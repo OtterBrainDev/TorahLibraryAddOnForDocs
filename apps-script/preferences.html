@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <?!= include('ui_head'); ?>
+    <?!= include('shared/ui/head'); ?>
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/themes/smoothness/jquery-ui.css" />
     <script>window.APP_CONFIG = <?= appConfigJson ?>;</script>
-    <?!= HtmlService.createHtmlOutputFromFile('preferences_css').getContent(); ?>
-    <?!= include('composition_card_css'); ?>
+<? var devFlags = JSON.parse(devFlagsJson); ?>
+    <?!= include('preferences/css'); ?>
+    <?!= include('shared/composition-card/css'); ?>
   </head>
   <body>
     <aside class="hide"><img src="https://www.sefaria.org/static/img/ajax-loader.gif" name="loading"></aside>
@@ -20,7 +21,9 @@
         <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
           <button type="button" id="pref-tab-fonts-btn" class="pref-tab" role="tab" data-pref-tab="fonts" aria-controls="pref-tab-fonts" aria-selected="true">Fonts</button>
           <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="false">Insertion</button>
+<? if (devFlags.AI_LESSON || devFlags.SURPRISE_ME) { ?>
           <button type="button" id="pref-tab-experimental-btn" class="pref-tab" role="tab" data-pref-tab="experimental" aria-controls="pref-tab-experimental" aria-selected="false">🧪 Experimental</button>
+<? } ?>
         </nav>
 
         <div class="pref-tab-panel" id="pref-tab-fonts" role="tabpanel" aria-labelledby="pref-tab-fonts-btn">
@@ -319,7 +322,7 @@
               <p class="section-note">Set the defaults applied to new insertions: linked title, source citation, line markers, cantillation, vowels, and transliteration. The sidebar can still override these for a single insertion.</p>
               <div class="subsection-card subsection-card--preview">
                 <div class="cc-card" id="composition-card-container" data-cc-features="header,linkedTitle,secondaryPills" aria-label="Default insertion preview">
-                  <?!= include('composition_card_markup') ?>
+                  <?!= include('shared/composition-card/markup') ?>
                 </div>
               </div>
               <div class="composition-state-inputs" hidden>
@@ -463,6 +466,7 @@
 
         </div>
 
+<? if (devFlags.AI_LESSON || devFlags.SURPRISE_ME) { ?>
         <div class="pref-tab-panel" id="pref-tab-experimental" role="tabpanel" aria-labelledby="pref-tab-experimental-btn" hidden>
           <p class="section-note">Optional, in-progress features. Leaving them off keeps the core experience unchanged.</p>
 
@@ -480,6 +484,7 @@
                 </label>
               </div>
               <div class="experimental-child-toggles">
+<? if (devFlags.SURPRISE_ME) { ?>
               <div class="toggle-row">
                 <div class="toggle-copy">
                   <div class="toggle-title">🎲 Surprise Me</div>
@@ -490,6 +495,8 @@
                   <span class="slider"></span>
                 </label>
               </div>
+<? } ?>
+<? if (devFlags.AI_LESSON) { ?>
               <div class="toggle-row">
                 <div class="toggle-copy">
                   <div class="toggle-title">🤖 AI Lesson Generator</div>
@@ -500,8 +507,10 @@
                   <span class="slider"></span>
                 </label>
               </div>
+<? } ?>
               </div>
 
+<? if (devFlags.AI_LESSON) { ?>
               <div class="section-note" style="margin-top:10px;">When enabled, the three AI lesson actions also appear in the add-on’s <strong>Quick Actions</strong> submenu.</div>
 
               <details class="compact-accordion compact-accordion--nested" open>
@@ -573,9 +582,11 @@
                   <span id="ai_key_status" class="save-note"></span>
                 </div>
               </details>
+<? } ?>
             </div>
           </details>
         </div>
+<? } ?>
 
       </div>
 
@@ -605,12 +616,12 @@
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
-    <?!= include('ui_core_shared'); ?>
-    <?!= include('ui_api'); ?>
-    <?!= include('ui_dom'); ?>
-    <?!= include('ui_feedback'); ?>
-    <?!= include('ui_state'); ?>
-    <?!= include('composition_card_shared'); ?>
-    <?!= HtmlService.createHtmlOutputFromFile('preferences_js').getContent(); ?>
+    <?!= include('shared/ui/core-shared'); ?>
+    <?!= include('shared/ui/api'); ?>
+    <?!= include('shared/ui/dom'); ?>
+    <?!= include('shared/ui/feedback'); ?>
+    <?!= include('shared/ui/state'); ?>
+    <?!= include('shared/composition-card/shared'); ?>
+    <?!= include('preferences/js'); ?>
   </body>
 </html>

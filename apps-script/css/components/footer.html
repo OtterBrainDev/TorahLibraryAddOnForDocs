@@ -1,0 +1,408 @@
+<style>
+/*
+ * components/footer.css — sidebar footer: button rows, icons, links
+ *
+ * The footer uses three button-row grids:
+ *   .primary-actions        — "Add Source" | "Open in Sefaria" (2-col)
+ *   .sidebar-footer-tools   — quick-action icons (3-col)
+ *   .session-override-buttons — session override icons (3-col)
+ *
+ * All buttons in the footer are reset to a flat white pill style.
+ * The .is-active state on a button fills it with the brand blue.
+ *
+ * HOVER NOTE for #insert-source / primary actions:
+ *   Base button styles (layout.css) set background: var(--selected) + color: #fff.
+ *   Inside the footer, those are overridden to white background + dark text.
+ *   The hover state here must set BOTH background AND color explicitly so that
+ *   neither the base blue background nor the is-active white text bleeds in.
+ */
+
+/* =============================================================
+   FOOTER SHELL
+   ============================================================= */
+
+.sidebar-footer {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 6px;
+  padding: 8px 12px 10px;
+  background: var(--lighter-grey);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -1px 0 rgba(24, 52, 93, 0.03);
+}
+
+.sidebar-footer > section {
+  margin: 0;
+  min-width: 0;
+}
+
+/* =============================================================
+   BUTTON ROW SHELLS
+   ============================================================= */
+
+.sidebar-footer .primary-actions,
+.sidebar-footer .sidebar-footer-tools,
+.sidebar-footer .session-override-buttons {
+  display: grid;
+  align-items: stretch;
+  gap: 0;
+  padding: var(--footer-row-padding);
+  overflow: hidden;
+  background: var(--footer-row-bg);
+  border-radius: var(--footer-row-radius);
+  box-sizing: border-box;
+}
+
+.sidebar-footer .primary-actions {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+.sidebar-footer .sidebar-footer-tools {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sidebar-footer .session-override-buttons {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Divider lines between sibling buttons within a row */
+.sidebar-footer .primary-actions > * + *,
+.sidebar-footer .sidebar-footer-tools > * + *,
+.sidebar-footer .session-override-buttons > * + * {
+  border-left: 1px solid var(--footer-divider);
+}
+
+/* =============================================================
+   UNIVERSAL FOOTER BUTTON RESET
+   All buttons inside the footer are flat, white, pill-shaped.
+   !important on background/border is required here because the
+   global base styles for #insert-source and .primary-action-button
+   apply colored backgrounds that cannot be cleanly unscoped.
+   ============================================================= */
+
+.sidebar-footer .primary-action-button,
+.sidebar-footer .secondary-action-button,
+.sidebar-footer .tertiary-action-button,
+.sidebar-footer .footer-tool-button,
+.sidebar-footer .session-library-primary-button,
+.sidebar-footer #insert-source,
+.sidebar-footer #open-on-sefaria,
+.sidebar-footer #open-session-library,
+.sidebar-footer .session-override-buttons .footer-tool-button {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: var(--footer-button-height);
+  min-height: var(--footer-button-height);
+  max-height: var(--footer-button-height);
+  margin: 0;
+  padding: 0 10px;
+  /* !important overrides colored backgrounds from base button rules */
+  background: #fff !important;
+  border: 1px solid #cfd5de !important;
+  border-radius: var(--footer-button-radius);
+  box-shadow: none !important;
+  color: var(--footer-button-text);
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  vertical-align: middle;
+}
+
+/* ---- Active state: brand-blue fill ---- */
+.sidebar-footer #insert-source.is-active,
+.sidebar-footer #open-on-sefaria.is-active,
+.sidebar-footer #open-session-library.is-active,
+.sidebar-footer .primary-action-button.is-active,
+.sidebar-footer .secondary-action-button.is-active,
+.sidebar-footer .session-library-primary-button.is-active {
+  color: #fff !important;
+  background: var(--selected) !important;
+  border-color: var(--selected) !important;
+}
+
+/* ---- Hover: light bg + dark text (non-active buttons) ---- */
+.sidebar-footer .primary-action-button:hover:not(:disabled):not(.is-active),
+.sidebar-footer .secondary-action-button:hover:not(:disabled):not(.is-active),
+.sidebar-footer .tertiary-action-button:hover:not(:disabled),
+.sidebar-footer .footer-tool-button:hover:not(:disabled),
+.sidebar-footer .session-library-primary-button:hover:not(:disabled):not(.is-active),
+.sidebar-footer #insert-source:hover:not(:disabled):not(.is-active),
+.sidebar-footer #open-on-sefaria:hover:not(:disabled):not(.is-active),
+.sidebar-footer #open-session-library:hover:not(:disabled):not(.is-active) {
+  background: var(--footer-button-hover-bg) !important;
+  color: var(--footer-button-hover-text);
+}
+
+/*
+ * Hover on an active primary button: stay dark, slightly lighter bg.
+ * Without this, the hover rule above would make the active button
+ * show a light background with white text (invisible).
+ */
+.sidebar-footer #insert-source.is-active:hover:not(:disabled),
+.sidebar-footer #open-session-library.is-active:hover:not(:disabled),
+.sidebar-footer .primary-action-button.is-active:hover:not(:disabled),
+.sidebar-footer .session-library-primary-button.is-active:hover:not(:disabled) {
+  background: var(--selected-hover) !important;
+  border-color: var(--selected-hover) !important;
+  color: #fff !important;
+}
+
+/* ---- Focus ring ---- */
+.sidebar-footer .primary-action-button:focus-visible,
+.sidebar-footer .secondary-action-button:focus-visible,
+.sidebar-footer .tertiary-action-button:focus-visible,
+.sidebar-footer .footer-tool-button:focus-visible,
+.sidebar-footer .session-library-primary-button:focus-visible,
+.sidebar-footer #insert-source:focus-visible,
+.sidebar-footer #open-on-sefaria:focus-visible,
+.sidebar-footer #open-session-library:focus-visible {
+  outline: 2px solid rgba(24, 52, 93, 0.28);
+  outline-offset: -2px;
+}
+
+/* ---- Disabled ---- */
+.sidebar-footer .primary-action-button:disabled,
+.sidebar-footer .secondary-action-button:disabled,
+.sidebar-footer .tertiary-action-button:disabled,
+.sidebar-footer .footer-tool-button:disabled,
+.sidebar-footer .session-library-primary-button:disabled,
+.sidebar-footer #insert-source:disabled,
+.sidebar-footer #open-on-sefaria:disabled,
+.sidebar-footer #open-session-library:disabled {
+  opacity: 0.48;
+  cursor: default;
+}
+
+/* =============================================================
+   PER-ROW TYPOGRAPHY
+   ============================================================= */
+
+/* Primary action text */
+.sidebar-footer #insert-source,
+.sidebar-footer .primary-action-button {
+  font-size: 14px;
+}
+
+/* Icon / symbol buttons */
+.sidebar-footer #open-session-library,
+.sidebar-footer .session-library-primary-button,
+.sidebar-footer #open-on-sefaria,
+.sidebar-footer .secondary-action-button,
+.sidebar-footer .tertiary-action-button {
+  padding-left: 0;
+  padding-right: 0;
+  font-size: 18px;
+}
+
+.sidebar-footer .footer-tool-button {
+  gap: 4px;
+  font-size: 18px;
+}
+
+/* =============================================================
+   FOOTER ICONS & SYMBOL SIZING
+   ============================================================= */
+
+.sidebar-footer .footer-icon,
+.sidebar-footer .tool-icon-stack,
+.sidebar-footer .open-sefaria-label,
+.sidebar-footer .open-sefaria-label.icon-only,
+.sidebar-footer .open-sefaria-icon,
+.sidebar-footer .footer-tool-button .footer-gear-icon,
+.sidebar-footer .footer-tool-button .footer-running-icon,
+.sidebar-footer .footer-tool-button .samekh-sized,
+.sidebar-footer .footer-tool-button .sefaria-badge.samekh,
+.sidebar-footer .samekh-sized {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.sidebar-footer .footer-icon,
+.sidebar-footer .footer-tool-button .footer-gear-icon,
+.sidebar-footer .footer-tool-button .samekh-sized,
+.sidebar-footer .footer-tool-button .sefaria-badge.samekh,
+.sidebar-footer .samekh-sized {
+  font-size: 18px;
+}
+
+.sidebar-footer .tool-icon-stack {
+  gap: 2px;
+  font-size: 14px;
+}
+
+.sidebar-footer .tool-arrow {
+  margin: 0 1px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.sidebar-footer .footer-tool-button .link-emoji {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.sidebar-footer .footer-gear-icon,
+.sidebar-footer .footer-tool-button .footer-gear-icon {
+  font-weight: 800;
+}
+
+.sidebar-footer .open-sefaria-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  line-height: 1;
+}
+
+.sidebar-footer .open-sefaria-label.icon-only {
+  width: 18px;
+  height: 18px;
+  gap: 0;
+  font-size: 0;
+}
+
+.sidebar-footer .open-sefaria-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.sidebar-footer .session-library-primary-button {
+  place-self: stretch;
+}
+
+.sidebar-footer .session-library-primary-button .footer-icon,
+.sidebar-footer #open-session-library .footer-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.sidebar-footer .samekh,
+.sidebar-footer .sefaria-badge.samekh {
+  color: #335f96;
+}
+
+/* AI lesson button always at full opacity regardless of feature state */
+.sidebar-footer .open-ai-lesson-tool,
+.sidebar-footer .open-ai-lesson-tool[disabled],
+.sidebar-footer .open-ai-lesson-tool.is-inactive-feature {
+  opacity: 1;
+}
+
+/* =============================================================
+   SETTINGS ROW (footer-settings-row / session-override-actions)
+   ============================================================= */
+
+.sidebar-footer .footer-settings-row,
+.sidebar-footer .session-override-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 0;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--lighter-grey);
+  border-radius: 14px;
+  box-sizing: border-box;
+}
+
+.sidebar-footer .session-override-label {
+  margin: 0;
+  color: #4d596d;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sidebar-footer .session-override-buttons .footer-tool-button {
+  font-size: 18px;
+}
+
+/* =============================================================
+   FOOTER LINKS ROW
+   ============================================================= */
+
+.sidebar-footer .footer,
+.sidebar-footer .footer-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 2px;
+  padding-top: 4px;
+  min-height: 20px;
+}
+
+.sidebar-footer .footer-inline a,
+.sidebar-footer .footer-inline span,
+.sidebar-footer .footer a {
+  line-height: 1;
+}
+
+.sidebar-footer .footer a {
+  color: #5a6880;
+  font-size: 12px;
+}
+
+.sidebar-footer .footer-logo-inline img {
+  display: block;
+  width: auto;
+  height: 18px;
+}
+
+/* Standalone footer elements (outside .sidebar-footer context) */
+.footer {
+  display: flex;
+  align-items: center;
+  padding-top: 6px;
+}
+
+.footer a {
+  color: #5a6880;
+  font-size: 12px;
+}
+
+.footer-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 6px;
+  font-size: 12px;
+}
+
+.footer-inline a,
+.footer-inline span {
+  line-height: 1;
+}
+
+.footer-logo-inline img {
+  display: block;
+  width: auto;
+  height: 18px;
+}
+
+.footerLogo img {
+  height: 16px;
+  opacity: 0.9;
+}
+</style>

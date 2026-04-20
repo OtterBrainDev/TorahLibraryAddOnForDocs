@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <?!= include('ui_head'); ?>
+    <?!= include('shared/ui/head'); ?>
     <script>window.APP_CONFIG = <?= appConfigJson ?>;</script>
-    <?!= include('surprise-me_css'); ?>
+    <?!= include('surprise-me/css'); ?>
   </head>
   <body>
     <main class="surprise-shell">
@@ -90,11 +90,11 @@
       </footer>
     </main>
 
-    <?!= include('ui_core_shared'); ?>
-    <?!= include('ui_api'); ?>
-    <?!= include('ui_dom'); ?>
-    <?!= include('ui_feedback'); ?>
-    <?!= include('ui_state'); ?>
-    <?!= include('surprise-me_js'); ?>
+    <?!= include('shared/ui/core-shared'); ?>
+    <?!= include('shared/ui/api'); ?>
+    <?!= include('shared/ui/dom'); ?>
+    <?!= include('shared/ui/feedback'); ?>
+    <?!= include('shared/ui/state'); ?>
+    <?!= include('surprise-me/js'); ?>
   </body>
 </html>

@@ -1,0 +1,395 @@
+<style>
+/*
+ * utilities.css — typography helpers, brand header, badges, icons,
+ *                 corpus colors, autocomplete, modals, toast, animations
+ */
+
+/* =============================================================
+   ACCESSIBILITY
+   ============================================================= */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+}
+
+/* Legacy hide pattern used by the add-on host frame */
+[class="hide"] > img {
+  position: absolute;
+  top: 48%;
+  left: 48%;
+}
+
+/* =============================================================
+   TYPOGRAPHY HELPERS
+   ============================================================= */
+
+.alef {
+  font-size: 1.15em;
+}
+
+.branding-text {
+  padding-top: 0.5em;
+}
+
+.helper-text,
+.experience-copy,
+.experience-note,
+.advanced-version-note {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.helper-text {
+  margin: 4px 0 0;
+}
+
+.section-label {
+  margin: 14px 0 8px;
+  color: #444;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.subsection-label,
+.compact-section-label,
+.session-library-title {
+  color: #4d596d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.subsection-label {
+  margin: 12px 0 6px;
+  color: #5d6878;
+}
+
+.section-muted {
+  opacity: 0.55;
+}
+
+/* =============================================================
+   BRAND HEADER
+   ============================================================= */
+
+.brand-header {
+  margin-bottom: 10px;
+  padding: 14px 14px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.brand-eyebrow {
+  margin-bottom: 4px;
+  color: var(--sefaria-blue);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brand-title {
+  margin: 0;
+  color: var(--sefaria-blue);
+  font-family: "Frank Ruhl Libre", "Noto Serif Hebrew", serif;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.brand-subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* =============================================================
+   QUERY INTEL
+   ============================================================= */
+
+.query-hint {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.query-intel-row {
+  display: none;
+}
+
+.query-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  color: #35527d;
+  background: var(--selected-soft);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.query-badge.commentary { color: #6c4e94; background: #f4ecfb; }
+.query-badge.direct     { color: #2c6d46; background: #e7f5ec; }
+.query-badge.fulltext   { color: #946328; background: #fdf3e8; }
+.query-badge.url        { color: #35527d; background: #eaf0f8; }
+
+/* =============================================================
+   ICONS / BADGES
+   ============================================================= */
+
+.samekh,
+.samekh-sized {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sefaria-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--selected);
+  border-radius: 999px;
+  font-family: "SBL Hebrew", "Ezra SIL", "Frank Ruhl Libre", serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sefaria-badge.samekh {
+  color: #28598c;
+}
+
+.tool-arrow,
+.arrow-mini,
+.external-link-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.arrow-mini,
+.external-link-icon {
+  transform: translateY(-1px);
+}
+
+.tool-icon-stack {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1;
+}
+
+/* Icon sizing normalisation (symbol/emoji icons in non-footer contexts) */
+.footer-icon,
+.footer-gear-icon,
+.footer-running-icon,
+.link-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15em;
+  height: 1.15em;
+  font-size: 18px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.link-emoji {
+  font-size: 17px;
+}
+
+/* Vertical alignment helpers for mixed controls */
+.results-tool.lang-tool-button,
+.restore-corpus-select,
+.section-label.accordion-summary,
+.display-choice-summary,
+.result-group-remove,
+.result-pin-button,
+.mode-card,
+.layout-option,
+.restore-corpus-button,
+.translation-language-toggle,
+.search-sort-select {
+  vertical-align: middle;
+}
+
+.results-tool.lang-tool-button {
+  font-size: 10px;
+}
+
+/* =============================================================
+   WARNINGS / STATUS
+   ============================================================= */
+
+.insert-warning {
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  color: #8d1f1a;
+  background: #fdecea;
+  border: 1px solid #d93025;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+/* =============================================================
+   CORPUS BACKGROUND COLORS (option pills / filter chips)
+   ============================================================= */
+
+.corpus-option {
+  color: #1f2b3a;
+}
+
+.corpus-apocrypha  { background: rgba(126,  63,  63, 0.1); }
+.corpus-chasidut   { background: rgba(  0,  98, 124, 0.1); }
+.corpus-halakhah   { background: rgba( 34, 102,  85, 0.1); }
+.corpus-kabbalah   { background: rgba( 80,  70, 130, 0.1); }
+.corpus-liturgy    { background: rgba(  0, 122, 122, 0.1); }
+.corpus-midrash    { background: rgba(166,  77, 121, 0.1); }
+.corpus-mishnah    { background: rgba(111,  76, 155, 0.1); }
+.corpus-modernworks{ background: rgba( 36,  99,  61, 0.1); }
+.corpus-musar      { background: rgba(123,  91,  38, 0.1); }
+.corpus-other      { background: rgba(112, 112, 112, 0.1); }
+.corpus-philosophy { background: rgba( 90,  90,  90, 0.1); }
+.corpus-reference  { background: rgba( 82,  82,  82, 0.1); }
+.corpus-talmud     { background: rgba(178, 102,   0, 0.1); }
+.corpus-tanaitic   { background: rgba(168,  95,   0, 0.1); }
+.corpus-tanakh     { background: rgba( 24,  94, 146, 0.1); }
+
+/* =============================================================
+   COMPONENT STATE HELPERS
+   ============================================================= */
+
+/* AI lesson button in inactive-feature mode reduces prominence slightly */
+.open-ai-lesson-tool.is-inactive-feature {
+  opacity: 0.8;
+}
+
+/* =============================================================
+   AUTOCOMPLETE (jQuery UI override)
+   ============================================================= */
+
+.ui-autocomplete {
+  display: none !important; /* Controlled by JS; hidden until JS activates */
+  z-index: 10020 !important;
+  max-height: 260px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
+.ui-menu .ui-menu-item a {
+  border: 0;
+  font-size: 13px;
+}
+
+/* =============================================================
+   TOAST NOTIFICATION
+   ============================================================= */
+
+.sidebar-toast {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  z-index: 9999;
+  max-width: calc(100% - 32px);
+  padding: 10px 14px;
+  color: #fff;
+  background: rgba(24, 52, 93, 0.94);
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity 0.18s ease;
+}
+
+.sidebar-toast.is-visible {
+  opacity: 1;
+}
+
+/* =============================================================
+   NOTICE BACKDROP + CARD (system alerts / confirmations)
+   ============================================================= */
+
+.sidebar-notice-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.26);
+}
+
+.sidebar-notice-backdrop[hidden] {
+  display: none !important;
+}
+
+/* Fixed width appropriate for sidebar context; was min(360px, calc(100vw-32px)) */
+.sidebar-notice-card {
+  width: 100%;
+  max-width: 280px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+}
+
+.sidebar-notice-card h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.sidebar-notice-message {
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.sidebar-notice-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* =============================================================
+   ANIMATIONS
+   ============================================================= */
+
+@keyframes preview-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes sidebar-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+@keyframes restorePulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+</style>

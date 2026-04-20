@@ -1,0 +1,117 @@
+<style>
+/*
+ * base.css — page shell, sidebar scaffold, mode/UI visibility gating
+ */
+
+/* ---- Root elements ---- */
+
+aside {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  display: none;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  color: #000;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Roboto", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
+main {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* ---- Sidebar scaffold ---- */
+
+.unified-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* The one true scroll container. All content sections live inside it. */
+.sidebar-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 12px 12px 16px;
+}
+
+/*
+ * Direct section children stack naturally as flex items.
+ * Do NOT set display here — individual components set their own.
+ */
+.sidebar-scroll > section {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* ---- Mode / UI visibility gating ---- */
+
+body.custom-mode .default-only,
+body.default-mode .advanced-only,
+body.default-mode .custom-only,
+body.default-mode details.sidebar-accordion[open] > .accordion-panel.custom-sensitive,
+body.smart-mode .advanced-only,
+.ui-hidden-checkbox,
+select.visually-hidden,
+input.visually-hidden {
+  display: none !important;
+}
+
+/* Voices mode hides text-specific panels */
+.mode-voices .text-mode-only,
+.mode-voices .display-layout-shell,
+.mode-voices .versions-section,
+.mode-voices .preview-section,
+.mode-voices .library-results,
+.mode-voices .results-lists > .text-mode-only {
+  display: none !important;
+}
+
+.mode-voices .search-results-label::before {
+  content: "Source Sheets";
+}
+
+.mode-voices .search-results {
+  margin-top: 0;
+}
+
+/* JS sets padding-left on the input at focus time; re-zero for voices mode */
+.mode-voices .reference-row .input {
+  padding-left: 0 !important;
+}
+
+.voices-only .helper-text {
+  margin-top: 0;
+}
+
+/* Texts mode: session-settings row is visible, hidden in voices/experimental */
+.mode-texts .more-options-accordion,
+.mode-texts .session-settings-inline-row {
+  display: block;
+}
+
+.mode-voices .session-settings-inline-row,
+.mode-experimental .session-settings-inline-row {
+  display: none !important;
+}
+</style>

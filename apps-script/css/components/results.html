@@ -1,0 +1,861 @@
+<style>
+/*
+ * components/results.css — results panel, result items, library toolbar,
+ *                          session library, corpus accents, skeleton loaders
+ */
+
+/* =============================================================
+   RESULTS PANEL HEADER
+   .results-header is hidden in favour of .library-results-heading-row.
+   Keep the display:none so any lingering HTML doesn't show it.
+   ============================================================= */
+
+.results-header {
+  display: none;
+}
+
+.results-header-tools {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-left: auto;
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.results-header-tools .results-tool,
+.results-header-tools select,
+.results-header-tools button {
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.results-header-actions {
+  display: none;
+}
+
+/* Session library header alignment */
+.session-library-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ece9e3;
+}
+
+/* =============================================================
+   LIBRARY RESULTS HEADING ROW + TOOLBAR
+   ============================================================= */
+
+.library-results-heading-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+
+.library-results-label {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-results-toolbar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.toolbar-control-group {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Toolbar-context lang toggle and sort select: fixed compact sizing */
+.library-results-toolbar .translation-language-toggle,
+.library-results-toolbar .lang-tool-button,
+.library-results-toolbar .results-tool.lang-tool-button {
+  width: auto;
+  min-width: 90px;
+  max-width: 120px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+}
+
+.library-results-toolbar .search-sort-select {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 72px;
+  max-width: 90px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+}
+
+/* Deprecated: restore-corpus row is replaced by the icon button */
+.restore-corpus-row,
+#restore-corpus-row,
+#restore-corpus-wrap {
+  display: none !important;
+}
+
+/* =============================================================
+   RESTORE CORPUS BUTTON
+   ============================================================= */
+
+.restore-corpus-button {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 15px;
+  line-height: 1;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.restore-corpus-button[disabled] {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+.restore-corpus-button.is-active {
+  opacity: 1;
+  cursor: pointer;
+  animation: restorePulse 0.25s ease;
+}
+
+.restore-corpus-button.is-active:hover,
+.restore-corpus-button.is-active:focus-visible {
+  background: #fff;
+  border-color: var(--selected);
+  color: var(--selected);
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px rgba(24, 52, 93, 0.08);
+}
+
+/* Subtle dot indicator when there's a corpus to restore */
+.restore-corpus-button.is-active::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  background: var(--selected);
+  border-radius: 50%;
+}
+
+/* Visually-hidden select paired with the icon button for accessibility */
+.restore-corpus-select.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* =============================================================
+   RESTORE CORPUS MENU (dropdown)
+   ============================================================= */
+
+.restore-corpus-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 20;
+  min-width: 140px;
+  max-width: 220px;
+  padding: 4px 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.restore-corpus-menu.hidden {
+  display: none;
+}
+
+.restore-corpus-menu-item {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  text-align: left;
+}
+
+.restore-corpus-menu-item:hover {
+  background: var(--selected-soft);
+}
+
+/* =============================================================
+   RESULTS LISTS
+   ============================================================= */
+
+.results-lists {
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0efec;
+}
+
+.results-panel .result-list {
+  overflow: visible;
+}
+
+.result-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-list + .result-group-label {
+  margin-top: 10px;
+}
+
+/* =============================================================
+   RESULT GROUPS & LABELS
+   ============================================================= */
+
+.result-group-label {
+  margin: 0 0 6px;
+  color: #555;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.result-group-label.text-mode-only,
+.search-results-label {
+  display: none; /* Deprecated: label content is in library-results-heading-row */
+}
+
+.results-lists .result-group-label {
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.result-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+}
+
+.result-cluster-label {
+  flex: 1 1 auto;
+  margin: 8px 0 4px;
+  color: #667;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.result-group-remove {
+  width: auto;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  color: #6f7684;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.result-group-remove[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* =============================================================
+   RESULT ITEMS
+   ============================================================= */
+
+.result-item {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.result-item:hover {
+  background: #f8fbff;
+}
+
+.result-item.is-nav-target {
+  box-shadow: inset 0 0 0 2px #89a3cc;
+}
+
+.result-item.selected {
+  background: var(--selected-soft);
+  border-color: var(--selected);
+  box-shadow: inset 0 0 0 1px var(--selected);
+}
+
+.recent-results .result-item {
+  margin-bottom: 0;
+}
+
+.result-item.session-library-item {
+  padding-right: 8px;
+}
+
+.result-row-main {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* =============================================================
+   RESULT TEXT CONTENT
+   ============================================================= */
+
+.results-title {
+  display: none !important; /* Deprecated element hidden globally */
+}
+
+.result-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 2px;
+  color: #18345d;
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.result-snippet,
+.result-subtitle {
+  color: #566273;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.result-meta {
+  color: #5b6677;
+  font-size: 11px;
+}
+
+.result-meta span {
+  display: inline-block;
+}
+
+.result-type {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: #5d6878;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* =============================================================
+   RESULT PIN BUTTON
+   ============================================================= */
+
+.result-pin-button {
+  display: inline;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  margin: 0 2px 0 0;
+  padding: 0;
+  color: #335f96;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.45;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  vertical-align: middle;
+}
+
+.result-item:hover .result-pin-button,
+.result-pin-button:focus-visible,
+.result-pin-button.is-pinned {
+  opacity: 1;
+}
+
+.result-pin-button.is-pinned {
+  transform: scale(1.05);
+}
+
+/* =============================================================
+   RESULTS REFINE ROW
+   ============================================================= */
+
+.results-refine-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.results-refine-row .search-sort-select {
+  width: auto;
+  min-width: 34px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0 2px;
+  color: #6e7890;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.results-refine-row .search-sort-select:focus,
+.results-refine-row .search-sort-select:hover {
+  background: transparent;
+  border: 0;
+}
+
+.results-toggle-button {
+  width: auto;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.results-toggle-row {
+  margin: 2px 0 6px;
+}
+
+.results-hint {
+  display: none;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* =============================================================
+   SELECTED RESULT SUMMARY
+   ============================================================= */
+
+.selected-result-summary {
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  color: #444;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  word-wrap: break-word;
+}
+
+.selected-result-summary strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--text);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+/* =============================================================
+   RESULT FILTER STRIP (corpus accent chips)
+   ============================================================= */
+
+.result-filter-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.result-filter-chip {
+  padding: 4px 8px;
+  border-left: 3px solid transparent;
+  border-radius: 999px;
+}
+
+.result-filter-chip.corpus-accent-commentary { border-left-color: var(--commentary-blue); }
+.result-filter-chip.corpus-accent-halakhah   { border-left-color: var(--halakhah-red); }
+.result-filter-chip.corpus-accent-midrash    { border-left-color: var(--midrash-green); }
+.result-filter-chip.corpus-accent-mishnah   { border-left-color: var(--mishnah-blue); }
+.result-filter-chip.corpus-accent-talmud    { border-left-color: var(--talmud-gold); }
+.result-filter-chip.corpus-accent-tanakh    { border-left-color: var(--tanakh-teal); }
+
+.result-filter-chip.removed {
+  color: #777;
+  background: #f0f0f0;
+  border-left-color: #b6b6b6;
+}
+
+/* =============================================================
+   CORPUS ACCENT ROW BACKGROUNDS (result-row / result-group-header)
+   ============================================================= */
+
+.result-row.corpus-accent-tanakh,     .result-group-header.corpus-accent-tanakh     { background: rgba(58, 91, 149, 0.08); }
+.result-row.corpus-accent-mishnah,    .result-group-header.corpus-accent-mishnah    { background: rgba(99, 120, 87, 0.08); }
+.result-row.corpus-accent-talmud,     .result-group-header.corpus-accent-talmud     { background: rgba(147, 110, 61, 0.08); }
+.result-row.corpus-accent-midrash,    .result-group-header.corpus-accent-midrash    { background: rgba(123, 91, 140, 0.08); }
+.result-row.corpus-accent-halakhah,   .result-group-header.corpus-accent-halakhah   { background: rgba(76, 122, 113, 0.08); }
+.result-row.corpus-accent-liturgy,    .result-group-header.corpus-accent-liturgy    { background: rgba(140, 88, 88, 0.08); }
+.result-row.corpus-accent-kabbalah,   .result-group-header.corpus-accent-kabbalah   { background: rgba(95, 74, 140, 0.08); }
+.result-row.corpus-accent-philosophy, .result-group-header.corpus-accent-philosophy { background: rgba(89, 108, 145, 0.08); }
+.result-row.corpus-accent-chasidut,   .result-group-header.corpus-accent-chasidut   { background: rgba(141, 112, 72, 0.08); }
+.result-row.corpus-accent-musar,      .result-group-header.corpus-accent-musar      { background: rgba(106, 120, 73, 0.08); }
+.result-row.corpus-accent-commentary, .result-group-header.corpus-accent-commentary { background: rgba(97, 97, 97, 0.08); }
+.result-row.corpus-accent-reference,  .result-group-header.corpus-accent-reference  { background: rgba(84, 104, 126, 0.08); }
+.result-row.corpus-accent-modernworks,.result-group-header.corpus-accent-modernworks{ background: rgba(116, 103, 140, 0.08); }
+.result-row.corpus-accent-apocrypha,  .result-group-header.corpus-accent-apocrypha  { background: rgba(136, 95, 72, 0.08); }
+.result-row.corpus-accent-tanaitic,   .result-group-header.corpus-accent-tanaitic   { background: rgba(111, 122, 79, 0.08); }
+
+/* =============================================================
+   LANGUAGE FILTER CHIPS
+   ============================================================= */
+
+.lang-filter-strip-label {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.lang-filter-chip {
+  padding: 4px 8px;
+  background: #eef2ff;
+  border: none;
+  border-radius: 999px;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.lang-filter-chip:hover {
+  background: #d8e4ff;
+}
+
+.lang-filter-clear-chip {
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.lang-filter-clear-chip:hover {
+  background: #e0e0e0;
+}
+
+/* =============================================================
+   SESSION LIBRARY (inline panel)
+   ============================================================= */
+
+.session-library-launch-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 8px;
+}
+
+.session-library-launch-button {
+  padding: 6px 10px;
+  color: #18345d;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #d7d1c7;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.session-library-tools {
+  margin-left: auto;
+}
+
+.session-library-group + .session-library-group {
+  margin-top: 10px;
+}
+
+.session-library-results {
+  margin-top: 4px;
+}
+
+/* Updated to flex — the grid version from section 14 was superseded */
+.session-library-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.session-library-item.is-pinned {
+  background: #f8fbff;
+  border-color: #cfdff3;
+}
+
+.session-library-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-library-remove {
+  width: 28px;
+  height: 28px;
+  margin-left: 10px;
+  color: #6d7786;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  font-size: 18px;
+}
+
+.session-library-remove:hover {
+  color: #18345d;
+  background: #eef2f6;
+}
+
+.session-library-note {
+  margin: 0 0 10px;
+  color: #5a6472;
+  font-size: 12px;
+}
+
+.session-corpus-group {
+  margin: 10px 0 6px;
+  padding: 5px 8px;
+  color: #5a6576;
+  background: #f7f4ef;
+  border: 1px solid #ebe5dd;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.session-library-primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.session-library-primary-button .footer-icon {
+  line-height: 1;
+  vertical-align: middle;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL
+   ============================================================= */
+
+.session-library-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(17, 24, 39, 0.35);
+}
+
+/* Fixed width for sidebar context — was calc(100vw - 32px) which sized to ~268px */
+.session-library-modal-card {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  max-height: 80vh;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e3dfd8;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.session-library-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #ece7df;
+}
+
+.session-library-modal-header h2 {
+  margin: 0;
+  color: #18345d;
+  font-family: Georgia, serif;
+  font-size: 20px;
+}
+
+.session-library-modal-close {
+  padding: 0;
+  color: #5f6b7c;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+#session-library-modal .session-library-panel {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-height: 420px;
+  margin: 0;
+  padding: 12px 14px 14px;
+  overflow: auto;
+}
+
+.modal-backdrop[hidden] {
+  display: none !important;
+}
+
+/* =============================================================
+   SESSION CORPUS ACCORDION (in modal)
+   ============================================================= */
+
+.session-library-corpus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session-corpus-accordion {
+  background: #fbfaf8;
+  border: 1px solid #e7e1d7;
+  border-radius: 12px;
+}
+
+.session-corpus-accordion > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+}
+
+.session-corpus-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.session-corpus-body {
+  padding: 0 10px 10px;
+}
+
+.session-subsection-title {
+  margin: 10px 2px 6px;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* =============================================================
+   SKELETON LOADERS
+   ============================================================= */
+
+.skeleton-result-item {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border: 1px solid #e8ecf2;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.skeleton-bar {
+  margin-bottom: 6px;
+  background: linear-gradient(90deg, #eaecef 25%, #f5f6f7 50%, #eaecef 75%);
+  background-size: 400px 100%;
+  border-radius: 3px;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-bar.skeleton-title {
+  width: 70%;
+  height: 13px;
+}
+
+.skeleton-bar.skeleton-subtitle {
+  width: 45%;
+  height: 11px;
+}
+
+.skeleton-bar.skeleton-meta {
+  width: 30%;
+  height: 9px;
+  margin-bottom: 0;
+  opacity: 0.6;
+}
+
+/* Empty state suppression */
+.search-results:empty,
+.search-results-label:empty {
+  display: none !important;
+}
+</style>

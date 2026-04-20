@@ -140,7 +140,7 @@ function onOpen(e) {
     surpriseEnabled = prefs.surprise_me_enabled == "true";
   }
 
-  if (experimentalAiEnabled) {
+  if (DEV_FLAGS.AI_LESSON && experimentalAiEnabled) {
     quickActionsMenu.addSeparator()
       .addItem("Today's Daf Lesson (45 min)", 'runQuickActionTodaysDafLessonMenu')
       .addItem("Today's 929 Lesson (45 min)", 'runQuickActionTodays929LessonMenu')
@@ -152,10 +152,10 @@ function onOpen(e) {
       .addItem('Voices', 'voicesHTML')
       .addSubMenu(quickActionsMenu);
 
-  if (experimentalAiEnabled) {
+  if (DEV_FLAGS.AI_LESSON && experimentalAiEnabled) {
     addOnMenu.addSeparator().addItem('Generate Shiur Draft (experimental)', 'openAiLessonGenerator');
   }
-  if (surpriseEnabled) {
+  if (DEV_FLAGS.SURPRISE_ME && surpriseEnabled) {
     addOnMenu.addSeparator().addItem('Surprise Me', 'surpriseMeHTML');
   }
 
@@ -1789,6 +1789,10 @@ function insertSheetReference(sheetPayload) {
 
 
 function openAiLessonGenerator() {
+  if (!DEV_FLAGS.AI_LESSON) {
+    DocumentApp.getUi().alert('The AI Lesson Generator is not available in this version.');
+    return;
+  }
   const template = HtmlService.createTemplateFromFile('ai_lesson');
   template.appConfigJson = JSON.stringify(getUiAppConfig_('ai_lesson', 'experimental'));
   const output = template.evaluate()
@@ -1867,6 +1871,9 @@ function maskApiKey_(value) {
 }
 
 function assertExperimentalAiEnabled_() {
+  if (!DEV_FLAGS.AI_LESSON) {
+    throw new Error('The AI Lesson Generator is not available in this version.');
+  }
   const prefs = getPreferences();
   if (prefs.experimental_ai_source_sheet_enabled != 'true') {
     throw new Error('Enable the experimental AI lesson generator in Preferences before using this feature.');
@@ -2463,6 +2470,7 @@ function insertGeneratedLessonIntoDoc_(lesson, request) {
 function preferencesPopup() {
   const template = HtmlService.createTemplateFromFile('preferences');
   template.appConfigJson = JSON.stringify(getUiAppConfig_('preferences', 'preferences'));
+  template.devFlagsJson = JSON.stringify(DEV_FLAGS);
   const output = template.evaluate()
     .setTitle('Preferences')
     .setWidth(600)

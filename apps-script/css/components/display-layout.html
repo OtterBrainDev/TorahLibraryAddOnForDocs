@@ -1,0 +1,304 @@
+<style>
+/*
+ * components/display-layout.css — display-layout section grid, mode cards,
+ *                                  layout options, composition card centering
+ *
+ * BUG FIX: .display-layout-section was using auto-fit which trapped opened
+ * dropdowns in a single narrow column. It is now an explicit 2-column grid.
+ * An open .display-choice-detail or .display-choice-dropdown spans both
+ * columns so its controls fill the available sidebar width.
+ */
+
+/* =============================================================
+   DISPLAY LAYOUT SECTION GRID
+   ============================================================= */
+
+/*
+ * Two closed selector controls sit side-by-side.
+ * When one opens, it spans the full row so its option group is not squashed.
+ */
+.display-layout-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.display-layout-section .display-choice-detail[open],
+.display-layout-section .display-choice-dropdown[open] {
+  grid-column: 1 / -1;
+}
+
+/* =============================================================
+   MODE CARD GROUP
+   ============================================================= */
+
+.compact-mode-card-group,
+.mode-card-group,
+.layout-option-group {
+  display: grid;
+  gap: 6px;
+}
+
+.mode-card-group.compact-mode-card-group {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+/* Default 3-column layout inside dropdown */
+.display-choice-dropdown[open] .mode-card-group {
+  grid-template-columns: repeat(3, minmax(30px, 1fr));
+}
+
+/* Layout options: auto-fill so narrow cells wrap rather than clip icons */
+.display-choice-dropdown[open] .layout-option-group {
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+}
+
+/* Standalone (non-dropdown) 3-column groups */
+.mode-card-group,
+.layout-option-group {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* =============================================================
+   MODE CARDS
+   ============================================================= */
+
+.mode-card,
+.layout-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-width: 34px;
+  height: 62px;
+  min-height: 62px;
+  padding: 0 8px;
+  color: var(--text);
+  cursor: pointer;
+  overflow: hidden;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.mode-card {
+  background: #fff;
+  border: 0;
+  border-radius: 0;
+}
+
+.mode-card:hover {
+  background: #f8fbff;
+}
+
+.mode-card.selected {
+  background: #eef2f8;
+  border-color: #6e8ab2;
+  box-shadow: inset 0 0 0 1px rgba(24, 52, 93, 0.08);
+}
+
+.mode-card:focus-visible {
+  outline: 2px solid var(--selected);
+  outline-offset: 2px;
+}
+
+/* =============================================================
+   LAYOUT OPTIONS
+   ============================================================= */
+
+.layout-option {
+  min-width: 44px;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+}
+
+.layout-option:hover {
+  background: #f8fbff;
+  border-color: #9fb3cc;
+}
+
+.layout-option.selected,
+.layout-option.is-active,
+.layout-option[aria-checked="true"] {
+  background: #eef2f8;
+  border-color: #6e8ab2;
+  box-shadow: inset 0 0 0 1px rgba(24, 52, 93, 0.08);
+}
+
+.layout-option:focus-visible {
+  outline: 2px solid var(--selected);
+  outline-offset: 2px;
+}
+
+/* =============================================================
+   MODE CARD CONTENT & LABELS
+   ============================================================= */
+
+.mode-card-content,
+.mode-card-content.both {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 20px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.mode-card-indicator {
+  display: none;
+}
+
+.mode-card-label {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mode-card-plus {
+  margin-top: 1px;
+  color: currentColor;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mode-card-symbol {
+  display: inline-block;
+  flex: 0 0 auto;
+  color: currentColor;
+  font-family: "SBL Hebrew", "Ezra SIL", "Frank Ruhl Libre", serif;
+  font-size: 23px;
+  line-height: 1;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.mode-card-symbol.latin {
+  font-family: "Crimson Text", "EB Garamond", Georgia, serif;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+/* Layout label text is hidden; icon communicates layout type */
+.layout-label {
+  display: none !important;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* =============================================================
+   LAYOUT ICON (visual schematic inside layout-option)
+   ============================================================= */
+
+.layout-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 38px;
+  min-width: 38px;
+  height: 24px;
+  margin: 0 auto;
+  background: #f7f7f5;
+  border: 1px solid #bcb8b1;
+  border-radius: 4px;
+}
+
+/* In the selected-display preview, the icon can be a bit wider */
+.display-choice-selected .layout-icon {
+  width: 38px;
+  min-width: 38px;
+  height: 24px;
+}
+
+.layout-icon.side-by-side,
+.layout-icon.side-by-side.reverse {
+  flex-direction: row;
+}
+
+.layout-icon.stacked {
+  flex-direction: column;
+}
+
+.layout-col,
+.layout-row {
+  display: block;
+  background: #bdb8b0;
+  border-radius: 2px;
+}
+
+.layout-col {
+  width: 10px;
+  height: 24px;
+}
+
+.layout-row {
+  width: 30px;
+  height: 7px;
+}
+
+/* Hebrew column/row accent colors */
+.layout-col.he,
+.layout-row.he,
+.layout-option.is-active .layout-col.he,
+.layout-option.is-active .layout-row.he {
+  background: #24406f;
+}
+
+.layout-option[data-layout="he-right"] .layout-col.en,
+.layout-option[data-layout="he-left"] .layout-col.he,
+.layout-option[data-layout="he-top"] .layout-row.he {
+  background: #6f89b8;
+}
+
+.layout-option[data-layout="he-right"] .layout-col.he,
+.layout-option[data-layout="he-left"] .layout-col.en,
+.layout-option[data-layout="he-top"] .layout-row.en {
+  background: #1f3f75;
+}
+
+/* =============================================================
+   COMPOSITION CARD CENTERING (#composition-card-container)
+   ============================================================= */
+
+#composition-card-container .hebrew-preview,
+#composition-card-container .hebrew-preview-text,
+#composition-card-container .cc-hebrew-preview,
+#composition-card-container .cc-hebrew-text {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  text-align: center;
+}
+
+#composition-card-container .cantillation-toggle,
+#composition-card-container .vowels-toggle,
+#composition-card-container .cc-cantillation-toggle,
+#composition-card-container .cc-vowels-toggle,
+#composition-card-container .cantillation-pill,
+#composition-card-container .vowels-pill {
+  display: inline-flex;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+#composition-card-container .hebrew-preview-wrap,
+#composition-card-container .hebrew-center-stack,
+#composition-card-container .cc-preview-center-stack,
+#composition-card-container .composition-preview-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+</style>

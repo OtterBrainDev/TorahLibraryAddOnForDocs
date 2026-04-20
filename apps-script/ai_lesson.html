@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <?!= include('ui_head'); ?>
+    <?!= include('shared/ui/head'); ?>
     <script>window.APP_CONFIG = <?= appConfigJson ?>;</script>
-    <?!= include('ai_lesson_css'); ?>
+    <?!= include('ai-lesson/css'); ?>
   </head>
   <body>
     <div class="wrap">
@@ -154,11 +154,11 @@
         </section>
       </div>
     </div>
-    <?!= include('ui_core_shared'); ?>
-    <?!= include('ui_api'); ?>
-    <?!= include('ui_dom'); ?>
-    <?!= include('ui_feedback'); ?>
-    <?!= include('ui_state'); ?>
-    <?!= include('ai_lesson_js'); ?>
+    <?!= include('shared/ui/core-shared'); ?>
+    <?!= include('shared/ui/api'); ?>
+    <?!= include('shared/ui/dom'); ?>
+    <?!= include('shared/ui/feedback'); ?>
+    <?!= include('shared/ui/state'); ?>
+    <?!= include('ai-lesson/js'); ?>
   </body>
 </html>

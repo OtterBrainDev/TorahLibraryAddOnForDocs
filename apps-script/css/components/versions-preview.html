@@ -1,0 +1,186 @@
+<style>
+/*
+ * components/versions-preview.css — versions section, preview section,
+ *                                    version controls, preview content
+ *
+ * SCROLL CONTAINMENT:
+ *   Both .versions-section and .preview-section are direct children of
+ *   .sidebar-scroll and participate in its normal block flow.
+ *   They do NOT escape the scroll container — the sidebar-scroll element
+ *   handles all vertical overflow for the content column.
+ *
+ *   Inner scrolling is provided by .suggestions (max-height + overflow-y).
+ *
+ * FIX: The original code had display:flex on .preview-section to set up a
+ *   scroll-containment chain, but a later patch rule (.sidebar-scroll > section
+ *   { display: block }) overrode it due to higher specificity. The fix is to
+ *   keep .preview-section as a normal block child and rely on .suggestions for
+ *   inner scroll. The full flex chain was removed as over-engineering.
+ *
+ * FIX: Invalid selector "..preview-section .suggestions" (double dot) corrected
+ *   to ".preview-section .suggestions".
+ */
+
+/* =============================================================
+   VERSIONS SECTION
+   ============================================================= */
+
+/* .versions-section panel chrome is shared with layout.css panel shells. */
+/* The details inside gets a slight shadow lift from the shared panel rule. */
+
+.versions-panel,
+.more-options-card {
+  background: #fff;
+  border: 1px solid #ece7df;
+  border-radius: 12px;
+}
+
+.versions-panel.more-options-card {
+  background: #fcfcfb;
+  border-color: #ece9e3;
+}
+
+.versions-section.single-translation .translation-version-control,
+.versions-section.single-translation .advanced-version-details {
+  display: none;
+}
+
+/* =============================================================
+   PREVIEW SECTION & PANEL
+   ============================================================= */
+
+/* .preview-section is a normal block child of .sidebar-scroll. */
+/* No flex / min-height chain needed here. */
+.preview-section {
+  display: block;
+}
+
+#previewContainer,
+.preview-panel .suggestions {
+  background: #fff;
+  border-radius: 12px;
+}
+
+/* =============================================================
+   SUGGESTIONS (scrollable content within preview)
+   Fixed max-height replaces the previous 42vh which was
+   viewport-relative and inappropriate for a fixed-width sidebar.
+   ============================================================= */
+
+.suggestions {
+  margin: 0;
+  min-height: 150px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.45;
+  overflow: auto;
+}
+
+.preview-section .suggestions,
+.preview-panel .suggestions {
+  box-sizing: border-box;
+  min-height: 180px;
+  max-height: 300px; /* fixed for ~300px sidebar; was 42vh */
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+/* =============================================================
+   PREVIEW CONTENT ELEMENTS
+   ============================================================= */
+
+.preview-he {
+  direction: rtl;
+}
+
+.preview-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.preview-loading-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #d3d3d3;
+  border-top-color: var(--selected);
+  border-radius: 999px;
+  animation: preview-spin 0.75s linear infinite;
+}
+
+.preview-meta {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.preview-shimmer {
+  position: relative;
+  min-height: 84px;
+  padding: 12px;
+  overflow: hidden;
+  background: #f7f8fa;
+  border-radius: 8px;
+}
+
+.preview-shimmer::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0.75),
+    rgba(255, 255, 255, 0)
+  );
+  transform: translateX(-100%);
+  animation: sidebar-shimmer 1.2s infinite;
+}
+
+.preview-state-message {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.preview-state-title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.preview-table td {
+  width: 50%;
+  padding: 0 6px 8px;
+  vertical-align: top;
+}
+
+/* =============================================================
+   NON-INSERTABLE WARNING (shown inside preview)
+   ============================================================= */
+
+.noninsertable-warning {
+  margin-top: 4px;
+  padding: 10px 12px;
+  background: #fff7e0;
+  border: 1px solid #e7c97a;
+  border-radius: 10px;
+}
+
+.noninsertable-warning .preview-state-title {
+  margin-bottom: 4px;
+  color: #6a4d00;
+}
+</style>

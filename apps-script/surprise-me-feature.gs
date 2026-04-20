@@ -1,4 +1,9 @@
 function surpriseMeHTML() {
+  if (!DEV_FLAGS.SURPRISE_ME) {
+    DocumentApp.getUi().alert('Surprise Me is not available in this version.');
+    return;
+  }
+
   const prefs = getPreferences();
 
   const enabled = prefs.surprise_me_enabled === "true";

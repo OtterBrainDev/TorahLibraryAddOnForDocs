@@ -1,0 +1,301 @@
+<style>
+/*
+ * components/accordion.css — sidebar accordion, display-choice details/dropdown,
+ *                            advanced version details, version-choice details
+ */
+
+/* =============================================================
+   SIDEBAR ACCORDION (main expand/collapse pattern)
+   ============================================================= */
+
+.sidebar-accordion {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.accordion-summary,
+.section-label.accordion-summary {
+  margin: 0;
+  color: var(--sefaria-blue);
+  font-family: "Frank Ruhl Libre", "Noto Serif Hebrew", serif;
+  font-size: 13px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.accordion-summary {
+  padding: 2px 0 8px;
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.accordion-panel {
+  padding-top: 2px;
+}
+
+.display-layout-shell .accordion-panel {
+  gap: 8px;
+}
+
+.display-layout-shell .helper-text {
+  max-width: none;
+}
+
+/* =============================================================
+   DISPLAY CHOICE — details/summary pattern
+   ============================================================= */
+
+.display-choice-detail {
+  min-width: 0;
+  padding: 8px 10px;
+  background: #fbfaf8;
+  border: 1px solid #ebe6dc;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.display-choice-detail:first-child {
+  margin-top: 0;
+  border-top: 0;
+}
+
+.display-choice-detail > summary {
+  margin-bottom: 4px;
+  list-style: none;
+  pointer-events: none;
+}
+
+.display-choice-detail > summary::-webkit-details-marker,
+.display-choice-summary::-webkit-details-marker,
+.advanced-version-details summary::-webkit-details-marker {
+  display: none;
+}
+
+/*
+ * .display-choice-summary is a single-column grid.
+ * (.display-choice-label is hidden, so only the selected-display cell shows.)
+ */
+.display-choice-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  margin-bottom: 4px;
+  padding: 0;
+}
+
+.display-choice-detail[open] > .display-choice-summary {
+  margin-bottom: 4px;
+}
+
+.display-choice-summary::after {
+  display: none;
+}
+
+/* Label is hidden; title-only context is provided as a tooltip in the HTML */
+.display-choice-label {
+  display: none;
+}
+
+.display-choice-detail:not([open]) .mode-card-group,
+.display-choice-detail:not([open]) .layout-option-group {
+  display: none;
+}
+
+/* =============================================================
+   DISPLAY CHOICE — dropdown variant (.display-choice-dropdown)
+   ============================================================= */
+
+.display-choice-dropdown {
+  position: relative;
+}
+
+.display-choice-dropdown > summary {
+  cursor: pointer;
+  list-style: none;
+  pointer-events: auto;
+}
+
+.display-choice-dropdown > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Selected-state preview button */
+.display-choice-selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 7px 10px;
+  overflow: hidden;
+  color: #18345d;
+  background: #fff;
+  border: 1px solid #d9d3c7;
+  border-radius: 12px;
+}
+
+.display-choice-dropdown[open] .display-choice-selected {
+  border-color: #b9c8dd;
+  box-shadow: 0 0 0 2px rgba(51, 95, 150, 0.08);
+}
+
+/* Summary text nodes rendered by JS */
+#display-choice-summary-text,
+#layout-choice-summary-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin-left: auto;
+  color: #18345d;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#display-choice-summary-text::after,
+#layout-choice-summary-text::after {
+  content: "▾";
+  margin-left: 8px;
+  color: #6c7d93;
+  font-size: 11px;
+}
+
+/* Conditional content for mode states */
+#display-choice-summary-text[data-mode="en"] .both,
+#display-choice-summary-text[data-mode="he"] .both {
+  display: none;
+}
+
+#display-choice-summary-text[data-mode="en"]::before {
+  content: "A";
+  font-size: 20px;
+  font-weight: 700;
+}
+
+#display-choice-summary-text[data-mode="he"]::before {
+  content: "א";
+  font-size: 20px;
+  font-weight: 700;
+}
+
+#display-choice-summary-text[data-mode="both"]::before,
+#layout-choice-summary-text[data-layout="he-right"]::before,
+#layout-choice-summary-text[data-layout="he-left"]::before,
+#layout-choice-summary-text[data-layout="he-top"]::before {
+  content: "";
+}
+
+#layout-choice-summary-text .layout-icon {
+  width: 34px;
+}
+
+.display-choice-dropdown:not([open]) .mode-card-group,
+.display-choice-dropdown:not([open]) .layout-option-group {
+  display: none;
+}
+
+.display-choice-dropdown[open] .mode-card-group,
+.display-choice-dropdown[open] .layout-option-group {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* =============================================================
+   ADVANCED VERSION DETAILS
+   ============================================================= */
+
+.advanced-version-details {
+  margin-top: 8px;
+  padding-top: 8px;
+  opacity: 0.9;
+  border-top: 1px solid var(--border);
+}
+
+.advanced-version-details summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #18345d;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.advanced-version-details summary::before {
+  margin-right: 6px;
+  color: #666;
+  content: "▸";
+}
+
+.advanced-version-details[open] summary::before {
+  content: "▾";
+}
+
+.versions-section.single-translation .translation-version-control,
+.versions-section.single-translation .advanced-version-details {
+  display: none;
+}
+
+/* =============================================================
+   VERSION CHOICE DETAILS
+   ============================================================= */
+
+.version-choice-details {
+  margin-top: 8px;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border);
+}
+
+.version-choice-details:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.version-choice-details > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #18345d;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.version-choice-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.version-choice-details > summary::before {
+  content: "▸";
+  margin-right: 6px;
+  color: #666;
+}
+
+.version-choice-details[open] > summary::before {
+  content: "▾";
+}
+
+.version-choice-details > summary > span:first-child {
+  flex: 1 1 auto;
+}
+
+.version-summary-count {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+</style>
