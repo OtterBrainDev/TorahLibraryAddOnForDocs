@@ -1,0 +1,21 @@
+<script>
+  function showSharedNotice(message, onConfirm) {
+    var notice = uiById('shared-notice');
+    if (!notice) return;
+    var messageNode = uiById('shared-notice-message');
+    var okNode = uiById('shared-notice-ok');
+    var cancelNode = uiById('shared-notice-cancel');
+    if (messageNode) messageNode.textContent = message || '';
+    notice.hidden = false;
+
+    if (okNode) {
+      okNode.onclick = function () {
+        notice.hidden = true;
+        if (typeof onConfirm === 'function') onConfirm();
+      };
+    }
+    if (cancelNode) {
+      cancelNode.onclick = function () { notice.hidden = true; };
+    }
+  }
+</script>

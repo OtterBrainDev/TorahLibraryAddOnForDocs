@@ -1,0 +1,48 @@
+{
+  "sidebar": {
+    "template": "sidebar.html",
+    "requiredSelectors": [
+      "#run-sefaria",
+      ".mode-switch-button",
+      ".results-panel",
+      "#display-choice-summary-text",
+      "#layout-choice-summary-text",
+      "data-sidebar-mode=\"texts\"",
+      "data-sidebar-mode=\"experimental\"",
+      "#ai-inline-generate",
+      "#ai-inline-topic",
+      "#sm-inline-launch",
+      "#sm-inline-term"
+    ]
+  },
+  "preferences": {
+    "template": "preferences.html",
+    "requiredSelectors": [
+      "#expand_all_sections",
+      "#collapse_all_sections",
+      "#source_title_font",
+      "#hebrew_font",
+      "#transliteration_scheme"
+    ]
+  },
+  "ai_lesson": {
+    "template": "ai_lesson.html",
+    "requiredSelectors": [
+      "#basicTabBtn",
+      "#advancedTabBtn",
+      "#modeToggle",
+      "#generateBtn",
+      "#status"
+    ]
+  },
+  "surprise_me": {
+    "template": "surprise-me.html",
+    "requiredSelectors": [
+      "#surprise-term",
+      "#surprise-count",
+      "#toggle-all-corpuses",
+      "#surprise-submit",
+      "#surprise-status"
+    ]
+  }
+}

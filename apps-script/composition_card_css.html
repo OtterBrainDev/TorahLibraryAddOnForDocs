@@ -1,0 +1,224 @@
+<style>
+/* ================================
+   Shared Composition Card Component
+   ================================ */
+
+.cc-card {
+  margin: 4px 0 10px;
+  padding: 12px 10px 10px;
+  background: #fcfcfb;
+  border: 1px solid #ece7df;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.cc-header {
+  margin-bottom: 10px;
+  text-align: left;
+}
+
+.cc-header-label {
+  color: #333;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cc-header-help {
+  margin-top: 2px;
+  color: #666;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.cc-surface {
+  position: relative;
+  padding: 14px 10px 10px;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid #e7e1d7;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.cc-title-pill {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 2px 6px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #18345d;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.cc-title-pill.is-linked {
+  text-decoration: underline;
+}
+
+.cc-title-pill[aria-pressed='false'] {
+  color: #4a586b;
+}
+
+.cc-hebrew-stage {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 84px;
+  padding: 14px 8px;
+}
+
+.cc-hebrew {
+  min-width: 250px;
+  min-height: 48px;
+  color: #222;
+  font-family: "Frank Ruhl Libre", "Noto Sans Hebrew", serif;
+  font-size: 28px;
+  line-height: 1.55;
+  user-select: none;
+}
+
+.cc-hebrew-text {
+  display: block;
+  white-space: nowrap;
+}
+
+.cc-hebrew-text[hidden] {
+  display: none !important;
+}
+
+/* Pill base — static by default, positioned inside hebrew-stage */
+.cc-pill {
+  display: inline-block;
+  height: 22px;
+  padding: 0 9px;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #d8d2c8;
+  border-radius: 999px;
+  color: #445267;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+/* Stage-positioned pills (cantillation + vowels) */
+.cc-hebrew-stage .cc-pill {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.cc-pill--top { top: 0; }
+.cc-pill--bottom { bottom: 0; }
+
+.cc-pill.is-off {
+  color: #8b8b8b;
+  background: #f3f3f3;
+}
+
+.cc-pill[aria-pressed='true'] {
+  color: #18345d;
+  background: #e4edf8;
+  border-color: #b7c8e2;
+}
+
+.cc-pill[aria-pressed='false'] {
+  color: #4a586b;
+}
+
+.cc-pill:focus-visible,
+.cc-translit-button:focus-visible,
+.cc-translit-option:focus-visible {
+  outline: 2px solid rgba(31, 59, 104, 0.35);
+  outline-offset: 2px;
+}
+
+/* Transliteration controls */
+.cc-translit-wrap {
+  position: relative;
+  margin-top: 8px;
+}
+
+.cc-translit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  padding: 0 8px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px dashed transparent;
+  border-radius: 8px;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.cc-translit-button:hover {
+  background: #f8f8f7;
+  border-color: #d8d2c8;
+}
+
+.cc-translit-button.is-none {
+  color: #999;
+  font-style: italic;
+}
+
+.cc-translit-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  z-index: 50;
+  display: grid;
+  min-width: 210px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #d8d2c8;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  transform: translateX(-50%);
+}
+
+.cc-translit-menu.hidden {
+  display: none;
+}
+
+.cc-translit-option {
+  padding: 8px 10px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: #243b67;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.cc-translit-option:hover,
+.cc-translit-option.is-selected {
+  background: #e8eef7;
+  color: #1f3b68;
+}
+
+/* Status line */
+.cc-status {
+  margin-top: 8px;
+  color: #6b7280;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* Secondary pills row */
+.cc-secondary-pills {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+</style>

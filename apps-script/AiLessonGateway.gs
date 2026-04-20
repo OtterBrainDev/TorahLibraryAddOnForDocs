@@ -1,0 +1,210 @@
+function getAiLessonBootstrapData() {
+  assertExperimentalAiEnabled_();
+  var gatewayBootstrap = merkazAiSignedRequest_('bootstrap', {});
+  var userProperties = PropertiesService.getUserProperties();
+  gatewayBootstrap.savedDefaults = Object.assign({}, gatewayBootstrap.defaults || {}, {
+    provider: String(userProperties.getProperty('ai_provider_default') || 'default'),
+    model: String(userProperties.getProperty('ai_model_default') || ''),
+    keyStrategy: String(userProperties.getProperty('ai_key_strategy_default') || 'auto'),
+    audience: String(userProperties.getProperty('ai_audience_default') || gatewayBootstrap.defaults.audience || 'Adult learners'),
+    lessonStyle: String(userProperties.getProperty('ai_lesson_style_default') || gatewayBootstrap.defaults.lessonStyle || 'Interactive shiur'),
+    duration: Number(userProperties.getProperty('ai_duration_default') || gatewayBootstrap.defaults.duration || 45),
+    includeOriginal: gatewayBootstrap.defaults.includeOriginal !== false,
+    includeTranslation: gatewayBootstrap.defaults.includeTranslation !== false,
+    includeTransliteration: gatewayBootstrap.defaults.includeTransliteration === true,
+    includeEducatorNotes: gatewayBootstrap.defaults.includeEducatorNotes !== false,
+    includeDiscussionPrompts: gatewayBootstrap.defaults.includeDiscussionPrompts !== false,
+    additionalInstructions: String(userProperties.getProperty('ai_additional_instructions_default') || '')
+  });
+  return gatewayBootstrap;
+}
+
+function generateAiLessonDraft(payload) {
+  assertExperimentalAiEnabled_();
+  var request = normalizeAiGatewayRequest_(payload || {});
+  saveAiLessonDefaults_(request);
+  var response = merkazAiSignedRequest_('lesson', request);
+  var insertedAt = insertAiLessonResponseIntoDoc_(response, request);
+  return {
+    ok: true,
+    title: response.title || 'Untitled Lesson Draft',
+    insertedAt: insertedAt,
+    provider: response.provider || request.provider || 'default',
+    model: response.model || request.model || '',
+    routeMode: response.routeMode || '',
+    warnings: response.warnings || [],
+    cooldownSeconds: (((getAiLessonBootstrapData() || {}).managedKeyPolicy || {}).cooldownSeconds) || 0
+  };
+}
+
+function normalizeAiGatewayRequest_(payload) {
+  var request = Object.assign({}, payload || {});
+  request.provider = String(request.provider || 'default').trim().toLowerCase();
+  request.model = String(request.model || '').trim();
+  request.keyStrategy = String(request.keyStrategy || 'auto').trim().toLowerCase();
+  request.topic = String(request.topic || '').trim();
+  request.contextMode = String(request.contextMode || 'topic').trim();
+  request.audience = String(request.audience || 'Adult learners').trim();
+  request.lessonStyle = String(request.lessonStyle || 'Interactive shiur').trim();
+  request.additionalInstructions = String(request.additionalInstructions || '').trim();
+  request.duration = Math.max(10, Math.min(120, Number(request.duration) || 45));
+  request.userRef = getMerkazAiUserRef_();
+  request.includeOriginal = request.includeOriginal !== false;
+  request.includeTranslation = request.includeTranslation !== false;
+  request.includeTransliteration = request.includeTransliteration === true;
+  request.includeEducatorNotes = request.includeEducatorNotes !== false;
+  request.includeDiscussionPrompts = request.includeDiscussionPrompts !== false;
+
+  if (request.keyStrategy === 'saved' && !request.apiKey) {
+    var saved = getSavedAiKeyForGateway_(request.provider);
+    if (!saved) throw new Error('No saved key was found for that provider.');
+    request.apiKey = saved;
+  }
+  if (request.quickAction) applyQuickActionContextToGatewayRequest_(request, request.quickAction);
+  if (!request.topic && request.contextMode !== 'learning_cycle') throw new Error('Add a topic before generating a lesson draft.');
+  return request;
+}
+
+function getSavedAiKeyForGateway_(provider) {
+  var safeProvider = String(provider || '').toLowerCase();
+  if (safeProvider === 'default') return '';
+  return String(PropertiesService.getUserProperties().getProperty('ai_user_key_' + safeProvider) || '').trim();
+}
+
+function applyQuickActionContextToGatewayRequest_(request, quickAction) {
+  var context = buildTodaysLearningCycleContext_();
+  var normalizedKind = String(quickAction || '').toLowerCase();
+  var filteredItems = (context.items || []).filter(function(item){
+    if (normalizedKind === 'daf') return /daf yomi/i.test(item.label);
+    if (normalizedKind === '929') return /929/.test(item.label);
+    if (normalizedKind === 'parashah') return /parash/i.test(item.label);
+    return true;
+  });
+  if (!filteredItems.length) throw new Error('That learning-cycle item is unavailable today.');
+  request.topic = filteredItems.map(function(item){ return item.label + ': ' + item.ref; }).join(' | ');
+  request.contextMode = 'learning_cycle';
+}
+
+function merkazAiSignedRequest_(endpoint, payload) {
+  var config = getMerkazAiGatewayConfig_();
+  var url = config.baseUrl.replace(/\/$/, '') + '/' + String(endpoint || '').replace(/^\//, '');
+  var body = JSON.stringify(payload || {});
+  var timestamp = String(Math.floor(Date.now() / 1000));
+  var nonce = Utilities.getUuid();
+  var signature = merkazAiHexHmacSha256_(timestamp + '.' + nonce + '.' + body, config.sharedSecret);
+  var response = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    muteHttpExceptions: true,
+    payload: body,
+    headers: {
+      'x-merkaz-key': config.keyId,
+      'x-merkaz-timestamp': timestamp,
+      'x-merkaz-nonce': nonce,
+      'x-merkaz-signature': signature
+    }
+  });
+  var status = response.getResponseCode();
+  var text = response.getContentText() || '{}';
+  var data;
+  try { data = JSON.parse(text); } catch (error) { throw new Error('The Merkaz gateway returned unreadable data.'); }
+  if (status >= 400) {
+    var suffix = data && data.retry_after ? ' [retry_after:' + data.retry_after + ']' : '';
+    throw new Error((data && data.message ? data.message : ('The Merkaz gateway returned an error (' + status + ').')) + suffix);
+  }
+  return data;
+}
+
+function getMerkazAiGatewayConfig_() {
+  var props = PropertiesService.getScriptProperties();
+  var baseUrl = String(props.getProperty('MERKAZ_AI_BASE_URL') || '').trim();
+  var keyId = String(props.getProperty('MERKAZ_AI_KEY_ID') || '').trim();
+  var sharedSecret = String(props.getProperty('MERKAZ_AI_SHARED_SECRET') || '').trim();
+  if (!baseUrl || !keyId || !sharedSecret) throw new Error('The WordPress AI gateway is not configured in Script Properties yet.');
+  return { baseUrl: baseUrl, keyId: keyId, sharedSecret: sharedSecret };
+}
+
+function merkazAiHexHmacSha256_(message, secret) {
+  var bytes = Utilities.computeHmacSha256Signature(message, secret);
+  return bytes.map(function(b) { var n = b < 0 ? b + 256 : b; return ('0' + n.toString(16)).slice(-2); }).join('');
+}
+
+function getMerkazAiUserRef_() {
+  try {
+    var email = Session.getActiveUser().getEmail();
+    if (email) return email;
+  } catch (error) {}
+  try {
+    if (typeof Session.getTemporaryActiveUserKey === 'function') return Session.getTemporaryActiveUserKey();
+  } catch (error2) {}
+  return 'anonymous';
+}
+
+function insertAiLessonResponseIntoDoc_(response, request) {
+  var doc = DocumentApp.getActiveDocument();
+  var body = doc.getBody();
+  var cursor = doc.getCursor();
+  var index = body.getNumChildren();
+  if (cursor) {
+    var element = cursor.getElement();
+    if (element && element.getParent) {
+      try { index = body.getChildIndex(element.getParent()) + 1; } catch (error) {}
+    }
+  }
+  var title = String((response && response.title) || 'AI Lesson Draft');
+  body.insertParagraph(index++, title).setHeading(DocumentApp.ParagraphHeading.HEADING1);
+  var meta = ['Generated via Merkaz AI gateway', 'Provider: ' + String(response.provider || request.provider || 'default'), response.model ? ('Model: ' + response.model) : '', request.duration ? ('Duration: ' + request.duration + ' minutes') : ''].filter(Boolean).join(' • ');
+  body.insertParagraph(index++, meta).setAttributes({ITALIC: true});
+  String((response && response.content) || '').replace(/\r\n/g, '\n').split('\n').forEach(function(line) {
+    var text = String(line || '');
+    if (!text.trim()) { body.insertParagraph(index++, ''); return; }
+    if (/^###\s+/.test(text)) body.insertParagraph(index++, text.replace(/^###\s+/, '')).setHeading(DocumentApp.ParagraphHeading.HEADING3);
+    else if (/^##\s+/.test(text)) body.insertParagraph(index++, text.replace(/^##\s+/, '')).setHeading(DocumentApp.ParagraphHeading.HEADING2);
+    else if (/^#\s+/.test(text)) body.insertParagraph(index++, text.replace(/^#\s+/, '')).setHeading(DocumentApp.ParagraphHeading.HEADING1);
+    else if (/^[-*]\s+/.test(text)) body.insertListItem(index++, text.replace(/^[-*]\s+/, ''));
+    else body.insertParagraph(index++, text);
+  });
+  if (response && response.warnings && response.warnings.length) body.insertParagraph(index++, 'Warnings: ' + response.warnings.join(' | ')).setForegroundColor('#9f1239');
+  return new Date().toISOString();
+}
+
+
+function runQuickActionTodaysDafLessonMenu() {
+  return runAiLessonQuickActionMenu_('daf', "today's Daf lesson");
+}
+
+function runQuickActionTodays929LessonMenu() {
+  return runAiLessonQuickActionMenu_('929', "today's 929 lesson");
+}
+
+function runQuickActionThisWeeksParashahLessonMenu() {
+  return runAiLessonQuickActionMenu_('parashah', "this week's Parashah lesson");
+}
+
+function runAiLessonQuickActionMenu_(quickAction, label) {
+  try {
+    assertExperimentalAiEnabled_();
+    var prefs = getPreferences();
+    var duration = Math.max(10, Math.min(120, Number(prefs.ai_duration_default || 45)));
+    var result = generateAiLessonDraft({
+      provider: 'default',
+      model: '',
+      keyStrategy: 'auto',
+      quickAction: quickAction,
+      audience: String(prefs.ai_audience_default || 'Adult learners'),
+      duration: duration,
+      lessonStyle: String(prefs.ai_lesson_style_default || 'Interactive shiur'),
+      additionalInstructions: 'Create a teachable ' + duration + '-minute lesson grounded in the current learning-cycle text. Keep the flow practical and suitable for live teaching. Review before sharing.',
+      includeOriginal: true,
+      includeTranslation: true,
+      includeTransliteration: false,
+      includeEducatorNotes: true,
+      includeDiscussionPrompts: true
+    });
+    DocumentApp.getUi().alert('Generated and inserted: ' + result.title);
+    return result;
+  } catch (error) {
+    DocumentApp.getUi().alert(error && error.message ? error.message : ('Unable to generate ' + label + '.'));
+    throw error;
+  }
+}

@@ -1,0 +1,5 @@
+<script>
+  function runGs(methodName) {
+    return google.script.run[methodName] ? google.script.run[methodName].bind(google.script.run) : null;
+  }
+</script>

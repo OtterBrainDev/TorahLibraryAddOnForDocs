@@ -1,0 +1,112 @@
+{
+  "meta": {
+    "version": 2,
+    "description": "Selector contract for sidebar/preferences refactor. Keep hard_gate small and durable."
+  },
+  "hard_gate": {
+    "sidebar": [
+      "[data-sidebar-mode=\"texts\"]",
+      "[data-sidebar-mode=\"voices\"]",
+      ".mode-switch-section",
+      ".unified-search-row",
+      ".reference-input-shell .input",
+      "#run-sefaria",
+      "#open-session-library",
+      ".results-panel",
+      ".library-results",
+      ".search-results",
+      "#translation-language-toggle",
+      "#translation-language-menu",
+      "#search-sort-mode",
+      "#restore-corpus-button",
+      ".display-layout-shell",
+      "#display-choice-button",
+      "#layout-choice-button",
+      ".versions-section",
+      ".translation-version-control",
+      ".advanced-version-details",
+      "#sidebar-composition-card",
+      "#sidebar-cantillation-toggle",
+      "#sidebar-vowels-toggle",
+      "#sidebar-transliteration-toggle",
+      "#sidebar-composition-status",
+      "#insert-source",
+      "#open-on-sefaria",
+      "#session-library-modal",
+      "#close-session-library"
+    ],
+    "preferences": [
+      ".preferences-dialog",
+      ".preferences-shell",
+      ".save-bar",
+      "#expand_all_sections",
+      "#collapse_all_sections",
+      "#transliteration_scheme",
+      "#transliteration_preview",
+      "#override_grid",
+      "#override_selected_char",
+      "#override_value",
+      "#save_override_btn",
+      "#remove_override_btn",
+      "#transliteration_overrides",
+      "#preferred_translation_language"
+    ]
+  },
+  "warn_only": {
+    "sidebar": [
+      ".library-results-heading-row",
+      ".library-results-toolbar",
+      ".results-toggle-button",
+      ".selected-result-summary",
+      ".session-settings-inline-row",
+      ".session-settings-inline-buttons",
+      ".more-options-accordion",
+      ".more-options-panel",
+      ".options-panel",
+      ".preview-section",
+      ".preview-panel",
+      ".sidebar-footer",
+      ".primary-actions",
+      ".sidebar-footer-tools",
+      ".translation-language-more-toggle",
+      "#translation-language-more",
+      "#restore-corpus-menu-wrap",
+      "#restore-corpus-menu",
+      "#restore-corpus-menu-items",
+      ".session-library-panel",
+      ".pinned-results",
+      ".inserted-results"
+    ],
+    "preferences": [
+      ".preferences-toc",
+      ".section-card",
+      ".section-accordion",
+      ".section-card-summary",
+      ".compact-accordion",
+      ".style-control",
+      ".custom-select",
+      ".custom-select-button",
+      ".custom-select-menu",
+      ".inline-preview",
+      ".override-list"
+    ]
+  },
+  "forbidden": {
+    "sidebar": [
+      "[data-sidebar-mode=\"basic\"]",
+      "[data-sidebar-mode=\"advanced\"]",
+      ".insert-citation-row",
+      ".insert-citation-only",
+      "#insert-citation-only",
+      ".insert-citation-help"
+    ],
+    "preferences": [
+      "#insert_citation_default",
+      ".title-links-citation-toggle"
+    ],
+    "global": [
+      "nekudot_filter_select",
+      "teamim_filter_select"
+    ]
+  }
+}

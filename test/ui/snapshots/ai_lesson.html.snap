@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <?!= include('ui_head'); ?>
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css">
+    <?!= include('ui_utilities.css'); ?>
+    <?!= include('ai_lesson_css'); ?>
+    <script>
+      window.APP_CONFIG = <?= JSON.stringify(appConfig) ?>;
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="dialog-shell">
+        <section class="section-card hero-card">
+          <div class="eyebrow">Experimental</div>
+          <h1>AI Lesson Generator</h1>
+          <p class="lede">Generate a structured lesson or source-sheet draft directly into the active Google Doc.</p>
+          <p class="section-note" id="heroNote">The website controls the managed gateway, routing, prompts, and limits for the default experience.</p>
+        </section>
+
+        <section class="section-card">
+          <div class="tabrow">
+            <button id="basicTabBtn" class="tabbtn active" type="button" data-tab="basic">Basic</button>
+            <button id="advancedTabBtn" class="tabbtn" type="button" data-tab="advanced">Advanced</button>
+            <span class="hint" id="tabDescription"></span>
+          </div>
+          <div id="policyNote" class="callout" style="margin-top:12px;"></div>
+        </section>
+
+        <section class="section-card">
+          <div class="compact-toolbar">
+            <div class="mode-label">Context Mode</div>
+            <div class="segmented" id="modeToggle">
+              <button type="button" class="seg active" data-mode="topic">Topic</button>
+              <button type="button" class="seg" data-mode="text">Text</button>
+            </div>
+          </div>
+
+          <div id="basicTab" class="pane-note" style="margin-top:12px;">
+            <div class="callout">
+              <strong>Default route:</strong> the add-on will send this request to the Merkaz WordPress gateway and let the site choose the provider, model, prompt template, cooldown policy, and any multi-step orchestration.
+            </div>
+          </div>
+
+          <div id="advancedTab" class="hidden pane-note" style="margin-top:12px;">
+            <div class="grid two">
+              <div>
+                <label for="provider">Provider Route</label>
+                <select id="provider"></select>
+              </div>
+              <div>
+                <label for="model">Model</label>
+                <select id="model"></select>
+              </div>
+              <div>
+                <label for="keyStrategy">Key Source</label>
+                <select id="keyStrategy"></select>
+              </div>
+              <div id="manualKeyWrap" class="hidden">
+                <label for="apiKey">API Key</label>
+                <input id="apiKey" type="password" autocomplete="off" placeholder="Paste a request-level key">
+              </div>
+            </div>
+            <div id="providerHints" class="chiprow" style="margin-top:12px;"></div>
+            <div id="savedKeyHint" class="hint" style="margin-top:6px;"></div>
+          </div>
+        </section>
+
+        <section class="section-card">
+          <div id="topicModeFields">
+            <div class="grid two">
+              <div style="grid-column:1 / span 2;">
+                <label for="topic">Topic</label>
+                <input id="topic" type="text" placeholder="Speech ethics, teshuvah and memory, gratitude after crisis">
+              </div>
+            </div>
+          </div>
+
+          <div id="textModeFields" class="hidden">
+            <div class="grid two">
+              <div style="grid-column:1 / span 2;">
+                <label for="textRef">Text / Reference</label>
+                <input id="textRef" type="text" placeholder="Berakhot 2a, Genesis 1, or another Sefaria reference">
+              </div>
+            </div>
+            <div class="hint">Use this when you want the draft anchored to a specific text or reference.</div>
+          </div>
+
+          <div class="grid two" style="margin-top:12px;">
+            <div>
+              <label for="audience">Audience</label>
+              <select id="audience">
+                <option value="Adult learners">Adult learners</option>
+                <option value="High school students">High school students</option>
+                <option value="Middle school students">Middle school students</option>
+                <option value="Intro / beginners">Intro / beginners</option>
+                <option value="Educators">Educators</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div id="audienceCustomWrap" class="hidden">
+              <label for="audienceCustom">Custom Audience</label>
+              <input id="audienceCustom" type="text" placeholder="Describe the learners">
+            </div>
+            <div>
+              <label for="duration">Duration (minutes)</label>
+              <input id="duration" type="number" min="10" max="120" step="5" value="45">
+            </div>
+            <div>
+              <label for="lessonStyle">Lesson Style</label>
+              <select id="lessonStyle">
+                <option value="Interactive shiur">Interactive shiur</option>
+                <option value="Source-sheet chavruta">Source-sheet chavruta</option>
+                <option value="Text-study seminar">Text-study seminar</option>
+                <option value="Accessible intro session">Accessible intro session</option>
+                <option value="Drash">Drash</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div id="lessonStyleCustomWrap" class="hidden" style="grid-column:1 / span 2;">
+              <label for="lessonStyleCustom">Custom Lesson Style</label>
+              <input id="lessonStyleCustom" type="text" placeholder="Describe the format">
+            </div>
+            <div style="grid-column:1 / span 2;">
+              <label for="additionalInstructions">Additional Instructions</label>
+              <textarea id="additionalInstructions" placeholder="Tone, angle, pacing notes, denominational assumptions, or teaching goals"></textarea>
+            </div>
+          </div>
+
+          <div class="toggles" style="margin-top:12px;">
+            <button type="button" class="toggle-chip active" data-target="includeOriginal">Original / Hebrew</button>
+            <button type="button" class="toggle-chip active" data-target="includeTranslation">Translation</button>
+            <button type="button" class="toggle-chip" data-target="includeTransliteration">Transliteration</button>
+            <button type="button" class="toggle-chip active" data-target="includeEducatorNotes">Educator Notes</button>
+            <button type="button" class="toggle-chip active" data-target="includeDiscussionPrompts">Discussion Prompts</button>
+          </div>
+          <input id="includeOriginal" type="hidden" value="true">
+          <input id="includeTranslation" type="hidden" value="true">
+          <input id="includeTransliteration" type="hidden" value="false">
+          <input id="includeEducatorNotes" type="hidden" value="true">
+          <input id="includeDiscussionPrompts" type="hidden" value="true">
+        </section>
+
+        <section class="modal-footer">
+          <div class="actions">
+            <button id="dafBtn" class="btn secondary" type="button">Today's Daf</button>
+            <button id="p929Btn" class="btn secondary" type="button">Today's 929</button>
+            <button id="parashahBtn" class="btn secondary" type="button">This Week's Parashah</button>
+            <button id="generateBtn" class="btn primary" type="button">Generate &amp; Insert</button>
+          </div>
+          <div class="footer-meta">
+            <div><button id="resetDefaultsBtn" class="btn" type="button">Reset to Defaults</button></div>
+            <div id="cooldownBanner" class="hint hidden"></div>
+            <div id="status" class="status"></div>
+            <div class="footer-note" id="footerHelpNote"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <?!= include('ui_core.js'); ?>
+    <?!= include('ui_api.js'); ?>
+    <?!= include('ui_state.js'); ?>
+    <?!= include('ui_dom.js'); ?>
+    <?!= include('ui_feedback.js'); ?>
+    <?!= include('ai_lesson.page.js'); ?>
+  </body>
+</html>

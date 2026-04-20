@@ -1,0 +1,334 @@
+<script>
+function updateActionabilityUI(state) {
+  var isActionable = !!(state && state.isInsertable);
+  $('.display-layout-shell, .display-layout-section, .options-panel, .versions-section').toggleClass('section-muted', !isActionable);
+}
+
+function setResultsLoading(isLoading) {
+  resultsLoading = !!isLoading;
+  $('.results-panel').toggleClass('is-loading', resultsLoading);
+  if (!$('.results-loading-indicator').length) {
+    $('.results-header').append("<div class='results-loading-indicator' aria-live='polite' style='display:none;'><span class='preview-loading-spinner' aria-hidden='true'></span><span>Searching…</span></div>");
+  }
+  if (isLoading) {
+    var skeletonHtml = '';
+    for (var i = 0; i < 4; i++) {
+      skeletonHtml += "<li class='skeleton-result-item' aria-hidden='true'>" +
+        "<div class='skeleton-bar skeleton-title'></div>" +
+        "<div class='skeleton-bar skeleton-subtitle'></div>" +
+        "<div class='skeleton-bar skeleton-meta'></div>" +
+        "</li>";
+    }
+    $('.library-results').html(skeletonHtml);
+    $('.search-results').empty();
+  } else {
+    $('.skeleton-result-item').remove();
+  }
+  $('.results-loading-indicator').hide();
+}
+
+
+
+
+
+
+
+// Session library and results rendering extracted to sidebar_session_library and sidebar_results_render.
+
+function runUnifiedQuery() {
+  if (appMode === 'voices') return runVoicesQuery();
+  updateModeDependentSections();
+  var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
+  $('.input').val(input);
+  var inputExpanded = expandShevaApostrophe(input);
+  var inputForNameApi = applyConsonantClusterVoweling(inputExpanded);
+  var useNameApi = isLikelyTitleQuery(inputExpanded);
+  clearSelectedResult();
+  setResultsHint('');
+  setResultsLoading(true);
+  pendingPreferredVersions = null;
+
+  if (!input) {
+    queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
+    resetResultPostProcessState();
+    reprocessAndRenderResults();
+    updateActionabilityUI({ isInsertable: false });
+    $('.suggestions').html("<b>Please enter a reference, title, or phrase.</b>");
+    setResultsLoading(false);
+    return;
+  }
+
+  var sefariaUrlInput = parseSefariaUrlInput(input);
+  if (sefariaUrlInput) {
+    $('.output-mode-selection').val(sefariaUrlInput.outputMode);
+    syncDisplayModeCards();
+    updateBilingualLayoutVisibility();
+    updateTranslationDetailsVisibility();
+    updateVersionControlsVisibility();
+
+    pendingPreferredVersions = sefariaUrlInput.preferredVersions;
+    resetResultPostProcessState();
+    queryState.rawLibraryMatches = [{
+      key: "library-ref-" + sefariaUrlInput.ref,
+      ref: sefariaUrlInput.ref,
+      label: sefariaUrlInput.ref,
+      subtitle: 'Parsed from Sefaria URL',
+      typeLabel: 'Library',
+      hasTranslation: true,
+      availableLangs: []
+    }];
+    queryState.rawSearchResults = [];
+    reprocessAndRenderResults();
+
+    selectedResultKey = queryState.libraryMatches[0].key;
+    selectedResultSummary = { label: sefariaUrlInput.ref, subtitle: 'Parsed from Sefaria URL' };
+    resultsCollapsed = true;
+    updateResultsVisibility();
+    setResultsLoading(false);
+    resolveSelectedResult(sefariaUrlInput.ref, sefariaUrlInput.ref);
+    return;
+  }
+
+  var prefixTitles = titles
+    .filter(function (title) {
+      if (!title) return false;
+      var expandedTitle = expandShevaApostrophe(title).toUpperCase();
+      var queryA = inputExpanded.toUpperCase();
+      var queryB = inputForNameApi.toUpperCase();
+      return expandedTitle.indexOf(queryA) === 0 || (queryB !== queryA && expandedTitle.indexOf(queryB) === 0);
+    })
+    .slice(0, 6)
+    .map(function (title, index) {
+      return {
+        key: "library-title-" + index + "-" + title,
+        ref: title,
+        label: title,
+        subtitle: 'Title match',
+        typeLabel: 'Library',
+        hasTranslation: true,
+        availableLangs: []
+      };
+    });
+
+  var directLookupInput = normalizeLatinLookupTitleCase(inputExpanded);
+  var directRefMatch = {
+    key: "library-ref-" + directLookupInput,
+    ref: directLookupInput,
+    label: input,
+    subtitle: 'Direct reference lookup',
+    typeLabel: 'Library',
+    hasTranslation: true,
+    availableLangs: []
+  };
+
+  var isHebrewScript = isLikelyHebrewScriptInput(input);
+  resetResultPostProcessState();
+  queryState.rawLibraryMatches = prefixTitles;
+  queryState.rawSearchResults = [];
+  reprocessAndRenderResults();
+
+  var requestId = ++latestQueryRequestId;
+  var validationRequestId = ++latestDirectRefValidationRequestId;
+  var pendingAsyncResultGroups = useNameApi ? 3 : 2;
+  function finishResultGroup() {
+    if (requestId !== latestQueryRequestId) return;
+    pendingAsyncResultGroups = Math.max(0, pendingAsyncResultGroups - 1);
+    if (pendingAsyncResultGroups === 0) {
+      setResultsLoading(false);
+      maybeShowZeroResultsSuggestions(input);
+      maybeAutoSelectSingleResult();
+    }
+  }
+
+  google.script.run.withSuccessHandler(function (response) {
+    if (validationRequestId !== latestDirectRefValidationRequestId || requestId !== latestQueryRequestId) return;
+    var isValidDirectRef = getResolvedNodeState(response).resolved;
+    if (isValidDirectRef) {
+      queryState.rawLibraryMatches = [directRefMatch].concat(queryState.rawLibraryMatches).slice(0, 10);
+      setResultsHint('');
+    } else if (isHebrewScript) {
+      setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
+    }
+    reprocessAndRenderResults();
+    finishResultGroup();
+  }).withFailureHandler(function () {
+    if (validationRequestId !== latestDirectRefValidationRequestId || requestId !== latestQueryRequestId) return;
+    if (isHebrewScript) setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
+    finishResultGroup();
+  }).findReference(directLookupInput);
+
+  var searchParameters = getSearchParameters();
+  google.script.run.withSuccessHandler(function (response) {
+    if (requestId !== latestQueryRequestId) return;
+    var hits = (Array.isArray(response) ? response : (((response || {}).hits || {}).hits || [])).slice(0, 24);
+    var libraryPathHits = [];
+    var contentHits = [];
+    hits.forEach(function (hit, index) {
+      var source = (hit && hit._source) ? hit._source : {};
+      var snippet = hit && hit.highlight && hit.highlight.naive_lemmatizer && hit.highlight.naive_lemmatizer[0] ? hit.highlight.naive_lemmatizer[0] : '';
+      var pathDepth = Array.isArray(source.path) ? source.path.filter(Boolean).length : (typeof source.path === 'string' ? source.path.split('/').filter(Boolean).length : 0);
+      if (pathDepth > 1) {
+        libraryPathHits.push(buildResultFromSource(source, source.ref, 'library-search', index, snippet, 'Library path'));
+        return;
+      }
+      contentHits.push(buildResultFromSource(source, source.ref, 'search', index, snippet, 'Content hit'));
+    });
+    var filteredLibraryPathHits = applyClientSideSearchFilters(libraryPathHits, searchParameters).slice(0, 10);
+    var filteredContentHits = applyClientSideSearchFilters(contentHits, searchParameters).slice(0, 12);
+    queryState.rawLibraryMatches = queryState.rawLibraryMatches.concat(filteredLibraryPathHits).slice(0, 10);
+    queryState.rawSearchResults = filteredContentHits;
+    if (searchParameters.translationOnly && !queryState.libraryMatches.length && !queryState.searchResults.length) {
+      setResultsHint('No results matched the selected translation language filter.');
+    }
+    reprocessAndRenderResults();
+    finishResultGroup();
+  }).withFailureHandler(function (error) {
+    if (requestId !== latestQueryRequestId) return;
+    queryState.rawSearchResults = [];
+    if (error && error.message) setResultsHint(error.message);
+    reprocessAndRenderResults();
+    finishResultGroup();
+  }).findSearchAdvanced(inputExpanded, searchParameters);
+
+  if (useNameApi) {
+    google.script.run.withSuccessHandler(function(nameCandidates) {
+      if (requestId !== latestQueryRequestId) return;
+      var nameMatches = (Array.isArray(nameCandidates) ? nameCandidates : [])
+        .filter(function(c) { return nameCandidatePassesFullQueryGuard(c, inputExpanded); })
+        .map(function(c, idx) {
+          return {
+            key: 'name-candidate-' + idx + '-' + c,
+            ref: c,
+            label: c,
+            subtitle: 'Title match',
+            typeLabel: 'Library',
+            hasTranslation: true,
+            availableLangs: []
+          };
+        });
+      queryState.rawLibraryMatches = nameMatches.concat(queryState.rawLibraryMatches).slice(0, 10);
+      reprocessAndRenderResults();
+      finishResultGroup();
+    }).withFailureHandler(function() {
+      if (requestId !== latestQueryRequestId) return;
+      finishResultGroup();
+    }).getNameCandidates(inputForNameApi);
+  }
+}
+
+function resolveSelectedResult(selectedRef, inputLabel) {
+  if (appMode === 'voices') {
+    var item = queryState.searchResults.concat(queryState.libraryMatches).find(function(result){ return result && result.ref === selectedRef; }) || null;
+    selectedVoiceItem = item;
+    selectedRefValue = selectedRef;
+    hasResolvedReference = false;
+    if (selectedResultSummary) {
+      selectedResultSummary.status = item ? 'Ready to insert' : '';
+      updateResultsVisibility();
+    }
+    setInsertButtonState(!!item);
+    $('#open-on-sefaria').prop('disabled', !(item && item.url));
+    if (item) {
+      var snippet = normalizeOptionText(item.snippet || item.summary || '');
+      var previewHtml = "<div class='voice-preview'><div class='voice-preview-title'>" + escapeHTML(item.label || item.ref || 'Source sheet') + "</div>";
+      if (snippet) previewHtml += "<div class='voice-preview-snippet'>" + escapeHTML(snippet) + "</div>";
+      if (item.url) previewHtml += "<div class='voice-preview-link'>Open on Sefaria with the button below.</div>";
+      previewHtml += "</div>";
+      $('.suggestions').html(previewHtml);
+    }
+    updateModeDependentSections();
+    return;
+  }
+  selectedVoiceItem = null;
+  selectedRefValue = selectedRef;
+  var requestId = ++latestResolveRequestId;
+  hasResolvedReference = false;
+  setInsertButtonState(false);
+  $('#open-on-sefaria').prop('disabled', true);
+  updatePesukimAvailability(null);
+  $('.suggestions').html(buildPreviewLoadingHTML('Loading preview…'));
+
+  google.script.run.withSuccessHandler(function (response) {
+    if (requestId !== latestResolveRequestId) return;
+    var nodeState = getResolvedNodeState(response);
+    if (nodeState.isInsertable) {
+      if (selectedResultSummary) {
+        selectedResultSummary.status = 'Ready to insert';
+        updateResultsVisibility();
+      }
+      updateSuggestion(response, inputLabel);
+      updatePesukimAvailability(response);
+      updateActionabilityUI(nodeState);
+      data = response;
+      hasResolvedReference = true;
+      setInsertButtonState(true);
+      $('#open-on-sefaria').prop('disabled', false);
+      return;
+    }
+
+    hasResolvedReference = false;
+    setInsertButtonState(false);
+    $('#open-on-sefaria').prop('disabled', true);
+    if (selectedResultSummary) {
+      selectedResultSummary.status = 'Choose a more specific ref';
+      updateResultsVisibility();
+    }
+    clearVersionSelectors();
+    updatePesukimAvailability(null);
+    updateActionabilityUI(nodeState);
+    $('.suggestions').html("<br>" + buildNonInsertableMessage(response));
+  }).withFailureHandler(function () {
+    if (requestId !== latestResolveRequestId) return;
+    hasResolvedReference = false;
+    setInsertButtonState(false);
+    $('#open-on-sefaria').prop('disabled', true);
+    clearVersionSelectors();
+    updatePesukimAvailability(null);
+    updateActionabilityUI({ isInsertable: false });
+    $('.suggestions').html("<br><b>Enter a valid reference to insert.</b>");
+  }).findReference(selectedRef);
+}
+
+function refreshSelectedResult() {
+  if (appMode === 'voices') {
+    updateModeDependentSections();
+    return;
+  }
+  if (!selectedRefValue) return;
+  var fallbackLabel = selectedResultSummary && selectedResultSummary.label ? selectedResultSummary.label : selectedRefValue;
+  resolveSelectedResult(selectedRefValue, fallbackLabel);
+}
+
+function runVoicesQuery() {
+  var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
+  $('.input').val(input);
+  clearSelectedResult();
+  selectedVoiceItem = null;
+  setResultsHint('');
+  updateModeDependentSections();
+  if (!input) {
+    queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
+    reprocessAndRenderResults();
+    setInsertButtonState(false);
+    $('#open-on-sefaria').prop('disabled', true);
+    return;
+  }
+  setResultsLoading(true);
+  google.script.run.withSuccessHandler(function(response) {
+    var items = Array.isArray(response) ? response : [];
+    queryState.rawLibraryMatches = [];
+    queryState.rawSearchResults = items;
+    reprocessAndRenderResults();
+    if (!items.length) setResultsHint('No source sheets matched this search.');
+    updateModeDependentSections();
+    setResultsLoading(false);
+  }).withFailureHandler(function(error) {
+    queryState.rawLibraryMatches = [];
+    queryState.rawSearchResults = [];
+    reprocessAndRenderResults();
+    setResultsHint((error && error.message) || 'Voices search is temporarily unavailable.');
+    setResultsLoading(false);
+  }).searchVoices(input, {});
+}
+
+</script>

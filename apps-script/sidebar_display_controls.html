@@ -1,0 +1,141 @@
+<script>
+(function(){
+  function closeDisplayChoicePanels() {
+    $('.display-choice-dropdown[open]').removeAttr('open');
+  }
+  $(document).off('click.displayChoiceClose').on('click.displayChoiceClose', function (event) {
+    if ($(event.target).closest('.display-choice-dropdown').length) return;
+    closeDisplayChoicePanels();
+  });
+  $('.display-choice-dropdown > summary').off('click.displayChoiceToggle').on('click.displayChoiceToggle', function () {
+    var $details = $(this).closest('.display-choice-dropdown');
+    $('.display-choice-dropdown').not($details).removeAttr('open');
+  });
+})();
+
+function updateBilingualLayoutVisibility() {
+  var outputMode = $('.output-mode-selection').val();
+  $('.bilingual-layout-wrapper').toggle(outputMode === 'both');
+}
+
+function updateTranslationDetailsVisibility() {
+  var outputMode = $('.output-mode-selection').val();
+  $('.translation-details-row, .translation-details-help').toggle(outputMode === 'both' || outputMode === 'en');
+}
+
+function updateHebrewOptionsVisibility() {
+  var outputMode = $('.output-mode-selection').val();
+  $('.hebrew-options-row').toggle(outputMode !== 'en');
+}
+
+function updateVersionControlsVisibility() {
+  var outputMode = $('.output-mode-selection').val();
+  var hideTranslations = $('.translation-version-select option:not(:disabled)').length <= 1;
+  $('.translation-version-control').toggle(outputMode !== 'he' && appMode !== 'voices' && !hideTranslations);
+  $('.advanced-version-details').toggle(outputMode !== 'en' && appMode === 'texts');
+  $('.versions-section').toggleClass('single-translation', hideTranslations);
+  if (appMode !== 'voices' && !!selectedResultKey) {
+    $('.versions-section').toggle(!hideTranslations);
+  }
+}
+
+function updateTransliterationVisibility() {
+  var outputMode = $('.output-mode-selection').val();
+  $('.transliteration-row, .transliteration-help, .transliteration-options-row').toggle(outputMode !== 'en');
+}
+
+
+function closeCompactChoicePanels() {
+  $('#display-choice-panel, #layout-choice-panel').addClass('hidden');
+  $('#display-choice-button, #layout-choice-button').attr('aria-expanded', 'false');
+}
+
+function toggleCompactChoicePanel(buttonSelector, panelSelector) {
+  var $button = $(buttonSelector);
+  var $panel = $(panelSelector);
+  var willOpen = $panel.hasClass('hidden');
+
+  closeCompactChoicePanels();
+
+  if (willOpen) {
+    $panel.removeClass('hidden');
+    $button.attr('aria-expanded', 'true');
+  }
+}
+
+$('#display-choice-button').on('click', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  toggleCompactChoicePanel('#display-choice-button', '#display-choice-panel');
+});
+
+$('#layout-choice-button').on('click', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  toggleCompactChoicePanel('#layout-choice-button', '#layout-choice-panel');
+});
+
+$(document).on('click', function (event) {
+  if ($(event.target).closest('.compact-choice-shell').length) return;
+  closeCompactChoicePanels();
+});
+
+function updateDisplayChoiceSummary() {
+  var outputMode = $('.output-mode-selection').val();
+  var labelMap = {
+    en: 'Translation',
+    both: 'Bilingual',
+    he: 'Original'
+  };
+  $('#display-choice-button-value').text(labelMap[outputMode] || 'Bilingual');
+}
+
+function updateLayoutChoiceSummary() {
+  var selectedLayout = $('.bilingual-layout-selection').val();
+  var labelMap = {
+    'he-top': 'Stacked',
+    'he-right': 'Right–Left',
+    'he-left': 'Left–Right'
+  };
+  $('#layout-choice-button-value').text(labelMap[selectedLayout] || 'Right–Left');
+}
+
+function syncDisplayModeCards() {
+  var outputMode = $('.output-mode-selection').val();
+  $('.mode-card').each(function () {
+    var isSelected = $(this).attr('data-mode') === outputMode;
+    $(this).toggleClass('selected', isSelected);
+    $(this).attr('aria-checked', isSelected ? 'true' : 'false');
+  });
+  updateDisplayChoiceSummary();
+}
+
+function syncLayoutCards() {
+  var selectedLayout = $('.bilingual-layout-selection').val();
+  $('.layout-option').each(function () {
+    var isSelected = $(this).attr('data-layout') === selectedLayout;
+    $(this).toggleClass('selected', isSelected);
+    $(this).attr('aria-checked', isSelected ? 'true' : 'false');
+  });
+  updateLayoutChoiceSummary();
+}
+
+$('.mode-card').on('click', function () {
+  var mode = $(this).attr('data-mode');
+  $('.output-mode-selection').val(mode).trigger('change');
+  syncDisplayModeCards();
+  updateBilingualLayoutVisibility();
+  updateTranslationDetailsVisibility();
+  updateHebrewOptionsVisibility();
+  updateVersionControlsVisibility();
+  updateTransliterationVisibility();
+  closeCompactChoicePanels();
+});
+
+$('.layout-option').on('click', function () {
+  var layout = $(this).attr('data-layout');
+  $('.bilingual-layout-selection').val(layout).trigger('change');
+  syncLayoutCards();
+  closeCompactChoicePanels();
+});
+</script>

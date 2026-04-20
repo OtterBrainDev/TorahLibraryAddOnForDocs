@@ -1,0 +1,43 @@
+<div class="cc-header" data-cc-feature="header">
+  <div class="cc-header-label">Default Insertion Preview</div>
+  <div class="cc-header-help">Set the defaults applied to new insertions. The sidebar can still override these for a single insertion.</div>
+</div>
+
+<div class="cc-surface">
+  <button type="button" class="cc-title-pill" id="cc-title-toggle" data-cc-feature="linkedTitle" aria-pressed="false" aria-label="Toggle linked title" title="Toggle linked title">🔗 Title: Off</button>
+
+  <div class="cc-hebrew-stage">
+    <button type="button" class="cc-pill cc-pill--top" id="cc-cantillation-toggle" aria-pressed="true" title="Toggle cantillation">Cantillation: On</button>
+
+    <div class="cc-hebrew" id="cc-hebrew-preview" dir="rtl" lang="he" aria-label="Hebrew preview">
+      <span class="cc-hebrew-text cc-hebrew-text--full">הַסֵּ֙פֶר֙ כָל־הָעָ֔ם</span>
+      <span class="cc-hebrew-text cc-hebrew-text--no-cantillation" hidden>הַסֵּפֶר כָל־הָעָם</span>
+      <span class="cc-hebrew-text cc-hebrew-text--consonants" hidden>הספר כל־העם</span>
+    </div>
+
+    <button type="button" class="cc-pill cc-pill--bottom" id="cc-vowels-toggle" aria-pressed="true" title="Toggle vowels">Vowels: On</button>
+  </div>
+
+  <div class="cc-translit-wrap">
+    <button type="button" class="cc-pill cc-translit-pill" id="cc-translit-pill" aria-pressed="false" title="Toggle transliteration">Translit: Off</button>
+    <button type="button" class="cc-translit-button" id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
+
+    <div class="cc-translit-menu hidden" id="cc-translit-menu" role="listbox">
+      <button type="button" class="cc-translit-option" data-value="none">None</button>
+      <button type="button" class="cc-translit-option" data-value="simple_english">Simple English</button>
+      <button type="button" class="cc-translit-option" data-value="traditional">Traditional</button>
+      <button type="button" class="cc-translit-option" data-value="modern_israeli">Modern Israeli</button>
+      <button type="button" class="cc-translit-option" data-value="ashkenazi">Ashkenazi</button>
+      <button type="button" class="cc-translit-option" data-value="academic_full">Academic (Full)</button>
+      <button type="button" class="cc-translit-option" data-value="ipa_modern">IPA (Modern Israeli)</button>
+      <button type="button" class="cc-translit-option" data-value="ipa_tiberian">IPA (Tiberian-ish)</button>
+    </div>
+  </div>
+
+  <div class="cc-status" id="cc-status" data-cc-feature="status" aria-live="polite">Cantillation on · Vowels on · Transliteration: off</div>
+</div>
+
+<div class="cc-secondary-pills" data-cc-feature="secondaryPills" aria-label="Secondary options">
+  <button type="button" class="cc-pill cc-secondary-pill" id="cc-lines-toggle" aria-pressed="true" title="Toggle line markers">Lines: On</button>
+  <button type="button" class="cc-pill cc-secondary-pill" id="cc-details-toggle" aria-pressed="false" aria-label="Toggle source citation" title="Toggle source citation">🔗 Sources: Off</button>
+</div>

@@ -1,0 +1,333 @@
+{
+  "meta": {
+    "version": 2,
+    "description": "JS contract checks for sidebar/preferences refactor."
+  },
+  "required_contract_snippets": [
+    {
+      "file": "ui_api.js.html",
+      "must_include": "App.api"
+    },
+    {
+      "file": "ui_api.js.html",
+      "must_include": ".call"
+    },
+    {
+      "file": "ui_dom.js.html",
+      "must_include": "App.dom"
+    },
+    {
+      "file": "ui_feedback.js.html",
+      "must_include": "App.feedback"
+    },
+    {
+      "file": "ui_state.js.html",
+      "must_include": "App.state"
+    },
+    {
+      "file": "sidebar.page.js.html",
+      "must_include": "App.register('sidebar'"
+    },
+    {
+      "file": "preferences.page.js.html",
+      "must_include": "App.register('preferences'"
+    },
+    {
+      "file": "ai_lesson.page.js.html",
+      "must_include": "App.register('ai_lesson'"
+    },
+    {
+      "file": "surprise-me.page.js.html",
+      "must_include": "App.register('surprise-me'"
+    }
+  ],
+  "required_globals": {
+    "sidebar": [
+      "runUnifiedQuery",
+      "setSidebarMode",
+      "renderResults",
+      "renderSessionLibrary",
+      "loadSessionLibrary",
+      "saveSessionLibrary",
+      "togglePinnedRef",
+      "updateSidebarCompositionCard",
+      "bindSidebarCompositionCard",
+      "syncDisplayModeCards",
+      "syncLayoutCards",
+      "updateTranslationLanguageVisibility",
+      "setFooterButtonStates"
+    ],
+    "preferences": [
+      "collectPreferenceObject",
+      "applyPreferencesToForm",
+      "updateTransliterationPreview",
+      "syncOverridesField",
+      "renderOverrideGrid",
+      "renderOverrideList",
+      "enhanceNativeSelect"
+    ]
+  },
+  "required_bindings": {
+    "sidebar": [
+      {
+        "selector": "#run-sefaria",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": ".reference-input-shell .input",
+        "events": [
+          "input",
+          "keydown"
+        ]
+      },
+      {
+        "selector": "#open-session-library",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": "#close-session-library",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": ".mode-card",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": ".layout-option",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": "#sidebar-cantillation-toggle",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": "#sidebar-vowels-toggle",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": ".sidebar-transliteration-option",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": ".translation-language-any",
+        "events": [
+          "change"
+        ]
+      },
+      {
+        "selector": ".translation-language-option",
+        "events": [
+          "change"
+        ]
+      },
+      {
+        "selector": "#search-sort-mode",
+        "events": [
+          "change"
+        ]
+      },
+      {
+        "selector": ".result-pin-button",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": ".result-item",
+        "events": [
+          "click",
+          "keydown"
+        ]
+      },
+      {
+        "selector": "#insert-source",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": "#open-on-sefaria",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": ".reset-session-overrides-button",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": ".save-session-defaults-button",
+        "events": [
+          "click"
+        ]
+      }
+    ],
+    "preferences": [
+      {
+        "selector": "#transliteration_scheme",
+        "events": [
+          "change"
+        ]
+      },
+      {
+        "selector": "#save_override_btn",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": "#remove_override_btn",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": "#expand_all_sections",
+        "events": [
+          "click"
+        ]
+      },
+      {
+        "selector": "#collapse_all_sections",
+        "events": [
+          "click"
+        ]
+      }
+    ]
+  },
+  "required_storage_keys": {
+    "sidebar_local_storage": [
+      "sefariaSidebarSessionLibrary"
+    ],
+    "preference_fields": [
+      "include_translation_source_info",
+      "include_transliteration_default",
+      "insert_sefaria_link_default",
+      "show_line_markers_default",
+      "preferred_translation_language",
+      "transliteration_scheme",
+      "transliteration_overrides"
+    ]
+  },
+  "required_behavior_pairs": {
+    "sidebar": [
+      {
+        "writer": "togglePinnedRef",
+        "reader": "isPinnedRef"
+      },
+      {
+        "writer": "saveSessionLibrary",
+        "reader": "loadSessionLibrary"
+      },
+      {
+        "writer": "syncDisplayModeCards",
+        "reader": "updateDisplayChoiceSummary"
+      },
+      {
+        "writer": "syncLayoutCards",
+        "reader": "updateLayoutChoiceSummary"
+      },
+      {
+        "writer": "saveSidebarPreference",
+        "reader": "applyEffectivePreferencesToUI"
+      },
+      {
+        "writer": "upsertSessionEntry",
+        "reader": "renderSessionLibrary"
+      },
+      {
+        "writer": "removeSessionEntry",
+        "reader": "renderSessionLibrary"
+      },
+      {
+        "writer": "saveSessionPreference",
+        "reader": "syncSessionOverrideButtons"
+      }
+    ],
+    "preferences": [
+      {
+        "writer": "syncOverridesField",
+        "reader": "collectPreferenceObject"
+      },
+      {
+        "writer": "setReplacementSelectValue",
+        "reader": "toggleCustomReplacementField"
+      }
+    ]
+  },
+  "forbidden_globals": {
+    "sidebar": [
+      "showCitationToggle",
+      "toggleCitationOnlyMode",
+      "setBasicMode",
+      "setAdvancedMode"
+    ],
+    "preferences": []
+  },
+  "forbidden_identifiers": {
+    "sidebar": [
+      "insert_citation_default",
+      "insertCitationOnly",
+      "insert-citation-row",
+      "insert-citation-help",
+      "citation-only",
+      "basic-mode",
+      "advanced-mode"
+    ],
+    "preferences": [
+      "title-links-citation-toggle",
+      "insert_citation_default"
+    ],
+    "global": [
+      "nekudot_filter_select",
+      "teamim_filter_select"
+    ]
+  },
+  "cardinality": {
+    "sidebar": {
+      "#run-sefaria": 1,
+      "#open-session-library": 1,
+      "#insert-source": 1,
+      "#open-on-sefaria": 1
+    },
+    "preferences": {
+      "#save_override_btn": 1,
+      "#remove_override_btn": 1,
+      "#transliteration_scheme": 1
+    }
+  },
+  "warn_only": {
+    "sidebar_globals": [
+      "openCustomMenu",
+      "closeAllCustomMenus",
+      "positionCustomMenu",
+      "syncRestoreCorpusButton",
+      "renderRestoreCorpusMenu",
+      "updateVersionControlsVisibility"
+    ],
+    "preferences_globals": [
+      "applyStyleControlState",
+      "bindStyleControl",
+      "updateFontPreview",
+      "updateStandardPreview"
+    ]
+  }
+}

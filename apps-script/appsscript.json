@@ -1,0 +1,21 @@
+{
+  "timeZone": "America/Denver",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/documents.currentonly",
+    "https://www.googleapis.com/auth/script.container.ui",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/script.storage",
+    "https://www.googleapis.com/auth/userinfo.email"
+  ],
+  "addOns": {
+    "common": {
+      "name": "Torah Library",
+      "logoUrl": "https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png",
+      "useLocaleFromApp": true
+    },
+    "docs": {}
+  }
+}

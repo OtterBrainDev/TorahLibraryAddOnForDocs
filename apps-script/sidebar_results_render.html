@@ -1,0 +1,439 @@
+<script>
+function resetResultPostProcessState() {
+  resultPostProcessState = { availableCorpora: [], removedCorpora: [] };
+}
+
+function getAllProcessedResults() {
+  return queryState.libraryMatches.concat(queryState.searchResults).filter(function (item) { return item && item.ref; });
+}
+
+function getAllRawResults() {
+  return queryState.rawLibraryMatches.concat(queryState.rawSearchResults).filter(function (item) { return item && item.ref; });
+}
+
+function getResultCorpusLabel(item, fallbackLabel) {
+  return String((item && (item.clusterLabel || item.typeLabel || fallbackLabel)) || 'Other').trim() || 'Other';
+}
+
+function getResultCorpusKey(item, fallbackLabel) {
+  return getResultCorpusLabel(item, fallbackLabel)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'other';
+}
+
+function syncAvailableCorpusFilters() {
+  var seen = {};
+  resultPostProcessState.availableCorpora = getAllRawResults().map(function (item) {
+    return {
+      key: getResultCorpusKey(item, 'Results'),
+      label: getResultCorpusLabel(item, 'Results')
+    };
+  }).filter(function (entry) {
+    if (!entry.key || seen[entry.key]) return false;
+    seen[entry.key] = true;
+    return true;
+  });
+  resultPostProcessState.removedCorpora = resultPostProcessState.removedCorpora.filter(function (key) {
+    return resultPostProcessState.availableCorpora.some(function (entry) { return entry.key === key; });
+  });
+}
+
+function ensureResultFilterUI() {
+  if ($('.result-filter-strip').length) {
+    return;
+  }
+  $('.results-header').after("<div class='result-filter-strip' style='display:none;'></div>");
+}
+
+function renderResultFilterStrip() {
+  ensureResultFilterUI();
+  var $strip = $('.result-filter-strip');
+  $strip.hide().empty();
+  syncRestoreCorpusButton();
+
+  var params = getSearchParameters();
+  var activeLangs = params.translationLanguages;
+  if (!activeLangs || !activeLangs.length) return;
+
+  // Build label lookup from the existing checkbox DOM
+  var langLabels = {};
+  $('.translation-language-option').each(function () {
+    var code = $(this).val();
+    var label = $(this).closest('label').find('span').text() || code;
+    langLabels[code] = label;
+  });
+
+  var html = "<span class='lang-filter-strip-label'>Language:</span>";
+  activeLangs.forEach(function (code) {
+    var label = langLabels[code] || code;
+    html += "<button type='button' class='result-filter-chip lang-filter-chip'" +
+      " data-lang-filter='" + escapeHTML(code) + "'" +
+      " title='Remove " + escapeHTML(label) + " filter'>" +
+      escapeHTML(label) + " <span aria-hidden='true'>\u00d7</span></button>";
+  });
+  if (activeLangs.length > 1) {
+    html += "<button type='button' class='result-filter-chip lang-filter-clear-chip'" +
+      " title='Clear all language filters'>Clear all \u00d7</button>";
+  }
+  $strip.html(html).show();
+}
+
+function resetSelectedResultView() {
+  selectedResultKey = null;
+  selectedResultSummary = null;
+  selectedRefValue = null;
+  resultsCollapsed = false;
+  hasResolvedReference = false;
+  setInsertButtonState(false);
+  $('#open-on-sefaria').prop('disabled', true);
+  data = {};
+  clearVersionSelectors();
+  updatePesukimAvailability(null);
+  $('.result-item').removeClass('selected').attr('aria-pressed', 'false');
+  $('.suggestions').html("<b>Select a result to preview it.</b>");
+  updateActionabilityUI({ isInsertable: false });
+}
+
+function ensureSelectedResultStillVisible() {
+  if (!selectedResultKey) {
+    return;
+  }
+  var stillVisible = getAllProcessedResults().some(function (item) { return item.key === selectedResultKey; });
+  if (!stillVisible) {
+    resetSelectedResultView();
+  }
+}
+
+function applyResultPostProcessing() {
+  syncAvailableCorpusFilters();
+  var removedLookup = {};
+  resultPostProcessState.removedCorpora.forEach(function (key) {
+    removedLookup[key] = true;
+  });
+  var searchParameters = getSearchParameters();
+  var filterItems = function (items, fallbackLabel) {
+    return applyClientSideSearchFilters(items, searchParameters).filter(function (item) {
+      return !removedLookup[getResultCorpusKey(item, fallbackLabel)];
+    });
+  };
+
+  queryState.libraryMatches = sortLibraryItems(
+    dedupeResultItems(filterItems(queryState.rawLibraryMatches, 'Library matches')),
+    searchParameters.sortMode
+  );
+  queryState.searchResults = sortSearchItems(
+    dedupeResultItems(filterItems(queryState.rawSearchResults, 'Search results')),
+    searchParameters.sortMode
+  );
+  ensureSelectedResultStillVisible();
+  renderResultFilterStrip();
+  setResultsLoading(false);
+}
+
+
+function reprocessAndRenderResults() {
+  applyResultPostProcessing();
+  renderResults();
+}
+
+function toggleCorpusVisibility(corpusKey) {
+  var existingIndex = resultPostProcessState.removedCorpora.indexOf(corpusKey);
+  if (existingIndex >= 0) {
+    resultPostProcessState.removedCorpora.splice(existingIndex, 1);
+  } else {
+    resultPostProcessState.removedCorpora.push(corpusKey);
+  }
+  reprocessAndRenderResults();
+}
+
+function renderResultGroup(selector, items, groupName) {
+  var $list = $(selector);
+  $list.empty();
+  if (!items.length) {
+    if (selector === '.search-results') return;
+    $list.append("<li class='result-subtitle'>No " + groupName.toLowerCase() + ".</li>");
+    return;
+  }
+
+  var lastCluster = '';
+  items.forEach(function (item) {
+    var cluster = getResultCorpusLabel(item, groupName);
+    var corpusKey = getResultCorpusKey(item, groupName);
+    var accentClass = getCorpusAccentClass(corpusKey);
+    if (cluster && cluster !== lastCluster) {
+      $list.append("<li class='result-group-header " + accentClass + "'><button type='button' class='result-group-remove' data-corpus-key='" + escapeHTML(corpusKey) + "' title='Hide corpus'>❌</button><span class='result-cluster-label'>" + escapeHTML(cluster) + "</span></li>");
+      lastCluster = cluster;
+    }
+    var selectedClass = item.key === selectedResultKey ? 'selected' : '';
+    var metaLine = "<div class='result-meta'><span>" + escapeHTML(cluster) + "</span><span> • </span><span>" + escapeHTML(describeResultLanguages(item)) + "</span></div>";
+    var subtitle = item.subtitle ? "<div class='result-subtitle'>" + escapeHTML(item.subtitle) + "</div>" : '';
+    var snippet = item.snippet ? "<div class='result-snippet'>" + item.snippet + "</div>" : subtitle;
+    var titleText = appMode === 'voices' ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
+    $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(titleText) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(titleText) + "</div></div>" + metaLine + snippet + "</li>");
+  });
+}
+
+function positionRestoreCorpusMenu() {
+  var menu = document.getElementById('restore-corpus-menu');
+  var wrap = document.getElementById('restore-corpus-menu-wrap');
+  if (!menu || !wrap) return;
+
+  menu.style.left = '';
+  menu.style.right = '0';
+
+  var menuRect = menu.getBoundingClientRect();
+  var viewportPadding = 8;
+
+  if (menuRect.left < viewportPadding) {
+    menu.style.right = 'auto';
+    menu.style.left = '0';
+  }
+}
+
+function closeRestoreCorpusMenu() {
+  $('#restore-corpus-menu').addClass('hidden');
+  $('#restore-corpus-button').attr('aria-expanded', 'false');
+}
+
+function openRestoreCorpusMenu() {
+  var removed = (resultPostProcessState && resultPostProcessState.removedCorpora) || [];
+  if (!removed.length) return;
+  $('#restore-corpus-menu').removeClass('hidden');
+  $('#restore-corpus-button').attr('aria-expanded', 'true');
+  positionRestoreCorpusMenu()
+}
+
+function renderRestoreCorpusMenu() {
+  var $items = $('#restore-corpus-menu-items');
+  var removed = (resultPostProcessState && resultPostProcessState.removedCorpora) || [];
+
+  if (!$items.length) return;
+
+  if (!removed.length) {
+    $items.empty();
+    closeRestoreCorpusMenu();
+    return;
+  }
+
+  var html = removed.slice().reverse().map(function (key) {
+    var entry = (resultPostProcessState.availableCorpora || []).find(function (item) {
+      return item.key === key;
+    });
+    var label = entry ? entry.label : key;
+    return (
+      '<button type="button" class="restore-corpus-menu-item" role="menuitem" ' +
+      'data-corpus-key="' + escapeHTML(key) + '">' +
+      escapeHTML(label) +
+      '</button>'
+    );
+  }).join('');
+
+  $items.html(html);
+}
+
+function syncRestoreCorpusButton() {
+  var $button = $('#restore-corpus-button');
+  var removed = (resultPostProcessState && resultPostProcessState.removedCorpora) || [];
+
+  if (!$button.length) return;
+
+  var hasRemoved = removed.length > 0;
+
+  $button.prop('disabled', !hasRemoved);
+  $button.attr('aria-disabled', hasRemoved ? 'false' : 'true');
+  $button.toggleClass('is-active', hasRemoved);
+
+  if (!hasRemoved) {
+    $button.attr('title', 'Restore Corpus').attr('aria-label', 'Restore Corpus');
+    closeRestoreCorpusMenu();
+  } else {
+    var latestKey = removed[removed.length - 1];
+    var latestEntry = (resultPostProcessState.availableCorpora || []).find(function (item) {
+      return item.key === latestKey;
+    });
+    var tooltip = latestEntry ? 'Restore ' + latestEntry.label : 'Restore Corpus';
+    $button.attr('title', tooltip).attr('aria-label', 'Restore Corpus');
+  }
+
+  renderRestoreCorpusMenu();
+}
+
+
+function renderResults() {
+  renderResultGroup('.library-results', queryState.libraryMatches, 'Library matches');
+  renderResultGroup('.search-results', queryState.searchResults, 'Search results');
+
+  var hasLibraryMatches = queryState.libraryMatches.length > 0;
+  var hasSearchResults = queryState.searchResults.length > 0;
+
+  $('.library-results-heading-row').toggle(appMode !== 'voices' && hasLibraryMatches);
+  $('.search-results-label').toggle(appMode !== 'voices' && hasSearchResults);
+  $('.search-results').toggle(appMode === 'voices' || hasSearchResults);
+
+  syncRestoreCorpusButton();
+  updateResultsVisibility();
+}
+
+function updateResultsVisibility() {
+  var shouldCollapse = resultsCollapsed && !!selectedResultSummary;
+  $('.results-lists').toggle(!shouldCollapse);
+  $('.results-toggle-button').toggle(!!selectedResultSummary).text(shouldCollapse ? 'Show results' : 'Hide results');
+  if (shouldCollapse) {
+    $('.selected-result-summary').html("<strong>" + escapeHTML(selectedResultSummary.label) + "</strong>" + (selectedResultSummary.subtitle ? "<div>" + escapeHTML(selectedResultSummary.subtitle) + "</div>" : '') + (selectedResultSummary.status ? "<div class='helper-text'>" + escapeHTML(selectedResultSummary.status) + "</div>" : '')).show();
+  } else {
+    $('.selected-result-summary').hide().empty();
+  }
+}
+
+function clearSelectedResult() {
+  resetResultPostProcessState();
+  queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
+  resetSelectedResultView();
+  updateResultsVisibility();
+  renderResultFilterStrip();
+}
+
+function compareResultsAlphabetically(a, b, direction) {
+  var left = normalizeOptionText((a && (a.label || a.ref)) || '').toLowerCase();
+  var right = normalizeOptionText((b && (b.label || b.ref)) || '').toLowerCase();
+  return direction === 'desc' ? right.localeCompare(left) : left.localeCompare(right);
+}
+
+function isDirectReferenceItem(item) {
+  if (!item) return false;
+  var subtitle = String(item.subtitle || '').toLowerCase();
+  var key = String(item.key || '').toLowerCase();
+  return subtitle.indexOf('direct reference lookup') >= 0 || key.indexOf('library-ref-') === 0;
+}
+
+function compareByCategory(a, b) {
+  var catA = String((a && a.clusterLabel) || '').toLowerCase();
+  var catB = String((b && b.clusterLabel) || '').toLowerCase();
+  if (catA !== catB) return catA.localeCompare(catB);
+  var labelA = normalizeOptionText((a && (a.label || a.ref)) || '').toLowerCase();
+  var labelB = normalizeOptionText((b && (b.label || b.ref)) || '').toLowerCase();
+  return labelA.localeCompare(labelB);
+}
+
+function sortByRecentSession(items) {
+  var list = (typeof sessionLibrary !== 'undefined' && sessionLibrary && Array.isArray(sessionLibrary.inserted)) ? sessionLibrary.inserted : [];
+  var refIndexMap = {};
+  list.forEach(function(entry, i) { if (entry && entry.ref) refIndexMap[entry.ref] = i; });
+  var recent = [];
+  var other = [];
+  items.forEach(function(item) {
+    if (item && item.ref && refIndexMap.hasOwnProperty(item.ref)) {
+      recent.push(item);
+    } else {
+      other.push(item);
+    }
+  });
+  recent.sort(function(a, b) { return refIndexMap[a.ref] - refIndexMap[b.ref]; });
+  return recent.concat(other);
+}
+
+function sortLibraryItems(items, sortMode) {
+  var direct = [];
+  var rest = [];
+  (items || []).forEach(function(item) {
+    (isDirectReferenceItem(item) ? direct : rest).push(item);
+  });
+  if (sortMode === 'alphabetical-asc') {
+    rest.sort(function(a, b) { return compareResultsAlphabetically(a, b, 'asc'); });
+  } else if (sortMode === 'alphabetical-desc') {
+    rest.sort(function(a, b) { return compareResultsAlphabetically(a, b, 'desc'); });
+  } else if (sortMode === 'category') {
+    rest.sort(compareByCategory);
+  } else if (sortMode === 'recent') {
+    rest = sortByRecentSession(rest);
+  }
+  // 'relevance': preserve existing order
+  return direct.concat(rest);
+}
+
+function sortSearchItems(items, sortMode) {
+  var out = (items || []).slice();
+  if (sortMode === 'alphabetical-asc') {
+    out.sort(function(a, b) { return compareResultsAlphabetically(a, b, 'asc'); });
+  } else if (sortMode === 'alphabetical-desc') {
+    out.sort(function(a, b) { return compareResultsAlphabetically(a, b, 'desc'); });
+  } else if (sortMode === 'category') {
+    out.sort(compareByCategory);
+  } else if (sortMode === 'recent') {
+    out = sortByRecentSession(out);
+  }
+  // 'relevance': preserve existing order
+  return out;
+}
+
+function itemMatchesTranslationLanguages(item, languages) {
+  if (!item || item.hasTranslation === false) return false;
+  var selected = Array.isArray(languages) ? languages.filter(Boolean) : [];
+  if (!selected.length) return item.hasTranslation !== false;
+  var available = Array.isArray(item.availableLangs) ? item.availableLangs.map(function (lang) { return String(lang || '').toLowerCase(); }) : [];
+  if (!available.length) return item.hasTranslation !== false;
+  return selected.some(function (lang) { return available.indexOf(String(lang || '').toLowerCase()) >= 0; });
+}
+
+function dedupeResultItems(items) {
+  var seen = {};
+  var out = [];
+  (items || []).forEach(function(item) {
+    if (!item || !item.ref) return;
+    var key = String(item.ref).trim().toLowerCase();
+    if (seen[key]) return;
+    seen[key] = true;
+    out.push(item);
+  });
+  return out;
+}
+
+function applyClientSideSearchFilters(items, searchParameters) {
+  var filtered = Array.isArray(items) ? items.slice() : [];
+  if (searchParameters && searchParameters.translationOnly) {
+    filtered = filtered.filter(function (item) { return itemMatchesTranslationLanguages(item, searchParameters.translationLanguages); });
+  }
+  return filtered;
+}
+
+function maybeAutoSelectSingleResult() {
+  var allResults = queryState.libraryMatches.concat(queryState.searchResults).filter(function (item) { return item && item.ref; });
+  if (allResults.length !== 1) return;
+  var only = allResults[0];
+  if (!only || !only.key || selectedResultKey === only.key) return;
+  selectedResultKey = only.key;
+  selectedResultSummary = { label: only.label || only.ref, subtitle: only.subtitle || '' };
+  resultsCollapsed = true;
+  renderResults();
+  resolveSelectedResult(only.ref, only.label || only.ref);
+}
+
+function formatRefForResult(ref) {
+  var clean = String(ref || '').trim();
+  var chunks = clean.split(',').map(function (part) { return part.trim(); }).filter(Boolean);
+  if (chunks.length <= 1) return { label: clean, subtitle: '' };
+  return { label: chunks[0], subtitle: chunks.slice(1).join(' › ') };
+}
+
+function buildResultFromSource(source, fallbackRef, keyPrefix, index, snippet, typeLabel) {
+  var ref = source.ref || fallbackRef || '';
+  var display = formatRefForResult(ref);
+  var sourcePath = Array.isArray(source.path) ? source.path.filter(Boolean) : (typeof source.path === 'string' ? source.path.split('/').map(function (part) { return part.trim(); }).filter(Boolean) : []);
+  var breadcrumb = sourcePath.length > 1 ? sourcePath.slice(0, -1).join(' › ') : (display.subtitle || source.heRef || '');
+  var availableLangs = Array.isArray(source && source.availableLangs) ? source.availableLangs.map(function (lang) { return String(lang || '').toLowerCase(); }).filter(Boolean) : (Array.isArray(source && source.versions) ? source.versions.map(function (version) { return String((version && version.language) || '').toLowerCase(); }).filter(Boolean) : []);
+  var clusterLabel = source.primary_category || (Array.isArray(source.categories) ? source.categories[0] : '') || typeLabel;
+
+  return {
+    key: keyPrefix + "-" + index + "-" + (ref || index),
+    ref: ref,
+    label: sourcePath[sourcePath.length - 1] || display.label || ref || 'Result',
+    subtitle: breadcrumb,
+    snippet: snippet,
+    typeLabel: typeLabel,
+    clusterLabel: clusterLabel,
+    availableLangs: availableLangs,
+    hasTranslation: source && (Array.isArray(source.availableLangs) ? source.availableLangs.length > 0 : (Array.isArray(source.versions) ? source.versions.some(function (version) { return version && String(version.language || '').trim(); }) : true))
+  };
+}
+</script>

@@ -1,0 +1,384 @@
+<script>
+function updatePesukimAvailability(response) {
+  var supportsLineMarkers = !!(response && (Array.isArray(response.he) || Array.isArray(response.text) || response.lineMarkersAvailable === true));
+  $('.pesukim-wrapper').toggle(supportsLineMarkers);
+  $('.wants-pesukim').prop('disabled', !supportsLineMarkers);
+  if (!supportsLineMarkers) {
+    $('.wants-pesukim').prop('checked', false);
+    $('.pesukim-help').text('Line markers are unavailable for this selection (single-block text).');
+  } else {
+    if (!$('.wants-pesukim').prop('checked')) {
+      $('.wants-pesukim').prop('checked', true);
+    }
+    $('.pesukim-help').text('Applies to segmented refs (e.g., verse/line ranges).');
+  }
+}
+
+function isResolvedReference(response) {
+  return !!(response && response.ref && response.indexTitle && !response.error);
+}
+
+function hasRenderableText(value) {
+  if (Array.isArray(value)) return value.some(function (part) { return hasRenderableText(part); });
+  if (value === null || value === undefined) return false;
+  var stripped = String(value).replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim();
+  return stripped.length > 0;
+}
+
+function buildDepthPrompt(response) {
+  var sectionNames = (response && Array.isArray(response.sectionNames)) ? response.sectionNames.filter(Boolean) : [];
+  if (sectionNames.length >= 2) return "Enter " + sectionNames[0] + " and optionally a " + sectionNames[1] + ". Specify a range with '-'.";
+  if (sectionNames.length === 1) return "Enter " + sectionNames[0] + ". Specify a range with '-'.";
+  return "Enter a valid reference to insert.";
+}
+
+function getResolvedNodeState(response) {
+  var resolved = isResolvedReference(response);
+  var hasText = hasRenderableText(response && response.text);
+  var hasHebrew = hasRenderableText(response && response.he);
+  var isInsertable = resolved && (hasText || hasHebrew);
+  var isStructural = resolved && !isInsertable;
+  return {
+    resolved: resolved,
+    hasText: hasText,
+    hasHebrew: hasHebrew,
+    isInsertable: isInsertable,
+    isStructural: isStructural,
+    prompt: buildDepthPrompt(response)
+  };
+}
+
+function buildVersionModel(dataIn) {
+  var versions = Array.isArray(dataIn.versions) ? dataIn.versions : [];
+  var seen = {};
+  var normalized = [];
+  versions.forEach(function (version, index) {
+    var safeVersion = version || {};
+    var language = normalizeLanguage(safeVersion);
+    var versionTitle = safeVersion.versionTitle || safeVersion.shortVersionTitle || ("Untitled version #" + (index + 1));
+    var dedupeKey = language.key + "::" + versionTitle + "::" + (safeVersion.versionSource || "");
+    if (seen[dedupeKey]) return;
+    seen[dedupeKey] = true;
+    normalized.push({
+      index: index,
+      versionTitle: versionTitle,
+      label: safeVersion.shortVersionTitle || safeVersion.versionTitle || versionTitle,
+      fullTitle: safeVersion.versionTitle || versionTitle,
+      languageKey: language.key,
+      languageLabel: language.label,
+      direction: safeVersion.direction,
+      priority: Number(safeVersion.priority) || 0,
+      isPrimary: !!safeVersion.isPrimary,
+      year: extractYear(safeVersion)
+    });
+  });
+  return normalized;
+}
+
+function sortVersionEntries(entries) {
+  return entries.slice().sort(function (a, b) {
+    if (a.year !== null && b.year !== null && a.year !== b.year) return b.year - a.year;
+    if (a.year !== null && b.year === null) return -1;
+    if (a.year === null && b.year !== null) return 1;
+    var left = normalizeOptionText(a.fullTitle || a.label || a.versionTitle).toLowerCase();
+    var right = normalizeOptionText(b.fullTitle || b.label || b.versionTitle).toLowerCase();
+    var alpha = left.localeCompare(right);
+    if (alpha !== 0) return alpha;
+    if (a.priority !== b.priority) return b.priority - a.priority;
+    return a.index - b.index;
+  });
+}
+
+function languagePriorityKey(label) {
+  var value = String(label || '').trim().toLowerCase();
+  if (!value) return 2;
+  if (value === preferredTranslationLanguage || (preferredTranslationLanguage === 'en' && value === 'english')) return 0;
+  if (value === 'english' || value === 'en') return 1;
+  return 2;
+}
+
+function renderPreviewHTML(dataIn, inputTitle) {
+  var mode = $('.output-mode-selection').val();
+  var layout = $('.bilingual-layout-selection').val() || 'he-right';
+
+  if (mode === 'he') {
+    return buildPreviewMeta(dataIn.heRef, dataIn) +
+      "<div class='preview-he'>" +
+      (dataIn.he || '<p class="preview-state-message">No source text available.</p>') +
+      "</div>";
+  }
+
+  if (mode === 'en') {
+    return buildPreviewMeta(dataIn.ref, inputTitle) +
+      "<div>" +
+      (dataIn.text || '<p class="preview-state-message">No translation text available.</p>') +
+      "</div>";
+  }
+
+  var englishCell = "<td>" + buildPreviewMeta(dataIn.ref, inputTitle) + (dataIn.text || '<p class="preview-state-message">No translation text available.</p>') + "</td>";
+  var hebrewCell = "<td class='preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + (dataIn.he || '<p class="preview-state-message">No source text available.</p>') + "</td>";
+
+  if (layout === 'he-top') {
+    return "<div class='preview-stack'>" +
+      "<div class='preview-stack-block preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + (dataIn.he || '<p class="preview-state-message">No source text available.</p>') + "</div>" +
+      "<div class='preview-stack-block'>" + buildPreviewMeta(dataIn.ref, inputTitle) + (dataIn.text || '<p class="preview-state-message">No translation text available.</p>') + "</div>" +
+      "</div>";
+  }
+
+  if (layout === 'he-left') {
+    return "<table class='preview-table'><tr>" + hebrewCell + englishCell + "</tr></table>";
+  }
+
+  return "<table class='preview-table'><tr>" + englishCell + hebrewCell + "</tr></table>";
+}
+
+function updateSuggestion(dataIn, inputTitle) {
+  var resolvedRef = dataIn && dataIn.ref ? dataIn.ref : inputTitle;
+  var versionEntries = buildVersionModel(dataIn);
+  var enSelectedVersionTitle = dataIn.versionTitle || "";
+  var heSelectedVersionTitle = dataIn.heVersionTitle || "";
+  var hebrewEntries = sortVersionEntries(versionEntries.filter(function (entry) { return entry.languageKey === 'he'; }));
+  var translationEntries = sortVersionEntries(versionEntries.filter(function (entry) { return entry.languageKey !== 'he'; }));
+
+  var selectVersionHebrew = "<div class=\"version-control-header\"><label class=\"version-label\" for=\"he-version-filter\">Source editions</label><span class=\"version-count\">" + hebrewEntries.length + " available</span></div><input type=\"text\" id=\"he-version-filter\" class=\"translation-filter-input he-version-filter\" placeholder=\"Filter source editions\" aria-label=\"Filter source editions\"><select id=\"he-version-selection\" class=\"translation-version-select he-version-selection\" size=\"6\" aria-label=\"Source editions\"></select><div class=\"translation-selected-display he-selected-display\" aria-live=\"polite\"></div>";
+
+  var translationInput = "<div class=\"version-control-header\"><label class=\"version-label\" for=\"translation-version-filter\">Translation versions</label><span class=\"version-count\">" + translationEntries.length + " available</span></div><input type=\"text\" id=\"translation-version-filter\" class=\"translation-filter-input\" placeholder=\"Filter by language or version name\" aria-label=\"Filter translation versions\"><select id=\"translation-version-selection\" class=\"translation-version-select\" size=\"6\" aria-label=\"Translation versions\"></select><div class=\"translation-selected-display\" aria-live=\"polite\"></div>";
+
+  var languageGroups = {};
+  translationEntries.forEach(function (entry) {
+    if (!languageGroups[entry.languageLabel]) languageGroups[entry.languageLabel] = [];
+    languageGroups[entry.languageLabel].push(entry);
+  });
+
+  var translationGroupLabels = Object.keys(languageGroups).sort(function (a, b) {
+    var diff = languagePriorityKey(a) - languagePriorityKey(b);
+    if (diff !== 0) return diff;
+    if (String(a || '').toLowerCase() === String(b || '').toLowerCase()) return 0;
+    return String(a || '').localeCompare(String(b || ''));
+  });
+
+  var translationItems = [];
+  translationGroupLabels.forEach(function (groupLabel) {
+    var cleanGroupLabel = (normalizeOptionText(groupLabel).slice(0,2).toUpperCase()) || 'OT';
+    if (!languageGroups[groupLabel] || !languageGroups[groupLabel].length) return;
+    languageGroups[groupLabel].forEach(function (entry) {
+      var cleanLabel = normalizeOptionText(entry.fullTitle || entry.label || entry.versionTitle);
+      var fallbackLabel = normalizeOptionText(entry.versionTitle);
+      var normalizedLabel = cleanLabel || fallbackLabel || ("Translation " + (entry.index + 1));
+      var optionLabel = normalizeOptionText(cleanGroupLabel + " – " + normalizedLabel);
+      translationItems.push({
+        label: normalizedLabel,
+        optionLabel: optionLabel,
+        value: entry.versionTitle,
+        category: cleanGroupLabel,
+        searchable: (normalizedLabel + " " + entry.versionTitle + " " + cleanGroupLabel).toLowerCase(),
+        availableForRef: Object.prototype.hasOwnProperty.call(translationAvailabilityByRef, resolvedRef + "::" + entry.versionTitle)
+          ? translationAvailabilityByRef[resolvedRef + "::" + entry.versionTitle]
+          : true
+      });
+    });
+  });
+
+  var hebrewItems = hebrewEntries.map(function (entry) {
+    var normalizedLabel = normalizeOptionText(entry.fullTitle || entry.label || entry.versionTitle) || normalizeOptionText(entry.versionTitle) || ("Source " + (entry.index + 1));
+    return {
+      label: normalizedLabel,
+      optionLabel: normalizedLabel,
+      value: entry.versionTitle,
+      searchable: (normalizedLabel + " " + entry.versionTitle).toLowerCase()
+    };
+  });
+
+  $('.translation-version-control').html(translationInput);
+  $('.hebrew-version-control').html(selectVersionHebrew);
+  $('.suggestions').html(renderPreviewHTML(dataIn, inputTitle));
+
+  if (pendingPreferredVersions) {
+    var preferredEn = pendingPreferredVersions.en || '';
+    var preferredHe = pendingPreferredVersions.he || '';
+    if (preferredEn && translationEntries.some(function (entry) { return entry.versionTitle === preferredEn; })) enSelectedVersionTitle = preferredEn;
+    if (preferredHe && hebrewEntries.some(function (entry) { return entry.versionTitle === preferredHe; })) heSelectedVersionTitle = preferredHe;
+  }
+
+  var currentEnVersion = enSelectedVersionTitle;
+  var currentHeVersion = heSelectedVersionTitle;
+
+  function syncSelectedTranslationDisplay() {
+    var selectedOption = $('.translation-version-select option:selected').first();
+    var displayText = normalizeOptionText(selectedOption.attr('title') || selectedOption.text() || 'No translation selected.');
+    $('.translation-selected-display').first().text(displayText).attr('title', displayText);
+  }
+
+  function syncSelectedHebrewDisplay() {
+    var selectedOption = $('.he-version-selection option:selected').first();
+    var displayText = normalizeOptionText(selectedOption.attr('title') || selectedOption.text() || 'No source edition selected.');
+    $('.he-selected-display').text(displayText).attr('title', displayText);
+  }
+
+  function markTranslationAvailability(resolvedVersionTitle, attemptedVersionTitle) {
+    var resolved = String(resolvedVersionTitle || '').trim();
+    var attempted = String(attemptedVersionTitle || '').trim();
+    if (!attempted) return;
+    var wasResolved = !!(resolved && resolved === attempted);
+    translationAvailabilityByRef[resolvedRef + '::' + attempted] = wasResolved;
+    translationItems.forEach(function (item) {
+      if (item.value === attempted) item.availableForRef = wasResolved;
+    });
+  }
+
+  function renderTranslationOptions(filterTerm) {
+    var query = String(filterTerm || '').trim().toLowerCase();
+    var filtered = translationItems.filter(function (item) { return !query || item.searchable.indexOf(query) >= 0; });
+    var optionsHTML = '';
+    var hasSelectableOption = false;
+
+    if (!filtered.length) {
+      optionsHTML = '<option value="" disabled>No matching translations</option>';
+    } else {
+      filtered.forEach(function (item) {
+        var isUnavailable = item.availableForRef === false;
+        var selected = item.value === currentEnVersion && !isUnavailable ? 'selected' : '';
+        var disabled = isUnavailable ? 'disabled' : '';
+        var label = isUnavailable ? (item.optionLabel + ' – unavailable for this ref') : item.optionLabel;
+        if (!isUnavailable) hasSelectableOption = true;
+        optionsHTML += '<option value="' + escapeHTML(item.value) + '" ' + selected + ' ' + disabled + ' title="' + escapeHTML(label) + '">' + escapeHTML(label) + '</option>';
+      });
+    }
+
+    if (!hasSelectableOption && filtered.length) {
+      optionsHTML += '<option value="" disabled>No available translations for this ref</option>';
+    }
+
+    $('.translation-version-select').html(optionsHTML);
+    if (!$('.translation-version-select').val()) {
+      var firstEnabled = $('.translation-version-select option:not(:disabled)').first();
+      if (firstEnabled.length) {
+        firstEnabled.prop('selected', true);
+        currentEnVersion = firstEnabled.val();
+      }
+    }
+    if (currentEnVersion && !$('.translation-version-select option:selected').length) currentEnVersion = '';
+    syncSelectedTranslationDisplay();
+  }
+
+  function renderHebrewOptions(filterTerm) {
+    var query = String(filterTerm || '').trim().toLowerCase();
+    var filtered = hebrewItems.filter(function (item) { return !query || item.searchable.indexOf(query) >= 0; });
+    var optionsHTML = '';
+
+    if (!filtered.length) {
+      optionsHTML = '<option value="" disabled>No matching source editions</option>';
+    } else {
+      filtered.forEach(function (item) {
+        var selected = item.value === currentHeVersion ? 'selected' : '';
+        optionsHTML += '<option value="' + escapeHTML(item.value) + '" ' + selected + ' title="' + escapeHTML(item.optionLabel) + '">' + escapeHTML(item.optionLabel) + '</option>';
+      });
+    }
+
+    $('.he-version-selection').html(optionsHTML);
+    if (!$('.he-version-selection').val()) {
+      var firstOption = $('.he-version-selection option:not(:disabled)').first();
+      if (firstOption.length) {
+        firstOption.prop('selected', true);
+        currentHeVersion = firstOption.val();
+      }
+    }
+    if (currentHeVersion && !$('.he-version-selection option:selected').length) currentHeVersion = '';
+    syncSelectedHebrewDisplay();
+  }
+
+  function getVersions(targetTranslationVersion) {
+    var selectedTranslation = targetTranslationVersion || $('.translation-version-select').val();
+    var enVersion = selectedTranslation || currentEnVersion || enSelectedVersionTitle;
+    var heVersion = $('.he-version-selection').val() || currentHeVersion || heSelectedVersionTitle;
+    var versions = { en: enVersion, he: heVersion };
+    var requestId = ++latestResolveRequestId;
+    hasResolvedReference = false;
+    setInsertButtonState(false);
+    $('#open-on-sefaria').prop('disabled', true);
+    $('.suggestions').html(buildPreviewLoadingHTML('Refreshing preview…'));
+
+    google.script.run.withSuccessHandler(function (response) {
+      if (requestId !== latestResolveRequestId) return;
+      var nodeState = getResolvedNodeState(response);
+      if (!nodeState.isInsertable) {
+        hasResolvedReference = false;
+        setInsertButtonState(false);
+        $('#open-on-sefaria').prop('disabled', true);
+        clearVersionSelectors();
+        updatePesukimAvailability(null);
+        updateActionabilityUI(nodeState);
+        $('.suggestions').html('<br>' + buildNonInsertableMessage(response));
+        return;
+      }
+
+      var resolvedTranslation = String((response && response.versionTitle) || '').trim();
+      markTranslationAvailability(resolvedTranslation, enVersion);
+      if (enVersion && resolvedTranslation && resolvedTranslation !== enVersion) renderTranslationOptions($('.translation-filter-input').val());
+      updateSuggestion(response, inputTitle);
+      updatePesukimAvailability(response);
+      updateActionabilityUI(nodeState);
+      data = response;
+      hasResolvedReference = true;
+      setInsertButtonState(true);
+      $('#open-on-sefaria').prop('disabled', false);
+    }).withFailureHandler(function () {
+      if (requestId !== latestResolveRequestId) return;
+      markTranslationAvailability('', enVersion);
+      renderTranslationOptions($('.translation-filter-input').val());
+      hasResolvedReference = false;
+      setInsertButtonState(false);
+      $('#open-on-sefaria').prop('disabled', true);
+      clearVersionSelectors();
+      updatePesukimAvailability(null);
+      updateActionabilityUI({ isInsertable: false });
+    }).findReference(resolvedRef, versions);
+  }
+
+  renderTranslationOptions('');
+  renderHebrewOptions('');
+
+  $('.translation-filter-input').off('input.translationFilter').on('input.translationFilter', function () {
+    if ($(this).hasClass('he-version-filter')) renderHebrewOptions($(this).val());
+    else renderTranslationOptions($(this).val());
+  }).off('keydown.translationFilter').on('keydown.translationFilter', function (event) {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      if ($(this).hasClass('he-version-filter')) $('.he-version-selection').focus();
+      else $('.translation-version-select').focus();
+    }
+  });
+
+  $('.translation-version-select').off('change.translationVersion').on('change.translationVersion', function () {
+    var selected = $(this).val();
+    syncSelectedTranslationDisplay();
+    if (!selected) return;
+    currentEnVersion = selected;
+    getVersions(selected);
+  });
+
+  $('.he-version-selection').off('change.heVersion').on('change.heVersion', function () {
+    var selected = $(this).val();
+    syncSelectedHebrewDisplay();
+    if (!selected) return;
+    currentHeVersion = selected;
+    getVersions();
+  });
+
+  if (pendingPreferredVersions) {
+    var prefEn = pendingPreferredVersions.en || '';
+    var prefHe = pendingPreferredVersions.he || '';
+    pendingPreferredVersions = null;
+    if (prefEn || prefHe) {
+      var currentEn = $('.translation-version-select').val() || currentEnVersion || enSelectedVersionTitle;
+      var currentHe = $('.he-version-selection').val() || currentHeVersion || heSelectedVersionTitle;
+      if (currentEn !== (dataIn.versionTitle || '') || currentHe !== (dataIn.heVersionTitle || '')) getVersions();
+    }
+  }
+
+  updateVersionControlsVisibility();
+  updateModeDependentSections();
+  if (typeof renderPreviewTransliteration === 'function') renderPreviewTransliteration(dataIn);
+}
+
+</script>

@@ -1,0 +1,164 @@
+<script>
+// ================================
+// Shared Composition Card Controller
+// ================================
+//
+// Usage:
+//   initCompositionCard({
+//     containerId: 'composition-card-container',
+//     getState:       function() { return { vowelsOn, cantillationOn, transliterationOn, scheme, linkOn, linesOn, detailsOn }; },
+//     onToggle:       function(key) { /* flip underlying state for key */ },
+//     onSchemeSelect: function(value) { /* set transliteration scheme */ },
+//     afterUpdate:    function(state) { /* optional host-specific post-update hook */ },
+//     getTranslitLabel: function(on, scheme) { /* optional custom label for translit button */ }
+//   });
+//
+// Then call updateCompositionCard() any time external state changes.
+
+var CC_TRANSLIT_LABELS = {
+  none: 'None',
+  simple_english: "ha-sefer kol-ha'am",
+  traditional: "ha-\u0113fer kol-h\u0101-\u02BFam",
+  modern_israeli: "ha-sefer kol-ha'am",
+  ashkenazi: "ha-seifer kol-ho'om",
+  academic_full: "ha-s\u0113fer kol-h\u0101-\u02BF\u0101m",
+  ipa_modern: "ha\u02C8sefe\u0281 kol ha\u02C8\u0294am",
+  ipa_tiberian: "has\u02C8se\u02D0f\u025Br k\u0254l h\u0254\u02D0\u02C8\u0295\u0254m"
+};
+
+var _ccConfig = null;
+
+function initCompositionCard(config) {
+  _ccConfig = config;
+  var $container = $('#' + (config.containerId || 'composition-card-container'));
+  if (!$container.length) return;
+
+  // Show/hide features based on data-cc-features attribute on the container
+  var features = ($container.attr('data-cc-features') || '').split(',').filter(Boolean);
+  $container.find('[data-cc-feature]').each(function () {
+    var feature = $(this).attr('data-cc-feature');
+    if (features.indexOf(feature) < 0) {
+      $(this).hide();
+    }
+  });
+
+  _bindCompositionCardEvents();
+  updateCompositionCard();
+}
+
+function closeCompositionCardTranslitMenu() {
+  $('#cc-translit-menu').addClass('hidden');
+  $('#cc-translit-toggle').attr('aria-expanded', 'false');
+}
+
+function updateCompositionCard() {
+  if (!_ccConfig) return;
+  var state = _ccConfig.getState();
+
+  // Linked title
+  $('#cc-title-toggle')
+    .text(state.linkOn ? '🔗 Title: On' : '🔗 Title: Off')
+    .toggleClass('is-linked is-active', !!state.linkOn)
+    .attr('aria-pressed', state.linkOn ? 'true' : 'false');
+
+  // Vowels
+  $('#cc-vowels-toggle')
+    .text(state.vowelsOn ? 'Vowels: On' : 'Vowels: Off')
+    .toggleClass('is-off', !state.vowelsOn)
+    .attr('aria-pressed', state.vowelsOn ? 'true' : 'false');
+
+  // Cantillation
+  $('#cc-cantillation-toggle')
+    .text(state.cantillationOn ? 'Cantillation: On' : 'Cantillation: Off')
+    .toggleClass('is-off', !state.cantillationOn)
+    .attr('aria-pressed', state.cantillationOn ? 'true' : 'false');
+
+  // Transliteration pill
+  $('#cc-translit-pill')
+    .text(state.transliterationOn ? 'Translit: On' : 'Translit: Off')
+    .attr('aria-pressed', state.transliterationOn ? 'true' : 'false');
+
+  // Lines
+  $('#cc-lines-toggle')
+    .text(state.linesOn ? 'Lines: On' : 'Lines: Off')
+    .attr('aria-pressed', state.linesOn ? 'true' : 'false');
+
+  // Source citation
+  $('#cc-details-toggle')
+    .text(state.detailsOn ? '🔗 Sources: On' : '🔗 Sources: Off')
+    .attr('aria-pressed', state.detailsOn ? 'true' : 'false');
+
+  // Hebrew text visibility
+  $('.cc-hebrew-text--full').prop('hidden', !(state.vowelsOn && state.cantillationOn));
+  $('.cc-hebrew-text--no-cantillation').prop('hidden', !(state.vowelsOn && !state.cantillationOn));
+  $('.cc-hebrew-text--consonants').prop('hidden', !!state.vowelsOn);
+
+  // Transliteration toggle button label
+  var scheme = state.transliterationOn ? (state.scheme || 'simple_english') : 'none';
+  var translitLabel;
+  if (_ccConfig.getTranslitLabel) {
+    translitLabel = _ccConfig.getTranslitLabel(state.transliterationOn, scheme);
+  } else {
+    translitLabel = state.transliterationOn
+      ? (CC_TRANSLIT_LABELS[scheme] || CC_TRANSLIT_LABELS.simple_english)
+      : 'A\u05D0 Translit';
+  }
+  $('#cc-translit-toggle')
+    .text(translitLabel)
+    .toggleClass('is-none', !state.transliterationOn)
+    .attr('data-value', scheme);
+
+  // Scheme menu selection state
+  $('.cc-translit-option').each(function () {
+    $(this).toggleClass('is-selected', $(this).attr('data-value') === scheme);
+  });
+
+  // Status line
+  var $status = $('#cc-status');
+  if ($status.length && $status.is(':visible')) {
+    $status.text(
+      'Cantillation ' + (state.cantillationOn ? 'on' : 'off') +
+      ' \u00B7 Vowels ' + (state.vowelsOn ? 'on' : 'off') +
+      ' \u00B7 Transliteration: ' + (scheme === 'none' ? 'off' : scheme)
+    );
+  }
+
+  // Host-specific post-update hook
+  if (_ccConfig.afterUpdate) _ccConfig.afterUpdate(state);
+}
+
+function _bindCompositionCardEvents() {
+  if (!_ccConfig) return;
+
+  function doToggle(key) {
+    _ccConfig.onToggle(key);
+    updateCompositionCard();
+  }
+
+  $('#cc-title-toggle').off('click.cc').on('click.cc', function () { doToggle('link'); });
+  $('#cc-vowels-toggle').off('click.cc').on('click.cc', function () { doToggle('vowels'); });
+  $('#cc-cantillation-toggle').off('click.cc').on('click.cc', function () { doToggle('cantillation'); });
+  $('#cc-translit-pill').off('click.cc').on('click.cc', function () { doToggle('translit'); });
+  $('#cc-lines-toggle').off('click.cc').on('click.cc', function () { doToggle('lines'); });
+  $('#cc-details-toggle').off('click.cc').on('click.cc', function () { doToggle('details'); });
+
+  $('#cc-translit-toggle').off('click.cc').on('click.cc', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    $('#cc-translit-menu').toggleClass('hidden');
+    $(this).attr('aria-expanded', $('#cc-translit-menu').hasClass('hidden') ? 'false' : 'true');
+  });
+
+  $('.cc-translit-option').off('click.cc').on('click.cc', function () {
+    var value = $(this).attr('data-value');
+    _ccConfig.onSchemeSelect(value);
+    closeCompositionCardTranslitMenu();
+    updateCompositionCard();
+  });
+
+  $(document).off('click.ccDismiss').on('click.ccDismiss', function (event) {
+    if ($(event.target).closest('.cc-translit-wrap').length) return;
+    closeCompositionCardTranslitMenu();
+  });
+}
+</script>

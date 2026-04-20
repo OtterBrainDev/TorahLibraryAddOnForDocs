@@ -1,0 +1,43 @@
+{
+  "sidebar_preferences_state.html": [
+    "function applyEffectivePreferencesToUI",
+    "function saveSidebarPreference",
+    "function saveAccountPreference",
+    "function mergePreferenceDefaults"
+  ],
+  "sidebar_mode_controller.html": [
+    "function setSidebarMode",
+    "function normalizeSidebarMode",
+    "function syncExperimentalAvailability",
+    "function updateModeDependentSections"
+  ],
+  "sidebar_search_controller.html": [
+    "function runUnifiedQuery",
+    "function resolveSelectedResult",
+    "google.script.run"
+  ],
+  "sidebar_bootstrap.html": [
+    "function initializeSidebar",
+    "google.script.run",
+    "setSidebarMode(appMode",
+    "setFooterButtonStates()"
+  ],
+  "preferences_js.html": [
+    "document.addEventListener('DOMContentLoaded'",
+    "function byId",
+    "function bindStyleControl",
+    "google.script.run"
+  ],
+  "ai_lesson_js.html": [
+    "function initialize",
+    "function collectPayload",
+    "function runRequest",
+    "google.script.run.withSuccessHandler(initialize)"
+  ],
+  "surprise-me_js.html": [
+    "function getPayload",
+    "function setBusy",
+    "insertSurpriseMe(payload)",
+    "google.script.host.close()"
+  ]
+}

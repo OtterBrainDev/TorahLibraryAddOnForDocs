@@ -1,0 +1,362 @@
+<script>
+// Composition card toggle persistence is now handled by the shared composition
+// card adapter in sidebar_composition_controls.html. The change handlers for
+// .wants-vowels, .wants-cantillation, .include-transliteration, .insert-sefaria-link,
+// .wants-pesukim, and .include-translation-source-info have been removed.
+
+$('#run-sefaria').off('click').on('click', runUnifiedQuery);
+
+// Debounced unified search replaces legacy autocomplete dropdown.
+$('.input').on('input', function () {
+  var value = $(this).val() || '';
+  if (searchDebounceHandle) clearTimeout(searchDebounceHandle);
+  searchDebounceHandle = setTimeout(function () {
+    if ((value || '').trim().length >= 2) runUnifiedQuery();
+  }, 320);
+});
+
+$('.input').on('keydown', function (event) {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    if (keyboardResultIndex >= 0 && $('.result-item').length) {
+      $('.result-item').eq(keyboardResultIndex).trigger('click');
+      return;
+    }
+    runUnifiedQuery();
+  }
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    focusResultByIndex(keyboardResultIndex + 1);
+  }
+  if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    focusResultByIndex(keyboardResultIndex <= 0 ? 0 : keyboardResultIndex - 1);
+  }
+});
+
+$(document).on('keydown', function (event) {
+  if (event.key === '/' && !$(event.target).is('input, textarea, select')) {
+    event.preventDefault();
+    $('.input').focus();
+  }
+});
+
+$('.wants-relevance, .search-sort-select, .translation-only-filter').on('change', function () {
+  updateTranslationLanguageVisibility();
+  saveLastUsedSearchSettings();
+  if (getAllRawResults().length) {
+    reprocessAndRenderResults();
+  } else if (($('.input').val() || '').trim()) {
+    runUnifiedQuery();
+  }
+});
+
+$('.results-panel').on('click keydown', '.result-item', function (event) {
+  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+
+  var key = $(this).attr('data-key');
+  var item = queryState.libraryMatches.concat(queryState.searchResults).find(function (result) { return result.key === key; });
+  if (!item) return;
+
+  selectedResultKey = item.key;
+  selectedResultSummary = { label: item.label || item.ref, subtitle: item.subtitle || '' };
+  resultsCollapsed = true;
+  $('.result-item').removeClass('selected').attr('aria-pressed', 'false');
+  $(this).addClass('selected').attr('aria-pressed', 'true');
+  updateResultsVisibility();
+  resolveSelectedResult(item.ref, item.label || item.ref);
+});
+
+$('.results-panel').on('click', '.result-group-remove', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  var corpusKey = $(this).attr('data-corpus-key');
+  if (!corpusKey) return;
+  toggleCorpusVisibility(corpusKey);
+});
+
+$('.results-panel').on('click', '.result-filter-chip', function (event) {
+  event.preventDefault();
+  var corpusKey = $(this).attr('data-corpus-key');
+  if (!corpusKey) return;
+  toggleCorpusVisibility(corpusKey);
+});
+
+$('.results-toggle-button').on('click', function () {
+  if (!selectedResultSummary) return;
+  resultsCollapsed = !resultsCollapsed;
+  updateResultsVisibility();
+});
+
+function bindDropdownToggle(selector) {
+  var dropdown = $(selector);
+  if (!dropdown.length) return;
+  dropdown.find('.multi-select-button').on('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    $('.multi-select-dropdown').not(dropdown).removeClass('open').find('.multi-select-button').attr('aria-expanded', 'false');
+    var willOpen = !dropdown.hasClass('open');
+    dropdown.toggleClass('open', willOpen);
+    dropdown.find('.multi-select-button').attr('aria-expanded', willOpen ? 'true' : 'false');
+  });
+}
+
+$('.translation-language-toggle').on('click', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  var $dropdown = $('#translation-language-dropdown');
+  var $menu = $('#translation-language-menu');
+  var willOpen = !$dropdown.hasClass('open');
+  $('.multi-select-dropdown').removeClass('open').find('.multi-select-button').attr('aria-expanded', 'false');
+  $dropdown.toggleClass('open', willOpen);
+  $menu.toggleClass('hidden', !willOpen);
+  $(this).attr('aria-expanded', willOpen ? 'true' : 'false');
+});
+
+$(document).on('click', function (event) {
+  if (!$(event.target).closest('.multi-select-dropdown, .translation-language-compact').length) {
+    $('.multi-select-dropdown').removeClass('open').find('.multi-select-button').attr('aria-expanded', 'false');
+    $('#translation-language-dropdown').removeClass('open');
+    $('#translation-language-menu').addClass('hidden');
+    $('#translation-language-toggle').attr('aria-expanded', 'false');
+  }
+});
+
+$(document).on('click', '.results-suggestion-button', function (event) {
+  event.preventDefault();
+  var suggestion = $(this).attr('data-suggested-query') || $(this).text();
+  $('.input').val(suggestion);
+  runUnifiedQuery();
+});
+
+$('.results-restore-button').on('click', function (event) {
+  event.preventDefault();
+  resultPostProcessState.removedCorpora = [];
+  reprocessAndRenderResults();
+});
+
+$(document).on('change', '.translation-language-any', function () {
+  if ($(this).is(':checked')) {
+    $('.translation-language-option').prop('checked', false);
+  }
+  updateTranslationLanguageVisibility();
+  saveLastUsedSearchSettings();
+  if (getAllRawResults().length) {
+    reprocessAndRenderResults();
+  } else if (($('.input').val() || '').trim()) {
+    runUnifiedQuery();
+  }
+});
+
+$(document).on('change', '.translation-language-option', function () {
+  if ($(this).is(':checked')) {
+    $('.translation-language-any').prop('checked', false);
+  } else if (!$('.translation-language-option:checked').length) {
+    $('.translation-language-any').prop('checked', true);
+  }
+  updateTranslationLanguageVisibility();
+  saveLastUsedSearchSettings();
+  if (getAllRawResults().length) {
+    reprocessAndRenderResults();
+  } else if (($('.input').val() || '').trim()) {
+    runUnifiedQuery();
+  }
+});
+
+$('.session-library-panel').on('click keydown', '.session-library-item', function (event) {
+  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+  if ($(event.target).closest('.session-library-remove').length) return;
+  event.preventDefault();
+  var ref = $(this).attr('data-ref');
+  if (ref) {
+    $('.input').val(ref);
+    $('#session-library-modal').attr('hidden', true);
+    runUnifiedQuery();
+    setTimeout(function () {
+      var match = queryState.libraryMatches.concat(queryState.searchResults).find(function(item){ return item && item.ref === ref; });
+      if (match && match.key) {
+        selectedResultKey = match.key;
+        selectedResultSummary = { label: match.ref || match.label, subtitle: match.subtitle || '' };
+        updateResultsVisibility();
+        resolveSelectedResult(match.ref, match.ref || match.label);
+      }
+    }, 250);
+  }
+});
+
+$('.session-library-panel').on('click', '.session-library-remove', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  removeSessionEntry($(this).attr('data-list'), $(this).attr('data-ref'));
+});
+
+$('.results-panel').on('click', '.result-pin-button', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  togglePinnedRef($(this).attr('data-ref'), $(this).attr('data-label'));
+});
+
+$('.output-mode-selection').on('change', function () {
+  updateBilingualLayoutVisibility();
+  updateTranslationDetailsVisibility();
+  updateHebrewOptionsVisibility();
+  updateVersionControlsVisibility();
+  updateTransliterationVisibility();
+  syncDisplayModeCards();
+  saveSidebarPreference({ output_mode_default: $('.output-mode-selection').val() });
+  if (hasResolvedReference && data && data.ref) {
+    updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
+  }
+});
+
+$('.mode-card').on('click keydown', function (event) {
+  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  $('.output-mode-selection').val($(this).attr('data-mode')).trigger('change');
+});
+
+$('.layout-option').on('click keydown', function (event) {
+  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  $('.bilingual-layout-selection').val($(this).attr('data-layout'));
+  syncLayoutCards();
+  saveSidebarPreference({ bilingual_layout_default: $('.bilingual-layout-selection').val() });
+  if (hasResolvedReference && data && data.ref) {
+    updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
+  }
+});
+
+$('.close').click(function () {
+  google.script.host.close();
+});
+
+$(document).on('click', '.lang-filter-chip', function (event) {
+  event.preventDefault();
+  var lang = $(this).attr('data-lang-filter');
+  if (!lang) return;
+  $('.translation-language-option').each(function () {
+    if ($(this).val() === lang) $(this).prop('checked', false);
+  });
+  if (!$('.translation-language-option:checked').length) {
+    $('.translation-language-any').prop('checked', true);
+  }
+  updateTranslationLanguageVisibility();
+  saveLastUsedSearchSettings();
+  if (getAllRawResults().length) {
+    reprocessAndRenderResults();
+  } else if (($('.input').val() || '').trim()) {
+    runUnifiedQuery();
+  }
+});
+
+$(document).on('click', '.lang-filter-clear-chip', function (event) {
+  event.preventDefault();
+  $('.translation-language-any').prop('checked', true);
+  $('.translation-language-option').prop('checked', false);
+  syncCompactTranslationLanguageUI();
+  updateTranslationLanguageVisibility();
+  saveLastUsedSearchSettings();
+  if (getAllRawResults().length) {
+    reprocessAndRenderResults();
+  } else if (($('.input').val() || '').trim()) {
+    runUnifiedQuery();
+  }
+});
+
+$('#sm-inline-launch').on('click', function () {
+  var term = ($('#sm-inline-term').val() || '').trim();
+  var count = parseInt($('#sm-inline-count').val(), 10);
+  var payload = {
+    term: term,
+    count: Math.max(1, Math.min(10, isNaN(count) ? 5 : count)),
+    corpuses: ['Tanakh', 'Mishnah', 'Talmud', 'Midrash', 'Halakhah'],
+    sortMode: 'relevance'
+  };
+  var $btn = $(this);
+  var $status = $('#sm-inline-status');
+  $btn.prop('disabled', true);
+  $status.text(term ? 'Searching and shuffling sources…' : 'Picking a seed word and searching…').removeAttr('hidden');
+  google.script.run
+    .withSuccessHandler(function (result) {
+      $btn.prop('disabled', false);
+      $status.text((result && result.message) ? result.message : 'Done.');
+    })
+    .withFailureHandler(function (error) {
+      $btn.prop('disabled', false);
+      $status.text((error && error.message) ? error.message : 'Something went wrong.');
+    })
+    .insertSurpriseMe(payload);
+});
+
+$('#restore-corpus-button').off('click').on('click', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  var menu = $('#restore-corpus-menu');
+  if (menu.hasClass('hidden')) openRestoreCorpusMenu();
+  else closeRestoreCorpusMenu();
+});
+
+$(document).on('click', function (event) {
+  if (!$(event.target).closest('#restore-corpus-menu-wrap').length) {
+    closeRestoreCorpusMenu();
+  }
+});
+
+$(document).on('click', '.restore-corpus-menu-item', function (event) {
+  event.preventDefault();
+  var corpusKey = $(this).attr('data-corpus-key');
+  if (!corpusKey) return;
+  toggleCorpusVisibility(corpusKey);
+});
+
+$('#ai-inline-generate').on('click', function () {
+  var topic = ($('#ai-inline-topic').val() || '').trim();
+  var payload = {
+    provider: 'default',
+    model: '',
+    keyStrategy: 'auto',
+    apiKey: '',
+    topic: topic,
+    contextMode: 'topic',
+    audience: $('#ai-inline-audience').val() || 'Adult learners',
+    duration: 45,
+    lessonStyle: $('#ai-inline-style').val() || 'Interactive shiur',
+    additionalInstructions: '',
+    includeOriginal: true,
+    includeTranslation: true,
+    includeTransliteration: false,
+    includeEducatorNotes: true,
+    includeDiscussionPrompts: true
+  };
+  var $btn = $(this);
+  var $status = $('#ai-inline-status');
+  $btn.prop('disabled', true);
+  $status.text('Generating and inserting your draft…').removeAttr('hidden');
+  google.script.run
+    .withSuccessHandler(function (result) {
+      $btn.prop('disabled', false);
+      var title = (result && result.title) ? result.title : 'lesson';
+      $status.text('Inserted "' + title + '".');
+    })
+    .withFailureHandler(function (error) {
+      $btn.prop('disabled', false);
+      $status.text((error && error.message) ? error.message : 'Something went wrong.');
+    })
+    .generateAiLessonDraft(payload);
+});
+
+$(document).on('click', '.reset-session-overrides-button', function () {
+  if ($(this).prop('disabled')) return;
+  resetSessionOverrides(function () {
+    showSidebarToast('Reverted to your saved defaults.');
+  });
+});
+
+$(document).on('click', '.save-session-defaults-button', function () {
+  if ($(this).prop('disabled')) return;
+  saveSessionAsDefaults(function () {
+    showSidebarToast('Saved these session choices as your new defaults.');
+  });
+});
+</script>

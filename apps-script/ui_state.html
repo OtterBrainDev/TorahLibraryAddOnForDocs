@@ -1,0 +1,29 @@
+<script>
+  window.UI_STATE = window.UI_STATE || {};
+
+  function getAppConfig() {
+    return window.APP_CONFIG || {};
+  }
+
+  function isTextsMode(mode) {
+    return String(mode || '') === 'texts';
+  }
+
+  function isVoicesMode(mode) {
+    return String(mode || '') === 'voices';
+  }
+
+  function isExperimentalMode(mode) {
+    return String(mode || '') === 'experimental';
+  }
+
+  function mergeEffectivePreferences(accountPreferences, sessionPreferences, allowSessionOverrides) {
+    return allowSessionOverrides
+      ? mergePreferenceLayers(accountPreferences, sessionPreferences)
+      : mergePreferenceLayers(accountPreferences, {});
+  }
+
+  function hasSessionPreferenceOverrides(sessionPreferences) {
+    return Object.keys(sessionPreferences || {}).length > 0;
+  }
+</script>

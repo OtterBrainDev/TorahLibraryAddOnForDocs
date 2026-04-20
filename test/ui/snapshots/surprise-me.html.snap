@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <?!= include('ui_head'); ?>
+    <?!= include('ui_components.css'); ?>
+    <?!= include('ui_utilities.css'); ?>
+    <?!= include('surprise-me_css'); ?>
+    <script>
+      window.APP_CONFIG = <?= JSON.stringify(appConfig) ?>;
+    </script>
+  </head>
+  <body>
+    <main class="surprise-shell">
+      <header class="surprise-header">
+        <div class="surprise-kicker">Sefaria</div>
+        <h1>Surprise Me</h1>
+        <p class="surprise-intro">
+          Search for a term across the corpuses you choose, then insert a random set of matching sources.
+          Leave the search box blank and the addon will pick a Hebrew seed word from Tanakh first.
+        </p>
+      </header>
+
+      <section class="card surprise-form-card">
+        <div class="field-group">
+          <label for="surprise-term">Search term</label>
+          <input
+            id="surprise-term"
+            class="surprise-text-input"
+            type="text"
+            placeholder="Optional — leave blank for a random Hebrew seed word"
+            autocomplete="off"
+          >
+          <div class="field-help">Blank = pick a Tanakh Hebrew word, search it, then shuffle the matches.</div>
+        </div>
+
+        <div class="inline-fields">
+          <div class="field-group small-field">
+            <label for="surprise-count">How many sources?</label>
+            <input id="surprise-count" class="surprise-number-input" type="number" min="1" max="10" value="5">
+          </div>
+          <div class="field-group grow-field">
+            <label for="surprise-sort">Search sort</label>
+            <select id="surprise-sort" class="surprise-select">
+              <option value="relevance" selected>Relevance</option>
+              <option value="chronological">Chronological</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="label-row">
+            <label>Allowed corpuses</label>
+            <button type="button" class="link-button" id="toggle-all-corpuses">Clear all</button>
+          </div>
+          <div class="field-help">Pick at least one corpus. Defaults focus on the most broadly useful libraries.</div>
+          <div class="corpus-grid" role="group" aria-label="Allowed corpuses">
+            <label class="corpus-option"><input type="checkbox" value="Tanakh" checked> <span>Tanakh</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Mishnah" checked> <span>Mishnah</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Talmud" checked> <span>Talmud</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Midrash" checked> <span>Midrash</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Halakhah" checked> <span>Halakhah</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Aggadah"> <span>Aggadah</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Tosefta"> <span>Tosefta</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Kabbalah"> <span>Kabbalah</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Liturgy"> <span>Liturgy</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Philosophy"> <span>Philosophy</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Hasidut"> <span>Hasidut</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Musar"> <span>Musar</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Responsa"> <span>Responsa</span></label>
+            <label class="corpus-option"><input type="checkbox" value="Commentary"> <span>Commentary</span></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card preview-card" aria-live="polite">
+        <div class="preview-header">
+          <h2>How it works</h2>
+        </div>
+        <ol class="preview-steps">
+          <li>Use your term, or pick a random Hebrew seed from Tanakh.</li>
+          <li>Search Sefaria using the chosen corpuses.</li>
+          <li>Shuffle matching insertable refs.</li>
+          <li>Insert the number of sources you requested.</li>
+        </ol>
+        <div class="status-panel" id="surprise-status">Ready.</div>
+      </section>
+
+      <footer class="surprise-actions">
+        <button class="blue" id="surprise-submit">Insert sources</button>
+        <button id="surprise-cancel">Cancel</button>
+        <span class="spinner" id="surprise-spinner" hidden>
+          <img src="https://www.sefaria.org/static/img/ajax-loader.gif" alt="Loading">
+        </span>
+      </footer>
+    </main>
+
+    <?!= include('ui_core.js'); ?>
+    <?!= include('ui_api.js'); ?>
+    <?!= include('ui_state.js'); ?>
+    <?!= include('ui_dom.js'); ?>
+    <?!= include('ui_feedback.js'); ?>
+    <?!= include('surprise-me.page.js'); ?>
+  </body>
+</html>

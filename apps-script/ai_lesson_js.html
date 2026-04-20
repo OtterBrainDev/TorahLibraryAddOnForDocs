@@ -1,0 +1,151 @@
+<script>
+const state = { bootstrap: null, activeTab: 'basic', cooldownTimer: null, cooldownRemaining: 0 };
+function $(id){ return document.getElementById(id); }
+function setStatus(message, kind) { const el = $('status'); el.textContent = message || ''; el.className = 'status' + (kind ? ' ' + kind : ''); }
+function config() { return (((state.bootstrap || {}).ui || {}).config) || {}; }
+function providers() { return (state.bootstrap && state.bootstrap.providers) ? state.bootstrap.providers : []; }
+function withBusy(button, busy, text) { button.disabled = !!busy; if (busy) { button.dataset.originalText = button.textContent; button.textContent = text || 'Working...'; } else if (button.dataset.originalText) { button.textContent = button.dataset.originalText; } }
+function setTab(tab) {
+  const allowAdvanced = !!(((state.bootstrap || {}).ui || {}).allowAdvancedTab);
+  state.activeTab = (tab === 'advanced' && allowAdvanced) ? 'advanced' : 'basic';
+  document.querySelectorAll('.tabbtn').forEach(function(btn){ btn.classList.toggle('active', btn.dataset.tab === state.activeTab); });
+  $('basicTab').classList.toggle('hidden', state.activeTab !== 'basic');
+  $('advancedTab').classList.toggle('hidden', state.activeTab !== 'advanced');
+  $('advancedTabBtn').classList.toggle('hidden', !allowAdvanced);
+  $('tabDescription').textContent = state.activeTab === 'advanced' ? (config().advancedDescription || '') : (config().basicDescription || '');
+}
+function setMode(mode) {
+  document.querySelectorAll('#modeToggle .seg').forEach(function(btn){ btn.classList.toggle('active', btn.dataset.mode === mode); });
+  $('topicModeFields').classList.toggle('hidden', mode !== 'topic');
+  $('textModeFields').classList.toggle('hidden', mode !== 'text');
+}
+function refreshAdvancedControls() {
+  const provider = $('provider').value;
+  const info = providers().find(function(p){ return p.key === provider; }) || { models: [] };
+  const allowModelSelection = !!(((state.bootstrap || {}).ui || {}).allowModelSelection);
+  const allowUserKeys = !!(((state.bootstrap || {}).ui || {}).allowUserKeys);
+  const allowSavedKeys = !!(((state.bootstrap || {}).ui || {}).allowSavedKeys);
+  $('model').disabled = !allowModelSelection || provider === 'default';
+  $('model').innerHTML = '';
+  const option = document.createElement('option'); option.value = ''; option.textContent = provider === 'default' ? 'Site decides' : 'Auto'; $('model').appendChild(option);
+  (info.models || []).forEach(function(model){ const o = document.createElement('option'); o.value = model; o.textContent = model; $('model').appendChild(o); });
+  $('keyStrategy').innerHTML = '';
+  [['auto','Automatic'], ['managed','Use site-managed key']].concat(allowSavedKeys ? [['saved','Use my saved key']] : []).concat(allowUserKeys ? [['manual','Paste a key for this request']] : []).forEach(function(pair){ const o = document.createElement('option'); o.value = pair[0]; o.textContent = pair[1]; $('keyStrategy').appendChild(o); });
+  const currentStrategy = ($('keyStrategy').dataset.selected || 'auto');
+  $('keyStrategy').value = Array.from($('keyStrategy').options).some(function(o){ return o.value === currentStrategy; }) ? currentStrategy : 'auto';
+  const manualVisible = allowUserKeys && $('keyStrategy').value === 'manual' && provider !== 'default';
+  $('manualKeyWrap').classList.toggle('hidden', !manualVisible);
+  const hints = [];
+  if (provider === 'default') hints.push('WordPress decides the provider and model');
+  else hints.push(info.managedKeyAvailable ? 'Managed key available' : 'No managed key configured');
+  const cooldown = (((state.bootstrap || {}).managedKeyPolicy || {}).cooldownSeconds) || 0;
+  if (cooldown > 0) hints.push('Managed cooldown: ' + cooldown + ' sec');
+  $('providerHints').innerHTML = hints.map(function(t){ return '<span class="chip">' + t + '</span>'; }).join('');
+  $('savedKeyHint').textContent = allowSavedKeys ? 'Saved keys are handled in add-on preferences and only used on your behalf for the request.' : '';
+}
+function applyDefaults() {
+  const d = (state.bootstrap || {}).savedDefaults || (state.bootstrap || {}).defaults || {};
+  $('provider').value = d.provider || 'default';
+  $('model').dataset.selected = d.model || '';
+  $('keyStrategy').dataset.selected = d.keyStrategy || 'auto';
+  $('duration').value = d.duration || 45;
+  $('audience').value = ['Adult learners','High school students','Middle school students','Intro / beginners','Educators','custom'].indexOf(d.audience) >= 0 ? d.audience : 'Adult learners';
+  if ($('audience').value === 'custom') $('audienceCustom').value = d.audience || '';
+  $('lessonStyle').value = ['Interactive shiur','Source-sheet chavruta','Text-study seminar','Accessible intro session','Drash','custom'].indexOf(d.lessonStyle) >= 0 ? d.lessonStyle : 'Interactive shiur';
+  if ($('lessonStyle').value === 'custom') $('lessonStyleCustom').value = d.lessonStyle || '';
+  $('additionalInstructions').value = d.additionalInstructions || '';
+  $('includeOriginal').value = d.includeOriginal === false ? 'false' : 'true';
+  $('includeTranslation').value = d.includeTranslation === false ? 'false' : 'true';
+  $('includeTransliteration').value = d.includeTransliteration ? 'true' : 'false';
+  $('includeEducatorNotes').value = d.includeEducatorNotes === false ? 'false' : 'true';
+  $('includeDiscussionPrompts').value = d.includeDiscussionPrompts === false ? 'false' : 'true';
+  document.querySelectorAll('.toggle-chip').forEach(function(btn){ const target = $(btn.dataset.target); btn.classList.toggle('active', target.value === 'true'); });
+  $('audienceCustomWrap').classList.toggle('hidden', $('audience').value !== 'custom');
+  $('lessonStyleCustomWrap').classList.toggle('hidden', $('lessonStyle').value !== 'custom');
+  refreshAdvancedControls();
+}
+function initialize(data) {
+  state.bootstrap = data;
+  $('provider').innerHTML = providers().map(function(provider){ return '<option value="' + provider.key + '">' + provider.label + '</option>'; }).join('');
+  $('basicTabBtn').textContent = config().basicTabTitle || 'Basic';
+  $('advancedTabBtn').textContent = config().advancedTabTitle || 'Advanced';
+  $('generateBtn').textContent = config().basicGenerateLabel || 'Generate & Insert';
+  $('policyNote').textContent = ((data.ui || {}).policyNote) || '';
+  $('footerHelpNote').textContent = ((data.ui || {}).helpNote) || '';
+  $('heroNote').textContent = ((data.ui || {}).statusNote) || $('heroNote').textContent;
+  applyDefaults();
+  setMode('topic');
+  setTab(((data.ui || {}).defaultModalTab) || 'basic');
+  setStatus('', '');
+}
+function activeMode(){ const btn = document.querySelector('#modeToggle .seg.active'); return btn ? btn.dataset.mode : 'topic'; }
+function collectPayload() {
+  const advanced = state.activeTab === 'advanced';
+  return {
+    provider: advanced ? $('provider').value : 'default',
+    model: advanced ? $('model').value : '',
+    keyStrategy: advanced ? $('keyStrategy').value : 'auto',
+    apiKey: advanced ? $('apiKey').value : '',
+    topic: activeMode() === 'text' ? $('textRef').value : $('topic').value,
+    contextMode: activeMode() === 'text' ? 'text_ref' : 'topic',
+    audience: $('audience').value === 'custom' ? $('audienceCustom').value : $('audience').value,
+    duration: Number($('duration').value || 45),
+    lessonStyle: $('lessonStyle').value === 'custom' ? $('lessonStyleCustom').value : $('lessonStyle').value,
+    additionalInstructions: $('additionalInstructions').value,
+    includeOriginal: $('includeOriginal').value === 'true',
+    includeTranslation: $('includeTranslation').value === 'true',
+    includeTransliteration: $('includeTransliteration').value === 'true',
+    includeEducatorNotes: $('includeEducatorNotes').value === 'true',
+    includeDiscussionPrompts: $('includeDiscussionPrompts').value === 'true'
+  };
+}
+function startCooldown(seconds) {
+  state.cooldownRemaining = Math.max(0, Number(seconds) || 0);
+  clearInterval(state.cooldownTimer);
+  if (!state.cooldownRemaining) { $('cooldownBanner').classList.add('hidden'); return; }
+  function render() {
+    const prefix = config().countdownPrefix || 'Please wait';
+    const suffix = config().countdownSuffix || 'before the next site-managed request.';
+    $('cooldownBanner').textContent = prefix + ' ' + state.cooldownRemaining + 's ' + suffix;
+    $('cooldownBanner').classList.remove('hidden');
+    const disabled = state.cooldownRemaining > 0;
+    ['generateBtn','dafBtn','p929Btn','parashahBtn'].forEach(function(id){ $(id).disabled = disabled; });
+    if (!disabled) { clearInterval(state.cooldownTimer); $('cooldownBanner').classList.add('hidden'); }
+    state.cooldownRemaining -= 1;
+  }
+  render();
+  state.cooldownTimer = setInterval(render, 1000);
+}
+function handleError(error) {
+  const message = error && error.message ? error.message : 'Something went wrong.';
+  const retryMatch = /\[retry_after:(\d+)\]/.exec(message);
+  if (retryMatch) startCooldown(Number(retryMatch[1]));
+  setStatus(message.replace(/\s*\[retry_after:\d+\]/, ''), 'error');
+}
+function runRequest(actionType) {
+  const button = actionType ? (actionType === 'daf' ? $('dafBtn') : actionType === '929' ? $('p929Btn') : $('parashahBtn')) : $('generateBtn');
+  const payload = collectPayload();
+  if (actionType) payload.quickAction = actionType;
+  setStatus('Generating and inserting your draft...', 'loading');
+  withBusy(button, true, 'Generating...');
+  google.script.run.withSuccessHandler(function(result){
+    withBusy(button, false);
+    if (result && result.cooldownSeconds) startCooldown(result.cooldownSeconds);
+    const warningText = result && result.warnings && result.warnings.length ? ' Warnings: ' + result.warnings.join(' | ') : '';
+    setStatus('Inserted "' + result.title + '" using ' + result.provider + '.' + warningText, 'success');
+  }).withFailureHandler(function(error){ withBusy(button, false); handleError(error); }).generateAiLessonDraft(payload);
+}
+$('provider').addEventListener('change', refreshAdvancedControls);
+$('keyStrategy').addEventListener('change', function(){ $('keyStrategy').dataset.selected = this.value; refreshAdvancedControls(); });
+document.querySelectorAll('.tabbtn').forEach(function(btn){ btn.addEventListener('click', function(){ setTab(btn.dataset.tab); }); });
+document.querySelectorAll('#modeToggle .seg').forEach(function(btn){ btn.addEventListener('click', function(){ setMode(btn.dataset.mode); }); });
+document.querySelectorAll('.toggle-chip').forEach(function(btn){ btn.addEventListener('click', function(){ btn.classList.toggle('active'); const target = $(btn.dataset.target); target.value = btn.classList.contains('active') ? 'true' : 'false'; }); });
+$('audience').addEventListener('change', function(){ $('audienceCustomWrap').classList.toggle('hidden', this.value !== 'custom'); });
+$('lessonStyle').addEventListener('change', function(){ $('lessonStyleCustomWrap').classList.toggle('hidden', this.value !== 'custom'); });
+$('resetDefaultsBtn').addEventListener('click', function(){ applyDefaults(); setTab(((state.bootstrap || {}).ui || {}).defaultModalTab || 'basic'); setStatus('Restored the current site defaults for this dialog.', 'success'); });
+$('generateBtn').addEventListener('click', function(){ runRequest(''); });
+$('dafBtn').addEventListener('click', function(){ runRequest('daf'); });
+$('p929Btn').addEventListener('click', function(){ runRequest('929'); });
+$('parashahBtn').addEventListener('click', function(){ runRequest('parashah'); });
+google.script.run.withSuccessHandler(initialize).withFailureHandler(handleError).getAiLessonBootstrapData();
+</script>

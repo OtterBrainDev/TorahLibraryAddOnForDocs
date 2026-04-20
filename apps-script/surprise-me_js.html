@@ -1,0 +1,73 @@
+<script>
+  function getSelectedCorpuses() {
+    return $('.corpus-grid input:checked').map(function () {
+      return $(this).val();
+    }).get();
+  }
+
+  function setStatus(message, kind) {
+    var $status = $('#surprise-status');
+    $status.removeClass('error success');
+    if (kind) $status.addClass(kind);
+    $status.text(message || '');
+  }
+
+  function setBusy(isBusy) {
+    $('#surprise-submit').prop('disabled', !!isBusy);
+    $('#surprise-cancel').prop('disabled', !!isBusy);
+    $('#surprise-spinner').prop('hidden', !isBusy);
+  }
+
+  function getPayload() {
+    var count = parseInt($('#surprise-count').val(), 10);
+    return {
+      term: ($('#surprise-term').val() || '').trim(),
+      count: Math.max(1, Math.min(10, isNaN(count) ? 5 : count)),
+      corpuses: getSelectedCorpuses(),
+      sortMode: ($('#surprise-sort').val() || 'relevance')
+    };
+  }
+
+  $('#toggle-all-corpuses').on('click', function () {
+    var $boxes = $('.corpus-grid input');
+    var checkedCount = $boxes.filter(':checked').length;
+    var shouldSelectAll = checkedCount === 0;
+    $boxes.prop('checked', shouldSelectAll);
+    $(this).text(shouldSelectAll ? 'Clear all' : 'Select all');
+    if (!shouldSelectAll) setStatus('Choose at least one corpus before inserting.', '');
+    else setStatus('Ready.', '');
+  });
+
+  $('.corpus-grid input').on('change', function () {
+    var total = $('.corpus-grid input').length;
+    var checked = $('.corpus-grid input:checked').length;
+    $('#toggle-all-corpuses').text(checked === total ? 'Clear all' : (checked === 0 ? 'Select all' : 'Clear all'));
+  });
+
+  $('#surprise-submit').on('click', function () {
+    var payload = getPayload();
+    if (!payload.corpuses.length) {
+      setStatus('Choose at least one corpus.', 'error');
+      return;
+    }
+
+    setBusy(true);
+    setStatus(payload.term ? 'Searching and shuffling sources…' : 'Picking a Hebrew seed word, then searching…');
+
+    google.script.run
+      .withSuccessHandler(function (result) {
+        setBusy(false);
+        var message = (result && result.message) ? result.message : 'Done.';
+        setStatus(message, 'success');
+      })
+      .withFailureHandler(function (error) {
+        setBusy(false);
+        setStatus((error && error.message) ? error.message : 'Something went wrong while finding sources.', 'error');
+      })
+      .insertSurpriseMe(payload);
+  });
+
+  $('#surprise-cancel').on('click', function () {
+    google.script.host.close();
+  });
+</script>

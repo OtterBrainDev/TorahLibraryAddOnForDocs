@@ -1,0 +1,84 @@
+<script>
+function setInsertButtonState(enabled) {
+  var isEnabled = !!enabled;
+  $('#insert-source').prop('disabled', !isEnabled).toggleClass('is-active', isEnabled);
+  setFooterButtonStates();
+}
+
+function setFooterButtonStates() {
+  var canInsert = !!((appMode === 'voices' && selectedVoiceItem && selectedVoiceItem.ref) || (appMode === 'texts' && hasResolvedReference && data && data.ref));
+  var canOpen = !!((appMode === 'voices' && selectedVoiceItem && selectedVoiceItem.url) || (appMode === 'texts' && hasResolvedReference && data && data.ref));
+  var hasHistoryItems = !!(((sessionLibrary && sessionLibrary.pinned) || []).length || ((sessionLibrary && sessionLibrary.inserted) || []).length);
+  $('#insert-source').prop('disabled', !canInsert).toggleClass('is-active', canInsert);
+  $('#open-on-sefaria').toggleClass('is-active', canOpen).prop('disabled', !canOpen);
+  $('#open-session-library').toggleClass('is-active', hasHistoryItems);
+}
+
+$('#insert-source').click(function () {
+  if (!hasResolvedReference || !data || !data.ref) return;
+
+  var outputMode = $('.output-mode-selection').val();
+  var language = (outputMode === 'both') ? undefined : outputMode;
+  var bilingualLayout = $('.bilingual-layout-selection').val();
+  var showPesukim = Boolean($('.wants-pesukim').prop('checked'));
+  var includeTranslationSourceInfo = $('.include-translation-source-info').is(':checked');
+  var insertSefariaLink = $('.insert-sefaria-link').is(':checked');
+  var input = $('.input').val();
+
+  $('.hide').add($('.warning')).fadeIn('1000');
+  google.script.run.withSuccessHandler(function () {
+    $('.hide').add($('.warning')).fadeOut('1000');
+    $('.insert-warning').remove();
+    upsertSessionEntry('inserted', buildSessionEntry(data.ref, selectedResultSummary && selectedResultSummary.label ? selectedResultSummary.label : data.ref, getCurrentCorpusForRef(data.ref)));
+    }).withFailureHandler(function (error) {
+    $('.hide').add($('.warning')).fadeOut('1000');
+    showInsertWarning(error && error.message);
+  }).insertReference(
+      data,
+      language,
+      showPesukim,
+      input,
+      includeTranslationSourceInfo,
+      bilingualLayout,
+      insertSefariaLink,
+      $('.include-transliteration').is(':checked'),
+      false
+    );
+});
+
+$('#open-on-sefaria').on('click', function () {
+  var sefariaUrl = buildSefariaOpenUrl();
+  if (!sefariaUrl) return;
+  window.open(sefariaUrl, '_blank', 'noopener');
+});
+
+$('.open-divine-name-preferences, .open-preferences-tool').on('click', function (event) {
+  if (event) event.preventDefault();
+  google.script.run.preferencesPopup();
+});
+
+$('.open-actions-panel').on('click', function (event) {
+  event.stopPropagation();
+  $('#footer-actions-panel').toggle();
+});
+
+$(document).on('click', function (event) {
+  if (!$(event.target).closest('.open-actions-panel, #footer-actions-panel').length) {
+    $('#footer-actions-panel').hide();
+  }
+});
+
+$('.open-divine-names-tool').on('click', function () {
+  $('.hide').fadeIn('200');
+  google.script.run.withSuccessHandler(function () {
+    $('.hide').fadeOut('200');
+  }).withFailureHandler(function () {
+    $('.hide').fadeOut('200');
+  }).transformDivineNames();
+});
+
+$('.open-linker-tool').on('click', function () {
+  google.script.run.linkerHTML();
+});
+
+</script>

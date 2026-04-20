@@ -1,0 +1,33 @@
+<script>
+  function clonePlainObject(value) {
+    var out = {};
+    value = value || {};
+    Object.keys(value).forEach(function (key) { out[key] = value[key]; });
+    return out;
+  }
+
+  function mergePreferenceLayers(base, override) {
+    var merged = clonePlainObject(base);
+    override = override || {};
+    Object.keys(override).forEach(function (key) { merged[key] = override[key]; });
+    return merged;
+  }
+
+  function parseStoredArrayPreference(value, fallback) {
+    fallback = Array.isArray(fallback) ? fallback : [];
+    if (Array.isArray(value)) return value.filter(Boolean);
+    var raw = String(value || '').trim();
+    if (!raw) return fallback.slice();
+    try {
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : fallback.slice();
+    } catch (error) {
+      return raw ? raw.split(',').map(function (part) { return String(part || '').trim(); }).filter(Boolean) : fallback.slice();
+    }
+  }
+
+  function getPrimaryTitle(item) {
+    if (!item) return '';
+    return item.label || item.title || item.sheet_title || item.name || (item.sheet && item.sheet.title) || item.ref || '';
+  }
+</script>

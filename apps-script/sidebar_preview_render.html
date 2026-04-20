@@ -1,0 +1,43 @@
+<script>
+function extractTextFromHtml_(html) {
+  var div = document.createElement('div');
+  div.innerHTML = String(html || '');
+  return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+}
+
+function removePreviewTransliteration() {
+  $('.preview-transliteration').remove();
+}
+
+function renderPreviewTransliteration(dataIn) {
+  removePreviewTransliteration();
+  if (!$('.include-transliteration').is(':checked')) return;
+  if (($('.output-mode-selection').val() || 'both') === 'en') return;
+  var plain = extractTextFromHtml_(dataIn && dataIn.he ? dataIn.he : '');
+  if (!plain) return;
+  var refAtRequest = String((dataIn && dataIn.ref) || '');
+  google.script.run.withSuccessHandler(function (text) {
+    if (!text) return;
+    if (refAtRequest && data && data.ref && String(data.ref) !== refAtRequest) return;
+    if (!$('.include-transliteration').is(':checked')) return;
+    var $target = $('.suggestions .preview-transliteration');
+    if (!$target.length) {
+      var $anchor = $('.suggestions .preview-he').last();
+      if ($anchor.length) {
+        $anchor.after("<div class='preview-transliteration'></div>");
+        $target = $('.suggestions .preview-transliteration').last();
+      } else {
+        $('.suggestions').append("<div class='preview-transliteration'></div>");
+        $target = $('.suggestions .preview-transliteration').last();
+      }
+    }
+    $target.text(String(text));
+  }).previewTransliterationWithOverrides(plain, getSidebarTransliterationScheme());
+}
+
+function refreshSidebarLivePreview() {
+  if (!hasResolvedReference || !data || !data.ref || typeof updateSuggestion !== 'function') return;
+  updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
+}
+
+</script>

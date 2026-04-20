@@ -1,0 +1,158 @@
+<script>
+// Sidebar global state declarations
+// no need for $(document).ready() since this script is loaded at the end of the page
+// Input stays enabled; legacy disabling removed.
+var data = {};
+var titles = [];
+var latestResolveRequestId = 0;
+var latestQueryRequestId = 0;
+var latestDirectRefValidationRequestId = 0;
+var selectedResultKey = null;
+var selectedResultSummary = null;
+var selectedRefValue = null;
+var queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
+var resultPostProcessState = { availableCorpora: [], removedCorpora: [] };
+var resultsCollapsed = false;
+var pendingPreferredVersions = null;
+var translationAvailabilityByRef = {};
+var hasResolvedReference = false;
+var searchDebounceHandle = null;
+var keyboardResultIndex = -1;
+var resultsLoading = false;
+var MAX_FUZZY_SUGGESTIONS = 3;
+var preferredTranslationLanguage = "en";
+var sidebarSessionId = null;
+var accountPreferences = {};
+var sessionPreferences = {};
+var effectivePreferences = {};
+
+function isAdvancedSessionMode() {
+  return appMode === 'texts';
+}
+
+function hasSessionOverrides() {
+  return Object.keys(sessionPreferences || {}).length > 0;
+}
+
+function syncSessionOverrideButtons() {
+  var isTexts = isAdvancedSessionMode();
+  var hasSelectedTextResult = isTexts && !!selectedResultKey;
+  $('.session-override-actions').toggle(isTexts);
+  $('.reset-session-overrides-button, .save-session-defaults-button').prop('disabled', !isTexts || !hasSessionOverrides());
+  $('.inline-session-settings').toggle(isTexts && hasSelectedTextResult);
+  $('#open-session-library').prop('disabled', false).attr('aria-disabled', 'false');
+}
+
+function syncAiQuickActionState() {
+  var enabled = String((effectivePreferences || {}).experimental_ai_source_sheet_enabled) === 'true' || (effectivePreferences || {}).experimental_ai_source_sheet_enabled === true;
+  $('.open-ai-lesson-tool').prop('disabled', !enabled).attr('aria-disabled', enabled ? 'false' : 'true');
+}
+
+function applyEffectivePreferencesToUI() {
+  mergePreferenceDefaults(effectivePreferences);
+  syncDisplayModeCards();
+  syncLayoutCards();
+  updateBilingualLayoutVisibility();
+  updateTranslationDetailsVisibility();
+  updateHebrewOptionsVisibility();
+  updateVersionControlsVisibility();
+  updateTransliterationVisibility();
+  updateTranslationLanguageVisibility();
+  syncSessionOverrideButtons();
+  syncAiQuickActionState();
+  syncExperimentalAvailability();
+  updateQuickActionsForMode();
+  if (typeof updateCompositionCard === 'function') updateCompositionCard();
+}
+
+function saveAccountPreference(payload, onDone) {
+  google.script.run.withSuccessHandler(function (updated) {
+    accountPreferences = clonePlainObject(updated || accountPreferences);
+    effectivePreferences = isAdvancedSessionMode()
+      ? mergePreferenceLayers(accountPreferences, sessionPreferences)
+      : mergePreferenceLayers(accountPreferences, {});
+    applyEffectivePreferencesToUI();   // <-- add this
+    if (typeof onDone === 'function') onDone(updated);
+  }).setAccountPreferences(payload || {});
+}
+
+function saveSessionPreference(payload, onDone) {
+  if (!sidebarSessionId) {
+    if (typeof onDone === 'function') onDone(sessionPreferences);
+    return;
+  }
+  google.script.run.withSuccessHandler(function (updated) {
+    sessionPreferences = clonePlainObject(updated || sessionPreferences);
+    effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
+    applyEffectivePreferencesToUI();   // <-- add this
+    if (typeof onDone === 'function') onDone(updated);
+  }).setSidebarSessionState(sidebarSessionId, payload || {});
+}
+
+function saveSidebarPreference(payload, onDone, forceAccountSave) {
+  if (forceAccountSave || !isAdvancedSessionMode()) {
+    saveAccountPreference(payload, onDone);
+  } else {
+    saveSessionPreference(payload, onDone);
+  }
+}
+
+function resetSessionOverrides(onDone) {
+  if (!sidebarSessionId) return;
+  google.script.run.withSuccessHandler(function () {
+    sessionPreferences = {};
+    effectivePreferences = mergePreferenceLayers(accountPreferences, {});
+    applyEffectivePreferencesToUI();
+    if (hasResolvedReference && data && data.ref) refreshSelectedResult();
+    updateModeDependentSections();
+    if (typeof onDone === 'function') onDone();
+  }).clearSidebarSessionState(sidebarSessionId);
+}
+
+function saveSessionAsDefaults(onDone) {
+  if (!sidebarSessionId) return;
+  google.script.run.withSuccessHandler(function (updated) {
+    accountPreferences = clonePlainObject(updated || accountPreferences);
+    sessionPreferences = {};
+    effectivePreferences = mergePreferenceLayers(accountPreferences, {});
+    applyEffectivePreferencesToUI();
+    updateModeDependentSections();
+    if (typeof onDone === 'function') onDone(updated);
+  }).saveSidebarSessionAsAccountDefaults(sidebarSessionId);
+}
+
+function mergePreferenceDefaults(preferences) {
+  preferences = preferences || {};
+  if (preferences.include_translation_source_info == "true") {
+    $('.include-translation-source-info').prop('checked', true);
+  }
+  $('.wants-vowels').prop('checked', preferences.nekudot !== "false");
+  $('.wants-cantillation').prop('checked', preferences.teamim !== "false");
+  $('.include-transliteration').prop('checked', String(preferences.include_transliteration_default) === "true");
+  $('.insert-sefaria-link').prop('checked', preferences.insert_sefaria_link_default !== "false");
+  $('.wants-pesukim').prop('checked', preferences.show_line_markers_default !== "false");
+  $('.output-mode-selection').val(preferences.output_mode_default || 'both');
+  $('.bilingual-layout-selection').val(preferences.bilingual_layout_default || 'he-right');
+  $('.translation-only-filter').prop('checked', preferences.last_translation_only_filter === "true");
+  $('.search-sort-select').val(preferences.last_search_sort_mode || 'relevance');
+  $('.wants-relevance').prop('checked', preferences.last_search_relevance_sort !== "false");
+
+  preferredTranslationLanguage = String(preferences.preferred_translation_language || 'en').toLowerCase();
+  var savedTranslationLanguages = parseStoredArrayPreference(preferences.last_translation_languages, ['en']);
+  $('.translation-language-option').prop('checked', false);
+  var useAnyTranslationLanguage = !savedTranslationLanguages.length || savedTranslationLanguages.indexOf('any') >= 0;
+  $('.translation-language-any').prop('checked', useAnyTranslationLanguage);
+  if (!useAnyTranslationLanguage) {
+    savedTranslationLanguages.forEach(function (value) {
+      $('.translation-language-option[value="' + value.replace(/([\"'])/g, '\$1') + '"]').prop('checked', true);
+    });
+  }
+}
+
+function getSidebarTransliterationScheme() {
+  return String((effectivePreferences && effectivePreferences.transliteration_scheme) || 'simple_english');
+}
+
+// getSidebarTransliterationLabel() removed — label data is now in
+// CC_TRANSLIT_LABELS in composition_card_shared.html.
+</script>

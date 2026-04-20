@@ -1,0 +1,54 @@
+<script>
+google.script.run.withSuccessHandler(function (bootstrap) {
+  sidebarSessionId = (bootstrap && bootstrap.sessionId) || null;
+  accountPreferences = clonePlainObject((bootstrap && (bootstrap.accountPreferences || bootstrap.preferences)) || {});
+  sessionPreferences = clonePlainObject((bootstrap && bootstrap.sessionState) || {});
+  effectivePreferences = clonePlainObject((bootstrap && (bootstrap.effectivePreferences || bootstrap.preferences)) || accountPreferences);
+  var bootstrapMode = (bootstrap && bootstrap.mode) || window.INITIAL_SIDEBAR_MODE || 'texts';
+  setSidebarMode(bootstrapMode, true);
+  applyEffectivePreferencesToUI();
+  bindSidebarCompositionCard();
+  updateSidebarCompositionCard();
+  loadSessionLibrary();
+  setFooterButtonStates();
+}).getSidebarBootstrapData(window.INITIAL_SIDEBAR_MODE || 'texts');
+
+function initializeSidebar(receivedTitles) {
+  titles = Array.isArray(receivedTitles) ? receivedTitles : [];
+  $(".input").removeAttr("disabled");
+  $('.suggestions').html("<b>Please enter the title of a text or a source to insert.</b>");
+  // jQuery UI autocomplete removed. Unified debounced search now drives suggestions/results.
+
+  loadSessionLibrary();
+  renderSessionLibrary();
+  updateTranslationLanguageVisibility();
+  syncCompactTranslationLanguageUI();
+  updateBilingualLayoutVisibility();
+  updateTranslationDetailsVisibility();
+  updateHebrewOptionsVisibility();
+  updateVersionControlsVisibility();
+  updateTransliterationVisibility();
+  syncDisplayModeCards();
+  syncLayoutCards();
+  ensureResultFilterUI();
+  $('.results-restore-button').hide();
+  renderResults();
+  renderSessionLibrary();
+  setInsertButtonState(false);
+  syncSessionOverrideButtons();
+}
+
+google.script.run.withSuccessHandler(function (receivedTitles) {
+  initializeSidebar(receivedTitles);
+}).withFailureHandler(function () {
+  initializeSidebar([]);
+}).returnTitles();
+
+setSidebarMode(appMode, true);
+updateModeDependentSections();
+syncExperimentalAvailability();
+updateQuickActionsForMode();
+syncRestoreCorpusButton();
+setFooterButtonStates();
+
+</script>

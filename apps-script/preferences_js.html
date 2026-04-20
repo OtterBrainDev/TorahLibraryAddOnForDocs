@@ -1,0 +1,814 @@
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const fontMeta = {
+      "Ezra SIL": { stack: "'Ezra SIL', 'SBL Hebrew', 'Times New Roman', serif" },
+      "SBL Hebrew": { stack: "'SBL Hebrew', 'Ezra SIL', 'Times New Roman', serif" },
+      "Arial": { stack: "Arial, 'Noto Sans Hebrew', sans-serif" },
+      "David": { stack: "David, 'Times New Roman', serif" },
+      "Frank Ruhl Libre": { stack: "'Frank Ruhl Libre', 'Times New Roman', serif" },
+      "Noto Rashi Hebrew": { stack: "'Noto Rashi Hebrew', 'Noto Serif Hebrew', serif" },
+      "Noto Sans Hebrew": { stack: "'Noto Sans Hebrew', Arial, sans-serif" },
+      "Noto Serif Hebrew": { stack: "'Noto Serif Hebrew', 'Times New Roman', serif" },
+      "Times New Roman": { stack: "'Times New Roman', serif" },
+      "Crimson Text": { stack: "'Crimson Text', Georgia, serif" },
+      "EB Garamond": { stack: "'EB Garamond', Georgia, serif" },
+      "Roboto": { stack: "Roboto, Arial, sans-serif" },
+      "Calibri": { stack: "Calibri, Arial, sans-serif" },
+      "Georgia": { stack: "Georgia, serif" },
+      "Verdana": { stack: "Verdana, Arial, sans-serif" }
+    };
+
+    const transliterationExamples = {
+      simple_english: "Ve-samtem et devarai eileh al levavchem",
+      traditional: "Vəśamtem ʾet-dəvaray ʾēleh ʿal-ləvavḵem",
+      modern_israeli: "Ve-samtem et devarai eleh al levavkhem",
+      ashkenazi: "Ve-samtem es devarai eileh al levavchem",
+      academic_full: "Wəśamtem ʾet-dəvaray ʾēlleh ʿal-ləvavḵem",
+      ipa_modern: "ve-samtem et dvarai ele al levavχem",
+      ipa_tiberian: "wəsamtem ʔet dəvaʁaj ʔele ʕal ləvavχem"
+    };
+
+    const overrideChars = ["א","ב","ג","ד","ה","ו","ז","ח","ט","י","כ","ך","ל","מ","ם","נ","ן","ס","ע","פ","ף","צ","ץ","ק","ר","ש","ת"];
+    const customReplacementFields = [
+      'meforash_replacement',
+      'yaw_replacement',
+      'elodim_replacement',
+      'god_replacement'
+    ];
+
+    let transliterationOverrides = {};
+    let selectedOverrideChar = "";
+
+    function byId(id) {
+      return document.getElementById(id);
+    }
+
+    function encodeStyleState(flags) {
+      return flags.length ? flags.sort().join(',') : 'normal';
+    }
+
+    function decodeStyleState(value) {
+      if (!value || value === 'normal') return [];
+      return String(value).split(',').filter(Boolean);
+    }
+
+    function applyPreviewStyles(previewId, styleInputId) {
+      const preview = byId(previewId);
+      const input = byId(styleInputId);
+      if (!preview || !input) return;
+      const flags = decodeStyleState(input.value);
+      preview.style.fontWeight = flags.indexOf('bold') >= 0 ? '700' : '400';
+      preview.style.fontStyle = flags.indexOf('italic') >= 0 ? 'italic' : 'normal';
+      preview.style.textDecoration = flags.indexOf('underline') >= 0 ? 'underline' : 'none';
+    }
+
+    function applyStyleControlState(inputId) {
+      const input = byId(inputId);
+      const flags = decodeStyleState(input ? input.value : '');
+      const container = document.querySelector('[data-style-control="' + inputId + '"]');
+      if (!container) return;
+      container.querySelectorAll('.style-btn').forEach(function(btn) {
+        btn.classList.toggle('active', flags.indexOf(btn.getAttribute('data-style-flag')) >= 0);
+      });
+    }
+
+    function bindStyleControl(inputId, previewId) {
+      const input = byId(inputId);
+      const container = document.querySelector('[data-style-control="' + inputId + '"]');
+      if (!input || !container) return;
+      container.querySelectorAll('.style-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          const flags = decodeStyleState(input.value);
+          const flag = btn.getAttribute('data-style-flag');
+          const idx = flags.indexOf(flag);
+          if (idx >= 0) flags.splice(idx, 1); else flags.push(flag);
+          input.value = encodeStyleState(flags);
+          applyStyleControlState(inputId);
+          applyPreviewStyles(previewId, inputId);
+        });
+      });
+    }
+
+    function updateFontPreview(selectId, previewId) {
+      const select = byId(selectId);
+      const preview = byId(previewId);
+      if (!select || !preview) return;
+      const meta = fontMeta[select.value];
+      if (meta) preview.style.fontFamily = meta.stack;
+    }
+
+    function updateStandardPreview(selectId, previewId, styleId) {
+      const select = byId(selectId);
+      const preview = byId(previewId);
+      if (!select || !preview) return;
+      updateFontPreview(selectId, previewId);
+      const sizeInput = byId(selectId + '_size') || byId(selectId.replace('_font', '_font_size'));
+      if (sizeInput && sizeInput.value) preview.style.fontSize = Number(sizeInput.value) + 'px';
+      applyPreviewStyles(previewId, styleId);
+    }
+
+    function updateTransliterationPreview() {
+      const scheme = byId('transliteration_scheme');
+      const preview = byId('transliteration_preview');
+      if (!scheme || !preview) return;
+      preview.innerHTML = '<span class="label">Preview</span>' + (transliterationExamples[scheme.value] || transliterationExamples.simple_english);
+      updateStandardPreview('transliteration_font', 'transliteration_preview', 'transliteration_font_style');
+    }
+
+    function normalizeFontSizeField(id) {
+      const input = byId(id);
+      if (!input || input.value === '') return;
+      const value = Number(input.value);
+      if (!Number.isFinite(value)) return;
+      const bounded = Math.min(400, Math.max(1, value));
+      input.value = bounded.toFixed(1);
+    }
+
+    function setSegmentedValue(type, value) {
+      document.querySelectorAll('[data-segmented="' + type + '"] .segmented-option').forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-value') === value);
+      });
+
+      if (type === 'vowels') {
+        byId('nekudot').value = value === 'never' ? 'false' : 'true';
+        byId('nekudot_filter').value = value === 'tanakh' ? 'tanakh' : (value === 'never' ? 'false' : 'always');
+      } else if (type === 'cantillation') {
+        byId('teamim').value = value === 'never' ? 'false' : 'true';
+        byId('teamim_filter').value = value;
+      }
+    }
+
+    function inferVowelsValue(preferences) {
+      if (preferences.nekudot === 'false') return 'never';
+      if (preferences.nekudot_filter === 'tanakh') return 'tanakh';
+      return 'always';
+    }
+
+    function inferCantillationValue(preferences) {
+      if (preferences.teamim === 'false') return 'never';
+      return preferences.teamim_filter || 'available';
+    }
+
+
+    // Composition card state helpers — used by the shared composition card adapter below.
+    function _prefSetCompositionVowels(on) {
+      if (byId('nekudot')) byId('nekudot').value = on ? 'true' : 'false';
+      if (byId('nekudot_filter')) byId('nekudot_filter').value = on ? 'always' : 'false';
+    }
+
+    function _prefSetCompositionCantillation(on) {
+      if (byId('teamim')) byId('teamim').value = on ? 'true' : 'false';
+      if (byId('teamim_filter')) byId('teamim_filter').value = on ? 'available' : 'false';
+    }
+
+    function _prefSetCompositionTransliteration(value) {
+      const normalized = value || 'none';
+      const include = normalized !== 'none';
+      if (byId('include_transliteration_default')) byId('include_transliteration_default').checked = include;
+      if (byId('transliteration_scheme') && include) {
+        byId('transliteration_scheme').value = normalized;
+        syncCustomSelect(byId('transliteration_scheme'));
+      }
+    }
+
+    // Preferences adapter for the shared composition card component.
+    function _initPreferencesCompositionCard() {
+      initCompositionCard({
+        containerId: 'composition-card-container',
+        getState: function () {
+          var vowelsOn = byId('nekudot') ? byId('nekudot').value !== 'false' : true;
+          var cantillationOn = byId('teamim') ? byId('teamim').value !== 'false' : true;
+          var translitCheck = byId('include_transliteration_default');
+          var transliterationOn = translitCheck ? translitCheck.checked : false;
+          var scheme = byId('transliteration_scheme') ? byId('transliteration_scheme').value : 'simple_english';
+          var linkCheck = byId('insert_sefaria_link_default');
+          var linesCheck = byId('show_line_markers_default');
+          var detailsCheck = byId('include_translation_source_info');
+          return {
+            vowelsOn: vowelsOn,
+            cantillationOn: cantillationOn,
+            transliterationOn: transliterationOn,
+            scheme: transliterationOn ? (scheme || 'simple_english') : 'none',
+            linkOn: linkCheck ? linkCheck.checked : false,
+            linesOn: linesCheck ? linesCheck.checked : false,
+            detailsOn: detailsCheck ? detailsCheck.checked : false
+          };
+        },
+        onToggle: function (key) {
+          if (key === 'vowels') {
+            var on = byId('nekudot') ? byId('nekudot').value !== 'false' : true;
+            _prefSetCompositionVowels(!on);
+          } else if (key === 'cantillation') {
+            var on = byId('teamim') ? byId('teamim').value !== 'false' : true;
+            _prefSetCompositionCantillation(!on);
+          } else if (key === 'translit') {
+            var check = byId('include_transliteration_default');
+            if (check) check.checked = !check.checked;
+          } else if (key === 'link') {
+            var linkBox = byId('insert_sefaria_link_default');
+            if (linkBox) linkBox.checked = !linkBox.checked;
+          } else if (key === 'lines') {
+            var linesBox = byId('show_line_markers_default');
+            if (linesBox) linesBox.checked = !linesBox.checked;
+          } else if (key === 'details') {
+            var detailsBox = byId('include_translation_source_info');
+            if (detailsBox) detailsBox.checked = !detailsBox.checked;
+          }
+        },
+        onSchemeSelect: function (value) {
+          _prefSetCompositionTransliteration(value);
+          updateTransliterationPreview();
+        },
+        getTranslitLabel: function (on, scheme) {
+          if (!on) return 'Transliteration off';
+          return transliterationExamples[scheme] || transliterationExamples.simple_english;
+        },
+        afterUpdate: function () {
+          // Apply font styling to transliteration button (preferences-specific)
+          var translitBtn = byId('cc-translit-toggle');
+          if (!translitBtn) return;
+          var fontMetaEntry = fontMeta[(byId('transliteration_font') || {}).value || ''];
+          translitBtn.style.fontFamily = fontMetaEntry ? fontMetaEntry.stack : '';
+          var sizeInput = byId('transliteration_font_size');
+          if (sizeInput && sizeInput.value) translitBtn.style.fontSize = Number(sizeInput.value) + 'px';
+          else translitBtn.style.fontSize = '';
+          applyPreviewStyles('cc-translit-toggle', 'transliteration_font_style');
+        }
+      });
+    }
+
+    function updateSheimotSummary() {
+      const enabled = ['meforash_replace','yaw_replace','elodim_replace','god_replace']
+        .map(byId)
+        .filter(Boolean)
+        .filter(function(el) { return el.checked; }).length;
+      const node = byId('sheimot_summary_note');
+      if (!node) return;
+      node.textContent = enabled > 0 ? enabled + ' mapping' + (enabled === 1 ? '' : 's') + ' enabled' : 'None';
+    }
+
+    function getCustomField(selectId) {
+      return byId(selectId + '_custom');
+    }
+
+    function getSelectStoredValue(selectId) {
+      const select = byId(selectId);
+      if (!select) return '';
+      if (select.value === '__other__') {
+        const custom = getCustomField(selectId);
+        return custom ? custom.value.trim() : '';
+      }
+      return select.value;
+    }
+
+    function setReplacementSelectValue(selectId, storedValue) {
+      const select = byId(selectId);
+      if (!select) return;
+      const value = String(storedValue == null ? '' : storedValue);
+      const matches = Array.from(select.options).some(function(opt) { return opt.value === value; });
+      if (matches) {
+        select.value = value;
+      } else {
+        select.value = '__other__';
+        const custom = getCustomField(selectId);
+        if (custom) custom.value = value;
+      }
+      toggleCustomReplacementField(selectId);
+    }
+
+    function toggleCustomReplacementField(selectId) {
+      const select = byId(selectId);
+      const custom = getCustomField(selectId);
+      if (!select || !custom) return;
+      const show = select.value === '__other__';
+      custom.hidden = !show;
+      if (!show) custom.value = '';
+    }
+
+    function bindReplacementField(selectId, checkboxId) {
+      const select = byId(selectId);
+      const custom = getCustomField(selectId);
+      const toggle = byId(checkboxId);
+      if (!select) return;
+
+      function handleChange() {
+        toggleCustomReplacementField(selectId);
+        if (toggle) toggle.checked = true;
+        syncCustomSelect(select);
+        updateSheimotSummary();
+      }
+
+      select.addEventListener('change', handleChange);
+      if (custom) {
+        custom.addEventListener('input', function() {
+          if (toggle) toggle.checked = true;
+          updateSheimotSummary();
+        });
+        custom.addEventListener('change', function() {
+          if (toggle) toggle.checked = true;
+          updateSheimotSummary();
+        });
+      }
+    }
+
+    function renderOverrideGrid() {
+      const grid = byId('override_grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      overrideChars.forEach(function(ch) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'override-char-btn' + (selectedOverrideChar === ch ? ' active' : '');
+        btn.textContent = ch;
+        btn.setAttribute('data-char', ch);
+        btn.addEventListener('click', function() {
+          selectedOverrideChar = ch;
+          byId('override_selected_char').value = ch;
+          byId('override_value').value = transliterationOverrides[ch] || '';
+          renderOverrideGrid();
+        });
+        grid.appendChild(btn);
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderOverrideList() {
+      const list = byId('override_list');
+      if (!list) return;
+      const keys = Object.keys(transliterationOverrides).sort();
+      if (!keys.length) {
+        list.innerHTML = '<div class="mini-help">No transliteration overrides saved.</div>';
+        return;
+      }
+      list.innerHTML = keys.map(function(k) {
+        return '<div class="override-item"><span><strong>' + escapeHtml(k) + '</strong> → ' + escapeHtml(transliterationOverrides[k]) + '</span></div>';
+      }).join('');
+    }
+
+    function syncOverridesField() {
+      const field = byId('transliteration_overrides');
+      if (field) field.value = JSON.stringify(transliterationOverrides);
+      renderOverrideList();
+    }
+
+    function buildCustomSelectMarkupFromSelect(select) {
+      if (!select || select.dataset.enhancedCustomSelect === 'true') return null;
+      select.dataset.enhancedCustomSelect = 'true';
+      select.classList.add('enhanced-native-select');
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'custom-select';
+      wrapper.setAttribute('data-custom-select', select.id || '');
+      wrapper.setAttribute('data-custom-select-for', select.name || select.id || '');
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'custom-select-button';
+      button.setAttribute('aria-haspopup', 'listbox');
+      button.setAttribute('aria-expanded', 'false');
+      button.innerHTML = '<span class="custom-select-value"></span><span class="custom-select-caret">▾</span>';
+
+      const menu = document.createElement('div');
+      menu.className = 'custom-select-menu';
+      menu.setAttribute('role', 'listbox');
+
+      Array.from(select.children).forEach(function(child) {
+        if (child.tagName === 'OPTGROUP') {
+          const label = document.createElement('div');
+          label.className = 'custom-select-group-label';
+          label.textContent = child.label || '';
+          menu.appendChild(label);
+          Array.from(child.children).forEach(function(opt) {
+            const optBtn = document.createElement('button');
+            optBtn.type = 'button';
+            optBtn.className = 'custom-select-option';
+            optBtn.setAttribute('data-value', opt.value);
+            optBtn.textContent = opt.textContent;
+            menu.appendChild(optBtn);
+          });
+        } else if (child.tagName === 'OPTION') {
+          const optBtn = document.createElement('button');
+          optBtn.type = 'button';
+          optBtn.className = 'custom-select-option';
+          optBtn.setAttribute('data-value', child.value);
+          optBtn.textContent = child.textContent;
+          menu.appendChild(optBtn);
+        }
+      });
+
+      wrapper.appendChild(button);
+      wrapper.appendChild(menu);
+      select.parentNode.insertBefore(wrapper, select.nextSibling);
+
+      button.addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.querySelectorAll('.custom-select.open').forEach(function(other) {
+          if (other !== wrapper) {
+            other.classList.remove('open');
+            const otherButton = other.querySelector('.custom-select-button');
+            if (otherButton) otherButton.setAttribute('aria-expanded', 'false');
+          }
+        });
+        const isOpen = wrapper.classList.toggle('open');
+        button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      });
+
+      wrapper.querySelectorAll('.custom-select-option').forEach(function(optBtn) {
+        optBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          select.value = optBtn.getAttribute('data-value');
+          syncCustomSelect(select);
+          wrapper.classList.remove('open');
+          button.setAttribute('aria-expanded', 'false');
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      });
+
+      syncCustomSelect(select);
+      return wrapper;
+    }
+
+    function syncCustomSelect(select) {
+      if (!select) return;
+      const wrapper = document.querySelector('[data-custom-select="' + select.id + '"]');
+      if (!wrapper) return;
+      const valueNode = wrapper.querySelector('.custom-select-value');
+      const selectedOption = select.options[select.selectedIndex];
+      if (valueNode) valueNode.textContent = selectedOption ? selectedOption.textContent : '';
+      wrapper.querySelectorAll('.custom-select-option').forEach(function(optBtn) {
+        optBtn.classList.toggle('is-selected', optBtn.getAttribute('data-value') === select.value);
+      });
+    }
+
+    function enhanceNativeSelect(selector) {
+      document.querySelectorAll(selector).forEach(function(select) {
+        buildCustomSelectMarkupFromSelect(select);
+      });
+    }
+
+    function collectPreferenceObject() {
+      syncOverridesField();
+      const preferenceObject = {};
+
+      document.querySelectorAll('select').forEach(function(el) {
+        if (customReplacementFields.indexOf(el.name) >= 0) {
+          preferenceObject[el.name] = getSelectStoredValue(el.id);
+        } else {
+          preferenceObject[el.name] = el.value;
+        }
+      });
+
+      document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+        preferenceObject[el.name] = el.checked;
+      });
+
+      document.querySelectorAll('input[type="text"], input[type="number"], input[type="hidden"]').forEach(function(el) {
+        if (!el.name) return;
+        if (el.dataset.customFor) return;
+        preferenceObject[el.name] = el.value;
+      });
+
+      return preferenceObject;
+    }
+
+    function applyPreferencesToForm(preferences) {
+      try {
+              document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+                el.checked = preferences[el.name] == 'true' || preferences[el.name] === true;
+              });
+
+              document.querySelectorAll('select').forEach(function(el) {
+                if (preferences[el.name] !== undefined && preferences[el.name] !== null && customReplacementFields.indexOf(el.name) === -1) {
+                  el.value = preferences[el.name];
+                }
+              });
+
+              document.querySelectorAll('input[type="text"], input[type="number"], input[type="hidden"]').forEach(function(el) {
+                if (!el.name) return;
+                if (el.dataset.customFor) return;
+                if (preferences[el.name] !== undefined && preferences[el.name] !== null && preferences[el.name] !== '') {
+                  el.value = preferences[el.name];
+                }
+              });
+
+              customReplacementFields.forEach(function(name) {
+                setReplacementSelectValue(name, preferences[name]);
+              });
+
+              try {
+                transliterationOverrides = JSON.parse(preferences.transliteration_overrides || '{}') || {};
+              } catch (e) {
+                transliterationOverrides = {};
+              }
+
+              setSegmentedValue('vowels', inferVowelsValue(preferences));
+              setSegmentedValue('cantillation', inferCantillationValue(preferences));
+
+              ['hebrew_font','translation_font','transliteration_font','source_title_font','sefaria_link_font','transliteration_scheme','preferred_translation_language']
+                .forEach(function(id) {
+                  const el = byId(id);
+                  if (!el) return;
+                  if (preferences[id] !== undefined && preferences[id] !== null && preferences[id] !== '') {
+                    if (customReplacementFields.indexOf(id) === -1) el.value = preferences[id];
+                  }
+                  syncCustomSelect(el);
+                });
+
+              ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size'].forEach(normalizeFontSizeField);
+
+              ['hebrew_font_style','translation_font_style','transliteration_font_style','source_title_font_style','sefaria_link_font_style'].forEach(function(id) {
+                const input = byId(id);
+                if (input && !input.value) input.value = 'normal';
+                applyStyleControlState(id);
+              });
+
+              updateStandardPreview('hebrew_font', 'hebrew_font_preview', 'hebrew_font_style');
+              updateStandardPreview('translation_font', 'translation_font_preview', 'translation_font_style');
+              updateStandardPreview('source_title_font', 'source_title_preview', 'source_title_font_style');
+              updateStandardPreview('sefaria_link_font', 'sefaria_link_preview', 'sefaria_link_font_style');
+              updateTransliterationPreview();
+              updateCompositionCard();
+              updateSheimotSummary();
+              renderOverrideGrid();
+              renderOverrideList();
+              syncExperimentalChildToggles();
+      } catch (error) {
+        console.error('Preferences modal apply failed:', error);
+        setResultsMessage('Preferences loaded with an error: ' + (error && error.message ? error.message : error));
+      } finally {
+        $(".hide").fadeOut(300);
+      }
+    }
+
+    function syncExperimentalChildToggles() {
+      var masterOn = $('#experimental_features_enabled').is(':checked');
+      $('.experimental-child-toggles').toggleClass('disabled-section', !masterOn);
+      $('.experimental-child-toggles input[type="checkbox"]').prop('disabled', !masterOn);
+      if (!masterOn) {
+        $('.experimental-child-toggles input[type="checkbox"]').prop('checked', false);
+      }
+    }
+
+    $('#experimental_features_enabled').on('change', syncExperimentalChildToggles);
+
+    function setResultsMessage(message, isHtml) {
+      if (isHtml) $("#results").html(message);
+      else $("#results").text(message);
+    }
+
+    function loadPreferencesIntoForm() {
+      google.script.run.withSuccessHandler(function(preferences) {
+        applyPreferencesToForm(preferences || {});
+      }).withFailureHandler(function(error) {
+        console.error('Preferences modal failed to load:', error);
+        setResultsMessage('Could not load preferences.');
+        $(".hide").fadeOut(300);
+      }).getPreferences();
+    }
+
+    function loadSavedAiKeyPreview() {
+      if (!byId('ai_saved_key_provider')) return;
+      google.script.run.withSuccessHandler(function(result) {
+        if (byId('ai_saved_key_mask')) byId('ai_saved_key_mask').value = (result && result.masked) || '';
+        if (byId('ai_key_status')) byId('ai_key_status').textContent = (result && result.masked) ? 'Saved key available for Advanced mode.' : 'No saved key for this provider.';
+      }).withFailureHandler(function(error) {
+        console.error('AI key preview failed:', error);
+        if (byId('ai_key_status')) byId('ai_key_status').textContent = 'Could not load saved key status.';
+      }).getSavedAiKeyPreview(byId('ai_saved_key_provider').value);
+    }
+
+    document.addEventListener('click', function() {
+      document.querySelectorAll('.custom-select.open').forEach(function(wrapper) {
+        wrapper.classList.remove('open');
+        const button = wrapper.querySelector('.custom-select-button');
+        if (button) button.setAttribute('aria-expanded', 'false');
+      });
+    });
+
+    bindStyleControl('hebrew_font_style', 'hebrew_font_preview');
+    bindStyleControl('translation_font_style', 'translation_font_preview');
+    bindStyleControl('transliteration_font_style', 'transliteration_preview');
+    bindStyleControl('source_title_font_style', 'source_title_preview');
+    bindStyleControl('sefaria_link_font_style', 'sefaria_link_preview');
+
+    enhanceNativeSelect([
+      'select#hebrew_font',
+      'select#translation_font',
+      'select#transliteration_font',
+      'select#source_title_font',
+      'select#sefaria_link_font',
+      'select#transliteration_scheme',
+      'select#preferred_translation_language',
+      'select#meforash_replacement',
+      'select#yaw_replacement',
+      'select#elodim_replacement',
+      'select#god_replacement',
+      'select#output_mode_default',
+      'select#bilingual_layout_default',
+      'select#ai_provider_default',
+      'select#ai_key_strategy_default',
+      'select#ai_saved_key_provider'
+    ].join(','));
+
+    {
+      var previewMap = {
+        hebrew_font: ['hebrew_font_preview', 'hebrew_font_style'],
+        translation_font: ['translation_font_preview', 'translation_font_style'],
+        source_title_font: ['source_title_preview', 'source_title_font_style'],
+        sefaria_link_font: ['sefaria_link_preview', 'sefaria_link_font_style']
+      };
+      Object.keys(previewMap).forEach(function(id) {
+        const el = byId(id);
+        if (!el) return;
+        el.addEventListener('change', function() {
+          updateStandardPreview(id, previewMap[id][0], previewMap[id][1]);
+          updateCompositionCard();
+        });
+      });
+    }
+
+    byId('transliteration_font').addEventListener('change', function(){ updateTransliterationPreview(); updateCompositionCard(); });
+    byId('transliteration_scheme').addEventListener('change', function(){ syncCustomSelect(byId('transliteration_scheme')); updateTransliterationPreview(); updateCompositionCard(); });
+    if (byId('include_transliteration_default')) byId('include_transliteration_default').addEventListener('change', function(){ updateCompositionCard(); });
+    if (byId('insert_sefaria_link_default')) byId('insert_sefaria_link_default').addEventListener('change', function(){ updateCompositionCard(); });
+    if (byId('show_line_markers_default')) byId('show_line_markers_default').addEventListener('change', function(){ updateCompositionCard(); });
+    if (byId('include_translation_source_info')) byId('include_translation_source_info').addEventListener('change', function(){ updateCompositionCard(); });
+    // insert_citation_default removed — citation feature was dropped.
+
+    ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size'].forEach(function(id) {
+      const el = byId(id);
+      if (!el) return;
+      function updateForField() {
+        normalizeFontSizeField(id);
+        if (id.indexOf('transliteration_') === 0) updateTransliterationPreview();
+        else if (id.indexOf('source_title_') === 0) updateStandardPreview('source_title_font', 'source_title_preview', 'source_title_font_style');
+        else if (id.indexOf('sefaria_link_') === 0) updateStandardPreview('sefaria_link_font', 'sefaria_link_preview', 'sefaria_link_font_style');
+        else if (id.indexOf('translation_') === 0) updateStandardPreview('translation_font', 'translation_font_preview', 'translation_font_style');
+        else updateStandardPreview('hebrew_font', 'hebrew_font_preview', 'hebrew_font_style');
+        updateCompositionCard();
+      }
+      el.addEventListener('blur', updateForField);
+      el.addEventListener('change', updateForField);
+    });
+
+    bindReplacementField('meforash_replacement', 'meforash_replace');
+    bindReplacementField('yaw_replacement', 'yaw_replace');
+    bindReplacementField('elodim_replacement', 'elodim_replace');
+    bindReplacementField('god_replacement', 'god_replace');
+
+    ['meforash_replace','yaw_replace','elodim_replace','god_replace'].forEach(function(id) {
+      const el = byId(id);
+      if (el) el.addEventListener('change', updateSheimotSummary);
+    });
+
+    byId('save_override_btn').addEventListener('click', function() {
+      if (!selectedOverrideChar) return;
+      const val = byId('override_value').value;
+      if (val) transliterationOverrides[selectedOverrideChar] = val;
+      else delete transliterationOverrides[selectedOverrideChar];
+      syncOverridesField();
+      renderOverrideGrid();
+    });
+
+    byId('remove_override_btn').addEventListener('click', function() {
+      if (!selectedOverrideChar) return;
+      delete transliterationOverrides[selectedOverrideChar];
+      byId('override_value').value = '';
+      syncOverridesField();
+      renderOverrideGrid();
+    });
+
+    document.querySelector('.reset-preferences-button').addEventListener('click', function() {
+      byId('reset_modal').hidden = false;
+    });
+
+    document.querySelector('.reset-cancel-button').addEventListener('click', function() {
+      byId('reset_modal').hidden = true;
+    });
+
+    document.querySelector('.reset-confirm-button').addEventListener('click', function() {
+      byId('reset_modal').hidden = true;
+      setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
+      google.script.run.withSuccessHandler(function(defaults) {
+        google.script.run.withSuccessHandler(function() {
+          applyPreferencesToForm(defaults);
+          setResultsMessage('Preferences reset to defaults.');
+        }).setPreferences(defaults);
+      }).getDefaultPreferences();
+    });
+
+    $('.refresh-sidebar-button').on('click', function() {
+      setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
+      google.script.run.withSuccessHandler(function() {
+        setResultsMessage('Sidebar refreshed. Sidebar-only session items were cleared.');
+      }).refreshSidebarAfterPreferences();
+    });
+
+    $(".save-preferences-button").click(function() {
+      setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
+      const preferenceObject = collectPreferenceObject();
+      google.script.run.withSuccessHandler(function() {
+        setResultsMessage('Successfully updated preferences. Refresh the sidebar if you want the open sidebar to pick up the new defaults now.');
+        updateSheimotSummary();
+      }).withFailureHandler(function(error) {
+        console.error('Preferences save failed:', error);
+        setResultsMessage('Could not save preferences.');
+      }).setPreferences(preferenceObject);
+    });
+
+    $(".save-close-preferences-button").click(function() {
+      setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
+      const preferenceObject = collectPreferenceObject();
+      google.script.run.withSuccessHandler(function() {
+        setResultsMessage('Successfully updated preferences.');
+        updateSheimotSummary();
+        google.script.host.close();
+      }).withFailureHandler(function(error) {
+        console.error('Preferences save-and-close failed:', error);
+        setResultsMessage('Could not save preferences.');
+      }).setPreferences(preferenceObject);
+    });
+
+    if (byId('ai_saved_key_provider')) {
+      byId('ai_saved_key_provider').addEventListener('change', loadSavedAiKeyPreview);
+      byId('ai_save_key_button').addEventListener('click', function(){
+        google.script.run.withSuccessHandler(function(){ byId('ai_key_status').textContent='Saved for Advanced mode.'; loadSavedAiKeyPreview(); byId('ai_saved_key_mask').value=''; }).saveAiKeyFromPreferences(byId('ai_saved_key_provider').value, byId('ai_saved_key_mask').value);
+      });
+      byId('ai_clear_key_button').addEventListener('click', function(){
+        google.script.run.withSuccessHandler(function(){ byId('ai_key_status').textContent='Cleared.'; loadSavedAiKeyPreview(); }).clearSavedAiKey(byId('ai_saved_key_provider').value);
+      });
+      loadSavedAiKeyPreview();
+    }
+
+    function _initPreferencesTabs() {
+      const tabs = Array.from(document.querySelectorAll('.pref-tab'));
+      if (!tabs.length) return;
+      const panels = tabs
+        .map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); })
+        .filter(Boolean);
+      if (!panels.length) return;
+
+      function activate(tab, opts) {
+        const focus = opts && opts.focus;
+        const panelId = tab.getAttribute('aria-controls');
+        tabs.forEach(function (t) {
+          const selected = t === tab;
+          t.setAttribute('aria-selected', selected ? 'true' : 'false');
+          t.tabIndex = selected ? 0 : -1;
+        });
+        panels.forEach(function (p) {
+          p.hidden = (p.id !== panelId);
+        });
+        if (focus) tab.focus();
+      }
+
+      const initial = tabs.find(function (t) {
+        return t.getAttribute('aria-selected') === 'true';
+      }) || tabs[0];
+      activate(initial);
+
+      tabs.forEach(function (tab, idx) {
+        tab.addEventListener('click', function () {
+          activate(tab, { focus: true });
+        });
+        tab.addEventListener('keydown', function (ev) {
+          switch (ev.key) {
+            case 'ArrowRight':
+              ev.preventDefault();
+              tabs[(idx + 1) % tabs.length].focus();
+              break;
+            case 'ArrowLeft':
+              ev.preventDefault();
+              tabs[(idx - 1 + tabs.length) % tabs.length].focus();
+              break;
+            case 'Home':
+              ev.preventDefault();
+              tabs[0].focus();
+              break;
+            case 'End':
+              ev.preventDefault();
+              tabs[tabs.length - 1].focus();
+              break;
+            case 'Enter':
+            case ' ':
+              ev.preventDefault();
+              activate(tab, { focus: true });
+              break;
+          }
+        });
+      });
+    }
+
+    _initPreferencesTabs();
+    _initPreferencesCompositionCard();
+    loadPreferencesIntoForm();
+  });
+</script>

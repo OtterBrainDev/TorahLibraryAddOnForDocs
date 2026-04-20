@@ -1,0 +1,7 @@
+{
+  "name": "torah-library-addon-for-docs",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

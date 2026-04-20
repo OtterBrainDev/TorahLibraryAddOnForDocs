@@ -1,0 +1,150 @@
+<script>
+var sessionLibrary = { pinned: [], inserted: [] };
+var sessionLibraryFilter = 'all';
+
+function loadSessionLibrary() {
+  try {
+    sessionLibrary = JSON.parse(localStorage.getItem('sefariaSidebarSessionLibrary') || '{"pinned":[],"inserted":[]}');
+    if (!sessionLibrary || typeof sessionLibrary !== 'object') throw new Error('bad');
+    if (!Array.isArray(sessionLibrary.pinned)) sessionLibrary.pinned = [];
+    if (!Array.isArray(sessionLibrary.inserted)) sessionLibrary.inserted = [];
+  } catch (e) {
+    sessionLibrary = { pinned: [], inserted: [] };
+  }
+}
+
+function saveSessionLibrary() {
+  try { localStorage.setItem('sefariaSidebarSessionLibrary', JSON.stringify(sessionLibrary)); } catch (e) {}
+  setFooterButtonStates();
+}
+
+function buildSessionEntry(ref, label, corpusLabel, extra) {
+  var rawLabel = String(label || ref || '').split(' › ')[0].split(',')[0].trim();
+  extra = extra || {};
+  return {
+    ref: ref,
+    label: rawLabel || ref,
+    corpusLabel: String(corpusLabel || 'Other'),
+    mode: extra.mode || (typeof appMode !== 'undefined' && appMode === 'voices' ? 'voices' : 'text'),
+    url: extra.url || '',
+    query: extra.query || label || ref
+  };
+}
+
+function upsertSessionEntry(listName, entry) {
+  if (!entry || !entry.ref) return;
+  var list = sessionLibrary[listName] || [];
+  list = list.filter(function(item){ return item && item.ref !== entry.ref; });
+  list.unshift(entry);
+  sessionLibrary[listName] = list.slice(0, 12);
+  saveSessionLibrary();
+  renderSessionLibrary();
+}
+
+function removeSessionEntry(listName, ref) {
+  sessionLibrary[listName] = (sessionLibrary[listName] || []).filter(function(item){ return item && item.ref !== ref; });
+  saveSessionLibrary();
+  renderSessionLibrary();
+}
+
+
+
+
+function syncSessionLibraryFilterOptions() {
+  var seen = {};
+  var options = [{ key: 'all', label: 'All Corpora' }];
+  (sessionLibrary.pinned || []).concat(sessionLibrary.inserted || []).forEach(function(item) {
+    var label = String((item && item.corpusLabel) || 'Other');
+    var key = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'other';
+    if (seen[key]) return;
+    seen[key] = true;
+    options.push({ key: key, label: label });
+  });
+  var $select = $('#session-library-corpus-filter');
+  if (!$select.length) return;
+  $select.html(options.map(function(option){
+    return "<option value='" + escapeHTML(option.key) + "'>" + escapeHTML(option.label) + "</option>";
+  }).join(''));
+  if (!$select.find("option[value='" + sessionLibraryFilter + "']").length) sessionLibraryFilter = 'all';
+  $select.val(sessionLibraryFilter);
+  $select.toggle(options.length > 2);
+}
+
+function getSessionEntryCorpusKey(item) {
+  return String((item && item.corpusLabel) || 'Other').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'other';
+}
+
+function renderSessionLibrary() {
+  var $panel = $('.session-library-panel');
+  var $combined = $('.session-library-combined-results');
+  if (!$panel.length) return;
+  if (!$combined.length) {
+    $('.session-library-group').remove();
+    $('.session-library-note').after("<div class='session-library-combined-results'></div>");
+    $combined = $('.session-library-combined-results');
+  }
+  $combined.empty();
+
+  syncSessionLibraryFilterOptions();
+
+  var grouped = {};
+  function addItem(item, bucket) {
+    if (!item || !item.ref) return;
+    var corpus = String((item && item.corpusLabel) || 'Other');
+    var corpusKey = getSessionEntryCorpusKey(item);
+    if (sessionLibraryFilter !== 'all' && corpusKey !== sessionLibraryFilter) return;
+    if (!grouped[corpus]) grouped[corpus] = { pinned: [], inserted: [] };
+    grouped[corpus][bucket].push(item);
+  }
+
+  (sessionLibrary.pinned || []).forEach(function(item){ addItem(item, 'pinned'); });
+  (sessionLibrary.inserted || []).forEach(function(item){ if (!isPinnedRef(item.ref)) addItem(item, 'inserted'); });
+
+  var corpora = Object.keys(grouped).sort();
+  corpora.forEach(function(corpus) {
+    var bucket = grouped[corpus];
+    var total = bucket.pinned.length + bucket.inserted.length;
+    var html = "<details class='session-library-corpus-details' open><summary><span>" + escapeHTML(corpus) + "</span><span class='session-library-corpus-count'>" + total + "</span></summary><div class='session-library-corpus-list'>";
+    if (bucket.pinned.length) {
+      html += "<div class='session-library-entry-group-label'>Pinned</div>";
+      bucket.pinned.forEach(function(item) {
+        html += "<div class='result-item session-library-item' data-ref='" + escapeHTML(item.ref) + "' data-url='" + escapeHTML(item.url || '') + "' data-mode='" + escapeHTML(item.mode || 'text') + "' data-query='" + escapeHTML(item.query || item.label || item.ref) + "' data-list='pinned' role='button' tabindex='0'><div class='result-title session-library-label'>" + escapeHTML(item.label || item.ref) + "</div><button type='button' class='session-library-remove' data-list='pinned' data-ref='" + escapeHTML(item.ref) + "' aria-label='Remove pinned item'>×</button></div>";
+      });
+    }
+    if (bucket.inserted.length) {
+      html += "<div class='session-library-entry-group-label'>Recent</div>";
+      bucket.inserted.forEach(function(item) {
+        html += "<div class='result-item session-library-item' data-ref='" + escapeHTML(item.ref) + "' data-url='" + escapeHTML(item.url || '') + "' data-mode='" + escapeHTML(item.mode || 'text') + "' data-query='" + escapeHTML(item.query || item.label || item.ref) + "' data-list='inserted' role='button' tabindex='0'><div class='result-title session-library-label'>" + escapeHTML(item.label || item.ref) + "</div></div>";
+      });
+    }
+    html += "</div></details>";
+    $combined.append(html);
+  });
+
+  var hasItems = !!((sessionLibrary.pinned || []).length || (sessionLibrary.inserted || []).length);
+  var hasVisibleItems = !!corpora.length;
+  $panel.toggle(hasItems);
+  $('.session-library-panel .results-hint').remove();
+  if (hasItems && !hasVisibleItems) {
+    $panel.append("<p class='results-hint'>No pinned or recent items match this corpus filter.</p>");
+  }
+  setFooterButtonStates();
+}
+
+function getCurrentCorpusForRef(ref) {
+  var allItems = getAllProcessedResults().concat(getAllRawResults());
+  var match = allItems.find(function(item){ return item && item.ref === ref; });
+  return match ? getResultCorpusLabel(match, 'Other') : 'Other';
+}
+
+function isPinnedRef(ref) {
+  return (sessionLibrary.pinned || []).some(function(item){ return item && item.ref === ref; });
+}
+
+function togglePinnedRef(ref, label) {
+  if (!ref) return;
+  if (isPinnedRef(ref)) removeSessionEntry('pinned', ref);
+  else upsertSessionEntry('pinned', buildSessionEntry(ref, label, getCurrentCorpusForRef(ref)));
+  renderResults();
+}
+</script>

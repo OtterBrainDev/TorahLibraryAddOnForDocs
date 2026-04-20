@@ -1,0 +1,213 @@
+<script>
+function focusResultByIndex(index) {
+  var $items = $('.result-item');
+  var count = $items.length;
+  if (count === 0) return;
+  var clamped = Math.max(0, Math.min(index, count - 1));
+  keyboardResultIndex = clamped;
+  $items.removeClass('is-nav-target');
+  var $target = $items.eq(clamped);
+  $target.addClass('is-nav-target');
+  if ($target[0] && $target[0].scrollIntoView) {
+    $target[0].scrollIntoView({ block: 'nearest' });
+  }
+}
+
+function showSidebarNotice(message, onConfirm) {
+  var $notice = $('#sidebar-notice');
+  if (!$notice.length) return;
+  $('#sidebar-notice-message').html(escapeHTML(message || ''));
+  $notice.removeAttr('hidden');
+  $('#sidebar-notice-ok').off('click.sidebarNotice').on('click.sidebarNotice', function () {
+    $notice.attr('hidden', true);
+    if (typeof onConfirm === 'function') onConfirm();
+  });
+  $('#sidebar-notice-cancel').off('click.sidebarNotice').on('click.sidebarNotice', function () {
+    $notice.attr('hidden', true);
+  });
+}
+
+function showSidebarToast(message) {
+  var $toast = $('#sidebar-toast');
+  if (!$toast.length) return;
+  $toast.html(escapeHTML(message || ''));
+  $toast.removeAttr('hidden');
+  setTimeout(function () {
+    $toast.attr('hidden', true);
+  }, 3000);
+}
+
+function openPreferencesWithHint(sectionHint) {
+  if (sectionHint) {
+    console.log('[sidebar] openPreferencesWithHint:', sectionHint);
+  }
+  google.script.run.preferencesPopup();
+}
+
+var appMode = window.INITIAL_SIDEBAR_MODE || 'texts';
+var selectedVoiceItem = null;
+
+function normalizeSidebarMode(mode) {
+  return (mode === 'voices' || mode === 'experimental') ? mode : 'texts';
+}
+
+function hasExperimentalFeaturesEnabled() {
+  var prefs = effectivePreferences || {};
+  if (String(prefs.experimental_features_enabled) !== 'true' &&
+      prefs.experimental_features_enabled !== true) {
+    return false;
+  }
+  return String(prefs.experimental_ai_source_sheet_enabled) === 'true' ||
+    prefs.experimental_ai_source_sheet_enabled === true ||
+    String(prefs.surprise_me_enabled) === 'true' ||
+    prefs.surprise_me_enabled === true;
+}
+
+function isExperimentalAiEnabled() {
+  return String((effectivePreferences || {}).experimental_ai_source_sheet_enabled) === 'true' ||
+    (effectivePreferences || {}).experimental_ai_source_sheet_enabled === true;
+}
+
+function isSurpriseEnabled() {
+  return String((effectivePreferences || {}).surprise_me_enabled) === 'true' ||
+    (effectivePreferences || {}).surprise_me_enabled === true;
+}
+
+function syncExperimentalAvailability() {
+  var hasExperimental = hasExperimentalFeaturesEnabled();
+  $('.experimental-menu-button').toggle(hasExperimental);
+  $('.experimental-section details').each(function() { $(this).show(); });
+  if (!isExperimentalAiEnabled()) {
+    $('.open-ai-lesson-tool').closest('details').hide();
+  }
+  if (!isSurpriseEnabled()) {
+    $('.open-surprise-tool').closest('details').hide();
+  }
+  if (!hasExperimental && appMode === 'experimental') {
+    appMode = 'texts';
+  }
+}
+
+function updateQuickActionsForMode() {
+  var experimentalMode = appMode === 'experimental';
+  $('.standard-quick-actions').toggle(!experimentalMode);
+  $('.experimental-quick-actions').toggle(experimentalMode);
+  if (experimentalMode) { $('#footer-actions-panel').hide(); }
+}
+
+function setSidebarMode(mode, skipPreferenceSave) {
+  appMode = normalizeSidebarMode(mode);
+  if (appMode === 'experimental' && !hasExperimentalFeaturesEnabled()) {
+    appMode = 'texts';
+  }
+
+  $('body').removeClass('mode-texts mode-voices mode-experimental')
+    .addClass('mode-' + appMode);
+  $('.unified-sidebar').attr('data-mode', appMode);
+  $('.mode-switch-button, .experimental-menu-button').removeClass('is-active').attr('aria-pressed', 'false');
+  $('.mode-switch-button[data-sidebar-mode="' + appMode + '"], .experimental-menu-button[data-sidebar-mode="' + appMode + '"]')
+    .addClass('is-active').attr('aria-pressed', 'true');
+
+  $('.voices-only').toggle(appMode === 'voices');
+  $('.text-mode-only').toggle(appMode === 'texts');
+  $('.experimental-section').toggle(appMode === 'experimental');
+
+  $('.reference-row .search-submit, .reference-row .history-submit').show();
+  $('.advanced-version-details').toggle(appMode === 'texts' && $('.output-mode-selection').val() !== 'en');
+  $('.input').attr('placeholder', appMode === 'voices' ? 'Search source sheets' : 'Search Sefaria');
+  $('.search-results-label').text(appMode === 'voices' ? 'Source Sheets' : 'Search results');
+  $('#insert-source').text(appMode === 'voices' ? 'Add Link' : 'Add Source');
+  $('.open-label-text').text(appMode === 'voices' ? 'Open Sheet' : 'Open');
+
+  if (!skipPreferenceSave && appMode !== 'experimental') {
+    saveAccountPreference({ search_mode: appMode });
+  }
+
+  syncSessionOverrideButtons();
+  updateModeDependentSections();
+  syncExperimentalAvailability();
+  updateQuickActionsForMode();
+  setFooterButtonStates();
+}
+
+function updateModeDependentSections() {
+  var hasSearch = !!(($('.input').val() || '').trim()) || getAllRawResults().length > 0;
+  var hasSelectedTextResult = appMode === 'texts' && !!selectedResultKey;
+  var hasSelectedVoiceResult = appMode === 'voices' && !!selectedVoiceItem;
+  var hideTranslations = $('.translation-version-select option:not(:disabled)').length <= 1;
+
+  if (appMode === 'experimental') {
+    $('.results-panel, .display-layout-shell, .versions-section, .preview-section, .inline-session-settings, .more-options-accordion').hide();
+    $('.experimental-section').show();
+    renderSessionLibrary();
+    return;
+  }
+
+  $('.experimental-section').hide();
+  $('.results-panel').toggle(hasSearch);
+  $('.display-layout-shell').toggle(hasSelectedTextResult);
+  $('.more-options-accordion').toggle(hasSelectedTextResult);
+  $('.versions-section').toggle(hasSelectedTextResult && !hideTranslations);
+  $('.preview-section').toggle(hasSelectedTextResult || hasSelectedVoiceResult);
+  $('.inline-session-settings').toggle(hasSelectedTextResult);
+  renderSessionLibrary();
+}
+
+
+$('.mode-switch-button, .experimental-menu-button').off('click').on('click', function () {
+  var nextMode = $(this).attr('data-sidebar-mode');
+  setSidebarMode(nextMode);
+  clearSelectedResult();
+  selectedVoiceItem = null;
+  setInsertButtonState(false);
+  $('#open-on-sefaria').prop('disabled', true);
+  if (($('.input').val() || '').trim() && appMode !== 'experimental') runUnifiedQuery();
+  else updateModeDependentSections();
+});
+
+$('#open-session-library').off('click').on('click', function (event) {
+  if (event) event.preventDefault();
+  renderSessionLibrary();
+  $('#session-library-modal').removeAttr('hidden');
+});
+
+$('#close-session-library').on('click', function () {
+  $('#session-library-modal').attr('hidden', true);
+});
+
+$('#open-session-library-experimental').on('click', function () {
+  setSidebarMode('texts');
+  $('#open-session-library').trigger('click');
+});
+
+$('.open-surprise-tool').off('click').on('click', function (event) {
+  if (event) event.preventDefault();
+  if (!isSurpriseEnabled()) {
+    showSidebarNotice('Surprise Me is an experimental feature. Click OK to open Preferences and enable it.', function () {
+      openPreferencesWithHint('experimental-features');
+    });
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function () { showSidebarToast('Launching Surprise Me…'); })
+    .withFailureHandler(function () { showSidebarNotice('Surprise Me is enabled, but its workflow is not yet wired in this build.'); })
+    .surpriseMeHTML();
+});
+
+$('.open-ai-lesson-tool').off('click').on('click', function (event) {
+  if (event) event.preventDefault();
+  if (!isExperimentalAiEnabled()) {
+    showSidebarNotice('AI Shiur is an experimental feature. Click OK to open Preferences and enable it.', function () {
+      openPreferencesWithHint('experimental-features');
+    });
+    return;
+  }
+  google.script.run.openAiLessonGenerator();
+});
+
+$('#open-preferences-experimental').off('click').on('click', function (event) {
+  if (event) event.preventDefault();
+  openPreferencesWithHint('experimental-features');
+});
+
+</script>
