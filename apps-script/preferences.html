@@ -387,14 +387,23 @@
                   <input type="hidden" id="voices_insert_mode_default" name="voices_insert_mode_default" value="reference">
                 </div>
                 <div class="pref-field-group">
-                  <div class="compact-section-label" id="pref-voices-translit-label">Transliteration</div>
-                  <div class="pref-insert-mode-selector" role="radiogroup" aria-labelledby="pref-voices-translit-label" data-pref-group="voices_translit_default">
-                    <button type="button" class="pref-insert-mode-btn is-active" data-value="none" role="radio" aria-checked="true">Off</button>
-                    <button type="button" class="pref-insert-mode-btn" data-value="simple_english" role="radio" aria-checked="false">Simple</button>
-                    <button type="button" class="pref-insert-mode-btn" data-value="traditional" role="radio" aria-checked="false">Traditional</button>
-                    <button type="button" class="pref-insert-mode-btn" data-value="modern_israeli" role="radio" aria-checked="false">Israeli</button>
+                  <div class="scheme-inline-row">
+                    <div class="compact-field compact-field--label">
+                      <label for="voices_translit_default">Transliteration</label>
+                    </div>
+                    <div class="compact-field">
+                      <select id="voices_translit_default" name="voices_translit_default">
+                        <option value="none">None</option>
+                        <option value="simple_english">Simple English</option>
+                        <option value="traditional">Traditional</option>
+                        <option value="modern_israeli">Modern Israeli</option>
+                        <option value="ashkenazi">Ashkenazi</option>
+                        <option value="academic_full">Academic (Full)</option>
+                        <option value="ipa_modern">IPA (Modern Israeli)</option>
+                        <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
+                      </select>
+                    </div>
                   </div>
-                  <input type="hidden" id="voices_translit_default" name="voices_translit_default" value="none">
                 </div>
               </div>
 
