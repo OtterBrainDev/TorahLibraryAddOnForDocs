@@ -202,6 +202,7 @@
       }
       .action-card a { text-decoration: none; color: inherit; display: block; }
       .action-card:hover, .mini-card:hover, .compare-card:hover { border-color: var(--selected); }
+      .action-card[data-jump-to] { cursor: pointer; }
       .callout {
         border-left: 4px solid var(--selected);
         background: var(--selected-soft);
@@ -348,10 +349,31 @@
         });
       }
 
+      function scrollToSection(id) {
+        switchTab('help-tab');
+        var section = document.getElementById(id);
+        if (section) highlightSection(section);
+      }
+
       document.addEventListener('DOMContentLoaded', function() {
         setupTabs();
         setupHelpSearch();
         switchTab('help-tab');
+
+        // Prevent sandboxed-iframe navigation errors from hash links
+        document.querySelectorAll('a[href^="#"]').forEach(function(link) {
+          link.addEventListener('click', function(e) {
+            e.preventDefault();
+            scrollToSection(this.getAttribute('href').slice(1));
+          });
+        });
+
+        // Wire clickable action-cards that carry a data-jump-to target
+        document.querySelectorAll('[data-jump-to]').forEach(function(card) {
+          card.addEventListener('click', function() {
+            scrollToSection(this.getAttribute('data-jump-to'));
+          });
+        });
       });
     </script>
   </head>
@@ -485,10 +507,10 @@
           <section class="card">
             <h2>Start here before emailing</h2>
             <div class="action-grid">
-              <div class="action-card"><h3>Reopen the add-on</h3><p class="muted">Close the sidebar and reopen it from Extensions to clear temporary UI state.</p></div>
-              <div class="action-card"><h3>Refresh the document</h3><p class="muted">Google Docs sometimes holds stale sidebar state after updates or setting changes.</p></div>
-              <div class="action-card"><h3>Recheck Preview</h3><p class="muted">Preview should reflect the current working state, not just saved defaults.</p></div>
-              <div class="action-card"><h3>Confirm the active workspace</h3><p class="muted">Texts, Voices, Preferences, and session overrides do not all behave the same way.</p></div>
+              <div class="action-card" data-jump-to="troubleshooting"><h3>Reopen the add-on</h3><p class="muted">Close the sidebar and reopen it from Extensions to clear temporary UI state.</p></div>
+              <div class="action-card" data-jump-to="troubleshooting"><h3>Refresh the document</h3><p class="muted">Google Docs sometimes holds stale sidebar state after updates or setting changes.</p></div>
+              <div class="action-card" data-jump-to="troubleshooting"><h3>Recheck Preview</h3><p class="muted">Preview should reflect the current working state, not just saved defaults.</p></div>
+              <div class="action-card" data-jump-to="troubleshooting"><h3>Confirm the active workspace</h3><p class="muted">Texts, Voices, Preferences, and session overrides do not all behave the same way.</p></div>
             </div>
           </section>
 
