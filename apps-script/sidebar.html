@@ -159,6 +159,11 @@
   </div>
 </section>
 
+        <!-- Voices prev/next navigation row (Enhancement 9.2) -->
+        <div class="voice-nav-row voices-insert-options" style="display:none;" aria-label="Navigate results">
+          <button type="button" class="voice-nav-btn voice-nav-prev" aria-label="Previous result" disabled>‹ Prev</button>
+          <button type="button" class="voice-nav-btn voice-nav-next" aria-label="Next result" disabled>Next ›</button>
+        </div>
         <!-- Source card: appears in State B (texts mode, result selected) -->
         <section class="source-card text-mode-only" style="display:none;" aria-label="Selected source">
           <div class="source-card-inner">
@@ -206,34 +211,29 @@
         </section>
 
         <!-- Voices insert options: appears when a source sheet result is selected.
-             Insert mode (reference / contents / both) is the only control exposed here.
              Advanced options (showMediaLabel, preserveSheetSpacing, etc.) are kept
              as hidden defaults and sent by the footer-actions insert handler. -->
-        <section class="voices-insert-options" style="display:none;" aria-label="Voices insert options">
-          <details class="sidebar-accordion voices-insert-accordion" open>
-            <summary class="section-label accordion-summary">Insert Options</summary>
-            <div class="accordion-panel voices-insert-panel">
-              <div class="voices-insert-controls">
-                <div class="compact-section-label" id="voices-insert-mode-label">What to insert</div>
-                <div class="insert-mode-selector" role="radiogroup" aria-labelledby="voices-insert-mode-label">
-                  <button type="button" class="insert-mode-btn is-active" data-value="reference" role="radio" aria-checked="true">Reference</button>
-                  <button type="button" class="insert-mode-btn" data-value="contents" role="radio" aria-checked="false">Contents</button>
-                  <button type="button" class="insert-mode-btn" data-value="both" role="radio" aria-checked="false">Both</button>
-                </div>
-                <div class="compact-section-label" id="voices-translit-label">Transliteration</div>
-                <div class="insert-mode-selector" role="radiogroup" aria-labelledby="voices-translit-label">
-                  <button type="button" class="insert-mode-btn voices-translit-btn is-active" data-value="none" role="radio" aria-checked="true">Off</button>
-                  <button type="button" class="insert-mode-btn voices-translit-btn" data-value="simple_english" role="radio" aria-checked="false">Simple</button>
-                  <button type="button" class="insert-mode-btn voices-translit-btn" data-value="traditional" role="radio" aria-checked="false">Trad.</button>
-                  <button type="button" class="insert-mode-btn voices-translit-btn" data-value="modern_israeli" role="radio" aria-checked="false">Israeli</button>
-                </div>
-              </div>
-              <div class="voices-fetch-loading preview-loading" style="display:none;" aria-live="polite" aria-label="Fetching sheet contents">
-                <span class="preview-loading-spinner" aria-hidden="true"></span>
-                <span>Fetching sheet contents…</span>
-              </div>
+        <section class="voices-insert-options voices-options-section" style="display:none;" aria-label="Voices insert options">
+          <div class="voices-insert-controls">
+            <div class="compact-section-label" id="voices-insert-mode-label">What to insert</div>
+            <div class="insert-mode-selector" role="radiogroup" aria-labelledby="voices-insert-mode-label">
+              <button type="button" class="insert-mode-btn is-active" data-value="reference" role="radio" aria-checked="true">Citation</button>
+              <button type="button" class="insert-mode-btn" data-value="contents" role="radio" aria-checked="false">Text</button>
+              <button type="button" class="insert-mode-btn" data-value="both" role="radio" aria-checked="false">Citation + text</button>
             </div>
-          </details>
+            <div class="compact-section-label" id="voices-translit-label" style="margin-top:8px;">Transliteration</div>
+            <select id="voices-translit-select" class="translation-version-select" aria-labelledby="voices-translit-label">
+              <option value="none">None</option>
+              <option value="simple_english">Simplified</option>
+              <option value="traditional">Traditional</option>
+              <option value="modern_israeli">Modern Israeli</option>
+            </select>
+            <div class="voices-insertion-summary" aria-live="polite">Will insert: Citation only</div>
+          </div>
+          <div class="voices-fetch-loading preview-loading" style="display:none;" aria-live="polite" aria-label="Fetching sheet contents">
+            <span class="preview-loading-spinner" aria-hidden="true"></span>
+            <span>Fetching sheet contents…</span>
+          </div>
         </section>
 
         <!-- Lexicon insert options: appears when a lexicon entry is selected. -->

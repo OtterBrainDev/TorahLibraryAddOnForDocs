@@ -163,6 +163,10 @@ function mergePreferenceDefaults(preferences) {
     $(this).toggleClass('is-active', active).attr('aria-checked', active ? 'true' : 'false');
   });
 
+  // Apply Voices transliteration default (Enhancement 9.1)
+  var voicesTranslit = preferences.voices_translit_default || 'none';
+  $('#voices-translit-select').val(voicesTranslit);
+
   preferredTranslationLanguage = String(preferences.preferred_translation_language || 'en').toLowerCase();
   var savedTranslationLanguages = parseStoredArrayPreference(preferences.last_translation_languages, ['en']);
   $('.translation-language-option').prop('checked', false);

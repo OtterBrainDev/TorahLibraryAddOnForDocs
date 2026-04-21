@@ -243,8 +243,9 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     setInsertButtonState(!!item);
     $('#open-on-sefaria').prop('disabled', !(item && item.url));
     if (item) {
-      var currentInsertMode = $('.insert-mode-btn[aria-checked="true"]:not(.voices-translit-btn)').data('value') || 'reference';
-      $('.suggestions').html(buildVoicesPreviewHtml(item, currentInsertMode));
+      renderVoicesCard(item);
+      var currentMode = $('.insert-mode-btn[aria-checked="true"]').data('value') || 'reference';
+      $('.voices-insertion-summary').text('Will insert: ' + (VOICE_MODE_SUMMARY_LABELS[currentMode] || 'Citation only'));
     }
     updateModeDependentSections();
     return;
@@ -327,44 +328,89 @@ function refreshSelectedResult() {
   resolveSelectedResult(selectedRefValue, fallbackLabel);
 }
 
+var VOICE_TOPIC_ACCENT_MAP = [
+  { accent: 'tanakh',     keys: ['tanakh','torah','parsha','parshat','genesis','bereishit','exodus','leviticus','numbers','deuteronomy','prophets','writings','nevi','ketuvim','pentateuch'] },
+  { accent: 'talmud',     keys: ['talmud','gemara','tractate','masekhet','bavli','yerushalmi','daf'] },
+  { accent: 'mishnah',    keys: ['mishnah','mishneh','mishna'] },
+  { accent: 'midrash',    keys: ['midrash','aggadah','aggada','midrashic'] },
+  { accent: 'halakhah',   keys: ['halakha','halakhah','halacha','law','responsa','shulchan','aruch'] },
+  { accent: 'kabbalah',   keys: ['kabbalah','zohar','mysticism','kabbalistic','sod'] },
+  { accent: 'liturgy',    keys: ['liturgy','prayer','siddur','machzor','piyyut','tefillah'] },
+  { accent: 'philosophy', keys: ['philosophy','rambam','maimonides','medieval','reason'] },
+  { accent: 'chasidut',   keys: ['chasidut','hasidut','hasidism','chasidism','rebbe'] },
+  { accent: 'musar',      keys: ['musar','ethics','mussar','character'] },
+  { accent: 'commentary', keys: ['commentary','rashi','ramban','nachmanides','interpretation'] }
+];
+
+function getVoiceCardTopicAccent(topics) {
+  if (!Array.isArray(topics) || !topics.length) return '';
+  var joined = topics.join(' ').toLowerCase();
+  for (var i = 0; i < VOICE_TOPIC_ACCENT_MAP.length; i++) {
+    var entry = VOICE_TOPIC_ACCENT_MAP[i];
+    for (var j = 0; j < entry.keys.length; j++) {
+      if (joined.indexOf(entry.keys[j]) !== -1) return entry.accent;
+    }
+  }
+  return '';
+}
+
 /**
- * Build the preview HTML for a selected Voices / source sheet result.
- * insertMode is one of 'reference' | 'contents' | 'both'.
+ * Build the preview card HTML for a selected Voices / source sheet result.
+ * The insertion mode summary is a separate persistent DOM element (.voices-insertion-summary)
+ * and is NOT rendered here — it is updated in place by the insert mode click handler.
  */
-function buildVoicesPreviewHtml(item, insertMode) {
+function buildVoicesPreviewHtml(item) {
   if (!item) return '';
 
-  var modeLabels = {
-    reference: 'Reference (title, link &amp; summary)',
-    contents:  'Full sheet contents',
-    both:      'Reference + contents'
-  };
-  var modeLabel = modeLabels[insertMode] || modeLabels['reference'];
-
-  var title = escapeHTML(item.label || item.ref || 'Source sheet');
-  var owner = item.owner ? escapeHTML('By ' + item.owner) : '';
+  var title   = escapeHTML(item.label || item.ref || 'Untitled sheet');
+  var owner   = item.owner ? escapeHTML('By ' + item.owner) : '';
   var snippet = escapeHTML(normalizeOptionText(item.snippet || item.summary || ''));
-  var topics = Array.isArray(item.topics) && item.topics.length
-    ? escapeHTML(item.topics.slice(0, 5).join(', '))
-    : '';
+  var accent  = getVoiceCardTopicAccent(item.topics);
+  var accentAttr = accent ? " data-accent='" + accent + "'" : '';
 
-  var html = "<div class='voice-preview'>";
+  var openBtn = item.url
+    ? "<a class='voice-preview-open-btn' href='" + escapeHTML(item.url) + "' target='_blank' rel='noopener' aria-label='Open " + title + " on Sefaria'>Open ↗</a>"
+    : '';
+  var copyBtn = "<button type='button' class='voice-preview-copy-btn' aria-label='Copy citation to clipboard'>⎘</button>";
+
+  var html = "<div class='voice-preview voice-preview-card'" + accentAttr + " role='region' aria-label='Selected sheet preview'>";
+  html += "<div class='voice-preview-header'>";
   html += "<div class='voice-preview-title'>" + title + "</div>";
-  if (owner) {
-    html += "<div class='voice-preview-owner preview-meta'>" + owner + "</div>";
-  }
+  html += "<div class='voice-preview-header-actions'>" + copyBtn + (openBtn || '') + "</div>";
+  html += "</div>";
+  if (owner) html += "<div class='voice-preview-byline preview-meta'>" + owner + "</div>";
+
   if (snippet) {
-    html += "<div class='voice-preview-snippet'>" + snippet + "</div>";
+    html += "<hr class='voice-preview-divider'>";
+    html += "<div class='voice-preview-excerpt' dir='auto'>" + snippet + "</div>";
+    html += "<button type='button' class='voice-preview-excerpt-toggle' aria-expanded='false'>See more ▾</button>";
   }
-  if (topics) {
-    html += "<div class='voice-preview-topics preview-meta'>Topics: " + topics + "</div>";
-  }
-  html += "<div class='voice-preview-mode preview-meta'>Will insert: <strong>" + modeLabel + "</strong></div>";
-  if (item.url) {
-    html += "<div class='voice-preview-link preview-meta'>Use the Open button below to view on Sefaria.</div>";
+
+  if (Array.isArray(item.topics) && item.topics.length) {
+    html += "<hr class='voice-preview-divider'>";
+    html += "<div class='voice-preview-topics'>";
+    item.topics.slice(0, 5).forEach(function(t) {
+      html += "<span class='voice-preview-tag'>" + escapeHTML(t) + "</span>";
+    });
+    html += "</div>";
   }
   html += "</div>";
   return html;
+}
+
+function renderVoicesCard(item) {
+  if (!item) return;
+  $('.suggestions').html(buildVoicesPreviewHtml(item));
+  // Show excerpt toggle if text is clamped
+  setTimeout(function() {
+    var el = document.querySelector('.voice-preview-excerpt');
+    if (el && el.scrollHeight > el.offsetHeight) {
+      var toggle = document.querySelector('.voice-preview-excerpt-toggle');
+      if (toggle) toggle.style.display = 'block';
+    }
+  }, 0);
+  // Sync nav button states
+  updateVoiceNavButtons();
 }
 
 function runVoicesQuery() {
@@ -399,23 +445,79 @@ function runVoicesQuery() {
   }).searchVoices(input, {});
 }
 
-// When the user clicks an insert mode button, activate it and refresh the preview.
-$(document).on('click', '.insert-mode-btn:not(.voices-translit-btn)', function () {
+// Insert mode button: update summary line only; do not re-render the card.
+var VOICE_MODE_SUMMARY_LABELS = { reference: 'Citation only', contents: 'Full text', both: 'Citation + text' };
+$(document).on('click', '.insert-mode-btn', function () {
   if (appMode !== 'voices') return;
   var $group = $(this).closest('[role="radiogroup"]');
   $group.find('.insert-mode-btn').removeClass('is-active').attr('aria-checked', 'false');
   $(this).addClass('is-active').attr('aria-checked', 'true');
-  if (!selectedVoiceItem) return;
-  var insertMode = $('.insert-mode-btn[aria-checked="true"]:not(.voices-translit-btn)').data('value') || 'reference';
-  $('.suggestions').html(buildVoicesPreviewHtml(selectedVoiceItem, insertMode));
+  var mode = $(this).data('value') || 'reference';
+  $('.voices-insertion-summary').text('Will insert: ' + (VOICE_MODE_SUMMARY_LABELS[mode] || 'Citation only'));
 });
 
-// Transliteration scheme selector — activate clicked option within its group.
-$(document).on('click', '.voices-translit-btn', function () {
+// Transliteration: persist selection to account preferences.
+$(document).on('change', '#voices-translit-select', function () {
   if (appMode !== 'voices') return;
-  $('.voices-translit-btn').removeClass('is-active').attr('aria-checked', 'false');
-  $(this).addClass('is-active').attr('aria-checked', 'true');
+  if (typeof saveAccountPreference === 'function') {
+    saveAccountPreference({ voices_translit_default: $(this).val() });
+  }
 });
+
+// Excerpt expand/collapse toggle.
+$(document).on('click', '.voice-preview-excerpt-toggle', function () {
+  var $btn = $(this);
+  var expanded = $btn.attr('aria-expanded') === 'true';
+  $btn.attr('aria-expanded', String(!expanded));
+  $btn.text(expanded ? 'See more ▾' : 'See less ▴');
+  $btn.prev('.voice-preview-excerpt').toggleClass('voice-preview-excerpt--expanded', !expanded);
+});
+
+// Copy citation to clipboard (Enhancement 9.5).
+$(document).on('click', '.voice-preview-copy-btn', function () {
+  if (!selectedVoiceItem) return;
+  var title = selectedVoiceItem.label || selectedVoiceItem.ref || '';
+  var url   = selectedVoiceItem.url || '';
+  var text  = title + (url ? ' — ' + url : '');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(function () { if (typeof showSidebarToast === 'function') showSidebarToast('Citation copied to clipboard.'); })
+      .catch(function () { if (typeof showSidebarToast === 'function') showSidebarToast('Could not copy to clipboard.'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    if (typeof showSidebarToast === 'function') showSidebarToast('Citation copied to clipboard.');
+  }
+});
+
+// Prev/next result navigation (Enhancement 9.2).
+function updateVoiceNavButtons() {
+  if (!selectedVoiceItem) { $('.voice-nav-btn').prop('disabled', true); return; }
+  var all = (typeof getAllProcessedResults === 'function') ? getAllProcessedResults() : [];
+  var idx = -1;
+  for (var i = 0; i < all.length; i++) { if (all[i].ref === selectedVoiceItem.ref) { idx = i; break; } }
+  $('.voice-nav-prev').prop('disabled', idx <= 0);
+  $('.voice-nav-next').prop('disabled', idx < 0 || idx >= all.length - 1);
+}
+
+function navigateVoiceResult(delta) {
+  var all = (typeof getAllProcessedResults === 'function') ? getAllProcessedResults() : [];
+  if (!all.length || !selectedVoiceItem) return;
+  var idx = -1;
+  for (var i = 0; i < all.length; i++) { if (all[i].ref === selectedVoiceItem.ref) { idx = i; break; } }
+  var next = idx + delta;
+  if (next < 0 || next >= all.length) return;
+  var item = all[next];
+  resolveSelectedResult(item.ref, item.label || item.ref);
+}
+
+$(document).on('click', '.voice-nav-prev', function () { navigateVoiceResult(-1); });
+$(document).on('click', '.voice-nav-next', function () { navigateVoiceResult(1); });
 
 // ─── Lexicon ─────────────────────────────────────────────────────────────────
 

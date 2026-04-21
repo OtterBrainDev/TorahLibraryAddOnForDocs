@@ -1086,6 +1086,145 @@
 }
 
 /* =============================================================
+   VOICES OPTIONS SECTION (flat, no accordion)
+   ============================================================= */
+
+.voices-options-section { margin-bottom: 10px; }
+
+.voices-insertion-summary {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* =============================================================
+   VOICE PREVIEW CARD
+   ============================================================= */
+
+.voice-preview-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-left-width: 3px;
+}
+
+.voice-preview-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.voice-preview-header-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.voice-preview-open-btn,
+.voice-preview-copy-btn {
+  font-size: 11px;
+  padding: 3px 7px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--sefaria-blue);
+  background: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.voice-preview-open-btn:hover,
+.voice-preview-copy-btn:hover { background: var(--selected-soft); }
+.voice-preview-copy-btn:focus-visible,
+.voice-preview-open-btn:focus-visible {
+  outline: 2px solid var(--selected);
+  outline-offset: 2px;
+}
+
+.voice-preview-byline { margin-top: 2px; }
+
+.voice-preview-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 8px 0;
+}
+
+.voice-preview-excerpt {
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+.voice-preview-excerpt--expanded {
+  overflow: visible;
+  -webkit-line-clamp: unset;
+  display: block;
+}
+
+.voice-preview-excerpt-toggle {
+  display: none;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--sefaria-blue);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.voice-preview-excerpt-toggle:hover { text-decoration: underline; }
+
+.voice-preview-topics { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.voice-preview-tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(24, 52, 93, 0.08);
+  color: var(--sefaria-blue);
+  border: 1px solid rgba(24, 52, 93, 0.15);
+}
+
+/* Topic accent — left border color keyed to corpus */
+.voice-preview-card[data-accent="tanakh"]     { border-left-color: var(--tanakh-teal); }
+.voice-preview-card[data-accent="mishnah"]    { border-left-color: var(--mishnah-blue); }
+.voice-preview-card[data-accent="talmud"]     { border-left-color: var(--talmud-gold); }
+.voice-preview-card[data-accent="midrash"]    { border-left-color: var(--midrash-green); }
+.voice-preview-card[data-accent="halakhah"]   { border-left-color: var(--halakhah-red); }
+.voice-preview-card[data-accent="kabbalah"]   { border-left-color: var(--kabbalah-purple); }
+.voice-preview-card[data-accent="liturgy"]    { border-left-color: var(--liturgy-rose); }
+.voice-preview-card[data-accent="philosophy"] { border-left-color: var(--philosophy-purple); }
+.voice-preview-card[data-accent="chasidut"]   { border-left-color: var(--chasidut-green); }
+.voice-preview-card[data-accent="musar"]      { border-left-color: var(--musar-purple); }
+.voice-preview-card[data-accent="commentary"] { border-left-color: var(--commentary-blue); }
+.voice-preview-card:not([data-accent])        { border-left-color: var(--sefaria-blue); }
+
+/* Prev/next navigation row */
+.voice-nav-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.voice-nav-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sefaria-blue);
+  cursor: pointer;
+}
+.voice-nav-btn:hover:not(:disabled) { background: var(--selected-soft); }
+.voice-nav-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* =============================================================
    SESSION SETTINGS (inline row + disclosure)
    ============================================================= */
 
