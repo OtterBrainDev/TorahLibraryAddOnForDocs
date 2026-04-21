@@ -159,4 +159,24 @@ $('.open-linker-tool').on('click', function () {
   google.script.run.linkerHTML();
 });
 
+$('#open-help-modal').on('click', function () {
+  $('#help-modal').prop('hidden', false);
+  var contentContainer = $('#help-modal-content');
+  if (!contentContainer.children().length) {
+    google.script.run.withSuccessHandler(function (html) {
+      contentContainer.html(html);
+    }).getHelpContent();
+  }
+});
+
+$('#close-help-modal').on('click', function () {
+  $('#help-modal').prop('hidden', true);
+});
+
+$('#help-modal').on('click', function (e) {
+  if (e.target === this) {
+    $('#help-modal').prop('hidden', true);
+  }
+});
+
 </script>

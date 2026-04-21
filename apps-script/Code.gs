@@ -297,6 +297,11 @@ function aboutPopup() {
   DocumentApp.getUi().showModalDialog(html, 'About');
 }
 
+function getHelpContent() {
+  const html = HtmlService.createHtmlOutputFromFile('help').getContent();
+  return html;
+}
+
 function gematriyaCountPopup() {
   let stats;
   try {
