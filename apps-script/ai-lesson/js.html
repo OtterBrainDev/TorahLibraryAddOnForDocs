@@ -19,6 +19,17 @@ function setMode(mode) {
   $('topicModeFields').classList.toggle('hidden', mode !== 'topic');
   $('textModeFields').classList.toggle('hidden', mode !== 'text');
 }
+function setChipGroupValue(groupId, value) {
+  const group = $(groupId);
+  if (!group) return;
+  const fieldName = group.dataset.field;
+  group.querySelectorAll('.chip').forEach(function(btn) {
+    const isSelected = btn.dataset.value === value;
+    btn.classList.toggle('active', isSelected);
+    btn.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+  });
+  if (fieldName) $(fieldName).value = value;
+}
 function refreshAdvancedControls() {
   const provider = $('provider').value;
   const info = providers().find(function(p){ return p.key === provider; }) || { models: [] };
@@ -49,10 +60,17 @@ function applyDefaults() {
   $('model').dataset.selected = d.model || '';
   $('keyStrategy').dataset.selected = d.keyStrategy || 'auto';
   $('duration').value = d.duration || 45;
-  $('audience').value = ['Adult learners','High school students','Middle school students','Intro / beginners','Educators','custom'].indexOf(d.audience) >= 0 ? d.audience : 'Adult learners';
-  if ($('audience').value === 'custom') $('audienceCustom').value = d.audience || '';
-  $('lessonStyle').value = ['Interactive shiur','Source-sheet chavruta','Text-study seminar','Accessible intro session','Drash','custom'].indexOf(d.lessonStyle) >= 0 ? d.lessonStyle : 'Interactive shiur';
-  if ($('lessonStyle').value === 'custom') $('lessonStyleCustom').value = d.lessonStyle || '';
+
+  const audienceValue = ['Adult learners','High school students','Intro / beginners','Educators'].indexOf(d.audience) >= 0 ? d.audience : 'Adult learners';
+  const audienceIsCustom = d.audience && ['Adult learners','High school students','Intro / beginners','Educators'].indexOf(d.audience) < 0;
+  setChipGroupValue('audienceGroup', audienceIsCustom ? '__other__' : audienceValue);
+  if (audienceIsCustom) $('audienceCustom').value = d.audience || '';
+
+  const styleValue = ['Interactive shiur','Source-sheet chavruta','Text-study seminar','Accessible intro session','Drash'].indexOf(d.lessonStyle) >= 0 ? d.lessonStyle : 'Interactive shiur';
+  const styleIsCustom = d.lessonStyle && ['Interactive shiur','Source-sheet chavruta','Text-study seminar','Accessible intro session','Drash'].indexOf(d.lessonStyle) < 0;
+  setChipGroupValue('lessonStyleGroup', styleIsCustom ? '__other__' : styleValue);
+  if (styleIsCustom) $('lessonStyleCustom').value = d.lessonStyle || '';
+
   $('additionalInstructions').value = d.additionalInstructions || '';
   $('includeOriginal').value = d.includeOriginal === false ? 'false' : 'true';
   $('includeTranslation').value = d.includeTranslation === false ? 'false' : 'true';
@@ -60,8 +78,8 @@ function applyDefaults() {
   $('includeEducatorNotes').value = d.includeEducatorNotes === false ? 'false' : 'true';
   $('includeDiscussionPrompts').value = d.includeDiscussionPrompts === false ? 'false' : 'true';
   document.querySelectorAll('.toggle-chip').forEach(function(btn){ const target = $(btn.dataset.target); btn.classList.toggle('active', target.value === 'true'); });
-  $('audienceCustomWrap').classList.toggle('hidden', $('audience').value !== 'custom');
-  $('lessonStyleCustomWrap').classList.toggle('hidden', $('lessonStyle').value !== 'custom');
+  $('audienceCustomWrap').classList.toggle('hidden', $('audience').value !== '__other__');
+  $('lessonStyleCustomWrap').classList.toggle('hidden', $('lessonStyle').value !== '__other__');
   refreshAdvancedControls();
 }
 function initialize(data) {
@@ -81,6 +99,8 @@ function initialize(data) {
 function activeMode(){ const btn = document.querySelector('#modeToggle .seg.active'); return btn ? btn.dataset.mode : 'topic'; }
 function collectPayload() {
   const advanced = state.activeTab === 'advanced';
+  const audienceValue = $('audience').value;
+  const lessonStyleValue = $('lessonStyle').value;
   return {
     provider: advanced ? $('provider').value : 'default',
     model: advanced ? $('model').value : '',
@@ -88,9 +108,9 @@ function collectPayload() {
     apiKey: advanced ? $('apiKey').value : '',
     topic: activeMode() === 'text' ? $('textRef').value : $('topic').value,
     contextMode: activeMode() === 'text' ? 'text_ref' : 'topic',
-    audience: $('audience').value === 'custom' ? $('audienceCustom').value : $('audience').value,
+    audience: audienceValue === '__other__' ? $('audienceCustom').value : audienceValue,
     duration: Number($('duration').value || 45),
-    lessonStyle: $('lessonStyle').value === 'custom' ? $('lessonStyleCustom').value : $('lessonStyle').value,
+    lessonStyle: lessonStyleValue === '__other__' ? $('lessonStyleCustom').value : lessonStyleValue,
     additionalInstructions: $('additionalInstructions').value,
     includeOriginal: $('includeOriginal').value === 'true',
     includeTranslation: $('includeTranslation').value === 'true',
@@ -140,8 +160,25 @@ $('keyStrategy').addEventListener('change', function(){ $('keyStrategy').dataset
 document.querySelectorAll('.tabbtn').forEach(function(btn){ btn.addEventListener('click', function(){ setTab(btn.dataset.tab); }); });
 document.querySelectorAll('#modeToggle .seg').forEach(function(btn){ btn.addEventListener('click', function(){ setMode(btn.dataset.mode); }); });
 document.querySelectorAll('.toggle-chip').forEach(function(btn){ btn.addEventListener('click', function(){ btn.classList.toggle('active'); const target = $(btn.dataset.target); target.value = btn.classList.contains('active') ? 'true' : 'false'; }); });
-$('audience').addEventListener('change', function(){ $('audienceCustomWrap').classList.toggle('hidden', this.value !== 'custom'); });
-$('lessonStyle').addEventListener('change', function(){ $('lessonStyleCustomWrap').classList.toggle('hidden', this.value !== 'custom'); });
+
+document.querySelectorAll('#audienceGroup .chip').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    const value = btn.dataset.value;
+    setChipGroupValue('audienceGroup', value);
+    const isCustom = value === '__other__';
+    $('audienceCustomWrap').classList.toggle('hidden', !isCustom);
+  });
+});
+
+document.querySelectorAll('#lessonStyleGroup .chip').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    const value = btn.dataset.value;
+    setChipGroupValue('lessonStyleGroup', value);
+    const isCustom = value === '__other__';
+    $('lessonStyleCustomWrap').classList.toggle('hidden', !isCustom);
+  });
+});
+
 $('resetDefaultsBtn').addEventListener('click', function(){ applyDefaults(); setTab(((state.bootstrap || {}).ui || {}).defaultModalTab || 'basic'); setStatus('Restored the current site defaults for this dialog.', 'success'); });
 $('generateBtn').addEventListener('click', function(){ runRequest(''); });
 $('dafBtn').addEventListener('click', function(){ runRequest('daf'); });

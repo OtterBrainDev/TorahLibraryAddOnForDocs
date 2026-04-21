@@ -36,6 +36,11 @@
       'god_replacement'
     ];
 
+    const customAiFields = [
+      'ai_audience_default',
+      'ai_lesson_style_default'
+    ];
+
     let transliterationOverrides = {};
     let selectedOverrideChar = "";
 
@@ -285,6 +290,40 @@
       if (!show) custom.value = '';
     }
 
+    function toggleCustomAiField(selectId) {
+      const select = byId(selectId);
+      const custom = byId(selectId + '_custom');
+      if (!select || !custom) return;
+      const show = select.value === '__other__';
+      custom.hidden = !show;
+      if (!show) custom.value = '';
+    }
+
+    function getAiFieldStoredValue(selectId) {
+      const select = byId(selectId);
+      if (!select) return '';
+      if (select.value === '__other__') {
+        const custom = byId(selectId + '_custom');
+        return custom ? custom.value.trim() : '';
+      }
+      return select.value;
+    }
+
+    function setAiFieldValue(selectId, storedValue) {
+      const select = byId(selectId);
+      if (!select) return;
+      const value = String(storedValue == null ? '' : storedValue);
+      const matches = Array.from(select.options).some(function(opt) { return opt.value === value; });
+      if (matches) {
+        select.value = value;
+      } else {
+        select.value = '__other__';
+        const custom = byId(selectId + '_custom');
+        if (custom) custom.value = value;
+      }
+      toggleCustomAiField(selectId);
+    }
+
     function bindReplacementField(selectId, checkboxId) {
       const select = byId(selectId);
       const custom = getCustomField(selectId);
@@ -461,6 +500,8 @@
       document.querySelectorAll('select').forEach(function(el) {
         if (customReplacementFields.indexOf(el.name) >= 0) {
           preferenceObject[el.name] = getSelectStoredValue(el.id);
+        } else if (customAiFields.indexOf(el.name) >= 0) {
+          preferenceObject[el.name] = getAiFieldStoredValue(el.id);
         } else {
           preferenceObject[el.name] = el.value;
         }
@@ -501,6 +542,10 @@
 
               customReplacementFields.forEach(function(name) {
                 setReplacementSelectValue(name, preferences[name]);
+              });
+
+              customAiFields.forEach(function(name) {
+                setAiFieldValue(name, preferences[name]);
               });
 
               // Sync button-group controls (Display & Insertion Defaults)
@@ -628,6 +673,8 @@
       'select#god_replacement',
       'select#ai_provider_default',
       'select#ai_key_strategy_default',
+      'select#ai_audience_default',
+      'select#ai_lesson_style_default',
       'select#ai_saved_key_provider'
     ].join(','));
 
@@ -680,6 +727,24 @@
     ['meforash_replace','yaw_replace','elodim_replace','god_replace'].forEach(function(id) {
       const el = byId(id);
       if (el) el.addEventListener('change', updateSheimotSummary);
+    });
+
+    customAiFields.forEach(function(fieldName) {
+      const select = byId(fieldName);
+      const custom = byId(fieldName + '_custom');
+      if (!select) return;
+      select.addEventListener('change', function() {
+        toggleCustomAiField(fieldName);
+        syncCustomSelect(select);
+      });
+      if (custom) {
+        custom.addEventListener('input', function() {
+          // Re-validate on input
+        });
+        custom.addEventListener('change', function() {
+          // Sync on change
+        });
+      }
     });
 
     byId('save_override_btn').addEventListener('click', function() {

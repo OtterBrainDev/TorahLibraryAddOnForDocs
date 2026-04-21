@@ -83,41 +83,49 @@
             <div class="hint">Use this when you want the draft anchored to a specific text or reference.</div>
           </div>
 
-          <div class="grid two" style="margin-top:12px;">
+          <div style="margin-top:12px;">
             <div>
               <label for="audience">Audience</label>
-              <select id="audience">
-                <option value="Adult learners">Adult learners</option>
-                <option value="High school students">High school students</option>
-                <option value="Middle school students">Middle school students</option>
-                <option value="Intro / beginners">Intro / beginners</option>
-                <option value="Educators">Educators</option>
-                <option value="custom">Custom</option>
-              </select>
+              <div class="chip-group" role="radiogroup" id="audienceGroup" data-field="audience">
+                <button type="button" role="radio" class="chip" aria-checked="true" data-value="Adult learners">Adults</button>
+                <button type="button" role="radio" class="chip" aria-checked="false" data-value="High school students">High school</button>
+                <button type="button" role="radio" class="chip" aria-checked="false" data-value="Intro / beginners">Beginner</button>
+                <button type="button" role="radio" class="chip" aria-checked="false" data-value="Educators">Educators</button>
+                <button type="button" role="radio" class="chip" aria-checked="false" data-value="__other__">Other</button>
+              </div>
             </div>
-            <div id="audienceCustomWrap" class="hidden">
+            <div id="audienceCustomWrap" class="hidden" style="margin-top:12px;">
               <label for="audienceCustom">📝 Custom Audience</label>
               <input id="audienceCustom" type="text" placeholder="Describe the learners">
             </div>
+          </div>
+
+          <div class="grid two" style="margin-top:12px;">
             <div>
               <label for="duration">Duration (minutes)</label>
               <input id="duration" type="number" min="10" max="120" step="5" value="45">
             </div>
+          </div>
+
+          <div style="margin-top:12px;">
             <div>
               <label for="lessonStyle">Lesson Style</label>
-              <select id="lessonStyle">
-                <option value="Interactive shiur">Interactive shiur</option>
-                <option value="Source-sheet chavruta">Source-sheet chavruta</option>
-                <option value="Text-study seminar">Text-study seminar</option>
-                <option value="Accessible intro session">Accessible intro session</option>
-                <option value="Drash">Drash</option>
-                <option value="custom">Custom</option>
-              </select>
+              <div class="chip-group" role="radiogroup" id="lessonStyleGroup" data-field="lessonStyle">
+                <button type="button" role="radio" class="chip" aria-checked="true" data-value="Interactive shiur">Interactive</button>
+                <button type="button" role="radio" class="chip" aria-checked="false" data-value="Source-sheet chavruta">Chavruta</button>
+                <button type="button" role="radio" class="chip" aria-checked="false" data-value="Text-study seminar">Seminar</button>
+                <button type="button" role="radio" class="chip" aria-checked="false" data-value="Accessible intro session">Intro</button>
+                <button type="button" role="radio" class="chip" aria-checked="false" data-value="Drash">Drash</button>
+                <button type="button" role="radio" class="chip" aria-checked="false" data-value="__other__">Other</button>
+              </div>
             </div>
-            <div id="lessonStyleCustomWrap" class="hidden" style="grid-column:1 / span 2;">
+            <div id="lessonStyleCustomWrap" class="hidden" style="margin-top:12px;">
               <label for="lessonStyleCustom">📝 Custom Style</label>
               <input id="lessonStyleCustom" type="text" placeholder="Describe the format">
             </div>
+          </div>
+
+          <div style="margin-top:12px;">
             <div style="grid-column:1 / span 2;">
               <label for="additionalInstructions">📝 Notes</label>
               <textarea id="additionalInstructions" placeholder="Tone, angle, pacing notes, denominational assumptions, or teaching goals"></textarea>
@@ -131,6 +139,8 @@
             <button type="button" class="toggle-chip active" data-target="includeEducatorNotes">Educator Notes</button>
             <button type="button" class="toggle-chip active" data-target="includeDiscussionPrompts">Discussion Prompts</button>
           </div>
+          <input id="audience" type="hidden" value="Adult learners">
+          <input id="lessonStyle" type="hidden" value="Interactive shiur">
           <input id="includeOriginal" type="hidden" value="true">
           <input id="includeTranslation" type="hidden" value="true">
           <input id="includeTransliteration" type="hidden" value="false">
