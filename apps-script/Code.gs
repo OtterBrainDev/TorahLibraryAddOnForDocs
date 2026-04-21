@@ -234,7 +234,7 @@ function openSharedSidebar_(mode) {
   template.initialMode = resolvedMode;
   template.appConfigJson = JSON.stringify(getUiAppConfig_('sidebar', resolvedMode));
   var output = template.evaluate()
-    .setTitle(resolvedMode === 'voices' ? 'Voices' : 'Texts')
+    .setTitle('Sefaria')
     .setWidth(300);
   DocumentApp.getUi().showSidebar(output);
   extendedGemaraPreference = PropertiesService.getUserProperties().getProperty("extended_gemara");
