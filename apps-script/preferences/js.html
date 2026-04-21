@@ -729,8 +729,13 @@
       setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
       const preferenceObject = collectPreferenceObject();
       google.script.run.withSuccessHandler(function() {
-        setResultsMessage('Successfully updated preferences. Refresh the sidebar if you want the open sidebar to pick up the new defaults now.');
-        updateSheimotSummary();
+        google.script.run.withSuccessHandler(function() {
+          setResultsMessage('Successfully updated preferences. Refresh the sidebar if you want the open sidebar to pick up the new defaults now.');
+          updateSheimotSummary();
+        }).withFailureHandler(function(error) {
+          console.error('Menu refresh failed:', error);
+          setResultsMessage('Preferences saved, but menu refresh failed. Close and reopen the document to see menu changes.');
+        }).buildAndInstallMenu();
       }).withFailureHandler(function(error) {
         console.error('Preferences save failed:', error);
         setResultsMessage('Could not save preferences.');
@@ -741,9 +746,15 @@
       setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
       const preferenceObject = collectPreferenceObject();
       google.script.run.withSuccessHandler(function() {
-        setResultsMessage('Successfully updated preferences.');
-        updateSheimotSummary();
-        google.script.host.close();
+        google.script.run.withSuccessHandler(function() {
+          setResultsMessage('Successfully updated preferences.');
+          updateSheimotSummary();
+          google.script.host.close();
+        }).withFailureHandler(function(error) {
+          console.error('Menu refresh failed:', error);
+          setResultsMessage('Preferences saved. Closing dialog.');
+          google.script.host.close();
+        }).buildAndInstallMenu();
       }).withFailureHandler(function(error) {
         console.error('Preferences save-and-close failed:', error);
         setResultsMessage('Could not save preferences.');

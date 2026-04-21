@@ -150,7 +150,7 @@ function onInstall() {
 
 let extendedGemaraPreference = false;
 
-function onOpen(e) {
+function buildAndInstallMenu() {
   const ui = DocumentApp.getUi();
   const addOnMenu = ui.createAddonMenu();
   const quickActionsMenu = ui.createMenu('Quick Actions')
@@ -159,16 +159,9 @@ function onOpen(e) {
       .addSeparator()
       .addItem('Gematriya Count', 'gematriyaCountPopup');
 
-  let experimentalAiEnabled = false;
-  let surpriseEnabled = false;
-
-  // Per Google Workspace add-on guidance, avoid reading PropertiesService while
-  // the add-on is still in AuthMode.NONE so the menu always renders.
-  if (!e || e.authMode !== ScriptApp.AuthMode.NONE) {
-    const prefs = getPreferences();
-    experimentalAiEnabled = prefs.experimental_ai_source_sheet_enabled == "true";
-    surpriseEnabled = prefs.surprise_me_enabled == "true";
-  }
+  const prefs = getPreferences();
+  const experimentalAiEnabled = prefs.experimental_ai_source_sheet_enabled == "true";
+  const surpriseEnabled = prefs.surprise_me_enabled == "true";
 
   if (DEV_FLAGS.AI_LESSON && experimentalAiEnabled) {
     quickActionsMenu.addSeparator()
@@ -195,6 +188,33 @@ function onOpen(e) {
       .addItem('Preferences', 'preferencesPopup')
       .addItem('Support', 'supportPopup')
       .addToUi();
+}
+
+function onOpen(e) {
+  // Per Google Workspace add-on guidance, avoid reading PropertiesService while
+  // the add-on is still in AuthMode.NONE so the menu always renders.
+  if (!e || e.authMode !== ScriptApp.AuthMode.NONE) {
+    buildAndInstallMenu();
+  } else {
+    // During AuthMode.NONE, create a minimal menu without reading preferences
+    const ui = DocumentApp.getUi();
+    const addOnMenu = ui.createAddonMenu();
+    const quickActionsMenu = ui.createMenu('Quick Actions')
+        .addItem('Transform Divine Names', 'transformDivineNames')
+        .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
+        .addSeparator()
+        .addItem('Gematriya Count', 'gematriyaCountPopup');
+
+    addOnMenu
+        .addItem('Texts', 'textsHTML')
+        .addItem('Voices', 'voicesHTML')
+        .addItem('Lexicon', 'lexiconHTML')
+        .addSubMenu(quickActionsMenu)
+        .addSeparator()
+        .addItem('Preferences', 'preferencesPopup')
+        .addItem('Support', 'supportPopup')
+        .addToUi();
+  }
 }
 
 function setSearchMode_(mode) {
