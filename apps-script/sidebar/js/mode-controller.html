@@ -79,8 +79,8 @@ function syncExperimentalAvailability() {
   var aiEnabled = isExperimentalAiEnabled();
   var surpriseEnabled = isSurpriseEnabled();
   $('.experimental-menu-button').toggle(hasExperimental);
-  $('#ai-inline-generate').closest('.feature-accordion').toggle(aiEnabled);
-  $('#sm-inline-launch').closest('.feature-accordion').toggle(surpriseEnabled);
+  $('#ai-inline-generate').closest('.exp-card').toggle(aiEnabled);
+  $('#sm-inline-launch').closest('.exp-card').toggle(surpriseEnabled);
   $('#footer-actions-panel .open-ai-lesson-tool').toggle(aiEnabled);
   $('#footer-actions-panel .open-surprise-tool').toggle(surpriseEnabled);
   if (!hasExperimental && appMode === 'experimental') {
