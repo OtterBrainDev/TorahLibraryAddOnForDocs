@@ -25,19 +25,93 @@
         <img src="https://www.sefaria.org/static/img/ajax-loader.gif" name="loading">
       </aside>
 
-      <div class="sidebar-scroll">
-        <section class="mode-switch-section" aria-label="Search mode selector">
-          <button type="button" class="mode-switch-button" data-sidebar-mode="texts">Texts</button>
-          <button type="button" class="mode-switch-button" data-sidebar-mode="voices">Voices</button>
-          <button type="button" class="mode-switch-button" data-sidebar-mode="lexicon" id="tab-lexicon-btn">Lexicon<span class="lexicon-tab-badge" id="lexicon-tab-badge" hidden aria-hidden="true"></span></button>
-          <button type="button" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental" style="display:none;" title="Experimental Features" aria-label="Experimental Features">🧪</button>
-        </section>
+      <header class="sidebar-header">
+        <h1 class="sidebar-title">Sefaria</h1>
+        <button type="button" class="sidebar-close close" aria-label="Close sidebar">×</button>
+      </header>
+
+      <nav class="mode-switch-section" role="tablist" aria-label="Search mode selector">
+        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="texts" aria-selected="true">Texts</button>
+        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="voices" aria-selected="false">Voices</button>
+        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="lexicon" id="tab-lexicon-btn" aria-selected="false">Lexicon<span class="lexicon-tab-badge" id="lexicon-tab-badge" hidden aria-hidden="true"></span></button>
+        <button type="button" role="tab" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental" style="display:none;" aria-label="Experimental Features" aria-selected="false">🧪</button>
+      </nav>
+
+      <div class="sidebar-search-region">
         <section class="reference-row unified-search-row">
-          <div class="reference-input-shell">
-            <input type="text" class="input" placeholder="Search Sefaria" aria-label="Search Sefaria" title="Press / to search">
+          <div class="search-field-wrapper">
+            <button type="button" class="search-submit search-icon-btn" id="run-sefaria" aria-label="Search Sefaria" title="Search Sefaria">
+              <span class="search-submit-icon" aria-hidden="true">🔍</span>
+            </button>
+            <input type="text" class="input" placeholder="Search texts…" aria-label="Search Sefaria" title="Press / to search" dir="auto" autocomplete="off" spellcheck="false">
+            <button type="button" class="keyboard-trigger" id="hebrew-keyboard-trigger" aria-label="Open Hebrew keyboard" aria-expanded="false" aria-controls="hebrew-keyboard-tray">⌨︎</button>
           </div>
-          <button class="search-submit" id="run-sefaria" title="Search Sefaria" aria-label="Search Sefaria"><span class="search-submit-icon" aria-hidden="true">🔍</span></button>
         </section>
+
+        <div id="search-history-dropdown" class="search-history-dropdown" role="listbox" aria-label="Recent searches" hidden></div>
+
+        <div class="hebrew-keyboard-tray" id="hebrew-keyboard-tray" role="region" aria-label="Hebrew keyboard">
+          <div class="heb-tray-header">
+            <span class="heb-tray-label" aria-hidden="true">Hebrew</span>
+            <button type="button" class="heb-nikud-toggle" id="heb-nikud-toggle" aria-pressed="false" aria-label="Toggle vowel marks">Vowels</button>
+          </div>
+          <div class="heb-key-row heb-key-row--nikud" id="heb-nikud-row" hidden>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ַ" aria-label="Patah">אַ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ָ" aria-label="Kamatz">אָ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֶ" aria-label="Segol">אֶ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֵ" aria-label="Tzere">אֵ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ִ" aria-label="Hiriq">אִ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֹ" aria-label="Holam">אֹ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ּ" aria-label="Dagesh">אּ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ְ" aria-label="Sheva">אְ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֻ" aria-label="Qubuts">אֻ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֲ" aria-label="Chataf Patah">אֲ</button>
+          </div>
+          <div class="heb-key-row">
+            <button type="button" class="heb-key" data-char="א" aria-label="Alef">א</button>
+            <button type="button" class="heb-key" data-char="ב" aria-label="Bet">ב</button>
+            <button type="button" class="heb-key" data-char="ג" aria-label="Gimel">ג</button>
+            <button type="button" class="heb-key" data-char="ד" aria-label="Dalet">ד</button>
+            <button type="button" class="heb-key" data-char="ה" aria-label="He">ה</button>
+            <button type="button" class="heb-key" data-char="ו" aria-label="Vav">ו</button>
+            <button type="button" class="heb-key" data-char="ז" aria-label="Zayin">ז</button>
+            <button type="button" class="heb-key" data-char="ח" aria-label="Het">ח</button>
+            <button type="button" class="heb-key" data-char="ט" aria-label="Tet">ט</button>
+            <button type="button" class="heb-key" data-char="י" aria-label="Yod">י</button>
+          </div>
+          <div class="heb-key-row">
+            <button type="button" class="heb-key" data-char="כ" aria-label="Kaf">כ</button>
+            <button type="button" class="heb-key" data-char="ל" aria-label="Lamed">ל</button>
+            <button type="button" class="heb-key" data-char="מ" aria-label="Mem">מ</button>
+            <button type="button" class="heb-key" data-char="נ" aria-label="Nun">נ</button>
+            <button type="button" class="heb-key" data-char="ס" aria-label="Samekh">ס</button>
+            <button type="button" class="heb-key" data-char="ע" aria-label="Ayin">ע</button>
+            <button type="button" class="heb-key" data-char="פ" aria-label="Pe">פ</button>
+            <button type="button" class="heb-key" data-char="צ" aria-label="Tsadi">צ</button>
+            <button type="button" class="heb-key" data-char="ק" aria-label="Qof">ק</button>
+            <button type="button" class="heb-key" data-char="ר" aria-label="Resh">ר</button>
+          </div>
+          <div class="heb-key-row">
+            <button type="button" class="heb-key" data-char="ש" aria-label="Shin">ש</button>
+            <button type="button" class="heb-key" data-char="ת" aria-label="Tav">ת</button>
+            <button type="button" class="heb-key" data-char="ך" aria-label="Final Kaf">ך</button>
+            <button type="button" class="heb-key" data-char="ם" aria-label="Final Mem">ם</button>
+            <button type="button" class="heb-key" data-char="ן" aria-label="Final Nun">ן</button>
+            <button type="button" class="heb-key" data-char="ף" aria-label="Final Pe">ף</button>
+            <button type="button" class="heb-key" data-char="ץ" aria-label="Final Tsadi">ץ</button>
+            <button type="button" class="heb-key" data-char="׳" aria-label="Geresh">׳</button>
+            <button type="button" class="heb-key" data-char="״" aria-label="Gershayim">״</button>
+            <button type="button" class="heb-key" data-char="-" aria-label="Hyphen">-</button>
+          </div>
+          <div class="heb-key-row heb-key-row--actions">
+            <button type="button" class="heb-key heb-key--space" id="heb-space" data-char=" " aria-label="Space">Space</button>
+            <button type="button" class="heb-key heb-key--delete" id="heb-delete" aria-label="Delete character">⌫</button>
+            <button type="button" class="heb-key heb-key--done" id="heb-done" aria-label="Close keyboard">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-scroll">
         <section class="mode-context-note voices-only" style="display:none;">
           <div class="helper-text">Searching source sheets via Sefaria’s sheet index.</div>
         </section>

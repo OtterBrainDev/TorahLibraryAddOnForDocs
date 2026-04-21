@@ -1882,4 +1882,514 @@
   vertical-align: middle;
   margin-right: 4px;
 }
+
+/* =============================================================
+   SIDEBAR HEADER — compact top bar with "Sefaria" + close button
+   ============================================================= */
+
+.sidebar-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  padding: 0 8px 0 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-title {
+  margin: 0;
+  font-family: "Roboto", system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sefaria-blue);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.sidebar-close {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #666;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s;
+}
+
+.sidebar-close:hover {
+  color: var(--text);
+  background: var(--lighter-grey);
+}
+
+/* =============================================================
+   MODE SWITCH — redesigned as compact underline tabs
+   ============================================================= */
+
+/* Override the old pill-container styling */
+.mode-switch-section {
+  position: relative;
+  align-items: flex-end;
+  gap: 0;
+  padding: 0 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* Override each tab button to underline style */
+.mode-switch-button {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: #777;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  cursor: pointer;
+  margin-bottom: -1px; /* overlap section's border-bottom with active indicator */
+  transition: color 0.1s;
+}
+
+.mode-switch-button:hover {
+  color: #333;
+}
+
+/* Override the old filled-pill active state */
+.mode-switch-button.is-active {
+  color: var(--sefaria-blue);
+  background: transparent;
+  border-bottom: 2px solid var(--sefaria-blue);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+/* Experimental emoji button — shrink to content width */
+.mode-switch-button.experimental-menu-button {
+  flex: 0 0 auto;
+  min-width: 30px;
+  padding: 0 6px;
+  letter-spacing: 0;
+}
+
+/* =============================================================
+   SIDEBAR SEARCH REGION — compact field + Hebrew keyboard tray
+   ============================================================= */
+
+.sidebar-search-region {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 12px 0;
+  background: transparent;
+}
+
+/* Strip old panel chrome from the reference-row inside sidebar-search-region */
+.sidebar-search-region .reference-row,
+.sidebar-search-region .reference-row.unified-search-row {
+  display: block;
+  position: static;
+  z-index: auto;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* Also remove the margin-bottom from .unified-search-row when inside search-region */
+.sidebar-search-region .unified-search-row {
+  margin-bottom: 0;
+}
+
+/* The actual styled search box */
+.search-field-wrapper {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(24, 52, 93, 0.05);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.search-field-wrapper:focus-within {
+  border-color: var(--sefaria-blue);
+  box-shadow: 0 0 0 2px rgba(24, 52, 93, 0.12);
+}
+
+/* Search icon button — override the large blue .search-submit / #run-sefaria styling */
+.search-field-wrapper #run-sefaria,
+.search-field-wrapper .search-submit {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  min-width: 34px;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  color: #999;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  font-size: 14px;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+.search-field-wrapper #run-sefaria:hover,
+.search-field-wrapper .search-submit:hover {
+  color: var(--sefaria-blue);
+  background: transparent;
+  border-color: transparent;
+}
+
+.search-field-wrapper .search-submit-icon {
+  font-size: 14px;
+  transform: none;
+}
+
+/* Input field inside the compact search box */
+.search-field-wrapper .input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  margin: 0;
+  padding: 0 4px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: none;
+  font-family: "Roboto", system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.search-field-wrapper .input::placeholder {
+  color: #aaa;
+  font-size: 13px;
+  font-family: "Roboto", system-ui, -apple-system, sans-serif;
+}
+
+/* Suppress focus ring (wrapper handles it via :focus-within) */
+.search-field-wrapper .input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ⌨︎ keyboard trigger button */
+.keyboard-trigger {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 36px;
+  padding: 0;
+  color: #999;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--lighter-grey);
+  border-radius: 0;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s;
+}
+
+.keyboard-trigger:hover {
+  color: var(--sefaria-blue);
+  background: #f0f4fa;
+}
+
+.keyboard-trigger.is-open {
+  color: var(--sefaria-blue);
+  background: #eef3fa;
+}
+
+/* =============================================================
+   HEBREW KEYBOARD TRAY
+   ============================================================= */
+
+/* Closed by default; JS adds .tray-open to animate open */
+.hebrew-keyboard-tray {
+  overflow: hidden;
+  max-height: 0;
+  margin-top: 0;
+  padding: 0 4px;
+  background: #f5f4f1;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    max-height 0.2s ease,
+    opacity 0.15s ease,
+    margin-top 0.2s ease,
+    padding-top 0.2s ease,
+    padding-bottom 0.2s ease,
+    border-color 0.15s ease,
+    visibility 0s linear 0.2s;
+}
+
+.hebrew-keyboard-tray.tray-open {
+  max-height: 250px;
+  margin-top: 4px;
+  padding: 6px 4px;
+  border-color: var(--border);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    max-height 0.2s ease,
+    opacity 0.15s ease,
+    margin-top 0.2s ease,
+    padding-top 0.2s ease,
+    padding-bottom 0.2s ease,
+    border-color 0.15s ease,
+    visibility 0s linear 0s;
+}
+
+.heb-key-row {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 2px;
+}
+
+.heb-key-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Character buttons — 10 per row; flex:1 distributes width equally */
+.heb-key {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 28px;
+  padding: 0;
+  font-size: 14px;
+  font-family: "Frank Ruhl Libre", "David", "Noto Serif Hebrew", Georgia, serif;
+  color: var(--text);
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: center;
+  line-height: 28px;
+  transition: background 0.08s, border-color 0.08s;
+}
+
+.heb-key:hover {
+  background: #e8f0fb;
+  border-color: #b0c8e8;
+}
+
+.heb-key:active {
+  background: #cde0f5;
+}
+
+/* Action row uses a fixed 2:1:1 grid instead of equal-flex */
+.heb-key-row--actions {
+  display: grid;
+  grid-template-columns: 1fr 0.5fr 0.5fr;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.heb-key--space {
+  font-family: "Roboto", system-ui, sans-serif;
+  font-size: 11px;
+  color: #555;
+  background: #e8e8e8;
+  border-color: #ccc;
+}
+
+.heb-key--space:hover {
+  background: #ddd;
+  border-color: #bbb;
+}
+
+.heb-key--delete {
+  font-family: system-ui, sans-serif;
+  font-size: 15px;
+  background: #e8e8e8;
+  border-color: #ccc;
+}
+
+.heb-key--delete:hover {
+  background: #ddd;
+  border-color: #bbb;
+}
+
+.heb-key--done {
+  font-family: "Roboto", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--sefaria-blue);
+  border-color: var(--sefaria-blue);
+}
+
+.heb-key--done:hover {
+  background: var(--selected-hover);
+  border-color: var(--selected-hover);
+}
+
+/* =============================================================
+   TRAY HEADER — label + nikud vowels toggle button
+   ============================================================= */
+
+.heb-tray-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  padding: 0 2px;
+}
+
+.heb-tray-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #999;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.heb-nikud-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 20px;
+  padding: 0 8px;
+  font-size: 10px;
+  font-family: "Roboto", system-ui, sans-serif;
+  font-weight: 600;
+  color: #777;
+  background: #ebe9e4;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s, border-color 0.1s;
+}
+
+.heb-nikud-toggle:hover {
+  color: var(--sefaria-blue);
+  background: #dde5f3;
+  border-color: #b0c8e8;
+}
+
+.heb-nikud-toggle.is-active,
+.heb-nikud-toggle[aria-pressed="true"] {
+  color: #fff;
+  background: var(--sefaria-blue);
+  border-color: var(--sefaria-blue);
+}
+
+/* Nikud character keys — taller to show base letter + combining mark */
+.heb-key--nikud {
+  font-size: 16px;
+  height: 30px;
+  line-height: 30px;
+}
+
+/* =============================================================
+   SEARCH HISTORY DROPDOWN
+   ============================================================= */
+
+.search-history-dropdown {
+  position: relative;
+  z-index: 20;
+  margin-top: 2px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.search-history-dropdown[hidden] {
+  display: none;
+}
+
+.search-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 6px 4px;
+  color: #999;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.search-history-clear {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: "Roboto", system-ui, sans-serif;
+}
+
+.search-history-clear:hover {
+  color: var(--sefaria-blue);
+}
+
+.search-history-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  box-sizing: border-box;
+  font-family: "Roboto", system-ui, sans-serif;
+}
+
+.search-history-item:hover {
+  background: #f4f6f9;
+}
+
+.search-history-item-icon {
+  flex-shrink: 0;
+  color: #ccc;
+  font-size: 12px;
+}
 </style>

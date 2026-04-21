@@ -692,4 +692,278 @@ $(document).on('click', '#sl-copy-refs', function () {
   if ($(this).prop('disabled')) return;
   copySessionLibraryRefs();
 });
+
+// ============================================================
+// HEBREW KEYBOARD TRAY
+// ============================================================
+
+(function () {
+  // Track cursor position when search input loses focus so character
+  // buttons can insert at the correct position after re-focusing.
+  var savedSelStart = 0;
+  var savedSelEnd   = 0;
+
+  // ── Search history ────────────────────────────────────────────────────────
+
+  var SEARCH_HISTORY_KEY = 'sefaria_recent_searches_v1';
+  var MAX_HISTORY = 8;
+  var HEB_RE = /[֐-׿יִ-ﭏ]/;
+
+  function loadSearchHistory() {
+    try { return JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || []; }
+    catch (e) { return []; }
+  }
+
+  function saveSearchHistory(query) {
+    var q = (query || '').trim();
+    if (!q) return;
+    var history = loadSearchHistory().filter(function (h) { return h !== q; });
+    history.unshift(q);
+    if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+    try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history)); } catch (e) {}
+  }
+
+  function renderSearchHistory() {
+    var history = loadSearchHistory();
+    var $dropdown = $('#search-history-dropdown');
+    if (!history.length) { $dropdown.attr('hidden', true); return; }
+    var html = '<div class="search-history-header">' +
+      '<span>Recent</span>' +
+      '<button type="button" class="search-history-clear" id="search-history-clear-btn">Clear</button>' +
+      '</div>';
+    history.forEach(function (q) {
+      var dir = HEB_RE.test(q) ? ' dir="rtl"' : '';
+      html += '<button type="button" class="search-history-item" data-query="' +
+        escapeHTML(q) + '"' + dir + '>' +
+        '<span class="search-history-item-icon" aria-hidden="true">↩</span>' +
+        escapeHTML(q) + '</button>';
+    });
+    $dropdown.html(html).removeAttr('hidden');
+  }
+
+  function hideSearchHistory() {
+    $('#search-history-dropdown').attr('hidden', true);
+  }
+
+  // Show history when search input is focused and field is empty.
+  $(document).on('focus', '.search-field-wrapper .input', function () {
+    if (!($(this).val() || '').trim()) renderSearchHistory();
+  });
+
+  // Sync history visibility with input content.
+  $(document).on('input', '.search-field-wrapper .input', function () {
+    if (($(this).val() || '').trim()) hideSearchHistory();
+    else renderSearchHistory();
+  });
+
+  // Click a history item: populate input and run search.
+  $(document).on('click', '.search-history-item', function (event) {
+    event.stopPropagation();
+    var q = $(this).data('query') || '';
+    if (!q) return;
+    hideSearchHistory();
+    var $inp = $('.input').val(q);
+    $inp.attr('dir', HEB_RE.test(q) ? 'rtl' : 'ltr');
+    if (typeof runUnifiedQuery === 'function') runUnifiedQuery();
+  });
+
+  // Clear all history.
+  $(document).on('click', '#search-history-clear-btn', function (event) {
+    event.stopPropagation();
+    try { localStorage.removeItem(SEARCH_HISTORY_KEY); } catch (e) {}
+    hideSearchHistory();
+  });
+
+  // Save to history on explicit search submission (button click or Enter key).
+  $(document).on('click', '#run-sefaria', function () {
+    var q = (($('.input').val()) || '').trim();
+    if (q) saveSearchHistory(q);
+  });
+
+  $(document).on('keydown', '.input', function (e) {
+    if (e.key === 'Enter') {
+      var q = ($(this).val() || '').trim();
+      if (q) saveSearchHistory(q);
+    }
+  });
+
+  // Click-away dismissal for history dropdown.
+  $(document).on('click', function (event) {
+    if ($('#search-history-dropdown').is('[hidden]')) return;
+    if (!$(event.target).closest('#search-history-dropdown, .search-field-wrapper').length) {
+      hideSearchHistory();
+    }
+  });
+
+  // ── Hebrew keyboard tray ──────────────────────────────────────────────────
+
+  function getInput() {
+    return document.querySelector('.search-field-wrapper .input') ||
+           document.querySelector('.input');
+  }
+
+  // Save cursor position on every blur of the search input.
+  $(document).on('blur', '.input', function () {
+    savedSelStart = this.selectionStart || 0;
+    savedSelEnd   = this.selectionEnd   || 0;
+  });
+
+  function openHebrewTray() {
+    $('#hebrew-keyboard-tray').addClass('tray-open');
+    $('#hebrew-keyboard-trigger')
+      .attr('aria-expanded', 'true')
+      .attr('aria-label', 'Close Hebrew keyboard')
+      .addClass('is-open');
+  }
+
+  function closeHebrewTray() {
+    $('#hebrew-keyboard-tray').removeClass('tray-open');
+    $('#hebrew-keyboard-trigger')
+      .attr('aria-expanded', 'false')
+      .attr('aria-label', 'Open Hebrew keyboard')
+      .removeClass('is-open');
+  }
+
+  function isHebrewTrayOpen() {
+    return $('#hebrew-keyboard-tray').hasClass('tray-open');
+  }
+
+  // Insert a character at the saved/current cursor position.
+  function insertAtCursor(char) {
+    var input = getInput();
+    if (!input) return;
+
+    input.focus();
+
+    var start = (typeof input.selectionStart === 'number') ? input.selectionStart : savedSelStart;
+    var end   = (typeof input.selectionEnd   === 'number') ? input.selectionEnd   : savedSelEnd;
+    var val   = input.value;
+
+    input.value = val.slice(0, start) + char + val.slice(end);
+
+    var newPos = start + char.length;
+    input.setSelectionRange(newPos, newPos);
+    savedSelStart = newPos;
+    savedSelEnd   = newPos;
+
+    $(input).trigger('input');
+  }
+
+  // Delete one character before the cursor (or delete the selection).
+  function deleteAtCursor() {
+    var input = getInput();
+    if (!input) return;
+
+    input.focus();
+
+    var start = (typeof input.selectionStart === 'number') ? input.selectionStart : savedSelStart;
+    var end   = (typeof input.selectionEnd   === 'number') ? input.selectionEnd   : savedSelEnd;
+    var val   = input.value;
+
+    if (start !== end) {
+      input.value = val.slice(0, start) + val.slice(end);
+      input.setSelectionRange(start, start);
+      savedSelStart = start;
+      savedSelEnd   = start;
+    } else if (start > 0) {
+      input.value = val.slice(0, start - 1) + val.slice(start);
+      input.setSelectionRange(start - 1, start - 1);
+      savedSelStart = start - 1;
+      savedSelEnd   = start - 1;
+    }
+
+    $(input).trigger('input');
+  }
+
+  // ── Long-press repeat delete ──────────────────────────────────────────────
+
+  var deleteRepeatTimeout  = null;
+  var deleteRepeatInterval = null;
+
+  function startDeleteRepeat() {
+    deleteRepeatTimeout = setTimeout(function () {
+      deleteAtCursor();
+      deleteRepeatInterval = setInterval(deleteAtCursor, 80);
+    }, 400);
+  }
+
+  function stopDeleteRepeat() {
+    clearTimeout(deleteRepeatTimeout);
+    clearInterval(deleteRepeatInterval);
+    deleteRepeatTimeout  = null;
+    deleteRepeatInterval = null;
+  }
+
+  $(document).on('mousedown touchstart', '#heb-delete', function (event) {
+    event.preventDefault();
+    deleteAtCursor();
+    startDeleteRepeat();
+  });
+
+  $(document).on('mouseup mouseleave touchend touchcancel', '#heb-delete', function () {
+    stopDeleteRepeat();
+  });
+
+  // Prevent double-delete from mousedown+click sequence.
+  $(document).on('click', '#heb-delete', function (event) {
+    event.preventDefault();
+  });
+
+  // ── Nikud vowel pointer toggle ────────────────────────────────────────────
+
+  $(document).on('click', '#heb-nikud-toggle', function () {
+    var $btn = $(this);
+    var nowActive = $btn.attr('aria-pressed') !== 'true';
+    $btn.attr('aria-pressed', String(nowActive)).toggleClass('is-active', nowActive);
+    if (nowActive) {
+      $('#heb-nikud-row').removeAttr('hidden');
+    } else {
+      $('#heb-nikud-row').attr('hidden', true);
+    }
+  });
+
+  // ── Toggle tray on ⌨︎ trigger click ──────────────────────────────────────
+
+  $(document).on('click', '#hebrew-keyboard-trigger', function (event) {
+    event.stopPropagation();
+    if (isHebrewTrayOpen()) {
+      closeHebrewTray();
+    } else {
+      openHebrewTray();
+    }
+  });
+
+  // Insert character when a .heb-key[data-char] button is clicked.
+  $(document).on('click', '#hebrew-keyboard-tray .heb-key[data-char]', function (event) {
+    event.preventDefault();
+    insertAtCursor($(this).attr('data-char'));
+  });
+
+  // Done button — close tray, return focus to search input.
+  $(document).on('click', '#heb-done', function (event) {
+    event.preventDefault();
+    closeHebrewTray();
+    var input = getInput();
+    if (input) input.focus();
+  });
+
+  // Click-away dismissal — close when clicking outside the tray and search field.
+  $(document).on('click', function (event) {
+    if (!isHebrewTrayOpen()) return;
+    if (!$(event.target).closest('#hebrew-keyboard-tray, #hebrew-keyboard-trigger, .search-field-wrapper').length) {
+      closeHebrewTray();
+    }
+  });
+
+  // Escape key — close the tray when it is open.
+  // The session-library Escape handler (above) uses stopPropagation, not
+  // stopImmediatePropagation, so this handler still runs if both are open.
+  $(document).on('keydown', function (event) {
+    if (event.key === 'Escape' && isHebrewTrayOpen()) {
+      closeHebrewTray();
+      var input = getInput();
+      if (input) input.focus();
+    }
+  });
+}());
 </script>

@@ -930,7 +930,6 @@ $(document).on('click', '.lexicon-format-btn', function () {
 var HEBREW_RANGE_RE = /[֐-׿יִ-ﭏ]/;
 
 $(document).on('input', '.input', function () {
-  if (appMode !== 'lexicon') return;
   var val = $(this).val() || '';
   $(this).attr('dir', HEBREW_RANGE_RE.test(val) ? 'rtl' : 'ltr');
 });

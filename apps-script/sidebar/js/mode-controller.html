@@ -103,9 +103,9 @@ function setSidebarMode(mode, skipPreferenceSave) {
   $('body').removeClass('mode-texts mode-voices mode-experimental mode-lexicon')
     .addClass('mode-' + appMode);
   $('.unified-sidebar').attr('data-mode', appMode);
-  $('.mode-switch-button, .experimental-menu-button').removeClass('is-active').attr('aria-pressed', 'false');
+  $('.mode-switch-button, .experimental-menu-button').removeClass('is-active').attr('aria-selected', 'false');
   $('.mode-switch-button[data-sidebar-mode="' + appMode + '"], .experimental-menu-button[data-sidebar-mode="' + appMode + '"]')
-    .addClass('is-active').attr('aria-pressed', 'true');
+    .addClass('is-active').attr('aria-selected', 'true');
 
   $('.voices-only').toggle(appMode === 'voices');
   $('.lexicon-only').toggle(appMode === 'lexicon');
@@ -114,8 +114,8 @@ function setSidebarMode(mode, skipPreferenceSave) {
 
   $('.reference-row .search-submit, .reference-row .history-submit').show();
   $('.advanced-version-details').toggle(appMode === 'texts' && $('.output-mode-selection').val() !== 'en');
-  var placeholders = { voices: 'Search source sheets', lexicon: 'Enter a Hebrew or Aramaic word' };
-  $('.input').attr('placeholder', placeholders[appMode] || 'Search Sefaria');
+  var placeholders = { texts: 'Search texts…', voices: 'Search voices…', lexicon: 'Search dictionary…' };
+  $('.input').attr('placeholder', placeholders[appMode] || 'Search texts…');
   var searchLabels = { voices: 'Source Sheets', lexicon: 'Lexicon entries' };
   $('.search-results-label').text(searchLabels[appMode] || 'Search results');
   var insertLabels = { voices: 'Add Sheet', lexicon: 'Add Entry' };
