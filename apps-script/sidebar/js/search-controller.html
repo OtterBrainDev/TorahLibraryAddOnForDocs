@@ -400,7 +400,8 @@ function buildVoicesPreviewHtml(item) {
 
 function renderVoicesCard(item) {
   if (!item) return;
-  $('.suggestions').html(buildVoicesPreviewHtml(item));
+  var $target = appMode === 'voices' ? $('.voices-suggestions') : $('.suggestions');
+  $target.html(buildVoicesPreviewHtml(item));
   // Show excerpt toggle if text is clamped
   setTimeout(function() {
     var el = document.querySelector('.voice-preview-excerpt');

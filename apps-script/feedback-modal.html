@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      :root {
+        --bg: #f5f5f3;
+        --panel: #ffffff;
+        --border: #d4d0ca;
+        --text: #222222;
+        --muted: #666666;
+        --selected: #1f3b68;
+        --radius: 12px;
+        --shadow: 0 1px 2px rgba(0,0,0,0.04);
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      .shell {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .shell-header {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(to bottom, #ffffff, #faf9f7);
+        flex-shrink: 0;
+      }
+      h1, h2, h3 { margin: 0 0 10px; line-height: 1.25; }
+      h1 { font-size: 24px; }
+      h2 { font-size: 18px; }
+      .shell-content {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+      }
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="shell">
+        <div class="shell-header">
+          <h1>Feedback</h1>
+          <p style="color: var(--muted); margin: 0;">Share your thoughts and suggestions to help improve the extension.</p>
+        </div>
+        <div class="shell-content">
+          <iframe
+            src="https://sefaria.formstack.com/forms/google_docs_extension_feedback"
+            title="Feedback form"
+            aria-label="Feedback form">
+          </iframe>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

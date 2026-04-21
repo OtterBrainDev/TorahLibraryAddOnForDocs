@@ -25,11 +25,6 @@
         <img src="https://www.sefaria.org/static/img/ajax-loader.gif" name="loading">
       </aside>
 
-      <header class="sidebar-header">
-        <h1 class="sidebar-title">Sefaria</h1>
-        <button type="button" class="sidebar-close close" aria-label="Close sidebar">×</button>
-      </header>
-
       <nav class="mode-switch-section" role="tablist" aria-label="Search mode selector">
         <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="texts" aria-selected="true">Texts</button>
         <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="voices" aria-selected="false">Voices</button>
@@ -40,11 +35,11 @@
       <div class="sidebar-search-region">
         <section class="reference-row unified-search-row">
           <div class="search-field-wrapper">
+            <button type="button" class="keyboard-trigger" id="hebrew-keyboard-trigger" aria-label="Open Hebrew keyboard" aria-expanded="false" aria-controls="hebrew-keyboard-tray">⌨︎</button>
+            <input type="text" class="input" placeholder="Search texts…" aria-label="Search Sefaria" title="Press / to search" dir="auto" autocomplete="off" spellcheck="false">
             <button type="button" class="search-submit search-icon-btn" id="run-sefaria" aria-label="Search Sefaria" title="Search Sefaria">
               <span class="search-submit-icon" aria-hidden="true">🔍</span>
             </button>
-            <input type="text" class="input" placeholder="Search texts…" aria-label="Search Sefaria" title="Press / to search" dir="auto" autocomplete="off" spellcheck="false">
-            <button type="button" class="keyboard-trigger" id="hebrew-keyboard-trigger" aria-label="Open Hebrew keyboard" aria-expanded="false" aria-controls="hebrew-keyboard-tray">⌨︎</button>
           </div>
         </section>
 
@@ -129,7 +124,10 @@
 
         <!-- 9.4: Recent sources — shown in texts mode before any search is typed -->
         <section class="recent-sources-section text-mode-only" style="display:none;" aria-label="Recent sources">
-          <div class="recent-sources-label">Recent</div>
+          <div class="recent-sources-header">
+            <span class="recent-sources-label">Recent</span>
+            <button type="button" class="recent-sources-clear-btn" aria-label="Clear all recent">&#x2715;</button>
+          </div>
           <ul class="recent-sources-list"></ul>
         </section>
 
@@ -255,33 +253,6 @@
               <button type="button" class="source-card-change-btn" id="source-card-change">Change</button>
             </div>
           </div>
-          <!-- 9.2: Quick-select version badge -->
-          <div class="source-card-version-row" style="display:none;">
-            <button type="button" class="source-card-version-badge" id="source-card-version-badge"
-              aria-haspopup="listbox" aria-expanded="false" title="Switch translation version">
-              <span class="source-card-version-lang"></span>
-              <span class="source-card-version-title">No translation</span>
-              <span class="source-card-version-arrow" aria-hidden="true">&#x25BE;</span>
-            </button>
-          </div>
-          <div class="source-card-version-popover" id="source-card-version-popover" role="listbox"
-            aria-label="Translation version" style="display:none;">
-            <ul class="source-card-version-list"></ul>
-          </div>
-        </section>
-
-        <!-- Compact version list: appears below source card when versions are available -->
-        <section class="versions-area text-mode-only" style="display:none;" aria-label="Version selection">
-          <div class="versions-area-inner">
-            <div class="version-area-group version-area-en" style="display:none;">
-              <div class="version-area-label">Translation</div>
-              <ul class="version-radio-list en-version-list" role="radiogroup" aria-label="Translation versions"></ul>
-            </div>
-            <div class="version-area-group version-area-he" style="display:none;">
-              <div class="version-area-label">Original Edition</div>
-              <ul class="version-radio-list he-version-list" role="radiogroup" aria-label="Source editions"></ul>
-            </div>
-          </div>
         </section>
 
         <!-- Voices insert options: appears when a source sheet result is selected.
@@ -290,7 +261,7 @@
         <section class="voices-insert-options voices-options-section" style="display:none;" aria-label="Voices insert options">
           <div class="voices-insert-controls">
             <div class="compact-section-label" id="voices-insert-mode-label">What to insert</div>
-            <div class="insert-mode-selector" role="radiogroup" aria-labelledby="voices-insert-mode-label">
+            <div class="insert-mode-selector" id="voices-insert-mode" role="radiogroup" aria-labelledby="voices-insert-mode-label">
               <button type="button" class="insert-mode-btn is-active" data-value="reference" role="radio" aria-checked="true">Citation</button>
               <button type="button" class="insert-mode-btn" data-value="contents" role="radio" aria-checked="false">Text</button>
               <button type="button" class="insert-mode-btn" data-value="both" role="radio" aria-checked="false">Citation + text</button>
@@ -404,12 +375,23 @@
           </details>
         </section>
 
-        <section class="preview-section" style="display:none;">
+        <section class="preview-section text-mode-only" style="display:none;">
           <details class="sidebar-accordion preview-accordion" open>
             <summary class="section-label accordion-summary">🔁 Preview</summary>
             <div class="preview-panel accordion-panel">
               <section class="suggestions" style="text-align:center;">
                 <b>Enter a text or source to preview.</b>
+              </section>
+            </div>
+          </details>
+        </section>
+
+        <section class="voices-preview-section voices-only" style="display:none;">
+          <details class="sidebar-accordion preview-accordion" open>
+            <summary class="section-label accordion-summary">🔁 Preview</summary>
+            <div class="preview-panel accordion-panel">
+              <section class="voices-suggestions suggestions" style="text-align:center;" aria-live="polite">
+                <b>Select a sheet to preview.</b>
               </section>
             </div>
           </details>
@@ -625,7 +607,7 @@
       <div class="footer footer-inline">
         <button type="button" class="footer-help-button" id="open-help-modal" aria-label="Help">Help</button>
         <span class="footer-logo-inline"><img src="https://www.sefaria.org/static/img/logo.svg" alt="Sefaria Logo"></span>
-        <a target="_blank" href="https://sefaria.formstack.com/forms/google_docs_extension_feedback">Feedback</a>
+        <button type="button" class="footer-help-button" id="open-feedback-modal" aria-label="Feedback">Feedback</button>
       </div>
       </footer>
 

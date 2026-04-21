@@ -88,7 +88,7 @@ input.visually-hidden {
 /* Voices mode hides text-specific panels */
 /* .preview-section is intentionally excluded: updateModeDependentSections()
    controls it for both modes and shows it when a voice item is selected. */
-.mode-voices .text-mode-only,
+.mode-voices .text-mode-only:not(.preview-section),
 .mode-voices .display-layout-shell,
 .mode-voices .versions-section,
 .mode-voices .library-results,

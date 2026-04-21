@@ -441,6 +441,7 @@
 .translation-language-compact {
   position: relative;
   min-width: 0;
+  overflow: visible;
 }
 
 .multi-select-dropdown {
@@ -1884,56 +1885,6 @@
 }
 
 /* =============================================================
-   SIDEBAR HEADER — compact top bar with "Sefaria" + close button
-   ============================================================= */
-
-.sidebar-header {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: space-between;
-  box-sizing: border-box;
-  width: 100%;
-  height: 32px;
-  padding: 0 8px 0 12px;
-  background: #fff;
-  border-bottom: 1px solid var(--border);
-}
-
-.sidebar-title {
-  margin: 0;
-  font-family: "Roboto", system-ui, -apple-system, sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--sefaria-blue);
-  line-height: 1;
-  letter-spacing: 0.01em;
-}
-
-.sidebar-close {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  color: #666;
-  background: transparent;
-  border: none;
-  border-radius: 4px;
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  transition: color 0.1s, background 0.1s;
-}
-
-.sidebar-close:hover {
-  color: var(--text);
-  background: var(--lighter-grey);
-}
-
-/* =============================================================
    MODE SWITCH — redesigned as compact underline tabs
    ============================================================= */
 
@@ -2114,27 +2065,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  color: #999;
+  color: #bbb;
   background: transparent;
   border: none;
-  border-left: 1px solid var(--lighter-grey);
   border-radius: 0;
-  font-size: 16px;
+  font-size: 12px;
   cursor: pointer;
   transition: color 0.1s, background 0.1s;
 }
 
 .keyboard-trigger:hover {
-  color: var(--sefaria-blue);
-  background: #f0f4fa;
+  color: #888;
+  background: transparent;
 }
 
 .keyboard-trigger.is-open {
-  color: var(--sefaria-blue);
-  background: #eef3fa;
+  color: #777;
+  background: transparent;
 }
 
 /* =============================================================

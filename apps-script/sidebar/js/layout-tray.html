@@ -1,7 +1,5 @@
 <script>
-// ── Layout Tray: open/close, sync, version list ────────────────────────────
-
-var _versionListExpanded = {};
+// ── Layout Tray: open/close, sync ─────────────────────────────────────────
 
 function openLayoutTray() {
   syncTrayFromCurrentState();
@@ -52,130 +50,10 @@ function syncTrayFromCurrentState() {
   syncTrayDisplayBtns();
   syncTrayLayoutBtns();
   syncTrayPillsFromPreferences();
-  syncVersionLists();
   var canOpen = !!(appMode === 'texts' && hasResolvedReference && data && data.ref);
   $('#tray-open-on-sefaria').prop('disabled', !canOpen);
   $('.tray-sefaria-section').toggle(canOpen);
 }
-
-// ── Version list helpers ───────────────────────────────────────────────────
-
-function _parseVersionOptionLabel(label) {
-  var m = String(label || '').match(/^([A-Z]{2,3})\s+–\s+(.+)$/);
-  if (m) return { lang: m[1], title: m[2] };
-  return { lang: '', title: label };
-}
-
-function renderVersionList(listSelector, $options, selectedVal, showLangTag) {
-  var $list = $(listSelector);
-  if (!$list.length) return;
-  var MAX = 5;
-  var expanded = !!_versionListExpanded[listSelector];
-
-  var items = [];
-  $options.each(function () {
-    items.push({ value: $(this).val(), label: $(this).attr('title') || $(this).text() });
-  });
-
-  var visible = expanded ? items : items.slice(0, MAX);
-  var hiddenCount = items.length - MAX;
-
-  var html = visible.map(function (item) {
-    var parsed = _parseVersionOptionLabel(item.label);
-    var title = parsed.title || item.label;
-    var lang  = parsed.lang;
-    var isSelected = item.value === selectedVal;
-    return '<li class="version-radio-item' + (isSelected ? ' is-selected' : '') + '"' +
-      ' data-version="' + escapeHTML(item.value) + '"' +
-      ' data-list="' + escapeHTML(listSelector) + '"' +
-      ' title="' + escapeHTML(item.label) + '"' +
-      ' role="radio" aria-checked="' + (isSelected ? 'true' : 'false') + '"' +
-      ' tabindex="0">' +
-      '<span class="version-radio-dot" aria-hidden="true"></span>' +
-      '<span class="version-radio-label">' + escapeHTML(title) + '</span>' +
-      (showLangTag && lang ? '<span class="version-radio-lang">' + escapeHTML(lang) + '</span>' : '') +
-      '</li>';
-  }).join('');
-
-  if (!expanded && hiddenCount > 0) {
-    html += '<li><button type="button" class="version-show-more" data-list-selector="' +
-      escapeHTML(listSelector) + '">Show ' + hiddenCount + ' more</button></li>';
-  } else if (expanded && hiddenCount > 0) {
-    html += '<li><button type="button" class="version-show-more" data-list-selector="' +
-      escapeHTML(listSelector) + '">Show fewer</button></li>';
-  }
-
-  $list.html(html);
-}
-
-function syncVersionLists() {
-  if (appMode !== 'texts' || !selectedResultKey) {
-    $('.versions-area').hide();
-    return;
-  }
-  var outputMode = $('.output-mode-selection').val() || 'both';
-
-  // Translation versions
-  var $enGroup = $('.version-area-en');
-  var $enSelect = $('#translation-version-selection');
-  if (!$enSelect.length) $enSelect = $('.translation-version-select').not('.he-version-selection').first();
-  var $enOptions = $enSelect.find('option:not(:disabled)');
-  var enSelected = $enSelect.val() || '';
-
-  if (outputMode !== 'he' && $enOptions.length > 1) {
-    $enGroup.show();
-    renderVersionList('.en-version-list', $enOptions, enSelected, true);
-  } else {
-    $enGroup.hide();
-  }
-
-  // Hebrew/original versions
-  var $heGroup = $('.version-area-he');
-  var $heSelect = $('#he-version-selection');
-  if (!$heSelect.length) $heSelect = $('.he-version-selection').first();
-  var $heOptions = $heSelect.find('option:not(:disabled)');
-  var heSelected = $heSelect.val() || '';
-
-  if (outputMode !== 'en' && $heOptions.length > 1) {
-    $heGroup.show();
-    renderVersionList('.he-version-list', $heOptions, heSelected, false);
-  } else {
-    $heGroup.hide();
-  }
-
-  var hasVersions = ($enGroup.is(':visible') || $heGroup.is(':visible'));
-  $('.versions-area').toggle(hasVersions);
-  updateSourceCardVersionBadge();
-}
-
-// ── Version list item click ────────────────────────────────────────────────
-
-$(document).on('click keydown', '.version-radio-item', function (event) {
-  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-  event.preventDefault();
-  var version = $(this).data('version');
-  var listSelector = $(this).data('list');
-  if (!version) return;
-
-  // Update hidden select and trigger change
-  if (listSelector === '.en-version-list') {
-    $('#translation-version-selection').val(version).trigger('change.translationVersion');
-  } else if (listSelector === '.he-version-list') {
-    $('#he-version-selection').val(version).trigger('change.heVersion');
-  }
-  // Re-render version list to reflect new selection
-  setTimeout(syncVersionLists, 50);
-});
-
-// ── Show more / fewer ─────────────────────────────────────────────────────
-
-$(document).on('click', '.version-show-more', function (event) {
-  event.preventDefault();
-  var sel = $(this).data('list-selector');
-  if (!sel) return;
-  _versionListExpanded[sel] = !_versionListExpanded[sel];
-  syncVersionLists();
-});
 
 // ── Tray display btn (output mode) ────────────────────────────────────────
 
@@ -266,101 +144,6 @@ function updateSourceCardSefariaState() {
 }
 
 // =====================================================================
-// 9.2 — Quick-Select Version badge on source card
-// =====================================================================
-
-function updateSourceCardVersionBadge() {
-  var outputMode = $('.output-mode-selection').val() || 'both';
-  if (outputMode === 'he' || !selectedResultKey) {
-    $('.source-card-version-row').hide();
-    closeVersionBadgePopover();
-    return;
-  }
-  var $select = $('#translation-version-selection');
-  if (!$select.length) $select = $('.translation-version-select').not('.he-version-selection').first();
-  var $selected = $select.find('option:selected').first();
-  if (!$selected.length || !$selected.val()) {
-    $('.source-card-version-row').hide();
-    closeVersionBadgePopover();
-    return;
-  }
-  var label = $selected.attr('title') || $selected.text();
-  var parsed = _parseVersionOptionLabel(label);
-  var lang  = parsed.lang || 'EN';
-  var title = parsed.title || label;
-  var shortTitle = title.length > 28 ? title.slice(0, 27) + '…' : title;
-  $('.source-card-version-lang').text(lang);
-  $('.source-card-version-title').text(shortTitle);
-  $('.source-card-version-row').show();
-}
-
-function openVersionBadgePopover() {
-  var $select = $('#translation-version-selection');
-  if (!$select.length) $select = $('.translation-version-select').not('.he-version-selection').first();
-  var $options = $select.find('option:not(:disabled)');
-  var selectedVal = $select.val() || '';
-  if (!$options.length) return;
-
-  var html = '';
-  $options.each(function () {
-    var val   = $(this).val();
-    var label = $(this).attr('title') || $(this).text();
-    var parsed = _parseVersionOptionLabel(label);
-    var title = parsed.title || label;
-    var lang  = parsed.lang;
-    var isSel = val === selectedVal;
-    html += '<li class="version-radio-item sc-popover-item' + (isSel ? ' is-selected' : '') + '"' +
-      ' data-version="' + escapeHTML(val) + '"' +
-      ' title="' + escapeHTML(label) + '"' +
-      ' role="option" aria-selected="' + (isSel ? 'true' : 'false') + '"' +
-      ' tabindex="0">' +
-      '<span class="version-radio-dot" aria-hidden="true"></span>' +
-      '<span class="version-radio-label">' + escapeHTML(title) + '</span>' +
-      (lang ? '<span class="version-radio-lang">' + escapeHTML(lang) + '</span>' : '') +
-      '</li>';
-  });
-  $('.source-card-version-list').html(html);
-  $('#source-card-version-popover').show();
-  $('#source-card-version-badge').attr('aria-expanded', 'true');
-}
-
-function closeVersionBadgePopover() {
-  $('#source-card-version-popover').hide();
-  $('#source-card-version-badge').attr('aria-expanded', 'false');
-}
-
-$('#source-card-version-badge').on('click', function (event) {
-  event.stopPropagation();
-  if ($('#source-card-version-popover').is(':visible')) {
-    closeVersionBadgePopover();
-  } else {
-    openVersionBadgePopover();
-  }
-});
-
-$(document).on('click keydown', '.sc-popover-item', function (event) {
-  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-  event.preventDefault();
-  var version = $(this).data('version');
-  if (!version) return;
-  var $select = $('#translation-version-selection');
-  if (!$select.length) $select = $('.translation-version-select').not('.he-version-selection').first();
-  $select.val(version).trigger('change.translationVersion');
-  closeVersionBadgePopover();
-  setTimeout(updateSourceCardVersionBadge, 50);
-});
-
-$(document).on('click', function (event) {
-  if (!$(event.target).closest('#source-card-version-badge, #source-card-version-popover').length) {
-    closeVersionBadgePopover();
-  }
-});
-
-$(document).on('keydown', '#source-card-version-popover', function (event) {
-  if (event.key === 'Escape') { closeVersionBadgePopover(); $('#source-card-version-badge').focus(); }
-});
-
-// =====================================================================
 // 9.3 — Tray preview Copy button
 // =====================================================================
 
@@ -420,25 +203,35 @@ function renderRecentSources() {
   var inserted = Array.isArray(sessionLibrary.inserted) ? sessionLibrary.inserted : [];
   var seen = {};
   var items = [];
-  pinned.concat(inserted).forEach(function (item) {
+  pinned.forEach(function (item) {
     if (!item || !item.ref || seen[item.ref]) return;
     seen[item.ref] = true;
-    items.push(item);
+    items.push({ data: item, listName: 'pinned' });
+  });
+  inserted.forEach(function (item) {
+    if (!item || !item.ref || seen[item.ref]) return;
+    seen[item.ref] = true;
+    items.push({ data: item, listName: 'inserted' });
   });
   items = items.slice(0, 3);
 
   if (!items.length) { $section.hide(); return; }
 
-  var html = items.map(function (item) {
+  var html = items.map(function (entry) {
+    var item     = entry.data;
+    var listName = entry.listName;
     var label    = item.label || item.ref || '';
     var category = item.category || '';
     var icon     = _RECENT_ICONS[category] || _RECENT_ICONS._default;
     return '<li class="recent-source-item" role="button" tabindex="0"' +
-      ' data-ref="'   + escapeHTML(item.ref || '') + '"' +
-      ' data-label="' + escapeHTML(label) + '">' +
+      ' data-ref="'    + escapeHTML(item.ref || '') + '"' +
+      ' data-list="'   + escapeHTML(listName) + '"' +
+      ' data-label="'  + escapeHTML(label) + '">' +
       '<span class="recent-source-icon" aria-hidden="true">' + icon + '</span>' +
       '<span class="recent-source-label">' + escapeHTML(label) + '</span>' +
       (category ? '<span class="recent-source-category">' + escapeHTML(category) + '</span>' : '') +
+      '<button type="button" class="recent-source-remove-btn" aria-label="Remove ' + escapeHTML(label) + '"' +
+      ' data-ref="' + escapeHTML(item.ref || '') + '" data-list="' + escapeHTML(listName) + '">&#x2715;</button>' +
       '</li>';
   }).join('');
 
@@ -446,8 +239,22 @@ function renderRecentSources() {
   $section.show();
 }
 
+$(document).on('click', '.recent-sources-clear-btn', function (event) {
+  event.stopPropagation();
+  clearRecentItems();
+  renderRecentSources();
+});
+
+$(document).on('click', '.recent-source-remove-btn', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  removeSessionEntry($(this).attr('data-list'), $(this).attr('data-ref'));
+  renderRecentSources();
+});
+
 $(document).on('click keydown', '.recent-source-item', function (event) {
   if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+  if ($(event.target).closest('.recent-source-remove-btn').length) return;
   event.preventDefault();
   var ref   = $(this).attr('data-ref');
   var label = $(this).attr('data-label') || ref;

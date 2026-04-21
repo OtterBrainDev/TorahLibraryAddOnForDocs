@@ -95,10 +95,7 @@ function resetSelectedResultView() {
   $('.result-item').removeClass('selected').attr('aria-pressed', 'false');
   $('.suggestions').html("<b>Select a result to preview it.</b>");
   updateActionabilityUI({ isInsertable: false });
-  // Clear new redesign elements
   $('.source-card').hide();
-  $('.versions-area').hide();
-  if (typeof closeVersionBadgePopover === 'function') closeVersionBadgePopover();
   if (typeof updateSourceCardSefariaState === 'function') updateSourceCardSefariaState();
   if (typeof renderRecentSources === 'function') renderRecentSources();
 }
