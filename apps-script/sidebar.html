@@ -273,50 +273,106 @@
           </details>
         </section>
 
-        <section class="experimental-section" style="display:none;">
-          <div class="more-options-card experimental-features-card">
-            <details class="feature-accordion" open>
-              <summary>🤖 AI Shiur</summary>
-              <p class="helper-text">Generate a lesson draft and insert it directly into your document.</p>
-              <div class="experimental-inline-form">
-                <label class="compact-section-label" for="ai-inline-topic">🔍 Topic or reference</label>
-                <input id="ai-inline-topic" type="text" class="experimental-inline-input" placeholder="Berakhot 2a, teshuvah, gratitude…" autocomplete="off">
-                <label class="compact-section-label" for="ai-inline-audience">Audience</label>
-                <select id="ai-inline-audience" class="translation-version-select">
-                  <option value="Adult learners">Adult learners</option>
-                  <option value="High school students">High school students</option>
-                  <option value="Middle school students">Middle school students</option>
-                  <option value="Intro / beginners">Intro / beginners</option>
-                  <option value="Educators">Educators</option>
-                </select>
-                <label class="compact-section-label" for="ai-inline-style">Style</label>
-                <select id="ai-inline-style" class="translation-version-select">
-                  <option value="Interactive shiur">Interactive shiur</option>
-                  <option value="Source-sheet chavruta">Source-sheet chavruta</option>
-                  <option value="Text-study seminar">Text-study seminar</option>
-                  <option value="Accessible intro session">Accessible intro session</option>
-                  <option value="Drash">Drash</option>
-                </select>
+        <section class="experimental-section" style="display:none;" aria-label="Experimental Features">
+          <!-- Early Access intro -->
+          <div class="exp-section-intro">
+            <span aria-hidden="true">⚗</span>
+            <div>
+              <p class="exp-intro-label">Early Access</p>
+              <p class="exp-intro-desc">These tools are still evolving. Review output before use.</p>
+            </div>
+          </div>
+
+          <!-- AI Shiur card -->
+          <div class="exp-card" id="exp-card-shiur">
+            <div class="exp-card-header">
+              <h3 class="exp-card-title"><span aria-hidden="true">🤖</span> AI Shiur</h3>
+              <span class="exp-badge" title="This is an experimental feature — output may vary.">⚗ Beta</span>
+            </div>
+            <p class="exp-card-desc">Generates a shiur outline and inserts it into your document at the cursor.</p>
+            <div class="exp-form">
+              <div class="exp-field">
+                <label class="exp-label" for="ai-inline-topic">Topic or reference <span class="exp-required" aria-label="required">*</span></label>
+                <input id="ai-inline-topic" type="text" class="exp-input" placeholder="Berakhot 2a, teshuvah, gratitude…" autocomplete="off" aria-required="true" aria-describedby="ai-topic-error">
+                <p class="exp-field-error" id="ai-topic-error" role="alert" hidden></p>
               </div>
-              <div class="experimental-action-row">
-                <button type="button" id="ai-inline-generate" class="experimental-action-button">📦 Generate &amp; Insert</button>
+              <div class="exp-field">
+                <p class="exp-label" id="ai-audience-label">Audience</p>
+                <div class="exp-chip-group" role="radiogroup" aria-labelledby="ai-audience-label" data-field="ai-audience">
+                  <button type="button" role="radio" class="exp-chip" aria-checked="true"  data-value="Adult learners">Adults</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="High school students">High school</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Intro / beginners">Beginner</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Educators">Educators</button>
+                </div>
               </div>
-              <p class="helper-text experimental-inline-status" id="ai-inline-status" hidden></p>
-            </details>
-            <details class="feature-accordion">
-              <summary>🎲 Surprise Me</summary>
-              <p class="helper-text">Insert random matching sources. Leave blank for a random Hebrew seed word.</p>
-              <div class="experimental-inline-form">
-                <label class="compact-section-label" for="sm-inline-term">🔍 Search term</label>
-                <input id="sm-inline-term" type="text" class="experimental-inline-input" placeholder="Optional — blank for random" autocomplete="off">
-                <label class="compact-section-label" for="sm-inline-count">How many sources</label>
-                <input id="sm-inline-count" type="number" class="experimental-inline-number" min="1" max="10" value="5">
+              <div class="exp-field">
+                <p class="exp-label" id="ai-style-label">Style</p>
+                <div class="exp-chip-group" role="radiogroup" aria-labelledby="ai-style-label" data-field="ai-style">
+                  <button type="button" role="radio" class="exp-chip" aria-checked="true"  data-value="Interactive shiur">Interactive</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Source-sheet chavruta">Chavruta</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Text-study seminar">Seminar</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Accessible intro session">Intro</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Drash">Drash</button>
+                </div>
               </div>
-              <div class="experimental-action-row">
-                <button type="button" id="sm-inline-launch" class="experimental-action-button">📦 Insert</button>
+              <details class="exp-advanced">
+                <summary class="exp-advanced-toggle">More options</summary>
+                <div class="exp-advanced-content">
+                  <div class="exp-field">
+                    <p class="exp-sublabel">LENGTH</p>
+                    <div class="exp-segmented" role="radiogroup" aria-label="Lesson length" data-field="ai-length">
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="25">Short</button>
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="true"  data-value="45">Standard</button>
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="70">Long</button>
+                    </div>
+                  </div>
+                  <div class="exp-field">
+                    <p class="exp-sublabel">LANGUAGE</p>
+                    <div class="exp-segmented" role="radiogroup" aria-label="Language balance" data-field="ai-language">
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="he">Hebrew</button>
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="true"  data-value="balanced">Balanced</button>
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="en">English</button>
+                    </div>
+                  </div>
+                  <div class="exp-field exp-field-toggle">
+                    <label class="exp-toggle-label" for="ai-inline-discussion">Include discussion questions</label>
+                    <input type="checkbox" id="ai-inline-discussion" class="exp-toggle" role="switch" checked>
+                  </div>
+                </div>
+              </details>
+            </div>
+            <div class="exp-action-row">
+              <button type="button" id="ai-inline-generate" class="exp-action-btn">Generate &amp; Insert</button>
+            </div>
+            <p class="exp-status" id="ai-inline-status" role="status" aria-live="polite"></p>
+          </div>
+
+          <!-- Surprise Me card -->
+          <div class="exp-card" id="exp-card-surprise">
+            <div class="exp-card-header">
+              <h3 class="exp-card-title"><span aria-hidden="true">🎲</span> Surprise Me</h3>
+              <span class="exp-badge" title="This is an experimental feature — output may vary.">⚗ Beta</span>
+            </div>
+            <p class="exp-card-desc">Inserts sources that match a word or theme. Leave blank to let us pick.</p>
+            <div class="exp-form">
+              <div class="exp-field">
+                <label class="exp-label" for="sm-inline-term">Topic hint <span class="exp-label-optional">(optional)</span></label>
+                <input id="sm-inline-term" type="text" class="exp-input" placeholder="e.g. shabbat, forgiveness, water, joy…" autocomplete="off">
               </div>
-              <p class="helper-text experimental-inline-status" id="sm-inline-status" hidden></p>
-            </details>
+              <div class="exp-field">
+                <p class="exp-label" id="sm-count-label">Sources</p>
+                <div class="exp-stepper" role="group" aria-labelledby="sm-count-label">
+                  <button type="button" class="exp-stepper-btn" id="sm-count-dec" aria-label="Decrease source count" aria-controls="sm-inline-count">−</button>
+                  <input type="number" id="sm-inline-count" class="exp-stepper-val" min="1" max="10" value="3" aria-label="Number of sources" readonly>
+                  <button type="button" class="exp-stepper-btn" id="sm-count-inc" aria-label="Increase source count" aria-controls="sm-inline-count">+</button>
+                  <span class="exp-stepper-hint" aria-hidden="true">1–10</span>
+                </div>
+              </div>
+            </div>
+            <div class="exp-action-row">
+              <button type="button" id="sm-inline-launch" class="exp-action-btn">Discover Sources</button>
+            </div>
+            <p class="exp-status" id="sm-inline-status" role="status" aria-live="polite"></p>
           </div>
         </section>
 

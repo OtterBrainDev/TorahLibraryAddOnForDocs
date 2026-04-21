@@ -264,27 +264,123 @@ $(document).on('click', '.lang-filter-clear-chip', function (event) {
   }
 });
 
-$('#sm-inline-launch').on('click', function () {
-  var term = ($('#sm-inline-term').val() || '').trim();
-  var count = parseInt($('#sm-inline-count').val(), 10);
+// ── Experimental controls — chip groups, segmented controls, stepper ──────────
+
+// Read selected data-value from a chip/segmented radiogroup
+function expGetGroupValue(fieldAttr) {
+  return $('[data-field="' + fieldAttr + '"] [aria-checked="true"]').attr('data-value') || '';
+}
+
+// Select a chip or segment by data-value within its group
+function expSetGroupValue(fieldAttr, value) {
+  var $group = $('[data-field="' + fieldAttr + '"]');
+  $group.children('[aria-checked]').attr('aria-checked', 'false');
+  var $target = $group.children('[data-value="' + value + '"]');
+  if ($target.length) $target.attr('aria-checked', 'true');
+}
+
+// Set busy state on an exp-card
+function expSetBusy($card, isBusy, loadingLabel, defaultLabel) {
+  $card.toggleClass('exp-busy', isBusy);
+  var $btn = $card.find('.exp-action-btn');
+  $btn.prop('disabled', isBusy);
+  if (isBusy) {
+    $btn.html('<span class="exp-spinner" aria-hidden="true"></span>' + loadingLabel);
+  } else {
+    $btn.text(defaultLabel);
+  }
+}
+
+// Set status text on an exp-card
+function expSetStatus($card, message, kind) {
+  var $s = $card.find('.exp-status');
+  $s.text(message).removeClass('exp-error exp-success');
+  if (kind) $s.addClass(kind);
+}
+
+// Chip group: click selects one chip, arrow keys navigate
+$(document).on('click', '.exp-chip-group .exp-chip', function () {
+  $(this).closest('.exp-chip-group').children('.exp-chip').attr('aria-checked', 'false');
+  $(this).attr('aria-checked', 'true');
+});
+$(document).on('keydown', '.exp-chip-group .exp-chip', function (e) {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' &&
+      e.key !== 'ArrowDown'  && e.key !== 'ArrowUp') return;
+  e.preventDefault();
+  var $chips = $(this).closest('.exp-chip-group').children('.exp-chip');
+  var idx = $chips.index(this);
+  var next = (e.key === 'ArrowRight' || e.key === 'ArrowDown')
+    ? (idx + 1) % $chips.length
+    : (idx - 1 + $chips.length) % $chips.length;
+  $chips.eq(next).trigger('click').trigger('focus');
+});
+
+// Segmented control: same radio pattern
+$(document).on('click', '.exp-segmented .exp-seg-btn', function () {
+  $(this).closest('.exp-segmented').children('.exp-seg-btn').attr('aria-checked', 'false');
+  $(this).attr('aria-checked', 'true');
+});
+
+// Stepper: decrement
+$(document).on('click', '#sm-count-dec', function () {
+  var $val = $('#sm-inline-count');
+  var v = parseInt($val.val(), 10) || 3;
+  if (v > 1) {
+    $val.val(v - 1);
+    $('#sm-count-dec').prop('disabled', v - 1 <= 1);
+    $('#sm-count-inc').prop('disabled', false);
+  }
+});
+
+// Stepper: increment
+$(document).on('click', '#sm-count-inc', function () {
+  var $val = $('#sm-inline-count');
+  var v = parseInt($val.val(), 10) || 3;
+  if (v < 10) {
+    $val.val(v + 1);
+    $('#sm-count-inc').prop('disabled', v + 1 >= 10);
+    $('#sm-count-dec').prop('disabled', false);
+  }
+});
+
+// ── Surprise Me ───────────────────────────────────────────────────────────────
+
+$('#sm-inline-launch').off('click').on('click', function () {
+  var $card = $('#exp-card-surprise');
+  var term  = ($('#sm-inline-term').val() || '').trim();
+  var count = Math.max(1, Math.min(10, parseInt($('#sm-inline-count').val(), 10) || 3));
   var payload = {
-    term: term,
-    count: Math.max(1, Math.min(10, isNaN(count) ? 5 : count)),
+    term:     term || null,
+    count:    count,
     corpuses: ['Tanakh', 'Mishnah', 'Talmud', 'Midrash', 'Halakhah'],
     sortMode: 'relevance'
   };
-  var $btn = $(this);
-  var $status = $('#sm-inline-status');
-  $btn.prop('disabled', true);
-  $status.text(term ? 'Searching and shuffling sources…' : 'Picking a seed word and searching…').removeAttr('hidden');
+
+  expSetBusy($card, true, 'Searching…', 'Discover Sources');
+  expSetStatus($card,
+    term ? 'Finding sources — almost there.'
+         : 'No topic? We’ll pick one. Finding sources…', '');
+
   google.script.run
     .withSuccessHandler(function (result) {
-      $btn.prop('disabled', false);
-      $status.text((result && result.message) ? result.message : 'Done.');
+      expSetBusy($card, false, '', 'Discover Sources');
+      if (!result || result.success === false) {
+        expSetStatus($card,
+          (result && result.message) ? result.message
+            : 'No matching sources found. Try a different topic or leave it blank.',
+          'exp-error');
+        return;
+      }
+      var msg = '✓ ' + count + ' source' + (count === 1 ? '' : 's') + ' inserted at your cursor.';
+      if (!term && result.seedWord) msg += ' We used the word ‘' + result.seedWord + '’.';
+      expSetStatus($card, msg, 'exp-success');
+      setTimeout(function () { expSetStatus($card, '', ''); }, 5000);
     })
-    .withFailureHandler(function (error) {
-      $btn.prop('disabled', false);
-      $status.text((error && error.message) ? error.message : 'Something went wrong.');
+    .withFailureHandler(function (err) {
+      expSetBusy($card, false, '', 'Discover Sources');
+      expSetStatus($card,
+        (err && err.message) ? err.message : 'Something went wrong. Try again.',
+        'exp-error');
     })
     .insertSurpriseMe(payload);
 });
@@ -310,38 +406,71 @@ $(document).on('click', '.restore-corpus-menu-item', function (event) {
   toggleCorpusVisibility(corpusKey);
 });
 
-$('#ai-inline-generate').on('click', function () {
-  var topic = ($('#ai-inline-topic').val() || '').trim();
+// ── AI Shiur ──────────────────────────────────────────────────────────────────
+
+$('#ai-inline-generate').off('click').on('click', function () {
+  var $card  = $('#exp-card-shiur');
+  var topic  = ($('#ai-inline-topic').val() || '').trim();
+
+  // Validate required field
+  if (!topic) {
+    var $input = $('#ai-inline-topic');
+    var $err   = $('#ai-topic-error');
+    $input.addClass('exp-input-error').trigger('focus');
+    $err.text('A topic is required to generate a shiur.').addClass('exp-visible').show();
+    $input.one('input.clearErr', function () {
+      $input.removeClass('exp-input-error');
+      $err.removeClass('exp-visible').hide();
+    });
+    return;
+  }
+
+  // Resolve language balance → include flags
+  var lang = expGetGroupValue('ai-language') || 'balanced';
+  var includeOriginal    = (lang !== 'en');
+  var includeTranslation = (lang !== 'he');
+
   var payload = {
-    provider: 'default',
-    model: '',
-    keyStrategy: 'auto',
-    apiKey: '',
-    topic: topic,
-    contextMode: 'topic',
-    audience: $('#ai-inline-audience').val() || 'Adult learners',
-    duration: 45,
-    lessonStyle: $('#ai-inline-style').val() || 'Interactive shiur',
-    additionalInstructions: '',
-    includeOriginal: true,
-    includeTranslation: true,
-    includeTransliteration: false,
-    includeEducatorNotes: true,
-    includeDiscussionPrompts: true
+    provider:                'default',
+    model:                   '',
+    keyStrategy:             'auto',
+    apiKey:                  '',
+    topic:                   topic,
+    contextMode:             'topic',
+    audience:                expGetGroupValue('ai-audience') || 'Adult learners',
+    duration:                parseInt(expGetGroupValue('ai-length'), 10) || 45,
+    lessonStyle:             expGetGroupValue('ai-style')    || 'Interactive shiur',
+    additionalInstructions:  '',
+    includeOriginal:         includeOriginal,
+    includeTranslation:      includeTranslation,
+    includeTransliteration:  false,
+    includeEducatorNotes:    true,
+    includeDiscussionPrompts: $('#ai-inline-discussion').is(':checked')
   };
-  var $btn = $(this);
-  var $status = $('#ai-inline-status');
-  $btn.prop('disabled', true);
-  $status.text('Generating and inserting your draft…').removeAttr('hidden');
+
+  expSetBusy($card, true, 'Generating…', 'Generate & Insert');
+  expSetStatus($card, 'This usually takes 20–40 seconds. Your draft will appear at the cursor.', '');
+
   google.script.run
     .withSuccessHandler(function (result) {
-      $btn.prop('disabled', false);
-      var title = (result && result.title) ? result.title : 'lesson';
-      $status.text('Inserted "' + title + '".');
+      expSetBusy($card, false, '', 'Generate & Insert');
+      if (!result || result.success === false) {
+        expSetStatus($card,
+          (result && result.message) ? result.message
+            : 'No content was generated. Try a different topic or style.',
+          'exp-error');
+        return;
+      }
+      var label = (result && result.title) ? '“' + result.title + '”' : 'your shiur';
+      expSetStatus($card, '✓ Draft inserted — ' + label + '. Scroll down to review.', 'exp-success');
+      setTimeout(function () { expSetStatus($card, '', ''); }, 6000);
     })
-    .withFailureHandler(function (error) {
-      $btn.prop('disabled', false);
-      $status.text((error && error.message) ? error.message : 'Something went wrong.');
+    .withFailureHandler(function (err) {
+      expSetBusy($card, false, '', 'Generate & Insert');
+      expSetStatus($card,
+        (err && err.message) ? err.message
+          : 'Something went wrong. Check your connection and try again.',
+        'exp-error');
     })
     .generateAiLessonDraft(payload);
 });

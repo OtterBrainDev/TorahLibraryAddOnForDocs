@@ -50,6 +50,13 @@ function syncAiQuickActionState() {
 
 function applyEffectivePreferencesToUI() {
   mergePreferenceDefaults(effectivePreferences);
+  // Sync AI Shiur audience/style preferences to experimental chip groups
+  if (typeof expSetGroupValue === 'function') {
+    if (effectivePreferences.ai_audience_default)
+      expSetGroupValue('ai-audience', effectivePreferences.ai_audience_default);
+    if (effectivePreferences.ai_lesson_style_default)
+      expSetGroupValue('ai-style', effectivePreferences.ai_lesson_style_default);
+  }
   syncDisplayModeCards();
   syncLayoutCards();
   updateBilingualLayoutVisibility();
