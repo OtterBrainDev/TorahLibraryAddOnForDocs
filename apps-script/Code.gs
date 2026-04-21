@@ -872,44 +872,62 @@ function insertReference(data, singleLanguage = undefined, pasukPreference = tru
   let index = doc.getNumChildren();
 
   const resolveSafeSelectionInsertionIndex = () => {
-    if (!selection) {
-      return null;
-    }
+    if (!selection) return null;
 
     let rangeElements = selection.getRangeElements();
-    if (!rangeElements || rangeElements.length !== 1) {
-      throw new Error("Could not insert at this selection. Select simple text in a single paragraph, or place the cursor where you want the source inserted.");
+    if (!rangeElements || rangeElements.length === 0) return null;
+
+    // Walk up from the first selected element to find its body-level parent
+    let firstElement = rangeElements[0].getElement();
+    let bodyLevelElement = firstElement;
+    while (bodyLevelElement.getParent && bodyLevelElement.getParent() && bodyLevelElement.getParent() !== doc) {
+      bodyLevelElement = bodyLevelElement.getParent();
     }
 
-    let rangeElement = rangeElements[0];
-    if (!rangeElement || !rangeElement.isPartial()) {
-      throw new Error("Could not insert at this selection. Select simple text in a single paragraph, or place the cursor where you want the source inserted.");
+    if (!bodyLevelElement || bodyLevelElement.getParent() !== doc) {
+      throw new Error("Your selection is inside a table, header, or footer, which isn't supported. Click to place your cursor in the main body of the document, then try again.");
     }
 
-    let element = rangeElement.getElement();
-    if (!element || element.getType() !== DocumentApp.ElementType.TEXT) {
-      throw new Error("Could not insert at this selection. Select plain paragraph text (not table/header/footer content), or place the cursor where you want the source inserted.");
+    let insertionIndex = doc.getChildIndex(bodyLevelElement) + 1;
+
+    // Delete selected content in reverse document order to preserve indices
+    for (let i = rangeElements.length - 1; i >= 0; i--) {
+      let re = rangeElements[i];
+      let el = re.getElement();
+      try {
+        if (re.isPartial()) {
+          if (el.getType() === DocumentApp.ElementType.TEXT) {
+            let start = re.getStartOffset();
+            let end = re.getEndOffsetInclusive();
+            if (start >= 0 && end >= start) {
+              el.asText().deleteText(start, end);
+            }
+          }
+        } else {
+          let type = el.getType();
+          if (type === DocumentApp.ElementType.TEXT) {
+            let text = el.asText().getText();
+            if (text.length > 0) {
+              el.asText().deleteText(0, text.length - 1);
+            }
+          } else if (type === DocumentApp.ElementType.PARAGRAPH || type === DocumentApp.ElementType.LIST_ITEM) {
+            if (el.getParent() === doc && doc.getNumChildren() > 1) {
+              let elIndex = doc.getChildIndex(el);
+              el.removeFromParent();
+              if (elIndex < insertionIndex) {
+                insertionIndex--;
+              }
+            } else {
+              try { el.clear(); } catch (e) {}
+            }
+          }
+        }
+      } catch (e) {
+        // Skip any element that cannot be deleted
+      }
     }
 
-    let parent = element.getParent();
-    if (!parent || (parent.getType() !== DocumentApp.ElementType.PARAGRAPH && parent.getType() !== DocumentApp.ElementType.LIST_ITEM)) {
-      throw new Error("Could not insert at this selection. Select plain paragraph text, or place the cursor where you want the source inserted.");
-    }
-
-    let container = parent.getParent();
-    if (container !== doc) {
-      throw new Error("Could not insert at this selection. This add-on currently supports replacing selected body text only.");
-    }
-
-    let start = rangeElement.getStartOffset();
-    let end = rangeElement.getEndOffsetInclusive();
-    if (start < 0 || end < start) {
-      throw new Error("Could not insert at this selection. Select plain paragraph text, or place the cursor where you want the source inserted.");
-    }
-
-    let textElement = element.asText();
-    textElement.deleteText(start, end);
-    return container.getChildIndex(parent) + 1;
+    return insertionIndex;
   };
 
   if (!cursor && selection) {
