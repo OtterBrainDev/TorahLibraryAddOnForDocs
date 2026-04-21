@@ -369,9 +369,9 @@ function buildVoicesPreviewHtml(item) {
   var accentAttr = accent ? " data-accent='" + accent + "'" : '';
 
   var openBtn = item.url
-    ? "<a class='voice-preview-open-btn' href='" + escapeHTML(item.url) + "' target='_blank' rel='noopener' aria-label='Open " + title + " on Sefaria'>Open ↗</a>"
+    ? "<a class='voice-preview-open-btn' href='" + escapeHTML(item.url) + "' target='_blank' rel='noopener' aria-label='Open " + title + " on Sefaria'><img src='https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png' alt='' class='open-sefaria-icon'></a>"
     : '';
-  var copyBtn = "<button type='button' class='voice-preview-copy-btn' aria-label='Copy citation to clipboard'>⎘</button>";
+  var copyBtn = "<button type='button' class='voice-preview-copy-btn' aria-label='Copy citation to clipboard'>📋</button>";
 
   var html = "<div class='voice-preview voice-preview-card'" + accentAttr + " role='region' aria-label='Selected sheet preview'>";
   html += "<div class='voice-preview-header'>";

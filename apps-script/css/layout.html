@@ -1126,17 +1126,23 @@
 
 .voice-preview-open-btn,
 .voice-preview-copy-btn {
-  font-size: 11px;
-  padding: 3px 7px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--sefaria-blue);
   background: transparent;
   text-decoration: none;
   cursor: pointer;
-  white-space: nowrap;
-  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
 }
+.voice-preview-open-btn .open-sefaria-icon { width: 16px; height: 16px; }
 .voice-preview-open-btn:hover,
 .voice-preview-copy-btn:hover { background: var(--selected-soft); }
 .voice-preview-copy-btn:focus-visible,
