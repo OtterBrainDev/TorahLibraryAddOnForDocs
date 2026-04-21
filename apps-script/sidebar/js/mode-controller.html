@@ -177,12 +177,22 @@ $('.mode-switch-button, .experimental-menu-button').off('click').on('click', fun
 
 $('#open-session-library').off('click').on('click', function (event) {
   if (event) event.preventDefault();
-  renderSessionLibrary();
-  $('#session-library-modal').removeAttr('hidden');
+  // openSessionLibraryModal() is defined in event-bindings.html which loads after
+  // this file; call it if available, otherwise fall back to a direct render+show.
+  if (typeof openSessionLibraryModal === 'function') {
+    openSessionLibraryModal();
+  } else {
+    renderSessionLibrary();
+    $('#session-library-modal').removeAttr('hidden');
+  }
 });
 
 $('#close-session-library').on('click', function () {
-  $('#session-library-modal').attr('hidden', true);
+  if (typeof closeSessionLibraryModal === 'function') {
+    closeSessionLibraryModal();
+  } else {
+    $('#session-library-modal').attr('hidden', true);
+  }
 });
 
 $('#open-session-library-experimental').on('click', function () {

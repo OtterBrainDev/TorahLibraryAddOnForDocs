@@ -605,88 +605,7 @@
 }
 
 /* =============================================================
-   SESSION LIBRARY (inline panel)
-   ============================================================= */
-
-.session-library-tools {
-  margin-left: auto;
-}
-
-.session-library-group + .session-library-group {
-  margin-top: 10px;
-}
-
-.session-library-results {
-  margin-top: 4px;
-}
-
-/* Updated to flex — the grid version from section 14 was superseded */
-.session-library-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.session-library-item.is-pinned {
-  background: #f8fbff;
-  border-color: #cfdff3;
-}
-
-.session-library-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.session-library-remove {
-  width: 28px;
-  height: 28px;
-  margin-left: 10px;
-  color: #6d7786;
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  border-radius: 999px;
-  font-size: 18px;
-}
-
-.session-library-remove:hover {
-  color: #18345d;
-  background: #eef2f6;
-}
-
-.session-library-note {
-  margin: 0 0 10px;
-  color: #5a6472;
-  font-size: 12px;
-}
-
-.session-corpus-group {
-  margin: 10px 0 6px;
-  padding: 5px 8px;
-  color: #5a6576;
-  background: #f7f4ef;
-  border: 1px solid #ebe5dd;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.session-library-primary-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.session-library-primary-button .footer-icon {
-  line-height: 1;
-  vertical-align: middle;
-}
-
-/* =============================================================
-   SESSION LIBRARY MODAL
+   SESSION LIBRARY MODAL — backdrop + card
    ============================================================= */
 
 .session-library-modal-backdrop {
@@ -697,55 +616,19 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(17, 24, 39, 0.35);
+  background: rgba(17, 24, 39, 0.4);
 }
 
-/* Fixed width for sidebar context — was calc(100vw - 32px) which sized to ~268px */
 .session-library-modal-card {
   display: flex;
   flex-direction: column;
-  width: 280px;
+  width: clamp(480px, 90vw, 640px);
   max-height: 80vh;
   overflow: hidden;
   background: #fff;
   border: 1px solid #e3dfd8;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-}
-
-.session-library-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  border-bottom: 1px solid #ece7df;
-}
-
-.session-library-modal-header h2 {
-  margin: 0;
-  color: #18345d;
-  font-family: Georgia, serif;
-  font-size: 20px;
-}
-
-.session-library-modal-close {
-  padding: 0;
-  color: #5f6b7c;
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  font-size: 20px;
-  line-height: 1;
-}
-
-#session-library-modal .session-library-panel {
-  display: block;
-  flex: 1 1 auto;
-  min-height: 0;
-  min-height: 420px;
-  margin: 0;
-  padding: 12px 14px 14px;
-  overflow: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
 }
 
 .modal-backdrop[hidden] {
@@ -753,13 +636,690 @@
 }
 
 /* =============================================================
-   SESSION CORPUS ACCORDION (in modal)
+   SESSION LIBRARY MODAL — header
    ============================================================= */
 
-.session-library-corpus-list {
+.sl-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.sl-modal-header-text {
+  min-width: 0;
+}
+
+.sl-modal-title {
+  margin: 0 0 2px;
+  color: #18345d;
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sl-modal-subtitle {
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.sl-modal-close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 32px;
+  text-align: center;
+}
+
+.sl-modal-close:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL — toolbar
+   ============================================================= */
+
+.sl-toolbar {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  padding: 10px 22px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.sl-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sl-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px;
+  color: #111827;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.sl-search-input:focus {
+  background: #fff;
+  border-color: #18345d;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(24, 52, 93, 0.12);
+}
+
+.sl-action-btn {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 10px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sl-action-btn--destructive {
+  color: #b91c1c;
+}
+
+.sl-action-btn--destructive:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #991b1b;
+  text-decoration: underline;
+}
+
+.sl-action-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sl-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sl-filter-chip {
+  height: 26px;
+  padding: 0 10px;
+  color: #374151;
+  cursor: pointer;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 13px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sl-filter-chip:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.sl-filter-chip--active {
+  color: #18345d;
+  background: #ddeeff;
+  border-color: #93bde8;
+}
+
+.sl-toolbar-extras {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sl-sort-select {
+  height: 26px;
+  padding: 0 6px;
+  color: #374151;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.sl-density-btn {
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  color: #6b7280;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.sl-density-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL — confirmation banner
+   ============================================================= */
+
+.sl-confirmation {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  padding: 10px 22px;
+  border-bottom: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.sl-confirmation[hidden] {
+  display: none !important;
+}
+
+.sl-confirmation--warning {
+  background: #fffbeb;
+  border-left: 3px solid #f59e0b;
+  border-bottom-color: #fde68a;
+}
+
+.sl-confirmation--danger {
+  background: #fef2f2;
+  border-left: 3px solid #dc2626;
+  border-bottom-color: #fecaca;
+}
+
+.sl-confirmation-message {
+  flex: 1;
+  margin: 0;
+  color: #374151;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.sl-confirmation-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL — content (scrollable)
+   ============================================================= */
+
+.sl-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background:
+    linear-gradient(white 30%, rgba(255,255,255,0)) top    / 100% 20px no-repeat local,
+    linear-gradient(rgba(255,255,255,0), white 70%) bottom / 100% 20px no-repeat local,
+    radial-gradient(farthest-side at 50% 0,   rgba(0,0,0,.05), transparent) top    / 100% 8px no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.05), transparent) bottom / 100% 8px no-repeat scroll;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL — sections
+   ============================================================= */
+
+.sl-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sl-section--pinned {
+  padding: 8px 10px;
+  background: #fffcf5;
+  border: 1px solid #fde68a;
+  border-left: 3px solid #f59e0b;
+  border-radius: 6px;
+}
+
+.sl-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #f3f4f6;
+  margin-bottom: 2px;
+}
+
+.sl-section--pinned .sl-section-header {
+  border-bottom-color: #fde68a;
+}
+
+.sl-section-label {
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.sl-section-count {
+  color: #9ca3af;
+  font-size: 10px;
+  user-select: none;
+}
+
+.sl-section-menu-wrap {
+  position: relative;
+  margin-left: auto;
+}
+
+.sl-section-menu-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  color: #9ca3af;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.sl-section:hover .sl-section-menu-btn,
+.sl-section-menu-btn:focus,
+.sl-section-menu-btn[aria-expanded="true"] {
+  opacity: 1;
+}
+
+.sl-section-menu-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.sl-section-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 10;
+  min-width: 190px;
+  padding: 4px 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+.sl-section-menu-item {
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
+  color: #374151;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  font-size: 12px;
+  text-align: left;
+}
+
+.sl-section-menu-item:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.sl-section-item-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL — item rows
+   ============================================================= */
+
+.sl-item {
+  display: flex;
+  align-items: center;
+  height: 38px;
+  gap: 4px;
+  padding: 0 2px;
+  cursor: pointer;
+  border-radius: 5px;
+  min-width: 0;
+}
+
+.sl-item:hover {
+  background: #f9fafb;
+}
+
+.sl-item:focus {
+  outline: 2px solid #18345d;
+  outline-offset: -2px;
+}
+
+.sl-item-pin-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.sl-item-pin-btn--active {
+  opacity: 1 !important;
+}
+
+.sl-item:hover .sl-item-pin-btn,
+.sl-item:focus-within .sl-item-pin-btn,
+.sl-item-pin-btn:focus {
+  opacity: 1;
+}
+
+.sl-item-pin-btn:hover {
+  background: #fef3c7;
+}
+
+.sl-item-title {
+  flex: 1;
+  min-width: 0;
+  color: #18345d;
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.sl-item-title--rtl {
+  direction: rtl;
+  text-align: right;
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+}
+
+.sl-item-lang-badge {
+  flex-shrink: 0;
+  padding: 1px 4px;
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.sl-item-remove-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  color: #9ca3af;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+
+.sl-item:hover .sl-item-remove-btn,
+.sl-item:focus-within .sl-item-remove-btn,
+.sl-item-remove-btn:focus {
+  opacity: 1;
+}
+
+.sl-item-remove-btn:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.sl-highlight {
+  background: #fef08a;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL — compact density mode
+   ============================================================= */
+
+[data-density="compact"] .sl-item {
+  height: 30px;
+}
+
+[data-density="compact"] .sl-content {
+  gap: 10px;
+}
+
+[data-density="compact"] .sl-section-header {
+  padding-bottom: 3px;
+}
+
+[data-density="compact"] .sl-item-title {
+  font-size: 12px;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL — undo toast
+   ============================================================= */
+
+.sl-undo-region {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 22px;
+  background: #1f2937;
+  flex-shrink: 0;
+}
+
+.sl-undo-region[hidden] {
+  display: none !important;
+}
+
+.sl-undo-message {
+  color: #f3f4f6;
+  font-size: 12px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sl-undo-btn {
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 10px;
+  color: #93c5fd;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sl-undo-btn:hover {
+  background: #374151;
+  border-color: #6b7280;
+  color: #bfdbfe;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL — footer + shared buttons
+   ============================================================= */
+
+.sl-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 22px;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.sl-btn {
+  height: 32px;
+  padding: 0 14px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.sl-btn--primary {
+  color: #fff;
+  background: #18345d;
+  border: 1px solid #18345d;
+}
+
+.sl-btn--primary:hover {
+  background: #22426f;
+  border-color: #22426f;
+}
+
+.sl-btn--ghost {
+  color: #374151;
+  background: transparent;
+  border: 1px solid #d1d5db;
+}
+
+.sl-btn--ghost:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.sl-btn--ghost:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.sl-btn--destructive {
+  color: #fff;
+  background: #dc2626;
+  border: 1px solid #dc2626;
+}
+
+.sl-btn--destructive:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* =============================================================
+   SESSION LIBRARY MODAL — empty states
+   ============================================================= */
+
+.sl-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.sl-empty-heading {
+  margin: 0 0 6px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sl-empty-body {
+  margin: 0 0 16px;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.sl-clear-search-btn {
+  padding: 5px 12px;
+  color: #18345d;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #93bde8;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.sl-clear-search-btn:hover {
+  background: #ddeeff;
+}
+
+/* =============================================================
+   SESSION LIBRARY — footer trigger badge
+   ============================================================= */
+
+.sl-footer-btn {
+  position: relative;
+}
+
+.sl-footer-count {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  color: #fff;
+  background: #dc2626;
+  border-radius: 7px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.sl-footer-count[hidden] {
+  display: none !important;
 }
 
 /* =============================================================

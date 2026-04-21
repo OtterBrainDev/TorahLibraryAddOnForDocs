@@ -1,7 +1,20 @@
 <script>
+// ============================================================
+// SESSION LIBRARY — global state
+// ============================================================
 var sessionLibrary = { pinned: [], inserted: [] };
 var sessionLibraryFilter = 'all';
+var sessionLibrarySearch = '';
+var sessionLibrarySortMode = 'category';
+var sessionLibraryDensity = 'normal';
+var _slUndoTimer = null;
+var _slUndoEntry = null;
+var _slConfirmType = null;
+var _slConfirmTimer = null;
 
+// ============================================================
+// STORAGE
+// ============================================================
 function loadSessionLibrary() {
   try {
     sessionLibrary = JSON.parse(localStorage.getItem('sefariaSidebarSessionLibrary') || '{"pinned":[],"inserted":[]}');
@@ -18,6 +31,9 @@ function saveSessionLibrary() {
   setFooterButtonStates();
 }
 
+// ============================================================
+// ENTRY BUILDERS / MUTATIONS
+// ============================================================
 function buildSessionEntry(ref, label, corpusLabel, extra) {
   var rawLabel = String(label || ref || '').split(' › ')[0].split(',')[0].trim();
   extra = extra || {};
@@ -41,94 +57,36 @@ function upsertSessionEntry(listName, entry) {
   renderSessionLibrary();
 }
 
-function removeSessionEntry(listName, ref) {
+function removeSessionEntry(listName, ref, skipUndo) {
+  var removed = null;
+  (sessionLibrary[listName] || []).forEach(function(item) {
+    if (item && item.ref === ref) removed = item;
+  });
   sessionLibrary[listName] = (sessionLibrary[listName] || []).filter(function(item){ return item && item.ref !== ref; });
+  saveSessionLibrary();
+  renderSessionLibrary();
+  if (!skipUndo && removed) {
+    showSlUndoToast(removed, listName);
+  }
+}
+
+function clearRecentItems() {
+  sessionLibrary.inserted = [];
   saveSessionLibrary();
   renderSessionLibrary();
 }
 
-
-
-
-function syncSessionLibraryFilterOptions() {
-  var seen = {};
-  var options = [{ key: 'all', label: 'All Corpora' }];
-  (sessionLibrary.pinned || []).concat(sessionLibrary.inserted || []).forEach(function(item) {
-    var label = String((item && item.corpusLabel) || 'Other');
-    var key = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'other';
-    if (seen[key]) return;
-    seen[key] = true;
-    options.push({ key: key, label: label });
-  });
-  var $select = $('#session-library-corpus-filter');
-  if (!$select.length) return;
-  $select.html(options.map(function(option){
-    return "<option value='" + escapeHTML(option.key) + "'>" + escapeHTML(option.label) + "</option>";
-  }).join(''));
-  if (!$select.find("option[value='" + sessionLibraryFilter + "']").length) sessionLibraryFilter = 'all';
-  $select.val(sessionLibraryFilter);
-  $select.toggle(options.length > 2);
+function resetSessionLibrary() {
+  sessionLibrary = { pinned: [], inserted: [] };
+  saveSessionLibrary();
+  renderSessionLibrary();
 }
 
+// ============================================================
+// CORPUS / REF HELPERS
+// ============================================================
 function getSessionEntryCorpusKey(item) {
   return String((item && item.corpusLabel) || 'Other').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'other';
-}
-
-function renderSessionLibrary() {
-  var $panel = $('.session-library-panel');
-  var $combined = $('.session-library-combined-results');
-  if (!$panel.length) return;
-  if (!$combined.length) {
-    $('.session-library-group').remove();
-    $('.session-library-note').after("<div class='session-library-combined-results'></div>");
-    $combined = $('.session-library-combined-results');
-  }
-  $combined.empty();
-
-  syncSessionLibraryFilterOptions();
-
-  var grouped = {};
-  function addItem(item, bucket) {
-    if (!item || !item.ref) return;
-    var corpus = String((item && item.corpusLabel) || 'Other');
-    var corpusKey = getSessionEntryCorpusKey(item);
-    if (sessionLibraryFilter !== 'all' && corpusKey !== sessionLibraryFilter) return;
-    if (!grouped[corpus]) grouped[corpus] = { pinned: [], inserted: [] };
-    grouped[corpus][bucket].push(item);
-  }
-
-  (sessionLibrary.pinned || []).forEach(function(item){ addItem(item, 'pinned'); });
-  (sessionLibrary.inserted || []).forEach(function(item){ if (!isPinnedRef(item.ref)) addItem(item, 'inserted'); });
-
-  var corpora = Object.keys(grouped).sort();
-  corpora.forEach(function(corpus) {
-    var bucket = grouped[corpus];
-    var total = bucket.pinned.length + bucket.inserted.length;
-    var html = "<details class='session-library-corpus-details' open><summary><span>" + escapeHTML(corpus) + "</span><span class='session-library-corpus-count'>" + total + "</span></summary><div class='session-library-corpus-list'>";
-    if (bucket.pinned.length) {
-      html += "<div class='session-library-entry-group-label'>Pinned</div>";
-      bucket.pinned.forEach(function(item) {
-        html += "<div class='result-item session-library-item' data-ref='" + escapeHTML(item.ref) + "' data-url='" + escapeHTML(item.url || '') + "' data-mode='" + escapeHTML(item.mode || 'text') + "' data-query='" + escapeHTML(item.query || item.label || item.ref) + "' data-list='pinned' role='button' tabindex='0'><div class='result-title session-library-label'>" + escapeHTML(item.label || item.ref) + "</div><button type='button' class='session-library-remove' data-list='pinned' data-ref='" + escapeHTML(item.ref) + "' aria-label='Remove pinned item'>×</button></div>";
-      });
-    }
-    if (bucket.inserted.length) {
-      html += "<div class='session-library-entry-group-label'>Recent</div>";
-      bucket.inserted.forEach(function(item) {
-        html += "<div class='result-item session-library-item' data-ref='" + escapeHTML(item.ref) + "' data-url='" + escapeHTML(item.url || '') + "' data-mode='" + escapeHTML(item.mode || 'text') + "' data-query='" + escapeHTML(item.query || item.label || item.ref) + "' data-list='inserted' role='button' tabindex='0'><div class='result-title session-library-label'>" + escapeHTML(item.label || item.ref) + "</div></div>";
-      });
-    }
-    html += "</div></details>";
-    $combined.append(html);
-  });
-
-  var hasItems = !!((sessionLibrary.pinned || []).length || (sessionLibrary.inserted || []).length);
-  var hasVisibleItems = !!corpora.length;
-  $panel.toggle(hasItems);
-  $('.session-library-panel .results-hint').remove();
-  if (hasItems && !hasVisibleItems) {
-    $panel.append("<p class='results-hint'>No pinned or recent items match this corpus filter.</p>");
-  }
-  setFooterButtonStates();
 }
 
 function getCurrentCorpusForRef(ref) {
@@ -143,8 +101,516 @@ function isPinnedRef(ref) {
 
 function togglePinnedRef(ref, label) {
   if (!ref) return;
-  if (isPinnedRef(ref)) removeSessionEntry('pinned', ref);
+  if (isPinnedRef(ref)) removeSessionEntry('pinned', ref, true);
   else upsertSessionEntry('pinned', buildSessionEntry(ref, label, getCurrentCorpusForRef(ref)));
   renderResults();
+}
+
+// ============================================================
+// HEBREW DETECTION
+// ============================================================
+function isHebrewTitle(str) {
+  return /[א-ת]/.test(String(str || ''));
+}
+
+// ============================================================
+// DATA QUERY HELPERS
+// ============================================================
+function slTotalCount() {
+  return (sessionLibrary.pinned || []).length + (sessionLibrary.inserted || []).length;
+}
+
+function slGetFilteredItems() {
+  var search = (sessionLibrarySearch || '').toLowerCase().trim();
+  var filter = sessionLibraryFilter;
+
+  var allPinned = (sessionLibrary.pinned || []);
+  var allInserted = (sessionLibrary.inserted || []).filter(function(item) {
+    return !isPinnedRef(item && item.ref);
+  });
+
+  function matchesSearch(item) {
+    if (!search) return true;
+    var label = String((item && item.label) || '').toLowerCase();
+    var ref   = String((item && item.ref)   || '').toLowerCase();
+    var corp  = String((item && item.corpusLabel) || '').toLowerCase();
+    return label.indexOf(search) >= 0 || ref.indexOf(search) >= 0 || corp.indexOf(search) >= 0;
+  }
+
+  function matchesCorpusFilter(item) {
+    if (filter === 'all' || filter === 'pinned' || filter === 'recent') return true;
+    return getSessionEntryCorpusKey(item) === filter;
+  }
+
+  var pinnedItems = allPinned.filter(function(item) {
+    if (filter === 'recent') return false;
+    return matchesSearch(item) && matchesCorpusFilter(item);
+  });
+
+  var insertedItems = allInserted.filter(function(item) {
+    if (filter === 'pinned') return false;
+    return matchesSearch(item) && matchesCorpusFilter(item);
+  });
+
+  return {
+    pinned: pinnedItems,
+    inserted: insertedItems,
+    totalVisible: pinnedItems.length + insertedItems.length
+  };
+}
+
+function slGetCategories() {
+  var seen = {};
+  var cats = [];
+  (sessionLibrary.pinned || []).concat(sessionLibrary.inserted || []).forEach(function(item) {
+    var key   = getSessionEntryCorpusKey(item);
+    var label = String((item && item.corpusLabel) || 'Other');
+    if (!seen[key]) { seen[key] = true; cats.push({ key: key, label: label }); }
+  });
+  return cats.sort(function(a, b) { return a.label < b.label ? -1 : 1; });
+}
+
+// ============================================================
+// RENDER — filter chips
+// ============================================================
+function renderSlFilterChips() {
+  var $chips = $('#sl-filter-chips');
+  if (!$chips.length) return;
+  var cats = slGetCategories();
+  var html = '';
+  var baseFilters = [
+    { key: 'all',    label: 'All'    },
+    { key: 'pinned', label: 'Pinned' },
+    { key: 'recent', label: 'Recent' }
+  ];
+  baseFilters.forEach(function(f) {
+    var active = sessionLibraryFilter === f.key;
+    html += "<button type='button' class='sl-filter-chip" + (active ? " sl-filter-chip--active" : "") +
+      "' data-filter='" + escapeHTML(f.key) + "' role='radio' aria-checked='" + (active ? 'true' : 'false') + "'>" +
+      escapeHTML(f.label) + "</button>";
+  });
+  cats.forEach(function(cat) {
+    var active = sessionLibraryFilter === cat.key;
+    html += "<button type='button' class='sl-filter-chip sl-filter-chip--category" + (active ? " sl-filter-chip--active" : "") +
+      "' data-filter='" + escapeHTML(cat.key) + "' role='radio' aria-checked='" + (active ? 'true' : 'false') + "'>" +
+      escapeHTML(cat.label) + "</button>";
+  });
+  $chips.html(html);
+}
+
+// ============================================================
+// RENDER — modal subtitle
+// ============================================================
+function updateSlModalSubtitle() {
+  var $subtitle = $('#sl-modal-subtitle');
+  if (!$subtitle.length) return;
+  var total   = slTotalCount();
+  var visible = slGetFilteredItems().totalVisible;
+  var word    = total === 1 ? 'reference' : 'references';
+  if (sessionLibrarySearch || sessionLibraryFilter !== 'all') {
+    $subtitle.text('Showing ' + visible + ' of ' + total + ' ' + word);
+  } else {
+    $subtitle.text(total + ' ' + word + ' in this session');
+  }
+}
+
+// ============================================================
+// RENDER — search highlight
+// ============================================================
+function slHighlightMatch(text, search) {
+  if (!search) return escapeHTML(text);
+  var parts = [];
+  var lower = text.toLowerCase();
+  var lowerSearch = search.toLowerCase();
+  var idx = 0;
+  var pos;
+  while ((pos = lower.indexOf(lowerSearch, idx)) >= 0) {
+    parts.push(escapeHTML(text.slice(idx, pos)));
+    parts.push('<mark class="sl-highlight">' + escapeHTML(text.slice(pos, pos + search.length)) + '</mark>');
+    idx = pos + search.length;
+  }
+  parts.push(escapeHTML(text.slice(idx)));
+  return parts.join('');
+}
+
+// ============================================================
+// RENDER — item row HTML
+// ============================================================
+function renderSlItemRow(item, listName) {
+  var label  = String((item && item.label) || (item && item.ref) || '');
+  var ref    = String((item && item.ref)   || '');
+  var url    = String((item && item.url)   || '');
+  var mode   = String((item && item.mode)  || 'text');
+  var query  = String((item && item.query) || label || ref);
+  var pinned = listName === 'pinned';
+  var isHebrew = isHebrewTitle(label);
+  var search = (sessionLibrarySearch || '').trim();
+
+  var displayLabel = search ? slHighlightMatch(label, search) : escapeHTML(label);
+  var pinBtnLabel  = (pinned ? 'Unpin ' : 'Pin ') + escapeHTML(label);
+  var pinBtnClass  = 'sl-item-pin-btn' + (pinned ? ' sl-item-pin-btn--active' : '');
+  var rtlClass     = isHebrew ? ' sl-item-title--rtl' : '';
+  var rtlAttr      = isHebrew ? " dir='rtl'" : '';
+  var langBadge    = isHebrew ? "<span class='sl-item-lang-badge' aria-hidden='true'>HE</span>" : '';
+  var titleAttr    = label.length > 55 ? " title='" + escapeHTML(label) + "'" : '';
+
+  return "<div class='sl-item' role='listitem'" +
+    " data-ref='" + escapeHTML(ref) + "'" +
+    " data-url='" + escapeHTML(url) + "'" +
+    " data-mode='" + escapeHTML(mode) + "'" +
+    " data-query='" + escapeHTML(query) + "'" +
+    " data-list='" + escapeHTML(listName) + "'" +
+    " tabindex='0'>" +
+    "<button type='button' class='" + pinBtnClass + "'" +
+      " data-ref='" + escapeHTML(ref) + "'" +
+      " data-list='" + escapeHTML(listName) + "'" +
+      " aria-label='" + pinBtnLabel + "'" +
+      " aria-pressed='" + (pinned ? 'true' : 'false') + "'" +
+      " title='" + (pinned ? 'Unpin' : 'Pin to keep at top') + "'>📌</button>" +
+    "<span class='sl-item-title" + rtlClass + "'" + rtlAttr + titleAttr + ">" + displayLabel + "</span>" +
+    langBadge +
+    "<button type='button' class='sl-item-remove-btn'" +
+      " data-ref='" + escapeHTML(ref) + "'" +
+      " data-list='" + escapeHTML(listName) + "'" +
+      " aria-label='Remove " + escapeHTML(label) + "'" +
+      " title='Remove from session'>×</button>" +
+    "</div>";
+}
+
+// ============================================================
+// RENDER — sort items
+// ============================================================
+function slSortItems(items) {
+  if (sessionLibrarySortMode === 'alpha') {
+    return items.slice().sort(function(a, b) {
+      var la = String((a && a.label) || '').toLowerCase();
+      var lb = String((b && b.label) || '').toLowerCase();
+      return la < lb ? -1 : la > lb ? 1 : 0;
+    });
+  }
+  return items;
+}
+
+// ============================================================
+// RENDER — section HTML
+// ============================================================
+function renderSlSection(sectionLabel, items, listName, isPinnedSection) {
+  if (!items || !items.length) return '';
+  var count     = items.length;
+  var countWord = count === 1 ? '1 item' : count + ' items';
+  var corpusKey = isPinnedSection ? 'pinned' : getSessionEntryCorpusKey({ corpusLabel: sectionLabel });
+  var sectionClass = 'sl-section' + (isPinnedSection ? ' sl-section--pinned' : '');
+  var sorted = slSortItems(items);
+
+  var html = "<section class='" + sectionClass + "' aria-label='" + escapeHTML(sectionLabel) + " references'>";
+  html += "<div class='sl-section-header'>";
+  html += "<span class='sl-section-label'>" + (isPinnedSection ? "📌 " : "") + escapeHTML(sectionLabel.toUpperCase()) + "</span>";
+  html += "<span class='sl-section-count'>· " + countWord + "</span>";
+  html += "<div class='sl-section-menu-wrap'>" +
+    "<button type='button' class='sl-section-menu-btn'" +
+    " data-section='" + escapeHTML(corpusKey) + "'" +
+    " data-list='" + escapeHTML(listName) + "'" +
+    " aria-label='" + escapeHTML(sectionLabel) + " section options'" +
+    " aria-haspopup='true' aria-expanded='false'" +
+    " title='Section options'>⋯</button>" +
+    "</div>";
+  html += "</div>";
+  html += "<div class='sl-section-item-list' role='list'>";
+  sorted.forEach(function(item) {
+    html += renderSlItemRow(item, listName);
+  });
+  html += "</div></section>";
+  return html;
+}
+
+// ============================================================
+// RENDER — category groups (for inserted items)
+// ============================================================
+function slRenderCategoryGroups(items, listName) {
+  if (!items || !items.length) return '';
+  var grouped = {};
+  var order   = [];
+  items.forEach(function(item) {
+    var corpus = String((item && item.corpusLabel) || 'Other');
+    if (!grouped[corpus]) { grouped[corpus] = []; order.push(corpus); }
+    grouped[corpus].push(item);
+  });
+  var sortedCorpora = (sessionLibrarySortMode !== 'recent') ? order.slice().sort() : order;
+  var html = '';
+  sortedCorpora.forEach(function(corpus) {
+    html += renderSlSection(corpus, grouped[corpus], listName, false);
+  });
+  return html;
+}
+
+// ============================================================
+// RENDER — empty states
+// ============================================================
+function slEmptyStateHtml(reason) {
+  if (reason === 'empty') {
+    return "<div class='sl-empty-state'>" +
+      "<p class='sl-empty-heading'>Your library is empty</p>" +
+      "<p class='sl-empty-body'>Sources you add during this session will appear here.</p>" +
+      "</div>";
+  }
+  if (reason === 'search') {
+    return "<div class='sl-empty-state sl-empty-state--search'>" +
+      "<p class='sl-empty-heading'>No matches for &ldquo;" + escapeHTML(sessionLibrarySearch) + "&rdquo;</p>" +
+      "<button type='button' class='sl-clear-search-btn'>Clear search</button>" +
+      "</div>";
+  }
+  if (reason === 'pinned') {
+    return "<div class='sl-empty-state'>" +
+      "<p class='sl-empty-heading'>No pinned references</p>" +
+      "<p class='sl-empty-body'>Pin items to keep them at the top of your library.</p>" +
+      "</div>";
+  }
+  if (reason === 'recent') {
+    return "<div class='sl-empty-state'>" +
+      "<p class='sl-empty-heading'>No recent references</p>" +
+      "<p class='sl-empty-body'>Recent items appear here as you work.</p>" +
+      "</div>";
+  }
+  return "<div class='sl-empty-state'>" +
+    "<p class='sl-empty-heading'>No references match this filter</p>" +
+    "</div>";
+}
+
+// ============================================================
+// RENDER — full content area
+// ============================================================
+function renderSlContent() {
+  var $content = $('#sl-content');
+  if (!$content.length) return;
+  var total    = slTotalCount();
+  var filter   = sessionLibraryFilter;
+  var search   = (sessionLibrarySearch || '').trim();
+
+  if (total === 0) {
+    $content.html(slEmptyStateHtml('empty'));
+    return;
+  }
+
+  var filtered = slGetFilteredItems();
+
+  if (filtered.totalVisible === 0) {
+    $content.html(slEmptyStateHtml(search ? 'search' : filter));
+    return;
+  }
+
+  var html = '';
+
+  if (filter === 'pinned') {
+    html = renderSlSection('Pinned', filtered.pinned, 'pinned', true);
+  } else if (filter === 'recent') {
+    html = slRenderCategoryGroups(filtered.inserted, 'inserted');
+  } else if (filter === 'all') {
+    if (filtered.pinned.length) html += renderSlSection('Pinned', filtered.pinned, 'pinned', true);
+    html += slRenderCategoryGroups(filtered.inserted, 'inserted');
+  } else {
+    // Specific corpus filter: show pinned (if any) then inserted for that corpus
+    if (filtered.pinned.length) html += renderSlSection('Pinned', filtered.pinned, 'pinned', true);
+    if (filtered.inserted.length) html += slRenderCategoryGroups(filtered.inserted, 'inserted');
+  }
+
+  $content.html(html || slEmptyStateHtml(filter));
+}
+
+// ============================================================
+// RENDER — sync toolbar button states
+// ============================================================
+function syncSlButtonStates() {
+  var hasRecent = !!((sessionLibrary.inserted || []).length);
+  var hasAny    = slTotalCount() > 0;
+  $('#sl-clear-recent').prop('disabled', !hasRecent);
+  $('#sl-reset-session').prop('disabled', !hasAny);
+  $('#sl-copy-refs').prop('disabled', !hasAny);
+}
+
+// ============================================================
+// RENDER — footer badge on session library button
+// ============================================================
+function updateSlFooterBadge() {
+  var total = slTotalCount();
+  var $badge = $('#sl-footer-count');
+  if (!$badge.length) return;
+  if (total > 0) {
+    $badge.text(total > 99 ? '99+' : total).removeAttr('hidden');
+  } else {
+    $badge.attr('hidden', true);
+  }
+}
+
+// ============================================================
+// RENDER — main entry point
+// ============================================================
+function renderSessionLibrary() {
+  updateSlModalSubtitle();
+  renderSlFilterChips();
+  renderSlContent();
+  syncSlButtonStates();
+  updateSlFooterBadge();
+  setFooterButtonStates();
+}
+
+// Legacy no-op kept for compatibility (callers outside this file)
+function syncSessionLibraryFilterOptions() {
+  renderSlFilterChips();
+}
+
+// ============================================================
+// CONFIRMATION BANNER
+// ============================================================
+function showSlConfirmation(type) {
+  _slConfirmType = type;
+  var $banner     = $('#sl-confirmation');
+  var $msg        = $('#sl-confirmation-message');
+  var $confirmBtn = $('#sl-confirmation-confirm');
+  if (!$banner.length) return;
+
+  if (type === 'clear-recent') {
+    $banner.removeClass('sl-confirmation--danger').addClass('sl-confirmation--warning');
+    $msg.text("Clear all recent items? This removes items that aren’t pinned. Pinned references will stay.");
+    $confirmBtn.text('Yes, Clear Recent');
+  } else if (type === 'reset') {
+    $banner.removeClass('sl-confirmation--warning').addClass('sl-confirmation--danger');
+    $msg.text('Reset your session library? This removes all references, including pinned items. This cannot be undone.');
+    $confirmBtn.text('Yes, Reset Everything');
+  }
+
+  $banner.removeAttr('hidden');
+  setTimeout(function() { $('#sl-confirmation-cancel').focus(); }, 30);
+
+  if (_slConfirmTimer) clearTimeout(_slConfirmTimer);
+  _slConfirmTimer = setTimeout(hideSlConfirmation, 8000);
+}
+
+function hideSlConfirmation() {
+  $('#sl-confirmation').attr('hidden', true);
+  _slConfirmType = null;
+  if (_slConfirmTimer) clearTimeout(_slConfirmTimer);
+}
+
+function confirmSlAction() {
+  var type = _slConfirmType;
+  hideSlConfirmation();
+  if (type === 'clear-recent') clearRecentItems();
+  else if (type === 'reset')   resetSessionLibrary();
+}
+
+// ============================================================
+// UNDO TOAST
+// ============================================================
+function showSlUndoToast(entry, listName) {
+  if (_slUndoTimer) clearTimeout(_slUndoTimer);
+  _slUndoEntry = { entry: entry, listName: listName };
+  var label = escapeHTML(String((entry && entry.label) || (entry && entry.ref) || 'Item'));
+  $('#sl-undo-message').html(label + ' removed.');
+  $('#sl-undo-region').removeAttr('hidden');
+  _slUndoTimer = setTimeout(function() {
+    $('#sl-undo-region').attr('hidden', true);
+    _slUndoEntry = null;
+  }, 4000);
+}
+
+function executeSlUndo() {
+  if (!_slUndoEntry) return;
+  if (_slUndoTimer) clearTimeout(_slUndoTimer);
+  var entry    = _slUndoEntry.entry;
+  var listName = _slUndoEntry.listName;
+  _slUndoEntry = null;
+  $('#sl-undo-region').attr('hidden', true);
+  var list = (sessionLibrary[listName] || []).filter(function(item){ return item && item.ref !== entry.ref; });
+  list.unshift(entry);
+  sessionLibrary[listName] = list.slice(0, 12);
+  saveSessionLibrary();
+  renderSessionLibrary();
+}
+
+// ============================================================
+// COPY REFERENCES
+// ============================================================
+function copySessionLibraryRefs() {
+  var lines   = [];
+  var pinned  = sessionLibrary.pinned || [];
+  var recent  = (sessionLibrary.inserted || []).filter(function(item){ return !isPinnedRef(item && item.ref); });
+
+  if (pinned.length) {
+    lines.push('Pinned:');
+    pinned.forEach(function(item){ lines.push('  ' + String((item && item.label) || (item && item.ref) || '')); });
+  }
+  if (recent.length) {
+    lines.push('Recent:');
+    recent.forEach(function(item){ lines.push('  ' + String((item && item.label) || (item && item.ref) || '')); });
+  }
+
+  var text = lines.join('\n');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(function() { showSidebarToast('References copied to clipboard.'); })
+        .catch(function() { showSidebarToast('Could not copy to clipboard.'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showSidebarToast('References copied to clipboard.');
+    }
+  } catch (e) {
+    showSidebarToast('Could not copy to clipboard.');
+  }
+}
+
+// ============================================================
+// SECTION MENU DROPDOWN
+// ============================================================
+function openSlSectionMenu($btn, sectionKey, listName) {
+  closeSlSectionMenu();
+  var label = listName === 'pinned' ? 'Unpin all' : 'Remove all in this section';
+  var $drop = $("<div class='sl-section-menu-dropdown' role='menu'>" +
+    "<button type='button' class='sl-section-menu-item' role='menuitem'" +
+    " data-section='" + escapeHTML(sectionKey) + "'" +
+    " data-list='" + escapeHTML(listName) + "'>" +
+    escapeHTML(label) + "</button></div>");
+  $btn.closest('.sl-section-menu-wrap').append($drop);
+  $btn.attr('aria-expanded', 'true');
+  $drop.find('button').focus();
+}
+
+function closeSlSectionMenu() {
+  $('.sl-section-menu-dropdown').remove();
+  $('.sl-section-menu-btn').attr('aria-expanded', 'false');
+}
+
+function handleSlSectionRemoveAll(sectionKey, listName) {
+  closeSlSectionMenu();
+  if (listName === 'pinned') {
+    sessionLibrary.pinned = [];
+  } else {
+    sessionLibrary.inserted = (sessionLibrary.inserted || []).filter(function(item) {
+      return getSessionEntryCorpusKey(item) !== sectionKey;
+    });
+  }
+  saveSessionLibrary();
+  renderSessionLibrary();
+}
+
+// ============================================================
+// DENSITY TOGGLE
+// ============================================================
+function toggleSlDensity() {
+  sessionLibraryDensity = (sessionLibraryDensity === 'compact') ? 'normal' : 'compact';
+  var $card = $('#session-library-modal .session-library-modal-card');
+  $card.attr('data-density', sessionLibraryDensity === 'compact' ? 'compact' : '');
+  var $btn = $('#sl-density-toggle');
+  if (sessionLibraryDensity === 'compact') {
+    $btn.text('⊞').attr('title', 'Switch to comfortable view');
+  } else {
+    $btn.text('⊟').attr('title', 'Switch to compact view');
+  }
 }
 </script>

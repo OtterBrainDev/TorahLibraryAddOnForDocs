@@ -409,28 +409,63 @@
 
       <div class="modal-backdrop session-library-modal-backdrop" id="session-library-modal" hidden>
         <div class="modal-card session-library-modal-card" role="dialog" aria-modal="true" aria-labelledby="session-library-modal-title">
-          <div class="session-library-modal-header">
-            <h2 id="session-library-modal-title">Session Library</h2>
-            <button type="button" class="session-library-modal-close" id="close-session-library" aria-label="Close Session Library">×</button>
+
+          <!-- Header -->
+          <div class="sl-modal-header">
+            <div class="sl-modal-header-text">
+              <h2 class="sl-modal-title" id="session-library-modal-title">Session Library</h2>
+              <p class="sl-modal-subtitle" id="sl-modal-subtitle" aria-live="polite">0 references in this session</p>
+            </div>
+            <button type="button" class="sl-modal-close" id="close-session-library" aria-label="Close Session Library">×</button>
           </div>
-          <section class="session-library-panel" ><p class="session-library-note">Pinned references and recent selections from this sidebar session.</p>
-          <div class="results-header session-library-header">
-            <div class="result-group-label" style="margin:0;">Session Library</div>
-            <div class="results-header-tools session-library-tools" aria-label="Session library tools">
-              <select class="results-tool corpus-filter-select session-library-filter-select" id="session-library-corpus-filter" aria-label="Filter session library by corpus">
-                <option value="all">All Corpora</option>
-              </select>
+
+          <!-- Toolbar -->
+          <div class="sl-toolbar">
+            <div class="sl-toolbar-row sl-toolbar-row--search">
+              <label for="sl-search-input" class="visually-hidden">Search references</label>
+              <input type="search" id="sl-search-input" class="sl-search-input" placeholder="Search references…" autocomplete="off">
+              <button type="button" class="sl-action-btn sl-action-btn--destructive" id="sl-clear-recent" title="Remove all non-pinned items" disabled>Clear Recent</button>
+              <button type="button" class="sl-action-btn sl-action-btn--destructive" id="sl-reset-session" title="Clear all items and start fresh" disabled>Reset Session</button>
+            </div>
+            <div class="sl-toolbar-row sl-toolbar-row--filters">
+              <div class="sl-filter-chips" id="sl-filter-chips" role="radiogroup" aria-label="Filter by type">
+                <button type="button" class="sl-filter-chip sl-filter-chip--active" data-filter="all" role="radio" aria-checked="true">All</button>
+              </div>
+              <div class="sl-toolbar-extras">
+                <select class="sl-sort-select" id="sl-sort-select" aria-label="Sort references">
+                  <option value="category">By Category</option>
+                  <option value="recent">Recently Added</option>
+                  <option value="alpha">Alphabetical</option>
+                </select>
+                <button type="button" class="sl-density-btn" id="sl-density-toggle" title="Switch to compact view" aria-label="Toggle density">⊟</button>
+              </div>
             </div>
           </div>
-          <div class="session-library-group">
-            <div class="session-library-title">Pinned</div>
-            <ul class="result-list session-library-results pinned-results"></ul>
+
+          <!-- Inline confirmation banner -->
+          <div class="sl-confirmation" id="sl-confirmation" role="alert" hidden>
+            <p class="sl-confirmation-message" id="sl-confirmation-message"></p>
+            <div class="sl-confirmation-actions">
+              <button type="button" class="sl-btn sl-btn--ghost" id="sl-confirmation-cancel">Cancel</button>
+              <button type="button" class="sl-btn sl-btn--destructive" id="sl-confirmation-confirm">Confirm</button>
+            </div>
           </div>
-          <div class="session-library-group">
-            <div class="session-library-title">Recent</div>
-            <ul class="result-list session-library-results inserted-results"></ul>
+
+          <!-- Scrollable content area -->
+          <div class="sl-content" id="sl-content" tabindex="-1"></div>
+
+          <!-- Undo toast (always in DOM, hidden until needed) -->
+          <div class="sl-undo-region" id="sl-undo-region" aria-live="polite" aria-atomic="true" hidden>
+            <span class="sl-undo-message" id="sl-undo-message"></span>
+            <button type="button" class="sl-undo-btn" id="sl-undo-btn">Undo</button>
           </div>
-        </section>
+
+          <!-- Footer -->
+          <div class="sl-modal-footer">
+            <button type="button" class="sl-btn sl-btn--ghost" id="sl-copy-refs" title="Copy all references as plain text" disabled>Copy References</button>
+            <button type="button" class="sl-btn sl-btn--primary" id="sl-modal-done">Done</button>
+          </div>
+
         </div>
       </div>
 
@@ -442,7 +477,7 @@
         </button>
       </section>
       <section class="sidebar-footer-tools footer-tool-row standard-quick-actions" aria-label="Quick actions">
-        <button type="button" class="footer-tool-button" id="open-session-library" title="Session Library" aria-label="Session Library"><span class="footer-icon" aria-hidden="true">📜</span></button>
+        <button type="button" class="footer-tool-button sl-footer-btn" id="open-session-library" title="Session Library" aria-label="Session Library"><span class="footer-icon" aria-hidden="true">📜</span><span class="sl-footer-count" id="sl-footer-count" hidden></span></button>
 		<button type="button" class="footer-tool-button open-actions-panel" title="Quick Actions" aria-label="Quick Actions"><span class="footer-icon footer-running-icon">🏃‍️</span></button>
         <button type="button" class="footer-tool-button open-preferences-tool" title="Preferences" aria-label="Preferences"><span class="footer-icon footer-gear-icon">⚙︎</span></button>
         

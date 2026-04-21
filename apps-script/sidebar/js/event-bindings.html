@@ -164,32 +164,7 @@ $(document).on('change', '.translation-language-option', function () {
   }
 });
 
-$('.session-library-panel').on('click keydown', '.session-library-item', function (event) {
-  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-  if ($(event.target).closest('.session-library-remove').length) return;
-  event.preventDefault();
-  var ref = $(this).attr('data-ref');
-  if (ref) {
-    $('.input').val(ref);
-    $('#session-library-modal').attr('hidden', true);
-    runUnifiedQuery();
-    setTimeout(function () {
-      var match = queryState.libraryMatches.concat(queryState.searchResults).find(function(item){ return item && item.ref === ref; });
-      if (match && match.key) {
-        selectedResultKey = match.key;
-        selectedResultSummary = { label: match.ref || match.label, subtitle: match.subtitle || '' };
-        updateResultsVisibility();
-        resolveSelectedResult(match.ref, match.ref || match.label);
-      }
-    }, 250);
-  }
-});
-
-$('.session-library-panel').on('click', '.session-library-remove', function (event) {
-  event.preventDefault();
-  event.stopPropagation();
-  removeSessionEntry($(this).attr('data-list'), $(this).attr('data-ref'));
-});
+// Session library item interactions are handled by delegated bindings below.
 
 $('.results-panel').on('click', '.result-pin-button', function (event) {
   event.preventDefault();
@@ -487,5 +462,216 @@ $(document).on('click', '.save-session-defaults-button', function () {
   saveSessionAsDefaults(function () {
     showSidebarToast('Saved these session choices as your new defaults.');
   });
+});
+
+// ============================================================
+// SESSION LIBRARY — modal open / close
+// ============================================================
+
+function openSessionLibraryModal() {
+  sessionLibrarySearch = '';
+  $('#sl-search-input').val('');
+  $('#sl-sort-select').val(sessionLibrarySortMode);
+  hideSlConfirmation();
+  renderSessionLibrary();
+  $('#session-library-modal').removeAttr('hidden');
+  setTimeout(function () { $('#sl-search-input').focus(); }, 40);
+}
+
+function closeSessionLibraryModal() {
+  $('#session-library-modal').attr('hidden', true);
+  hideSlConfirmation();
+  $('#open-session-library').focus();
+}
+
+// Done button and backdrop click
+$(document).on('click', '#sl-modal-done', closeSessionLibraryModal);
+
+$(document).on('click', '#session-library-modal', function (event) {
+  if ($(event.target).is('#session-library-modal')) closeSessionLibraryModal();
+});
+
+// Escape key closes modal
+$(document).on('keydown', function (event) {
+  if (event.key === 'Escape' && !$('#session-library-modal').attr('hidden')) {
+    event.stopPropagation();
+    closeSessionLibraryModal();
+  }
+  // Ctrl/Cmd + Shift + L — keyboard shortcut to open/close session library
+  if ((event.ctrlKey || event.metaKey) && event.shiftKey && (event.key === 'L' || event.key === 'l')) {
+    event.preventDefault();
+    if ($('#session-library-modal').attr('hidden') !== undefined &&
+        $('#session-library-modal').attr('hidden') !== false) {
+      openSessionLibraryModal();
+    } else {
+      closeSessionLibraryModal();
+    }
+  }
+});
+
+// ============================================================
+// SESSION LIBRARY — filter chips
+// ============================================================
+
+$(document).on('click', '#sl-filter-chips .sl-filter-chip', function () {
+  sessionLibraryFilter = $(this).attr('data-filter') || 'all';
+  renderSessionLibrary();
+  $('#sl-content').scrollTop(0);
+});
+
+// ============================================================
+// SESSION LIBRARY — search
+// ============================================================
+
+var _slSearchDebounce = null;
+$(document).on('input', '#sl-search-input', function () {
+  var val = $(this).val() || '';
+  if (_slSearchDebounce) clearTimeout(_slSearchDebounce);
+  _slSearchDebounce = setTimeout(function () {
+    sessionLibrarySearch = val;
+    renderSessionLibrary();
+  }, 150);
+});
+
+$(document).on('click', '.sl-clear-search-btn', function () {
+  sessionLibrarySearch = '';
+  $('#sl-search-input').val('');
+  renderSessionLibrary();
+  $('#sl-search-input').focus();
+});
+
+// ============================================================
+// SESSION LIBRARY — global destructive actions
+// ============================================================
+
+$(document).on('click', '#sl-clear-recent', function () {
+  if ($(this).prop('disabled')) return;
+  showSlConfirmation('clear-recent');
+});
+
+$(document).on('click', '#sl-reset-session', function () {
+  if ($(this).prop('disabled')) return;
+  showSlConfirmation('reset');
+});
+
+$(document).on('click', '#sl-confirmation-cancel', hideSlConfirmation);
+$(document).on('click', '#sl-confirmation-confirm', confirmSlAction);
+
+// ============================================================
+// SESSION LIBRARY — item interactions
+// ============================================================
+
+// Click/Enter on item row → search for it
+$(document).on('click keydown', '.sl-item', function (event) {
+  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+  if ($(event.target).closest('.sl-item-pin-btn, .sl-item-remove-btn').length) return;
+  event.preventDefault();
+  var ref = $(this).attr('data-ref');
+  if (!ref) return;
+  $('.input').val(ref);
+  closeSessionLibraryModal();
+  runUnifiedQuery();
+  setTimeout(function () {
+    var match = queryState.libraryMatches.concat(queryState.searchResults)
+      .find(function (item) { return item && item.ref === ref; });
+    if (match && match.key) {
+      selectedResultKey = match.key;
+      selectedResultSummary = { label: match.ref || match.label, subtitle: match.subtitle || '' };
+      updateResultsVisibility();
+      resolveSelectedResult(match.ref, match.ref || match.label);
+    }
+  }, 250);
+});
+
+// Remove button
+$(document).on('click', '.sl-item-remove-btn', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  removeSessionEntry($(this).attr('data-list'), $(this).attr('data-ref'));
+});
+
+// Pin / unpin button
+$(document).on('click', '.sl-item-pin-btn', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  var ref      = $(this).attr('data-ref');
+  var listName = $(this).attr('data-list');
+  if (!ref) return;
+
+  if (listName === 'pinned') {
+    // Unpin → move to inserted
+    var pinnedEntry = (sessionLibrary.pinned || []).find(function (it) { return it && it.ref === ref; });
+    sessionLibrary.pinned = (sessionLibrary.pinned || []).filter(function (it) { return it && it.ref !== ref; });
+    if (pinnedEntry) {
+      var ins = (sessionLibrary.inserted || []).filter(function (it) { return it && it.ref !== ref; });
+      ins.unshift(pinnedEntry);
+      sessionLibrary.inserted = ins.slice(0, 12);
+    }
+  } else {
+    // Pin → move to pinned
+    var insEntry = (sessionLibrary.inserted || []).find(function (it) { return it && it.ref === ref; });
+    if (!insEntry) insEntry = buildSessionEntry(ref, ref, 'Other');
+    sessionLibrary.inserted = (sessionLibrary.inserted || []).filter(function (it) { return it && it.ref !== ref; });
+    var pins = (sessionLibrary.pinned || []).filter(function (it) { return it && it.ref !== ref; });
+    pins.unshift(insEntry);
+    sessionLibrary.pinned = pins.slice(0, 12);
+  }
+  saveSessionLibrary();
+  renderSessionLibrary();
+});
+
+// ============================================================
+// SESSION LIBRARY — undo toast
+// ============================================================
+
+$(document).on('click', '#sl-undo-btn', executeSlUndo);
+
+// ============================================================
+// SESSION LIBRARY — section menu
+// ============================================================
+
+$(document).on('click', '.sl-section-menu-btn', function (event) {
+  event.stopPropagation();
+  var $btn       = $(this);
+  var sectionKey = $btn.attr('data-section');
+  var listName   = $btn.attr('data-list');
+  if ($btn.attr('aria-expanded') === 'true') {
+    closeSlSectionMenu();
+  } else {
+    openSlSectionMenu($btn, sectionKey, listName);
+  }
+});
+
+$(document).on('click', '.sl-section-menu-item', function (event) {
+  event.stopPropagation();
+  handleSlSectionRemoveAll($(this).attr('data-section'), $(this).attr('data-list'));
+});
+
+$(document).on('click', function (event) {
+  if (!$(event.target).closest('.sl-section-menu-wrap').length) closeSlSectionMenu();
+});
+
+$(document).on('keydown', '.sl-section-menu-dropdown', function (event) {
+  if (event.key === 'Escape') closeSlSectionMenu();
+});
+
+// ============================================================
+// SESSION LIBRARY — sort + density
+// ============================================================
+
+$(document).on('change', '#sl-sort-select', function () {
+  sessionLibrarySortMode = $(this).val() || 'category';
+  renderSlContent();
+});
+
+$(document).on('click', '#sl-density-toggle', toggleSlDensity);
+
+// ============================================================
+// SESSION LIBRARY — copy references
+// ============================================================
+
+$(document).on('click', '#sl-copy-refs', function () {
+  if ($(this).prop('disabled')) return;
+  copySessionLibraryRefs();
 });
 </script>
