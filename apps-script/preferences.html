@@ -321,26 +321,27 @@
           <details class="section-card section-accordion" id="display-defaults" name="display-defaults" open>
             <summary class="section-card-summary"><span>Display &amp; Layout</span></summary>
             <div class="section-card-body">
-              <div class="pref-field-group">
-                <div class="compact-section-label" id="pref-output-mode-label">Default Display</div>
-                <div class="pref-insert-mode-selector" role="radiogroup" aria-labelledby="pref-output-mode-label" data-pref-group="output_mode_default">
-                  <button type="button" class="pref-insert-mode-btn" data-value="he" role="radio" aria-checked="false">Hebrew only</button>
-                  <button type="button" class="pref-insert-mode-btn is-active" data-value="both" role="radio" aria-checked="true">Both</button>
-                  <button type="button" class="pref-insert-mode-btn" data-value="en" role="radio" aria-checked="false">Translation only</button>
+              <div class="pref-display-layout-section">
+                <div class="pref-field-group">
+                  <div class="compact-section-label" id="pref-output-mode-label">Display</div>
+                  <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-labelledby="pref-output-mode-label" data-pref-group="output_mode_default">
+                    <button type="button" class="mode-card" data-value="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
+                    <button type="button" class="mode-card is-active" data-value="both" role="radio" aria-checked="true" title="Both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
+                    <button type="button" class="mode-card" data-value="he" role="radio" aria-checked="false" title="Hebrew only"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
+                  </div>
+                  <input type="hidden" id="output_mode_default" name="output_mode_default" value="both">
                 </div>
-                <input type="hidden" id="output_mode_default" name="output_mode_default" value="both">
-                <div class="mini-help">Which text layers appear when you insert a source.</div>
-              </div>
-              <div class="pref-field-group" id="pref-bilingual-layout-group">
-                <div class="compact-section-label" id="pref-bilingual-layout-label">Default Bilingual Layout</div>
-                <div class="pref-insert-mode-selector" role="radiogroup" aria-labelledby="pref-bilingual-layout-label" data-pref-group="bilingual_layout_default">
-                  <button type="button" class="pref-insert-mode-btn is-active" data-value="he-right" role="radio" aria-checked="true">Hebrew right</button>
-                  <button type="button" class="pref-insert-mode-btn" data-value="he-left" role="radio" aria-checked="false">Hebrew left</button>
-                  <button type="button" class="pref-insert-mode-btn" data-value="stacked" role="radio" aria-checked="false">Stacked</button>
+                <div class="pref-field-group" id="pref-bilingual-layout-group">
+                  <div class="compact-section-label" id="pref-bilingual-layout-label">Layout</div>
+                  <div class="layout-option-group" role="radiogroup" aria-labelledby="pref-bilingual-layout-label" data-pref-group="bilingual_layout_default">
+                    <button type="button" class="layout-option" data-value="he-top" role="radio" aria-checked="false" title="Stacked"><span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span></button>
+                    <button type="button" class="layout-option is-active" data-value="he-right" role="radio" aria-checked="true" title="Right–Left"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></button>
+                    <button type="button" class="layout-option" data-value="he-left" role="radio" aria-checked="false" title="Left–Right"><span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span></button>
+                  </div>
+                  <input type="hidden" id="bilingual_layout_default" name="bilingual_layout_default" value="he-right">
                 </div>
-                <input type="hidden" id="bilingual_layout_default" name="bilingual_layout_default" value="he-right">
-                <div class="mini-help">Layout for side-by-side bilingual display.</div>
               </div>
+              <div class="mini-help">Which text layers and layout to use when inserting a source.</div>
             </div>
           </details>
 
