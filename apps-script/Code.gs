@@ -127,7 +127,9 @@ function onOpen(e) {
   const addOnMenu = ui.createAddonMenu();
   const quickActionsMenu = ui.createMenu('Quick Actions')
       .addItem('Transform Divine Names', 'transformDivineNames')
-      .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria');
+      .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
+      .addSeparator()
+      .addItem('Gematriya Count', 'gematriyaCountPopup');
 
   let experimentalAiEnabled = false;
   let surpriseEnabled = false;
@@ -240,6 +242,84 @@ function aboutPopup() {
       .setWidth(760)
       .setHeight(860);
   DocumentApp.getUi().showModalDialog(html, 'About');
+}
+
+function gematriyaCountPopup() {
+  const stats = getGematriyaStats_();
+  const template = HtmlService.createTemplateFromFile('gematriya-count');
+  template.statsJson = JSON.stringify(stats);
+  const html = template.evaluate().setWidth(480).setHeight(420);
+  DocumentApp.getUi().showModalDialog(html, 'Gematriya Count');
+}
+
+function getGematriyaStats_() {
+  const FINAL_FORMS = { 'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ' };
+  const LETTER_VALUES = {
+    'א':1,'ב':2,'ג':3,'ד':4,'ה':5,'ו':6,'ז':7,'ח':8,'ט':9,
+    'י':10,'כ':20,'ל':30,'מ':40,'נ':50,'ס':60,'ע':70,'פ':80,'צ':90,
+    'ק':100,'ר':200,'ש':300,'ת':400
+  };
+
+  const doc = DocumentApp.getActiveDocument();
+  const selection = doc.getSelection();
+  let rawText = '';
+  let hasSelection = false;
+
+  if (selection) {
+    hasSelection = true;
+    const elements = selection.getRangeElements();
+    for (const elem of elements) {
+      const el = elem.getElement();
+      if (el.getType() === DocumentApp.ElementType.TEXT) {
+        const textEl = el.asText();
+        if (elem.isPartial()) {
+          rawText += textEl.getText().substring(
+            elem.getStartOffset(), elem.getEndOffsetInclusive() + 1
+          );
+        } else {
+          rawText += textEl.getText();
+        }
+      }
+    }
+  } else {
+    rawText = doc.getBody().getText();
+  }
+
+  // Normalize final forms and keep only base letters + whitespace
+  let normalized = '';
+  for (const char of rawText) {
+    const base = FINAL_FORMS[char] || char;
+    if (LETTER_VALUES[base] !== undefined) {
+      normalized += base;
+    } else if (/\s/.test(char)) {
+      normalized += ' ';
+    }
+  }
+
+  const words = normalized.trim().split(/\s+/).filter(w => w.length > 0);
+  let totalValue = 0;
+  let totalLetters = 0;
+  const wordData = [];
+
+  for (const word of words) {
+    let wordValue = 0;
+    for (const char of word) {
+      wordValue += (LETTER_VALUES[char] || 0);
+    }
+    totalValue += wordValue;
+    totalLetters += word.length;
+    if (words.length <= 50) {
+      wordData.push({ word, value: wordValue });
+    }
+  }
+
+  return {
+    hasSelection,
+    totalValue,
+    wordCount: words.length,
+    letterCount: totalLetters,
+    words: wordData
+  };
 }
 
 //returns the user preference w.r.t. displaying the versioning dropdowns in the insertion module
