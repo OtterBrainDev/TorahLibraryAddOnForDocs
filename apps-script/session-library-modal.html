@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <?!= include('shared/ui/head'); ?>
+    <?!= include('shared/ui/dom'); ?>
+    <?!= include('css/tokens'); ?>
+    <?!= include('css/components/results'); ?>
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        color: #111827;
+      }
+      .sl-dialog-root {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sl-dialog-root" id="sl-dialog-root">
+
+      <!-- Header -->
+      <div class="sl-modal-header">
+        <div class="sl-modal-header-text">
+          <h2 class="sl-modal-title">Session Library</h2>
+          <p class="sl-modal-subtitle" id="sl-modal-subtitle" aria-live="polite">0 references in this session</p>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="sl-toolbar">
+        <div class="sl-toolbar-row sl-toolbar-row--search">
+          <label for="sl-search-input" class="visually-hidden">Search references</label>
+          <input type="search" id="sl-search-input" class="sl-search-input" placeholder="Search references…" autocomplete="off">
+          <button type="button" class="sl-action-btn sl-action-btn--destructive" id="sl-clear-recent" title="Remove all non-pinned items" disabled>Clear Recent</button>
+          <button type="button" class="sl-action-btn sl-action-btn--destructive" id="sl-reset-session" title="Clear all items and start fresh" disabled>Reset Session</button>
+        </div>
+        <div class="sl-toolbar-row sl-toolbar-row--filters">
+          <div class="sl-filter-chips" id="sl-filter-chips" role="radiogroup" aria-label="Filter by type">
+            <button type="button" class="sl-filter-chip sl-filter-chip--active" data-filter="all" role="radio" aria-checked="true">All</button>
+          </div>
+          <div class="sl-toolbar-extras">
+            <select class="sl-sort-select" id="sl-sort-select" aria-label="Sort references">
+              <option value="category">By Category</option>
+              <option value="recent">Recently Added</option>
+              <option value="alpha">Alphabetical</option>
+            </select>
+            <button type="button" class="sl-density-btn" id="sl-density-toggle" title="Switch to compact view" aria-label="Toggle density">⊟</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inline confirmation banner -->
+      <div class="sl-confirmation" id="sl-confirmation" role="alert" hidden>
+        <p class="sl-confirmation-message" id="sl-confirmation-message"></p>
+        <div class="sl-confirmation-actions">
+          <button type="button" class="sl-btn sl-btn--ghost" id="sl-confirmation-cancel">Cancel</button>
+          <button type="button" class="sl-btn sl-btn--destructive" id="sl-confirmation-confirm">Confirm</button>
+        </div>
+      </div>
+
+      <!-- Scrollable content area -->
+      <div class="sl-content" id="sl-content" tabindex="-1"></div>
+
+      <!-- Undo toast -->
+      <div class="sl-undo-region" id="sl-undo-region" aria-live="polite" aria-atomic="true" hidden>
+        <span class="sl-undo-message" id="sl-undo-message"></span>
+        <button type="button" class="sl-undo-btn" id="sl-undo-btn">Undo</button>
+      </div>
+
+      <!-- Footer -->
+      <div class="sl-modal-footer">
+        <button type="button" class="sl-btn sl-btn--ghost" id="sl-copy-refs" title="Copy all references as plain text" disabled>Copy References</button>
+        <button type="button" class="sl-btn sl-btn--primary" id="sl-modal-done">Done</button>
+      </div>
+
+    </div>
+
+    <script>var _slInitData = <?!= sessionDataJson ?>;</script>
+    <script>
+// ============================================================
+// STATE
+// ============================================================
+var sessionLibrary = { pinned: [], inserted: [] };
+try {
+  sessionLibrary = _slInitData;
+  if (!sessionLibrary || typeof sessionLibrary !== 'object') throw new Error();
+  if (!Array.isArray(sessionLibrary.pinned))   sessionLibrary.pinned   = [];
+  if (!Array.isArray(sessionLibrary.inserted)) sessionLibrary.inserted = [];
+} catch(e) {
+  sessionLibrary = { pinned: [], inserted: [] };
+}
+var sessionLibraryFilter   = 'all';
+var sessionLibrarySearch   = '';
+var sessionLibrarySortMode = 'category';
+var sessionLibraryDensity  = 'normal';
+var _slUndoTimer    = null;
+var _slUndoEntry    = null;
+var _slConfirmType  = null;
+var _slConfirmTimer = null;
+
+// ============================================================
+// STORAGE (no-op in dialog — state saved to server on close)
+// ============================================================
+function saveSessionLibrary() {}
+
+// ============================================================
+// ENTRY BUILDERS / MUTATIONS
+// ============================================================
+function buildSessionEntry(ref, label, corpusLabel, extra) {
+  var rawLabel = String(label || ref || '').split(' › ')[0].split(',')[0].trim();
+  extra = extra || {};
+  return {
+    ref: ref,
+    label: rawLabel || ref,
+    corpusLabel: String(corpusLabel || 'Other'),
+    mode: extra.mode || 'text',
+    url: extra.url || '',
+    query: extra.query || label || ref
+  };
+}
+
+function upsertSessionEntry(listName, entry) {
+  if (!entry || !entry.ref) return;
+  var list = sessionLibrary[listName] || [];
+  list = list.filter(function(item){ return item && item.ref !== entry.ref; });
+  list.unshift(entry);
+  sessionLibrary[listName] = list.slice(0, 12);
+  saveSessionLibrary();
+  renderSessionLibrary();
+}
+
+function removeSessionEntry(listName, ref, skipUndo) {
+  var removed = null;
+  (sessionLibrary[listName] || []).forEach(function(item) {
+    if (item && item.ref === ref) removed = item;
+  });
+  sessionLibrary[listName] = (sessionLibrary[listName] || []).filter(function(item){ return item && item.ref !== ref; });
+  saveSessionLibrary();
+  renderSessionLibrary();
+  if (!skipUndo && removed) showSlUndoToast(removed, listName);
+}
+
+function clearRecentItems() {
+  sessionLibrary.inserted = [];
+  saveSessionLibrary();
+  renderSessionLibrary();
+}
+
+function resetSessionLibrary() {
+  sessionLibrary = { pinned: [], inserted: [] };
+  saveSessionLibrary();
+  renderSessionLibrary();
+}
+
+// ============================================================
+// CORPUS / REF HELPERS
+// ============================================================
+function getSessionEntryCorpusKey(item) {
+  return String((item && item.corpusLabel) || 'Other').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'other';
+}
+
+function getCurrentCorpusForRef(ref) {
+  return 'Other';
+}
+
+function isPinnedRef(ref) {
+  return (sessionLibrary.pinned || []).some(function(item){ return item && item.ref === ref; });
+}
+
+// ============================================================
+// HEBREW DETECTION
+// ============================================================
+function isHebrewTitle(str) {
+  return /[א-ת]/.test(String(str || ''));
+}
+
+// ============================================================
+// DATA QUERY HELPERS
+// ============================================================
+function slTotalCount() {
+  return (sessionLibrary.pinned || []).length + (sessionLibrary.inserted || []).length;
+}
+
+function slGetFilteredItems() {
+  var search = (sessionLibrarySearch || '').toLowerCase().trim();
+  var filter = sessionLibraryFilter;
+  var allPinned   = (sessionLibrary.pinned || []);
+  var allInserted = (sessionLibrary.inserted || []).filter(function(item) {
+    return !isPinnedRef(item && item.ref);
+  });
+  function matchesSearch(item) {
+    if (!search) return true;
+    var label = String((item && item.label) || '').toLowerCase();
+    var ref   = String((item && item.ref)   || '').toLowerCase();
+    var corp  = String((item && item.corpusLabel) || '').toLowerCase();
+    return label.indexOf(search) >= 0 || ref.indexOf(search) >= 0 || corp.indexOf(search) >= 0;
+  }
+  function matchesCorpusFilter(item) {
+    if (filter === 'all' || filter === 'pinned' || filter === 'recent') return true;
+    return getSessionEntryCorpusKey(item) === filter;
+  }
+  var pinnedItems = allPinned.filter(function(item) {
+    if (filter === 'recent') return false;
+    return matchesSearch(item) && matchesCorpusFilter(item);
+  });
+  var insertedItems = allInserted.filter(function(item) {
+    if (filter === 'pinned') return false;
+    return matchesSearch(item) && matchesCorpusFilter(item);
+  });
+  return { pinned: pinnedItems, inserted: insertedItems, totalVisible: pinnedItems.length + insertedItems.length };
+}
+
+function slGetCategories() {
+  var seen = {};
+  var cats = [];
+  (sessionLibrary.pinned || []).concat(sessionLibrary.inserted || []).forEach(function(item) {
+    var key   = getSessionEntryCorpusKey(item);
+    var label = String((item && item.corpusLabel) || 'Other');
+    if (!seen[key]) { seen[key] = true; cats.push({ key: key, label: label }); }
+  });
+  return cats.sort(function(a, b) { return a.label < b.label ? -1 : 1; });
+}
+
+// ============================================================
+// RENDER — filter chips
+// ============================================================
+function renderSlFilterChips() {
+  var $chips = $('#sl-filter-chips');
+  if (!$chips.length) return;
+  var cats = slGetCategories();
+  var html = '';
+  var baseFilters = [{ key: 'all', label: 'All' }, { key: 'pinned', label: 'Pinned' }, { key: 'recent', label: 'Recent' }];
+  baseFilters.forEach(function(f) {
+    var active = sessionLibraryFilter === f.key;
+    html += "<button type='button' class='sl-filter-chip" + (active ? " sl-filter-chip--active" : "") +
+      "' data-filter='" + escapeHTML(f.key) + "' role='radio' aria-checked='" + (active ? 'true' : 'false') + "'>" +
+      escapeHTML(f.label) + "</button>";
+  });
+  cats.forEach(function(cat) {
+    var active = sessionLibraryFilter === cat.key;
+    html += "<button type='button' class='sl-filter-chip sl-filter-chip--category" + (active ? " sl-filter-chip--active" : "") +
+      "' data-filter='" + escapeHTML(cat.key) + "' role='radio' aria-checked='" + (active ? 'true' : 'false') + "'>" +
+      escapeHTML(cat.label) + "</button>";
+  });
+  $chips.html(html);
+}
+
+function updateSlModalSubtitle() {
+  var $subtitle = $('#sl-modal-subtitle');
+  if (!$subtitle.length) return;
+  var total   = slTotalCount();
+  var visible = slGetFilteredItems().totalVisible;
+  var word    = total === 1 ? 'reference' : 'references';
+  if (sessionLibrarySearch || sessionLibraryFilter !== 'all') {
+    $subtitle.text('Showing ' + visible + ' of ' + total + ' ' + word);
+  } else {
+    $subtitle.text(total + ' ' + word + ' in this session');
+  }
+}
+
+function slHighlightMatch(text, search) {
+  if (!search) return escapeHTML(text);
+  var parts = [];
+  var lower = text.toLowerCase();
+  var lowerSearch = search.toLowerCase();
+  var idx = 0, pos;
+  while ((pos = lower.indexOf(lowerSearch, idx)) >= 0) {
+    parts.push(escapeHTML(text.slice(idx, pos)));
+    parts.push('<mark class="sl-highlight">' + escapeHTML(text.slice(pos, pos + search.length)) + '</mark>');
+    idx = pos + search.length;
+  }
+  parts.push(escapeHTML(text.slice(idx)));
+  return parts.join('');
+}
+
+function renderSlItemRow(item, listName) {
+  var label  = String((item && item.label) || (item && item.ref) || '');
+  var ref    = String((item && item.ref)   || '');
+  var url    = String((item && item.url)   || '');
+  var mode   = String((item && item.mode)  || 'text');
+  var query  = String((item && item.query) || label || ref);
+  var pinned = listName === 'pinned';
+  var isHebrew = isHebrewTitle(label);
+  var search = (sessionLibrarySearch || '').trim();
+  var displayLabel = search ? slHighlightMatch(label, search) : escapeHTML(label);
+  var pinBtnLabel  = (pinned ? 'Unpin ' : 'Pin ') + escapeHTML(label);
+  var pinBtnClass  = 'sl-item-pin-btn' + (pinned ? ' sl-item-pin-btn--active' : '');
+  var rtlClass     = isHebrew ? ' sl-item-title--rtl' : '';
+  var rtlAttr      = isHebrew ? " dir='rtl'" : '';
+  var langBadge    = isHebrew ? "<span class='sl-item-lang-badge' aria-hidden='true'>HE</span>" : '';
+  var titleAttr    = label.length > 55 ? " title='" + escapeHTML(label) + "'" : '';
+  return "<div class='sl-item' role='listitem'" +
+    " data-ref='" + escapeHTML(ref) + "'" +
+    " data-url='" + escapeHTML(url) + "'" +
+    " data-mode='" + escapeHTML(mode) + "'" +
+    " data-query='" + escapeHTML(query) + "'" +
+    " data-list='" + escapeHTML(listName) + "'" +
+    " tabindex='0'>" +
+    "<button type='button' class='" + pinBtnClass + "'" +
+      " data-ref='" + escapeHTML(ref) + "'" +
+      " data-list='" + escapeHTML(listName) + "'" +
+      " aria-label='" + pinBtnLabel + "'" +
+      " aria-pressed='" + (pinned ? 'true' : 'false') + "'" +
+      " title='" + (pinned ? 'Unpin' : 'Pin to keep at top') + "'>📌</button>" +
+    "<span class='sl-item-title" + rtlClass + "'" + rtlAttr + titleAttr + ">" + displayLabel + "</span>" +
+    langBadge +
+    "<button type='button' class='sl-item-remove-btn'" +
+      " data-ref='" + escapeHTML(ref) + "'" +
+      " data-list='" + escapeHTML(listName) + "'" +
+      " aria-label='Remove " + escapeHTML(label) + "'" +
+      " title='Remove from session'>×</button>" +
+    "</div>";
+}
+
+function slSortItems(items) {
+  if (sessionLibrarySortMode === 'alpha') {
+    return items.slice().sort(function(a, b) {
+      var la = String((a && a.label) || '').toLowerCase();
+      var lb = String((b && b.label) || '').toLowerCase();
+      return la < lb ? -1 : la > lb ? 1 : 0;
+    });
+  }
+  return items;
+}
+
+function renderSlSection(sectionLabel, items, listName, isPinnedSection) {
+  if (!items || !items.length) return '';
+  var count     = items.length;
+  var countWord = count === 1 ? '1 item' : count + ' items';
+  var corpusKey = isPinnedSection ? 'pinned' : getSessionEntryCorpusKey({ corpusLabel: sectionLabel });
+  var sectionClass = 'sl-section' + (isPinnedSection ? ' sl-section--pinned' : '');
+  var sorted = slSortItems(items);
+  var html = "<section class='" + sectionClass + "' aria-label='" + escapeHTML(sectionLabel) + " references'>";
+  html += "<div class='sl-section-header'>";
+  html += "<span class='sl-section-label'>" + (isPinnedSection ? "📌 " : "") + escapeHTML(sectionLabel.toUpperCase()) + "</span>";
+  html += "<span class='sl-section-count'>· " + countWord + "</span>";
+  html += "<div class='sl-section-menu-wrap'>" +
+    "<button type='button' class='sl-section-menu-btn'" +
+    " data-section='" + escapeHTML(corpusKey) + "'" +
+    " data-list='" + escapeHTML(listName) + "'" +
+    " aria-label='" + escapeHTML(sectionLabel) + " section options'" +
+    " aria-haspopup='true' aria-expanded='false'" +
+    " title='Section options'>⋯</button>" +
+    "</div>";
+  html += "</div>";
+  html += "<div class='sl-section-item-list' role='list'>";
+  sorted.forEach(function(item) { html += renderSlItemRow(item, listName); });
+  html += "</div></section>";
+  return html;
+}
+
+function slRenderCategoryGroups(items, listName) {
+  if (!items || !items.length) return '';
+  var grouped = {}, order = [];
+  items.forEach(function(item) {
+    var corpus = String((item && item.corpusLabel) || 'Other');
+    if (!grouped[corpus]) { grouped[corpus] = []; order.push(corpus); }
+    grouped[corpus].push(item);
+  });
+  var sortedCorpora = (sessionLibrarySortMode !== 'recent') ? order.slice().sort() : order;
+  var html = '';
+  sortedCorpora.forEach(function(corpus) { html += renderSlSection(corpus, grouped[corpus], listName, false); });
+  return html;
+}
+
+function slEmptyStateHtml(reason) {
+  if (reason === 'empty') {
+    return "<div class='sl-empty-state'><p class='sl-empty-heading'>Your library is empty</p><p class='sl-empty-body'>Sources you add during this session will appear here.</p></div>";
+  }
+  if (reason === 'search') {
+    return "<div class='sl-empty-state sl-empty-state--search'><p class='sl-empty-heading'>No matches for &ldquo;" + escapeHTML(sessionLibrarySearch) + "&rdquo;</p><button type='button' class='sl-clear-search-btn'>Clear search</button></div>";
+  }
+  if (reason === 'pinned') {
+    return "<div class='sl-empty-state'><p class='sl-empty-heading'>No pinned references</p><p class='sl-empty-body'>Pin items to keep them at the top of your library.</p></div>";
+  }
+  if (reason === 'recent') {
+    return "<div class='sl-empty-state'><p class='sl-empty-heading'>No recent references</p><p class='sl-empty-body'>Recent items appear here as you work.</p></div>";
+  }
+  return "<div class='sl-empty-state'><p class='sl-empty-heading'>No references match this filter</p></div>";
+}
+
+function renderSlContent() {
+  var $content = $('#sl-content');
+  if (!$content.length) return;
+  var total  = slTotalCount();
+  var filter = sessionLibraryFilter;
+  var search = (sessionLibrarySearch || '').trim();
+  if (total === 0) { $content.html(slEmptyStateHtml('empty')); return; }
+  var filtered = slGetFilteredItems();
+  if (filtered.totalVisible === 0) { $content.html(slEmptyStateHtml(search ? 'search' : filter)); return; }
+  var html = '';
+  if (filter === 'pinned') {
+    html = renderSlSection('Pinned', filtered.pinned, 'pinned', true);
+  } else if (filter === 'recent') {
+    html = slRenderCategoryGroups(filtered.inserted, 'inserted');
+  } else if (filter === 'all') {
+    if (filtered.pinned.length) html += renderSlSection('Pinned', filtered.pinned, 'pinned', true);
+    html += slRenderCategoryGroups(filtered.inserted, 'inserted');
+  } else {
+    if (filtered.pinned.length)   html += renderSlSection('Pinned', filtered.pinned, 'pinned', true);
+    if (filtered.inserted.length) html += slRenderCategoryGroups(filtered.inserted, 'inserted');
+  }
+  $content.html(html);
+}
+
+function syncSlButtonStates() {
+  var hasRecent = !!((sessionLibrary.inserted || []).length);
+  var hasAny    = slTotalCount() > 0;
+  $('#sl-clear-recent').prop('disabled', !hasRecent);
+  $('#sl-reset-session').prop('disabled', !hasAny);
+  $('#sl-copy-refs').prop('disabled', !hasAny);
+}
+
+function updateSlFooterBadge() {
+  var $badge = $('#sl-footer-count');
+  if (!$badge.length) return;
+  var total = slTotalCount();
+  if (total > 0) { $badge.text(total > 99 ? '99+' : total).removeAttr('hidden'); }
+  else           { $badge.attr('hidden', true); }
+}
+
+function renderSessionLibrary() {
+  updateSlModalSubtitle();
+  renderSlFilterChips();
+  renderSlContent();
+  syncSlButtonStates();
+  updateSlFooterBadge();
+}
+
+function syncSessionLibraryFilterOptions() { renderSlFilterChips(); }
+
+// ============================================================
+// CONFIRMATION BANNER
+// ============================================================
+function showSlConfirmation(type) {
+  _slConfirmType = type;
+  var $banner = $('#sl-confirmation'), $msg = $('#sl-confirmation-message'), $confirmBtn = $('#sl-confirmation-confirm');
+  if (!$banner.length) return;
+  if (type === 'clear-recent') {
+    $banner.removeClass('sl-confirmation--danger').addClass('sl-confirmation--warning');
+    $msg.text("Clear all recent items? This removes items that aren't pinned. Pinned references will stay.");
+    $confirmBtn.text('Yes, Clear Recent');
+  } else if (type === 'reset') {
+    $banner.removeClass('sl-confirmation--warning').addClass('sl-confirmation--danger');
+    $msg.text('Reset your session library? This removes all references, including pinned items. This cannot be undone.');
+    $confirmBtn.text('Yes, Reset Everything');
+  }
+  $banner.removeAttr('hidden');
+  setTimeout(function() { $('#sl-confirmation-cancel').focus(); }, 30);
+  if (_slConfirmTimer) clearTimeout(_slConfirmTimer);
+  _slConfirmTimer = setTimeout(hideSlConfirmation, 8000);
+}
+
+function hideSlConfirmation() {
+  $('#sl-confirmation').attr('hidden', true);
+  _slConfirmType = null;
+  if (_slConfirmTimer) clearTimeout(_slConfirmTimer);
+}
+
+function confirmSlAction() {
+  var type = _slConfirmType;
+  hideSlConfirmation();
+  if (type === 'clear-recent') clearRecentItems();
+  else if (type === 'reset')   resetSessionLibrary();
+}
+
+// ============================================================
+// UNDO TOAST
+// ============================================================
+function showSlUndoToast(entry, listName) {
+  if (_slUndoTimer) clearTimeout(_slUndoTimer);
+  _slUndoEntry = { entry: entry, listName: listName };
+  var label = escapeHTML(String((entry && entry.label) || (entry && entry.ref) || 'Item'));
+  $('#sl-undo-message').html(label + ' removed.');
+  $('#sl-undo-region').removeAttr('hidden');
+  _slUndoTimer = setTimeout(function() { $('#sl-undo-region').attr('hidden', true); _slUndoEntry = null; }, 4000);
+}
+
+function executeSlUndo() {
+  if (!_slUndoEntry) return;
+  if (_slUndoTimer) clearTimeout(_slUndoTimer);
+  var entry = _slUndoEntry.entry, listName = _slUndoEntry.listName;
+  _slUndoEntry = null;
+  $('#sl-undo-region').attr('hidden', true);
+  var list = (sessionLibrary[listName] || []).filter(function(item){ return item && item.ref !== entry.ref; });
+  list.unshift(entry);
+  sessionLibrary[listName] = list.slice(0, 12);
+  saveSessionLibrary();
+  renderSessionLibrary();
+}
+
+// ============================================================
+// COPY REFERENCES
+// ============================================================
+function _showCopyFeedback(msg) {
+  var $btn = $('#sl-copy-refs');
+  var original = $btn.text();
+  $btn.text(msg);
+  setTimeout(function() { $btn.text(original); }, 2000);
+}
+
+function copySessionLibraryRefs() {
+  var lines   = [];
+  var pinned  = sessionLibrary.pinned || [];
+  var recent  = (sessionLibrary.inserted || []).filter(function(item){ return !isPinnedRef(item && item.ref); });
+  if (pinned.length) {
+    lines.push('Pinned:');
+    pinned.forEach(function(item){ lines.push('  ' + String((item && item.label) || (item && item.ref) || '')); });
+  }
+  if (recent.length) {
+    lines.push('Recent:');
+    recent.forEach(function(item){ lines.push('  ' + String((item && item.label) || (item && item.ref) || '')); });
+  }
+  var text = lines.join('\n');
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(function()  { _showCopyFeedback('Copied!'); })
+        .catch(function() { _showCopyFeedback('Failed'); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      _showCopyFeedback('Copied!');
+    }
+  } catch(e) {
+    _showCopyFeedback('Failed');
+  }
+}
+
+// ============================================================
+// SECTION MENU DROPDOWN
+// ============================================================
+function openSlSectionMenu($btn, sectionKey, listName) {
+  closeSlSectionMenu();
+  var label = listName === 'pinned' ? 'Unpin all' : 'Remove all in this section';
+  var $drop = $("<div class='sl-section-menu-dropdown' role='menu'>" +
+    "<button type='button' class='sl-section-menu-item' role='menuitem'" +
+    " data-section='" + escapeHTML(sectionKey) + "'" +
+    " data-list='" + escapeHTML(listName) + "'>" +
+    escapeHTML(label) + "</button></div>");
+  $btn.closest('.sl-section-menu-wrap').append($drop);
+  $btn.attr('aria-expanded', 'true');
+  $drop.find('button').focus();
+}
+
+function closeSlSectionMenu() {
+  $('.sl-section-menu-dropdown').remove();
+  $('.sl-section-menu-btn').attr('aria-expanded', 'false');
+}
+
+function handleSlSectionRemoveAll(sectionKey, listName) {
+  closeSlSectionMenu();
+  if (listName === 'pinned') {
+    sessionLibrary.pinned = [];
+  } else {
+    sessionLibrary.inserted = (sessionLibrary.inserted || []).filter(function(item) {
+      return getSessionEntryCorpusKey(item) !== sectionKey;
+    });
+  }
+  saveSessionLibrary();
+  renderSessionLibrary();
+}
+
+// ============================================================
+// DENSITY TOGGLE
+// ============================================================
+function toggleSlDensity() {
+  sessionLibraryDensity = (sessionLibraryDensity === 'compact') ? 'normal' : 'compact';
+  var $root = $('.sl-dialog-root');
+  $root.attr('data-density', sessionLibraryDensity === 'compact' ? 'compact' : '');
+  var $btn = $('#sl-density-toggle');
+  if (sessionLibraryDensity === 'compact') {
+    $btn.text('⊞').attr('title', 'Switch to comfortable view');
+  } else {
+    $btn.text('⊟').attr('title', 'Switch to compact view');
+  }
+}
+
+// ============================================================
+// SAVE AND CLOSE
+// ============================================================
+function _slSaveAndClose(selectedRef) {
+  var action = { sessionData: JSON.stringify(sessionLibrary), closed: true };
+  if (selectedRef) action.selectedRef = selectedRef;
+  google.script.run
+    .withSuccessHandler(function() { google.script.host.close(); })
+    .withFailureHandler(function() { google.script.host.close(); })
+    .saveSessionLibraryAction(JSON.stringify(action));
+}
+
+window.addEventListener('beforeunload', function() {
+  google.script.run.saveSessionLibraryAction(
+    JSON.stringify({ sessionData: JSON.stringify(sessionLibrary), closed: true })
+  );
+});
+
+// ============================================================
+// EVENT HANDLERS
+// ============================================================
+
+// Filter chips
+$(document).on('click', '#sl-filter-chips .sl-filter-chip', function() {
+  sessionLibraryFilter = $(this).attr('data-filter') || 'all';
+  renderSessionLibrary();
+  $('#sl-content').scrollTop(0);
+});
+
+// Search
+var _slSearchDebounce = null;
+$(document).on('input', '#sl-search-input', function() {
+  var val = $(this).val() || '';
+  if (_slSearchDebounce) clearTimeout(_slSearchDebounce);
+  _slSearchDebounce = setTimeout(function() { sessionLibrarySearch = val; renderSessionLibrary(); }, 150);
+});
+
+$(document).on('click', '.sl-clear-search-btn', function() {
+  sessionLibrarySearch = '';
+  $('#sl-search-input').val('');
+  renderSessionLibrary();
+  $('#sl-search-input').focus();
+});
+
+// Destructive actions
+$(document).on('click', '#sl-clear-recent', function() { if (!$(this).prop('disabled')) showSlConfirmation('clear-recent'); });
+$(document).on('click', '#sl-reset-session', function() { if (!$(this).prop('disabled')) showSlConfirmation('reset'); });
+$(document).on('click', '#sl-confirmation-cancel',  hideSlConfirmation);
+$(document).on('click', '#sl-confirmation-confirm', confirmSlAction);
+
+// Item row click → save selected ref and close dialog
+$(document).on('click keydown', '.sl-item', function(event) {
+  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+  if ($(event.target).closest('.sl-item-pin-btn, .sl-item-remove-btn').length) return;
+  event.preventDefault();
+  var ref = $(this).attr('data-ref');
+  if (!ref) return;
+  _slSaveAndClose(ref);
+});
+
+// Remove button
+$(document).on('click', '.sl-item-remove-btn', function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  removeSessionEntry($(this).attr('data-list'), $(this).attr('data-ref'));
+});
+
+// Pin / unpin button
+$(document).on('click', '.sl-item-pin-btn', function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  var ref = $(this).attr('data-ref'), listName = $(this).attr('data-list');
+  if (!ref) return;
+  if (listName === 'pinned') {
+    var pinnedEntry = (sessionLibrary.pinned || []).find(function(it){ return it && it.ref === ref; });
+    sessionLibrary.pinned = (sessionLibrary.pinned || []).filter(function(it){ return it && it.ref !== ref; });
+    if (pinnedEntry) {
+      var ins = (sessionLibrary.inserted || []).filter(function(it){ return it && it.ref !== ref; });
+      ins.unshift(pinnedEntry);
+      sessionLibrary.inserted = ins.slice(0, 12);
+    }
+  } else {
+    var insEntry = (sessionLibrary.inserted || []).find(function(it){ return it && it.ref === ref; });
+    if (!insEntry) insEntry = buildSessionEntry(ref, ref, 'Other');
+    sessionLibrary.inserted = (sessionLibrary.inserted || []).filter(function(it){ return it && it.ref !== ref; });
+    var pins = (sessionLibrary.pinned || []).filter(function(it){ return it && it.ref !== ref; });
+    pins.unshift(insEntry);
+    sessionLibrary.pinned = pins.slice(0, 12);
+  }
+  saveSessionLibrary();
+  renderSessionLibrary();
+});
+
+// Undo toast
+$(document).on('click', '#sl-undo-btn', executeSlUndo);
+
+// Section menu
+$(document).on('click', '.sl-section-menu-btn', function(event) {
+  event.stopPropagation();
+  var $btn = $(this);
+  if ($btn.attr('aria-expanded') === 'true') closeSlSectionMenu();
+  else openSlSectionMenu($btn, $btn.attr('data-section'), $btn.attr('data-list'));
+});
+$(document).on('click', '.sl-section-menu-item', function(event) {
+  event.stopPropagation();
+  handleSlSectionRemoveAll($(this).attr('data-section'), $(this).attr('data-list'));
+});
+$(document).on('click', function(event) {
+  if (!$(event.target).closest('.sl-section-menu-wrap').length) closeSlSectionMenu();
+});
+$(document).on('keydown', '.sl-section-menu-dropdown', function(event) {
+  if (event.key === 'Escape') closeSlSectionMenu();
+});
+
+// Sort + density
+$(document).on('change', '#sl-sort-select', function() { sessionLibrarySortMode = $(this).val() || 'category'; renderSlContent(); });
+$(document).on('click', '#sl-density-toggle', toggleSlDensity);
+
+// Copy references
+$(document).on('click', '#sl-copy-refs', function() { if (!$(this).prop('disabled')) copySessionLibraryRefs(); });
+
+// Done button
+$(document).on('click', '#sl-modal-done', function() { _slSaveAndClose(null); });
+
+// ============================================================
+// INIT
+// ============================================================
+$(function() {
+  renderSessionLibrary();
+  setTimeout(function() { $('#sl-search-input').focus(); }, 40);
+});
+    </script>
+  </body>
+</html>

@@ -486,14 +486,70 @@ $(document).on('click', '.save-session-defaults-button', function () {
 // SESSION LIBRARY — modal open / close
 // ============================================================
 
+var _slDialogPollTimer = null;
+var _slDialogPollCount = 0;
+var _slDialogActive    = false;
+
+function _stopSlDialogPoll() {
+  if (_slDialogPollTimer) clearInterval(_slDialogPollTimer);
+  _slDialogPollTimer = null;
+  _slDialogPollCount = 0;
+  _slDialogActive    = false;
+}
+
+function _handleSlDialogResult(action) {
+  _stopSlDialogPoll();
+  if (!action) return;
+  if (action.sessionData) {
+    try {
+      sessionLibrary = JSON.parse(action.sessionData);
+      try { localStorage.setItem('sefariaSidebarSessionLibrary', action.sessionData); } catch (e2) {}
+      renderSessionLibrary();
+      updateSlFooterBadge();
+      setFooterButtonStates();
+    } catch (e) {}
+  }
+  if (action.selectedRef) {
+    var ref = action.selectedRef;
+    $('.input').val(ref);
+    runUnifiedQuery();
+    setTimeout(function () {
+      var match = (queryState.libraryMatches || []).concat(queryState.searchResults || [])
+        .find(function (item) { return item && item.ref === ref; });
+      if (match && match.key) {
+        selectedResultKey = match.key;
+        selectedResultSummary = { label: match.ref || match.label, subtitle: match.subtitle || '' };
+        updateResultsVisibility();
+        resolveSelectedResult(match.ref, match.ref || match.label);
+      }
+    }, 250);
+  }
+}
+
 function openSessionLibraryModal() {
-  sessionLibrarySearch = '';
-  $('#sl-search-input').val('');
-  $('#sl-sort-select').val(sessionLibrarySortMode);
-  hideSlConfirmation();
-  renderSessionLibrary();
-  $('#session-library-modal').removeAttr('hidden');
-  setTimeout(function () { $('#sl-search-input').focus(); }, 40);
+  if (_slDialogActive) return;
+  _stopSlDialogPoll();
+  var data = localStorage.getItem('sefariaSidebarSessionLibrary') || '{"pinned":[],"inserted":[]}';
+  google.script.run
+    .withSuccessHandler(function () {
+      _slDialogActive = true;
+      _slDialogPollTimer = setInterval(function () {
+        if (++_slDialogPollCount > 600) { _stopSlDialogPoll(); return; }
+        google.script.run
+          .withSuccessHandler(function (action) { if (action) _handleSlDialogResult(action); })
+          .checkSessionLibraryAction();
+      }, 1000);
+    })
+    .withFailureHandler(function () {
+      sessionLibrarySearch = '';
+      $('#sl-search-input').val('');
+      $('#sl-sort-select').val(sessionLibrarySortMode);
+      hideSlConfirmation();
+      renderSessionLibrary();
+      $('#session-library-modal').removeAttr('hidden');
+      setTimeout(function () { $('#sl-search-input').focus(); }, 40);
+    })
+    .sessionLibraryPopup(data);
 }
 
 function closeSessionLibraryModal() {

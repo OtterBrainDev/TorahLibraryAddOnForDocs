@@ -3408,6 +3408,41 @@ function preferencesPopup() {
   DocumentApp.getUi().showModalDialog(output, 'Preferences');
 }
 
+function sessionLibraryPopup(sessionDataJson) {
+  PropertiesService.getUserProperties().deleteProperty('SL_DIALOG_ACTION');
+  let parsed;
+  try { parsed = JSON.parse(sessionDataJson); } catch(e) { parsed = { pinned: [], inserted: [] }; }
+  if (!parsed || typeof parsed !== 'object') parsed = { pinned: [], inserted: [] };
+  if (!Array.isArray(parsed.pinned)) parsed.pinned = [];
+  if (!Array.isArray(parsed.inserted)) parsed.inserted = [];
+  const template = HtmlService.createTemplateFromFile('session-library-modal');
+  template.sessionDataJson = JSON.stringify(parsed);
+  const html = template.evaluate().setWidth(680).setHeight(640);
+  DocumentApp.getUi().showModalDialog(html, 'Session Library');
+}
+
+function saveSessionLibraryAction(actionJson) {
+  try {
+    PropertiesService.getUserProperties().setProperty('SL_DIALOG_ACTION', String(actionJson || ''));
+  } catch(e) {}
+}
+
+function checkSessionLibraryAction() {
+  try {
+    const props = PropertiesService.getUserProperties();
+    const val = props.getProperty('SL_DIALOG_ACTION');
+    if (!val) return null;
+    const action = JSON.parse(val);
+    if (action && action.closed) {
+      props.deleteProperty('SL_DIALOG_ACTION');
+      return action;
+    }
+    return null;
+  } catch(e) {
+    return null;
+  }
+}
+
 function divineNamePopup() {
   transformDivineNames();
 }
