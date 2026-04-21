@@ -6,12 +6,12 @@ function config() { return (((state.bootstrap || {}).ui || {}).config) || {}; }
 function providers() { return (state.bootstrap && state.bootstrap.providers) ? state.bootstrap.providers : []; }
 function withBusy(button, busy, text) { button.disabled = !!busy; if (busy) { button.dataset.originalText = button.textContent; button.textContent = text || 'Working...'; } else if (button.dataset.originalText) { button.textContent = button.dataset.originalText; } }
 function setTab(tab) {
-  const allowAdvanced = !!(((state.bootstrap || {}).ui || {}).allowAdvancedTab);
+  const allowAdvanced = state.bootstrap ? !!(((state.bootstrap || {}).ui || {}).allowAdvancedTab) : true;
   state.activeTab = (tab === 'advanced' && allowAdvanced) ? 'advanced' : 'basic';
   document.querySelectorAll('.tabbtn').forEach(function(btn){ btn.classList.toggle('active', btn.dataset.tab === state.activeTab); });
   $('basicTab').classList.toggle('hidden', state.activeTab !== 'basic');
   $('advancedTab').classList.toggle('hidden', state.activeTab !== 'advanced');
-  $('advancedTabBtn').classList.toggle('hidden', !allowAdvanced);
+  $('advancedTabBtn').classList.toggle('hidden', state.bootstrap !== null && !allowAdvanced);
   $('tabDescription').textContent = state.activeTab === 'advanced' ? (config().advancedDescription || '') : (config().basicDescription || '');
 }
 function setMode(mode) {

@@ -82,22 +82,19 @@ $(document).on('click', function (event) {
 
 function updateDisplayChoiceSummary() {
   var outputMode = $('.output-mode-selection').val();
-  var labelMap = {
-    en: 'Translation',
-    both: 'Bilingual',
-    he: 'Original'
-  };
-  $('#display-choice-button-value').text(labelMap[outputMode] || 'Bilingual');
+  $('#display-choice-summary-text').attr('data-mode', outputMode || 'both');
 }
 
 function updateLayoutChoiceSummary() {
   var selectedLayout = $('.bilingual-layout-selection').val();
-  var labelMap = {
-    'he-top': 'Stacked',
-    'he-right': 'Right–Left',
-    'he-left': 'Left–Right'
+  var iconMap = {
+    'he-top': '<span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>',
+    'he-right': '<span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>',
+    'he-left': '<span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>'
   };
-  $('#layout-choice-button-value').text(labelMap[selectedLayout] || 'Right–Left');
+  $('#layout-choice-summary-text')
+    .attr('data-layout', selectedLayout)
+    .html(iconMap[selectedLayout] || iconMap['he-right']);
 }
 
 function syncDisplayModeCards() {

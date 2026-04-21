@@ -35,23 +35,28 @@ function insertSurpriseMe(options) {
     throw new Error('Choose at least one corpus.');
   }
 
-  if (!term) {
-    term = getRandomTanakhHebrewWord_();
+  const isBlankTerm = !term;
+  const maxAttempts = isBlankTerm ? 5 : 1;
+  let candidateRefs = [];
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    if (isBlankTerm) {
+      term = getRandomTanakhHebrewWord_();
+    }
+    const searchResponse = findSearchAdvanced(term, {
+      filters: corpuses,
+      relevanceSort: sortMode === 'relevance',
+      sortMode: sortMode,
+      translationOnly: false,
+      translationLanguages: []
+    });
+    const rawHits = Array.isArray(searchResponse)
+      ? searchResponse
+      : ((((searchResponse || {}).hits || {}).hits) || []);
+    candidateRefs = getInsertableRefsFromSearchHits_(rawHits, corpuses);
+    if (candidateRefs.length) break;
   }
 
-  const searchResponse = findSearchAdvanced(term, {
-    filters: corpuses,
-    relevanceSort: sortMode === 'relevance',
-    sortMode: sortMode,
-    translationOnly: false,
-    translationLanguages: []
-  });
-
-  const rawHits = Array.isArray(searchResponse)
-    ? searchResponse
-    : ((((searchResponse || {}).hits || {}).hits) || []);
-
-  const candidateRefs = getInsertableRefsFromSearchHits_(rawHits, corpuses);
   if (!candidateRefs.length) {
     throw new Error('No insertable results were found for that term and corpus selection.');
   }

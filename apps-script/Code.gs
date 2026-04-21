@@ -458,6 +458,10 @@ function applyHebrewDivineNamePreferences(data, userProperties) {
     return data;
   }
 
+  if (userProperties.getProperty("apply_sheimot_on_insertion") != "true") {
+    return data;
+  }
+
   const meforashReplacement = userProperties.getProperty("meforash_replacement");
   const replacements = [];
 
@@ -498,6 +502,10 @@ function applyHebrewDivineNamePreferences(data, userProperties) {
 
 function applyEnglishDivineNamePreference(data, userProperties) {
   if (!data || userProperties.getProperty("god_replace") != "true") {
+    return;
+  }
+
+  if (userProperties.getProperty("apply_sheimot_on_insertion") != "true") {
     return;
   }
 

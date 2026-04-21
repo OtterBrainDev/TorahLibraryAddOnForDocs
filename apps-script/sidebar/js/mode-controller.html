@@ -75,14 +75,13 @@ function isSurpriseEnabled() {
 
 function syncExperimentalAvailability() {
   var hasExperimental = hasExperimentalFeaturesEnabled();
+  var aiEnabled = isExperimentalAiEnabled();
+  var surpriseEnabled = isSurpriseEnabled();
   $('.experimental-menu-button').toggle(hasExperimental);
-  $('.experimental-section details').each(function() { $(this).show(); });
-  if (!isExperimentalAiEnabled()) {
-    $('.open-ai-lesson-tool').closest('details').hide();
-  }
-  if (!isSurpriseEnabled()) {
-    $('.open-surprise-tool').closest('details').hide();
-  }
+  $('#ai-inline-generate').closest('.feature-accordion').toggle(aiEnabled);
+  $('#sm-inline-launch').closest('.feature-accordion').toggle(surpriseEnabled);
+  $('#footer-actions-panel .open-ai-lesson-tool').toggle(aiEnabled);
+  $('#footer-actions-panel .open-surprise-tool').toggle(surpriseEnabled);
   if (!hasExperimental && appMode === 'experimental') {
     appMode = 'texts';
   }
@@ -90,8 +89,7 @@ function syncExperimentalAvailability() {
 
 function updateQuickActionsForMode() {
   var experimentalMode = appMode === 'experimental';
-  $('.standard-quick-actions').toggle(!experimentalMode);
-  $('.experimental-quick-actions').toggle(experimentalMode);
+  $('#footer-actions-panel .open-linker-tool').toggle(!experimentalMode);
   if (experimentalMode) { $('#footer-actions-panel').hide(); }
 }
 
@@ -137,7 +135,7 @@ function updateModeDependentSections() {
   var hideTranslations = $('.translation-version-select option:not(:disabled)').length <= 1;
 
   if (appMode === 'experimental') {
-    $('.results-panel, .display-layout-shell, .versions-section, .preview-section, .inline-session-settings, .more-options-accordion').hide();
+    $('.results-panel, .display-layout-shell, .versions-section, .preview-section, .inline-session-settings, .more-options-shell').hide();
     $('.experimental-section').show();
     renderSessionLibrary();
     return;
@@ -146,7 +144,7 @@ function updateModeDependentSections() {
   $('.experimental-section').hide();
   $('.results-panel').toggle(hasSearch);
   $('.display-layout-shell').toggle(hasSelectedTextResult);
-  $('.more-options-accordion').toggle(hasSelectedTextResult);
+  $('.more-options-shell').toggle(hasSelectedTextResult);
   $('.versions-section').toggle(hasSelectedTextResult && !hideTranslations);
   $('.preview-section').toggle(hasSelectedTextResult || hasSelectedVoiceResult);
   $('.inline-session-settings').toggle(hasSelectedTextResult);

@@ -224,59 +224,50 @@
         </section>
 
         <section class="experimental-section" style="display:none;">
-          <details class="sidebar-accordion experimental-accordion" open>
-            <summary class="section-label accordion-summary">🧪 Experimental</summary>
-            <div class="accordion-panel more-options-card">
-              <details class="feature-accordion" open>
-                <summary>🤖 AI Shiur</summary>
-                <p class="helper-text">Generate a lesson draft and insert it directly into your document.</p>
-                <div class="experimental-inline-form">
-                  <label class="compact-section-label" for="ai-inline-topic">🔍 Topic or reference</label>
-                  <input id="ai-inline-topic" type="text" class="experimental-inline-input" placeholder="Berakhot 2a, teshuvah, gratitude…" autocomplete="off">
-                  <label class="compact-section-label" for="ai-inline-audience">Audience</label>
-                  <select id="ai-inline-audience" class="translation-version-select">
-                    <option value="Adult learners">Adult learners</option>
-                    <option value="High school students">High school students</option>
-                    <option value="Middle school students">Middle school students</option>
-                    <option value="Intro / beginners">Intro / beginners</option>
-                    <option value="Educators">Educators</option>
-                  </select>
-                  <label class="compact-section-label" for="ai-inline-style">Style</label>
-                  <select id="ai-inline-style" class="translation-version-select">
-                    <option value="Interactive shiur">Interactive shiur</option>
-                    <option value="Source-sheet chavruta">Source-sheet chavruta</option>
-                    <option value="Text-study seminar">Text-study seminar</option>
-                    <option value="Accessible intro session">Accessible intro session</option>
-                    <option value="Drash">Drash</option>
-                  </select>
-                </div>
-                <div class="footer-button-row">
-                  <button type="button" id="ai-inline-generate" class="footer-action-button">📦 Generate &amp; Insert</button>
-                </div>
-                <p class="helper-text experimental-inline-status" id="ai-inline-status" hidden></p>
-                <div class="footer-button-row experimental-advanced-link">
-                  <button type="button" class="link-button open-ai-lesson-tool">Advanced options…</button>
-                </div>
-              </details>
-              <details class="feature-accordion">
-                <summary>🎲 Surprise Me</summary>
-                <p class="helper-text">Insert random matching sources. Leave blank for a random Hebrew seed word.</p>
-                <div class="experimental-inline-form">
-                  <label class="compact-section-label" for="sm-inline-term">🔍 Search term</label>
-                  <input id="sm-inline-term" type="text" class="experimental-inline-input" placeholder="Optional — blank for random" autocomplete="off">
-                  <label class="compact-section-label" for="sm-inline-count">How many sources</label>
-                  <input id="sm-inline-count" type="number" class="experimental-inline-number" min="1" max="10" value="5">
-                </div>
-                <div class="footer-button-row">
-                  <button type="button" id="sm-inline-launch" class="footer-action-button">📦 Insert</button>
-                </div>
-                <p class="helper-text experimental-inline-status" id="sm-inline-status" hidden></p>
-                <div class="footer-button-row experimental-advanced-link">
-                  <button type="button" class="link-button open-surprise-tool">Advanced options…</button>
-                </div>
-              </details>
-            </div>
-          </details>
+          <div class="more-options-card experimental-features-card">
+            <details class="feature-accordion" open>
+              <summary>🤖 AI Shiur</summary>
+              <p class="helper-text">Generate a lesson draft and insert it directly into your document.</p>
+              <div class="experimental-inline-form">
+                <label class="compact-section-label" for="ai-inline-topic">🔍 Topic or reference</label>
+                <input id="ai-inline-topic" type="text" class="experimental-inline-input" placeholder="Berakhot 2a, teshuvah, gratitude…" autocomplete="off">
+                <label class="compact-section-label" for="ai-inline-audience">Audience</label>
+                <select id="ai-inline-audience" class="translation-version-select">
+                  <option value="Adult learners">Adult learners</option>
+                  <option value="High school students">High school students</option>
+                  <option value="Middle school students">Middle school students</option>
+                  <option value="Intro / beginners">Intro / beginners</option>
+                  <option value="Educators">Educators</option>
+                </select>
+                <label class="compact-section-label" for="ai-inline-style">Style</label>
+                <select id="ai-inline-style" class="translation-version-select">
+                  <option value="Interactive shiur">Interactive shiur</option>
+                  <option value="Source-sheet chavruta">Source-sheet chavruta</option>
+                  <option value="Text-study seminar">Text-study seminar</option>
+                  <option value="Accessible intro session">Accessible intro session</option>
+                  <option value="Drash">Drash</option>
+                </select>
+              </div>
+              <div class="experimental-action-row">
+                <button type="button" id="ai-inline-generate" class="experimental-action-button">📦 Generate &amp; Insert</button>
+              </div>
+              <p class="helper-text experimental-inline-status" id="ai-inline-status" hidden></p>
+            </details>
+            <details class="feature-accordion">
+              <summary>🎲 Surprise Me</summary>
+              <p class="helper-text">Insert random matching sources. Leave blank for a random Hebrew seed word.</p>
+              <div class="experimental-inline-form">
+                <label class="compact-section-label" for="sm-inline-term">🔍 Search term</label>
+                <input id="sm-inline-term" type="text" class="experimental-inline-input" placeholder="Optional — blank for random" autocomplete="off">
+                <label class="compact-section-label" for="sm-inline-count">How many sources</label>
+                <input id="sm-inline-count" type="number" class="experimental-inline-number" min="1" max="10" value="5">
+              </div>
+              <div class="experimental-action-row">
+                <button type="button" id="sm-inline-launch" class="experimental-action-button">📦 Insert</button>
+              </div>
+              <p class="helper-text experimental-inline-status" id="sm-inline-status" hidden></p>
+            </details>
+          </div>
         </section>
 
 
@@ -341,16 +332,11 @@
         <button type="button" class="footer-tool-button open-preferences-tool" title="Preferences" aria-label="Preferences"><span class="footer-icon footer-gear-icon">⚙︎</span></button>
         
       </section>
-      <div class="footer-button-row experimental-quick-actions" style="display:none;">
-        <button type="button" class="footer-action-button open-ai-lesson-tool">🤖 AI Shiur</button>
-        <button type="button" class="footer-action-button open-surprise-tool">🎲 Surprise Me</button>
-        <button type="button" class="footer-tool-button open-preferences-tool" title="Preferences" aria-label="Preferences"><span class="footer-icon footer-gear-icon">⚙︎</span></button>
-        <button type="button" class="footer-tool-button" id="open-session-library-experimental" title="Session Library" aria-label="Session Library"><span class="footer-icon" aria-hidden="true">📜</span></button>
-      </div>
       <div class="sidebar-footer-tools footer-actions-panel" id="footer-actions-panel" style="display:none;" aria-label="Actions panel">
         <button type="button" class="footer-tool-button open-divine-names-tool" title="Transform Divine Names" aria-label="Transform Divine Names"><span class="tool-icon-stack"><span class="samekh-sized">ה</span><span class="tool-arrow">→</span><span class="samekh-sized">ש</span></span></button>
         <button type="button" class="footer-tool-button open-linker-tool" title="Link Texts with Sefaria" aria-label="Link Texts with Sefaria"><span class="tool-icon-stack"><span class="link-emoji">🔗</span><span class="tool-arrow">→</span><span class="sefaria-badge samekh" aria-hidden="true">ס</span></span></button>
         <button type="button" class="footer-tool-button open-ai-lesson-tool" title="AI Shiur" aria-label="AI Shiur"><span class="footer-icon">🧠</span></button>
+        <button type="button" class="footer-tool-button open-surprise-tool" title="Surprise Me" aria-label="Surprise Me" style="display:none;"><span class="footer-icon">🎲</span></button>
       </div>
       <div class="footer footer-inline">
         <a target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244">Help</a>

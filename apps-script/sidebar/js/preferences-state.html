@@ -126,16 +126,16 @@ function mergePreferenceDefaults(preferences) {
   if (preferences.include_translation_source_info == "true") {
     $('.include-translation-source-info').prop('checked', true);
   }
-  $('.wants-vowels').prop('checked', preferences.nekudot !== "false");
-  $('.wants-cantillation').prop('checked', preferences.teamim !== "false");
+  $('.wants-vowels').prop('checked', String(preferences.nekudot) !== "false");
+  $('.wants-cantillation').prop('checked', String(preferences.teamim) !== "false");
   $('.include-transliteration').prop('checked', String(preferences.include_transliteration_default) === "true");
-  $('.insert-sefaria-link').prop('checked', preferences.insert_sefaria_link_default !== "false");
-  $('.wants-pesukim').prop('checked', preferences.show_line_markers_default !== "false");
+  $('.insert-sefaria-link').prop('checked', String(preferences.insert_sefaria_link_default) !== "false");
+  $('.wants-pesukim').prop('checked', String(preferences.show_line_markers_default) !== "false");
   $('.output-mode-selection').val(preferences.output_mode_default || 'both');
   $('.bilingual-layout-selection').val(preferences.bilingual_layout_default || 'he-right');
   $('.translation-only-filter').prop('checked', preferences.last_translation_only_filter === "true");
   $('.search-sort-select').val(preferences.last_search_sort_mode || 'relevance');
-  $('.wants-relevance').prop('checked', preferences.last_search_relevance_sort !== "false");
+  $('.wants-relevance').prop('checked', String(preferences.last_search_relevance_sort) !== "false");
 
   preferredTranslationLanguage = String(preferences.preferred_translation_language || 'en').toLowerCase();
   var savedTranslationLanguages = parseStoredArrayPreference(preferences.last_translation_languages, ['en']);
