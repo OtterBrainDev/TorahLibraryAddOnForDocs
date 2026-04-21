@@ -22,8 +22,8 @@ function decodeHTMLEntities(text) {
     .replace(/&mdash;/g, '—')
     .replace(/&ldquo;/g, '"')
     .replace(/&rdquo;/g, '"')
-    .replace(/&lsquo;/g, ''')
-    .replace(/&rsquo;/g, ''')
+    .replace(/&lsquo;/g, '\'')
+    .replace(/&rsquo;/g, '\'')
     .replace(/&#(\d+);/g, function(match, dec) {
       return String.fromCharCode(parseInt(dec, 10));
     })
