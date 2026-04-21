@@ -160,6 +160,12 @@ function updateModeDependentSections() {
   // Show Lexicon insert-mode selector only when a lexicon entry has been selected.
   $('.lexicon-insert-options').toggle(hasSelectedLexiconResult);
   renderSessionLibrary();
+
+  // Render lexicon enhancement sections when in lexicon mode
+  if (appMode === 'lexicon') {
+    if (typeof renderLexiconHistory   === 'function') renderLexiconHistory();
+    if (typeof renderLexiconBookmarks === 'function') renderLexiconBookmarks();
+  }
 }
 
 

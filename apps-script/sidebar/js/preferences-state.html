@@ -156,9 +156,12 @@ function mergePreferenceDefaults(preferences) {
     $(this).toggleClass('is-active', active).attr('aria-checked', active ? 'true' : 'false');
   });
 
-  // Apply Lexicon workflow default
+  // Apply Lexicon workflow default — sync to radio chip group
   var lexiconInsertMode = preferences.lexicon_insert_mode_default || 'entry';
-  $('#lexicon-insert-mode').val(lexiconInsertMode);
+  $('.lexicon-format-btn').each(function () {
+    var active = $(this).data('value') === lexiconInsertMode;
+    $(this).toggleClass('is-active', active).attr('aria-checked', active ? 'true' : 'false');
+  });
 
   preferredTranslationLanguage = String(preferences.preferred_translation_language || 'en').toLowerCase();
   var savedTranslationLanguages = parseStoredArrayPreference(preferences.last_translation_languages, ['en']);

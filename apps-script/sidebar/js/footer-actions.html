@@ -22,8 +22,13 @@ $('#insert-source').click(function () {
   if (appMode === 'lexicon') {
     if (!selectedLexiconItem || !selectedLexiconItem.headWord) return;
 
-    var lexiconInsertMode = $('#lexicon-insert-mode').val() || 'entry';
+    // Read from the new radio chip group (falls back to 'entry')
+    var lexiconInsertMode = (typeof getLexiconFormat === 'function')
+      ? getLexiconFormat()
+      : ($('.lexicon-format-btn[aria-checked="true"]').data('value') || 'entry');
+
     var lexiconPayload = Object.assign({}, selectedLexiconItem, { insertMode: lexiconInsertMode });
+    var $btn = $('#insert-source');
 
     $('.hide').add($('.warning')).fadeIn('1000');
     google.script.run
@@ -35,6 +40,12 @@ $('#insert-source').click(function () {
           selectedLexiconItem.headWord || selectedLexiconItem.label,
           'Dictionary'
         ));
+        // Brief success feedback on the button
+        var originalLabel = $btn.text();
+        $btn.text('Inserted ✓').addClass('lexicon-insert-success');
+        setTimeout(function () {
+          $btn.text(originalLabel).removeClass('lexicon-insert-success');
+        }, 1800);
       })
       .withFailureHandler(function (error) {
         $('.hide').add($('.warning')).fadeOut('1000');

@@ -10,6 +10,7 @@
     <?!= include('css/components/results'); ?>
     <?!= include('css/components/display-layout'); ?>
     <?!= include('css/components/versions-preview'); ?>
+    <?!= include('css/components/lexicon'); ?>
     <?!= include('css/utilities'); ?>
     <?!= include('shared/composition-card/css'); ?>
     <script>
@@ -27,7 +28,7 @@
         <section class="mode-switch-section" aria-label="Search mode selector">
           <button type="button" class="mode-switch-button" data-sidebar-mode="texts">Texts</button>
           <button type="button" class="mode-switch-button" data-sidebar-mode="voices">Voices</button>
-          <button type="button" class="mode-switch-button" data-sidebar-mode="lexicon">Lexicon</button>
+          <button type="button" class="mode-switch-button" data-sidebar-mode="lexicon" id="tab-lexicon-btn">Lexicon<span class="lexicon-tab-badge" id="lexicon-tab-badge" hidden aria-hidden="true"></span></button>
           <button type="button" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental" style="display:none;" title="Experimental Features" aria-label="Experimental Features">🧪</button>
         </section>
         <section class="reference-row unified-search-row">
@@ -39,8 +40,16 @@
         <section class="mode-context-note voices-only" style="display:none;">
           <div class="helper-text">Searching source sheets via Sefaria’s sheet index.</div>
         </section>
+        <!-- SR live region for lexicon status announcements -->
+        <div class="lexicon-sr-live" id="lexicon-sr-live" aria-live="polite" aria-atomic="true"></div>
+
         <section class="mode-context-note lexicon-only" style="display:none;">
-          <div class="helper-text">Search dictionaries and lexicons for a Hebrew or Aramaic word.</div>
+          <div class="helper-text" id="lexicon-helper-text">Search dictionaries and lexicons for a Hebrew or Aramaic word.</div>
+        </section>
+
+        <!-- Lexicon search history chips (Enhancement 1) -->
+        <section class="lexicon-history-section lexicon-only" style="display:none;" aria-label="Recent searches" id="lexicon-history-section">
+          <div class="lexicon-history" id="lexicon-history-chips" role="group" aria-label="Recent searches"></div>
         </section>
 
         <section class="results-panel" style="display:none;">
@@ -176,17 +185,23 @@
 
         <!-- Lexicon insert options: appears when a lexicon entry is selected. -->
         <section class="lexicon-insert-options" style="display:none;" aria-label="Lexicon insert options">
-          <details class="sidebar-accordion lexicon-insert-accordion" open>
-            <summary class="section-label accordion-summary">Insert Options</summary>
-            <div class="accordion-panel lexicon-insert-panel">
-              <label class="compact-section-label" for="lexicon-insert-mode">What to insert</label>
-              <select id="lexicon-insert-mode" class="translation-version-select lexicon-insert-mode-select" aria-label="Insert mode for lexicon entry">
-                <option value="entry" selected>Full entry (headword, notes &amp; definition)</option>
-                <option value="headword">Headword &amp; source only</option>
-                <option value="definition">Definition only</option>
-              </select>
-            </div>
-          </details>
+          <p class="lexicon-section-label" id="lexicon-format-label">What to insert</p>
+          <div class="insert-mode-selector lexicon-format-row" role="radiogroup" aria-labelledby="lexicon-format-label" id="lexicon-format-group">
+            <button type="button" class="insert-mode-btn lexicon-format-btn is-active" data-value="entry" role="radio" aria-checked="true">Full entry</button>
+            <button type="button" class="insert-mode-btn lexicon-format-btn" data-value="headword" role="radio" aria-checked="false">Headword &amp; source</button>
+            <button type="button" class="insert-mode-btn lexicon-format-btn" data-value="definition" role="radio" aria-checked="false">Definition only</button>
+          </div>
+          <!-- No-preview caveat shown when selected entry has no definition text -->
+          <p class="lexicon-no-preview-note" id="lexicon-no-preview-note" style="display:none;">Preview unavailable for this entry — definition text could not be loaded.</p>
+        </section>
+
+        <!-- Lexicon bookmarks (Enhancement 4) — shown when there are saved entries -->
+        <section class="lexicon-bookmarks-section lexicon-only" style="display:none;" aria-label="Bookmarked entries" id="lexicon-bookmarks-section">
+          <div class="lexicon-bookmarks-header" id="lexicon-bookmarks-header" role="button" tabindex="0" aria-expanded="true" aria-controls="lexicon-bookmarks-list">
+            <span class="lexicon-bookmarks-title">⭐ Starred entries</span>
+            <button type="button" class="lexicon-bookmarks-toggle" id="lexicon-bookmarks-toggle" aria-label="Toggle bookmarks">▾</button>
+          </div>
+          <ul class="lexicon-bookmarks-list" id="lexicon-bookmarks-list" aria-label="Starred entries"></ul>
         </section>
 
         <section class="display-layout-shell display-section layout-section text-mode-only" style="display:none;">

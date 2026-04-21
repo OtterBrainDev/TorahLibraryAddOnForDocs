@@ -149,6 +149,128 @@ function toggleCorpusVisibility(corpusKey) {
   reprocessAndRenderResults();
 }
 
+/* ── Lexicon-specific result row rendering ────────────────────────────────── */
+
+var LEXICON_SOURCE_LABELS = {
+  'jastrow': 'Jastrow',
+  'jastrow dictionary': 'Jastrow',
+  'bdb': 'BDB',
+  'brown-driver-briggs': 'BDB',
+  'brown driver briggs': 'BDB',
+  'halot': 'HALOT',
+  'hebrew and aramaic lexicon': 'HALOT',
+  'the hebrew and aramaic lexicon of the old testament': 'HALOT',
+  'gesenius': 'Gesenius',
+  'klein': 'Klein',
+  'klein dictionary': 'Klein',
+  'lsj': 'LSJ',
+  'strong': "Strong's",
+  "strong's": "Strong's",
+  "strong's concordance": "Strong's",
+  'ben-yehuda': 'Ben-Yehuda',
+  'ben yehuda': 'Ben-Yehuda',
+  'even-shoshan': 'Even-Shoshan',
+  'even shoshan': 'Even-Shoshan',
+  'maagarim': 'Maagarim',
+  'maagarim dictionary': 'Maagarim',
+  'aramaic lexicon and concordance': 'Kosovsky',
+  'kosovsky': 'Kosovsky'
+};
+
+function getLexiconSourceShortLabel(rawName) {
+  if (!rawName) return 'Lexicon';
+  var key = String(rawName).toLowerCase().trim();
+  if (LEXICON_SOURCE_LABELS[key]) return LEXICON_SOURCE_LABELS[key];
+  // Partial match — check if any known key is a substring of rawName
+  for (var k in LEXICON_SOURCE_LABELS) {
+    if (LEXICON_SOURCE_LABELS.hasOwnProperty(k) && key.indexOf(k) >= 0) {
+      return LEXICON_SOURCE_LABELS[k];
+    }
+  }
+  // Fallback: return as-is, but strip "Dictionary" suffix for brevity
+  return rawName.replace(/\s+dictionary$/i, '').replace(/\s+lexicon$/i, '').trim() || rawName;
+}
+
+function getLexiconGlossSnippet(item) {
+  var raw = (item.snippet || '').trim();
+  if (!raw) return null;
+  // Take first ~10 words
+  var words = raw.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+  var snippet = words.slice(0, 10).join(' ');
+  if (words.length > 10) snippet += '…';
+  return snippet;
+}
+
+function buildLexiconChips(item) {
+  var chips = '';
+  // Language
+  var langs = Array.isArray(item.availableLangs) ? item.availableLangs : [];
+  var langLabel = '';
+  if (langs.indexOf('arc') >= 0 || (item.morphology && /aramaic/i.test(item.morphology))) {
+    langLabel = 'Aramaic';
+  } else if (langs.indexOf('he') >= 0 || langs.indexOf('hb') >= 0) {
+    langLabel = 'Hebrew';
+  }
+  if (langLabel) chips += "<span class='lexicon-chip'>" + escapeHTML(langLabel) + "</span>";
+  // Morphology / entry type — show first token if short
+  if (item.morphology) {
+    var morph = String(item.morphology).trim();
+    var morphShort = morph.split(/[,;(]/)[0].trim();
+    if (morphShort && morphShort.length <= 24) {
+      chips += "<span class='lexicon-chip'>" + escapeHTML(morphShort) + "</span>";
+    }
+  }
+  return chips;
+}
+
+function isLexiconBookmarked(ref) {
+  try {
+    var saved = JSON.parse(localStorage.getItem('lexicon_bookmarks') || '[]');
+    return saved.some(function (b) { return b.ref === ref; });
+  } catch (e) { return false; }
+}
+
+function renderLexiconResultItem(item, selectedClass) {
+  var headWord   = escapeHTML(item.headWord || item.label || '');
+  var source     = escapeHTML(getLexiconSourceShortLabel(item.lexiconName));
+  var gloss      = getLexiconGlossSnippet(item);
+  var chips      = buildLexiconChips(item);
+  var bookmarked = isLexiconBookmarked(item.ref);
+  var bookmarkClass = bookmarked ? ' is-bookmarked' : '';
+  var bookmarkTitle = bookmarked ? 'Remove star' : 'Star this entry';
+  var bookmarkIcon  = bookmarked ? '⭐' : '☆';
+
+  var glossHtml;
+  if (gloss) {
+    glossHtml = "<div class='lexicon-row-gloss'>" + escapeHTML(gloss) + "</div>";
+  } else {
+    glossHtml = "<div class='lexicon-row-gloss lexicon-row-gloss--unavailable'>Definition preview unavailable</div>";
+  }
+
+  var chipsHtml = chips ? "<div class='lexicon-row-chips'>" + chips + "</div>" : '';
+
+  return "<li class='result-item result-row " + selectedClass + "'" +
+    " data-key='" + escapeHTML(item.key) + "'" +
+    " data-ref='" + escapeHTML(item.ref) + "'" +
+    " role='option'" +
+    " tabindex='-1'" +
+    " aria-selected='" + (selectedClass === 'selected' ? 'true' : 'false') + "'>" +
+    "<div class='lexicon-row-header'>" +
+      "<span class='lexicon-row-headword' lang='he' dir='rtl'>" + headWord + "</span>" +
+      "<span class='lexicon-row-source'>" + source + "</span>" +
+      "<button type='button' class='lexicon-row-bookmark-btn" + bookmarkClass + "'" +
+        " data-ref='" + escapeHTML(item.ref) + "'" +
+        " data-headword='" + headWord + "'" +
+        " data-source='" + source + "'" +
+        " aria-label='" + bookmarkTitle + "'" +
+        " title='" + bookmarkTitle + "'>" + bookmarkIcon + "</button>" +
+    "</div>" +
+    glossHtml +
+    chipsHtml +
+    "</li>";
+}
+
 function renderResultGroup(selector, items, groupName) {
   var $list = $(selector);
   $list.empty();
@@ -156,6 +278,35 @@ function renderResultGroup(selector, items, groupName) {
     if (selector === '.search-results') return;
     if (selector === '.library-results' && appMode !== 'texts') return;
     $list.append("<li class='result-subtitle'>No " + groupName.toLowerCase() + ".</li>");
+    return;
+  }
+
+  // Lexicon mode: use enriched row layout with dedup grouping
+  if (appMode === 'lexicon') {
+    var groups = groupLexiconItems(items);
+    groups.forEach(function (group) {
+      var primary = group.primary;
+      var dupes   = group.duplicates;
+      var selectedClass = primary.key === selectedResultKey ? 'selected' : '';
+
+      if (dupes.length > 0) {
+        var dupCount = dupes.length;
+        var dupGroupHtml = "<li class='lexicon-dup-group' role='presentation'>" +
+          "<div class='lexicon-dup-header'>Multiple entries for this headword &mdash; " +
+          "<button type='button' class='lexicon-dup-expand-btn' data-group-key='" + escapeHTML(primary.key) + "'" +
+            " aria-expanded='false'>(+" + dupCount + " more)</button></div>" +
+          renderLexiconResultItem(primary, selectedClass) +
+          "<ul class='lexicon-dup-secondary-items' id='dup-secondary-" + escapeHTML(primary.key) + "' style='display:none;'>";
+        dupes.forEach(function (dupe) {
+          var dupeSelectedClass = dupe.key === selectedResultKey ? 'selected' : '';
+          dupGroupHtml += renderLexiconResultItem(dupe, dupeSelectedClass);
+        });
+        dupGroupHtml += "</ul></li>";
+        $list.append(dupGroupHtml);
+      } else {
+        $list.append(renderLexiconResultItem(primary, selectedClass));
+      }
+    });
     return;
   }
 
@@ -172,9 +323,32 @@ function renderResultGroup(selector, items, groupName) {
     var metaLine = "<div class='result-meta'><span>" + escapeHTML(cluster) + "</span><span> • </span><span>" + escapeHTML(describeResultLanguages(item)) + "</span></div>";
     var subtitle = item.subtitle ? "<div class='result-subtitle'>" + escapeHTML(item.subtitle) + "</div>" : '';
     var snippet = item.snippet ? "<div class='result-snippet'>" + item.snippet + "</div>" : subtitle;
-    var titleText = (appMode === 'voices' || appMode === 'lexicon') ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
-    $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(titleText) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(titleText) + "</div></div>" + metaLine + snippet + "</li>");
+    var titleText = (appMode === 'voices') ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
+    $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(item.label || item.ref) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(item.label || item.ref) + "</div></div>" + metaLine + snippet + "</li>");
   });
+}
+
+/* Group lexicon items: true duplicates (same headWord + source + first 60 chars of snippet)
+   are collapsed; distinct senses/sources stay separate. */
+function groupLexiconItems(items) {
+  var groups   = [];
+  var keyIndex = {};
+
+  items.forEach(function (item) {
+    var hw  = String(item.headWord || item.label || '').trim();
+    var src = getLexiconSourceShortLabel(item.lexiconName);
+    var snip = String(item.snippet || '').trim().slice(0, 60);
+    var groupKey = hw + '||' + src + '||' + snip;
+
+    if (keyIndex.hasOwnProperty(groupKey)) {
+      groups[keyIndex[groupKey]].duplicates.push(item);
+    } else {
+      keyIndex[groupKey] = groups.length;
+      groups.push({ primary: item, duplicates: [] });
+    }
+  });
+
+  return groups;
 }
 
 function positionRestoreCorpusMenu() {

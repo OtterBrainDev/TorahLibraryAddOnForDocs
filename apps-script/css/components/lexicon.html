@@ -1,0 +1,615 @@
+<style>
+/*
+ * components/lexicon.css — Redesigned Lexicon sidebar styles
+ *
+ * Covers: tab badge, search history, result rows, duplicate groups,
+ * insert format chips, preview card, bookmarks, show-more, fallback states.
+ */
+
+/* =============================================================
+   TAB BADGE
+   ============================================================= */
+
+.mode-switch-button[data-sidebar-mode="lexicon"] {
+  position: relative;
+}
+
+.lexicon-tab-badge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  background: var(--sefaria-blue);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 15px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* =============================================================
+   SR-ONLY LIVE REGION
+   ============================================================= */
+
+.lexicon-sr-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* =============================================================
+   SEARCH HISTORY CHIPS
+   ============================================================= */
+
+.lexicon-history-section {
+  margin: -4px 0 6px;
+}
+
+.lexicon-history {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.lexicon-history-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: var(--lighter-grey);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.lexicon-history-chip:hover,
+.lexicon-history-chip:focus {
+  background: var(--selected-soft);
+  border-color: var(--sefaria-blue);
+  color: var(--sefaria-blue);
+  outline: none;
+}
+
+.lexicon-history-chip-text {
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+  direction: rtl;
+}
+
+.lexicon-history-clear {
+  background: none;
+  border: none;
+  font-size: 10px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  margin-left: 2px;
+  line-height: 1.4;
+}
+
+.lexicon-history-clear:hover {
+  color: var(--text);
+}
+
+/* =============================================================
+   RESULT COUNT STATUS LINE
+   ============================================================= */
+
+.lexicon-result-count {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+  padding: 0 2px;
+}
+
+/* =============================================================
+   LEXICON RESULT ROWS — override generic result-item in lexicon mode
+   ============================================================= */
+
+.mode-lexicon .search-results .result-item.result-row,
+.mode-lexicon .library-results .result-item.result-row {
+  padding: 7px 10px;
+  border: 1px solid #e8e6e0;
+  border-left: 3px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #fff;
+  transition: background 0.1s, border-color 0.1s;
+  margin-bottom: 0;
+}
+
+.mode-lexicon .result-item.result-row:hover {
+  background: var(--lighter-grey);
+  border-color: #ccc;
+  border-left-color: transparent;
+}
+
+.mode-lexicon .result-item.result-row.selected {
+  background: var(--selected-soft);
+  border-color: var(--sefaria-blue);
+  border-left-color: var(--sefaria-blue);
+  border-left-width: 3px;
+}
+
+.mode-lexicon .result-item.result-row:focus-visible {
+  outline: 2px solid var(--sefaria-blue);
+  outline-offset: 1px;
+}
+
+/* Suppress the generic result-row-main, result-meta, result-snippet
+   in lexicon mode — we render our own layout inside the li */
+.mode-lexicon .result-item .result-row-main,
+.mode-lexicon .result-item .result-meta,
+.mode-lexicon .result-item .result-snippet,
+.mode-lexicon .result-item .result-subtitle,
+.mode-lexicon .result-item .result-pin-button {
+  display: none;
+}
+
+/* ---- Lexicon row anatomy ---- */
+
+.lexicon-row-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 2px;
+  min-width: 0;
+}
+
+.lexicon-row-headword {
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  direction: rtl;
+  color: var(--text);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.result-item.selected .lexicon-row-headword {
+  color: var(--sefaria-blue);
+}
+
+.lexicon-row-source {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lexicon-row-gloss {
+  font-size: 12px;
+  color: #3c3c3c;
+  direction: ltr;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.4;
+}
+
+.lexicon-row-gloss--unavailable {
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Chips: language, morphology, sense */
+.lexicon-row-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.lexicon-chip {
+  display: inline-block;
+  padding: 1px 5px;
+  background: #f0eeea;
+  border-radius: 3px;
+  font-size: 10px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* ---- Duplicate group ---- */
+
+.lexicon-dup-group {
+  margin-bottom: 4px;
+}
+
+.lexicon-dup-header {
+  font-size: 10px;
+  font-style: italic;
+  color: var(--muted);
+  padding: 2px 3px 3px;
+}
+
+.lexicon-dup-expand-btn {
+  background: none;
+  border: none;
+  font-size: 10px;
+  color: var(--sefaria-blue);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  margin-left: 4px;
+}
+
+.lexicon-dup-expand-btn:hover {
+  opacity: 0.75;
+}
+
+.lexicon-dup-secondary-items .result-item.result-row {
+  opacity: 0.8;
+}
+
+/* ---- Bookmark star on result row ---- */
+
+.lexicon-row-bookmark-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+  opacity: 0.4;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: opacity 0.1s;
+  color: var(--muted);
+}
+
+.lexicon-row-bookmark-btn:hover,
+.lexicon-row-bookmark-btn.is-bookmarked {
+  opacity: 1;
+  color: #c8a000;
+}
+
+/* =============================================================
+   SECTION LABELS (inline, compact)
+   ============================================================= */
+
+.lexicon-section-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin: 10px 0 5px;
+  padding: 0;
+}
+
+/* =============================================================
+   LEXICON INSERT OPTIONS — flat, no accordion chrome
+   ============================================================= */
+
+/* Suppress the accordion decoration entirely in lexicon insert options */
+.lexicon-insert-options {
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* =============================================================
+   LEXICON FORMAT CHIPS — radio group replacing the select
+   ============================================================= */
+
+.lexicon-format-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* Override insert-mode-btn to be more compact for 3 items */
+.lexicon-format-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 11px;
+  padding: 3px 6px;
+  height: auto;
+  min-height: 26px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+/* =============================================================
+   PREVIEW SECTION — lexicon mode: strip generic accordion chrome
+   ============================================================= */
+
+.mode-lexicon .preview-section {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.mode-lexicon .preview-accordion > summary.accordion-summary {
+  display: none;
+}
+
+.mode-lexicon .preview-panel {
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+/* The suggestions container in lexicon mode */
+.mode-lexicon .suggestions {
+  text-align: left;
+}
+
+/* =============================================================
+   LEXICON PREVIEW CARD
+   ============================================================= */
+
+.lexicon-preview-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.lexicon-preview-header {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.lexicon-preview-headword {
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sefaria-blue);
+  direction: rtl;
+  flex-shrink: 0;
+}
+
+.lexicon-preview-sep {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.lexicon-preview-source-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.lexicon-preview-morphology {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.lexicon-preview-body {
+  direction: ltr;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.lexicon-preview-unavailable {
+  font-style: italic;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.lexicon-preview-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 7px;
+  gap: 8px;
+}
+
+.lexicon-preview-show-more-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--sefaria-blue);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.lexicon-preview-show-more-btn:hover {
+  opacity: 0.75;
+}
+
+.lexicon-preview-copy-btn {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 2px;
+  white-space: nowrap;
+  transition: color 0.1s;
+}
+
+.lexicon-preview-copy-btn:hover {
+  color: var(--sefaria-blue);
+}
+
+.lexicon-preview-copy-btn.copy-success {
+  color: #1e7e34;
+}
+
+/* =============================================================
+   FALLBACK / EMPTY / ERROR STATES
+   ============================================================= */
+
+.lexicon-empty-state,
+.lexicon-error-state {
+  padding: 10px 8px;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.lexicon-error-state {
+  color: #c0392b;
+}
+
+.lexicon-error-retry {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--sefaria-blue);
+  cursor: pointer;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* =============================================================
+   BOOKMARKS SECTION
+   ============================================================= */
+
+.lexicon-bookmarks-section {
+  margin-top: 10px;
+}
+
+.lexicon-bookmarks-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 4px 2px;
+  user-select: none;
+}
+
+.lexicon-bookmarks-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.lexicon-bookmarks-toggle {
+  font-size: 10px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.lexicon-bookmarks-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lexicon-bookmark-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.lexicon-bookmark-row:hover {
+  background: var(--lighter-grey);
+}
+
+.lexicon-bookmark-headword {
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+  font-size: 13px;
+  direction: rtl;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--text);
+}
+
+.lexicon-bookmark-source {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.lexicon-bookmark-remove {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.5;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: opacity 0.1s, color 0.1s;
+}
+
+.lexicon-bookmark-remove:hover {
+  opacity: 1;
+  color: #c0392b;
+}
+
+.lexicon-bookmarks-empty {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 3px 4px;
+}
+
+/* =============================================================
+   INSERT BUTTON — lexicon success feedback
+   ============================================================= */
+
+#insert-source.lexicon-insert-success {
+  background: #1e7e34 !important;
+  border-color: #1e7e34 !important;
+}
+
+/* No-preview caveat line under insert button */
+.lexicon-no-preview-note {
+  font-size: 10px;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  margin: 2px 0 0;
+}
+</style>

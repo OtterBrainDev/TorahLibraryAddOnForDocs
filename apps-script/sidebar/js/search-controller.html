@@ -406,6 +406,422 @@ $(document).on('click', '.voices-translit-btn', function () {
 
 // ─── Lexicon ─────────────────────────────────────────────────────────────────
 
+/* ── Search history (Enhancement 1) ───────────────────────────────────────── */
+
+var LEXICON_HISTORY_KEY = 'lexicon_search_history';
+var LEXICON_HISTORY_MAX = 5;
+
+function getLexiconHistory() {
+  try { return JSON.parse(localStorage.getItem(LEXICON_HISTORY_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+
+function saveLexiconHistory(query) {
+  if (!query) return;
+  try {
+    var list = getLexiconHistory().filter(function (q) { return q !== query; });
+    list.unshift(query);
+    localStorage.setItem(LEXICON_HISTORY_KEY, JSON.stringify(list.slice(0, LEXICON_HISTORY_MAX)));
+  } catch (e) {}
+  renderLexiconHistory();
+}
+
+function clearLexiconHistory() {
+  try { localStorage.removeItem(LEXICON_HISTORY_KEY); } catch (e) {}
+  renderLexiconHistory();
+}
+
+function renderLexiconHistory() {
+  var $container = $('#lexicon-history-section');
+  var $chips     = $('#lexicon-history-chips');
+  if (!$container.length || !$chips.length) return;
+
+  var history = getLexiconHistory();
+  if (!history.length || appMode !== 'lexicon') {
+    $container.hide();
+    return;
+  }
+
+  var html = '';
+  history.forEach(function (q) {
+    html += "<button type='button' class='lexicon-history-chip' data-query='" + escapeHTML(q) + "' aria-label='Search again: " + escapeHTML(q) + "'>" +
+      "<span class='lexicon-history-chip-text'>" + escapeHTML(q) + "</span>" +
+      "</button>";
+  });
+  html += "<button type='button' class='lexicon-history-clear' aria-label='Clear search history'>Clear</button>";
+  $chips.html(html);
+  $container.show();
+}
+
+$(document).on('click', '.lexicon-history-chip', function () {
+  var query = $(this).data('query');
+  if (!query) return;
+  $('.input').val(query);
+  runLexiconQuery();
+});
+
+$(document).on('click', '.lexicon-history-clear', function () {
+  clearLexiconHistory();
+});
+
+/* ── Bookmarks (Enhancement 4) ─────────────────────────────────────────────── */
+
+var LEXICON_BOOKMARKS_KEY = 'lexicon_bookmarks';
+
+function getLexiconBookmarks() {
+  try { return JSON.parse(localStorage.getItem(LEXICON_BOOKMARKS_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+
+function saveLexiconBookmark(item) {
+  if (!item || !item.ref) return;
+  var bookmarks = getLexiconBookmarks().filter(function (b) { return b.ref !== item.ref; });
+  bookmarks.unshift({
+    ref:        item.ref,
+    key:        item.key,
+    headWord:   item.headWord || item.label || '',
+    lexiconName: item.lexiconName || '',
+    sourceLabel: getLexiconSourceShortLabel(item.lexiconName)
+  });
+  try { localStorage.setItem(LEXICON_BOOKMARKS_KEY, JSON.stringify(bookmarks.slice(0, 20))); }
+  catch (e) {}
+  renderLexiconBookmarks();
+}
+
+function removeLexiconBookmark(ref) {
+  var bookmarks = getLexiconBookmarks().filter(function (b) { return b.ref !== ref; });
+  try { localStorage.setItem(LEXICON_BOOKMARKS_KEY, JSON.stringify(bookmarks)); }
+  catch (e) {}
+  renderLexiconBookmarks();
+}
+
+function toggleLexiconBookmark(item) {
+  if (!item || !item.ref) return;
+  var existing = getLexiconBookmarks().some(function (b) { return b.ref === item.ref; });
+  if (existing) {
+    removeLexiconBookmark(item.ref);
+  } else {
+    saveLexiconBookmark(item);
+  }
+  // Refresh row bookmark buttons
+  var bookmarked = getLexiconBookmarks().some(function (b) { return b.ref === item.ref; });
+  $('[data-ref="' + item.ref.replace(/"/g, '\\"') + '"].lexicon-row-bookmark-btn')
+    .toggleClass('is-bookmarked', bookmarked)
+    .attr('aria-label', bookmarked ? 'Remove star' : 'Star this entry')
+    .attr('title', bookmarked ? 'Remove star' : 'Star this entry')
+    .text(bookmarked ? '⭐' : '☆');
+}
+
+function renderLexiconBookmarks() {
+  var $section = $('#lexicon-bookmarks-section');
+  var $list    = $('#lexicon-bookmarks-list');
+  if (!$section.length || !$list.length) return;
+
+  var bookmarks = getLexiconBookmarks();
+  if (!bookmarks.length || appMode !== 'lexicon') {
+    $section.hide();
+    return;
+  }
+
+  var html = '';
+  bookmarks.forEach(function (b) {
+    html += "<li class='lexicon-bookmark-row' data-ref='" + escapeHTML(b.ref) + "' data-key='" + escapeHTML(b.key || '') + "' role='option' tabindex='0'>" +
+      "<span class='lexicon-bookmark-headword' lang='he' dir='rtl'>" + escapeHTML(b.headWord) + "</span>" +
+      "<span class='lexicon-bookmark-source'>" + escapeHTML(b.sourceLabel || b.lexiconName || '') + "</span>" +
+      "<button type='button' class='lexicon-bookmark-remove' data-ref='" + escapeHTML(b.ref) + "' aria-label='Remove " + escapeHTML(b.headWord) + " from starred entries' title='Remove star'>✕</button>" +
+      "</li>";
+  });
+  $list.html(html);
+  $section.show();
+}
+
+$(document).on('click', '.lexicon-bookmark-row', function (e) {
+  if ($(e.target).hasClass('lexicon-bookmark-remove')) return;
+  var ref = $(this).data('ref');
+  if (!ref) return;
+  // Find the item in current results and select it, or run a new search
+  var allResults = queryState.searchResults.concat(queryState.libraryMatches);
+  var match = allResults.filter(function (item) { return item && item.ref === ref; })[0];
+  if (match) {
+    selectedResultKey = match.key;
+    selectedResultSummary = { label: match.headWord || match.label || ref, subtitle: match.lexiconName || '' };
+    renderResults();
+    resolveSelectedResult(ref, match.label || ref);
+  }
+});
+
+$(document).on('click', '.lexicon-bookmark-remove', function (e) {
+  e.stopPropagation();
+  var ref = $(this).data('ref');
+  if (ref) removeLexiconBookmark(ref);
+});
+
+$(document).on('click keydown', '#lexicon-bookmarks-header', function (e) {
+  if (e.type === 'keydown' && e.which !== 13 && e.which !== 32) return;
+  var $list     = $('#lexicon-bookmarks-list');
+  var $btn      = $('#lexicon-bookmarks-toggle');
+  var expanded  = $(this).attr('aria-expanded') === 'true';
+  $(this).attr('aria-expanded', !expanded ? 'true' : 'false');
+  $btn.text(expanded ? '▸' : '▾');
+  $list.toggle(!expanded);
+});
+
+// Bookmark star on result rows
+$(document).on('click', '.lexicon-row-bookmark-btn', function (e) {
+  e.stopPropagation();
+  var $btn = $(this);
+  var ref  = $btn.data('ref');
+  var item = (queryState.searchResults.concat(queryState.libraryMatches))
+    .filter(function (it) { return it && it.ref === ref; })[0];
+  if (!item) {
+    // Reconstruct minimal item from data attributes
+    item = { ref: ref, headWord: $btn.data('headword'), lexiconName: $btn.data('source'), key: ref };
+  }
+  toggleLexiconBookmark(item);
+});
+
+// Expand/collapse duplicate groups
+$(document).on('click', '.lexicon-dup-expand-btn', function (e) {
+  e.stopPropagation();
+  var $btn      = $(this);
+  var groupKey  = $btn.data('group-key');
+  var $secondary = $('#dup-secondary-' + groupKey);
+  var expanded  = $btn.attr('aria-expanded') === 'true';
+  $btn.attr('aria-expanded', !expanded ? 'true' : 'false');
+  if (expanded) {
+    $secondary.hide();
+    var count = $secondary.find('.result-item').length;
+    $btn.text('(+' + count + ' more)');
+  } else {
+    $secondary.show();
+    $btn.text('(show less)');
+  }
+});
+
+/* ── Tab badge (Enhancement 5) ─────────────────────────────────────────────── */
+
+function updateLexiconTabBadge(count) {
+  var $badge = $('#lexicon-tab-badge');
+  if (!$badge.length) return;
+  if (count > 0) {
+    $badge.text(count).removeAttr('hidden');
+  } else {
+    $badge.attr('hidden', true).text('');
+  }
+}
+
+/* ── Announcement helper ────────────────────────────────────────────────────── */
+
+function announceLexiconStatus(msg) {
+  var $live = $('#lexicon-sr-live');
+  if ($live.length) $live.text(msg);
+}
+
+/* ── Build insertion string ─────────────────────────────────────────────────── */
+
+function buildLexiconInsertionString(item, mode) {
+  if (!item) return '';
+  var hw         = (item.headWord || item.label || '').trim();
+  var src        = getLexiconSourceShortLabel(item.lexiconName);
+  var morphology = (item.morphology || '').trim();
+  var definition = (item.snippet || '').trim();
+
+  switch (mode) {
+    case 'headword':
+      return hw + (src ? ' — ' + src : '');
+
+    case 'definition':
+      return definition;
+
+    case 'entry':
+    default:
+      var parts = [hw + (src ? ' — ' + src : '')];
+      if (morphology) parts.push(morphology);
+      if (definition) parts.push(definition);
+      return parts.join('\n');
+  }
+}
+
+/* ── Word truncation ────────────────────────────────────────────────────────── */
+
+function truncateLexiconToWords(text, maxWords) {
+  if (!text) return { text: '', truncated: false };
+  var words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return { text: text.trim(), truncated: false };
+  return { text: words.slice(0, maxWords).join(' ') + '…', truncated: true };
+}
+
+/* ── Get current lexicon format ─────────────────────────────────────────────── */
+
+function getLexiconFormat() {
+  return $('.lexicon-format-btn[aria-checked="true"]').data('value') || 'entry';
+}
+
+/* ── Build and render the live preview ─────────────────────────────────────── */
+
+var lexiconPreviewExpanded = false;
+
+function buildLexiconPreviewHtml(item, insertMode) {
+  if (!item) return '';
+  var mode = insertMode || getLexiconFormat();
+  lexiconPreviewExpanded = false;
+
+  var hw         = escapeHTML(item.headWord || item.label || '');
+  var src        = escapeHTML(getLexiconSourceShortLabel(item.lexiconName));
+  var morphology = (item.morphology || '').trim();
+  var insertionStr = buildLexiconInsertionString(item, mode);
+
+  // Detect missing definition for non-headword modes
+  var hasDef = !!(item.snippet || '').trim();
+  var showNoPreviewNote = !hasDef && mode !== 'headword';
+  $('#lexicon-no-preview-note').toggle(showNoPreviewNote);
+
+  if (!insertionStr) {
+    return "<div class='lexicon-preview-card'>" +
+      "<p class='lexicon-preview-unavailable'>Preview unavailable — definition text could not be loaded for this entry.</p>" +
+      "</div>";
+  }
+
+  var truncated   = truncateLexiconToWords(insertionStr, 50);
+  var previewText = truncated.text;
+  var isTruncated = truncated.truncated;
+
+  // Build header line
+  var headerHtml = "<div class='lexicon-preview-header'>" +
+    "<span class='lexicon-preview-headword' lang='he' dir='rtl'>" + hw + "</span>";
+  if (src) {
+    headerHtml += "<span class='lexicon-preview-sep'>—</span>" +
+      "<span class='lexicon-preview-source-label'>" + src + "</span>";
+  }
+  headerHtml += "</div>";
+
+  // Morphology sub-line for full entry
+  var morphHtml = '';
+  if (morphology && mode === 'entry') {
+    morphHtml = "<div class='lexicon-preview-morphology'>" + escapeHTML(morphology) + "</div>";
+  }
+
+  // For headword-only mode, body is just the formatted headword+source line
+  var bodyContent;
+  if (mode === 'headword') {
+    // insertionStr is already just the short line; no truncation needed
+    bodyContent = escapeHTML(insertionStr);
+  } else {
+    // Show definition/full body, skipping the header line we already rendered
+    var bodyText = mode === 'entry'
+      ? (item.snippet || '').trim()
+      : insertionStr;
+    var bodyTruncated = truncateLexiconToWords(bodyText, 50);
+    bodyContent = escapeHTML(bodyTruncated.text);
+    isTruncated = bodyTruncated.truncated;
+  }
+
+  var bodyHtml = mode !== 'headword'
+    ? "<div class='lexicon-preview-body' dir='ltr' id='lexicon-preview-body'>" + bodyContent + "</div>"
+    : '';
+
+  // Footer with show-more and copy button
+  var footerHtml = "<div class='lexicon-preview-footer'>";
+  if (isTruncated) {
+    footerHtml += "<button type='button' class='lexicon-preview-show-more-btn' id='lexicon-show-more-btn'>Show more</button>";
+  } else {
+    footerHtml += "<span></span>";
+  }
+  footerHtml += "<button type='button' class='lexicon-preview-copy-btn' id='lexicon-copy-btn' title='Copy to clipboard'>Copy</button>";
+  footerHtml += "</div>";
+
+  return "<div class='lexicon-preview-card'>" +
+    headerHtml + morphHtml + bodyHtml + footerHtml +
+    "</div>";
+}
+
+/* ── Show more / less toggle ────────────────────────────────────────────────── */
+
+$(document).on('click', '#lexicon-show-more-btn', function () {
+  if (!selectedLexiconItem) return;
+  var mode = getLexiconFormat();
+  lexiconPreviewExpanded = !lexiconPreviewExpanded;
+
+  var bodyText = mode === 'entry'
+    ? (selectedLexiconItem.snippet || '').trim()
+    : buildLexiconInsertionString(selectedLexiconItem, mode);
+
+  var limit    = lexiconPreviewExpanded ? 300 : 50;
+  var result   = truncateLexiconToWords(bodyText, limit);
+  var $body    = $('#lexicon-preview-body');
+  var $btn     = $('#lexicon-show-more-btn');
+
+  if ($body.length) $body.text(result.text);
+
+  if (lexiconPreviewExpanded) {
+    $btn.text('Show less');
+  } else {
+    $btn.text('Show more');
+  }
+  // Hide button when fully expanded and no truncation remains
+  if (!result.truncated && lexiconPreviewExpanded) $btn.hide();
+});
+
+/* ── Copy to clipboard (Enhancement 2) ─────────────────────────────────────── */
+
+$(document).on('click', '#lexicon-copy-btn', function () {
+  if (!selectedLexiconItem) return;
+  var mode        = getLexiconFormat();
+  var fullString  = buildLexiconInsertionString(selectedLexiconItem, mode);
+  var $btn        = $(this);
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(fullString).then(function () {
+        $btn.text('Copied!').addClass('copy-success');
+        setTimeout(function () { $btn.text('Copy').removeClass('copy-success'); }, 2000);
+      });
+    } else {
+      // Fallback for older environments
+      var ta = document.createElement('textarea');
+      ta.value = fullString;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      $btn.text('Copied!').addClass('copy-success');
+      setTimeout(function () { $btn.text('Copy').removeClass('copy-success'); }, 2000);
+    }
+  } catch (err) {
+    $btn.text('Copy failed');
+    setTimeout(function () { $btn.text('Copy'); }, 2000);
+  }
+});
+
+/* ── Format chip click handler ──────────────────────────────────────────────── */
+
+$(document).on('click', '.lexicon-format-btn', function () {
+  if (appMode !== 'lexicon') return;
+  var $group = $(this).closest('[role="radiogroup"]');
+  $group.find('.lexicon-format-btn').removeClass('is-active').attr('aria-checked', 'false');
+  $(this).addClass('is-active').attr('aria-checked', 'true');
+
+  // Save preference
+  var newMode = $(this).data('value') || 'entry';
+  saveAccountPreference({ lexicon_insert_mode_default: newMode });
+
+  if (!selectedLexiconItem) return;
+  $('.suggestions').html(buildLexiconPreviewHtml(selectedLexiconItem, newMode));
+});
+
+/* ── RTL input detection for lexicon search ─────────────────────────────────── */
+
+var HEBREW_RANGE_RE = /[֐-׿יִ-ﭏ]/;
+
+$(document).on('input', '.input', function () {
+  if (appMode !== 'lexicon') return;
+  var val = $(this).val() || '';
+  $(this).attr('dir', HEBREW_RANGE_RE.test(val) ? 'rtl' : 'ltr');
+});
+
+/* ── Main lexicon query ─────────────────────────────────────────────────────── */
+
 function runLexiconQuery() {
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
   $('.input').val(input);
@@ -413,21 +829,48 @@ function runLexiconQuery() {
   selectedLexiconItem = null;
   setResultsHint('');
   updateModeDependentSections();
+
   if (!input) {
     queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
     reprocessAndRenderResults();
     setInsertButtonState(false);
     $('#open-on-sefaria').prop('disabled', true);
+    updateLexiconTabBadge(0);
+    renderLexiconHistory();
+    renderLexiconBookmarks();
     return;
   }
+
+  announceLexiconStatus('Searching…');
   setResultsLoading(true);
+  renderLexiconHistory();
+  renderLexiconBookmarks();
+
   google.script.run
     .withSuccessHandler(function (response) {
       var items = Array.isArray(response) ? response : [];
       queryState.rawLibraryMatches = [];
       queryState.rawSearchResults = items;
       reprocessAndRenderResults();
-      if (!items.length) setResultsHint('No lexicon entries found for this word.');
+
+      var count = items.length;
+      updateLexiconTabBadge(count);
+
+      if (!count) {
+        setResultsHint('No lexicon entries found for “' + input + '”. Try a different spelling or root form.');
+        announceLexiconStatus('No entries found for ' + input);
+      } else {
+        var countLabel = count === 1 ? '1 entry found' : count + ' entries found';
+        announceLexiconStatus(countLabel);
+        // Show count line inside results panel
+        if (!$('.lexicon-result-count').length) {
+          $('.results-header').after("<p class='lexicon-result-count'></p>");
+        }
+        $('.lexicon-result-count').text(countLabel);
+        // Save to history on successful search
+        saveLexiconHistory(input);
+      }
+
       updateModeDependentSections();
       setResultsLoading(false);
     })
@@ -435,56 +878,15 @@ function runLexiconQuery() {
       queryState.rawLibraryMatches = [];
       queryState.rawSearchResults = [];
       reprocessAndRenderResults();
-      setResultsHint((error && error.message) || 'Lexicon search is temporarily unavailable.');
+      updateLexiconTabBadge(0);
+      setResultsHint((error && error.message) || 'Lexicon search is temporarily unavailable. Check your connection and try again.');
+      announceLexiconStatus('Search failed.');
       setResultsLoading(false);
     })
     .searchLexicon(input);
 }
 
-function buildLexiconPreviewHtml(item, insertMode) {
-  if (!item) return '';
-
-  var mode = insertMode || $('#lexicon-insert-mode').val() || 'entry';
-  var modeLabels = {
-    entry:    'Full entry (headword, notes & definition)',
-    headword: 'Headword & source only',
-    definition: 'Definition only'
-  };
-  var modeLabel = modeLabels[mode] || modeLabels['entry'];
-
-  var headWord   = escapeHTML(item.headWord || item.label || '');
-  var morphology = item.morphology ? escapeHTML(item.morphology) : '';
-  var lexiconName = item.lexiconName ? escapeHTML(item.lexiconName) : '';
-  var alternates = Array.isArray(item.alternateHeadWords) && item.alternateHeadWords.length
-    ? escapeHTML(item.alternateHeadWords.slice(0, 4).join(', '))
-    : '';
-  var snippet = escapeHTML(normalizeOptionText(item.snippet || ''));
-
-  var html = "<div class='voice-preview lexicon-preview'>";
-  html += "<div class='voice-preview-title' dir='rtl'>" + headWord + "</div>";
-  if (alternates) {
-    html += "<div class='voice-preview-owner preview-meta'>" + alternates + "</div>";
-  }
-  if (morphology) {
-    html += "<div class='voice-preview-topics preview-meta'>" + morphology + "</div>";
-  }
-  if (lexiconName) {
-    html += "<div class='voice-preview-mode preview-meta'>Source: <strong>" + lexiconName + "</strong></div>";
-  }
-  if (snippet && mode !== 'headword') {
-    html += "<div class='voice-preview-snippet'>" + snippet + "</div>";
-  }
-  html += "<div class='voice-preview-mode preview-meta'>Will insert: <strong>" + escapeHTML(modeLabel) + "</strong></div>";
-  html += "</div>";
-  return html;
-}
-
-// When the user changes the lexicon insert mode, refresh the preview.
-$(document).on('change', '#lexicon-insert-mode', function () {
-  if (appMode !== 'lexicon' || !selectedLexiconItem) return;
-  var insertMode = $(this).val() || 'entry';
-  $('.suggestions').html(buildLexiconPreviewHtml(selectedLexiconItem, insertMode));
-});
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
 </script>
