@@ -139,6 +139,24 @@
   </div>
 </section>
 
+        <!-- Voices insert options: appears when a source sheet result is selected.
+             Insert mode (reference / contents / both) is the only control exposed here.
+             Advanced options (showMediaLabel, preserveSheetSpacing, etc.) are kept
+             as hidden defaults and sent by the footer-actions insert handler. -->
+        <section class="voices-insert-options" style="display:none;" aria-label="Voices insert options">
+          <details class="sidebar-accordion voices-insert-accordion" open>
+            <summary class="section-label accordion-summary">Insert Options</summary>
+            <div class="accordion-panel voices-insert-panel">
+              <label class="compact-section-label" for="voices-insert-mode">What to insert</label>
+              <select id="voices-insert-mode" class="translation-version-select voices-insert-mode-select" aria-label="Insert mode for source sheet">
+                <option value="reference" selected>Reference (title, link &amp; summary)</option>
+                <option value="contents">Full sheet contents</option>
+                <option value="both">Reference + contents</option>
+              </select>
+            </div>
+          </details>
+        </section>
+
         <section class="display-layout-shell display-section layout-section text-mode-only" style="display:none;">
           <details class="sidebar-accordion display-layout-accordion" open>
             <summary class="section-label accordion-summary">Display &amp; Layout</summary>

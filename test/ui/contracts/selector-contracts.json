@@ -1,6 +1,6 @@
 {
   "sidebar": {
-    "template": "sidebar.html",
+    "template": "apps-script/sidebar.html",
     "requiredSelectors": [
       "#run-sefaria",
       ".mode-switch-button",
@@ -12,21 +12,21 @@
       "#ai-inline-generate",
       "#ai-inline-topic",
       "#sm-inline-launch",
-      "#sm-inline-term"
+      "#sm-inline-term",
+      "#voices-insert-mode",
+      ".voices-insert-options"
     ]
   },
   "preferences": {
-    "template": "preferences.html",
+    "template": "apps-script/preferences.html",
     "requiredSelectors": [
-      "#expand_all_sections",
-      "#collapse_all_sections",
       "#source_title_font",
       "#hebrew_font",
       "#transliteration_scheme"
     ]
   },
   "ai_lesson": {
-    "template": "ai_lesson.html",
+    "template": "apps-script/ai_lesson.html",
     "requiredSelectors": [
       "#basicTabBtn",
       "#advancedTabBtn",
@@ -36,7 +36,7 @@
     ]
   },
   "surprise_me": {
-    "template": "surprise-me.html",
+    "template": "apps-script/surprise-me.html",
     "requiredSelectors": [
       "#surprise-term",
       "#surprise-count",

@@ -1,43 +1,37 @@
 {
-  "sidebar_preferences_state.html": [
+  "apps-script/sidebar/js/preferences-state.html": [
     "function applyEffectivePreferencesToUI",
     "function saveSidebarPreference",
     "function saveAccountPreference",
     "function mergePreferenceDefaults"
   ],
-  "sidebar_mode_controller.html": [
+  "apps-script/sidebar/js/mode-controller.html": [
     "function setSidebarMode",
     "function normalizeSidebarMode",
     "function syncExperimentalAvailability",
-    "function updateModeDependentSections"
+    "function updateModeDependentSections",
+    ".voices-insert-options"
   ],
-  "sidebar_search_controller.html": [
+  "apps-script/sidebar/js/search-controller.html": [
     "function runUnifiedQuery",
     "function resolveSelectedResult",
-    "google.script.run"
+    "function buildVoicesPreviewHtml",
+    "function runVoicesQuery",
+    "google.script.run",
+    "insertMode",
+    "#voices-insert-mode"
   ],
-  "sidebar_bootstrap.html": [
+  "apps-script/sidebar/js/footer-actions.html": [
+    "google.script.run",
+    "insertSheet",
+    "insertReference",
+    "sheetPayload",
+    "insertMode"
+  ],
+  "apps-script/sidebar/js/bootstrap.html": [
     "function initializeSidebar",
     "google.script.run",
-    "setSidebarMode(appMode",
-    "setFooterButtonStates()"
-  ],
-  "preferences_js.html": [
-    "document.addEventListener('DOMContentLoaded'",
-    "function byId",
-    "function bindStyleControl",
-    "google.script.run"
-  ],
-  "ai_lesson_js.html": [
-    "function initialize",
-    "function collectPayload",
-    "function runRequest",
-    "google.script.run.withSuccessHandler(initialize)"
-  ],
-  "surprise-me_js.html": [
-    "function getPayload",
-    "function setBusy",
-    "insertSurpriseMe(payload)",
-    "google.script.host.close()"
+    "setSidebarMode",
+    "setFooterButtonStates"
   ]
 }

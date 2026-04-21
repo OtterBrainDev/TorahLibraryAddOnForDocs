@@ -229,12 +229,8 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     setInsertButtonState(!!item);
     $('#open-on-sefaria').prop('disabled', !(item && item.url));
     if (item) {
-      var snippet = normalizeOptionText(item.snippet || item.summary || '');
-      var previewHtml = "<div class='voice-preview'><div class='voice-preview-title'>" + escapeHTML(item.label || item.ref || 'Source sheet') + "</div>";
-      if (snippet) previewHtml += "<div class='voice-preview-snippet'>" + escapeHTML(snippet) + "</div>";
-      if (item.url) previewHtml += "<div class='voice-preview-link'>Open on Sefaria with the button below.</div>";
-      previewHtml += "</div>";
-      $('.suggestions').html(previewHtml);
+      var currentInsertMode = $('#voices-insert-mode').val() || 'reference';
+      $('.suggestions').html(buildVoicesPreviewHtml(item, currentInsertMode));
     }
     updateModeDependentSections();
     return;
@@ -299,6 +295,46 @@ function refreshSelectedResult() {
   resolveSelectedResult(selectedRefValue, fallbackLabel);
 }
 
+/**
+ * Build the preview HTML for a selected Voices / source sheet result.
+ * insertMode is one of 'reference' | 'contents' | 'both'.
+ */
+function buildVoicesPreviewHtml(item, insertMode) {
+  if (!item) return '';
+
+  var modeLabels = {
+    reference: 'Reference (title, link &amp; summary)',
+    contents:  'Full sheet contents',
+    both:      'Reference + contents'
+  };
+  var modeLabel = modeLabels[insertMode] || modeLabels['reference'];
+
+  var title = escapeHTML(item.label || item.ref || 'Source sheet');
+  var owner = item.owner ? escapeHTML('By ' + item.owner) : '';
+  var snippet = escapeHTML(normalizeOptionText(item.snippet || item.summary || ''));
+  var topics = Array.isArray(item.topics) && item.topics.length
+    ? escapeHTML(item.topics.slice(0, 5).join(', '))
+    : '';
+
+  var html = "<div class='voice-preview'>";
+  html += "<div class='voice-preview-title'>" + title + "</div>";
+  if (owner) {
+    html += "<div class='voice-preview-owner preview-meta'>" + owner + "</div>";
+  }
+  if (snippet) {
+    html += "<div class='voice-preview-snippet'>" + snippet + "</div>";
+  }
+  if (topics) {
+    html += "<div class='voice-preview-topics preview-meta'>Topics: " + topics + "</div>";
+  }
+  html += "<div class='voice-preview-mode preview-meta'>Will insert: <strong>" + modeLabel + "</strong></div>";
+  if (item.url) {
+    html += "<div class='voice-preview-link preview-meta'>Use the Open button below to view on Sefaria.</div>";
+  }
+  html += "</div>";
+  return html;
+}
+
 function runVoicesQuery() {
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
   $('.input').val(input);
@@ -330,5 +366,13 @@ function runVoicesQuery() {
     setResultsLoading(false);
   }).searchVoices(input, {});
 }
+
+// When the user changes the insert mode selector, refresh the preview summary
+// so the "Will insert:" line reflects their choice before they click Add.
+$(document).on('change', '#voices-insert-mode', function () {
+  if (appMode !== 'voices' || !selectedVoiceItem) return;
+  var insertMode = $(this).val() || 'reference';
+  $('.suggestions').html(buildVoicesPreviewHtml(selectedVoiceItem, insertMode));
+});
 
 </script>

@@ -148,6 +148,8 @@ function updateModeDependentSections() {
   $('.versions-section').toggle(hasSelectedTextResult && !hideTranslations);
   $('.preview-section').toggle(hasSelectedTextResult || hasSelectedVoiceResult);
   $('.inline-session-settings').toggle(hasSelectedTextResult);
+  // Show Voices insert-mode selector only when a source sheet has been selected.
+  $('.voices-insert-options').toggle(hasSelectedVoiceResult);
   renderSessionLibrary();
 }
 

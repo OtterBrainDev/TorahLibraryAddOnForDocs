@@ -15,6 +15,50 @@ function setFooterButtonStates() {
 }
 
 $('#insert-source').click(function () {
+  // --- Voices mode: call the unified insertSheet backend ---
+  if (appMode === 'voices') {
+    if (!selectedVoiceItem || !selectedVoiceItem.ref) return;
+
+    var insertMode = $('#voices-insert-mode').val() || 'reference';
+
+    // Build a payload from the selected sheet item, forwarding all hook fields.
+    // Hidden defaults (showMediaLabel, preserveSheetSpacing, debugUnknownNodes)
+    // are carried from the result object returned by searchVoices.
+    var sheetPayload = {
+      label:               selectedVoiceItem.label  || '',
+      summary:             selectedVoiceItem.summary || '',
+      owner:               selectedVoiceItem.owner   || '',
+      url:                 selectedVoiceItem.url      || '',
+      sheetId:             selectedVoiceItem.sheetId  || null,
+      topics:              selectedVoiceItem.topics   || [],
+      insertMode:          insertMode,
+      includeReference:    insertMode === 'reference' || insertMode === 'both',
+      includeContents:     insertMode === 'contents'  || insertMode === 'both',
+      showMediaLabel:      selectedVoiceItem.showMediaLabel      !== false,
+      preserveSheetSpacing:selectedVoiceItem.preserveSheetSpacing !== false,
+      debugUnknownNodes:   !!selectedVoiceItem.debugUnknownNodes
+    };
+
+    $('.hide').add($('.warning')).fadeIn('1000');
+    google.script.run
+      .withSuccessHandler(function () {
+        $('.hide').add($('.warning')).fadeOut('1000');
+        $('.insert-warning').remove();
+        upsertSessionEntry('inserted', buildSessionEntry(
+          selectedVoiceItem.ref,
+          selectedVoiceItem.label || selectedVoiceItem.ref,
+          'voices'
+        ));
+      })
+      .withFailureHandler(function (error) {
+        $('.hide').add($('.warning')).fadeOut('1000');
+        showInsertWarning(error && error.message);
+      })
+      .insertSheet(sheetPayload, { insertMode: insertMode });
+    return;
+  }
+
+  // --- Texts mode: existing insertion path ---
   if (!hasResolvedReference || !data || !data.ref) return;
 
   var outputMode = $('.output-mode-selection').val();
