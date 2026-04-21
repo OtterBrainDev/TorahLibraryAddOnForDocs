@@ -4,64 +4,92 @@
     <base target="_top">
     <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
     <style>
-      body { padding: 12px 16px; line-height: 1.45; }
-      h2, h3 { margin-top: 18px; }
-      ul { margin-top: 6px; }
+      body {
+        padding: 12px 16px;
+        line-height: 1.5;
+        color: #222222;
+      }
+      h2, h3 {
+        margin-top: 18px;
+        line-height: 1.25;
+      }
+      p {
+        margin: 0 0 10px;
+      }
+      ul {
+        margin-top: 6px;
+      }
+      li + li {
+        margin-top: 6px;
+      }
+      .muted {
+        color: #666666;
+      }
     </style>
   </head>
   <body>
-    <h2>Torah Library Add-on (Fork) — Release Notes</h2>
-    <p>This fork has moved from incremental patches to a more unified UX and safer insertion pipeline while preserving the original add-on goals.</p>
+    <h2>Torah Library Add-on for Docs — Release Notes</h2>
+    <p>This release continues the 2.0 fork stream with a stronger focus on coherent front-end behavior, clearer working-state controls, and more understandable internal help. The goal is not just to add features, but to make the add-on behave more consistently while people are actually using it inside Google Docs.</p>
 
-    <h3>Major updates in this fork</h3>
+    <h3>What changed in this phase</h3>
     <ul>
-      <li><b>Unified sidebar workflow:</b> a single “Find &amp; Insert Source” flow for reference lookup, title lookup, and content search results.</li>
+      <li><b>Internal documentation refresh:</b> Support, User Guide, and Release Notes content were updated to reflect the intended modern workflow more clearly.</li>
+      <li><b>Clearer workspace framing:</b> documentation now distinguishes more explicitly between Texts, Voices, Preferences, and session-level overrides.</li>
+      <li><b>Better explanation of live state:</b> the docs now explain the difference between saved defaults, current sidebar state, and Preview.</li>
+      <li><b>Stronger support guidance:</b> bug-report instructions now ask for the workspace, current settings, expected behavior, actual behavior, and whether refresh or reopen changed the result.</li>
+      <li><b>More explicit expectation-setting:</b> the docs now acknowledge stale sidebar state, session-specific overrides, and workflow-context differences instead of treating them as user error.</li>
+    </ul>
+
+    <h3>Major updates already present in the fork</h3>
+    <ul>
+      <li><b>Unified sidebar workflow:</b> a more coherent Find, Preview, and Insert flow for reference lookup, title lookup, and content search results.</li>
       <li><b>Translation selector overhaul:</b> normalized and grouped translation entries, improved filtering, and cleaner option labeling.</li>
-      <li><b>Layout/display controls:</b> stronger output mode + bilingual layout controls (Hebrew right/left/top) with actionability gating.</li>
-      <li><b>Structural-node handling:</b> non-insertable structural nodes are detected and clearly messaged in preview before insertion.</li>
-      <li><b>Hebrew toggles and orthography:</b> nikkud/ta’amim controls remain available and consistently applied.</li>
-      <li><b>Linking features:</b> document linking now uses Sefaria’s find-refs API pipeline (with async polling) instead of local regex-only matching.</li>
-      <li><b>Preferences + typography additions:</b> persistent Hebrew/translation font and size settings with improved save ergonomics.</li>
-      <li><b>Divine-name workflow updates:</b> preference-driven Hebrew and English divine-name replacement and doc-level transforms.</li>
+      <li><b>Layout and display controls:</b> stronger output mode and bilingual layout controls with clearer actionability.</li>
+      <li><b>Structural-node handling:</b> non-insertable structural nodes are detected and messaged clearly before insertion.</li>
+      <li><b>Hebrew orthography controls:</b> niqqud and ta'amim controls remain available and are more consistently explained.</li>
+      <li><b>Linking improvements:</b> document linking uses Sefaria's find-refs pipeline with async polling instead of relying only on local regex matching.</li>
+      <li><b>Preferences and typography additions:</b> persistent Hebrew and translation font and size settings with improved save ergonomics.</li>
+      <li><b>Divine-name workflow updates:</b> preference-driven Hebrew and English divine-name replacement and document-level transforms.</li>
     </ul>
 
-    <h3>Focused refinements in this release</h3>
+    <h3>Focused refinements</h3>
     <ul>
-      <li>Improved Hebrew-script reference normalization in unified lookup (quotes/geresh/gershayim, colon/dash variants, spacing cleanup).</li>
-      <li>Translation option alignment cleanup (leading prefix/whitespace artifacts stripped for consistent rendering).</li>
-      <li>Popcorn remains disabled by default and only appears as a legacy feature when enabled in Preferences.</li>
+      <li>Improved Hebrew-script reference normalization in unified lookup, including quotes, geresh or gershayim variants, colon or dash variants, and spacing cleanup.</li>
+      <li>Translation option cleanup to remove rendering artifacts such as stray prefixes or leading whitespace.</li>
       <li>Preferences layout simplified to a single-scroll form with a persistent bottom save action bar.</li>
+      <li>Legacy or experimental features are framed more clearly so they do not compete with the primary workflow unless enabled.</li>
     </ul>
 
+    <h3>Version 2.0 context</h3>
+    <p>Version 2.0 marked the largest overhaul to the codebase in many years. It moved the project away from accumulated patchwork toward a more maintainable interface and insertion pipeline. That shift also means some behaviors are now stricter, more explicit, and easier to reason about than in earlier versions.</p>
+    <ul>
+      <li>Inserted content no longer carries the old visible HTML-tag artifacts that users reported in earlier generations of the add-on.</li>
+      <li>Formatting is preserved more faithfully during insertion, improving the display of bold and italic-rich sources.</li>
+      <li>Reference numbering is based on API response data rather than fragile input assumptions, avoiding older edge cases such as missing or invalid numbering.</li>
+      <li>Preferences were overhauled to support stronger divine-name and orthography defaults.</li>
+      <li>Translation selection became available at preview time when multiple versions exist.</li>
+      <li>Search behavior improved with stronger ranking and matching options.</li>
+      <li>Inserted titles can preserve user-entered form instead of always forcing normalized labels.</li>
+    </ul>
+
+    <h3>What users should know</h3>
+    <ul>
+      <li><b>Preferences</b> define how the add-on starts for you.</li>
+      <li><b>The sidebar</b> reflects your current working state in this session.</li>
+      <li><b>Preview</b> should show what will be inserted right now.</li>
+      <li>If behavior seems wrong immediately after an update, refresh the document and reopen the add-on before assuming a setting itself is broken.</li>
+    </ul>
 
     <h3>Deferred backlog</h3>
     <ul>
-      <li>TODO: add misspelling-tolerant Hebrew reference matching (deferred until after current linker stability work).</li>
+      <li>Misspelling-tolerant Hebrew reference matching remains deferred until after current linker stability work.</li>
     </ul>
 
-    <h3>Context and thanks</h3>
-    <p>Huge thanks to the broader Sefaria ecosystem and community contributors for reference-linking ideas and APIs that make this add-on possible.</p>
-	<p>For questions and updates please file an issue at: or email me at austin@the-merkaz.org</p>
-	
-<h2>Introducing version 2.0</h2>
-<p>A general word (and caution): this is the most significant update I have made to the codebase since 2014. I hope that the new and improved add-on will be far more useful than its predecessor, and I am sure that in the first few months, things will break - bear with me as we make this add-on work well together!</p>
-<p>1. Probably the most important change - the HTML tags which were interpolated into the text, noted by many many people are gone.</p> 
-<p>2. Not only are the tags gone, but the styling has been applied to the insertions. This means that bold and italic-heavy texts, e.g. the Bavli in English translation, now display beautifully in the documents. (If there is enough interest in some of the incredibly useful footnotes, e.g. the Tanach JPS ones, I can try and see if it would be possible to add footnotes to the sources in Google Docs and insert the Sefaria-provided footnotes.)</p>
-<p>3. Numbering used to be based on input rather than the response provided from the Sefaria API, for some inexplicable reason decided at the outset of the development of version 1.0. (probably convenience.) In older versions, searching “Daniel 1-2” would result in pesukim marked “NaN” (“not a number”) or simply blank pesukim. In the current version this is fixed.</p>
-<p>4. The preferences have been completely overhauled, in accordance with many many many requests. There is now global Sheimot/Sheimos/holy name replacement as well as an Orthography section, under which global preferences for nikkud and ta’amei ha’miqra can be set. [Again, if there is enough interest, these can be made into local settings as opposed to global ones.] </p>
-<p>5. The desired translation/version (when multiple exist; e.g. for now Tanach, Gemara, maybe one day the Sefer haEshkol) can be selected from a drop-down menu when previewing the source. As of yet, an economical way to do this in the search module has not been found, but מהיות טוב אל תקרא רע and this update is long overdue in any event.</p>
-<p>6. The search module has been updated to have an option to use Sefaria's implementation of PageRank (another easy but far-reaching change overlooked by moi for many years), and now works far better, as well as allows for exact searches.</p>
-<p>7. The title which appears in suggestions and is inserted is the one which user inputs, not the normalized version from Sefaria. E.g., typing in Bereishit 12:15 yields Bereishit 12:15 and not Genesis 12:15, as in the older version.</p>
-<p>8. For the code aesthetes - while the codebase isn't perfect, and I'm no expert in ES6,, it smells far better. I've refactored the core functionality, which I haven't made substantial changes to in a decade, and brought it to be far closer to being in line both with modern (if not edge-of-your-seat current) ES6 as well as accepted style dictates. It ain't Typescript, but it's far better than what it was before.</p>
-<p>9. I did add a tab to both send feature requests / well-wishes / a buy-me-a-coffee button. Dealing with the programming but also the ecosystem (as many wonderful folks pointed out, the app was blocked for a couple of months, and this was part of the impetus to simply start from scratch) takes a lot of time and energy, and getting support - in words and perhaps even in the monies needed to maintain, update, and upgrade this project - is a huge incentive to keep the add-on in ship-shape and to ensure that the over 100,000 uses this add-on clocks (on a good week) run smoothly.</p>
-<h2>Next steps</h2>
-	This section is intentionally kept high-level. Specific feature requests and roadmap discussions are tracked via support email/GitHub issues rather than embedded as inline release-note commitments. A still-relevant technical item from this release cycle is improving translation cleanup options (for example, optional removal of explanatory additions where available).
-<h2>Credits</h2>
-Many thanks to I.S., R’ Z.B., N.O., and Mrs. S.S. for their helpful comments. A huge thank you to the Sefaria development team (especially Russell Neiss and Noah Santacruz) for their support. It is truly a pleasure to develop with an API whose lead team members are so responsive to any query.
-<h2>Sign off</h2>
-Please feel free to reach out with any questions, bug reports, and/or suggestions either by <a href="mailto:shlomi.helfgot@yale.edu" target="_blank"> email or on <a href="https://github.com/shelfgot/SefariaAddOnForDocs">Github</a>! Can't wait to connect.
-- b'virkat ha'torah (with torah blessings) Shlomi Helfgot
-<img height="50px" width="50px" src="">
+    <h3>Credits and thanks</h3>
+    <p>Many thanks to the broader Sefaria ecosystem and community contributors for the APIs, linking ideas, and developer support that make this add-on possible.</p>
 
+    <h3>Questions, bug reports, and suggestions</h3>
+    <p>For support, feature requests, or reproducible bug reports, email <a href="mailto:help@the-merkaz.org">help@the-merkaz.org</a> or open an issue on <a href="https://github.com/shelfgot/SefariaAddOnForDocs" target="_blank">GitHub</a>.</p>
+    <p class="muted">The most useful reports include the workspace you were using, what you searched for, the settings you had enabled, what you expected, what happened instead, and whether reopening the add-on or refreshing the document changed the outcome.</p>
   </body>
 </html>

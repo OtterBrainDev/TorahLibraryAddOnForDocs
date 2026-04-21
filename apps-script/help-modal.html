@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      :root {
+        --bg: #f5f5f3;
+        --panel: #ffffff;
+        --border: #d4d0ca;
+        --text: #222222;
+        --muted: #666666;
+        --selected: #1f3b68;
+        --selected-soft: #eef3fb;
+        --selected-softer: #f6f8fc;
+        --radius: 12px;
+        --shadow: 0 1px 2px rgba(0,0,0,0.04);
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+      .shell, .panel-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+      .shell {
+        overflow: hidden;
+      }
+      .shell-header {
+        padding: 16px 18px 12px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(to bottom, #ffffff, #faf9f7);
+      }
+      .eyebrow {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+      }
+      h1, h2, h3 { margin: 0 0 10px; line-height: 1.25; }
+      h1 { font-size: 24px; }
+      h2 { font-size: 18px; }
+      h3 { font-size: 15px; }
+      p { margin: 0 0 10px; }
+      a { color: var(--selected); }
+      .lede { color: var(--muted); font-size: 14px; }
+      .global-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .pill-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--selected);
+      }
+      .tablist {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--border);
+        background: #fcfbf9;
+      }
+      .tab-button {
+        appearance: none;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--selected);
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .tab-button[aria-selected="true"] {
+        background: var(--selected);
+        border-color: var(--selected);
+        color: #fff;
+      }
+      .tab-panel {
+        display: none;
+        padding: 16px;
+      }
+      .tab-panel.is-active {
+        display: block;
+      }
+      .hero, .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px 18px;
+        box-shadow: var(--shadow);
+      }
+      .card + .card { margin-top: 12px; }
+      .toolbar, .button-row, .section-nav, .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .toolbar, .button-row, .section-nav { margin-top: 12px; }
+      .button-link, button.button-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 10px;
+        padding: 10px 14px;
+        border: 1px solid var(--selected);
+        background: var(--selected);
+        color: #fff;
+        cursor: pointer;
+      }
+      .button-link.secondary, button.button-link.secondary {
+        background: #fff;
+        color: var(--selected);
+      }
+      .search-shell {
+        margin-top: 12px;
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--selected-softer);
+        border: 1px solid var(--border);
+      }
+      .search-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .search-row input {
+        flex: 1 1 280px;
+        min-width: 220px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 14px;
+      }
+      .search-status {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .search-results {
+        margin-top: 8px;
+        display: grid;
+        gap: 6px;
+      }
+      .search-result {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        padding: 10px 12px;
+        cursor: pointer;
+      }
+      .search-result strong {
+        display: block;
+        margin-bottom: 2px;
+      }
+      .search-result span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .action-grid, .mini-card-grid, .compare-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+      }
+      .compare-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+      .action-card, .mini-card, .compare-card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        padding: 12px;
+      }
+      .action-card a { text-decoration: none; color: inherit; display: block; }
+      .action-card:hover, .mini-card:hover, .compare-card:hover { border-color: var(--selected); }
+      .callout {
+        border-left: 4px solid var(--selected);
+        background: var(--selected-soft);
+        padding: 10px 12px;
+        border-radius: 10px;
+        margin-top: 10px;
+      }
+      .section-nav a, .top-link, .meta-pill {
+        text-decoration: none;
+        color: var(--selected);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 6px 10px;
+        background: #fff;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .steps, .checklist, ul {
+        margin: 0;
+        padding-left: 20px;
+      }
+      .steps li + li, .checklist li + li, li + li { margin-top: 8px; }
+      .muted, .small { color: var(--muted); }
+      .topic-section { scroll-margin-top: 16px; }
+      .topic-section.is-highlighted {
+        outline: 2px solid var(--selected);
+        outline-offset: 2px;
+      }
+      code {
+        background: #f0f2f5;
+        border-radius: 6px;
+        padding: 1px 6px;
+        font-size: 12px;
+      }
+      details {
+        margin-top: 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        padding: 10px 12px;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 700;
+      }
+      @media (max-width: 640px) {
+        main { padding: 12px; }
+      }
+    </style>
+    <script>
+      function switchTab(tabId) {
+        var tabs = document.querySelectorAll('[role="tab"]');
+        var panels = document.querySelectorAll('[role="tabpanel"]');
+        tabs.forEach(function(tab) {
+          var isSelected = tab.getAttribute('data-tab') === tabId;
+          tab.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+          tab.setAttribute('tabindex', isSelected ? '0' : '-1');
+        });
+        panels.forEach(function(panel) {
+          var active = panel.id === tabId;
+          panel.classList.toggle('is-active', active);
+          panel.hidden = !active;
+        });
+      }
+
+      function setupTabs() {
+        var tabs = document.querySelectorAll('[role="tab"]');
+        tabs.forEach(function(tab) {
+          tab.addEventListener('click', function() {
+            switchTab(tab.getAttribute('data-tab'));
+          });
+          tab.addEventListener('keydown', function(event) {
+            var list = Array.prototype.slice.call(tabs);
+            var index = list.indexOf(tab);
+            if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+              event.preventDefault();
+              var delta = event.key === 'ArrowRight' ? 1 : -1;
+              var next = (index + delta + list.length) % list.length;
+              list[next].focus();
+              switchTab(list[next].getAttribute('data-tab'));
+            }
+          });
+        });
+      }
+
+      function highlightSection(section) {
+        document.querySelectorAll('.topic-section').forEach(function(el) {
+          el.classList.remove('is-highlighted');
+        });
+        section.classList.add('is-highlighted');
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(function() {
+          section.classList.remove('is-highlighted');
+        }, 1800);
+      }
+
+      function setupHelpSearch() {
+        var input = document.getElementById('helpSearch');
+        var results = document.getElementById('searchResults');
+        var status = document.getElementById('searchStatus');
+        if (!input || !results || !status) return;
+
+        var sections = Array.prototype.slice.call(document.querySelectorAll('#help-tab .topic-section[data-search-title]')).map(function(el) {
+          return {
+            el: el,
+            title: (el.getAttribute('data-search-title') || '').toLowerCase(),
+            terms: (el.getAttribute('data-search-terms') || '').toLowerCase(),
+            label: el.getAttribute('data-search-title') || 'Topic',
+            id: el.id
+          };
+        });
+
+        function renderMatches(matches, query) {
+          results.innerHTML = '';
+          if (!query) {
+            status.textContent = 'Try: citation, preview, translation, Voices, defaults, history, niqqud';
+            return;
+          }
+          if (!matches.length) {
+            status.textContent = 'No exact topic matches found. Try a broader keyword.';
+            return;
+          }
+          status.textContent = matches.length + ' topic' + (matches.length === 1 ? '' : 's') + ' found';
+          matches.slice(0, 6).forEach(function(match) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'search-result';
+            button.innerHTML = '<strong>' + match.label + '</strong><span>Jump to this section in Help</span>';
+            button.addEventListener('click', function() {
+              switchTab('help-tab');
+              highlightSection(match.el);
+            });
+            results.appendChild(button);
+          });
+        }
+
+        input.addEventListener('input', function() {
+          switchTab('help-tab');
+          var query = input.value.trim().toLowerCase();
+          var matches = sections.filter(function(section) {
+            return section.title.indexOf(query) !== -1 || section.terms.indexOf(query) !== -1;
+          });
+          renderMatches(matches, query);
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        setupTabs();
+        setupHelpSearch();
+        switchTab('help-tab');
+      });
+    </script>
+  </head>
+  <body>
+    <main>
+      <section class="shell">
+        <div class="shell-header">
+          <div class="eyebrow">Torah Library Add-on for Docs</div>
+          <h1>Help Center</h1>
+          <p class="lede">One place for how-to guidance, troubleshooting, and version context. Use <strong>Help</strong> to get things done, <strong>Support</strong> when something feels wrong, and <strong>About</strong> for release notes and changelog context.</p>
+          <div class="global-links">
+            <a class="pill-link" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244">Full Sefaria Help Center</a>
+            <a class="pill-link" href="mailto:help@the-merkaz.org">Email support</a>
+            <a class="pill-link" target="_blank" href="https://github.com/shelfgot/SefariaAddOnForDocs">GitHub</a>
+          </div>
+        </div>
+
+        <div class="tablist" role="tablist" aria-label="Help Center Tabs">
+          <button class="tab-button" role="tab" aria-selected="true" aria-controls="help-tab" data-tab="help-tab">Help</button>
+          <button class="tab-button" role="tab" aria-selected="false" aria-controls="support-tab" data-tab="support-tab" tabindex="-1">Support</button>
+          <button class="tab-button" role="tab" aria-selected="false" aria-controls="about-tab" data-tab="about-tab" tabindex="-1">About</button>
+        </div>
+
+        <section class="tab-panel is-active" id="help-tab" role="tabpanel">
+          <section class="hero">
+            <div class="section-nav">
+              <a href="#quick-start">Quick start</a>
+              <a href="#texts">Texts</a>
+              <a href="#voices">Voices</a>
+              <a href="#text-links">Text &amp; Links</a>
+              <a href="#preferences">Preferences</a>
+              <a href="#troubleshooting">Troubleshooting</a>
+            </div>
+            <h2 style="margin-top:12px;">Help</h2>
+            <p class="lede">Use this tab when you want to get something done. Start with the task cards below, or search for a topic like <em>citation</em>, <em>transliteration</em>, <em>preview</em>, or <em>Voices</em>.</p>
+
+            <div class="search-shell">
+              <div class="search-row">
+                <input id="helpSearch" type="search" placeholder="Search help topics" aria-label="Search help topics">
+                <a class="button-link secondary" href="#quick-start">Browse topics</a>
+              </div>
+              <div class="search-status" id="searchStatus">Try: citation, preview, translation, Voices, defaults, history, niqqud</div>
+              <div class="search-results" id="searchResults"></div>
+            </div>
+          </section>
+
+          <section class="card topic-section" id="quick-start" data-search-title="Quick start" data-search-terms="start begin insert text standard text search result preview workflow getting started">
+            <h2>What are you trying to do?</h2>
+            <div class="action-grid">
+              <div class="action-card"><a href="#texts"><h3>Insert a standard text</h3><p class="muted">Use Texts to search, preview, and insert from Sefaria.</p></a></div>
+              <div class="action-card"><a href="#voices"><h3>Use Voices</h3><p class="muted">Work with the source-sheet workflow without the extra text controls.</p></a></div>
+              <div class="action-card"><a href="#text-links"><h3>Change text and citation details</h3><p class="muted">Use Text &amp; Links for session-level overrides like citation and transliteration.</p></a></div>
+              <div class="action-card"><a href="#troubleshooting"><h3>Fix something unexpected</h3><p class="muted">Start with the quick checks before assuming a setting is broken.</p></a></div>
+            </div>
+            <div class="callout">Most users should spend their working time in <strong>Texts</strong> or <strong>Voices</strong>. Use <strong>Preferences</strong> to set defaults, not for ordinary day-to-day insertion.</div>
+          </section>
+
+          <section class="card topic-section" id="texts" data-search-title="Texts" data-search-terms="texts standard text search reference title phrase url translation preview insert layout language display">
+            <h2>Texts: the standard workflow</h2>
+            <ol class="steps">
+              <li>Open <strong>Texts</strong>.</li>
+              <li>Type a reference, title, phrase, or paste a Sefaria URL.</li>
+              <li>Run the search and select the result you want.</li>
+              <li>Review language layout, display layout, translation choice, and Preview.</li>
+              <li>Insert once Preview matches what you want in the document.</li>
+            </ol>
+            <div class="mini-card-grid" style="margin-top:10px;">
+              <div class="mini-card"><h3>Language layout</h3><p class="muted">This is a live working control and should stay easy to access in Texts.</p></div>
+              <div class="mini-card"><h3>Display layout</h3><p class="muted">Use this to change how the inserted content is arranged before you insert.</p></div>
+              <div class="mini-card"><h3>Translation selection</h3><p class="muted">When multiple translations exist, choose directly in the sidebar.</p></div>
+              <div class="mini-card"><h3>Preview</h3><p class="muted">Preview should show what will be inserted right now.</p></div>
+            </div>
+          </section>
+
+          <section class="card topic-section" id="voices" data-search-title="Voices" data-search-terms="voices source sheet sheets source-sheet workflow metadata narrower workspace">
+            <h2>Voices: the source-sheet workflow</h2>
+            <ol class="steps">
+              <li>Open <strong>Voices</strong>.</li>
+              <li>Search for the sheet or source-sheet content you want.</li>
+              <li>Select the result and review the available preview or metadata.</li>
+              <li>Insert or use the relevant Voices action.</li>
+            </ol>
+            <p class="muted">Voices is intentionally narrower than Texts. Text-specific controls should stay out of the way here so the source-sheet workflow remains focused.</p>
+          </section>
+
+          <section class="card topic-section" id="text-links" data-search-title="Text and Links" data-search-terms="text links citation source citation transliteration niqqud vowels cantillation taamim overrides current session">
+            <h2>Text &amp; Links: current-session overrides</h2>
+            <p><strong>Text &amp; Links</strong> is for temporary overrides inside Texts. Use it when you want to change citation, transliteration, niqqud, or cantillation for the current session without changing your saved defaults.</p>
+            <div class="mini-card-grid">
+              <div class="mini-card"><h3>Source citation</h3><p class="muted">Turn the source citation block below the inserted text on or off for the current session.</p></div>
+              <div class="mini-card"><h3>Transliteration</h3><p class="muted">Include transliteration when needed without permanently changing your defaults.</p></div>
+              <div class="mini-card"><h3>Niqqud</h3><p class="muted">Match the Hebrew display details you want to insert.</p></div>
+              <div class="mini-card"><h3>Cantillation</h3><p class="muted">Use the viewer controls and confirm the result in Preview before inserting.</p></div>
+            </div>
+            <div class="callout">Changes in Text &amp; Links should update Preview immediately. They affect the current session unless you explicitly save them as new defaults.</div>
+          </section>
+
+          <section class="card topic-section" id="preferences" data-search-title="Preferences and current session" data-search-terms="preferences defaults current session save reset preview live state saved defaults settings">
+            <h2>Preferences vs. current session</h2>
+            <div class="compare-grid">
+              <div class="compare-card"><h3>Preferences</h3><p class="muted">Your saved defaults. These populate Texts when you start a session.</p></div>
+              <div class="compare-card"><h3>Current session</h3><p class="muted">Your live choices in the sidebar right now. Preview follows these, not just your saved defaults.</p></div>
+              <div class="compare-card"><h3>Save as defaults</h3><p class="muted">Use this only when you want your current session choices to become your new starting defaults.</p></div>
+              <div class="compare-card"><h3>Reset to defaults</h3><p class="muted">Return the current session to your saved Preferences.</p></div>
+            </div>
+          </section>
+
+          <section class="card topic-section" id="troubleshooting" data-search-title="Troubleshooting" data-search-terms="problem bug toggle stuck output mismatch stale state refresh reopen sidebar layout broken old after update">
+            <h2>Troubleshooting</h2>
+            <div class="action-grid">
+              <div class="action-card"><h3>A toggle is not responding</h3><p class="muted">Reopen the section, then reopen the add-on. Refresh the document if the toggle still looks stuck.</p></div>
+              <div class="action-card"><h3>The output did not match the setting</h3><p class="muted">Check whether another setting, workspace, or current-session override changed the insertion state.</p></div>
+              <div class="action-card"><h3>The sidebar layout looks wrong</h3><p class="muted">Compressed or unstable layout is often fixed by reopening the add-on or refreshing the document.</p></div>
+              <div class="action-card"><h3>Things look old after an update</h3><p class="muted">This is often stale state rather than a broken setting. Refresh first, then test again.</p></div>
+            </div>
+          </section>
+        </section>
+
+        <section class="tab-panel" id="support-tab" role="tabpanel" hidden>
+          <section class="hero">
+            <h2>Support</h2>
+            <p class="lede">Use this tab when something is not behaving as expected, or when you need direct help after trying the self-serve guidance.</p>
+            <div class="button-row">
+              <button type="button" class="button-link" onclick="switchTab('help-tab')">Open Help</button>
+              <button type="button" class="button-link secondary" onclick="switchTab('about-tab')">Open About</button>
+              <a class="button-link secondary" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244">Full Sefaria Help Center</a>
+              <a class="button-link secondary" href="mailto:help@the-merkaz.org">Email support</a>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>Start here before emailing</h2>
+            <div class="action-grid">
+              <div class="action-card"><h3>Reopen the add-on</h3><p class="muted">Close the sidebar and reopen it from Extensions to clear temporary UI state.</p></div>
+              <div class="action-card"><h3>Refresh the document</h3><p class="muted">Google Docs sometimes holds stale sidebar state after updates or setting changes.</p></div>
+              <div class="action-card"><h3>Recheck Preview</h3><p class="muted">Preview should reflect the current working state, not just saved defaults.</p></div>
+              <div class="action-card"><h3>Confirm the active workspace</h3><p class="muted">Texts, Voices, Preferences, and session overrides do not all behave the same way.</p></div>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>What to include in a bug report</h2>
+            <p>If you email support, include enough detail to make the issue reproducible.</p>
+            <ul class="checklist">
+              <li>which workspace you were using: <strong>Texts</strong>, <strong>Voices</strong>, or <strong>Preferences</strong></li>
+              <li>what you searched for or selected</li>
+              <li>which settings or overrides were active</li>
+              <li>what you expected to happen</li>
+              <li>what happened instead</li>
+              <li>whether reopening the add-on or refreshing the document changed the result</li>
+            </ul>
+            <div class="callout">Screenshots are especially helpful for layout issues, Preview mismatches, and setting-sync problems.</div>
+          </section>
+
+          <section class="card">
+            <h2>When to email support</h2>
+            <p>Email support when the self-serve steps do not resolve the issue, when you have a reproducible bug, or when you need advanced guidance that is not covered in Help.</p>
+            <div class="button-row">
+              <a class="button-link" href="mailto:help@the-merkaz.org">Email support</a>
+            </div>
+            <p class="small">For version information, release notes, changelog context, and project links, use the About tab rather than Support.</p>
+          </section>
+        </section>
+
+        <section class="tab-panel" id="about-tab" role="tabpanel" hidden>
+          <section class="hero">
+            <h2>About</h2>
+            <p class="muted">Torah Library Add-on for Docs · UX and maintenance fork</p>
+            <p>This tab is the long-term home for version information, current release context, and the running changelog. The separate release-notes popup should stay brief and point here for the fuller record.</p>
+            <div class="meta-row">
+              <span class="meta-pill">Current line: 2.0 fork stream</span>
+              <a class="meta-pill" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244">Sefaria Help Center</a>
+              <a class="meta-pill" target="_blank" href="https://github.com/shelfgot/SefariaAddOnForDocs">GitHub</a>
+              <a class="meta-pill" href="mailto:help@the-merkaz.org">Contact support</a>
+            </div>
+          </section>
+
+          <section class="card">
+            <h2>Current release summary</h2>
+            <p>This phase focuses on making the add-on feel more understandable while people are actively using it. The work emphasizes cleaner front-end behavior, clearer distinctions between defaults and live state, and documentation that matches the actual workflows more closely.</p>
+            <ul>
+              <li><strong>Help surface redesign:</strong> Help, Support, and About are now framed as distinct purposes rather than overlapping documents.</li>
+              <li><strong>Clearer workflow language:</strong> the docs now distinguish more explicitly between Texts, Voices, Preferences, and current-session overrides.</li>
+              <li><strong>Live-state clarity:</strong> Preview, saved defaults, and current sidebar state are explained in more practical terms.</li>
+              <li><strong>Support-oriented troubleshooting:</strong> the docs now acknowledge stale sidebar state, session-specific overrides, and context differences instead of treating them as user error.</li>
+              <li><strong>Human-centered navigation:</strong> the Help content now supports task-based scanning and lightweight topic search.</li>
+            </ul>
+            <div class="callout">What users may notice: the documentation should feel less like a wall of text and more like a guided support surface.</div>
+          </section>
+
+          <section class="card">
+            <h2>What is in this fork</h2>
+            <ul>
+              <li>Unified Find &amp; Insert sidebar flow</li>
+              <li>Improved display and bilingual layout controls</li>
+              <li>Normalized translation and source-version selection</li>
+              <li>Persistent preferences across documents</li>
+              <li>Safer insertion pipeline for richer formatting</li>
+              <li>More intentional internal documentation and support framing</li>
+            </ul>
+          </section>
+
+          <section class="card">
+            <h2>Running changelog</h2>
+            <details open>
+              <summary>Current documentation and support refresh</summary>
+              <ul>
+                <li>Reframed the internal help system around three clearer purposes: Help, Support, and About.</li>
+                <li>Added a lightweight Help search bar for topic finding inside the guide.</li>
+                <li>Moved long-term version and changelog context into About, leaving Support focused on troubleshooting and escalation.</li>
+                <li>Reworked release notes into a cleaner current-release summary plus expandable changelog model.</li>
+              </ul>
+            </details>
+            <details>
+              <summary>Core 2.0 fork direction</summary>
+              <ul>
+                <li>Unified sidebar workflow for finding, previewing, and inserting sources.</li>
+                <li>Translation selector cleanup and normalized option labeling.</li>
+                <li>Stronger output and bilingual layout controls.</li>
+                <li>Structural-node handling with clearer preview messaging.</li>
+                <li>Hebrew orthography controls applied more consistently.</li>
+                <li>Preferences and typography improvements with better save ergonomics.</li>
+              </ul>
+            </details>
+          </section>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>
