@@ -57,9 +57,16 @@ main {
 /*
  * Direct section children stack naturally as flex items.
  * Do NOT set display here — individual components set their own.
+ *
+ * CRITICAL FIX FOR RECURRING BUG:
+ * min-height: 0 allows flex items to shrink below content size.
+ * WITHOUT this, versions/preview sections overflow the scroll container.
+ * This must NEVER be removed or the regression WILL recur.
+ * See: versions-preview.html scroll-containment notes.
  */
 .sidebar-scroll > section {
   flex: 0 0 auto;
+  min-height: 0;
   box-sizing: border-box;
   width: 100%;
 }

@@ -151,12 +151,21 @@
           <details class="sidebar-accordion voices-insert-accordion" open>
             <summary class="section-label accordion-summary">Insert Options</summary>
             <div class="accordion-panel voices-insert-panel">
-              <label class="compact-section-label" for="voices-insert-mode">What to insert</label>
-              <select id="voices-insert-mode" class="translation-version-select voices-insert-mode-select" aria-label="Insert mode for source sheet">
-                <option value="reference" selected>Reference (title, link &amp; summary)</option>
-                <option value="contents">Full sheet contents</option>
-                <option value="both">Reference + contents</option>
-              </select>
+              <div class="voices-insert-controls">
+                <div class="compact-section-label" id="voices-insert-mode-label">What to insert</div>
+                <div class="insert-mode-selector" role="radiogroup" aria-labelledby="voices-insert-mode-label">
+                  <button type="button" class="insert-mode-btn is-active" data-value="reference" role="radio" aria-checked="true">Reference</button>
+                  <button type="button" class="insert-mode-btn" data-value="contents" role="radio" aria-checked="false">Contents</button>
+                  <button type="button" class="insert-mode-btn" data-value="both" role="radio" aria-checked="false">Both</button>
+                </div>
+                <div class="compact-section-label" id="voices-translit-label">Transliteration</div>
+                <div class="insert-mode-selector" role="radiogroup" aria-labelledby="voices-translit-label">
+                  <button type="button" class="insert-mode-btn voices-translit-btn is-active" data-value="none" role="radio" aria-checked="true">Off</button>
+                  <button type="button" class="insert-mode-btn voices-translit-btn" data-value="simple_english" role="radio" aria-checked="false">Simple</button>
+                  <button type="button" class="insert-mode-btn voices-translit-btn" data-value="traditional" role="radio" aria-checked="false">Trad.</button>
+                  <button type="button" class="insert-mode-btn voices-translit-btn" data-value="modern_israeli" role="radio" aria-checked="false">Israeli</button>
+                </div>
+              </div>
               <div class="voices-fetch-loading preview-loading" style="display:none;" aria-live="polite" aria-label="Fetching sheet contents">
                 <span class="preview-loading-spinner" aria-hidden="true"></span>
                 <span>Fetching sheet contents…</span>

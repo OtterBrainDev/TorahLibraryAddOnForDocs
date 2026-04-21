@@ -118,7 +118,7 @@ function setSidebarMode(mode, skipPreferenceSave) {
   $('.input').attr('placeholder', placeholders[appMode] || 'Search Sefaria');
   var searchLabels = { voices: 'Source Sheets', lexicon: 'Lexicon entries' };
   $('.search-results-label').text(searchLabels[appMode] || 'Search results');
-  var insertLabels = { voices: 'Add Link', lexicon: 'Add Entry' };
+  var insertLabels = { voices: 'Add Sheet', lexicon: 'Add Entry' };
   $('#insert-source').text(insertLabels[appMode] || 'Add Source');
   var openLabels = { voices: 'Open Sheet' };
   $('.open-label-text').text(openLabels[appMode] || 'Open');

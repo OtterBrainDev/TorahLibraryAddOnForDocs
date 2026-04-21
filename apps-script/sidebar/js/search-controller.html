@@ -230,7 +230,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     setInsertButtonState(!!item);
     $('#open-on-sefaria').prop('disabled', !(item && item.url));
     if (item) {
-      var currentInsertMode = $('#voices-insert-mode').val() || 'reference';
+      var currentInsertMode = $('.insert-mode-btn[aria-checked="true"]:not(.voices-translit-btn)').data('value') || 'reference';
       $('.suggestions').html(buildVoicesPreviewHtml(item, currentInsertMode));
     }
     updateModeDependentSections();
@@ -386,12 +386,22 @@ function runVoicesQuery() {
   }).searchVoices(input, {});
 }
 
-// When the user changes the insert mode selector, refresh the preview summary
-// so the "Will insert:" line reflects their choice before they click Add.
-$(document).on('change', '#voices-insert-mode', function () {
-  if (appMode !== 'voices' || !selectedVoiceItem) return;
-  var insertMode = $(this).val() || 'reference';
+// When the user clicks an insert mode button, activate it and refresh the preview.
+$(document).on('click', '.insert-mode-btn:not(.voices-translit-btn)', function () {
+  if (appMode !== 'voices') return;
+  var $group = $(this).closest('[role="radiogroup"]');
+  $group.find('.insert-mode-btn').removeClass('is-active').attr('aria-checked', 'false');
+  $(this).addClass('is-active').attr('aria-checked', 'true');
+  if (!selectedVoiceItem) return;
+  var insertMode = $('.insert-mode-btn[aria-checked="true"]:not(.voices-translit-btn)').data('value') || 'reference';
   $('.suggestions').html(buildVoicesPreviewHtml(selectedVoiceItem, insertMode));
+});
+
+// Transliteration scheme selector — activate clicked option within its group.
+$(document).on('click', '.voices-translit-btn', function () {
+  if (appMode !== 'voices') return;
+  $('.voices-translit-btn').removeClass('is-active').attr('aria-checked', 'false');
+  $(this).addClass('is-active').attr('aria-checked', 'true');
 });
 
 // ─── Lexicon ─────────────────────────────────────────────────────────────────

@@ -48,7 +48,8 @@ $('#insert-source').click(function () {
   if (appMode === 'voices') {
     if (!selectedVoiceItem || !selectedVoiceItem.ref) return;
 
-    var insertMode = $('#voices-insert-mode').val() || 'reference';
+    var insertMode = $('.insert-mode-btn[aria-checked="true"]:not(.voices-translit-btn)').data('value') || 'reference';
+    var transliterationScheme = $('.voices-translit-btn[aria-checked="true"]').data('value') || 'none';
     var fetchesSheet = insertMode === 'contents' || insertMode === 'both';
 
     // Build a payload from the selected sheet item, forwarding all hook fields.
@@ -87,7 +88,7 @@ $('#insert-source').click(function () {
         $('.hide').add($('.warning')).fadeOut('1000');
         showInsertWarning(error && error.message);
       })
-      .insertSheet(sheetPayload, { insertMode: insertMode });
+      .insertSheet(sheetPayload, { insertMode: insertMode, transliterationScheme: transliterationScheme !== 'none' ? transliterationScheme : null });
     return;
   }
 

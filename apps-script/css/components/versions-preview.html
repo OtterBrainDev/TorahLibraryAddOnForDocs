@@ -27,6 +27,13 @@
 
 /* .versions-section panel chrome is shared with layout.css panel shells. */
 /* The details inside gets a slight shadow lift from the shared panel rule. */
+/* CRITICAL: .versions-section must have min-height: 0 and overflow: hidden */
+/* to prevent escape from .sidebar-scroll container. */
+
+.versions-section {
+  min-height: 0;
+  overflow: hidden;
+}
 
 .versions-panel,
 .more-options-card {
@@ -53,6 +60,8 @@
 /* No flex / min-height chain needed here. */
 .preview-section {
   display: block;
+  min-height: 0;
+  overflow: hidden;
 }
 
 #previewContainer,

@@ -9,6 +9,28 @@ function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
+function decodeHTMLEntities(text) {
+  if (!text || typeof text !== 'string') return text;
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&ndash;/g, '–')
+    .replace(/&mdash;/g, '—')
+    .replace(/&ldquo;/g, '"')
+    .replace(/&rdquo;/g, '"')
+    .replace(/&lsquo;/g, ''')
+    .replace(/&rsquo;/g, ''')
+    .replace(/&#(\d+);/g, function(match, dec) {
+      return String.fromCharCode(parseInt(dec, 10));
+    })
+    .replace(/&#x([a-fA-F0-9]+);/g, function(match, hex) {
+      return String.fromCharCode(parseInt(hex, 16));
+    });
+}
 
 const SETTINGS = [
   "apply_sheimot_on_insertion",
@@ -152,6 +174,7 @@ function onOpen(e) {
   addOnMenu
       .addItem('Texts', 'textsHTML')
       .addItem('Voices', 'voicesHTML')
+      .addItem('Lexicon', 'lexiconHTML')
       .addSubMenu(quickActionsMenu);
 
   if (DEV_FLAGS.AI_LESSON && experimentalAiEnabled) {
@@ -197,6 +220,10 @@ function textsHTML() {
 
 function voicesHTML() {
   openSharedSidebar_('voices');
+}
+
+function lexiconHTML() {
+  openSharedSidebar_('lexicon');
 }
 
 function getSidebarBootstrapData(mode, sessionId) {
@@ -245,7 +272,19 @@ function aboutPopup() {
 }
 
 function gematriyaCountPopup() {
-  const stats = getGematriyaStats_();
+  let stats;
+  try {
+    stats = getGematriyaStats_();
+  } catch (error) {
+    stats = {
+      hasSelection: false,
+      totalValue: 0,
+      wordCount: 0,
+      letterCount: 0,
+      words: []
+    };
+    Logger.log('Error in gematriyaCountPopup: ' + error.message);
+  }
   const template = HtmlService.createTemplateFromFile('gematriya-count');
   template.statsJson = JSON.stringify(stats);
   const html = template.evaluate().setWidth(480).setHeight(420);
@@ -1208,6 +1247,7 @@ function insertRichTextFromHTML(element, htmlString) {
   let inserterFn = (textModification) => {
     //grab all words in the buffer and join
     let snippet = buf.join("");
+    snippet = decodeHTMLEntities(snippet);
 
     //index of snippet needs to be zero-indexed. This is how we keep track of which words/phrases/sentences to bold/italicize
     let snippetLength = snippet.length;
@@ -1301,6 +1341,7 @@ function insertRichTextFromHTML(element, htmlString) {
   // add in the last words, if the text snippet does not end with a tag
   let snippet = buf.join("");
   if ( snippet != "" ) {
+    snippet = decodeHTMLEntities(snippet);
     element.insertText(textLength, snippet);
     let snippetIndex = snippet.length - 1;
     element.setBold(textLength, textLength+snippetIndex, false); 
@@ -2090,13 +2131,17 @@ function normalizeSheetInsertOptions(sheetPayload, frontendOptions) {
     includeContents = false;
   }
 
+  const rawScheme = opts.transliterationScheme || sheetPayload.transliterationScheme || null;
+  const transliterationScheme = (rawScheme && rawScheme !== 'none') ? rawScheme : null;
+
   return {
     insertMode: insertMode,
     includeReference: includeReference,
     includeContents: includeContents,
     showMediaLabel: getBooleanOption_(sheetPayload.showMediaLabel, true),
     preserveSheetSpacing: getBooleanOption_(sheetPayload.preserveSheetSpacing, true),
-    debugUnknownNodes: getBooleanOption_(sheetPayload.debugUnknownNodes, false)
+    debugUnknownNodes: getBooleanOption_(sheetPayload.debugUnknownNodes, false),
+    transliterationScheme: transliterationScheme
   };
 }
 
@@ -2296,6 +2341,21 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
         fontSize: typography.hebrewFontSize || typography.translationFontSize,
         fontStyle: typography.hebrewFontStyle || typography.translationFontStyle
       });
+      if (normalizedOptions.transliterationScheme) {
+        const translitText = transliterateHebrewHtmlPreservingBasicBreaks(hebrewText, normalizedOptions.transliterationScheme, {
+          keepNiqqud: true,
+          isBiblicalHebrew: false
+        });
+        if (translitText) {
+          index = appendMultilineParagraphs_(body, index, translitText, {
+            rtl: false,
+            indent: shouldIndent ? 24 : 0,
+            fontFamily: typography.transliterationFont,
+            fontSize: typography.transliterationFontSize,
+            fontStyle: typography.transliterationFontStyle
+          });
+        }
+      }
     }
 
     const englishText = extractSheetText_(source.text, 'en', normalizedOptions);

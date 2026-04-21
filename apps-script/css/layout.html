@@ -356,6 +356,7 @@
   min-height: 150px;
   margin-top: 6px;
   padding: 4px;
+  text-align: left;
   text-indent: 0;
 }
 
@@ -1031,6 +1032,57 @@
   color: #fff;
   background: #18345d;
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* =============================================================
+   INSERT MODE SELECTOR (voices panel — segmented button group)
+   ============================================================= */
+
+.voices-insert-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insert-mode-selector {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 4px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.insert-mode-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 30px;
+  padding: 5px 8px;
+  color: #506077;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.insert-mode-btn.is-active,
+.insert-mode-btn[aria-checked="true"] {
+  color: #fff;
+  background: #18345d;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.insert-mode-btn:focus-visible {
+  outline: 2px solid var(--selected);
+  outline-offset: 2px;
 }
 
 /* =============================================================
