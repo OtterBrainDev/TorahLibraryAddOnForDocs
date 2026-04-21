@@ -273,6 +273,13 @@ function expSetStatus($card, message, kind) {
   if (kind) $s.addClass(kind);
 }
 
+// Set status HTML on an exp-card (for rich content like links)
+function expSetStatusHTML($card, html, kind) {
+  var $s = $card.find('.exp-status');
+  $s.html(html).removeClass('exp-error exp-success');
+  if (kind) $s.addClass(kind);
+}
+
 // Chip group: click selects one chip, arrow keys navigate
 $(document).on('click', '.exp-chip-group .exp-chip', function () {
   $(this).closest('.exp-chip-group').children('.exp-chip').attr('aria-checked', 'false');
@@ -442,10 +449,21 @@ $('#ai-inline-generate').off('click').on('click', function () {
     })
     .withFailureHandler(function (err) {
       expSetBusy($card, false, '', 'Generate & Insert');
-      expSetStatus($card,
-        (err && err.message) ? err.message
-          : 'Something went wrong. Check your connection and try again.',
-        'exp-error');
+      var errorMsg = (err && err.message) ? err.message : 'Something went wrong. Check your connection and try again.';
+
+      // Special handling for invalid request signature error
+      if (errorMsg && errorMsg.indexOf('Invalid request signature') >= 0) {
+        var htmlMsg = 'Invalid request signature. <a href="#" class="exp-error-link" data-action="open-ai-prefs">Open <span aria-hidden="true">⚙️</span> Preferences</a> to enable AI Shiur.';
+        expSetStatusHTML($card, htmlMsg, 'exp-error');
+
+        // Attach click handler to the link
+        $card.find('.exp-error-link').one('click', function (e) {
+          e.preventDefault();
+          openPreferencesWithHint('experimental-features');
+        });
+      } else {
+        expSetStatus($card, errorMsg, 'exp-error');
+      }
     })
     .generateAiLessonDraft(payload);
 });

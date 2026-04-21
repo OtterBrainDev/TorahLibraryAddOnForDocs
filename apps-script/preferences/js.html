@@ -927,9 +927,21 @@
         if (focus) tab.focus();
       }
 
-      const initial = tabs.find(function (t) {
-        return t.getAttribute('aria-selected') === 'true';
-      }) || tabs[0];
+      // Check if we should navigate to a specific tab based on hint
+      var preferredTab = window.PREF_NAVIGATE_TAB || sessionStorage.getItem('PREF_NAVIGATE_TAB');
+      sessionStorage.removeItem('PREF_NAVIGATE_TAB');
+
+      var initial = null;
+      if (preferredTab) {
+        initial = tabs.find(function (t) {
+          return t.getAttribute('data-pref-tab') === preferredTab;
+        });
+      }
+      if (!initial) {
+        initial = tabs.find(function (t) {
+          return t.getAttribute('aria-selected') === 'true';
+        }) || tabs[0];
+      }
       activate(initial);
 
       tabs.forEach(function (tab, idx) {

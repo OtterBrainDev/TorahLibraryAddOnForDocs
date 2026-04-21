@@ -38,8 +38,8 @@ function showSidebarToast(message) {
 }
 
 function openPreferencesWithHint(sectionHint) {
-  if (sectionHint) {
-    console.log('[sidebar] openPreferencesWithHint:', sectionHint);
+  if (sectionHint === 'experimental-features') {
+    sessionStorage.setItem('PREF_NAVIGATE_TAB', 'experimental');
   }
   google.script.run.preferencesPopup();
 }
