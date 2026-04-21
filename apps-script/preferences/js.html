@@ -503,6 +503,21 @@
                 setReplacementSelectValue(name, preferences[name]);
               });
 
+              // Sync button-group controls (Display & Insertion Defaults)
+              var btnGroupDefaults = {
+                output_mode_default: 'both',
+                bilingual_layout_default: 'he-right',
+                voices_insert_mode_default: 'reference',
+                voices_translit_default: 'none',
+                lexicon_insert_mode_default: 'entry'
+              };
+              Object.keys(btnGroupDefaults).forEach(function(groupId) {
+                var val = (preferences[groupId] !== undefined && preferences[groupId] !== null && preferences[groupId] !== '')
+                  ? preferences[groupId]
+                  : btnGroupDefaults[groupId];
+                setPrefButtonGroup(groupId, val);
+              });
+
               try {
                 transliterationOverrides = JSON.parse(preferences.transliteration_overrides || '{}') || {};
               } catch (e) {
@@ -611,8 +626,6 @@
       'select#yaw_replacement',
       'select#elodim_replacement',
       'select#god_replacement',
-      'select#output_mode_default',
-      'select#bilingual_layout_default',
       'select#ai_provider_default',
       'select#ai_key_strategy_default',
       'select#ai_saved_key_provider'
@@ -748,6 +761,74 @@
       loadSavedAiKeyPreview();
     }
 
+    // ── Button-group helpers (Display & Insertion Defaults sections) ────────
+
+    function setPrefButtonGroup(groupId, value) {
+      var container = document.querySelector('[data-pref-group="' + groupId + '"]');
+      if (!container) return;
+      container.querySelectorAll('.pref-insert-mode-btn').forEach(function(btn) {
+        var match = btn.getAttribute('data-value') === String(value);
+        btn.classList.toggle('is-active', match);
+        btn.setAttribute('aria-checked', match ? 'true' : 'false');
+      });
+      var hidden = byId(groupId);
+      if (hidden) hidden.value = value;
+    }
+
+    function initPrefButtonGroups() {
+      document.querySelectorAll('.pref-insert-mode-selector[data-pref-group]').forEach(function(selector) {
+        var groupId = selector.getAttribute('data-pref-group');
+        selector.querySelectorAll('.pref-insert-mode-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            setPrefButtonGroup(groupId, btn.getAttribute('data-value'));
+          });
+        });
+      });
+    }
+
+    // ── Workflow sub-tabs (Texts / Voices / Lexicon) ────────────────────────
+
+    function initWorkflowTabs() {
+      var tabs = Array.from(document.querySelectorAll('.pref-workflow-tab'));
+      if (!tabs.length) return;
+
+      function activateWorkflow(activeTab) {
+        var target = activeTab.getAttribute('data-workflow');
+        tabs.forEach(function(t) {
+          var on = t === activeTab;
+          t.classList.toggle('is-active', on);
+          t.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        document.querySelectorAll('.pref-workflow-panel').forEach(function(panel) {
+          panel.hidden = (panel.id !== 'pref-workflow-' + target);
+        });
+      }
+
+      tabs.forEach(function(tab, idx) {
+        tab.addEventListener('click', function() { activateWorkflow(tab); });
+        tab.addEventListener('keydown', function(ev) {
+          switch (ev.key) {
+            case 'ArrowRight':
+              ev.preventDefault();
+              tabs[(idx + 1) % tabs.length].click();
+              break;
+            case 'ArrowLeft':
+              ev.preventDefault();
+              tabs[(idx - 1 + tabs.length) % tabs.length].click();
+              break;
+            case 'Home':
+              ev.preventDefault();
+              tabs[0].click();
+              break;
+            case 'End':
+              ev.preventDefault();
+              tabs[tabs.length - 1].click();
+              break;
+          }
+        });
+      });
+    }
+
     function _initPreferencesTabs() {
       const tabs = Array.from(document.querySelectorAll('.pref-tab'));
       if (!tabs.length) return;
@@ -808,6 +889,8 @@
     }
 
     _initPreferencesTabs();
+    initPrefButtonGroups();
+    initWorkflowTabs();
     _initPreferencesCompositionCard();
     loadPreferencesIntoForm();
   });

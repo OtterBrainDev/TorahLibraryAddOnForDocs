@@ -316,128 +316,105 @@
         </div>
 
         <div class="pref-tab-panel" id="pref-tab-insertion" role="tabpanel" aria-labelledby="pref-tab-insertion-btn" hidden>
-          <details class="section-card section-accordion" id="insertion-preview" name="insertion-preview" open>
-            <summary class="section-card-summary"><span>Insertion Preview</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Set the defaults applied to new insertions: linked title, source citation, line markers, cantillation, vowels, and transliteration. The sidebar can still override these for a single insertion.</p>
-              <div class="subsection-card subsection-card--preview">
-                <div class="cc-card" id="composition-card-container" data-cc-features="header,linkedTitle,secondaryPills" aria-label="Default insertion preview">
-                  <?!= include('shared/composition-card/markup') ?>
-                </div>
-              </div>
-              <div class="composition-state-inputs" hidden>
-                <input type="hidden" id="nekudot" name="nekudot">
-                <input type="hidden" id="nekudot_filter" name="nekudot_filter">
-                <input type="hidden" id="teamim" name="teamim">
-                <input type="hidden" id="teamim_filter" name="teamim_filter">
-                <input id="include_transliteration_default" type="checkbox" name="include_transliteration_default">
-                <input id="insert_sefaria_link_default" type="checkbox" name="insert_sefaria_link_default">
-                <input id="show_line_markers_default" type="checkbox" name="show_line_markers_default" checked>
-                <input id="include_translation_source_info" type="checkbox" name="include_translation_source_info">
-              </div>
-            </div>
-          </details>
 
-          <details class="section-card section-accordion" id="display-defaults" name="display-defaults">
-            <summary class="section-card-summary"><span>Display</span></summary>
+          <!-- Display & Layout — above Insertion Defaults per UX requirement -->
+          <details class="section-card section-accordion" id="display-defaults" name="display-defaults" open>
+            <summary class="section-card-summary"><span>Display &amp; Layout</span></summary>
             <div class="section-card-body">
-              <div class="compact-field">
-                <label for="output_mode_default">Default Display Mode</label>
-                <select id="output_mode_default" name="output_mode_default">
-                  <option value="both">Original with Translation</option>
-                  <option value="he">Original Only</option>
-                  <option value="en">Translation Only</option>
-                </select>
-                <div class="mini-help">Choose which text layers appear when you insert a source.</div>
+              <div class="pref-field-group">
+                <div class="compact-section-label" id="pref-output-mode-label">Default Display</div>
+                <div class="pref-insert-mode-selector" role="radiogroup" aria-labelledby="pref-output-mode-label" data-pref-group="output_mode_default">
+                  <button type="button" class="pref-insert-mode-btn" data-value="he" role="radio" aria-checked="false">Hebrew only</button>
+                  <button type="button" class="pref-insert-mode-btn is-active" data-value="both" role="radio" aria-checked="true">Both</button>
+                  <button type="button" class="pref-insert-mode-btn" data-value="en" role="radio" aria-checked="false">Translation only</button>
+                </div>
+                <input type="hidden" id="output_mode_default" name="output_mode_default" value="both">
+                <div class="mini-help">Which text layers appear when you insert a source.</div>
               </div>
-              <div class="compact-field">
-                <label for="bilingual_layout_default">Default Bilingual Layout</label>
-                <select id="bilingual_layout_default" name="bilingual_layout_default">
-                  <option value="he-right">Hebrew Right / English Left</option>
-                  <option value="he-left">Hebrew Left / English Right</option>
-                  <option value="stacked">Stacked (Hebrew above English)</option>
-                </select>
+              <div class="pref-field-group" id="pref-bilingual-layout-group">
+                <div class="compact-section-label" id="pref-bilingual-layout-label">Default Bilingual Layout</div>
+                <div class="pref-insert-mode-selector" role="radiogroup" aria-labelledby="pref-bilingual-layout-label" data-pref-group="bilingual_layout_default">
+                  <button type="button" class="pref-insert-mode-btn is-active" data-value="he-right" role="radio" aria-checked="true">Hebrew right</button>
+                  <button type="button" class="pref-insert-mode-btn" data-value="he-left" role="radio" aria-checked="false">Hebrew left</button>
+                  <button type="button" class="pref-insert-mode-btn" data-value="stacked" role="radio" aria-checked="false">Stacked</button>
+                </div>
+                <input type="hidden" id="bilingual_layout_default" name="bilingual_layout_default" value="he-right">
                 <div class="mini-help">Layout for side-by-side bilingual display.</div>
               </div>
             </div>
           </details>
 
-          <details class="section-card section-accordion" id="divine-name-mappings" name="divine-name-mappings">
-            <summary class="section-card-summary"><span>Divine Name Mappings</span></summary>
+          <!-- Insertion Defaults — with per-workflow sub-tabs -->
+          <details class="section-card section-accordion" id="insertion-preview" name="insertion-preview" open>
+            <summary class="section-card-summary"><span>Insertion Defaults</span></summary>
             <div class="section-card-body">
-              <div class="subsection-card">
-                <div class="subsection-title">Insertion behavior</div>
-                <div class="toggle-row">
-                  <div class="toggle-copy">
-                    <div class="toggle-title">Apply Divine-Name Replacements On Insertion</div>
-                    <div class="toggle-help">Apply the replacement mappings below automatically when new text is inserted.</div>
+              <nav class="pref-workflow-tabs" role="tablist" aria-label="Workflow insertion defaults">
+                <button type="button" class="pref-workflow-tab is-active" data-workflow="texts" role="tab" aria-selected="true" aria-controls="pref-workflow-texts">Texts</button>
+                <button type="button" class="pref-workflow-tab" data-workflow="voices" role="tab" aria-selected="false" aria-controls="pref-workflow-voices">Voices</button>
+                <button type="button" class="pref-workflow-tab" data-workflow="lexicon" role="tab" aria-selected="false" aria-controls="pref-workflow-lexicon">Lexicon</button>
+              </nav>
+
+              <!-- Texts workflow -->
+              <div class="pref-workflow-panel" id="pref-workflow-texts" role="tabpanel" aria-labelledby="pref-workflow-tab-texts">
+                <p class="section-note">Set the defaults applied to new text insertions: linked title, source citation, line markers, cantillation, vowels, and transliteration. The sidebar can still override these for a single insertion.</p>
+                <div class="subsection-card subsection-card--preview">
+                  <div class="cc-card" id="composition-card-container" data-cc-features="header,linkedTitle,secondaryPills" aria-label="Default insertion preview">
+                    <?!= include('shared/composition-card/markup') ?>
                   </div>
-                  <label class="switch" for="apply_sheimot_on_insertion">
-                    <input id="apply_sheimot_on_insertion" type="checkbox" name="apply_sheimot_on_insertion">
-                    <span class="slider"></span>
-                  </label>
+                </div>
+                <div class="composition-state-inputs" hidden>
+                  <input type="hidden" id="nekudot" name="nekudot">
+                  <input type="hidden" id="nekudot_filter" name="nekudot_filter">
+                  <input type="hidden" id="teamim" name="teamim">
+                  <input type="hidden" id="teamim_filter" name="teamim_filter">
+                  <input id="include_transliteration_default" type="checkbox" name="include_transliteration_default">
+                  <input id="insert_sefaria_link_default" type="checkbox" name="insert_sefaria_link_default">
+                  <input id="show_line_markers_default" type="checkbox" name="show_line_markers_default" checked>
+                  <input id="include_translation_source_info" type="checkbox" name="include_translation_source_info">
                 </div>
               </div>
 
-              <div class="subsection-card">
-                <div class="subsection-title">Replacement rules</div>
-                <div class="replacement-grid">
-                <div class="replacement-row">
-                  <label class="switch" for="meforash_replace"><input id="meforash_replace" type="checkbox" name="meforash_replace"><span class="slider"></span></label>
-                  <div class="replacement-label">יהוה</div>
-                  <select name="meforash_replacement" id="meforash_replacement">
-                    <option value="ה'">ה'</option>
-                    <option value="יקוק">יקוק</option>
-                    <option value="השם">השם</option>
-                    <option value="ד'">ד'</option>
-                    <option value="ידוד">ידוד</option>
-                    <option value="יהו-ה">יהו-ה</option>
-                    <option value="יחוח">יחוח</option>
-                    <option value="__other__">Other</option>
-                  </select>
-                  <input type="text" id="meforash_replacement_custom" data-custom-for="meforash_replacement" class="replacement-custom" placeholder="Custom" hidden>
+              <!-- Voices workflow -->
+              <div class="pref-workflow-panel" id="pref-workflow-voices" role="tabpanel" aria-labelledby="pref-workflow-tab-voices" hidden>
+                <p class="section-note">Set the default insert options for the Voices (source sheets) workflow. These apply each time you open the sidebar in Voices mode.</p>
+                <div class="pref-field-group">
+                  <div class="compact-section-label" id="pref-voices-insert-mode-label">What to insert</div>
+                  <div class="pref-insert-mode-selector" role="radiogroup" aria-labelledby="pref-voices-insert-mode-label" data-pref-group="voices_insert_mode_default">
+                    <button type="button" class="pref-insert-mode-btn is-active" data-value="reference" role="radio" aria-checked="true">Reference</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="contents" role="radio" aria-checked="false">Contents</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="both" role="radio" aria-checked="false">Both</button>
+                  </div>
+                  <input type="hidden" id="voices_insert_mode_default" name="voices_insert_mode_default" value="reference">
                 </div>
-
-                <div class="replacement-row">
-                  <label class="switch" for="yaw_replace"><input id="yaw_replace" type="checkbox" name="yaw_replace"><span class="slider"></span></label>
-                  <div class="replacement-label">יה</div>
-                  <select name="yaw_replacement" id="yaw_replacement">
-                    <option value="קה">קה</option>
-                    <option value="השם">השם</option>
-                    <option value="__other__">Other</option>
-                  </select>
-                  <input type="text" id="yaw_replacement_custom" data-custom-for="yaw_replacement" class="replacement-custom" placeholder="Custom" hidden>
-                </div>
-
-                <div class="replacement-row">
-                  <label class="switch" for="elodim_replace"><input id="elodim_replace" type="checkbox" name="elodim_replace"><span class="slider"></span></label>
-                  <div class="replacement-label">אלוהים</div>
-                  <select name="elodim_replacement" id="elodim_replacement">
-                    <option value="אלוקים">אלוקים</option>
-                    <option value="אלודים">אלודים</option>
-                    <option value="__other__">Other</option>
-                  </select>
-                  <input type="text" id="elodim_replacement_custom" data-custom-for="elodim_replacement" class="replacement-custom" placeholder="Custom" hidden>
-                </div>
-
-                <div class="replacement-row">
-                  <label class="switch" for="god_replace"><input id="god_replace" type="checkbox" name="god_replace"><span class="slider"></span></label>
-                  <div class="replacement-label">God</div>
-                  <select name="god_replacement" id="god_replacement">
-                    <option value="Adonai">Adonai</option>
-                    <option value="HaShem">HaShem</option>
-                    <option value="G-d" selected>G-d</option>
-                    <option value="__other__">Other</option>
-                  </select>
-                  <input type="text" id="god_replacement_custom" data-custom-for="god_replacement" class="replacement-custom" placeholder="Custom" hidden>
+                <div class="pref-field-group">
+                  <div class="compact-section-label" id="pref-voices-translit-label">Transliteration</div>
+                  <div class="pref-insert-mode-selector" role="radiogroup" aria-labelledby="pref-voices-translit-label" data-pref-group="voices_translit_default">
+                    <button type="button" class="pref-insert-mode-btn is-active" data-value="none" role="radio" aria-checked="true">Off</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="simple_english" role="radio" aria-checked="false">Simple</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="traditional" role="radio" aria-checked="false">Traditional</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="modern_israeli" role="radio" aria-checked="false">Israeli</button>
+                  </div>
+                  <input type="hidden" id="voices_translit_default" name="voices_translit_default" value="none">
                 </div>
               </div>
 
-                <div class="mini-help">These define the replacement rules themselves. The document-wide transform command remains separate from insertion-time replacement. <span id="sheimot_summary_note">None</span></div>
+              <!-- Lexicon workflow -->
+              <div class="pref-workflow-panel" id="pref-workflow-lexicon" role="tabpanel" aria-labelledby="pref-workflow-tab-lexicon" hidden>
+                <p class="section-note">Set the default insert option for the Lexicon (dictionary) workflow.</p>
+                <div class="pref-field-group">
+                  <div class="compact-section-label" id="pref-lexicon-insert-mode-label">What to insert</div>
+                  <div class="pref-insert-mode-selector pref-insert-mode-selector--column" role="radiogroup" aria-labelledby="pref-lexicon-insert-mode-label" data-pref-group="lexicon_insert_mode_default">
+                    <button type="button" class="pref-insert-mode-btn is-active" data-value="entry" role="radio" aria-checked="true">Full entry (headword, notes &amp; definition)</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="headword" role="radio" aria-checked="false">Headword &amp; source only</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="definition" role="radio" aria-checked="false">Definition only</button>
+                  </div>
+                  <input type="hidden" id="lexicon_insert_mode_default" name="lexicon_insert_mode_default" value="entry">
+                </div>
               </div>
             </div>
           </details>
 
+          <!-- Transliteration Mapping — above Divine Name Mappings per UX requirement -->
           <details class="section-card section-accordion" id="transliteration-mapping" name="transliteration-mapping">
             <summary class="section-card-summary"><span>Transliteration Mapping</span></summary>
             <div class="section-card-body">
@@ -460,6 +437,83 @@
                 <input type="hidden" id="transliteration_overrides" name="transliteration_overrides">
                 <input type="hidden" id="transliteration_is_biblical_hebrew" name="transliteration_is_biblical_hebrew" value="true">
                 <input type="hidden" id="transliteration_biblical_dagesh_mode" name="transliteration_biblical_dagesh_mode" value="none">
+              </div>
+            </div>
+          </details>
+
+          <!-- Divine Name Mappings -->
+          <details class="section-card section-accordion" id="divine-name-mappings" name="divine-name-mappings">
+            <summary class="section-card-summary"><span>Divine Name Mappings</span></summary>
+            <div class="section-card-body">
+              <div class="subsection-card">
+                <div class="subsection-title">Insertion behavior</div>
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Apply Divine-Name Replacements On Insertion</div>
+                    <div class="toggle-help">Apply the replacement mappings below automatically when new text is inserted.</div>
+                  </div>
+                  <label class="switch" for="apply_sheimot_on_insertion">
+                    <input id="apply_sheimot_on_insertion" type="checkbox" name="apply_sheimot_on_insertion">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="subsection-card">
+                <div class="subsection-title">Replacement rules</div>
+                <div class="replacement-grid">
+                  <div class="replacement-row">
+                    <label class="switch" for="meforash_replace"><input id="meforash_replace" type="checkbox" name="meforash_replace"><span class="slider"></span></label>
+                    <div class="replacement-label">יהוה</div>
+                    <select name="meforash_replacement" id="meforash_replacement">
+                      <option value="ה'">ה'</option>
+                      <option value="יקוק">יקוק</option>
+                      <option value="השם">השם</option>
+                      <option value="ד'">ד'</option>
+                      <option value="ידוד">ידוד</option>
+                      <option value="יהו-ה">יהו-ה</option>
+                      <option value="יחוח">יחוח</option>
+                      <option value="__other__">Other</option>
+                    </select>
+                    <input type="text" id="meforash_replacement_custom" data-custom-for="meforash_replacement" class="replacement-custom" placeholder="Custom" hidden>
+                  </div>
+
+                  <div class="replacement-row">
+                    <label class="switch" for="yaw_replace"><input id="yaw_replace" type="checkbox" name="yaw_replace"><span class="slider"></span></label>
+                    <div class="replacement-label">יה</div>
+                    <select name="yaw_replacement" id="yaw_replacement">
+                      <option value="קה">קה</option>
+                      <option value="השם">השם</option>
+                      <option value="__other__">Other</option>
+                    </select>
+                    <input type="text" id="yaw_replacement_custom" data-custom-for="yaw_replacement" class="replacement-custom" placeholder="Custom" hidden>
+                  </div>
+
+                  <div class="replacement-row">
+                    <label class="switch" for="elodim_replace"><input id="elodim_replace" type="checkbox" name="elodim_replace"><span class="slider"></span></label>
+                    <div class="replacement-label">אלוהים</div>
+                    <select name="elodim_replacement" id="elodim_replacement">
+                      <option value="אלוקים">אלוקים</option>
+                      <option value="אלודים">אלודים</option>
+                      <option value="__other__">Other</option>
+                    </select>
+                    <input type="text" id="elodim_replacement_custom" data-custom-for="elodim_replacement" class="replacement-custom" placeholder="Custom" hidden>
+                  </div>
+
+                  <div class="replacement-row">
+                    <label class="switch" for="god_replace"><input id="god_replace" type="checkbox" name="god_replace"><span class="slider"></span></label>
+                    <div class="replacement-label">God</div>
+                    <select name="god_replacement" id="god_replacement">
+                      <option value="Adonai">Adonai</option>
+                      <option value="HaShem">HaShem</option>
+                      <option value="G-d" selected>G-d</option>
+                      <option value="__other__">Other</option>
+                    </select>
+                    <input type="text" id="god_replacement_custom" data-custom-for="god_replacement" class="replacement-custom" placeholder="Custom" hidden>
+                  </div>
+                </div>
+
+                <div class="mini-help">These define the replacement rules themselves. The document-wide transform command remains separate from insertion-time replacement. <span id="sheimot_summary_note">None</span></div>
               </div>
             </div>
           </details>

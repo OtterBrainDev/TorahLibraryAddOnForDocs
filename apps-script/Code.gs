@@ -74,6 +74,9 @@ const SETTINGS = [
   "transliteration_is_biblical_hebrew",
   "transliteration_biblical_dagesh_mode",
   "versioning",
+  "voices_insert_mode_default",
+  "voices_translit_default",
+  "lexicon_insert_mode_default",
   "yaw_replace",
   "yaw_replacement",
   "source_title_font",
@@ -94,7 +97,7 @@ const SETTINGS = [
 
 function onInstall() {
 	  const initialPrefs = {
-    "apply_sheimot_on_insertion": false,
+    "apply_sheimot_on_insertion": true,
     "elodim_replace": false,
     "extended_gemara": false,
     "god_replace": false,
@@ -109,7 +112,7 @@ function onInstall() {
     "show_line_markers_default": true,
     "output_mode_default": "both",
     "bilingual_layout_default": "he-right",
-    "meforash_replace": false,
+    "meforash_replace": true,
     "nekudot": true,
     "nekudot_filter": "always",
     "surprise_me_enabled": false,
@@ -126,6 +129,9 @@ function onInstall() {
     "transliteration_is_biblical_hebrew": true,
     "transliteration_biblical_dagesh_mode": "none",
     "versioning": true,
+    "voices_insert_mode_default": "reference",
+    "voices_translit_default": "none",
+    "lexicon_insert_mode_default": "entry",
     "yaw_replace": false,
     "search_mode": "texts",
     "experimental_ai_source_sheet_enabled": false,

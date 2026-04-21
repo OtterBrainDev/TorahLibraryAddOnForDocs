@@ -137,6 +137,22 @@ function mergePreferenceDefaults(preferences) {
   $('.search-sort-select').val(preferences.last_search_sort_mode || 'relevance');
   $('.wants-relevance').prop('checked', String(preferences.last_search_relevance_sort) !== "false");
 
+  // Apply Voices workflow defaults
+  var voicesInsertMode = preferences.voices_insert_mode_default || 'reference';
+  $('.voices-insert-controls .insert-mode-btn:not(.voices-translit-btn)').each(function() {
+    var active = $(this).data('value') === voicesInsertMode;
+    $(this).toggleClass('is-active', active).attr('aria-checked', active ? 'true' : 'false');
+  });
+  var voicesTranslit = preferences.voices_translit_default || 'none';
+  $('.voices-translit-btn').each(function() {
+    var active = $(this).data('value') === voicesTranslit;
+    $(this).toggleClass('is-active', active).attr('aria-checked', active ? 'true' : 'false');
+  });
+
+  // Apply Lexicon workflow default
+  var lexiconInsertMode = preferences.lexicon_insert_mode_default || 'entry';
+  $('#lexicon-insert-mode').val(lexiconInsertMode);
+
   preferredTranslationLanguage = String(preferences.preferred_translation_language || 'en').toLowerCase();
   var savedTranslationLanguages = parseStoredArrayPreference(preferences.last_translation_languages, ['en']);
   $('.translation-language-option').prop('checked', false);

@@ -1051,4 +1051,124 @@
     display: none;
   }
 
+  /* ── Insertion Defaults: workflow sub-tabs ──────────────────────────── */
+
+  .pref-workflow-tabs {
+    display: flex;
+    gap: 4px;
+    margin: 0 0 14px;
+    padding: 4px;
+    background: #f4f3f1;
+    border: 1px solid #d2d0ca;
+    border-radius: 12px;
+  }
+
+  .pref-workflow-tab {
+    flex: 1;
+    min-width: 0;
+    min-height: 30px;
+    padding: 4px 8px;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    color: #444;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    transition: background 0.12s, color 0.12s;
+  }
+
+  .pref-workflow-tab.is-active,
+  .pref-workflow-tab[aria-selected="true"] {
+    background: #18345d;
+    color: #fff;
+  }
+
+  .pref-workflow-tab:focus-visible {
+    outline: 2px solid #18345d;
+    outline-offset: 2px;
+  }
+
+  .pref-workflow-panel[hidden] {
+    display: none;
+  }
+
+  /* ── Insertion Defaults & Display: button-group selectors ───────────── */
+
+  .pref-field-group {
+    margin: 0 0 14px;
+  }
+
+  .pref-field-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .pref-field-group .compact-section-label {
+    display: block;
+    margin: 0 0 6px;
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .pref-insert-mode-selector {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    overflow: hidden;
+    background: #f4f3f1;
+    border: 1px solid #d2d0ca;
+    border-radius: 12px;
+  }
+
+  .pref-insert-mode-selector--column {
+    flex-direction: column;
+    border-radius: 10px;
+  }
+
+  .pref-insert-mode-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 32px;
+    padding: 6px 10px;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    color: #444;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background 0.12s, color 0.12s;
+  }
+
+  .pref-insert-mode-selector--column .pref-insert-mode-btn {
+    flex: 1 1 auto;
+    text-align: left;
+    padding: 9px 14px;
+    border-top: 1px solid #d2d0ca;
+    white-space: normal;
+  }
+
+  .pref-insert-mode-selector--column .pref-insert-mode-btn:first-child {
+    border-top: none;
+  }
+
+  .pref-insert-mode-btn.is-active,
+  .pref-insert-mode-btn[aria-checked="true"] {
+    background: #18345d;
+    color: #fff;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .pref-insert-mode-btn:focus-visible {
+    outline: 2px solid #18345d;
+    outline-offset: 2px;
+  }
+
 </style>
