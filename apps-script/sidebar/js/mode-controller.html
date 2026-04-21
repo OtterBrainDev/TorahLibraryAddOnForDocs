@@ -150,10 +150,15 @@ function updateModeDependentSections() {
 
   $('.experimental-section').hide();
   $('.results-panel').toggle(hasSearch);
+  // Legacy accordion sections remain hidden (CSS display:none !important); keep for JS bindings
   $('.display-layout-shell').toggle(hasSelectedTextResult);
   $('.more-options-shell').toggle(hasSelectedTextResult);
   $('.versions-section').toggle(hasSelectedTextResult && !hideTranslations);
   $('.preview-section').toggle(hasSelectedTextResult || hasSelectedVoiceResult || hasSelectedLexiconResult);
+  // New redesign sections
+  $('.source-card').toggle(hasSelectedTextResult);
+  if (typeof syncVersionLists === 'function') syncVersionLists();
+  if (typeof renderRecentSources === 'function') renderRecentSources();
   $('.inline-session-settings').toggle(hasSelectedTextResult);
   // Show Voices insert-mode selector only when a source sheet has been selected.
   $('.voices-insert-options').toggle(hasSelectedVoiceResult);

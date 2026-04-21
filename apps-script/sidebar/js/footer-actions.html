@@ -13,7 +13,10 @@ function setFooterButtonStates() {
                    (appMode === 'texts' && hasResolvedReference && data && data.ref));
   var hasHistoryItems = !!(((sessionLibrary && sessionLibrary.pinned) || []).length || ((sessionLibrary && sessionLibrary.inserted) || []).length);
   $('#insert-source').prop('disabled', !canInsert).toggleClass('is-active', canInsert);
+  // Hidden legacy button (kept for JS references)
   $('#open-on-sefaria').toggleClass('is-active', canOpen).prop('disabled', !canOpen);
+  // Layout Settings button always enabled; source card Sefaria btn reflects canOpen
+  if (typeof updateSourceCardSefariaState === 'function') updateSourceCardSefariaState();
   $('#open-session-library').toggleClass('is-active', hasHistoryItems);
 }
 

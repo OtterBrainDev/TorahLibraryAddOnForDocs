@@ -95,6 +95,12 @@ function resetSelectedResultView() {
   $('.result-item').removeClass('selected').attr('aria-pressed', 'false');
   $('.suggestions').html("<b>Select a result to preview it.</b>");
   updateActionabilityUI({ isInsertable: false });
+  // Clear new redesign elements
+  $('.source-card').hide();
+  $('.versions-area').hide();
+  if (typeof closeVersionBadgePopover === 'function') closeVersionBadgePopover();
+  if (typeof updateSourceCardSefariaState === 'function') updateSourceCardSefariaState();
+  if (typeof renderRecentSources === 'function') renderRecentSources();
 }
 
 function ensureSelectedResultStillVisible() {
@@ -455,12 +461,41 @@ function renderResults() {
 function updateResultsVisibility() {
   var shouldCollapse = resultsCollapsed && !!selectedResultSummary;
   $('.results-lists').toggle(!shouldCollapse);
+  // Legacy summary/toggle hidden by CSS; kept for existing JS references
   $('.results-toggle-button').toggle(!!selectedResultSummary).text(shouldCollapse ? 'Show results' : 'Hide results');
   if (shouldCollapse) {
     $('.selected-result-summary').html("<strong>" + escapeHTML(selectedResultSummary.label) + "</strong>" + (selectedResultSummary.subtitle ? "<div>" + escapeHTML(selectedResultSummary.subtitle) + "</div>" : '') + (selectedResultSummary.status ? "<div class='helper-text'>" + escapeHTML(selectedResultSummary.status) + "</div>" : '')).show();
   } else {
     $('.selected-result-summary').hide().empty();
   }
+  // Populate new source card
+  updateSourceCard();
+}
+
+function updateSourceCard() {
+  if (!selectedResultSummary) {
+    $('.source-card').hide();
+    return;
+  }
+  $('.source-card-title').text(selectedResultSummary.label || '');
+  var status = selectedResultSummary.status || 'Resolving…';
+  $('.source-card-status-text').text(status);
+  var dot = $('.source-card-status-dot');
+  dot.removeClass('dot-ready dot-pending dot-error');
+  if (!selectedResultSummary.status || status === 'Resolving…') {
+    dot.addClass('dot-pending');
+  } else if (status.indexOf('Ready') >= 0 || status.indexOf('ready') >= 0) {
+    dot.addClass('dot-ready');
+  } else if (status.indexOf('more specific') >= 0 || status.indexOf('not found') >= 0) {
+    dot.addClass('dot-error');
+  } else {
+    dot.addClass('dot-ready');
+  }
+  // Show card immediately when a texts result is selected (don't wait for async)
+  if (typeof appMode !== 'undefined' && appMode === 'texts' && !!selectedResultKey) {
+    $('.source-card').show();
+  }
+  if (typeof updateSourceCardSefariaState === 'function') updateSourceCardSefariaState();
 }
 
 function clearSelectedResult() {

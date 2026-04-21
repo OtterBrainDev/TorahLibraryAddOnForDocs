@@ -2,6 +2,19 @@
 function updateActionabilityUI(state) {
   var isActionable = !!(state && state.isInsertable);
   $('.display-layout-shell, .display-layout-section, .options-panel, .versions-section').toggleClass('section-muted', !isActionable);
+  // Update source card status dot
+  var dot = $('.source-card-status-dot');
+  dot.removeClass('dot-ready dot-pending dot-error');
+  if (isActionable) {
+    dot.addClass('dot-ready');
+    if (selectedResultSummary) selectedResultSummary.status = 'Ready to insert';
+  } else if (state && state.isStructural) {
+    dot.addClass('dot-error');
+    if (selectedResultSummary) selectedResultSummary.status = 'Choose a more specific ref';
+  } else {
+    dot.addClass('dot-pending');
+  }
+  if (selectedResultSummary && typeof updateSourceCard === 'function') updateSourceCard();
 }
 
 function setResultsLoading(isLoading) {

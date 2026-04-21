@@ -13,6 +13,7 @@
     <?!= include('css/components/lexicon'); ?>
     <?!= include('css/utilities'); ?>
     <?!= include('shared/composition-card/css'); ?>
+    <?!= include('css/components/redesign'); ?>
     <script>
       window.APP_CONFIG = <?= appConfigJson ?>;
       window.INITIAL_SIDEBAR_MODE = '<?= initialMode ?>';
@@ -50,6 +51,12 @@
         <!-- Lexicon search history chips (Enhancement 1) -->
         <section class="lexicon-history-section lexicon-only" style="display:none;" aria-label="Recent searches" id="lexicon-history-section">
           <div class="lexicon-history" id="lexicon-history-chips" role="group" aria-label="Recent searches"></div>
+        </section>
+
+        <!-- 9.4: Recent sources — shown in texts mode before any search is typed -->
+        <section class="recent-sources-section text-mode-only" style="display:none;" aria-label="Recent sources">
+          <div class="recent-sources-label">Recent</div>
+          <ul class="recent-sources-list"></ul>
         </section>
 
         <section class="results-panel" style="display:none;">
@@ -151,6 +158,52 @@
     <p class="results-hint" aria-live="polite"></p>
   </div>
 </section>
+
+        <!-- Source card: appears in State B (texts mode, result selected) -->
+        <section class="source-card text-mode-only" style="display:none;" aria-label="Selected source">
+          <div class="source-card-inner">
+            <div class="source-card-info">
+              <div class="source-card-title"></div>
+              <div class="source-card-meta">
+                <span class="source-card-status-dot"></span>
+                <span class="source-card-status-text"></span>
+              </div>
+            </div>
+            <div class="source-card-actions">
+              <button type="button" class="source-card-sefaria-btn" id="source-card-sefaria" disabled aria-label="Open on Sefaria" title="Open on Sefaria">
+                <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon">
+              </button>
+              <button type="button" class="source-card-change-btn" id="source-card-change">Change</button>
+            </div>
+          </div>
+          <!-- 9.2: Quick-select version badge -->
+          <div class="source-card-version-row" style="display:none;">
+            <button type="button" class="source-card-version-badge" id="source-card-version-badge"
+              aria-haspopup="listbox" aria-expanded="false" title="Switch translation version">
+              <span class="source-card-version-lang"></span>
+              <span class="source-card-version-title">No translation</span>
+              <span class="source-card-version-arrow" aria-hidden="true">&#x25BE;</span>
+            </button>
+          </div>
+          <div class="source-card-version-popover" id="source-card-version-popover" role="listbox"
+            aria-label="Translation version" style="display:none;">
+            <ul class="source-card-version-list"></ul>
+          </div>
+        </section>
+
+        <!-- Compact version list: appears below source card when versions are available -->
+        <section class="versions-area text-mode-only" style="display:none;" aria-label="Version selection">
+          <div class="versions-area-inner">
+            <div class="version-area-group version-area-en" style="display:none;">
+              <div class="version-area-label">Translation</div>
+              <ul class="version-radio-list en-version-list" role="radiogroup" aria-label="Translation versions"></ul>
+            </div>
+            <div class="version-area-group version-area-he" style="display:none;">
+              <div class="version-area-label">Original Edition</div>
+              <ul class="version-radio-list he-version-list" role="radiogroup" aria-label="Source editions"></ul>
+            </div>
+          </div>
+        </section>
 
         <!-- Voices insert options: appears when a source sheet result is selected.
              Insert mode (reference / contents / both) is the only control exposed here.
@@ -475,12 +528,13 @@
         </div>
       </div>
 
+      <!-- Hidden legacy button kept for JS compatibility -->
+      <button id="open-on-sefaria" style="display:none;" disabled aria-hidden="true"></button>
+
       <footer class="sidebar-footer">
       <section class="primary-actions" aria-label="Primary actions">
-        <button class="submit primary-action-button" id="insert-source" disabled>Add Source</button>
-        <button class="submit secondary-action-button" id="open-on-sefaria" disabled title="Open the selected item on Sefaria" aria-label="Open the selected item on Sefaria">
-          <span class="open-sefaria-label icon-only" aria-hidden="true"><img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon"></span>
-        </button>
+        <button class="submit primary-action-button" id="insert-source" disabled title="Add Source (Ctrl+Enter)">Add Source</button>
+        <button class="submit secondary-action-button" id="open-layout-settings" title="Layout Settings" aria-label="Layout Settings">&#x1F4F0; Layout</button>
       </section>
       <section class="sidebar-footer-tools footer-tool-row standard-quick-actions" aria-label="Quick actions">
         <button type="button" class="footer-tool-button sl-footer-btn" id="open-session-library" title="Session Library" aria-label="Session Library"><span class="footer-icon" aria-hidden="true">📜</span><span class="sl-footer-count" id="sl-footer-count" hidden></span></button>
@@ -500,8 +554,84 @@
         <a target="_blank" href="https://sefaria.formstack.com/forms/google_docs_extension_feedback">Feedback</a>
       </div>
       </footer>
-    </main>
 
+      <!-- Layout Settings tray -->
+      <div class="layout-tray" id="layout-tray" role="dialog" aria-modal="true" aria-label="Layout Settings">
+        <div class="tray-backdrop" id="layout-tray-backdrop"></div>
+        <div class="tray-sheet">
+          <div class="tray-handle" aria-hidden="true"></div>
+          <div class="tray-header">
+            <span class="tray-title">Layout Settings</span>
+            <button type="button" class="tray-close" id="layout-tray-close" aria-label="Close Layout Settings">&times;</button>
+          </div>
+          <div class="tray-body">
+
+            <!-- Preview (moved from main scroll area) -->
+            <div class="tray-section tray-preview-section">
+              <div class="tray-preview-header">
+                <div class="tray-section-label">Preview</div>
+                <button type="button" class="tray-copy-btn" id="tray-copy-preview"
+                  title="Copy preview text" aria-label="Copy preview text">&#x1F4CB;</button>
+              </div>
+              <section class="suggestions" aria-live="polite" style="text-align:center;">
+                <b>Select a source to preview it.</b>
+              </section>
+            </div>
+
+            <!-- Display mode -->
+            <div class="tray-section tray-display-section">
+              <div class="tray-section-label">Display</div>
+              <div class="tray-seg-control" role="radiogroup" aria-label="Display mode">
+                <button type="button" class="tray-seg-btn tray-display-btn" data-mode="en" role="radio" aria-checked="false">Translation</button>
+                <button type="button" class="tray-seg-btn tray-display-btn" data-mode="both" role="radio" aria-checked="true">Both</button>
+                <button type="button" class="tray-seg-btn tray-display-btn" data-mode="he" role="radio" aria-checked="false">Original</button>
+              </div>
+            </div>
+
+            <!-- Bilingual layout (shown only when display mode is "both") -->
+            <div class="tray-section tray-layout-section bilingual-layout-wrapper" style="display:none;">
+              <div class="tray-section-label">Layout</div>
+              <div class="tray-seg-control" role="radiogroup" aria-label="Bilingual layout">
+                <button type="button" class="tray-seg-btn tray-layout-btn" data-layout="he-top" role="radio" aria-checked="false">Stacked</button>
+                <button type="button" class="tray-seg-btn tray-layout-btn" data-layout="he-right" role="radio" aria-checked="true">Side-by-side</button>
+                <button type="button" class="tray-seg-btn tray-layout-btn" data-layout="he-left" role="radio" aria-checked="false">Reversed</button>
+              </div>
+            </div>
+
+            <!-- Text & Links composition toggles -->
+            <div class="tray-section tray-composition-section text-mode-only">
+              <div class="tray-section-label">Text &amp; Links</div>
+              <div class="tray-pills">
+                <button type="button" class="tray-pill" data-composition-key="vowels" aria-pressed="true">Vowels</button>
+                <button type="button" class="tray-pill" data-composition-key="cantillation" aria-pressed="true">Cantillation</button>
+                <button type="button" class="tray-pill" data-composition-key="lines" aria-pressed="true">Line markers</button>
+                <button type="button" class="tray-pill" data-composition-key="link" aria-pressed="true">Sefaria link</button>
+                <button type="button" class="tray-pill" data-composition-key="details" aria-pressed="false">Source info</button>
+                <button type="button" class="tray-pill" data-composition-key="translit" aria-pressed="false">Transliteration</button>
+              </div>
+            </div>
+
+            <!-- Session override actions -->
+            <div class="tray-section tray-session-section session-override-actions" style="display:none;">
+              <div class="tray-section-label">Session</div>
+              <div class="tray-pills tray-action-pills">
+                <button type="button" class="tray-action-pill reset-session-overrides-button" aria-label="Revert to saved defaults" disabled>&#x21BA; Revert to defaults</button>
+                <button type="button" class="tray-action-pill save-session-defaults-button" aria-label="Save as defaults" disabled>&#x1F4BE; Save as defaults</button>
+              </div>
+            </div>
+
+            <!-- Open on Sefaria -->
+            <div class="tray-section tray-sefaria-section" style="display:none;">
+              <button type="button" class="tray-open-sefaria-btn" id="tray-open-on-sefaria" disabled>
+                <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon">
+                Open on Sefaria
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
     <div class="sidebar-toast" id="sidebar-toast" hidden></div>
     <div class="sidebar-notice-backdrop" id="sidebar-notice" hidden>
       <div class="sidebar-notice-card" role="alertdialog" aria-modal="true" aria-labelledby="sidebar-notice-title">
@@ -533,5 +663,6 @@
     <?!= include('sidebar/js/preview-render'); ?>
     <?!= include('shared/composition-card/shared'); ?>
     <?!= include('sidebar/js/composition-controls'); ?>
+    <?!= include('sidebar/js/layout-tray'); ?>
   </body>
 </html>
