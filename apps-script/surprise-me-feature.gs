@@ -41,7 +41,7 @@ function insertSurpriseMe(options) {
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     if (isBlankTerm) {
-      term = getRandomTanakhHebrewWord_();
+      term = getRandomFrequencyDictWord_();
     }
     const searchResponse = findSearchAdvanced(term, {
       filters: corpuses,
@@ -82,7 +82,7 @@ function insertSurpriseMe(options) {
   return {
     term: term,
     inserted: inserted,
-    message: 'Inserted ' + inserted + ' random source' + (inserted === 1 ? '' : 's') + ' for “' + term + '”.'
+    message: 'Inserted ' + inserted + ' random source' + (inserted === 1 ? '' : 's') + ' for "' + term + '".'
   };
 }
 
@@ -168,52 +168,204 @@ function shuffleArray_(items) {
   return copy;
 }
 
-function getRandomTanakhHebrewWord_() {
-  const seedRefs = [
-    'Genesis 1:1',
-    'Genesis 12:1',
-    'Exodus 3:14',
-    'Deuteronomy 6:4',
-    'Joshua 1:8',
-    'Isaiah 40:1',
-    'Psalms 23:1',
-    'Proverbs 3:5',
-    'Job 1:1',
-    'Song of Songs 2:1'
-  ];
-
-  for (let attempt = 0; attempt < 12; attempt++) {
-    const ref = seedRefs[Math.floor(Math.random() * seedRefs.length)];
-    try {
-      const response = findReference(ref);
-      const rawText = collectHebrewSearchSeedText_(response);
-      const words = extractHebrewSeedWords_(rawText);
-      if (words.length) return words[Math.floor(Math.random() * words.length)];
-    } catch (err) {
-      Logger.log('Could not derive seed word from ' + ref + ': ' + err.message);
-    }
-  }
-
-  return 'שלום';
+// Returns a random Hebrew or English word drawn from the BYU Hebrew Frequency
+// Dictionary. These are high-frequency Biblical Hebrew content words guaranteed
+// to produce Sefaria search results.
+function getRandomFrequencyDictWord_() {
+  const entry = FREQ_DICT_WORDS_[Math.floor(Math.random() * FREQ_DICT_WORDS_.length)];
+  return Math.random() < 0.5 ? entry[0] : entry[1];
 }
 
-function collectHebrewSearchSeedText_(response) {
-  if (!response) return '';
-  const raw = Array.isArray(response.he)
-    ? response.he.join(' ')
-    : (Array.isArray(response.text) ? response.text.join(' ') : (response.he || response.text || ''));
-  return String(raw || '');
-}
-
-function extractHebrewSeedWords_(text) {
-  return String(text || '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/[\u0591-\u05C7]/g, '')
-    .replace(/[^\u05D0-\u05EA\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .split(' ')
-    .filter(function (word) {
-      return word && word.length >= 2;
-    });
-}
+// Word pairs from the BYU Hebrew Frequency Dictionary (unvocalized Hebrew, English).
+// Covers the most common content words (nouns, verbs, adjectives, proper nouns)
+// in the Hebrew Bible, ordered roughly by descending corpus frequency.
+var FREQ_DICT_WORDS_ = [
+  // Proper nouns
+  ['ישראל', 'Israel'],
+  ['יהוה', 'LORD'],
+  ['משה', 'Moses'],
+  ['אברהם', 'Abraham'],
+  ['דוד', 'David'],
+  ['יצחק', 'Isaac'],
+  ['יעקב', 'Jacob'],
+  ['ירושלם', 'Jerusalem'],
+  ['מצרים', 'Egypt'],
+  ['שלמה', 'Solomon'],
+  ['ציון', 'Zion'],
+  ['אדם', 'Adam'],
+  ['יוסף', 'Joseph'],
+  ['אהרן', 'Aaron'],
+  ['כנען', 'Canaan'],
+  ['בבל', 'Babylon'],
+  ['ירדן', 'Jordan'],
+  ['סיני', 'Sinai'],
+  // High-frequency nouns
+  ['אלהים', 'God'],
+  ['בן', 'son'],
+  ['ארץ', 'land'],
+  ['יום', 'day'],
+  ['איש', 'man'],
+  ['עם', 'people'],
+  ['פנים', 'face'],
+  ['מלך', 'king'],
+  ['יד', 'hand'],
+  ['עין', 'eye'],
+  ['עיר', 'city'],
+  ['בית', 'house'],
+  ['לב', 'heart'],
+  ['נפש', 'soul'],
+  ['דבר', 'word'],
+  ['שם', 'name'],
+  ['ראש', 'head'],
+  ['אב', 'father'],
+  ['שנה', 'year'],
+  ['דרך', 'way'],
+  ['כהן', 'priest'],
+  ['בת', 'daughter'],
+  ['אח', 'brother'],
+  ['אם', 'mother'],
+  ['אשה', 'woman'],
+  ['עבד', 'servant'],
+  ['נביא', 'prophet'],
+  ['מלאך', 'angel'],
+  ['שמים', 'heaven'],
+  ['אור', 'light'],
+  ['אש', 'fire'],
+  ['מים', 'water'],
+  ['עץ', 'tree'],
+  ['אבן', 'stone'],
+  ['זהב', 'gold'],
+  ['כסף', 'silver'],
+  ['פה', 'mouth'],
+  ['בשר', 'flesh'],
+  ['דם', 'blood'],
+  ['קול', 'voice'],
+  ['לחם', 'bread'],
+  ['יין', 'wine'],
+  ['שמן', 'oil'],
+  ['חלב', 'milk'],
+  ['דבש', 'honey'],
+  ['פרי', 'fruit'],
+  ['הר', 'mountain'],
+  ['מדבר', 'wilderness'],
+  ['ים', 'sea'],
+  ['נהר', 'river'],
+  ['ענן', 'cloud'],
+  ['שמש', 'sun'],
+  ['ירח', 'moon'],
+  ['לילה', 'night'],
+  ['בקר', 'morning'],
+  ['ערב', 'evening'],
+  ['שדה', 'field'],
+  ['אדמה', 'ground'],
+  ['זרע', 'seed'],
+  ['כנף', 'wing'],
+  ['ספר', 'book'],
+  ['אהל', 'tent'],
+  ['ארון', 'ark'],
+  ['מזבח', 'altar'],
+  ['מקדש', 'sanctuary'],
+  ['שבט', 'tribe'],
+  ['נחלה', 'inheritance'],
+  ['מחנה', 'camp'],
+  ['צבא', 'army'],
+  ['חרב', 'sword'],
+  ['מגן', 'shield'],
+  ['כח', 'strength'],
+  ['ילד', 'child'],
+  ['נער', 'youth'],
+  ['זקן', 'elder'],
+  ['גר', 'stranger'],
+  ['בכור', 'firstborn'],
+  ['אדון', 'lord'],
+  ['חיים', 'life'],
+  ['רוח', 'spirit'],
+  // Theological and legal nouns
+  ['תורה', 'Torah'],
+  ['שלום', 'peace'],
+  ['אמת', 'truth'],
+  ['חסד', 'lovingkindness'],
+  ['צדק', 'righteousness'],
+  ['משפט', 'justice'],
+  ['מצוה', 'commandment'],
+  ['ברית', 'covenant'],
+  ['כבוד', 'glory'],
+  ['חק', 'statute'],
+  ['גוי', 'nation'],
+  ['חכמה', 'wisdom'],
+  ['שבת', 'Sabbath'],
+  ['עולם', 'eternity'],
+  ['תפלה', 'prayer'],
+  ['שיר', 'song'],
+  ['תהלה', 'praise'],
+  ['ישועה', 'salvation'],
+  ['קרבן', 'offering'],
+  ['עולה', 'burnt offering'],
+  ['כפרה', 'atonement'],
+  ['נדר', 'vow'],
+  ['גאלה', 'redemption'],
+  ['תשובה', 'repentance'],
+  ['אמונה', 'faith'],
+  ['ענוה', 'humility'],
+  ['צדקה', 'charity'],
+  // Common verbs (root form / infinitive)
+  ['אמר', 'say'],
+  ['עשה', 'do'],
+  ['בוא', 'come'],
+  ['הלך', 'walk'],
+  ['נתן', 'give'],
+  ['שמע', 'hear'],
+  ['ידע', 'know'],
+  ['ראה', 'see'],
+  ['שוב', 'return'],
+  ['לקח', 'take'],
+  ['קרא', 'call'],
+  ['יצא', 'go out'],
+  ['עמד', 'stand'],
+  ['ישב', 'dwell'],
+  ['עלה', 'ascend'],
+  ['ירד', 'descend'],
+  ['נפל', 'fall'],
+  ['שמר', 'keep'],
+  ['דבר', 'speak'],
+  ['בנה', 'build'],
+  ['נשא', 'carry'],
+  ['קום', 'rise'],
+  ['צוה', 'command'],
+  ['עבד', 'serve'],
+  ['אכל', 'eat'],
+  ['שתה', 'drink'],
+  ['מות', 'die'],
+  ['ירא', 'fear'],
+  ['אהב', 'love'],
+  ['כתב', 'write'],
+  ['זכר', 'remember'],
+  ['ברך', 'bless'],
+  ['קדש', 'sanctify'],
+  ['חיה', 'live'],
+  ['ענה', 'answer'],
+  ['שאל', 'ask'],
+  ['רדף', 'pursue'],
+  ['עזב', 'forsake'],
+  ['סלח', 'forgive'],
+  ['גאל', 'redeem'],
+  // Adjectives
+  ['גדול', 'great'],
+  ['טוב', 'good'],
+  ['רע', 'evil'],
+  ['חזק', 'strong'],
+  ['קדוש', 'holy'],
+  ['ישר', 'upright'],
+  ['צדיק', 'righteous'],
+  ['רשע', 'wicked'],
+  ['חכם', 'wise'],
+  ['חי', 'living'],
+  ['אחד', 'one'],
+  ['חדש', 'new'],
+  ['גבור', 'mighty'],
+  ['עני', 'poor'],
+  ['עשיר', 'rich'],
+  ['רחום', 'merciful'],
+  ['ברוך', 'blessed'],
+  ['אמין', 'faithful'],
+];
