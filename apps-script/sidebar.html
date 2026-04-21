@@ -153,6 +153,10 @@
                 <option value="contents">Full sheet contents</option>
                 <option value="both">Reference + contents</option>
               </select>
+              <div class="voices-fetch-loading preview-loading" style="display:none;" aria-live="polite" aria-label="Fetching sheet contents">
+                <span class="preview-loading-spinner" aria-hidden="true"></span>
+                <span>Fetching sheet contents…</span>
+              </div>
             </div>
           </details>
         </section>
@@ -230,7 +234,7 @@
           </details>
         </section>
 
-        <section class="preview-section text-mode-only" style="display:none;">
+        <section class="preview-section" style="display:none;">
           <details class="sidebar-accordion preview-accordion" open>
             <summary class="section-label accordion-summary">🔁 Preview</summary>
             <div class="preview-panel accordion-panel">

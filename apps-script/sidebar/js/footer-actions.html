@@ -20,6 +20,7 @@ $('#insert-source').click(function () {
     if (!selectedVoiceItem || !selectedVoiceItem.ref) return;
 
     var insertMode = $('#voices-insert-mode').val() || 'reference';
+    var fetchesSheet = insertMode === 'contents' || insertMode === 'both';
 
     // Build a payload from the selected sheet item, forwarding all hook fields.
     // Hidden defaults (showMediaLabel, preserveSheetSpacing, debugUnknownNodes)
@@ -39,9 +40,11 @@ $('#insert-source').click(function () {
       debugUnknownNodes:   !!selectedVoiceItem.debugUnknownNodes
     };
 
+    if (fetchesSheet) { $('.voices-fetch-loading').show(); }
     $('.hide').add($('.warning')).fadeIn('1000');
     google.script.run
       .withSuccessHandler(function () {
+        $('.voices-fetch-loading').hide();
         $('.hide').add($('.warning')).fadeOut('1000');
         $('.insert-warning').remove();
         upsertSessionEntry('inserted', buildSessionEntry(
@@ -51,6 +54,7 @@ $('#insert-source').click(function () {
         ));
       })
       .withFailureHandler(function (error) {
+        $('.voices-fetch-loading').hide();
         $('.hide').add($('.warning')).fadeOut('1000');
         showInsertWarning(error && error.message);
       })
