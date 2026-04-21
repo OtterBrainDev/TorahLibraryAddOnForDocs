@@ -157,6 +157,8 @@ function updateModeDependentSections() {
   $('.inline-session-settings').toggle(hasSelectedTextResult);
   // Show Voices insert-mode selector only when a source sheet has been selected.
   $('.voices-insert-options').toggle(hasSelectedVoiceResult);
+  // Show Lexicon insert-mode selector only when a lexicon entry has been selected.
+  $('.lexicon-insert-options').toggle(hasSelectedLexiconResult);
   renderSessionLibrary();
 }
 

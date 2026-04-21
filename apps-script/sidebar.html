@@ -165,6 +165,21 @@
           </details>
         </section>
 
+        <!-- Lexicon insert options: appears when a lexicon entry is selected. -->
+        <section class="lexicon-insert-options" style="display:none;" aria-label="Lexicon insert options">
+          <details class="sidebar-accordion lexicon-insert-accordion" open>
+            <summary class="section-label accordion-summary">Insert Options</summary>
+            <div class="accordion-panel lexicon-insert-panel">
+              <label class="compact-section-label" for="lexicon-insert-mode">What to insert</label>
+              <select id="lexicon-insert-mode" class="translation-version-select lexicon-insert-mode-select" aria-label="Insert mode for lexicon entry">
+                <option value="entry" selected>Full entry (headword, notes &amp; definition)</option>
+                <option value="headword">Headword &amp; source only</option>
+                <option value="definition">Definition only</option>
+              </select>
+            </div>
+          </details>
+        </section>
+
         <section class="display-layout-shell display-section layout-section text-mode-only" style="display:none;">
           <details class="sidebar-accordion display-layout-accordion" open>
             <summary class="section-label accordion-summary">Display &amp; Layout</summary>

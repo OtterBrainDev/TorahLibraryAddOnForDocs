@@ -1964,13 +1964,18 @@ function insertLexiconEntry(lexiconPayload) {
   const typography = getTypographySettings();
   let index = getInsertionIndex_(document, body);
 
+  const insertMode = String(lexiconPayload.insertMode || 'entry');
   const headWord  = String(lexiconPayload.headWord || '').trim();
   const morphology = String(lexiconPayload.morphology || '').trim();
   const lexiconName = String(lexiconPayload.lexiconName || '').trim();
   const alternates = (lexiconPayload.alternateHeadWords || []).filter(Boolean).join(', ');
 
+  const includeHeadword  = insertMode === 'entry' || insertMode === 'headword';
+  const includeMeta      = insertMode === 'entry';
+  const includeDefinition = insertMode === 'entry' || insertMode === 'definition';
+
   // Heading: headword in Hebrew typography
-  if (headWord) {
+  if (includeHeadword && headWord) {
     const titleParagraph = body.insertParagraph(index, headWord);
     titleParagraph.setHeading(DocumentApp.ParagraphHeading.HEADING3);
     applyTypographyToParagraph(titleParagraph, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle);
@@ -1978,19 +1983,28 @@ function insertLexiconEntry(lexiconPayload) {
   }
 
   // Metadata line: alternates · morphology · lexicon name
-  const metaParts = [alternates, morphology, lexiconName].filter(Boolean);
-  if (metaParts.length) {
-    const metaParagraph = body.insertParagraph(index, metaParts.join(' · '));
-    applyTypographyToParagraph(metaParagraph, typography.translationFont, typography.translationFontSize, 'italic');
+  if (includeMeta) {
+    const metaParts = [alternates, morphology, lexiconName].filter(Boolean);
+    if (metaParts.length) {
+      const metaParagraph = body.insertParagraph(index, metaParts.join(' · '));
+      applyTypographyToParagraph(metaParagraph, typography.translationFont, typography.translationFontSize, 'italic');
+      index++;
+    }
+  } else if (insertMode === 'headword' && lexiconName) {
+    // For headword-only mode still note the source lexicon
+    const sourceParagraph = body.insertParagraph(index, lexiconName);
+    applyTypographyToParagraph(sourceParagraph, typography.translationFont, typography.translationFontSize, 'italic');
     index++;
   }
 
   // Definition body — flatten content nodes into plain text lines
-  const definitionText = extractLexiconSnippet_(lexiconPayload.content, 2000);
-  if (definitionText) {
-    const defParagraph = body.insertParagraph(index, definitionText);
-    applyTypographyToParagraph(defParagraph, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
-    index++;
+  if (includeDefinition) {
+    const definitionText = extractLexiconSnippet_(lexiconPayload.content, 2000);
+    if (definitionText) {
+      const defParagraph = body.insertParagraph(index, definitionText);
+      applyTypographyToParagraph(defParagraph, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+      index++;
+    }
   }
 
   return { ok: true };

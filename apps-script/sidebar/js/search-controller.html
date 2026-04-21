@@ -431,8 +431,16 @@ function runLexiconQuery() {
     .searchLexicon(input);
 }
 
-function buildLexiconPreviewHtml(item) {
+function buildLexiconPreviewHtml(item, insertMode) {
   if (!item) return '';
+
+  var mode = insertMode || $('#lexicon-insert-mode').val() || 'entry';
+  var modeLabels = {
+    entry:    'Full entry (headword, notes & definition)',
+    headword: 'Headword & source only',
+    definition: 'Definition only'
+  };
+  var modeLabel = modeLabels[mode] || modeLabels['entry'];
 
   var headWord   = escapeHTML(item.headWord || item.label || '');
   var morphology = item.morphology ? escapeHTML(item.morphology) : '';
@@ -453,12 +461,20 @@ function buildLexiconPreviewHtml(item) {
   if (lexiconName) {
     html += "<div class='voice-preview-mode preview-meta'>Source: <strong>" + lexiconName + "</strong></div>";
   }
-  if (snippet) {
+  if (snippet && mode !== 'headword') {
     html += "<div class='voice-preview-snippet'>" + snippet + "</div>";
   }
+  html += "<div class='voice-preview-mode preview-meta'>Will insert: <strong>" + escapeHTML(modeLabel) + "</strong></div>";
   html += "</div>";
   return html;
 }
+
+// When the user changes the lexicon insert mode, refresh the preview.
+$(document).on('change', '#lexicon-insert-mode', function () {
+  if (appMode !== 'lexicon' || !selectedLexiconItem) return;
+  var insertMode = $(this).val() || 'entry';
+  $('.suggestions').html(buildLexiconPreviewHtml(selectedLexiconItem, insertMode));
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 </script>

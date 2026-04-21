@@ -52,6 +52,8 @@ function renderResultFilterStrip() {
   $strip.hide().empty();
   syncRestoreCorpusButton();
 
+  if (appMode !== 'texts') return;
+
   var params = getSearchParameters();
   var activeLangs = params.translationLanguages;
   if (!activeLangs || !activeLangs.length) return;
@@ -152,6 +154,7 @@ function renderResultGroup(selector, items, groupName) {
   $list.empty();
   if (!items.length) {
     if (selector === '.search-results') return;
+    if (selector === '.library-results' && appMode !== 'texts') return;
     $list.append("<li class='result-subtitle'>No " + groupName.toLowerCase() + ".</li>");
     return;
   }
@@ -169,7 +172,7 @@ function renderResultGroup(selector, items, groupName) {
     var metaLine = "<div class='result-meta'><span>" + escapeHTML(cluster) + "</span><span> • </span><span>" + escapeHTML(describeResultLanguages(item)) + "</span></div>";
     var subtitle = item.subtitle ? "<div class='result-subtitle'>" + escapeHTML(item.subtitle) + "</div>" : '';
     var snippet = item.snippet ? "<div class='result-snippet'>" + item.snippet + "</div>" : subtitle;
-    var titleText = appMode === 'voices' ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
+    var titleText = (appMode === 'voices' || appMode === 'lexicon') ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
     $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(titleText) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(titleText) + "</div></div>" + metaLine + snippet + "</li>");
   });
 }
@@ -391,6 +394,7 @@ function dedupeResultItems(items) {
 
 function applyClientSideSearchFilters(items, searchParameters) {
   var filtered = Array.isArray(items) ? items.slice() : [];
+  if (appMode !== 'texts') return filtered;
   if (searchParameters && searchParameters.translationOnly) {
     filtered = filtered.filter(function (item) { return itemMatchesTranslationLanguages(item, searchParameters.translationLanguages); });
   }
