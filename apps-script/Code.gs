@@ -186,7 +186,7 @@ function buildAndInstallMenu() {
   addOnMenu
       .addSeparator()
       .addItem('Preferences', 'preferencesPopup')
-      .addItem('Support', 'supportPopup')
+      .addItem('Help & Support', 'openHelpModal')
       .addToUi();
 }
 
@@ -212,7 +212,7 @@ function onOpen(e) {
         .addSubMenu(quickActionsMenu)
         .addSeparator()
         .addItem('Preferences', 'preferencesPopup')
-        .addItem('Support', 'supportPopup')
+        .addItem('Help & Support', 'openHelpModal')
         .addToUi();
   }
 }
@@ -268,11 +268,11 @@ function getSidebarBootstrapData(mode, sessionId) {
   };
 }
 
-function supportPopup() {
-  let html = HtmlService.createHtmlOutputFromFile('support')
+function openHelpModal() {
+  const html = HtmlService.createHtmlOutputFromFile('help-modal')
       .setWidth(760)
       .setHeight(860);
-  DocumentApp.getUi().showModalDialog(html, 'Support');
+  DocumentApp.getUi().showModalDialog(html, 'Help & Support');
 }
 
 function releaseNotesPopup() {
@@ -280,26 +280,6 @@ function releaseNotesPopup() {
     .setWidth(700)
     .setHeight(700);
   SpreadsheetApp.getUi().showModalDialog(html, 'Release Notes');
-}
-
-
-function howItWorksPopup() {
-  const html = HtmlService.createHtmlOutputFromFile('help')
-      .setWidth(760)
-      .setHeight(860);
-  DocumentApp.getUi().showModalDialog(html, 'User Guide');
-}
-
-function aboutPopup() {
-  const html = HtmlService.createHtmlOutputFromFile('support')
-      .setWidth(760)
-      .setHeight(860);
-  DocumentApp.getUi().showModalDialog(html, 'About');
-}
-
-function getHelpContent() {
-  const html = HtmlService.createHtmlOutputFromFile('help').getContent();
-  return html;
 }
 
 function gematriyaCountPopup() {
