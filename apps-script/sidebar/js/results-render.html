@@ -327,7 +327,8 @@ function renderResultGroup(selector, items, groupName) {
     var subtitle = item.subtitle ? "<div class='result-subtitle'>" + escapeHTML(item.subtitle) + "</div>" : '';
     var snippet = item.snippet ? "<div class='result-snippet'>" + item.snippet + "</div>" : subtitle;
     var titleText = (appMode === 'voices') ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
-    $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(item.label || item.ref) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(item.label || item.ref) + "</div></div>" + metaLine + snippet + "</li>");
+    var sefariaBtn = appMode !== 'voices' ? "<button type='button' class='result-sefaria-btn' data-ref='" + escapeHTML(item.ref) + "' aria-label='Open on Sefaria' title='Open on Sefaria'><img src='https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png' alt='' class='open-sefaria-icon'></button>" : '';
+    $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(item.label || item.ref) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(item.label || item.ref) + "</div>" + sefariaBtn + "</div>" + metaLine + snippet + "</li>");
   });
 }
 
@@ -458,13 +459,12 @@ function renderResults() {
 function updateResultsVisibility() {
   var shouldCollapse = resultsCollapsed && !!selectedResultSummary;
   $('.results-lists').toggle(!shouldCollapse);
-  // Legacy summary/toggle hidden by CSS; kept for existing JS references
   $('.results-toggle-button').toggle(!!selectedResultSummary).text(shouldCollapse ? 'Show results' : 'Hide results');
-  if (shouldCollapse) {
-    $('.selected-result-summary').html("<strong>" + escapeHTML(selectedResultSummary.label) + "</strong>" + (selectedResultSummary.subtitle ? "<div>" + escapeHTML(selectedResultSummary.subtitle) + "</div>" : '') + (selectedResultSummary.status ? "<div class='helper-text'>" + escapeHTML(selectedResultSummary.status) + "</div>" : '')).show();
-  } else {
-    $('.selected-result-summary').hide().empty();
-  }
+  // selected-result-summary is suppressed via CSS (display:none !important);
+  // source card is the canonical display of the selected result.
+  $('.selected-result-summary').hide().empty();
+  // Show results-panel-sefaria only when collapsed + result selected
+  $('#results-panel-sefaria').toggle(shouldCollapse);
   // Populate new source card
   updateSourceCard();
 }

@@ -51,8 +51,18 @@ $('.wants-relevance, .search-sort-select, .translation-only-filter').on('change'
   }
 });
 
+$('.results-panel').on('click', '.result-sefaria-btn', function (event) {
+  event.preventDefault();
+  event.stopPropagation();
+  var ref = $(this).attr('data-ref');
+  if (!ref) return;
+  var refSlug = encodeURIComponent(ref).replace(/%20/g, '_');
+  window.open('https://www.sefaria.org/' + refSlug, '_blank', 'noopener');
+});
+
 $('.results-panel').on('click keydown', '.result-item', function (event) {
   if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+  if ($(event.target).closest('.result-sefaria-btn').length) return;
   event.preventDefault();
 
   var key = $(this).attr('data-key');
@@ -112,6 +122,14 @@ $('.translation-language-toggle').on('click', function (event) {
   $dropdown.toggleClass('open', willOpen);
   $menu.toggleClass('hidden', !willOpen);
   $(this).attr('aria-expanded', willOpen ? 'true' : 'false');
+  if (willOpen) {
+    var rect = this.getBoundingClientRect();
+    $menu.css({
+      top: (rect.bottom + 2) + 'px',
+      left: rect.left + 'px',
+      right: 'auto'
+    });
+  }
 });
 
 $(document).on('click', function (event) {

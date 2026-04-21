@@ -136,6 +136,9 @@
 
   <div class="results-toggle-row">
     <button type="button" class="results-toggle-button" style="display:none;">Show results</button>
+    <button type="button" class="results-panel-sefaria-btn" id="results-panel-sefaria" style="display:none;" disabled aria-label="Open on Sefaria" title="Open on Sefaria">
+      <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon"> Open on Sefaria
+    </button>
   </div>
 
   <div class="selected-result-summary" style="display:none;"></div>
@@ -250,7 +253,6 @@
               <button type="button" class="source-card-sefaria-btn" id="source-card-sefaria" disabled aria-label="Open on Sefaria" title="Open on Sefaria">
                 <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon">
               </button>
-              <button type="button" class="source-card-change-btn" id="source-card-change">Change</button>
             </div>
           </div>
         </section>
@@ -306,61 +308,6 @@
           <ul class="lexicon-bookmarks-list" id="lexicon-bookmarks-list" aria-label="Starred entries"></ul>
         </section>
 
-        <section class="display-layout-shell display-section layout-section text-mode-only" style="display:none;">
-          <details class="sidebar-accordion display-layout-accordion" open>
-            <summary class="section-label accordion-summary">Display &amp; Layout</summary>
-            <div class="accordion-panel display-layout-panel">
-              <div class="display-layout-section">
-                <details class="display-choice-detail display-choice-dropdown" open>
-                  <summary class="display-choice-summary" aria-label="Display selector" title="Display"><span class="display-choice-label" aria-hidden="true">Display</span><span class="display-choice-selected display-choice-selected--display" id="display-choice-summary-text" data-mode="both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></span></summary>
-                  <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-label="Display mode">
-                    <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
-                    <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
-                    <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
-                  </div>
-                </details>
-                <details class="display-choice-detail bilingual-layout-wrapper display-choice-dropdown" open>
-                  <summary class="display-choice-summary" aria-label="Layout selector" title="Layout"><span class="display-choice-label" aria-hidden="true">Layout</span><span class="display-choice-selected display-choice-selected--layout" id="layout-choice-summary-text" data-layout="he-right"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></span></summary>
-                  <div class="layout-option-group" role="radiogroup" aria-label="Bilingual layout">
-                    <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
-                      <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>
-                    </button>
-                    <button type="button" class="layout-option" data-layout="he-right" role="radio" aria-checked="false" title="Right–Left">
-                      <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>
-                    </button>
-                    <button type="button" class="layout-option" data-layout="he-left" role="radio" aria-checked="false" title="Left–Right">
-                      <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>
-                    </button>
-                  </div>
-                </details>
-              </div>
-            </div>
-          </details>
-        </section>
-
-        <section class="more-options-shell text-mode-only" style="display:none;">
-          <details class="sidebar-accordion more-options-accordion" open>
-            <summary class="section-label accordion-summary">🔗 Text &amp; Links</summary>
-            <div class="more-options-panel accordion-panel">
-              <div class="options-panel more-options-card options-section">
-                <details class="session-settings-disclosure text-mode-only">
-                  <summary class="session-settings-summary">⚙️ Defaults</summary>
-                  <div class="session-settings-panel">
-                    <button type="button" class="session-settings-action-button reset-session-overrides-button" aria-label="Revert to saved defaults" title="Discard session changes and reload your saved defaults" disabled>↺ Revert</button>
-                    <button type="button" class="session-settings-action-button save-session-defaults-button" aria-label="Save current session choices as defaults" title="Make these session choices your new defaults" disabled>💾 Save as defaults</button>
-                  </div>
-                </details>
-                <div class="subsection-label">🔗 Text &amp; Links for this insertion</div>
-
-                <div class="cc-card hebrew-options-row" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills" aria-label="Composition for this insertion">
-                  <?!= include('shared/composition-card/markup') ?>
-                </div>
-                </div>
-
-              </div>
-            </div>
-          </details>
-        </section>
 
         <section class="versions-section text-mode-only" style="display:none;">
           <details class="sidebar-accordion versions-accordion" open>
@@ -626,48 +573,40 @@
           </div>
           <div class="tray-body">
 
-            <!-- Preview (moved from main scroll area) -->
-            <div class="tray-section tray-preview-section">
-              <div class="tray-preview-header">
-                <div class="tray-section-label">Preview</div>
-                <button type="button" class="tray-copy-btn" id="tray-copy-preview"
-                  title="Copy preview text" aria-label="Copy preview text">&#x1F4CB;</button>
-              </div>
-              <section class="suggestions" aria-live="polite" style="text-align:center;">
-                <b>Select a source to preview it.</b>
-              </section>
-            </div>
-
-            <!-- Display mode -->
-            <div class="tray-section tray-display-section">
-              <div class="tray-section-label">Display</div>
-              <div class="tray-seg-control" role="radiogroup" aria-label="Display mode">
-                <button type="button" class="tray-seg-btn tray-display-btn" data-mode="en" role="radio" aria-checked="false">Translation</button>
-                <button type="button" class="tray-seg-btn tray-display-btn" data-mode="both" role="radio" aria-checked="true">Both</button>
-                <button type="button" class="tray-seg-btn tray-display-btn" data-mode="he" role="radio" aria-checked="false">Original</button>
-              </div>
-            </div>
-
-            <!-- Bilingual layout (shown only when display mode is "both") -->
-            <div class="tray-section tray-layout-section bilingual-layout-wrapper" style="display:none;">
-              <div class="tray-section-label">Layout</div>
-              <div class="tray-seg-control" role="radiogroup" aria-label="Bilingual layout">
-                <button type="button" class="tray-seg-btn tray-layout-btn" data-layout="he-top" role="radio" aria-checked="false">Stacked</button>
-                <button type="button" class="tray-seg-btn tray-layout-btn" data-layout="he-right" role="radio" aria-checked="true">Side-by-side</button>
-                <button type="button" class="tray-seg-btn tray-layout-btn" data-layout="he-left" role="radio" aria-checked="false">Reversed</button>
+            <!-- Display & Layout controls (actual sidebar controls, not simplified) -->
+            <div class="tray-section tray-display-layout-section text-mode-only">
+              <div class="tray-section-label">Display &amp; Layout</div>
+              <div class="display-layout-section">
+                <details class="display-choice-detail display-choice-dropdown" open>
+                  <summary class="display-choice-summary" aria-label="Display selector" title="Display"><span class="display-choice-label" aria-hidden="true">Display</span><span class="display-choice-selected display-choice-selected--display" id="display-choice-summary-text" data-mode="both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></span></summary>
+                  <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-label="Display mode">
+                    <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
+                    <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
+                    <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
+                  </div>
+                </details>
+                <details class="display-choice-detail bilingual-layout-wrapper display-choice-dropdown" open>
+                  <summary class="display-choice-summary" aria-label="Layout selector" title="Layout"><span class="display-choice-label" aria-hidden="true">Layout</span><span class="display-choice-selected display-choice-selected--layout" id="layout-choice-summary-text" data-layout="he-right"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></span></summary>
+                  <div class="layout-option-group" role="radiogroup" aria-label="Bilingual layout">
+                    <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
+                      <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>
+                    </button>
+                    <button type="button" class="layout-option" data-layout="he-right" role="radio" aria-checked="false" title="Right–Left">
+                      <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>
+                    </button>
+                    <button type="button" class="layout-option" data-layout="he-left" role="radio" aria-checked="false" title="Left–Right">
+                      <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>
+                    </button>
+                  </div>
+                </details>
               </div>
             </div>
 
-            <!-- Text & Links composition toggles -->
-            <div class="tray-section tray-composition-section text-mode-only">
-              <div class="tray-section-label">Text &amp; Links</div>
-              <div class="tray-pills">
-                <button type="button" class="tray-pill" data-composition-key="vowels" aria-pressed="true">Vowels</button>
-                <button type="button" class="tray-pill" data-composition-key="cantillation" aria-pressed="true">Cantillation</button>
-                <button type="button" class="tray-pill" data-composition-key="lines" aria-pressed="true">Line markers</button>
-                <button type="button" class="tray-pill" data-composition-key="link" aria-pressed="true">Sefaria link</button>
-                <button type="button" class="tray-pill" data-composition-key="details" aria-pressed="false">Source info</button>
-                <button type="button" class="tray-pill" data-composition-key="translit" aria-pressed="false">Transliteration</button>
+            <!-- Insertion Format (composition card) -->
+            <div class="tray-section tray-insertion-format-section text-mode-only">
+              <div class="tray-section-label">Insertion Format</div>
+              <div class="cc-card hebrew-options-row" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills" aria-label="Composition for this insertion">
+                <?!= include('shared/composition-card/markup') ?>
               </div>
             </div>
 

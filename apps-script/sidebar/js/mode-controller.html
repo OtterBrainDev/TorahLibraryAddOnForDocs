@@ -142,7 +142,7 @@ function updateModeDependentSections() {
   var hideTranslations = $('.translation-version-select option:not(:disabled)').length <= 1;
 
   if (appMode === 'experimental') {
-    $('.results-panel, .display-layout-shell, .versions-section, .preview-section, .inline-session-settings, .more-options-shell').hide();
+    $('.results-panel, .versions-section, .preview-section, .inline-session-settings').hide();
     $('.experimental-section').show();
     renderSessionLibrary();
     return;
@@ -150,14 +150,13 @@ function updateModeDependentSections() {
 
   $('.experimental-section').hide();
   $('.results-panel').toggle(hasSearch);
-  $('.display-layout-shell').toggle(hasSelectedTextResult);
-  $('.more-options-shell').toggle(hasSelectedTextResult);
   $('.versions-section').toggle(hasSelectedTextResult && !hideTranslations);
   // Show source card when a text result is selected
   $('.preview-section').toggle(hasSelectedTextResult);
   $('.voices-preview-section').toggle(hasSelectedVoiceResult || hasSelectedLexiconResult);
   // New redesign sections
   $('.source-card').toggle(hasSelectedTextResult);
+  $('.unified-sidebar').toggleClass('has-selected-result', hasSelectedTextResult);
   if (typeof renderRecentSources === 'function') renderRecentSources();
   $('.inline-session-settings').toggle(hasSelectedTextResult);
   // Show Voices insert-mode selector only when a source sheet has been selected.

@@ -12,82 +12,11 @@ function closeLayoutTray() {
   $('#open-layout-settings').focus();
 }
 
-function syncTrayDisplayBtns() {
-  var outputMode = $('.output-mode-selection').val() || 'both';
-  $('.tray-display-btn').each(function () {
-    var isSelected = $(this).data('mode') === outputMode;
-    $(this).attr('aria-checked', isSelected ? 'true' : 'false');
-  });
-}
-
-function syncTrayLayoutBtns() {
-  var layout = $('.bilingual-layout-selection').val() || 'he-right';
-  $('.tray-layout-btn').each(function () {
-    var isSelected = $(this).data('layout') === layout;
-    $(this).attr('aria-checked', isSelected ? 'true' : 'false');
-  });
-}
-
-function syncTrayPillsFromPreferences() {
-  var keyToCheckbox = {
-    'vowels':       '.wants-vowels',
-    'cantillation': '.wants-cantillation',
-    'lines':        '.wants-pesukim',
-    'link':         '.insert-sefaria-link',
-    'details':      '.include-translation-source-info',
-    'translit':     '.include-transliteration'
-  };
-  $('.tray-pill[data-composition-key]').each(function () {
-    var key = $(this).data('composition-key');
-    var selector = keyToCheckbox[key];
-    if (selector) {
-      $(this).attr('aria-pressed', $(selector).prop('checked') ? 'true' : 'false');
-    }
-  });
-}
-
 function syncTrayFromCurrentState() {
-  syncTrayDisplayBtns();
-  syncTrayLayoutBtns();
-  syncTrayPillsFromPreferences();
   var canOpen = !!(appMode === 'texts' && hasResolvedReference && data && data.ref);
   $('#tray-open-on-sefaria').prop('disabled', !canOpen);
   $('.tray-sefaria-section').toggle(canOpen);
 }
-
-// ── Tray display btn (output mode) ────────────────────────────────────────
-
-$(document).on('click', '.tray-display-btn', function () {
-  var mode = $(this).data('mode');
-  if (!mode) return;
-  $('.output-mode-selection').val(mode).trigger('change');
-  // syncTrayDisplayBtns() called via the .output-mode-selection change handler
-  // which calls syncDisplayModeCards(), which now also updates tray btns
-});
-
-// ── Tray layout btn (bilingual layout) ────────────────────────────────────
-
-$(document).on('click', '.tray-layout-btn', function () {
-  var layout = $(this).data('layout');
-  if (!layout) return;
-  $('.bilingual-layout-selection').val(layout);
-  syncLayoutCards();
-  saveSidebarPreference({ bilingual_layout_default: layout });
-  if (hasResolvedReference && data && data.ref) {
-    updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
-  }
-  syncTrayLayoutBtns();
-});
-
-// ── Tray composition pill clicks ──────────────────────────────────────────
-
-$(document).on('click', '.tray-pill[data-composition-key]', function () {
-  var key = $(this).data('composition-key');
-  if (!key || typeof _sidebarCompositionOnToggle !== 'function') return;
-  _sidebarCompositionOnToggle(key);
-  // Sync pill state from checkbox after toggle
-  setTimeout(syncTrayPillsFromPreferences, 0);
-});
 
 // ── Open tray ─────────────────────────────────────────────────────────────
 
@@ -112,14 +41,6 @@ $(document).on('keydown', function (event) {
   }
 });
 
-// ── Source card "Change" button ───────────────────────────────────────────
-
-$('#source-card-change').on('click', function () {
-  resultsCollapsed = false;
-  updateResultsVisibility();
-  updateModeDependentSections();
-});
-
 // ── Source card "Open on Sefaria" button ─────────────────────────────────
 
 $('#source-card-sefaria').on('click', function () {
@@ -134,50 +55,21 @@ $('#tray-open-on-sefaria').on('click', function () {
   if (url) window.open(url, '_blank', 'noopener');
 });
 
-// ── Update source card + tray Sefaria btn when reference state changes ────
+// ── Results panel "Open on Sefaria" button ────────────────────────────────
+
+$('#results-panel-sefaria').on('click', function () {
+  var url = typeof buildSefariaOpenUrl === 'function' ? buildSefariaOpenUrl() : null;
+  if (url) window.open(url, '_blank', 'noopener');
+});
+
+// ── Update source card + tray + results-panel Sefaria btns ───────────────
 
 function updateSourceCardSefariaState() {
   var canOpen = !!(appMode === 'texts' && hasResolvedReference && data && data.ref);
   $('#source-card-sefaria').prop('disabled', !canOpen);
   $('#tray-open-on-sefaria').prop('disabled', !canOpen);
   $('.tray-sefaria-section').toggle(canOpen);
-}
-
-// =====================================================================
-// 9.3 — Tray preview Copy button
-// =====================================================================
-
-$('#tray-copy-preview').on('click', function () {
-  var $btn  = $(this);
-  var $area = $('.tray-preview-section .suggestions');
-  var div   = document.createElement('div');
-  div.innerHTML = $area.html() || '';
-  var text  = (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
-  if (!text || text === 'Select a source to preview it.') return;
-
-  var finish = function (ok) {
-    if (!ok) return;
-    var orig = $btn.html();
-    $btn.html('&#x2713;').addClass('tray-copy-success');
-    setTimeout(function () { $btn.html(orig).removeClass('tray-copy-success'); }, 1500);
-  };
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(function () { finish(true); }).catch(function () {
-      fallbackCopy(text, finish);
-    });
-  } else {
-    fallbackCopy(text, finish);
-  }
-});
-
-function fallbackCopy(text, cb) {
-  var $ta = $('<textarea>').val(text).css({ position: 'fixed', top: 0, left: 0, opacity: 0 }).appendTo('body');
-  $ta[0].select();
-  var ok = false;
-  try { ok = document.execCommand('copy'); } catch (e) {}
-  $ta.remove();
-  cb(ok);
+  $('#results-panel-sefaria').prop('disabled', !canOpen).toggle(!!selectedResultSummary && resultsCollapsed);
 }
 
 // =====================================================================
