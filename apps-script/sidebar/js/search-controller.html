@@ -37,6 +37,7 @@ function setResultsLoading(isLoading) {
 
 function runUnifiedQuery() {
   if (appMode === 'voices') return runVoicesQuery();
+  if (appMode === 'lexicon') return runLexiconQuery();
   updateModeDependentSections();
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
   $('.input').val(input);
@@ -235,6 +236,24 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     updateModeDependentSections();
     return;
   }
+
+  if (appMode === 'lexicon') {
+    var lexItem = queryState.searchResults.concat(queryState.libraryMatches).find(function(result){ return result && result.ref === selectedRef; }) || null;
+    selectedLexiconItem = lexItem;
+    selectedRefValue = selectedRef;
+    hasResolvedReference = false;
+    if (selectedResultSummary) {
+      selectedResultSummary.status = lexItem ? 'Ready to insert' : '';
+      updateResultsVisibility();
+    }
+    setInsertButtonState(!!lexItem);
+    $('#open-on-sefaria').prop('disabled', true);
+    if (lexItem) {
+      $('.suggestions').html(buildLexiconPreviewHtml(lexItem));
+    }
+    updateModeDependentSections();
+    return;
+  }
   selectedVoiceItem = null;
   selectedRefValue = selectedRef;
   var requestId = ++latestResolveRequestId;
@@ -286,7 +305,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
 }
 
 function refreshSelectedResult() {
-  if (appMode === 'voices') {
+  if (appMode === 'voices' || appMode === 'lexicon') {
     updateModeDependentSections();
     return;
   }
@@ -375,4 +394,71 @@ $(document).on('change', '#voices-insert-mode', function () {
   $('.suggestions').html(buildVoicesPreviewHtml(selectedVoiceItem, insertMode));
 });
 
+// ─── Lexicon ─────────────────────────────────────────────────────────────────
+
+function runLexiconQuery() {
+  var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
+  $('.input').val(input);
+  clearSelectedResult();
+  selectedLexiconItem = null;
+  setResultsHint('');
+  updateModeDependentSections();
+  if (!input) {
+    queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
+    reprocessAndRenderResults();
+    setInsertButtonState(false);
+    $('#open-on-sefaria').prop('disabled', true);
+    return;
+  }
+  setResultsLoading(true);
+  google.script.run
+    .withSuccessHandler(function (response) {
+      var items = Array.isArray(response) ? response : [];
+      queryState.rawLibraryMatches = [];
+      queryState.rawSearchResults = items;
+      reprocessAndRenderResults();
+      if (!items.length) setResultsHint('No lexicon entries found for this word.');
+      updateModeDependentSections();
+      setResultsLoading(false);
+    })
+    .withFailureHandler(function (error) {
+      queryState.rawLibraryMatches = [];
+      queryState.rawSearchResults = [];
+      reprocessAndRenderResults();
+      setResultsHint((error && error.message) || 'Lexicon search is temporarily unavailable.');
+      setResultsLoading(false);
+    })
+    .searchLexicon(input);
+}
+
+function buildLexiconPreviewHtml(item) {
+  if (!item) return '';
+
+  var headWord   = escapeHTML(item.headWord || item.label || '');
+  var morphology = item.morphology ? escapeHTML(item.morphology) : '';
+  var lexiconName = item.lexiconName ? escapeHTML(item.lexiconName) : '';
+  var alternates = Array.isArray(item.alternateHeadWords) && item.alternateHeadWords.length
+    ? escapeHTML(item.alternateHeadWords.slice(0, 4).join(', '))
+    : '';
+  var snippet = escapeHTML(normalizeOptionText(item.snippet || ''));
+
+  var html = "<div class='voice-preview lexicon-preview'>";
+  html += "<div class='voice-preview-title' dir='rtl'>" + headWord + "</div>";
+  if (alternates) {
+    html += "<div class='voice-preview-owner preview-meta'>" + alternates + "</div>";
+  }
+  if (morphology) {
+    html += "<div class='voice-preview-topics preview-meta'>" + morphology + "</div>";
+  }
+  if (lexiconName) {
+    html += "<div class='voice-preview-mode preview-meta'>Source: <strong>" + lexiconName + "</strong></div>";
+  }
+  if (snippet) {
+    html += "<div class='voice-preview-snippet'>" + snippet + "</div>";
+  }
+  html += "</div>";
+  return html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 </script>

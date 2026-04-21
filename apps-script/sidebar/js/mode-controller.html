@@ -46,9 +46,10 @@ function openPreferencesWithHint(sectionHint) {
 
 var appMode = window.INITIAL_SIDEBAR_MODE || 'texts';
 var selectedVoiceItem = null;
+var selectedLexiconItem = null;
 
 function normalizeSidebarMode(mode) {
-  return (mode === 'voices' || mode === 'experimental') ? mode : 'texts';
+  return (mode === 'voices' || mode === 'experimental' || mode === 'lexicon') ? mode : 'texts';
 }
 
 function hasExperimentalFeaturesEnabled() {
@@ -99,7 +100,7 @@ function setSidebarMode(mode, skipPreferenceSave) {
     appMode = 'texts';
   }
 
-  $('body').removeClass('mode-texts mode-voices mode-experimental')
+  $('body').removeClass('mode-texts mode-voices mode-experimental mode-lexicon')
     .addClass('mode-' + appMode);
   $('.unified-sidebar').attr('data-mode', appMode);
   $('.mode-switch-button, .experimental-menu-button').removeClass('is-active').attr('aria-pressed', 'false');
@@ -107,15 +108,20 @@ function setSidebarMode(mode, skipPreferenceSave) {
     .addClass('is-active').attr('aria-pressed', 'true');
 
   $('.voices-only').toggle(appMode === 'voices');
+  $('.lexicon-only').toggle(appMode === 'lexicon');
   $('.text-mode-only').toggle(appMode === 'texts');
   $('.experimental-section').toggle(appMode === 'experimental');
 
   $('.reference-row .search-submit, .reference-row .history-submit').show();
   $('.advanced-version-details').toggle(appMode === 'texts' && $('.output-mode-selection').val() !== 'en');
-  $('.input').attr('placeholder', appMode === 'voices' ? 'Search source sheets' : 'Search Sefaria');
-  $('.search-results-label').text(appMode === 'voices' ? 'Source Sheets' : 'Search results');
-  $('#insert-source').text(appMode === 'voices' ? 'Add Link' : 'Add Source');
-  $('.open-label-text').text(appMode === 'voices' ? 'Open Sheet' : 'Open');
+  var placeholders = { voices: 'Search source sheets', lexicon: 'Enter a Hebrew or Aramaic word' };
+  $('.input').attr('placeholder', placeholders[appMode] || 'Search Sefaria');
+  var searchLabels = { voices: 'Source Sheets', lexicon: 'Lexicon entries' };
+  $('.search-results-label').text(searchLabels[appMode] || 'Search results');
+  var insertLabels = { voices: 'Add Link', lexicon: 'Add Entry' };
+  $('#insert-source').text(insertLabels[appMode] || 'Add Source');
+  var openLabels = { voices: 'Open Sheet' };
+  $('.open-label-text').text(openLabels[appMode] || 'Open');
 
   if (!skipPreferenceSave && appMode !== 'experimental') {
     saveAccountPreference({ search_mode: appMode });
@@ -132,6 +138,7 @@ function updateModeDependentSections() {
   var hasSearch = !!(($('.input').val() || '').trim()) || getAllRawResults().length > 0;
   var hasSelectedTextResult = appMode === 'texts' && !!selectedResultKey;
   var hasSelectedVoiceResult = appMode === 'voices' && !!selectedVoiceItem;
+  var hasSelectedLexiconResult = appMode === 'lexicon' && !!selectedLexiconItem;
   var hideTranslations = $('.translation-version-select option:not(:disabled)').length <= 1;
 
   if (appMode === 'experimental') {
@@ -146,7 +153,7 @@ function updateModeDependentSections() {
   $('.display-layout-shell').toggle(hasSelectedTextResult);
   $('.more-options-shell').toggle(hasSelectedTextResult);
   $('.versions-section').toggle(hasSelectedTextResult && !hideTranslations);
-  $('.preview-section').toggle(hasSelectedTextResult || hasSelectedVoiceResult);
+  $('.preview-section').toggle(hasSelectedTextResult || hasSelectedVoiceResult || hasSelectedLexiconResult);
   $('.inline-session-settings').toggle(hasSelectedTextResult);
   // Show Voices insert-mode selector only when a source sheet has been selected.
   $('.voices-insert-options').toggle(hasSelectedVoiceResult);
@@ -159,6 +166,7 @@ $('.mode-switch-button, .experimental-menu-button').off('click').on('click', fun
   setSidebarMode(nextMode);
   clearSelectedResult();
   selectedVoiceItem = null;
+  selectedLexiconItem = null;
   setInsertButtonState(false);
   $('#open-on-sefaria').prop('disabled', true);
   if (($('.input').val() || '').trim() && appMode !== 'experimental') runUnifiedQuery();

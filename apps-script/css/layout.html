@@ -991,8 +991,9 @@
    ============================================================= */
 
 .mode-switch-section {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: 6px;
   margin: 0 0 8px;
   padding: 5px;
@@ -1013,6 +1014,17 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.02em;
+  /* Text tabs share available width equally */
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Compact emoji button — only needs its natural width */
+.mode-switch-button.experimental-menu-button {
+  flex: 0 0 auto;
+  min-width: 36px;
+  padding: 6px 8px;
+  letter-spacing: 0;
 }
 
 .mode-switch-button.is-active {

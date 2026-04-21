@@ -6,8 +6,11 @@ function setInsertButtonState(enabled) {
 }
 
 function setFooterButtonStates() {
-  var canInsert = !!((appMode === 'voices' && selectedVoiceItem && selectedVoiceItem.ref) || (appMode === 'texts' && hasResolvedReference && data && data.ref));
-  var canOpen = !!((appMode === 'voices' && selectedVoiceItem && selectedVoiceItem.url) || (appMode === 'texts' && hasResolvedReference && data && data.ref));
+  var canInsert = !!((appMode === 'voices' && selectedVoiceItem && selectedVoiceItem.ref) ||
+                     (appMode === 'texts' && hasResolvedReference && data && data.ref) ||
+                     (appMode === 'lexicon' && selectedLexiconItem && selectedLexiconItem.headWord));
+  var canOpen = !!((appMode === 'voices' && selectedVoiceItem && selectedVoiceItem.url) ||
+                   (appMode === 'texts' && hasResolvedReference && data && data.ref));
   var hasHistoryItems = !!(((sessionLibrary && sessionLibrary.pinned) || []).length || ((sessionLibrary && sessionLibrary.inserted) || []).length);
   $('#insert-source').prop('disabled', !canInsert).toggleClass('is-active', canInsert);
   $('#open-on-sefaria').toggleClass('is-active', canOpen).prop('disabled', !canOpen);
@@ -15,6 +18,29 @@ function setFooterButtonStates() {
 }
 
 $('#insert-source').click(function () {
+  // --- Lexicon mode: insert a lexicon entry ---
+  if (appMode === 'lexicon') {
+    if (!selectedLexiconItem || !selectedLexiconItem.headWord) return;
+
+    $('.hide').add($('.warning')).fadeIn('1000');
+    google.script.run
+      .withSuccessHandler(function () {
+        $('.hide').add($('.warning')).fadeOut('1000');
+        $('.insert-warning').remove();
+        upsertSessionEntry('inserted', buildSessionEntry(
+          selectedLexiconItem.ref,
+          selectedLexiconItem.headWord || selectedLexiconItem.label,
+          'Dictionary'
+        ));
+      })
+      .withFailureHandler(function (error) {
+        $('.hide').add($('.warning')).fadeOut('1000');
+        showInsertWarning(error && error.message);
+      })
+      .insertLexiconEntry(selectedLexiconItem);
+    return;
+  }
+
   // --- Voices mode: call the unified insertSheet backend ---
   if (appMode === 'voices') {
     if (!selectedVoiceItem || !selectedVoiceItem.ref) return;

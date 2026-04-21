@@ -169,14 +169,14 @@ function onOpen(e) {
 }
 
 function setSearchMode_(mode) {
-  const normalizedMode = (mode === 'voices' || mode === 'experimental') ? mode : 'texts';
+  const normalizedMode = (mode === 'voices' || mode === 'experimental' || mode === 'lexicon') ? mode : 'texts';
   PropertiesService.getUserProperties().setProperty('search_mode', normalizedMode);
   return normalizedMode;
 }
 
 function getSearchMode_() {
   const stored = PropertiesService.getUserProperties().getProperty('search_mode');
-  return (stored === 'voices' || stored === 'experimental') ? stored : 'texts';
+  return (stored === 'voices' || stored === 'experimental' || stored === 'lexicon') ? stored : 'texts';
 }
 
 function openSharedSidebar_(mode) {
@@ -201,7 +201,7 @@ function voicesHTML() {
 
 function getSidebarBootstrapData(mode, sessionId) {
   const accountPreferences = getAccountPreferences();
-  const resolvedMode = (mode === 'voices' || mode === 'experimental' || mode === 'texts') ? mode : getSearchMode_();
+  const resolvedMode = (mode === 'voices' || mode === 'experimental' || mode === 'texts' || mode === 'lexicon') ? mode : getSearchMode_();
   const resolvedSessionId = sessionId || generateSidebarSessionId_();
   const sessionState = resolvedMode === 'texts' ? getSidebarSessionState(resolvedSessionId) : {};
   const effectivePreferences = Object.assign({}, accountPreferences, sessionState);
@@ -1862,6 +1862,141 @@ function searchVoices(query, options) {
 function insertSheetReference(sheetPayload) {
   return insertSheet(sheetPayload, { insertMode: 'reference' });
 }
+
+// ─── Lexicon ──────────────────────────────────────────────────────────────────
+
+/**
+ * Search the Sefaria lexicon for a given word.
+ * Calls https://www.sefaria.org/api/words/{word} and returns a normalized
+ * array of result objects ready for the sidebar result list.
+ */
+function searchLexicon(query) {
+  const safeQuery = String(query || '').trim();
+  if (!safeQuery) {
+    return [];
+  }
+
+  const url = 'https://www.sefaria.org/api/words/' + encodeURIComponent(safeQuery);
+  const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+
+  const status = response.getResponseCode ? response.getResponseCode() : 200;
+  if (status === 404) {
+    return [];
+  }
+  if (status >= 400) {
+    throw new Error('Lexicon search is temporarily unavailable.');
+  }
+
+  let entries;
+  try {
+    entries = JSON.parse(response.getContentText() || '[]');
+  } catch (e) {
+    return [];
+  }
+
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return [];
+  }
+
+  return entries.map(function(entry, index) {
+    const headWord = String(entry.headWord || entry.headword || safeQuery).trim();
+    const lexiconName = String(entry.parent_lexicon || '').trim();
+
+    const alternateTexts = Array.isArray(entry.alternateHeadWords)
+      ? entry.alternateHeadWords.map(function(a) { return typeof a === 'string' ? a : (a.text || a.word || ''); }).filter(Boolean)
+      : [];
+
+    let snippet = extractLexiconSnippet_(entry.content, 180);
+    if (!snippet && entry.morphology) snippet = String(entry.morphology).trim();
+
+    return {
+      key: 'lexicon-' + index + '-' + headWord,
+      ref: 'lexicon:' + String(entry.rid || index),
+      label: headWord,
+      subtitle: lexiconName || 'Lexicon',
+      snippet: snippet,
+      headWord: headWord,
+      alternateHeadWords: alternateTexts,
+      morphology: String(entry.morphology || '').trim(),
+      lexiconName: lexiconName,
+      content: entry.content || [],
+      rid: entry.rid || null,
+      typeLabel: 'Lexicon',
+      clusterLabel: 'Dictionary',
+      kind: 'lexicon',
+      hasTranslation: true,
+      availableLangs: ['en', 'he']
+    };
+  });
+}
+
+function extractLexiconSnippet_(content, maxLen) {
+  if (!Array.isArray(content)) return '';
+  var parts = [];
+  var collect = function(node) {
+    if (!node) return;
+    if (typeof node === 'string') { parts.push(node); return; }
+    if (node.text) collect(node.text);
+    if (node.en) collect(node.en);
+    if (Array.isArray(node.senses)) node.senses.forEach(collect);
+    if (Array.isArray(node.notes)) node.notes.forEach(collect);
+  };
+  content.forEach(collect);
+  var raw = parts.join(' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return raw.length > maxLen ? raw.substring(0, maxLen) + '…' : raw;
+}
+
+/**
+ * Insert a selected lexicon entry into the active Google Document.
+ * lexiconPayload is the normalized object returned by searchLexicon.
+ */
+function insertLexiconEntry(lexiconPayload) {
+  if (!lexiconPayload || !lexiconPayload.headWord) {
+    throw new Error('No lexicon entry is selected.');
+  }
+
+  const document = DocumentApp.getActiveDocument();
+  if (!document) {
+    throw new Error('Open a Google Doc before inserting a lexicon entry.');
+  }
+
+  const body = document.getBody();
+  const typography = getTypographySettings();
+  let index = getInsertionIndex_(document, body);
+
+  const headWord  = String(lexiconPayload.headWord || '').trim();
+  const morphology = String(lexiconPayload.morphology || '').trim();
+  const lexiconName = String(lexiconPayload.lexiconName || '').trim();
+  const alternates = (lexiconPayload.alternateHeadWords || []).filter(Boolean).join(', ');
+
+  // Heading: headword in Hebrew typography
+  if (headWord) {
+    const titleParagraph = body.insertParagraph(index, headWord);
+    titleParagraph.setHeading(DocumentApp.ParagraphHeading.HEADING3);
+    applyTypographyToParagraph(titleParagraph, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle);
+    index++;
+  }
+
+  // Metadata line: alternates · morphology · lexicon name
+  const metaParts = [alternates, morphology, lexiconName].filter(Boolean);
+  if (metaParts.length) {
+    const metaParagraph = body.insertParagraph(index, metaParts.join(' · '));
+    applyTypographyToParagraph(metaParagraph, typography.translationFont, typography.translationFontSize, 'italic');
+    index++;
+  }
+
+  // Definition body — flatten content nodes into plain text lines
+  const definitionText = extractLexiconSnippet_(lexiconPayload.content, 2000);
+  if (definitionText) {
+    const defParagraph = body.insertParagraph(index, definitionText);
+    applyTypographyToParagraph(defParagraph, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+    index++;
+  }
+
+  return { ok: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Unified insert entry point called by the sidebar.
