@@ -373,7 +373,7 @@
   flex: 1 1 auto;
   min-width: 0;
   margin-bottom: 2px;
-  color: #18345d;
+  color: var(--sefaria-blue);
   font-size: 13px;
   font-weight: 700;
   overflow-wrap: anywhere;
@@ -658,7 +658,7 @@
 
 .sl-modal-title {
   margin: 0 0 2px;
-  color: #18345d;
+  color: var(--sefaria-blue);
   font-family: Georgia, serif;
   font-size: 18px;
   font-weight: 600;
@@ -727,7 +727,7 @@
 
 .sl-search-input:focus {
   background: #fff;
-  border-color: #18345d;
+  border-color: var(--selected);
   outline: none;
   box-shadow: 0 0 0 2px rgba(24, 52, 93, 0.12);
 }
@@ -789,8 +789,8 @@
 }
 
 .sl-filter-chip--active {
-  color: #18345d;
-  background: #ddeeff;
+  color: var(--sefaria-blue);
+  background: var(--selected-soft);
   border-color: #93bde8;
 }
 
@@ -1026,7 +1026,7 @@
 }
 
 .sl-item:focus {
-  outline: 2px solid #18345d;
+  outline: 2px solid var(--selected);
   outline-offset: -2px;
 }
 
@@ -1062,7 +1062,7 @@
 .sl-item-title {
   flex: 1;
   min-width: 0;
-  color: #18345d;
+  color: var(--sefaria-blue);
   font-size: 13px;
   font-weight: 500;
   overflow: hidden;
@@ -1217,13 +1217,13 @@
 
 .sl-btn--primary {
   color: #fff;
-  background: #18345d;
-  border: 1px solid #18345d;
+  background: var(--selected);
+  border: 1px solid var(--selected);
 }
 
 .sl-btn--primary:hover {
-  background: #22426f;
-  border-color: #22426f;
+  background: var(--selected-hover);
+  border-color: var(--selected-hover);
 }
 
 .sl-btn--ghost {
@@ -1282,7 +1282,7 @@
 
 .sl-clear-search-btn {
   padding: 5px 12px;
-  color: #18345d;
+  color: var(--sefaria-blue);
   cursor: pointer;
   background: transparent;
   border: 1px solid #93bde8;
@@ -1292,7 +1292,7 @@
 }
 
 .sl-clear-search-btn:hover {
-  background: #ddeeff;
+  background: var(--selected-soft);
 }
 
 /* =============================================================

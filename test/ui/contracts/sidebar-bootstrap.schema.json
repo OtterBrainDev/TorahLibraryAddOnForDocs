@@ -1,0 +1,19 @@
+{
+  "_description": "Shape contract for the object returned by getSidebarBootstrapData (apps-script/Code.gs). The sidebar client (apps-script/sidebar/js/bootstrap.html) reads these fields at load time; any server refactor that renames or removes one of them silently breaks the sidebar. test/ui/rpc-surface.test.js freezes the function name and arity; this contract freezes the returned shape.",
+  "required": [
+    "mode",
+    "sessionId",
+    "accountPreferences",
+    "sessionState",
+    "effectivePreferences",
+    "preferences"
+  ],
+  "types": {
+    "mode": "string",
+    "sessionId": "string",
+    "accountPreferences": "object",
+    "sessionState": "object",
+    "effectivePreferences": "object",
+    "preferences": "object"
+  }
+}

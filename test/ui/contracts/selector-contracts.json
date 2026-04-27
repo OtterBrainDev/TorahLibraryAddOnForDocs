@@ -9,8 +9,6 @@
       "#layout-choice-summary-text",
       "data-sidebar-mode=\"texts\"",
       "data-sidebar-mode=\"experimental\"",
-      "#ai-inline-generate",
-      "#ai-inline-topic",
       "#sm-inline-launch",
       "#sm-inline-term",
       "#voices-insert-mode",
@@ -23,16 +21,6 @@
       "#source_title_font",
       "#hebrew_font",
       "#transliteration_scheme"
-    ]
-  },
-  "ai_lesson": {
-    "template": "apps-script/ai_lesson.html",
-    "requiredSelectors": [
-      "#basicTabBtn",
-      "#advancedTabBtn",
-      "#modeToggle",
-      "#generateBtn",
-      "#status"
     ]
   },
   "surprise_me": {

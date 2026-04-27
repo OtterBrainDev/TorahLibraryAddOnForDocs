@@ -1,10 +1,23 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {
-  getEnglishAttributionDetails,
-  getEnglishAttributionLines,
-  getEnglishAttribution,
-} = require('../apps-script/attribution.gs');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const ATTRIBUTION_SOURCE = fs.readFileSync(
+  path.resolve(__dirname, '../../apps-script/attribution.gs'),
+  'utf8'
+);
+
+function loadAttributionModule() {
+  const wrapped = `(function (module, exports) {\n${ATTRIBUTION_SOURCE}\n});`;
+  const factory = vm.runInThisContext(wrapped, { filename: 'attribution.gs' });
+  const fakeModule = { exports: {} };
+  factory(fakeModule, fakeModule.exports);
+  return fakeModule.exports;
+}
+
+const { getEnglishAttributionDetails, getEnglishAttributionLines, getEnglishAttribution } = loadAttributionModule();
 
 test('returns empty string when version title is missing', () => {
   assert.equal(getEnglishAttribution({}), '');

@@ -1,5 +1,33 @@
 <script>
+// Shape contract for the object returned by getSidebarBootstrapData. Must
+// stay in sync with test/ui/contracts/sidebar-bootstrap.schema.json. If the
+// server reshapes the payload without updating both sides, this logs a
+// structured warning to the browser console so the failure is visible instead
+// of silent (missing keys fall through to defaults and the sidebar half-works).
+var SIDEBAR_BOOTSTRAP_CONTRACT_KEYS = [
+  'mode', 'sessionId', 'accountPreferences', 'sessionState',
+  'effectivePreferences', 'preferences'
+];
+function validateSidebarBootstrapShape(bootstrap) {
+  if (!bootstrap || typeof bootstrap !== 'object') {
+    console.warn('[sidebar-bootstrap] payload is not an object:', bootstrap);
+    return;
+  }
+  var missing = [];
+  for (var i = 0; i < SIDEBAR_BOOTSTRAP_CONTRACT_KEYS.length; i++) {
+    var k = SIDEBAR_BOOTSTRAP_CONTRACT_KEYS[i];
+    if (!Object.prototype.hasOwnProperty.call(bootstrap, k)) missing.push(k);
+  }
+  if (missing.length) {
+    console.warn(
+      '[sidebar-bootstrap] server payload is missing contract keys: ' + missing.join(', ') +
+      '. Update getSidebarBootstrapData and docs/rpc-surface.json together.'
+    );
+  }
+}
+
 google.script.run.withSuccessHandler(function (bootstrap) {
+  validateSidebarBootstrapShape(bootstrap);
   sidebarSessionId = (bootstrap && bootstrap.sessionId) || null;
   accountPreferences = clonePlainObject((bootstrap && (bootstrap.accountPreferences || bootstrap.preferences)) || {});
   sessionPreferences = clonePlainObject((bootstrap && bootstrap.sessionState) || {});

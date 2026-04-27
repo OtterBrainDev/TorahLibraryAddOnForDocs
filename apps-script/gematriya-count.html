@@ -215,9 +215,15 @@
         const section = document.getElementById('breakdown-section');
 
         if (STATS.wordCount === 0) {
-          section.innerHTML =
-            '<div class="empty-state">No Hebrew letters found in the ' +
-            (STATS.hasSelection ? 'selection' : 'document') + '.</div>';
+          // Use DOM APIs so neither "selection" nor "document" (both constants
+          // in this codebase) ever get re-interpreted as HTML. The previous
+          // innerHTML build was safe but unnecessary.
+          while (section.firstChild) section.removeChild(section.firstChild);
+          const empty = document.createElement('div');
+          empty.className = 'empty-state';
+          empty.textContent = 'No Hebrew letters found in the ' +
+            (STATS.hasSelection ? 'selection' : 'document') + '.';
+          section.appendChild(empty);
           return;
         }
 
@@ -229,18 +235,35 @@
 
           const table = document.createElement('table');
           table.className = 'word-table';
-          table.innerHTML =
-            '<thead><tr>' +
-            '<th class="rtl-col">Word</th>' +
-            '<th style="text-align:right">Gematriya</th>' +
-            '</tr></thead>';
+
+          // Static thead — build by DOM so the whole file stays off innerHTML.
+          const thead = document.createElement('thead');
+          const headRow = document.createElement('tr');
+          const thWord = document.createElement('th');
+          thWord.className = 'rtl-col';
+          thWord.textContent = 'Word';
+          const thGem = document.createElement('th');
+          thGem.style.textAlign = 'right';
+          thGem.textContent = 'Gematriya';
+          headRow.appendChild(thWord);
+          headRow.appendChild(thGem);
+          thead.appendChild(headRow);
+          table.appendChild(thead);
 
           const tbody = document.createElement('tbody');
           STATS.words.forEach(function (w) {
+            // w.word comes from the user's document. Using textContent here is
+            // critical: a document could contain HTML-looking text (e.g. pasted
+            // code), and innerHTML would execute it in the dialog's scope.
             const tr = document.createElement('tr');
-            tr.innerHTML =
-              '<td class="word-col">' + w.word + '</td>' +
-              '<td class="val-col">' + w.value.toLocaleString() + '</td>';
+            const tdWord = document.createElement('td');
+            tdWord.className = 'word-col';
+            tdWord.textContent = String(w.word);
+            const tdVal = document.createElement('td');
+            tdVal.className = 'val-col';
+            tdVal.textContent = w.value.toLocaleString();
+            tr.appendChild(tdWord);
+            tr.appendChild(tdVal);
             tbody.appendChild(tr);
           });
           table.appendChild(tbody);

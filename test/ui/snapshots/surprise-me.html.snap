@@ -1,19 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <?!= include('ui_head'); ?>
-    <?!= include('ui_components.css'); ?>
-    <?!= include('ui_utilities.css'); ?>
-    <?!= include('surprise-me_css'); ?>
-    <script>
-      window.APP_CONFIG = <?= JSON.stringify(appConfig) ?>;
-    </script>
+    <?!= include('shared/ui/head'); ?>
+    <script>window.APP_CONFIG = <?= appConfigJson ?>;</script>
+    <?!= include('surprise-me/css'); ?>
   </head>
   <body>
     <main class="surprise-shell">
       <header class="surprise-header">
         <div class="surprise-kicker">Sefaria</div>
-        <h1>Surprise Me</h1>
+        <h1>🎲 Surprise Me</h1>
         <p class="surprise-intro">
           Search for a term across the corpuses you choose, then insert a random set of matching sources.
           Leave the search box blank and the addon will pick a Hebrew seed word from Tanakh first.
@@ -22,7 +18,7 @@
 
       <section class="card surprise-form-card">
         <div class="field-group">
-          <label for="surprise-term">Search term</label>
+          <label for="surprise-term">🔍 Search term</label>
           <input
             id="surprise-term"
             class="surprise-text-input"
@@ -86,7 +82,7 @@
       </section>
 
       <footer class="surprise-actions">
-        <button class="blue" id="surprise-submit">Insert sources</button>
+        <button class="blue" id="surprise-submit">📦 Insert</button>
         <button id="surprise-cancel">Cancel</button>
         <span class="spinner" id="surprise-spinner" hidden>
           <img src="https://www.sefaria.org/static/img/ajax-loader.gif" alt="Loading">
@@ -94,11 +90,11 @@
       </footer>
     </main>
 
-    <?!= include('ui_core.js'); ?>
-    <?!= include('ui_api.js'); ?>
-    <?!= include('ui_state.js'); ?>
-    <?!= include('ui_dom.js'); ?>
-    <?!= include('ui_feedback.js'); ?>
-    <?!= include('surprise-me.page.js'); ?>
+    <?!= include('shared/ui/core-shared'); ?>
+    <?!= include('shared/ui/api'); ?>
+    <?!= include('shared/ui/dom'); ?>
+    <?!= include('shared/ui/feedback'); ?>
+    <?!= include('shared/ui/state'); ?>
+    <?!= include('surprise-me/js'); ?>
   </body>
 </html>

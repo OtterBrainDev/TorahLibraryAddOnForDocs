@@ -1,0 +1,689 @@
+/* Preserved from branch claude/review-addon-rewrite-GY8IC (apps-script/Code.gs,
+ * originally lines 2774-3451) as a reference implementation. NOT wired into
+ * the shipped add-on. Includes the full direct-provider AI lesson path
+ * (OpenAI / Anthropic / Gemini adapters, prompt construction, response
+ * parsing, Sefaria-text enrichment, document insertion) plus the saved-key
+ * preference helpers.
+ *
+ * See docs/ai-lesson/DESIGN.md for why this is detached, Routes 1 (Merkaz
+ * gateway) vs 3 (ephemeral CacheService keys) vs 4 (Sefaria-hosted), and
+ * the checklist that any revival should work through.
+ */
+
+function openAiLessonGenerator() {
+  if (!DEV_FLAGS.AI_LESSON) {
+    DocumentApp.getUi().alert('The AI Lesson Generator is not available in this version.');
+    return;
+  }
+  const template = HtmlService.createTemplateFromFile('ai_lesson');
+  template.appConfigJson = JSON.stringify(getUiAppConfig_('ai_lesson', 'experimental'));
+  const output = template.evaluate()
+    .setWidth(460)
+    .setHeight(720);
+  DocumentApp.getUi().showModalDialog(output, 'AI Lesson Generator (experimental)');
+}
+
+
+const AI_PROVIDER_OPTIONS_ = {
+  openai: {
+    label: 'ChatGPT',
+    managedKeyProperties: ['OPENAI_API_KEY', 'AI_OPENAI_API_KEY'],
+    defaultModel: 'gpt-5-mini',
+    models: ['gpt-5', 'gpt-5-mini']
+  },
+  anthropic: {
+    label: 'Claude',
+    managedKeyProperties: ['ANTHROPIC_API_KEY', 'AI_ANTHROPIC_API_KEY'],
+    defaultModel: 'claude-sonnet-4-20250514',
+    models: ['claude-sonnet-4-20250514', 'claude-3-5-haiku-20241022']
+  },
+  gemini: {
+    label: 'Gemini',
+    managedKeyProperties: ['GEMINI_API_KEY', 'AI_GEMINI_API_KEY'],
+    defaultModel: 'gemini-2.5-flash',
+    models: ['gemini-2.5-flash', 'gemini-2.5-pro']
+  }
+};
+
+function saveAiLessonDefaults_(payload) {
+  const userProperties = PropertiesService.getUserProperties();
+  const requestedProvider = String(payload && payload.provider || '').toLowerCase().trim();
+  const provider = requestedProvider === 'default' ? 'default' : normalizeAiProvider_(requestedProvider);
+  const model = provider === 'default' ? '' : sanitizeAiModel_(provider, payload && payload.model);
+  userProperties.setProperty('ai_provider_default', provider);
+  userProperties.setProperty('ai_model_default', model);
+  userProperties.setProperty('ai_key_strategy_default', normalizeAiKeyStrategy_(payload && payload.keyStrategy));
+  if (payload && payload.audience) {
+    userProperties.setProperty('ai_audience_default', String(payload.audience).trim());
+  }
+  if (payload && payload.lessonStyle) {
+    userProperties.setProperty('ai_lesson_style_default', String(payload.lessonStyle).trim());
+  }
+  if (payload && payload.duration) {
+    userProperties.setProperty('ai_duration_default', String(Math.max(10, Math.min(120, Number(payload.duration) || 45))));
+  }
+  return true;
+}
+
+function clearSavedAiKey(provider) {
+  const safeProvider = normalizeAiProvider_(provider);
+  PropertiesService.getUserProperties().deleteProperty(getSavedAiKeyPropertyName_(safeProvider));
+  return { provider: safeProvider, cleared: true };
+}
+
+function getSavedAiKeyPreview(provider) {
+  const safeProvider = normalizeAiProvider_(provider);
+  const value = PropertiesService.getUserProperties().getProperty(getSavedAiKeyPropertyName_(safeProvider)) || '';
+  return { provider: safeProvider, masked: maskApiKey_(value) };
+}
+
+function saveAiKeyFromPreferences(provider, apiKey) {
+  const safeProvider = normalizeAiProvider_(provider);
+  const key = String(apiKey || '').trim();
+  if (!key) throw new Error('Enter an API key before saving.');
+  PropertiesService.getUserProperties().setProperty(getSavedAiKeyPropertyName_(safeProvider), key);
+  return getSavedAiKeyPreview(safeProvider);
+}
+
+function maskApiKey_(value) {
+  const raw = String(value || '');
+  if (!raw) return '';
+  if (raw.length <= 8) return '••••••••';
+  return raw.slice(0, 4) + '••••••••' + raw.slice(-4);
+}
+
+function assertExperimentalAiEnabled_() {
+  if (!DEV_FLAGS.AI_LESSON) {
+    throw new Error('The AI Lesson Generator is not available in this version.');
+  }
+  const prefs = getPreferences();
+  if (prefs.experimental_ai_source_sheet_enabled != 'true') {
+    throw new Error('Enable the experimental AI lesson generator in Preferences before using this feature.');
+  }
+}
+
+function normalizeAiProvider_(provider) {
+  const safe = String(provider || '').toLowerCase().trim();
+  return AI_PROVIDER_OPTIONS_[safe] ? safe : 'openai';
+}
+
+function normalizeAiKeyStrategy_(strategy) {
+  const safe = String(strategy || '').toLowerCase().trim();
+  return ['auto', 'managed', 'saved', 'manual'].indexOf(safe) >= 0 ? safe : 'auto';
+}
+
+function sanitizeAiModel_(provider, model) {
+  const safeProvider = normalizeAiProvider_(provider);
+  const providerConfig = AI_PROVIDER_OPTIONS_[safeProvider];
+  const safeModel = String(model || '').trim();
+  if (!safeModel) return providerConfig.defaultModel;
+  if (providerConfig.models.indexOf(safeModel) >= 0) {
+    return safeModel;
+  }
+  return providerConfig.defaultModel;
+}
+
+function hasManagedAiKey_(provider) {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const config = AI_PROVIDER_OPTIONS_[normalizeAiProvider_(provider)];
+  return config.managedKeyProperties.some(function(propertyName) {
+    return !!scriptProperties.getProperty(propertyName);
+  });
+}
+
+function hasSavedAiKey_(provider) {
+  return !!PropertiesService.getUserProperties().getProperty(getSavedAiKeyPropertyName_(provider));
+}
+
+function getSavedAiKeyPropertyName_(provider) {
+  return 'ai_user_key_' + normalizeAiProvider_(provider);
+}
+
+function getManagedAiCooldownSeconds_() {
+  const raw = PropertiesService.getScriptProperties().getProperty('AI_MANAGED_COOLDOWN_SECONDS');
+  const parsed = Number(raw || 600);
+  return isNaN(parsed) || parsed < 0 ? 600 : parsed;
+}
+
+function enforceManagedAiCooldown_(provider) {
+  const userProperties = PropertiesService.getUserProperties();
+  const cooldownSeconds = getManagedAiCooldownSeconds_();
+  const key = 'ai_managed_last_used_at_' + normalizeAiProvider_(provider);
+  const lastUsed = Number(userProperties.getProperty(key) || 0);
+  const now = Date.now();
+  if (cooldownSeconds > 0 && lastUsed && (now - lastUsed) < cooldownSeconds * 1000) {
+    const remainingSeconds = Math.ceil((cooldownSeconds * 1000 - (now - lastUsed)) / 1000);
+    const remainingMinutes = Math.ceil(remainingSeconds / 60);
+    throw new Error('Please wait about ' + remainingMinutes + ' more minute' + (remainingMinutes === 1 ? '' : 's') + ' before using the add-on managed ' + AI_PROVIDER_OPTIONS_[provider].label + ' key again.');
+  }
+  userProperties.setProperty(key, String(now));
+}
+
+function resolveAiCredential_(request) {
+  const provider = request.provider;
+  const strategy = normalizeAiKeyStrategy_(request.keyStrategy);
+  const userProperties = PropertiesService.getUserProperties();
+  const manualKey = String(request.apiKey || '').trim();
+  const savedKey = String(userProperties.getProperty(getSavedAiKeyPropertyName_(provider)) || '').trim();
+  let managedKey = '';
+  const scriptProperties = PropertiesService.getScriptProperties();
+  AI_PROVIDER_OPTIONS_[provider].managedKeyProperties.some(function(propertyName) {
+    const candidate = String(scriptProperties.getProperty(propertyName) || '').trim();
+    if (candidate) {
+      managedKey = candidate;
+      return true;
+    }
+    return false;
+  });
+
+  if (strategy === 'manual') {
+    if (!manualKey) {
+      throw new Error('Paste an API key for ' + AI_PROVIDER_OPTIONS_[provider].label + ' or switch to a different key source.');
+    }
+    return { apiKey: manualKey, source: request.saveApiKey ? 'manual-saved' : 'manual' };
+  }
+
+  if (strategy === 'saved') {
+    if (!savedKey) {
+      throw new Error('No saved ' + AI_PROVIDER_OPTIONS_[provider].label + ' key was found for your account.');
+    }
+    return { apiKey: savedKey, source: 'saved' };
+  }
+
+  if (strategy === 'managed') {
+    if (!managedKey) {
+      throw new Error('This add-on does not currently have a managed ' + AI_PROVIDER_OPTIONS_[provider].label + ' key configured.');
+    }
+    enforceManagedAiCooldown_(provider);
+    return { apiKey: managedKey, source: 'managed' };
+  }
+
+  if (manualKey) {
+    return { apiKey: manualKey, source: request.saveApiKey ? 'manual-saved' : 'manual' };
+  }
+  if (savedKey) {
+    return { apiKey: savedKey, source: 'saved' };
+  }
+  if (managedKey) {
+    enforceManagedAiCooldown_(provider);
+    return { apiKey: managedKey, source: 'managed' };
+  }
+
+  throw new Error('No API key is available for ' + AI_PROVIDER_OPTIONS_[provider].label + '. Paste your own key, use a saved key, or ask an admin to configure a managed key.');
+}
+
+function persistUserAiKeyIfRequested_(request) {
+  if (request.saveApiKey && String(request.apiKey || '').trim()) {
+    PropertiesService.getUserProperties().setProperty(getSavedAiKeyPropertyName_(request.provider), String(request.apiKey).trim());
+  }
+}
+
+function normalizeAiLessonRequest_(payload) {
+  const prefs = getPreferences();
+  const provider = normalizeAiProvider_(payload.provider || prefs.ai_provider_default);
+  const request = {
+    provider: provider,
+    model: sanitizeAiModel_(provider, payload.model || prefs.ai_model_default),
+    keyStrategy: normalizeAiKeyStrategy_(payload.keyStrategy || prefs.ai_key_strategy_default),
+    apiKey: String(payload.apiKey || '').trim(),
+    saveApiKey: payload.saveApiKey === true,
+    topic: String(payload.topic || '').trim(),
+    audience: String(payload.audience || 'Adult learners').trim(),
+    duration: Math.max(10, Math.min(120, Number(payload.duration || 45))),
+    lessonStyle: String(payload.lessonStyle || 'Interactive shiur').trim(),
+    includeTransliteration: payload.includeTransliteration === true,
+    additionalInstructions: String(payload.additionalInstructions || '').trim(),
+    includeOriginal: payload.includeOriginal !== false,
+    includeTranslation: payload.includeTranslation !== false,
+    includeEducatorNotes: payload.includeEducatorNotes !== false,
+    includeDiscussionPrompts: payload.includeDiscussionPrompts !== false,
+    contextMode: String(payload.contextMode || 'topic').trim(),
+    learningCycleContext: payload.learningCycleContext || null
+  };
+
+  if (request.contextMode !== 'learning_cycle' && !request.topic) {
+    throw new Error('Add a topic before generating a lesson draft.');
+  }
+  return request;
+}
+
+function pickAvailableAiProvider_() {
+  const preferred = normalizeAiProvider_(PropertiesService.getUserProperties().getProperty('ai_provider_default'));
+  const ordered = [preferred].concat(Object.keys(AI_PROVIDER_OPTIONS_).filter(function(provider) {
+    return provider !== preferred;
+  }));
+  for (let i = 0; i < ordered.length; i++) {
+    if (hasSavedAiKey_(ordered[i]) || hasManagedAiKey_(ordered[i])) {
+      return ordered[i];
+    }
+  }
+  return '';
+}
+
+function buildTodaysLearningCycleContext_() {
+  const response = UrlFetchApp.fetch('https://www.sefaria.org/api/calendars', { muteHttpExceptions: true });
+  const status = response.getResponseCode ? response.getResponseCode() : 200;
+  if (status >= 400) {
+    throw new Error('Could not retrieve today’s learning cycle from Sefaria right now.');
+  }
+
+  const raw = JSON.parse(response.getContentText() || '[]');
+  const items = Array.isArray(raw) ? raw : (raw.calendar_items || raw.items || []);
+  if (!Array.isArray(items) || !items.length) {
+    throw new Error('Sefaria returned an empty learning cycle feed.');
+  }
+
+  const daf = pickCalendarItem_(items, ['daf yomi']);
+  const chapter929 = pickCalendarItem_(items, ['929']);
+  const parashah = pickCalendarItem_(items, ['parash', 'hashavua']);
+
+  const contexts = [daf, chapter929, parashah].filter(Boolean);
+  if (!contexts.length) {
+    throw new Error('Could not identify Daf Yomi, 929, or Parashah in today’s Sefaria calendar feed.');
+  }
+
+  return {
+    topicLine: contexts.map(function(item) { return item.label + ': ' + item.ref; }).join(' | '),
+    summary: contexts.map(function(item) { return item.label + ' — ' + item.ref; }).join('\n'),
+    items: contexts
+  };
+}
+
+function pickCalendarItem_(items, patterns) {
+  const tests = (patterns || []).map(function(value) {
+    return String(value || '').toLowerCase();
+  });
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i] || {};
+    const haystack = [
+      item.title && item.title.en,
+      item.title && item.title.he,
+      item.displayValue && item.displayValue.en,
+      item.displayValue && item.displayValue.he,
+      item.category,
+      item.en,
+      item.he,
+      item.name
+    ].filter(Boolean).join(' | ').toLowerCase();
+
+    const matched = tests.some(function(testValue) {
+      return haystack.indexOf(testValue) >= 0;
+    });
+    if (!matched) {
+      continue;
+    }
+
+    const ref = String(item.ref || item.displayValue && item.displayValue.en || item.en || '').trim();
+    if (!ref) {
+      continue;
+    }
+
+    const label = String(item.title && item.title.en || item.name || item.category || 'Learning Cycle').trim();
+    return {
+      label: label,
+      ref: ref
+    };
+  }
+
+  return null;
+}
+
+function generateLessonDraftViaProvider_(request, keyInfo) {
+  const prompt = buildLessonGenerationPrompt_(request);
+  switch (request.provider) {
+    case 'anthropic':
+      return parseAiLessonJson_(callAnthropicForLesson_(request.model, keyInfo.apiKey, prompt));
+    case 'gemini':
+      return parseAiLessonJson_(callGeminiForLesson_(request.model, keyInfo.apiKey, prompt));
+    case 'openai':
+    default:
+      return parseAiLessonJson_(callOpenAiForLesson_(request.model, keyInfo.apiKey, prompt));
+  }
+}
+
+function buildLessonGenerationPrompt_(request) {
+  const sourceInstructions = request.contextMode === 'learning_cycle'
+    ? 'Prioritize the supplied learning-cycle references as the backbone of the lesson. You may add at most two supplementary classic references if they genuinely improve the teaching flow.'
+    : 'Suggest 4 to 6 references that are likely to be accessible on Sefaria and relevant for a Jewish source-sheet or shiur format.';
+
+  const contextBlock = request.contextMode === 'learning_cycle' && request.learningCycleContext
+    ? 'Learning-cycle context:\n' + request.learningCycleContext.items.map(function(item) {
+        return '- ' + item.label + ': ' + item.ref;
+      }).join('\n')
+    : 'Topic: ' + request.topic;
+
+  return [
+    'You are generating a structured Jewish lesson draft for insertion into Google Docs.',
+    'Write practical, modest, editable teaching content. Do not use markdown fences.',
+    'Return valid JSON only, with no commentary before or after it.',
+    'Schema:',
+    '{',
+    '  "lessonTitle": string,',
+    '  "framingQuestion": string,',
+    '  "overview": string,',
+    '  "learningGoals": [string],',
+    '  "teachingFlow": [string],',
+    '  "sources": [',
+    '    {',
+    '      "citation": string,',
+    '      "whyItMatters": string,',
+    '      "discussionPrompt": string',
+    '    }',
+    '  ]',
+    '}',
+    '',
+    contextBlock,
+    'Audience: ' + request.audience,
+    'Duration minutes: ' + request.duration,
+    'Lesson style: ' + request.lessonStyle,
+    'Additional instructions: ' + (request.additionalInstructions || 'None provided.'),
+    request.contextMode === 'text_ref' ? 'Treat the supplied topic line as the primary text or reference to anchor the lesson.' : '',
+    sourceInstructions,
+    'Keep the source list short enough to fit a real ' + request.duration + '-minute session.',
+    'Review before sharing. Avoid grandiose claims.'
+  ].join('\n');
+}
+
+function callOpenAiForLesson_(model, apiKey, prompt) {
+  const payload = {
+    model: model,
+    input: prompt
+  };
+  const response = UrlFetchApp.fetch('https://api.openai.com/v1/responses', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      Authorization: 'Bearer ' + apiKey
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+  return extractOpenAiTextResponse_(response);
+}
+
+function extractOpenAiTextResponse_(response) {
+  const status = response.getResponseCode ? response.getResponseCode() : 200;
+  const body = JSON.parse(response.getContentText() || '{}');
+  if (status >= 400) {
+    throw new Error(formatOpenAiError_(status, body));
+  }
+  if (body.output_text) {
+    return body.output_text;
+  }
+  const outputs = Array.isArray(body.output) ? body.output : [];
+  for (let i = 0; i < outputs.length; i++) {
+    const content = Array.isArray(outputs[i].content) ? outputs[i].content : [];
+    for (let j = 0; j < content.length; j++) {
+      if (content[j] && typeof content[j].text === 'string') {
+        return content[j].text;
+      }
+    }
+  }
+  throw new Error('OpenAI returned an empty response.');
+}
+
+function formatOpenAiError_(status, body) {
+  const message = body && body.error && body.error.message ? body.error.message : 'OpenAI request failed.';
+  if (status === 401) return 'OpenAI rejected the API key. Check the key and try again.';
+  if (status === 429) return 'OpenAI rate-limited this request. Please wait a moment and try again.';
+  return 'OpenAI error (' + status + '): ' + message;
+}
+
+function callAnthropicForLesson_(model, apiKey, prompt) {
+  const payload = {
+    model: model,
+    max_tokens: 2500,
+    messages: [{ role: 'user', content: prompt }]
+  };
+  const response = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+  return extractAnthropicTextResponse_(response);
+}
+
+function extractAnthropicTextResponse_(response) {
+  const status = response.getResponseCode ? response.getResponseCode() : 200;
+  const body = JSON.parse(response.getContentText() || '{}');
+  if (status >= 400) {
+    throw new Error(formatAnthropicError_(status, body));
+  }
+  const content = Array.isArray(body.content) ? body.content : [];
+  const textParts = content.filter(function(part) {
+    return part && part.type === 'text' && typeof part.text === 'string';
+  }).map(function(part) { return part.text; });
+  if (textParts.length) {
+    return textParts.join('\n');
+  }
+  throw new Error('Anthropic returned an empty response.');
+}
+
+function formatAnthropicError_(status, body) {
+  const errorObj = body && body.error ? body.error : {};
+  const message = errorObj.message || 'Anthropic request failed.';
+  if (status === 401) return 'Anthropic rejected the API key. Check the key and try again.';
+  if (status === 429) return 'Anthropic rate-limited this request. Please wait a moment and try again.';
+  return 'Anthropic error (' + status + '): ' + message;
+}
+
+function callGeminiForLesson_(model, apiKey, prompt) {
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }]
+  };
+  const response = UrlFetchApp.fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'x-goog-api-key': apiKey
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  });
+  return extractGeminiTextResponse_(response);
+}
+
+function extractGeminiTextResponse_(response) {
+  const status = response.getResponseCode ? response.getResponseCode() : 200;
+  const body = JSON.parse(response.getContentText() || '{}');
+  if (status >= 400) {
+    throw new Error(formatGeminiError_(status, body));
+  }
+  const candidates = Array.isArray(body.candidates) ? body.candidates : [];
+  for (let i = 0; i < candidates.length; i++) {
+    const content = candidates[i] && candidates[i].content;
+    const parts = content && Array.isArray(content.parts) ? content.parts : [];
+    for (let j = 0; j < parts.length; j++) {
+      if (parts[j] && typeof parts[j].text === 'string') {
+        return parts[j].text;
+      }
+    }
+  }
+  throw new Error('Gemini returned an empty response.');
+}
+
+function formatGeminiError_(status, body) {
+  const errorObj = body && body.error ? body.error : {};
+  const message = errorObj.message || 'Gemini request failed.';
+  if (status === 400) return 'Gemini rejected the request. ' + message;
+  if (status === 401 || status === 403) return 'Gemini rejected the API key. Check the key and try again.';
+  if (status === 429) return 'Gemini rate-limited this request. Please wait a moment and try again.';
+  return 'Gemini error (' + status + '): ' + message;
+}
+
+function parseAiLessonJson_(rawText) {
+  const safeText = String(rawText || '').trim();
+  const candidates = [];
+  candidates.push(safeText);
+  const fenced = safeText.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenced && fenced[1]) {
+    candidates.push(fenced[1].trim());
+  }
+  const firstBrace = safeText.indexOf('{');
+  const lastBrace = safeText.lastIndexOf('}');
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    candidates.push(safeText.slice(firstBrace, lastBrace + 1));
+  }
+
+  let parsed = null;
+  for (let i = 0; i < candidates.length; i++) {
+    try {
+      parsed = JSON.parse(candidates[i]);
+      break;
+    } catch (error) {}
+  }
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('The AI provider returned an unreadable draft. Please try again or switch providers.');
+  }
+
+  return {
+    lessonTitle: String(parsed.lessonTitle || parsed.title || 'Untitled Lesson Draft').trim(),
+    framingQuestion: String(parsed.framingQuestion || parsed.essentialQuestion || '').trim(),
+    overview: String(parsed.overview || '').trim(),
+    learningGoals: Array.isArray(parsed.learningGoals) ? parsed.learningGoals.map(function(item) { return String(item || '').trim(); }).filter(Boolean) : [],
+    teachingFlow: Array.isArray(parsed.teachingFlow) ? parsed.teachingFlow.map(function(item) { return String(item || '').trim(); }).filter(Boolean) : [],
+    sources: Array.isArray(parsed.sources) ? parsed.sources.map(function(item) {
+      return {
+        citation: String(item && (item.citation || item.ref) || '').trim(),
+        whyItMatters: String(item && (item.whyItMatters || item.note) || '').trim(),
+        discussionPrompt: String(item && (item.discussionPrompt || item.prompt) || '').trim()
+      };
+    }).filter(function(item) { return item.citation; }) : [],
+    warnings: []
+  };
+}
+
+function enrichLessonWithSefariaTexts_(lesson, request) {
+  const enriched = JSON.parse(JSON.stringify(lesson || {}));
+  const warnings = Array.isArray(enriched.warnings) ? enriched.warnings.slice() : [];
+  enriched.sources = (enriched.sources || []).slice(0, 8).map(function(source) {
+    const entry = JSON.parse(JSON.stringify(source));
+    try {
+      const resolved = findReference(entry.citation, undefined, false);
+      if (resolved && resolved.ref) {
+        entry.citation = resolved.ref;
+        entry.hebrewCitation = resolved.heRef || '';
+        if (request.includeOriginal) {
+          entry.originalText = summarizeSefariaTextForLesson_(resolved.he);
+        }
+        if (request.includeTranslation) {
+          entry.translationText = summarizeSefariaTextForLesson_(resolved.text);
+        }
+      } else {
+        warnings.push('Could not resolve source: ' + entry.citation);
+      }
+    } catch (error) {
+      warnings.push('Could not resolve source: ' + entry.citation);
+    }
+    return entry;
+  });
+  enriched.warnings = warnings;
+  return enriched;
+}
+
+function summarizeSefariaTextForLesson_(value) {
+  const flattened = flattenSefariaText_(value).trim();
+  if (!flattened) {
+    return '';
+  }
+  if (flattened.length > 1200) {
+    return flattened.slice(0, 1197) + '...';
+  }
+  return flattened;
+}
+
+function flattenSefariaText_(value) {
+  if (Array.isArray(value)) {
+    return value.map(function(item) { return flattenSefariaText_(item); }).filter(Boolean).join('\n');
+  }
+  if (value === null || value === undefined) {
+    return '';
+  }
+  return String(value).replace(/<[^>]+>/g, '').replace(/\s+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function insertGeneratedLessonIntoDoc_(lesson, request) {
+  const document = DocumentApp.getActiveDocument();
+  if (!document) {
+    throw new Error('Open a Google Doc before generating a lesson draft.');
+  }
+
+  const body = document.getBody();
+  const typography = getTypographySettings();
+  let index = body.getNumChildren();
+  const cursor = document.getCursor();
+  if (cursor) {
+    const currentElement = cursor.getElement();
+    if (currentElement && currentElement.getParent()) {
+      index = currentElement.getParent().getChildIndex(currentElement) + 1;
+    }
+  }
+
+  const insertParagraph_ = function(text, heading, font, size, style, rtl) {
+    const paragraph = body.insertParagraph(index++, text);
+    if (heading) {
+      paragraph.setHeading(heading);
+    }
+    if (heading === DocumentApp.ParagraphHeading.HEADING1) {
+      applyTitleTypography(paragraph, typography, false);
+    } else if (heading === DocumentApp.ParagraphHeading.HEADING2) {
+      applyTitleTypography(paragraph, typography, true);
+    } else {
+      paragraph.setLeftToRight(rtl ? false : true);
+      applyTypographyToParagraph(paragraph, font || typography.translationFont, size || typography.translationFontSize, style || typography.translationFontStyle);
+    }
+    return paragraph;
+  };
+
+  insertParagraph_(lesson.lessonTitle || 'Lesson Draft', DocumentApp.ParagraphHeading.HEADING1);
+
+  if (lesson.framingQuestion) {
+    insertParagraph_('Framing Question: ' + lesson.framingQuestion, null);
+  }
+  if (lesson.overview) {
+    insertParagraph_(lesson.overview, null);
+  }
+  if (Array.isArray(lesson.learningGoals) && lesson.learningGoals.length) {
+    insertParagraph_('Learning Goals', DocumentApp.ParagraphHeading.HEADING3, typography.sourceTitleFont, typography.sourceTitleFontSize, typography.sourceTitleFontStyle);
+    lesson.learningGoals.forEach(function(item) {
+      const bullet = body.insertListItem(index++, item);
+      applyTypographyToParagraph(bullet, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+    });
+  }
+  if (Array.isArray(lesson.teachingFlow) && lesson.teachingFlow.length) {
+    insertParagraph_('Teaching Flow', DocumentApp.ParagraphHeading.HEADING3, typography.sourceTitleFont, typography.sourceTitleFontSize, typography.sourceTitleFontStyle);
+    lesson.teachingFlow.forEach(function(item) {
+      const bullet = body.insertListItem(index++, item);
+      applyTypographyToParagraph(bullet, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+    });
+  }
+
+  insertParagraph_('Experimental draft — review, fact-check, and edit before sharing.', null);
+
+  (lesson.sources || []).forEach(function(source) {
+    insertParagraph_(source.citation || 'Source', DocumentApp.ParagraphHeading.HEADING2);
+
+    if (request.includeOriginal && source.originalText) {
+      insertParagraph_('Hebrew / Original: ' + source.originalText, null, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle, true);
+    }
+    if (request.includeTranslation && source.translationText) {
+      insertParagraph_('Translation: ' + source.translationText, null, typography.translationFont, typography.translationFontSize, typography.translationFontStyle, false);
+    }
+    if (request.includeEducatorNotes && source.whyItMatters) {
+      insertParagraph_('Educator Note: ' + source.whyItMatters, null);
+    }
+    if (request.includeDiscussionPrompts && source.discussionPrompt) {
+      insertParagraph_('Discussion Prompt: ' + source.discussionPrompt, null);
+    }
+  });
+
+  return {
+    insertedAt: new Date().toISOString()
+  };
+}

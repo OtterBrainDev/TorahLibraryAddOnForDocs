@@ -21,7 +21,7 @@
         <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
           <button type="button" id="pref-tab-fonts-btn" class="pref-tab" role="tab" data-pref-tab="fonts" aria-controls="pref-tab-fonts" aria-selected="true">Fonts</button>
           <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="false">Insertion</button>
-<? if (devFlags.AI_LESSON || devFlags.SURPRISE_ME) { ?>
+<? if (devFlags.SURPRISE_ME) { ?>
           <button type="button" id="pref-tab-experimental-btn" class="pref-tab" role="tab" data-pref-tab="experimental" aria-controls="pref-tab-experimental" aria-selected="false">🧪 Experimental</button>
 <? } ?>
         </nav>
@@ -530,7 +530,7 @@
 
         </div>
 
-<? if (devFlags.AI_LESSON || devFlags.SURPRISE_ME) { ?>
+<? if (devFlags.SURPRISE_ME) { ?>
         <div class="pref-tab-panel" id="pref-tab-experimental" role="tabpanel" aria-labelledby="pref-tab-experimental-btn" hidden>
           <p class="section-note">Optional, in-progress features. Leaving them off keeps the core experience unchanged.</p>
 
@@ -539,7 +539,7 @@
               <div class="toggle-row">
                 <div class="toggle-copy">
                   <div class="toggle-title">Enable Experimental Features</div>
-                  <div class="toggle-help">Turn on to access Surprise Me and AI Lesson Generator features.</div>
+                  <div class="toggle-help">Turn on to access Surprise Me.</div>
                 </div>
                 <label class="switch" for="experimental_features_enabled">
                   <input id="experimental_features_enabled" type="checkbox" name="experimental_features_enabled">
@@ -559,108 +559,8 @@
                 </label>
               </div>
 <? } ?>
-<? if (devFlags.AI_LESSON) { ?>
-              <div class="toggle-row">
-                <div class="toggle-copy">
-                  <div class="toggle-title">🤖 AI Lesson Generator</div>
-                  <div class="toggle-help">Generate a structured lesson or source-sheet draft directly in Google Docs. Basic mode uses the Merkaz website default route so most users do not need to choose a provider, model, or API key. Advanced mode keeps provider, model, and request-level key controls for power users.</div>
-                </div>
-                <label class="switch" for="experimental_ai_source_sheet_enabled">
-                  <input id="experimental_ai_source_sheet_enabled" type="checkbox" name="experimental_ai_source_sheet_enabled">
-                  <span class="slider"></span>
-                </label>
-              </div>
-<? } ?>
               </div>
 
-<? if (devFlags.AI_LESSON) { ?>
-              <div class="section-note" style="margin-top:10px;">When enabled, the three AI lesson actions also appear in the add-on’s <strong>Quick Actions</strong> submenu.</div>
-
-              <details class="compact-accordion compact-accordion--nested" open>
-                <summary>🤖 AI Settings</summary>
-                <div class="compact-inline-pair compact-inline-pair--spaced">
-                  <div class="compact-field">
-                    <label for="ai_provider_default">Preferred Route</label>
-                    <select id="ai_provider_default" name="ai_provider_default">
-                      <option value="default">Default (recommended)</option>
-                      <option value="openai">ChatGPT / OpenAI</option>
-                      <option value="anthropic">Claude / Anthropic</option>
-                      <option value="gemini">Gemini / Google</option>
-                    </select>
-                    <div class="mini-help">This pre-fills the AI modal. In Basic mode the site still decides how to route the request.</div>
-                  </div>
-                  <div class="compact-field">
-                    <label for="ai_key_strategy_default">Advanced Key Source Default</label>
-                    <select id="ai_key_strategy_default" name="ai_key_strategy_default">
-                      <option value="auto">Automatic</option>
-                      <option value="managed">Use site-managed key</option>
-                      <option value="saved">Use my saved key</option>
-                      <option value="manual">Paste a key for this request</option>
-                    </select>
-                    <div class="mini-help">Only applies when you switch to Advanced mode.</div>
-                  </div>
-                </div>
-                <input id="ai_model_default" name="ai_model_default" type="hidden" value="">
-                <div class=”compact-inline-pair compact-inline-pair--spaced”>
-                  <div class=”compact-field compact-field--size”>
-                    <label for=”ai_duration_default”>Default Length</label>
-                    <input id=”ai_duration_default” name=”ai_duration_default” type=”number” min=”10” max=”120” step=”5” value=”45”>
-                  </div>
-                  <div class=”compact-field”>
-                    <label for=”ai_audience_default”>Default Audience</label>
-                    <select id=”ai_audience_default” name=”ai_audience_default”>
-                      <option value=”Adult learners”>Adult learners</option>
-                      <option value=”High school students”>High school students</option>
-                      <option value=”Intro / beginners”>Intro / beginners</option>
-                      <option value=”Educators”>Educators</option>
-                      <option value=”__other__”>Other</option>
-                    </select>
-                    <input id=”ai_audience_default_custom” type=”text” placeholder=”Custom audience” hidden data-custom-for=”ai_audience_default”>
-                  </div>
-                </div>
-                <div class=”compact-inline-pair compact-inline-pair--spaced”>
-                  <div class=”compact-field”>
-                    <label for=”ai_lesson_style_default”>Default Style</label>
-                    <select id=”ai_lesson_style_default” name=”ai_lesson_style_default”>
-                      <option value=”Interactive shiur”>Interactive shiur</option>
-                      <option value=”Source-sheet chavruta”>Source-sheet chavruta</option>
-                      <option value=”Text-study seminar”>Text-study seminar</option>
-                      <option value=”Accessible intro session”>Accessible intro session</option>
-                      <option value=”Drash”>Drash</option>
-                      <option value=”__other__”>Other</option>
-                    </select>
-                    <input id=”ai_lesson_style_default_custom” type=”text” placeholder=”Custom style” hidden data-custom-for=”ai_lesson_style_default”>
-                  </div>
-                  <div class=”compact-field”>
-                    <label>Permissions note</label>
-                    <div class=”mini-help”>Google may describe the add-on as able to “run when you are not present” because it can make secure external requests to the Merkaz site. In practice, AI requests are only sent when you choose a menu item or click a button in the add-on.</div>
-                  </div>
-                </div>
-              </details>
-
-              <details class="compact-accordion compact-accordion--nested">
-                <summary>🤖 Saved Keys</summary>
-                <div class="compact-inline-pair compact-inline-pair--spaced">
-                  <div class="compact-field">
-                    <label for="ai_saved_key_provider">Provider</label>
-                    <select id="ai_saved_key_provider">
-                      <option value="openai">ChatGPT / OpenAI</option>
-                      <option value="anthropic">Claude / Anthropic</option>
-                      <option value="gemini">Gemini / Google</option>
-                    </select>
-                  </div>
-                  <div class="compact-field">
-                    <label for="ai_saved_key_mask">Saved Key</label>
-                    <input id="ai_saved_key_mask" type="password" placeholder="No key saved" autocomplete="off">
-                  </div>
-                </div>
-                <div class="save-actions ai-key-actions">
-                  <button type="button" class="submit" id="ai_save_key_button">Save Key</button>
-                  <button type="button" class="submit" id="ai_clear_key_button">Clear Key</button>
-                  <span id="ai_key_status" class="save-note"></span>
-                </div>
-              </details>
-<? } ?>
             </div>
           </div>
         </div>

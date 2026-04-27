@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { ROOT, readAppScriptFile } = require('./test-utils');
 
 const SNAPSHOT_DIR = path.join(ROOT, 'test/ui/snapshots');
-const TEMPLATES = ['sidebar.html', 'preferences.html', 'ai_lesson.html', 'surprise-me.html'];
+const TEMPLATES = ['sidebar.html', 'preferences.html', 'surprise-me.html'];
 const updateSnapshots = process.env.UPDATE_UI_SNAPSHOTS === '1';
 
 TEMPLATES.forEach((templateFile) => {

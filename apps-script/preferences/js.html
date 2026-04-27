@@ -36,11 +36,6 @@
       'god_replacement'
     ];
 
-    const customAiFields = [
-      'ai_audience_default',
-      'ai_lesson_style_default'
-    ];
-
     let transliterationOverrides = {};
     let selectedOverrideChar = "";
 
@@ -116,6 +111,9 @@
       const scheme = byId('transliteration_scheme');
       const preview = byId('transliteration_preview');
       if (!scheme || !preview) return;
+      // Both operands are local constants: the <span> literal is static, and
+      // transliterationExamples is a hand-authored const lookup at the top of
+      // this file. No user input is interpolated.
       preview.innerHTML = '<span class="label">Preview</span>' + (transliterationExamples[scheme.value] || transliterationExamples.simple_english);
       updateStandardPreview('transliteration_font', 'transliteration_preview', 'transliteration_font_style');
     }
@@ -290,40 +288,6 @@
       if (!show) custom.value = '';
     }
 
-    function toggleCustomAiField(selectId) {
-      const select = byId(selectId);
-      const custom = byId(selectId + '_custom');
-      if (!select || !custom) return;
-      const show = select.value === '__other__';
-      custom.hidden = !show;
-      if (!show) custom.value = '';
-    }
-
-    function getAiFieldStoredValue(selectId) {
-      const select = byId(selectId);
-      if (!select) return '';
-      if (select.value === '__other__') {
-        const custom = byId(selectId + '_custom');
-        return custom ? custom.value.trim() : '';
-      }
-      return select.value;
-    }
-
-    function setAiFieldValue(selectId, storedValue) {
-      const select = byId(selectId);
-      if (!select) return;
-      const value = String(storedValue == null ? '' : storedValue);
-      const matches = Array.from(select.options).some(function(opt) { return opt.value === value; });
-      if (matches) {
-        select.value = value;
-      } else {
-        select.value = '__other__';
-        const custom = byId(selectId + '_custom');
-        if (custom) custom.value = value;
-      }
-      toggleCustomAiField(selectId);
-    }
-
     function bindReplacementField(selectId, checkboxId) {
       const select = byId(selectId);
       const custom = getCustomField(selectId);
@@ -353,6 +317,7 @@
     function renderOverrideGrid() {
       const grid = byId('override_grid');
       if (!grid) return;
+      // Clear: constant empty string; equivalent to replaceChildren().
       grid.innerHTML = '';
       overrideChars.forEach(function(ch) {
         const btn = document.createElement('button');
@@ -384,9 +349,12 @@
       if (!list) return;
       const keys = Object.keys(transliterationOverrides).sort();
       if (!keys.length) {
+        // Constant literal string.
         list.innerHTML = '<div class="mini-help">No transliteration overrides saved.</div>';
         return;
       }
+      // Every user-sourced value is passed through `escapeHtml`. If you
+      // change this builder, keep every interpolation escaped.
       list.innerHTML = keys.map(function(k) {
         return '<div class="override-item"><span><strong>' + escapeHtml(k) + '</strong> → ' + escapeHtml(transliterationOverrides[k]) + '</span></div>';
       }).join('');
@@ -413,6 +381,7 @@
       button.className = 'custom-select-button';
       button.setAttribute('aria-haspopup', 'listbox');
       button.setAttribute('aria-expanded', 'false');
+      // Constant literal; two empty <span>s for the select widget's scaffolding.
       button.innerHTML = '<span class="custom-select-value"></span><span class="custom-select-caret">▾</span>';
 
       const menu = document.createElement('div');
@@ -500,8 +469,6 @@
       document.querySelectorAll('select').forEach(function(el) {
         if (customReplacementFields.indexOf(el.name) >= 0) {
           preferenceObject[el.name] = getSelectStoredValue(el.id);
-        } else if (customAiFields.indexOf(el.name) >= 0) {
-          preferenceObject[el.name] = getAiFieldStoredValue(el.id);
         } else {
           preferenceObject[el.name] = el.value;
         }
@@ -542,10 +509,6 @@
 
               customReplacementFields.forEach(function(name) {
                 setReplacementSelectValue(name, preferences[name]);
-              });
-
-              customAiFields.forEach(function(name) {
-                setAiFieldValue(name, preferences[name]);
               });
 
               // Sync button-group controls (Display & Insertion Defaults)
@@ -635,17 +598,6 @@
       }).getPreferences();
     }
 
-    function loadSavedAiKeyPreview() {
-      if (!byId('ai_saved_key_provider')) return;
-      google.script.run.withSuccessHandler(function(result) {
-        if (byId('ai_saved_key_mask')) byId('ai_saved_key_mask').value = (result && result.masked) || '';
-        if (byId('ai_key_status')) byId('ai_key_status').textContent = (result && result.masked) ? 'Saved key available for Advanced mode.' : 'No saved key for this provider.';
-      }).withFailureHandler(function(error) {
-        console.error('AI key preview failed:', error);
-        if (byId('ai_key_status')) byId('ai_key_status').textContent = 'Could not load saved key status.';
-      }).getSavedAiKeyPreview(byId('ai_saved_key_provider').value);
-    }
-
     document.addEventListener('click', function() {
       document.querySelectorAll('.custom-select.open').forEach(function(wrapper) {
         wrapper.classList.remove('open');
@@ -671,12 +623,7 @@
       'select#meforash_replacement',
       'select#yaw_replacement',
       'select#elodim_replacement',
-      'select#god_replacement',
-      'select#ai_provider_default',
-      'select#ai_key_strategy_default',
-      'select#ai_audience_default',
-      'select#ai_lesson_style_default',
-      'select#ai_saved_key_provider'
+      'select#god_replacement'
     ].join(','));
 
     {
@@ -730,23 +677,6 @@
       if (el) el.addEventListener('change', updateSheimotSummary);
     });
 
-    customAiFields.forEach(function(fieldName) {
-      const select = byId(fieldName);
-      const custom = byId(fieldName + '_custom');
-      if (!select) return;
-      select.addEventListener('change', function() {
-        toggleCustomAiField(fieldName);
-        syncCustomSelect(select);
-      });
-      if (custom) {
-        custom.addEventListener('input', function() {
-          // Re-validate on input
-        });
-        custom.addEventListener('change', function() {
-          // Sync on change
-        });
-      }
-    });
 
     byId('save_override_btn').addEventListener('click', function() {
       if (!selectedOverrideChar) return;
@@ -826,17 +756,6 @@
         setResultsMessage('Could not save preferences.');
       }).setPreferences(preferenceObject);
     });
-
-    if (byId('ai_saved_key_provider')) {
-      byId('ai_saved_key_provider').addEventListener('change', loadSavedAiKeyPreview);
-      byId('ai_save_key_button').addEventListener('click', function(){
-        google.script.run.withSuccessHandler(function(){ byId('ai_key_status').textContent='Saved for Advanced mode.'; loadSavedAiKeyPreview(); byId('ai_saved_key_mask').value=''; }).saveAiKeyFromPreferences(byId('ai_saved_key_provider').value, byId('ai_saved_key_mask').value);
-      });
-      byId('ai_clear_key_button').addEventListener('click', function(){
-        google.script.run.withSuccessHandler(function(){ byId('ai_key_status').textContent='Cleared.'; loadSavedAiKeyPreview(); }).clearSavedAiKey(byId('ai_saved_key_provider').value);
-      });
-      loadSavedAiKeyPreview();
-    }
 
     // ── Button-group helpers (Display & Insertion Defaults sections) ────────
 

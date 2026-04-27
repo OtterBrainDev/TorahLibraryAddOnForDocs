@@ -1,2 +1,5 @@
 test/**
 *.sh
+# Preserved AI-lesson reference implementation. Never push to Apps Script.
+# See docs/ai-lesson/DESIGN.md.
+reference/**

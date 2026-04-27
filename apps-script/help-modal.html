@@ -316,6 +316,8 @@
         });
 
         function renderMatches(matches, query) {
+          // Clear: innerHTML = '' is equivalent to replaceChildren() and is
+          // safe because the right-hand side is a constant empty string.
           results.innerHTML = '';
           if (!query) {
             status.textContent = 'Try: citation, preview, translation, Voices, defaults, history, niqqud';
@@ -327,10 +329,18 @@
           }
           status.textContent = matches.length + ' topic' + (matches.length === 1 ? '' : 's') + ' found';
           matches.slice(0, 6).forEach(function(match) {
+            // match.label comes from an author-controlled `data-search-title`
+            // attribute, but prefer textContent anyway — there is no reason
+            // to let a single author-typo become an innerHTML write.
             var button = document.createElement('button');
             button.type = 'button';
             button.className = 'search-result';
-            button.innerHTML = '<strong>' + match.label + '</strong><span>Jump to this section in Help</span>';
+            var strong = document.createElement('strong');
+            strong.textContent = String(match.label || '');
+            var hint = document.createElement('span');
+            hint.textContent = 'Jump to this section in Help';
+            button.appendChild(strong);
+            button.appendChild(hint);
             button.addEventListener('click', function() {
               switchTab('help-tab');
               highlightSection(match.el);
@@ -385,9 +395,9 @@
           <h1>Help Center</h1>
           <p class="lede">One place for how-to guidance, troubleshooting, and version context. Use <strong>Help</strong> to get things done, <strong>Support</strong> when something feels wrong, and <strong>About</strong> for release notes and changelog context.</p>
           <div class="global-links">
-            <a class="pill-link" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244">Full Sefaria Help Center</a>
+            <a class="pill-link" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244" rel="noopener noreferrer">Full Sefaria Help Center</a>
             <a class="pill-link" href="mailto:help@the-merkaz.org">Email support</a>
-            <a class="pill-link" target="_blank" href="https://github.com/shelfgot/SefariaAddOnForDocs">GitHub</a>
+            <a class="pill-link" target="_blank" href="https://github.com/shelfgot/SefariaAddOnForDocs" rel="noopener noreferrer">GitHub</a>
           </div>
         </div>
 
@@ -499,7 +509,7 @@
             <div class="button-row">
               <button type="button" class="button-link" onclick="switchTab('help-tab')">Open Help</button>
               <button type="button" class="button-link secondary" onclick="switchTab('about-tab')">Open About</button>
-              <a class="button-link secondary" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244">Full Sefaria Help Center</a>
+              <a class="button-link secondary" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244" rel="noopener noreferrer">Full Sefaria Help Center</a>
               <a class="button-link secondary" href="mailto:help@the-merkaz.org">Email support</a>
             </div>
           </section>
@@ -545,8 +555,8 @@
             <p>This tab is the long-term home for version information, current release context, and the running changelog. The separate release-notes popup should stay brief and point here for the fuller record.</p>
             <div class="meta-row">
               <span class="meta-pill">Current line: 2.0 fork stream</span>
-              <a class="meta-pill" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244">Sefaria Help Center</a>
-              <a class="meta-pill" target="_blank" href="https://github.com/shelfgot/SefariaAddOnForDocs">GitHub</a>
+              <a class="meta-pill" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244" rel="noopener noreferrer">Sefaria Help Center</a>
+              <a class="meta-pill" target="_blank" href="https://github.com/shelfgot/SefariaAddOnForDocs" rel="noopener noreferrer">GitHub</a>
               <a class="meta-pill" href="mailto:help@the-merkaz.org">Contact support</a>
             </div>
           </section>

@@ -4,6 +4,14 @@ A Google Docs add-on that brings Sefaria-powered source finding, previewing, ins
 
 > This is not an official Sefaria project.
 
+## Contributing (human or AI)
+
+Before editing anything beyond a typo, read **[`AGENTS.md`](./AGENTS.md)** (also duplicated as `CLAUDE.md`). It covers: what this codebase actually is, the non-negotiable rules, the anti-pattern catalog, and where the canonical documents live. Companion docs:
+
+- [`docs/architecture.md`](./docs/architecture.md) — server/client boundary, storage layers, RPC surface, include graph.
+- [`docs/regression-log.md`](./docs/regression-log.md) — every bug that has regressed silently, with the pinning test now holding it down.
+- [`docs/rpc-surface.json`](./docs/rpc-surface.json) — the frozen list of server functions reachable from the client.
+
 ## Project overview
 
 This repository contains the Google Apps Script code and add-on UI templates used to:
@@ -86,7 +94,7 @@ Persistent user preferences include:
 - Hebrew font and font size defaults,
 - Translation font and font size defaults,
 - optional English divine-name replacement,
-- preference-gated legacy features such as Popcorn.
+- preference-gated experimental features such as Surprise Me.
 
 ### Structural-node handling
 
@@ -120,26 +128,21 @@ Behavior summary:
 4. If no source is found, it still emits a version-title-only block when possible.
 5. If no usable translation version title is available, no translation-details block is inserted.
 
-## Canonical knowledge-contract consumers
+## AI lesson generator (deferred)
 
-This repository now includes schema-focused contract adapters for multiple consumer types:
-
-- display-oriented consumer baseline: Living Library tooltip (`TooltipPayload`) (documented externally),
-- editorial-oriented consumer baseline: Commentary Builder glossary hints (`GlossaryTerm`) (documented externally),
-- workflow/editorial-governance consumer: Review Schema alignment helpers for `ReviewStatus` and `ProvenanceRecord` (this repo pass).
-
-See [`docs/review-schema-alignment.md`](./docs/review-schema-alignment.md) and [`apps-script/review-schema-contract.js`](./apps-script/review-schema-contract.js) for the low-risk schema/adaptor implementation.
+An AI-assisted lesson / shiur drafting feature was developed on the rewrite branch and **is not shipped in v1**. The design — including both the Merkaz-gateway route and a future Sefaria-hosted gateway recommendation — is preserved in [`docs/ai-lesson/DESIGN.md`](./docs/ai-lesson/DESIGN.md). The source files are preserved, not shipped, under [`reference/ai-lesson/`](./reference/ai-lesson/). If you are picking this up (including upstream Sefaria.org engineers), start with the design doc: it documents the trade-offs that kept the feature out of v1 and the checklist that any revival should work through.
 
 ## Menu actions
 
 The add-on menu includes:
 
-- **Find & Insert Source**
-- **Transform Divine Names**
-- **Link Texts with Sefaria**
+- **Texts** — unified Find & Insert sidebar (default).
+- **Voices** — commentary/voices search with insert controls.
+- **Lexicon** — reverse-lookup dictionary.
+- **Quick Actions** submenu — Transform Divine Names, Link Texts with Sefaria, Gematriya Count.
 - **Preferences**
-- **Support**
-- **Popcorn** (legacy/original-developer feature, preference-gated)
+- **Help & Support**
+- **Surprise Me** — preference-gated experimental feature (random-reference discovery).
 
 ## Demo and walkthrough
 
@@ -154,19 +157,23 @@ The add-on menu includes:
 
 ### Apps Script implementation
 
-All Google Apps Script source files now live under `apps-script/`:
+All Google Apps Script source files live under `apps-script/` (clasp rootDir):
 
-- `apps-script/Code.gs` - Main Apps Script server logic (menu setup, Sefaria API calls, insertion, linking, preferences, divine-name transforms, typography application).
-- `apps-script/appsscript.json` - Apps Script project manifest.
-- `apps-script/attribution.js` - Pure helper module for translation/source attribution logic.
-- `apps-script/consts.gs` - Constants and supporting data.
-- `apps-script/main.html` - Unified Find & Insert sidebar UI.
-- `apps-script/preferences.html` - Preferences dialog UI.
-- `apps-script/release-notes.html` - Release notes modal.
-- `apps-script/support-and-features.html` - Support/feature request modal.
-- `apps-script/popcorn.html` - Legacy/original-developer Popcorn feature UI.
-- `apps-script/search.html` - Legacy search UI retained only as historical/reference material if still present.
-- `apps-script/package.json` - Local package metadata for lightweight test tooling.
+- `apps-script/Code.gs` — main server logic: menu, Sefaria API, insertion, linking, preferences, divine-name transforms, typography.
+- `apps-script/appsscript.json` — Apps Script project manifest.
+- `apps-script/attribution.gs` — dual-mode (Apps Script + Node test) helper for translation/source attribution.
+- `apps-script/config.gs` — `DEV_FLAGS` object.
+- `apps-script/gematriya.gs` — gematriya numerals.
+- `apps-script/migrations.gs` — schema-versioned `UserProperties` migrations keyed by `prefs_schema_version`.
+- `apps-script/surprise-me-feature.gs` — "surprise me" random-reference feature.
+- `apps-script/transliteration.gs` — Hebrew→Latin transliteration engine with biblical-dagesh mode.
+- `apps-script/ui_core.gs` — shared UI-side helpers.
+- `apps-script/sidebar.html` — main sidebar entry template (composes `sidebar/js/*.html` partials).
+- `apps-script/preferences.html` + `apps-script/preferences/` — preferences dialog entry template and its CSS/JS partials.
+- `apps-script/surprise-me.html` + `apps-script/surprise-me/` — surprise-me dialog.
+- `apps-script/help-modal.html`, `feedback-modal.html`, `session-library-modal.html`, `gematriya-count.html`, `release-notes.html` — standalone modal dialogs.
+- `apps-script/css/` — tokens and component styles composed via `include()`.
+- `apps-script/shared/` — ui-head, composition-card, and core shared partials pulled into every entry template.
 
 ### Documentation
 
@@ -174,8 +181,10 @@ All Google Apps Script source files now live under `apps-script/`:
 - `docs/google-docs-walkthrough.md` - End-user walkthrough for the current unified workflow.
 
 ### Tests
-- `tests/attribution.test.js` - Lightweight local unit tests for attribution formatting/fallback behavior.
-- `tests/review-schema-contract.test.js` - Lightweight local unit tests for Review Schema contract normalization and adapters.
+- `test/tests/attribution.test.js` - Lightweight local unit tests for attribution formatting/fallback behavior.
+- `test/tests/hebrew-preferences.test.js` - Hebrew display preference and divine-name replacement tests (runs `applyHebrewDisplayPreferences` / `applyHebrewDivineNamePreferences` against the real `Code.gs` via `vm`).
+- `test/ui/*.test.js` - Lightweight template / contract / snapshot tests for the sidebar and dialog entry points.
+- Run everything with `npm test` from the repo root.
 
 ## Development workflow
 

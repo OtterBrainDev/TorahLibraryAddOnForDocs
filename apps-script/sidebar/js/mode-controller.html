@@ -224,15 +224,12 @@ $('.open-surprise-tool').off('click').on('click', function (event) {
     .surpriseMeHTML();
 });
 
+// AI Shiur was detached from the shipped add-on — see docs/ai-lesson/DESIGN.md.
+// The button that used to trigger it stays hidden (preferences-state.html
+// disables it) but this inert handler guards against a direct click on a
+// stale DOM.
 $('.open-ai-lesson-tool').off('click').on('click', function (event) {
   if (event) event.preventDefault();
-  if (!isExperimentalAiEnabled()) {
-    showSidebarNotice('AI Shiur is an experimental feature. Click OK to open Preferences and enable it.', function () {
-      openPreferencesWithHint('experimental-features');
-    });
-    return;
-  }
-  google.script.run.openAiLessonGenerator();
 });
 
 $('#open-preferences-experimental').off('click').on('click', function (event) {

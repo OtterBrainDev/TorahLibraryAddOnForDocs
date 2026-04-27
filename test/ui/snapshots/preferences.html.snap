@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <?!= include('ui_head'); ?>
-    <?!= include('ui_utilities.css'); ?>
+    <?!= include('shared/ui/head'); ?>
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/themes/smoothness/jquery-ui.css" />
-    <?!= HtmlService.createHtmlOutputFromFile('preferences_css').getContent(); ?>
-    <script>
-      window.APP_CONFIG = <?= JSON.stringify(appConfig) ?>;
-    </script>
+    <script>window.APP_CONFIG = <?= appConfigJson ?>;</script>
+<? var devFlags = JSON.parse(devFlagsJson); ?>
+    <?!= include('preferences/css'); ?>
+    <?!= include('shared/composition-card/css'); ?>
   </head>
   <body>
     <aside class="hide"><img src="https://www.sefaria.org/static/img/ajax-loader.gif" name="loading"></aside>
@@ -15,284 +14,421 @@
     <div class="preferences-dialog">
       <div class="preferences-shell">
         <section class="preferences-toc section-card" aria-label="Preferences sections">
-          <div class="toc-header-row">
-            <h1>Preferences</h1>
-            <div class="toc-actions">
-              <button type="button" class="small-button" id="expand_all_sections">Expand All</button>
-              <button type="button" class="small-button" id="collapse_all_sections">Collapse All</button>
-            </div>
-          </div>
-          <p class="section-note">Open only the sections you need. Saved changes apply to all Google Docs for your account.</p>
+          <h1>Preferences</h1>
+          <p class="section-note">These are your default settings for new insertions. The sidebar is where you pick what to insert right now and override these defaults for a single insertion. Saved changes apply to all Google Docs for your account.</p>
         </section>
 
-        <details class="section-card section-accordion" id="title-links" name="title-links">
-          <summary class="section-card-summary"><span>Titles And Links</span></summary>
-          <div class="section-card-body">
-            <p class="section-note">Source titles use the Title settings when not linked. When Insert Sefaria Link is enabled, linked titles use the Hyperlink settings below.</p>
+        <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
+          <button type="button" id="pref-tab-fonts-btn" class="pref-tab" role="tab" data-pref-tab="fonts" aria-controls="pref-tab-fonts" aria-selected="true">Fonts</button>
+          <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="false">Insertion</button>
+<? if (devFlags.SURPRISE_ME) { ?>
+          <button type="button" id="pref-tab-experimental-btn" class="pref-tab" role="tab" data-pref-tab="experimental" aria-controls="pref-tab-experimental" aria-selected="false">🧪 Experimental</button>
+<? } ?>
+        </nav>
 
-            <div class="compact-row">
-              <div class="compact-field">
-                <label for="source_title_font">Title Font</label>
-                <select name="source_title_font" id="source_title_font">
-                  <optgroup label="Sefaria Fonts">
-                    <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
-                    <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                    <option value="SBL Hebrew">SBL Hebrew</option>
-                    <option value="Ezra SIL">Ezra SIL</option>
-                    <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                    <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                  </optgroup>
-                  <optgroup label="System Fonts">
-                    <option value="Crimson Text">Crimson Text</option>
-                    <option value="EB Garamond">EB Garamond</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Arial">Arial</option>
-                    <option value="Calibri">Calibri</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Verdana">Verdana</option>
-                    <option value="Roboto">Roboto</option>
-                  </optgroup>
-                </select>
-              </div>
-              <div class="compact-field compact-field--size">
-                <label for="source_title_font_size">Size</label>
-                <input id="source_title_font_size" type="number" name="source_title_font_size" min="1" max="400" step="0.1">
-              </div>
-              <div class="compact-field compact-field--style">
-                <label>Style</label>
-                <div class="style-control" data-style-control="source_title_font_style">
-                  <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                  <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                  <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+        <div class="pref-tab-panel" id="pref-tab-fonts" role="tabpanel" aria-labelledby="pref-tab-fonts-btn">
+          <details class="section-card section-accordion" id="translation" name="translation">
+            <summary class="section-card-summary"><span>Translation</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">If your preferred language is unavailable, the sidebar will try English next and then other available languages.</p>
+
+              <div class="subsection-card">
+              <div class="scheme-inline-row scheme-inline-row--translation">
+                <div class="compact-field compact-field--label">
+                  <label for="preferred_translation_language">Preferred Language</label>
                 </div>
-                <input type="hidden" id="source_title_font_style" name="source_title_font_style">
-              </div>
-            </div>
-            <div class="inline-preview" id="source_title_preview"><span class="label">Title Preview</span>Deuteronomy 11:18</div>
-
-            <div class="compact-row compact-row--spaced">
-              <div class="compact-field">
-                <label for="sefaria_link_font">Hyperlink Font</label>
-                <select name="sefaria_link_font" id="sefaria_link_font">
-                  <optgroup label="Sefaria Fonts">
-                    <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
-                    <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                    <option value="SBL Hebrew">SBL Hebrew</option>
-                    <option value="Ezra SIL">Ezra SIL</option>
-                    <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                    <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                  </optgroup>
-                  <optgroup label="System Fonts">
-                    <option value="Crimson Text">Crimson Text</option>
-                    <option value="EB Garamond">EB Garamond</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Arial">Arial</option>
-                    <option value="Calibri">Calibri</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="Verdana">Verdana</option>
-                    <option value="Roboto">Roboto</option>
-                  </optgroup>
-                </select>
-              </div>
-              <div class="compact-field compact-field--size">
-                <label for="sefaria_link_font_size">Size</label>
-                <input id="sefaria_link_font_size" type="number" name="sefaria_link_font_size" min="1" max="400" step="0.1">
-              </div>
-              <div class="compact-field compact-field--style">
-                <label>Style</label>
-                <div class="style-control" data-style-control="sefaria_link_font_style">
-                  <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                  <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                  <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                <div class="compact-field">
+                  <select id="preferred_translation_language" name="preferred_translation_language">
+                    <option value="en">English</option>
+                    <option value="he">Hebrew</option>
+                    <option value="ar">Arabic</option>
+                    <option value="cs">Czech</option>
+                    <option value="eo">Esperanto</option>
+                    <option value="fa">Farsi (Persian)</option>
+                    <option value="fi">Finnish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="hu">Hungarian</option>
+                    <option value="it">Italian</option>
+                    <option value="itk">Judeo-Italian</option>
+                    <option value="jrb">Judeo-Arabic</option>
+                    <option value="lad">Ladino (Judeo-Spanish)</option>
+                    <option value="ko">Korean</option>
+                    <option value="pl">Polish</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="ru">Russian</option>
+                    <option value="es">Spanish</option>
+                    <option value="yi">Yiddish</option>
+                  </select>
                 </div>
-                <input type="hidden" id="sefaria_link_font_style" name="sefaria_link_font_style">
               </div>
-            </div>
-            <div class="inline-preview" id="sefaria_link_preview"><span class="label">Hyperlink Preview</span><span class="preview-link-sample">Deuteronomy 11:18</span></div>
 
-            <div class="toggle-row title-links-citation-toggle">
-              <div class="toggle-copy">
-                <div class="toggle-title">Include Source Citation After Inserted Text</div>
-                <div class="toggle-help">Adds the formatted source citation below the inserted text block.</div>
-              </div>
-              <label class="switch" for="include-translation-source-info">
-                <input id="include-translation-source-info" type="checkbox" name="include-translation-source-info">
-                <span class="slider"></span>
-              </label>
-            </div>
-          </div>
-        </details>
-
-        <details class="section-card section-accordion" id="hebrew-text-settings" name="hebrew-text-settings">
-          <summary class="section-card-summary"><span>Hebrew Text Settings</span></summary>
-          <div class="section-card-body">
-            <p class="section-note">Defaults for inserted Hebrew text.</p>
-
-            <details class="compact-accordion">
-              <summary>Source Text</summary>
               <div class="compact-row">
                 <div class="compact-field">
-                  <label for="hebrew_font">Font</label>
-                  <select name="hebrew_font" id="hebrew_font">
+                  <label for="translation_font">Font</label>
+                  <select name="translation_font" id="translation_font">
                     <optgroup label="Sefaria Fonts">
                       <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
-                      <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                      <option value="SBL Hebrew">SBL Hebrew</option>
-                      <option value="Ezra SIL">Ezra SIL</option>
-                      <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                      <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                    </optgroup>
-                    <optgroup label="System Fonts">
                       <option value="Crimson Text">Crimson Text</option>
                       <option value="EB Garamond">EB Garamond</option>
+                      <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
+                      <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
+                    </optgroup>
+                    <optgroup label="System Fonts">
+                      <option value="Roboto">Roboto</option>
                       <option value="Georgia">Georgia</option>
+                      <option value="Verdana">Verdana</option>
                       <option value="Arial">Arial</option>
                       <option value="Calibri">Calibri</option>
                       <option value="Times New Roman">Times New Roman</option>
-                      <option value="Verdana">Verdana</option>
-                      <option value="Roboto">Roboto</option>
+                      <option value="David">David</option>
+                      <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
                     </optgroup>
                   </select>
                 </div>
                 <div class="compact-field compact-field--size">
-                  <label for="hebrew_font_size">Size</label>
-                  <input id="hebrew_font_size" type="number" name="hebrew_font_size" min="1" max="400" step="0.1" value="18">
+                  <label for="translation_font_size">Size</label>
+                  <input id="translation_font_size" type="number" name="translation_font_size" min="1" max="400" step="0.1">
                 </div>
                 <div class="compact-field compact-field--style">
                   <label>Style</label>
-                  <div class="style-control" data-style-control="hebrew_font_style">
+                  <div class="style-control" data-style-control="translation_font_style">
                     <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
                     <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
                     <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
                   </div>
-                  <input type="hidden" id="hebrew_font_style" name="hebrew_font_style">
+                  <input type="hidden" id="translation_font_style" name="translation_font_style">
                 </div>
               </div>
-              <div class="inline-preview hebrew" id="hebrew_font_preview"><span class="label">Preview</span>וְשַׂמְתֶּם אֶת־דְּבָרַי אֵלֶּה עַל־לְבַבְכֶם</div>
-            </details>
-
-            <div class="composition-card" id="composition_card" aria-label="Interactive text composition preview">
-              <div class="composition-card-header">
-                <div class="composition-card-label">Interactive Preview</div>
-                <div class="composition-card-help">Use the preview controls to set vowels, cantillation, and transliteration defaults.</div>
-              </div>
-
-              <div class="composition-surface">
-                <div class="composition-hebrew-stage">
-                  <button type="button" id="composition-cantillation-toggle" class="mark-pill mark-pill--top" aria-pressed="true" title="Toggle cantillation">Cantillation</button>
-
-                  <div id="composition-hebrew-preview" class="composition-hebrew" dir="rtl" lang="he" aria-label="Hebrew preview">
-                    <span class="composition-hebrew-text composition-hebrew-text--full">הַסֵּ֙פֶר֙ כָל־הָעָ֔ם</span>
-                    <span class="composition-hebrew-text composition-hebrew-text--no-cantillation" hidden>הַסֵּפֶר כָל־הָעָם</span>
-                    <span class="composition-hebrew-text composition-hebrew-text--consonants" hidden>הספר כל־העם</span>
-                  </div>
-
-                  <button type="button" id="composition-vowels-toggle" class="mark-pill mark-pill--bottom" aria-pressed="true" title="Toggle vowels">Vowels</button>
-                </div>
-
-                <div class="composition-transliteration-wrap">
-                  <button type="button" id="composition-transliteration-toggle" class="composition-transliteration" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
-
-                  <div id="composition-transliteration-menu" class="composition-transliteration-menu" role="listbox" hidden>
-                    <button type="button" class="composition-transliteration-option" data-value="none">None</button>
-                    <button type="button" class="composition-transliteration-option" data-value="simple_english">Simple English</button>
-                    <button type="button" class="composition-transliteration-option" data-value="traditional">Traditional</button>
-                    <button type="button" class="composition-transliteration-option" data-value="modern_israeli">Modern Israeli</button>
-                    <button type="button" class="composition-transliteration-option" data-value="ashkenazi">Ashkenazi</button>
-                    <button type="button" class="composition-transliteration-option" data-value="academic_full">Academic (Full)</button>
-                    <button type="button" class="composition-transliteration-option" data-value="ipa_modern">IPA (Modern Israeli)</button>
-                    <button type="button" class="composition-transliteration-option" data-value="ipa_tiberian">IPA (Tiberian-ish)</button>
-                  </div>
-                </div>
-
-                <div class="composition-status" id="composition-status" aria-live="polite">Cantillation on · Vowels on · Transliteration: off</div>
+              <div class="inline-preview translation" id="translation_font_preview"><span class="label">Preview</span>Therefore place these words of Mine upon your heart…</div>
               </div>
             </div>
+          </details>
 
-            <div class="composition-state-inputs" hidden>
-              <input type="hidden" id="nekudot" name="nekudot">
-              <input type="hidden" id="nekudot_filter" name="nekudot_filter">
-              <input type="hidden" id="teamim" name="teamim">
-              <input type="hidden" id="teamim_filter" name="teamim_filter">
-            </div>
-
-
-            <details class="compact-accordion">
-              <summary>Transliteration</summary>
-
-              <div class="toggle-row">
-                <div class="toggle-copy">
-                  <div class="toggle-title">Include Transliteration By Default</div>
-                  <div class="toggle-help">Start with transliteration enabled whenever Hebrew output is selected.</div>
-                </div>
-                <label class="switch" for="include_transliteration_default">
-                  <input id="include_transliteration_default" type="checkbox" name="include_transliteration_default">
-                  <span class="slider"></span>
-                </label>
-              </div>
-
-              <details class="compact-accordion compact-accordion--nested">
-                <summary>Font</summary>
-                <div class="scheme-inline-row">
-                  <div class="compact-field compact-field--label">
-                    <label for="transliteration_scheme">Scheme</label>
-                  </div>
+          <details class="section-card section-accordion" id="hebrew-text-settings" name="hebrew-text-settings">
+            <summary class="section-card-summary"><span>Hebrew</span></summary>
+            <div class="section-card-body">
+              <div class="subsection-card">
+                <div class="subsection-title">Source text</div>
+                <div class="compact-row compact-row--comfortable">
                   <div class="compact-field">
-                    <select id="transliteration_scheme" name="transliteration_scheme">
-                      <option value="simple_english">Simple English</option>
-                      <option value="traditional">Traditional</option>
-                      <option value="modern_israeli">Modern Israeli</option>
-                      <option value="ashkenazi">Ashkenazi</option>
-                      <option value="academic_full">Academic (Full)</option>
-                      <option value="ipa_modern">IPA (Modern Israeli)</option>
-                      <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="compact-row">
-                  <div class="compact-field">
-                    <label for="transliteration_font">Font</label>
-                    <select id="transliteration_font" name="transliteration_font">
+                    <label for="hebrew_font">Font</label>
+                    <select name="hebrew_font" id="hebrew_font">
                       <optgroup label="Sefaria Fonts">
                         <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
                         <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
+                        <option value="SBL Hebrew">SBL Hebrew</option>
+                        <option value="Ezra SIL">Ezra SIL</option>
                         <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="Crimson Text">Crimson Text</option>
-                        <option value="EB Garamond">EB Garamond</option>
+                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
                       </optgroup>
                       <optgroup label="System Fonts">
-                        <option value="Roboto">Roboto</option>
+                        <option value="Crimson Text">Crimson Text</option>
+                        <option value="EB Garamond">EB Garamond</option>
                         <option value="Georgia">Georgia</option>
-                        <option value="Verdana">Verdana</option>
                         <option value="Arial">Arial</option>
                         <option value="Calibri">Calibri</option>
                         <option value="Times New Roman">Times New Roman</option>
-                        <option value="David">David</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Roboto">Roboto</option>
                       </optgroup>
                     </select>
                   </div>
                   <div class="compact-field compact-field--size">
-                    <label for="transliteration_font_size">Size</label>
-                    <input id="transliteration_font_size" type="number" name="transliteration_font_size" min="1" max="400" step="0.1">
+                    <label for="hebrew_font_size">Size</label>
+                    <input id="hebrew_font_size" type="number" name="hebrew_font_size" min="1" max="400" step="0.1" value="18">
                   </div>
                   <div class="compact-field compact-field--style">
                     <label>Style</label>
-                    <div class="style-control" data-style-control="transliteration_font_style">
+                    <div class="style-control" data-style-control="hebrew_font_style">
                       <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
                       <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
                       <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
                     </div>
-                    <input type="hidden" id="transliteration_font_style" name="transliteration_font_style">
+                    <input type="hidden" id="hebrew_font_style" name="hebrew_font_style">
                   </div>
                 </div>
+                <div class="inline-preview hebrew" id="hebrew_font_preview"><span class="label">Preview</span>וְשַׂמְתֶּם אֶת־דְּבָרַי אֵלֶּה עַל־לְבַבְכֶם</div>
+              </div>
 
-                <div class="inline-preview transliteration" id="transliteration_preview"><span class="label">Preview</span>Ve-samtem et devarai eileh al levavchem</div>
-              </details>
+              <div class="subsection-card">
+                <div class="subsection-title">Transliteration</div>
+                <p class="subsection-note">Toggle transliteration and choose a scheme from the Insertion Preview in the Insertion tab. Use the font controls below to set how it looks.</p>
 
-              <details class="compact-accordion compact-accordion--nested">
-                <summary>Mapping</summary>
+                <details class="compact-accordion compact-accordion--nested">
+                  <summary>Font</summary>
+                  <div class="scheme-inline-row">
+                    <div class="compact-field compact-field--label">
+                      <label for="transliteration_scheme">Scheme</label>
+                    </div>
+                    <div class="compact-field">
+                      <select id="transliteration_scheme" name="transliteration_scheme">
+                        <option value="simple_english">Simple English</option>
+                        <option value="traditional">Traditional</option>
+                        <option value="modern_israeli">Modern Israeli</option>
+                        <option value="ashkenazi">Ashkenazi</option>
+                        <option value="academic_full">Academic (Full)</option>
+                        <option value="ipa_modern">IPA (Modern Israeli)</option>
+                        <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="compact-row">
+                    <div class="compact-field">
+                      <label for="transliteration_font">Font</label>
+                      <select id="transliteration_font" name="transliteration_font">
+                        <optgroup label="Sefaria Fonts">
+                          <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
+                          <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
+                          <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
+                          <option value="Crimson Text">Crimson Text</option>
+                          <option value="EB Garamond">EB Garamond</option>
+                        </optgroup>
+                        <optgroup label="System Fonts">
+                          <option value="Roboto">Roboto</option>
+                          <option value="Georgia">Georgia</option>
+                          <option value="Verdana">Verdana</option>
+                          <option value="Arial">Arial</option>
+                          <option value="Calibri">Calibri</option>
+                          <option value="Times New Roman">Times New Roman</option>
+                          <option value="David">David</option>
+                          <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                        </optgroup>
+                      </select>
+                    </div>
+                    <div class="compact-field compact-field--size">
+                      <label for="transliteration_font_size">Size</label>
+                      <input id="transliteration_font_size" type="number" name="transliteration_font_size" min="1" max="400" step="0.1">
+                    </div>
+                    <div class="compact-field compact-field--style">
+                      <label>Style</label>
+                      <div class="style-control" data-style-control="transliteration_font_style">
+                        <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                        <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                        <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                      </div>
+                      <input type="hidden" id="transliteration_font_style" name="transliteration_font_style">
+                    </div>
+                  </div>
+
+                  <div class="inline-preview transliteration" id="transliteration_preview"><span class="label">Preview</span>Ve-samtem et devarai eileh al levavchem</div>
+                </details>
+
+              </div>
+            </div>
+          </details>
+
+          <details class="section-card section-accordion" id="title-typography" name="title-typography">
+            <summary class="section-card-summary"><span>🔗 Title Typography</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Fonts and styling used when source titles are inserted with text.</p>
+
+              <div class="subsection-card">
+                <div class="subsection-title">Title formatting</div>
+                <p class="subsection-note">Used for source titles when a title is inserted without a hyperlink.</p>
+                <div class="compact-row compact-row--comfortable">
+                  <div class="compact-field">
+                    <label for="source_title_font">Title font</label>
+                    <select name="source_title_font" id="source_title_font">
+                      <optgroup label="Sefaria Fonts">
+                        <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
+                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
+                        <option value="SBL Hebrew">SBL Hebrew</option>
+                        <option value="Ezra SIL">Ezra SIL</option>
+                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
+                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                      </optgroup>
+                      <optgroup label="System Fonts">
+                        <option value="Crimson Text">Crimson Text</option>
+                        <option value="EB Garamond">EB Garamond</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Roboto">Roboto</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div class="compact-field compact-field--size">
+                    <label for="source_title_font_size">Size</label>
+                    <input id="source_title_font_size" type="number" name="source_title_font_size" min="1" max="400" step="0.1">
+                  </div>
+                  <div class="compact-field compact-field--style">
+                    <label>Style</label>
+                    <div class="style-control" data-style-control="source_title_font_style">
+                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                    </div>
+                    <input type="hidden" id="source_title_font_style" name="source_title_font_style">
+                  </div>
+                </div>
+                <div class="inline-preview" id="source_title_preview"><span class="label">Title Preview</span>Deuteronomy 11:18</div>
+              </div>
+
+              <div class="subsection-card">
+                <div class="subsection-title">Linked title formatting</div>
+                <p class="subsection-note">Used when the linked source title option is turned on.</p>
+                <div class="compact-row compact-row--comfortable">
+                  <div class="compact-field">
+                    <label for="sefaria_link_font">Hyperlink font</label>
+                    <select name="sefaria_link_font" id="sefaria_link_font">
+                      <optgroup label="Sefaria Fonts">
+                        <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
+                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
+                        <option value="SBL Hebrew">SBL Hebrew</option>
+                        <option value="Ezra SIL">Ezra SIL</option>
+                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
+                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                      </optgroup>
+                      <optgroup label="System Fonts">
+                        <option value="Crimson Text">Crimson Text</option>
+                        <option value="EB Garamond">EB Garamond</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Roboto">Roboto</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div class="compact-field compact-field--size">
+                    <label for="sefaria_link_font_size">Size</label>
+                    <input id="sefaria_link_font_size" type="number" name="sefaria_link_font_size" min="1" max="400" step="0.1">
+                  </div>
+                  <div class="compact-field compact-field--style">
+                    <label>Style</label>
+                    <div class="style-control" data-style-control="sefaria_link_font_style">
+                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                    </div>
+                    <input type="hidden" id="sefaria_link_font_style" name="sefaria_link_font_style">
+                  </div>
+                </div>
+                <div class="inline-preview" id="sefaria_link_preview"><span class="label">Hyperlink Preview</span><span class="preview-link-sample">Deuteronomy 11:18</span></div>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="pref-tab-panel" id="pref-tab-insertion" role="tabpanel" aria-labelledby="pref-tab-insertion-btn" hidden>
+
+          <!-- Display & Layout — above Insertion Defaults per UX requirement -->
+          <details class="section-card section-accordion" id="display-defaults" name="display-defaults" open>
+            <summary class="section-card-summary"><span>Display &amp; Layout</span></summary>
+            <div class="section-card-body">
+              <div class="pref-display-layout-section">
+                <div class="pref-field-group">
+                  <div class="compact-section-label" id="pref-output-mode-label">Display</div>
+                  <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-labelledby="pref-output-mode-label" data-pref-group="output_mode_default">
+                    <button type="button" class="mode-card" data-value="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
+                    <button type="button" class="mode-card is-active" data-value="both" role="radio" aria-checked="true" title="Both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
+                    <button type="button" class="mode-card" data-value="he" role="radio" aria-checked="false" title="Hebrew only"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
+                  </div>
+                  <input type="hidden" id="output_mode_default" name="output_mode_default" value="both">
+                </div>
+                <div class="pref-field-group" id="pref-bilingual-layout-group">
+                  <div class="compact-section-label" id="pref-bilingual-layout-label">Layout</div>
+                  <div class="layout-option-group" role="radiogroup" aria-labelledby="pref-bilingual-layout-label" data-pref-group="bilingual_layout_default">
+                    <button type="button" class="layout-option" data-value="he-top" role="radio" aria-checked="false" title="Stacked"><span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span></button>
+                    <button type="button" class="layout-option is-active" data-value="he-right" role="radio" aria-checked="true" title="Right–Left"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></button>
+                    <button type="button" class="layout-option" data-value="he-left" role="radio" aria-checked="false" title="Left–Right"><span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span></button>
+                  </div>
+                  <input type="hidden" id="bilingual_layout_default" name="bilingual_layout_default" value="he-right">
+                </div>
+              </div>
+              <div class="mini-help">Which text layers and layout to use when inserting a source.</div>
+            </div>
+          </details>
+
+          <!-- Insertion Defaults — with per-workflow sub-tabs -->
+          <details class="section-card section-accordion" id="insertion-preview" name="insertion-preview" open>
+            <summary class="section-card-summary"><span>Insertion Defaults</span></summary>
+            <div class="section-card-body">
+              <nav class="pref-workflow-tabs" role="tablist" aria-label="Workflow insertion defaults">
+                <button type="button" class="pref-workflow-tab is-active" data-workflow="texts" role="tab" aria-selected="true" aria-controls="pref-workflow-texts">Texts</button>
+                <button type="button" class="pref-workflow-tab" data-workflow="voices" role="tab" aria-selected="false" aria-controls="pref-workflow-voices">Voices</button>
+                <button type="button" class="pref-workflow-tab" data-workflow="lexicon" role="tab" aria-selected="false" aria-controls="pref-workflow-lexicon">Lexicon</button>
+              </nav>
+
+              <!-- Texts workflow -->
+              <div class="pref-workflow-panel" id="pref-workflow-texts" role="tabpanel" aria-labelledby="pref-workflow-tab-texts">
+                <p class="section-note">Set the defaults applied to new text insertions: linked title, source citation, line markers, cantillation, vowels, and transliteration. The sidebar can still override these for a single insertion.</p>
+                <div class="subsection-card subsection-card--preview">
+                  <div class="cc-card" id="composition-card-container" data-cc-features="header,linkedTitle,secondaryPills" aria-label="Default insertion preview">
+                    <?!= include('shared/composition-card/markup') ?>
+                  </div>
+                </div>
+                <div class="composition-state-inputs" hidden>
+                  <input type="hidden" id="nekudot" name="nekudot">
+                  <input type="hidden" id="nekudot_filter" name="nekudot_filter">
+                  <input type="hidden" id="teamim" name="teamim">
+                  <input type="hidden" id="teamim_filter" name="teamim_filter">
+                  <input id="include_transliteration_default" type="checkbox" name="include_transliteration_default">
+                  <input id="insert_sefaria_link_default" type="checkbox" name="insert_sefaria_link_default">
+                  <input id="show_line_markers_default" type="checkbox" name="show_line_markers_default" checked>
+                  <input id="include_translation_source_info" type="checkbox" name="include_translation_source_info">
+                </div>
+              </div>
+
+              <!-- Voices workflow -->
+              <div class="pref-workflow-panel" id="pref-workflow-voices" role="tabpanel" aria-labelledby="pref-workflow-tab-voices" hidden>
+                <p class="section-note">Set the default insert options for the Voices (source sheets) workflow. These apply each time you open the sidebar in Voices mode.</p>
+                <div class="pref-field-group">
+                  <div class="compact-section-label" id="pref-voices-insert-mode-label">What to insert</div>
+                  <div class="pref-insert-mode-selector" role="radiogroup" aria-labelledby="pref-voices-insert-mode-label" data-pref-group="voices_insert_mode_default">
+                    <button type="button" class="pref-insert-mode-btn is-active" data-value="reference" role="radio" aria-checked="true">Reference</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="contents" role="radio" aria-checked="false">Contents</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="both" role="radio" aria-checked="false">Both</button>
+                  </div>
+                  <input type="hidden" id="voices_insert_mode_default" name="voices_insert_mode_default" value="reference">
+                </div>
+                <div class="pref-field-group">
+                  <div class="scheme-inline-row">
+                    <div class="compact-field compact-field--label">
+                      <label for="voices_translit_default">Transliteration</label>
+                    </div>
+                    <div class="compact-field">
+                      <select id="voices_translit_default" name="voices_translit_default">
+                        <option value="none">None</option>
+                        <option value="simple_english">Simple English</option>
+                        <option value="traditional">Traditional</option>
+                        <option value="modern_israeli">Modern Israeli</option>
+                        <option value="ashkenazi">Ashkenazi</option>
+                        <option value="academic_full">Academic (Full)</option>
+                        <option value="ipa_modern">IPA (Modern Israeli)</option>
+                        <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lexicon workflow -->
+              <div class="pref-workflow-panel" id="pref-workflow-lexicon" role="tabpanel" aria-labelledby="pref-workflow-tab-lexicon" hidden>
+                <p class="section-note">Set the default insert option for the Lexicon (dictionary) workflow.</p>
+                <div class="pref-field-group">
+                  <div class="compact-section-label" id="pref-lexicon-insert-mode-label">What to insert</div>
+                  <div class="pref-insert-mode-selector pref-insert-mode-selector--column" role="radiogroup" aria-labelledby="pref-lexicon-insert-mode-label" data-pref-group="lexicon_insert_mode_default">
+                    <button type="button" class="pref-insert-mode-btn is-active" data-value="entry" role="radio" aria-checked="true">Full entry (headword, notes &amp; definition)</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="headword" role="radio" aria-checked="false">Headword &amp; source only</button>
+                    <button type="button" class="pref-insert-mode-btn" data-value="definition" role="radio" aria-checked="false">Definition only</button>
+                  </div>
+                  <input type="hidden" id="lexicon_insert_mode_default" name="lexicon_insert_mode_default" value="entry">
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- Transliteration Mapping — above Divine Name Mappings per UX requirement -->
+          <details class="section-card section-accordion" id="transliteration-mapping" name="transliteration-mapping">
+            <summary class="section-card-summary"><span>Transliteration Mapping</span></summary>
+            <div class="section-card-body">
+              <div class="subsection-card">
                 <div class="mini-help">Choose a Hebrew character, then specify the replacement you want this transliteration engine to use for that character.</div>
                 <div class="override-grid" id="override_grid"></div>
                 <div class="override-editor">
@@ -311,266 +447,140 @@
                 <input type="hidden" id="transliteration_overrides" name="transliteration_overrides">
                 <input type="hidden" id="transliteration_is_biblical_hebrew" name="transliteration_is_biblical_hebrew" value="true">
                 <input type="hidden" id="transliteration_biblical_dagesh_mode" name="transliteration_biblical_dagesh_mode" value="none">
-              </details>
-            </details>
+              </div>
+            </div>
+          </details>
+
+          <!-- Divine Name Mappings -->
+          <details class="section-card section-accordion" id="divine-name-mappings" name="divine-name-mappings">
+            <summary class="section-card-summary"><span>Divine Name Mappings</span></summary>
+            <div class="section-card-body">
+              <div class="subsection-card">
+                <div class="subsection-title">Insertion behavior</div>
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Apply Divine-Name Replacements On Insertion</div>
+                    <div class="toggle-help">Apply the replacement mappings below automatically when new text is inserted.</div>
+                  </div>
+                  <label class="switch" for="apply_sheimot_on_insertion">
+                    <input id="apply_sheimot_on_insertion" type="checkbox" name="apply_sheimot_on_insertion">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="subsection-card">
+                <div class="subsection-title">Replacement rules</div>
+                <div class="replacement-grid">
+                  <div class="replacement-row">
+                    <label class="switch" for="meforash_replace"><input id="meforash_replace" type="checkbox" name="meforash_replace"><span class="slider"></span></label>
+                    <div class="replacement-label">יהוה</div>
+                    <select name="meforash_replacement" id="meforash_replacement">
+                      <option value="ה'">ה'</option>
+                      <option value="יקוק">יקוק</option>
+                      <option value="השם">השם</option>
+                      <option value="ד'">ד'</option>
+                      <option value="ידוד">ידוד</option>
+                      <option value="יהו-ה">יהו-ה</option>
+                      <option value="יחוח">יחוח</option>
+                      <option value="__other__">Other</option>
+                    </select>
+                    <input type="text" id="meforash_replacement_custom" data-custom-for="meforash_replacement" class="replacement-custom" placeholder="Custom" hidden>
+                  </div>
+
+                  <div class="replacement-row">
+                    <label class="switch" for="yaw_replace"><input id="yaw_replace" type="checkbox" name="yaw_replace"><span class="slider"></span></label>
+                    <div class="replacement-label">יה</div>
+                    <select name="yaw_replacement" id="yaw_replacement">
+                      <option value="קה">קה</option>
+                      <option value="השם">השם</option>
+                      <option value="__other__">Other</option>
+                    </select>
+                    <input type="text" id="yaw_replacement_custom" data-custom-for="yaw_replacement" class="replacement-custom" placeholder="Custom" hidden>
+                  </div>
+
+                  <div class="replacement-row">
+                    <label class="switch" for="elodim_replace"><input id="elodim_replace" type="checkbox" name="elodim_replace"><span class="slider"></span></label>
+                    <div class="replacement-label">אלוהים</div>
+                    <select name="elodim_replacement" id="elodim_replacement">
+                      <option value="אלוקים">אלוקים</option>
+                      <option value="אלודים">אלודים</option>
+                      <option value="__other__">Other</option>
+                    </select>
+                    <input type="text" id="elodim_replacement_custom" data-custom-for="elodim_replacement" class="replacement-custom" placeholder="Custom" hidden>
+                  </div>
+
+                  <div class="replacement-row">
+                    <label class="switch" for="god_replace"><input id="god_replace" type="checkbox" name="god_replace"><span class="slider"></span></label>
+                    <div class="replacement-label">God</div>
+                    <select name="god_replacement" id="god_replacement">
+                      <option value="Adonai">Adonai</option>
+                      <option value="HaShem">HaShem</option>
+                      <option value="G-d" selected>G-d</option>
+                      <option value="__other__">Other</option>
+                    </select>
+                    <input type="text" id="god_replacement_custom" data-custom-for="god_replacement" class="replacement-custom" placeholder="Custom" hidden>
+                  </div>
+                </div>
+
+                <div class="mini-help">These define the replacement rules themselves. The document-wide transform command remains separate from insertion-time replacement. <span id="sheimot_summary_note">None</span></div>
+              </div>
+            </div>
+          </details>
+
+        </div>
+
+<? if (devFlags.SURPRISE_ME) { ?>
+        <div class="pref-tab-panel" id="pref-tab-experimental" role="tabpanel" aria-labelledby="pref-tab-experimental-btn" hidden>
+          <p class="section-note">Optional, in-progress features. Leaving them off keeps the core experience unchanged.</p>
+
+          <div class="section-card">
+            <div class="section-card-body">
+              <div class="toggle-row">
+                <div class="toggle-copy">
+                  <div class="toggle-title">Enable Experimental Features</div>
+                  <div class="toggle-help">Turn on to access Surprise Me.</div>
+                </div>
+                <label class="switch" for="experimental_features_enabled">
+                  <input id="experimental_features_enabled" type="checkbox" name="experimental_features_enabled">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="experimental-child-toggles">
+<? if (devFlags.SURPRISE_ME) { ?>
+              <div class="toggle-row">
+                <div class="toggle-copy">
+                  <div class="toggle-title">🎲 Surprise Me</div>
+                  <div class="toggle-help">Modified from Legacy beta feature <a href="https://en.wikipedia.org/wiki/PowerPoint_karaoke">"Popcorn"</a> by Shlomi Helfgot.</div>
+                </div>
+                <label class="switch" for="surprise_me_enabled">
+                  <input id="surprise_me_enabled" type="checkbox" name="surprise_me_enabled">
+                  <span class="slider"></span>
+                </label>
+              </div>
+<? } ?>
+              </div>
+
+            </div>
           </div>
-        </details>
+        </div>
+<? } ?>
 
-        <details class="section-card section-accordion" id="translation" name="translation">
-          <summary class="section-card-summary"><span>Translation</span></summary>
-          <div class="section-card-body">
-            <p class="section-note">Choose the default font for inserted translation text. If your preferred translation language is unavailable for a source, the sidebar will try English next, then other available languages.</p>
-
-            <div class="scheme-inline-row scheme-inline-row--translation">
-              <div class="compact-field compact-field--label">
-                <label for="preferred_translation_language">Preferred Language</label>
-              </div>
-              <div class="compact-field">
-                <select id="preferred_translation_language" name="preferred_translation_language">
-                  <option value="en">English</option>
-                  <option value="he">Hebrew</option>
-                  <option value="ar">Arabic</option>
-                  <option value="cs">Czech</option>
-                  <option value="eo">Esperanto</option>
-                  <option value="fa">Farsi (Persian)</option>
-                  <option value="fi">Finnish</option>
-                  <option value="fr">French</option>
-                  <option value="de">German</option>
-                  <option value="hu">Hungarian</option>
-                  <option value="it">Italian</option>
-                  <option value="itk">Judeo-Italian</option>
-                  <option value="jrb">Judeo-Arabic</option>
-                  <option value="lad">Ladino (Judeo-Spanish)</option>
-                  <option value="ko">Korean</option>
-                  <option value="pl">Polish</option>
-                  <option value="pt">Portuguese</option>
-                  <option value="ru">Russian</option>
-                  <option value="es">Spanish</option>
-                  <option value="yi">Yiddish</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="compact-row">
-              <div class="compact-field">
-                <label for="translation_font">Font</label>
-                <select name="translation_font" id="translation_font">
-                  <optgroup label="Sefaria Fonts">
-                    <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
-                    <option value="Crimson Text">Crimson Text</option>
-                    <option value="EB Garamond">EB Garamond</option>
-                    <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                    <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                  </optgroup>
-                  <optgroup label="System Fonts">
-                    <option value="Roboto">Roboto</option>
-                    <option value="Georgia">Georgia</option>
-                    <option value="Verdana">Verdana</option>
-                    <option value="Arial">Arial</option>
-                    <option value="Calibri">Calibri</option>
-                    <option value="Times New Roman">Times New Roman</option>
-                    <option value="David">David</option>
-                    <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                  </optgroup>
-                </select>
-              </div>
-              <div class="compact-field compact-field--size">
-                <label for="translation_font_size">Size</label>
-                <input id="translation_font_size" type="number" name="translation_font_size" min="1" max="400" step="0.1">
-              </div>
-              <div class="compact-field compact-field--style">
-                <label>Style</label>
-                <div class="style-control" data-style-control="translation_font_style">
-                  <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                  <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                  <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                </div>
-                <input type="hidden" id="translation_font_style" name="translation_font_style">
-              </div>
-            </div>
-            <div class="inline-preview translation" id="translation_font_preview"><span class="label">Preview</span>Therefore place these words of Mine upon your heart…</div>
-          </div>
-        </details>
-
-        <details class="section-card section-accordion" id="divine-name-mappings" name="divine-name-mappings">
-          <summary class="section-card-summary"><span>Divine Name Mappings</span></summary>
-          <div class="section-card-body">
-            <div class="toggle-row">
-              <div class="toggle-copy">
-                <div class="toggle-title">Apply Divine-Name Replacements On Insertion</div>
-                <div class="toggle-help">Apply the replacement mappings below automatically when new text is inserted.</div>
-              </div>
-              <label class="switch" for="apply_sheimot_on_insertion">
-                <input id="apply_sheimot_on_insertion" type="checkbox" name="apply_sheimot_on_insertion">
-                <span class="slider"></span>
-              </label>
-            </div>
-
-            <div class="replacement-grid">
-              <div class="replacement-row">
-                <label class="switch" for="meforash_replace"><input id="meforash_replace" type="checkbox" name="meforash_replace"><span class="slider"></span></label>
-                <div class="replacement-label">יהוה</div>
-                <select name="meforash_replacement" id="meforash_replacement">
-                  <option value="ה'">ה'</option>
-                  <option value="יקוק">יקוק</option>
-                  <option value="השם">השם</option>
-                  <option value="ד'">ד'</option>
-                  <option value="ידוד">ידוד</option>
-                  <option value="יהו-ה">יהו-ה</option>
-                  <option value="יחוח">יחוח</option>
-                  <option value="__other__">Other</option>
-                </select>
-                <input type="text" id="meforash_replacement_custom" data-custom-for="meforash_replacement" class="replacement-custom" placeholder="Custom" hidden>
-              </div>
-
-              <div class="replacement-row">
-                <label class="switch" for="yaw_replace"><input id="yaw_replace" type="checkbox" name="yaw_replace"><span class="slider"></span></label>
-                <div class="replacement-label">יה</div>
-                <select name="yaw_replacement" id="yaw_replacement">
-                  <option value="קה">קה</option>
-                  <option value="השם">השם</option>
-                  <option value="__other__">Other</option>
-                </select>
-                <input type="text" id="yaw_replacement_custom" data-custom-for="yaw_replacement" class="replacement-custom" placeholder="Custom" hidden>
-              </div>
-
-              <div class="replacement-row">
-                <label class="switch" for="elodim_replace"><input id="elodim_replace" type="checkbox" name="elodim_replace"><span class="slider"></span></label>
-                <div class="replacement-label">אלוהים</div>
-                <select name="elodim_replacement" id="elodim_replacement">
-                  <option value="אלוקים">אלוקים</option>
-                  <option value="אלודים">אלודים</option>
-                  <option value="__other__">Other</option>
-                </select>
-                <input type="text" id="elodim_replacement_custom" data-custom-for="elodim_replacement" class="replacement-custom" placeholder="Custom" hidden>
-              </div>
-
-              <div class="replacement-row">
-                <label class="switch" for="god_replace"><input id="god_replace" type="checkbox" name="god_replace"><span class="slider"></span></label>
-                <div class="replacement-label">God</div>
-                <select name="god_replacement" id="god_replacement">
-                  <option value="Adonai">Adonai</option>
-                  <option value="HaShem">HaShem</option>
-                  <option value="G-d" selected>G-d</option>
-                  <option value="__other__">Other</option>
-                </select>
-                <input type="text" id="god_replacement_custom" data-custom-for="god_replacement" class="replacement-custom" placeholder="Custom" hidden>
-              </div>
-            </div>
-
-            <div class="mini-help">These define the replacement rules themselves. The document-wide transform command remains separate from insertion-time replacement. <span id="sheimot_summary_note">None</span></div>
-          </div>
-        </details>
-
-        <details class="section-card section-accordion" id="features" name="features">
-          <summary class="section-card-summary"><span>Experimental Features</span></summary>
-          <div class="section-card-body">
-            <div class="toggle-row">
-              <div class="toggle-copy">
-                <div class="toggle-title">Enable Surprise Me</div>
-                <div class="toggle-help">Modified from Legacy beta feature <a href="https://en.wikipedia.org/wiki/PowerPoint_karaoke">"Popcorn"</a> by Shlomi Helfgot.</div>
-              </div>
-              <label class="switch" for="surprise_me_enabled">
-                <input id="surprise_me_enabled" type="checkbox" name="surprise_me_enabled">
-                <span class="slider"></span>
-              </label>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-copy">
-                <div class="toggle-title">Enable Experimental AI Lesson Generator</div>
-                <div class="toggle-help">Generate a structured lesson or source-sheet draft directly in Google Docs. Basic mode uses the Merkaz website default route so most users do not need to choose a provider, model, or API key. Advanced mode keeps provider, model, and request-level key controls for power users.</div>
-              </div>
-              <label class="switch" for="experimental_ai_source_sheet_enabled">
-                <input id="experimental_ai_source_sheet_enabled" type="checkbox" name="experimental_ai_source_sheet_enabled">
-                <span class="slider"></span>
-              </label>
-            </div>
-
-            <div class="section-note" style="margin-top:10px;">The AI modal now has a <strong>Basic</strong> tab for the Merkaz-managed default experience and an <strong>Advanced</strong> tab for provider-specific overrides. The three lesson quick actions also appear in the add-on’s <strong>Quick Actions</strong> submenu.</div>
-
-            <details class="compact-accordion compact-accordion--nested" open>
-              <summary>AI Quick Defaults</summary>
-              <div class="compact-inline-pair compact-inline-pair--spaced">
-                <div class="compact-field">
-                  <label for="ai_provider_default">Preferred Route</label>
-                  <select id="ai_provider_default" name="ai_provider_default">
-                    <option value="default">Default (recommended)</option>
-                    <option value="openai">ChatGPT / OpenAI</option>
-                    <option value="anthropic">Claude / Anthropic</option>
-                    <option value="gemini">Gemini / Google</option>
-                  </select>
-                  <div class="mini-help">This pre-fills the AI modal. In Basic mode the site still decides how to route the request.</div>
-                </div>
-                <div class="compact-field">
-                  <label for="ai_key_strategy_default">Advanced Key Source Default</label>
-                  <select id="ai_key_strategy_default" name="ai_key_strategy_default">
-                    <option value="auto">Automatic</option>
-                    <option value="managed">Use site-managed key</option>
-                    <option value="saved">Use my saved key</option>
-                    <option value="manual">Paste a key for this request</option>
-                  </select>
-                  <div class="mini-help">Only applies when you switch to Advanced mode.</div>
-                </div>
-              </div>
-              <input id="ai_model_default" name="ai_model_default" type="hidden" value="">
-              <div class="compact-inline-pair compact-inline-pair--spaced">
-                <div class="compact-field compact-field--size">
-                  <label for="ai_duration_default">Default Length</label>
-                  <input id="ai_duration_default" name="ai_duration_default" type="number" min="10" max="120" step="5" value="45">
-                </div>
-                <div class="compact-field">
-                  <label for="ai_audience_default">Default Audience</label>
-                  <input id="ai_audience_default" name="ai_audience_default" type="text" placeholder="Adult learners">
-                </div>
-              </div>
-              <div class="compact-inline-pair compact-inline-pair--spaced">
-                <div class="compact-field">
-                  <label for="ai_lesson_style_default">Default Style</label>
-                  <input id="ai_lesson_style_default" name="ai_lesson_style_default" type="text" placeholder="Interactive shiur">
-                </div>
-                <div class="compact-field">
-                  <label>Permissions note</label>
-                  <div class="mini-help">Google may describe the add-on as able to “run when you are not present” because it can make secure external requests to the Merkaz site. In practice, AI requests are only sent when you choose a menu item or click a button in the add-on.</div>
-                </div>
-              </div>
-            </details>
-
-            <details class="compact-accordion compact-accordion--nested">
-              <summary>Saved AI Keys (Advanced mode)</summary>
-              <div class="compact-inline-pair compact-inline-pair--spaced">
-                <div class="compact-field">
-                  <label for="ai_saved_key_provider">Provider</label>
-                  <select id="ai_saved_key_provider">
-                    <option value="openai">ChatGPT / OpenAI</option>
-                    <option value="anthropic">Claude / Anthropic</option>
-                    <option value="gemini">Gemini / Google</option>
-                  </select>
-                </div>
-                <div class="compact-field">
-                  <label for="ai_saved_key_mask">Saved Key</label>
-                  <input id="ai_saved_key_mask" type="password" placeholder="No key saved" autocomplete="off">
-                </div>
-              </div>
-              <div class="save-actions ai-key-actions">
-                <button type="button" class="submit" id="ai_save_key_button">Save Key</button>
-                <button type="button" class="submit" id="ai_clear_key_button">Clear Key</button>
-                <span id="ai_key_status" class="save-note"></span>
-              </div>
-            </details>
-          </div>
-        </details>
       </div>
 
       <section class="save-bar" name="actions">
         <div class="save-actions">
           <button type="button" class="submit reset-preferences-button">Reset To Defaults</button>
-          <button type="button" class="submit refresh-sidebar-button">Refresh Sidebar</button>
-          <button type="button" class="blue submit save-preferences-button">Save Preferences</button>
-		  <button type="button" class="blue submit save-close-preferences-button">Save and Close</button>
+          <button type="button" class="submit refresh-sidebar-button" aria-label="Refresh Sidebar">
+            <span class="icon" aria-hidden="true">🔁</span>
+            <span>Refresh</span>
+          </button>
+          <button type="button" class="blue submit save-preferences-button">Save Defaults</button>
+		  <button type="button" class="blue submit save-close-preferences-button">Save &amp; Close</button>
         </div>
         <div class="save-feedback">
           <span id="results"></span>
-          <span id="sidebar_refresh_note" class="save-note">Refresh updates the sidebar immediately and clears any sidebar-only session items.</span>
+          <span id="sidebar_refresh_note" class="save-note">Reloads the sidebar from your saved defaults and clears any per-insertion session overrides.</span>
         </div>
       </section>
 
@@ -587,11 +597,12 @@
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
-    <?!= include('ui_core.js'); ?>
-    <?!= include('ui_api.js'); ?>
-    <?!= include('ui_state.js'); ?>
-    <?!= include('ui_dom.js'); ?>
-    <?!= include('ui_feedback.js'); ?>
-    <?!= HtmlService.createHtmlOutputFromFile('preferences.page.js').getContent(); ?>
+    <?!= include('shared/ui/core-shared'); ?>
+    <?!= include('shared/ui/api'); ?>
+    <?!= include('shared/ui/dom'); ?>
+    <?!= include('shared/ui/feedback'); ?>
+    <?!= include('shared/ui/state'); ?>
+    <?!= include('shared/composition-card/shared'); ?>
+    <?!= include('preferences/js'); ?>
   </body>
 </html>

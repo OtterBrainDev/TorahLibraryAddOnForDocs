@@ -1,3 +1,11 @@
+/* Preserved from branch claude/review-addon-rewrite-GY8IC as a reference
+ * implementation. NOT wired into the shipped add-on.
+ * See docs/ai-lesson/DESIGN.md for the pros/cons analysis and the
+ * Route-4 (Sefaria-hosted gateway) recommendation this code is
+ * waiting on. Do NOT move this file back under apps-script/ without
+ * addressing the credentials-handling concerns documented in DESIGN.md.
+ */
+
 function getAiLessonBootstrapData() {
   assertExperimentalAiEnabled_();
   var gatewayBootstrap = merkazAiSignedRequest_('bootstrap', {});

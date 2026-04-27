@@ -406,84 +406,13 @@ $(document).on('click', '.restore-corpus-menu-item', function (event) {
   toggleCorpusVisibility(corpusKey);
 });
 
-// ── AI Shiur ──────────────────────────────────────────────────────────────────
-
-$('#ai-inline-generate').off('click').on('click', function () {
-  var $card  = $('#exp-card-shiur');
-  var topic  = ($('#ai-inline-topic').val() || '').trim();
-
-  // Validate required field
-  if (!topic) {
-    var $input = $('#ai-inline-topic');
-    var $err   = $('#ai-topic-error');
-    $input.addClass('exp-input-error').trigger('focus');
-    $err.text('A topic is required to generate a shiur.').addClass('exp-visible').show();
-    $input.one('input.clearErr', function () {
-      $input.removeClass('exp-input-error');
-      $err.removeClass('exp-visible').hide();
-    });
-    return;
-  }
-
-  // Resolve language balance → include flags
-  var lang = expGetGroupValue('ai-language') || 'balanced';
-  var includeOriginal    = (lang !== 'en');
-  var includeTranslation = (lang !== 'he');
-
-  var payload = {
-    provider:                'default',
-    model:                   '',
-    keyStrategy:             'auto',
-    apiKey:                  '',
-    topic:                   topic,
-    contextMode:             'topic',
-    audience:                expGetGroupValue('ai-audience') || 'Adult learners',
-    duration:                parseInt(expGetGroupValue('ai-length'), 10) || 45,
-    lessonStyle:             expGetGroupValue('ai-style')    || 'Interactive shiur',
-    additionalInstructions:  '',
-    includeOriginal:         includeOriginal,
-    includeTranslation:      includeTranslation,
-    includeTransliteration:  false,
-    includeEducatorNotes:    true,
-    includeDiscussionPrompts: $('#ai-inline-discussion').is(':checked')
-  };
-
-  expSetBusy($card, true, 'Generating…', 'Generate & Insert');
-  expSetStatus($card, 'This usually takes 20–40 seconds. Your draft will appear at the cursor.', '');
-
-  google.script.run
-    .withSuccessHandler(function (result) {
-      expSetBusy($card, false, '', 'Generate & Insert');
-      if (!result || result.success === false) {
-        expSetStatus($card,
-          (result && result.message) ? result.message
-            : 'No content was generated. Try a different topic or style.',
-          'exp-error');
-        return;
-      }
-      var label = (result && result.title) ? '“' + result.title + '”' : 'your shiur';
-      expSetStatus($card, '✓ Draft inserted — ' + label + '. Scroll down to review.', 'exp-success');
-      setTimeout(function () { expSetStatus($card, '', ''); }, 6000);
-    })
-    .withFailureHandler(function (err) {
-      expSetBusy($card, false, '', 'Generate & Insert');
-      var errorMsg = (err && err.message) ? err.message : 'Something went wrong. Check your connection and try again.';
-
-      // Special handling for invalid request signature error
-      if (errorMsg && errorMsg.indexOf('Invalid request signature') >= 0) {
-        var htmlMsg = 'Invalid request signature. <a href="#" class="exp-error-link" data-action="open-ai-prefs">Open <span aria-hidden="true">⚙️</span> Preferences</a> to enable AI Shiur.';
-        expSetStatusHTML($card, htmlMsg, 'exp-error');
-
-        // Attach click handler to the link
-        $card.find('.exp-error-link').one('click', function (e) {
-          e.preventDefault();
-          openPreferencesWithHint('experimental-features');
-        });
-      } else {
-        expSetStatus($card, errorMsg, 'exp-error');
-      }
-    })
-    .generateAiLessonDraft(payload);
+// AI Shiur was detached from the shipped add-on; see reference/ai-lesson/ and
+// docs/ai-lesson/DESIGN.md. The previous `#ai-inline-generate` click handler
+// called `generateAiLessonDraft` against a server function that no longer
+// exists. The corresponding sidebar-experimental UI has been neutralized; if
+// a stale DOM still surfaces the button, this no-op handler keeps it quiet.
+$('#ai-inline-generate').off('click').on('click', function (event) {
+  if (event) event.preventDefault();
 });
 
 $(document).on('click', '.reset-session-overrides-button', function () {

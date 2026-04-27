@@ -125,17 +125,16 @@ $('#insert-source').click(function () {
     }).withFailureHandler(function (error) {
     $('.hide').add($('.warning')).fadeOut('1000');
     showInsertWarning(error && error.message);
-  }).insertReference(
-      data,
-      language,
-      showPesukim,
-      input,
-      includeTranslationSourceInfo,
-      bilingualLayout,
-      insertSefariaLink,
-      $('.include-transliteration').is(':checked'),
-      false
-    );
+  }).insertReference(data, {
+    singleLanguage: language,
+    pasukPreference: showPesukim,
+    preferredTitle: input,
+    includeTranslationSourceInfo: includeTranslationSourceInfo,
+    bilingualLayout: bilingualLayout,
+    insertSefariaLink: insertSefariaLink,
+    includeTransliteration: $('.include-transliteration').is(':checked'),
+    insertCitationOnly: false
+  });
 });
 
 $('#open-on-sefaria').on('click', function () {

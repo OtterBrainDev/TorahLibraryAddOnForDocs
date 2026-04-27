@@ -1,5 +1,8 @@
 <script>
 function extractTextFromHtml_(html) {
+  // innerHTML on an unattached div is a standard pattern for "decode this HTML
+  // to plain text"; scripts inside never execute because the element is not
+  // inserted into the document. We read textContent and discard the div.
   var div = document.createElement('div');
   div.innerHTML = String(html || '');
   return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();

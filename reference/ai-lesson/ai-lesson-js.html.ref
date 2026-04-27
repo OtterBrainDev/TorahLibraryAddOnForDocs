@@ -1,3 +1,7 @@
+<!-- Preserved from branch claude/review-addon-rewrite-GY8IC as a reference
+     implementation. NOT wired into the shipped add-on.
+     See docs/ai-lesson/DESIGN.md for the full rationale. -->
+
 <script>
 const state = { bootstrap: null, activeTab: 'basic', cooldownTimer: null, cooldownRemaining: 0 };
 function $(id){ return document.getElementById(id); }

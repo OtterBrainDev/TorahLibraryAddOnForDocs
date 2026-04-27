@@ -1,9 +1,0 @@
-{
-  "scripts": {
-    "test:ui-includes": "node tests/validate-html-includes.mjs",
-    "test:ui-selectors": "node tests/validate-selectors.mjs",
-    "test:ui-contracts": "node tests/validate-page-contracts.mjs",
-    "test:ui-snapshots": "node tests/snapshot-page-templates.mjs",
-    "test:ui": "npm run test:ui-includes && npm run test:ui-selectors && npm run test:ui-contracts && npm run test:ui-snapshots"
-  }
-}

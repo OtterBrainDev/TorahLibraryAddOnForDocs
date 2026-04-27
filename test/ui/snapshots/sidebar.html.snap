@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <?!= include('ui_head'); ?>
-    <?!= include('ui_shell.css'); ?>
-    <?!= include('ui_components.css'); ?>
-    <?!= include('ui_utilities.css'); ?>
-    <?!= include('sidebar_css'); ?>
+    <?!= include('shared/ui/head'); ?>
+    <?!= include('css/tokens'); ?>
+    <?!= include('css/base'); ?>
+    <?!= include('css/layout'); ?>
+    <?!= include('css/components/accordion'); ?>
+    <?!= include('css/components/footer'); ?>
+    <?!= include('css/components/results'); ?>
+    <?!= include('css/components/display-layout'); ?>
+    <?!= include('css/components/versions-preview'); ?>
+    <?!= include('css/components/lexicon'); ?>
+    <?!= include('css/utilities'); ?>
+    <?!= include('shared/composition-card/css'); ?>
+    <?!= include('css/components/redesign'); ?>
     <script>
+      window.APP_CONFIG = <?= appConfigJson ?>;
       window.INITIAL_SIDEBAR_MODE = '<?= initialMode ?>';
-      window.APP_CONFIG = <?= JSON.stringify(appConfig) ?>;
     </script>
   </head>
   <body>
@@ -17,20 +25,110 @@
         <img src="https://www.sefaria.org/static/img/ajax-loader.gif" name="loading">
       </aside>
 
-      <div class="sidebar-scroll">
-        <section class="mode-switch-section" aria-label="Search mode selector">
-          <button type="button" class="mode-switch-button" data-sidebar-mode="texts">Texts</button>
-          <button type="button" class="mode-switch-button" data-sidebar-mode="voices">Voices</button>
-          <button type="button" class="mode-switch-button experimental-mode-button" data-sidebar-mode="experimental" style="display:none;">Experimental Features</button>
-        </section>
+      <nav class="mode-switch-section" role="tablist" aria-label="Search mode selector">
+        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="texts" aria-selected="true">Texts</button>
+        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="voices" aria-selected="false">Voices</button>
+        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="lexicon" id="tab-lexicon-btn" aria-selected="false">Lexicon<span class="lexicon-tab-badge" id="lexicon-tab-badge" hidden aria-hidden="true"></span></button>
+        <button type="button" role="tab" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental" style="display:none;" aria-label="Experimental Features" aria-selected="false">🧪</button>
+      </nav>
+
+      <div class="sidebar-search-region">
         <section class="reference-row unified-search-row">
-          <div class="reference-input-shell">
-            <input type="text" class="input" placeholder="Search Sefaria" aria-label="Search Sefaria" title="Press / to search">
+          <div class="search-field-wrapper">
+            <button type="button" class="keyboard-trigger" id="hebrew-keyboard-trigger" aria-label="Open Hebrew keyboard" aria-expanded="false" aria-controls="hebrew-keyboard-tray">⌨︎</button>
+            <input type="text" class="input" placeholder="Search texts…" aria-label="Search Sefaria" title="Press / to search" dir="auto" autocomplete="off" spellcheck="false">
+            <button type="button" class="search-submit search-icon-btn" id="run-sefaria" aria-label="Search Sefaria" title="Search Sefaria">
+              <span class="search-submit-icon" aria-hidden="true">🔍</span>
+            </button>
           </div>
-          <button class="search-submit" id="run-sefaria" title="Search Sefaria" aria-label="Search Sefaria"><span class="search-submit-icon" aria-hidden="true">🔍</span></button>
         </section>
+
+        <div id="search-history-dropdown" class="search-history-dropdown" role="listbox" aria-label="Recent searches" hidden></div>
+
+        <div class="hebrew-keyboard-tray" id="hebrew-keyboard-tray" role="region" aria-label="Hebrew keyboard">
+          <div class="heb-tray-header">
+            <span class="heb-tray-label" aria-hidden="true">Hebrew</span>
+            <button type="button" class="heb-nikud-toggle" id="heb-nikud-toggle" aria-pressed="false" aria-label="Toggle vowel marks">Vowels</button>
+          </div>
+          <div class="heb-key-row heb-key-row--nikud" id="heb-nikud-row" hidden>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ַ" aria-label="Patah">אַ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ָ" aria-label="Kamatz">אָ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֶ" aria-label="Segol">אֶ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֵ" aria-label="Tzere">אֵ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ִ" aria-label="Hiriq">אִ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֹ" aria-label="Holam">אֹ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ּ" aria-label="Dagesh">אּ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ְ" aria-label="Sheva">אְ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֻ" aria-label="Qubuts">אֻ</button>
+            <button type="button" class="heb-key heb-key--nikud" data-char="ֲ" aria-label="Chataf Patah">אֲ</button>
+          </div>
+          <div class="heb-key-row">
+            <button type="button" class="heb-key" data-char="א" aria-label="Alef">א</button>
+            <button type="button" class="heb-key" data-char="ב" aria-label="Bet">ב</button>
+            <button type="button" class="heb-key" data-char="ג" aria-label="Gimel">ג</button>
+            <button type="button" class="heb-key" data-char="ד" aria-label="Dalet">ד</button>
+            <button type="button" class="heb-key" data-char="ה" aria-label="He">ה</button>
+            <button type="button" class="heb-key" data-char="ו" aria-label="Vav">ו</button>
+            <button type="button" class="heb-key" data-char="ז" aria-label="Zayin">ז</button>
+            <button type="button" class="heb-key" data-char="ח" aria-label="Het">ח</button>
+            <button type="button" class="heb-key" data-char="ט" aria-label="Tet">ט</button>
+            <button type="button" class="heb-key" data-char="י" aria-label="Yod">י</button>
+          </div>
+          <div class="heb-key-row">
+            <button type="button" class="heb-key" data-char="כ" aria-label="Kaf">כ</button>
+            <button type="button" class="heb-key" data-char="ל" aria-label="Lamed">ל</button>
+            <button type="button" class="heb-key" data-char="מ" aria-label="Mem">מ</button>
+            <button type="button" class="heb-key" data-char="נ" aria-label="Nun">נ</button>
+            <button type="button" class="heb-key" data-char="ס" aria-label="Samekh">ס</button>
+            <button type="button" class="heb-key" data-char="ע" aria-label="Ayin">ע</button>
+            <button type="button" class="heb-key" data-char="פ" aria-label="Pe">פ</button>
+            <button type="button" class="heb-key" data-char="צ" aria-label="Tsadi">צ</button>
+            <button type="button" class="heb-key" data-char="ק" aria-label="Qof">ק</button>
+            <button type="button" class="heb-key" data-char="ר" aria-label="Resh">ר</button>
+          </div>
+          <div class="heb-key-row">
+            <button type="button" class="heb-key" data-char="ש" aria-label="Shin">ש</button>
+            <button type="button" class="heb-key" data-char="ת" aria-label="Tav">ת</button>
+            <button type="button" class="heb-key" data-char="ך" aria-label="Final Kaf">ך</button>
+            <button type="button" class="heb-key" data-char="ם" aria-label="Final Mem">ם</button>
+            <button type="button" class="heb-key" data-char="ן" aria-label="Final Nun">ן</button>
+            <button type="button" class="heb-key" data-char="ף" aria-label="Final Pe">ף</button>
+            <button type="button" class="heb-key" data-char="ץ" aria-label="Final Tsadi">ץ</button>
+            <button type="button" class="heb-key" data-char="׳" aria-label="Geresh">׳</button>
+            <button type="button" class="heb-key" data-char="״" aria-label="Gershayim">״</button>
+            <button type="button" class="heb-key" data-char="-" aria-label="Hyphen">-</button>
+          </div>
+          <div class="heb-key-row heb-key-row--actions">
+            <button type="button" class="heb-key heb-key--space" id="heb-space" data-char=" " aria-label="Space">Space</button>
+            <button type="button" class="heb-key heb-key--delete" id="heb-delete" aria-label="Delete character">⌫</button>
+            <button type="button" class="heb-key heb-key--done" id="heb-done" aria-label="Close keyboard">Done</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-scroll">
         <section class="mode-context-note voices-only" style="display:none;">
           <div class="helper-text">Searching source sheets via Sefaria’s sheet index.</div>
+        </section>
+        <!-- SR live region for lexicon status announcements -->
+        <div class="lexicon-sr-live" id="lexicon-sr-live" aria-live="polite" aria-atomic="true"></div>
+
+        <section class="mode-context-note lexicon-only" style="display:none;">
+          <div class="helper-text" id="lexicon-helper-text">Search dictionaries and lexicons for a Hebrew or Aramaic word.</div>
+        </section>
+
+        <!-- Lexicon search history chips (Enhancement 1) -->
+        <section class="lexicon-history-section lexicon-only" style="display:none;" aria-label="Recent searches" id="lexicon-history-section">
+          <div class="lexicon-history" id="lexicon-history-chips" role="group" aria-label="Recent searches"></div>
+        </section>
+
+        <!-- 9.4: Recent sources — shown in texts mode before any search is typed -->
+        <section class="recent-sources-section text-mode-only" style="display:none;" aria-label="Recent sources">
+          <div class="recent-sources-header">
+            <span class="recent-sources-label">Recent</span>
+            <button type="button" class="recent-sources-clear-btn" aria-label="Clear all recent">&#x2715;</button>
+          </div>
+          <ul class="recent-sources-list"></ul>
         </section>
 
         <section class="results-panel" style="display:none;">
@@ -38,6 +136,9 @@
 
   <div class="results-toggle-row">
     <button type="button" class="results-toggle-button" style="display:none;">Show results</button>
+    <button type="button" class="results-panel-sefaria-btn" id="results-panel-sefaria" style="display:none;" disabled aria-label="Open on Sefaria" title="Open on Sefaria">
+      <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon"> Open on Sefaria
+    </button>
   </div>
 
   <div class="selected-result-summary" style="display:none;"></div>
@@ -104,21 +205,25 @@
             <option value="relevance" selected>Rel. ▾</option>
             <option value="alphabetical-asc">A–Z ▾</option>
             <option value="alphabetical-desc">Z–A ▾</option>
+            <option value="category">Category ▾</option>
+            <option value="recent">Recent ▾</option>
           </select>
         </div>
 
-        <button
-          type="button"
-          class="results-tool restore-corpus-button text-mode-only"
-          id="restore-corpus-button"
-          aria-label="Restore Corpus"
-          title="Restore Corpus"
-          style="display:none;">⤦</button>
-
-        <label class="visually-hidden" for="restore-corpus-select">Restore removed corpus</label>
-        <select class="results-tool restore-corpus-select visually-hidden" id="restore-corpus-select" aria-label="Restore removed corpus">
-          <option value="">Restore…</option>
-        </select>
+        <div id="restore-corpus-menu-wrap" style="position:relative;display:inline-block;">
+          <button
+            type="button"
+            class="results-tool restore-corpus-button text-mode-only"
+            id="restore-corpus-button"
+            aria-label="Restore Corpus"
+            aria-haspopup="true"
+            aria-expanded="false"
+            title="Restore Corpus"
+            style="display:none;">⤦</button>
+          <div id="restore-corpus-menu" class="hidden restore-corpus-menu" role="menu" aria-label="Restore hidden corpora">
+            <div id="restore-corpus-menu-items"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -129,102 +234,80 @@
   </div>
 </section>
 
-        <section class="display-layout-shell display-section layout-section text-mode-only" style="display:none;">
-          <details class="sidebar-accordion display-layout-accordion">
-            <summary class="section-label accordion-summary">Display &amp; Layout</summary>
-            <div class="accordion-panel">
-              <div class="display-layout-section">
-                <details class="display-choice-detail display-choice-dropdown">
-                  <summary class="display-choice-summary" aria-label="Display selector"><span class="display-choice-label">Display</span><span class="display-choice-selected display-choice-selected--display" id="display-choice-summary-text" data-mode="both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></span></summary>
-                  <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-label="Display mode">
-                    <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
-                    <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
-                    <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
-                  </div>
-                </details>
-                <details class="display-choice-detail bilingual-layout-wrapper display-choice-dropdown">
-                  <summary class="display-choice-summary" aria-label="Layout selector"><span class="display-choice-label">Layout</span><span class="display-choice-selected display-choice-selected--layout" id="layout-choice-summary-text" data-layout="he-right"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></span></summary>
-                  <div class="layout-option-group" role="radiogroup" aria-label="Bilingual layout">
-                    <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
-                      <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>
-                    </button>
-                    <button type="button" class="layout-option" data-layout="he-right" role="radio" aria-checked="false" title="Right–Left">
-                      <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>
-                    </button>
-                    <button type="button" class="layout-option" data-layout="he-left" role="radio" aria-checked="false" title="Left–Right">
-                      <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>
-                    </button>
-                  </div>
-                </details>
+        <!-- Voices prev/next navigation row (Enhancement 9.2) -->
+        <div class="voice-nav-row voices-insert-options" style="display:none;" aria-label="Navigate results">
+          <button type="button" class="voice-nav-btn voice-nav-prev" aria-label="Previous result" disabled>‹ Prev</button>
+          <button type="button" class="voice-nav-btn voice-nav-next" aria-label="Next result" disabled>Next ›</button>
+        </div>
+        <!-- Source card: appears in State B (texts mode, result selected) -->
+        <section class="source-card text-mode-only" style="display:none;" aria-label="Selected source">
+          <div class="source-card-inner">
+            <div class="source-card-info">
+              <div class="source-card-title"></div>
+              <div class="source-card-meta">
+                <span class="source-card-status-dot"></span>
+                <span class="source-card-status-text"></span>
               </div>
-              <details class="sidebar-accordion nested-accordion more-options-accordion">
-                <summary class="section-label accordion-summary">More Options</summary>
-                <div class="more-options-panel accordion-panel">
-                  <div class="options-panel more-options-card options-section">
-                    <div class="session-settings-inline-row text-mode-only" aria-label="Session settings">
-                      <div class="session-settings-inline-label">Session:</div>
-                      <div class="session-settings-inline-buttons">
-                        <button type="button" class="footer-tool-button reset-session-overrides-button" title="Reset Session Settings" aria-label="Reset Session Settings" disabled><span class="footer-icon">↺</span></button>
-                        <button type="button" class="footer-tool-button save-session-defaults-button" title="Save Settings as Defaults" aria-label="Save Settings as Defaults" disabled><span class="footer-icon">💾</span></button>
-                      </div>
-                    </div>
-                    <div class="subsection-label">Text and Links</div>
-
-                    <div class="sidebar-composition-card hebrew-options-row" id="sidebar-composition-card" aria-label="Interactive text preview">
-                      <button type="button" class="sidebar-composition-title" id="sidebar-composition-title-toggle" aria-pressed="false" title="Insert Link">Nehemiah 8:5</button>
-
-                      <div class="sidebar-composition-hebrew-stage">
-                        <button type="button" class="sidebar-mark-pill sidebar-mark-pill--top" id="sidebar-cantillation-toggle" aria-pressed="true" title="Toggle cantillation">Cantillation</button>
-
-                        <div class="sidebar-composition-hebrew" id="sidebar-composition-hebrew" dir="rtl" lang="he" aria-label="Hebrew preview">
-                          <span class="sidebar-composition-hebrew-text sidebar-composition-hebrew-text--full">הַסֵּ֙פֶר֙ כָל־הָעָ֔ם</span>
-                          <span class="sidebar-composition-hebrew-text sidebar-composition-hebrew-text--no-cantillation" hidden>הַסֵּפֶר כָל־הָעָם</span>
-                          <span class="sidebar-composition-hebrew-text sidebar-composition-hebrew-text--consonants" hidden>הספר כל־העם</span>
-                        </div>
-
-                        <button type="button" class="sidebar-mark-pill sidebar-mark-pill--bottom" id="sidebar-vowels-toggle" aria-pressed="true" title="Toggle vowels">Vowels</button>
-                      </div>
-
-                      <div class="sidebar-composition-transliteration-wrap">
-                        <button type="button" class="sidebar-composition-transliteration" id="sidebar-transliteration-toggle" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
-
-                        <div class="sidebar-composition-transliteration-menu hidden" id="sidebar-transliteration-menu" role="listbox">
-                          <button type="button" class="sidebar-transliteration-option" data-value="none">None</button>
-                          <button type="button" class="sidebar-transliteration-option" data-value="simple_english">Simple English</button>
-                          <button type="button" class="sidebar-transliteration-option" data-value="traditional">Traditional</button>
-                          <button type="button" class="sidebar-transliteration-option" data-value="modern_israeli">Modern Israeli</button>
-                          <button type="button" class="sidebar-transliteration-option" data-value="ashkenazi">Ashkenazi</button>
-                          <button type="button" class="sidebar-transliteration-option" data-value="academic_full">Academic (Full)</button>
-                          <button type="button" class="sidebar-transliteration-option" data-value="ipa_modern">IPA (Modern Israeli)</button>
-                          <button type="button" class="sidebar-transliteration-option" data-value="ipa_tiberian">IPA (Tiberian-ish)</button>
-                        </div>
-                      </div>
-
-                      <div class="sidebar-composition-status" id="sidebar-composition-status" aria-live="polite">Link off · Cantillation on · Vowels on · Transliteration: off</div>
-                    </div>
-
-                    <div class="toggle-row pesukim-wrapper option-toggle-row">
-                      <label for="wants-pesukim" title="Adds segment numbers or verse markers when the text supports them.">Line markers</label>
-                      <label class="switch" for="wants-pesukim"><input id="wants-pesukim" type="checkbox" class="wants-pesukim" checked><span class="slider"></span></label>
-                    </div>
-                    <div class="toggle-row translation-details-row option-toggle-row">
-                      <label for="include-translation-source-info" title="Adds version and source details below the inserted translation text.">Translation details</label>
-                      <label class="switch" for="include-translation-source-info"><input id="include-translation-source-info" type="checkbox" class="include-translation-source-info"><span class="slider"></span></label>
-                    </div>
-                    <div class="toggle-row hebrew-options-row transliteration-options-row option-toggle-row visually-hidden" aria-hidden="true">
-                      <label for="include-transliteration" title="Uses your saved transliteration scheme and overrides.">Transliteration</label>
-                      <label class="switch" for="include-transliteration"><input id="include-transliteration" type="checkbox" class="include-transliteration"><span class="slider"></span></label>
-                    </div>
-                    <div class="toggle-row option-toggle-row visually-hidden" aria-hidden="true">
-                      <label for="insert-sefaria-link" title="Adds a Sefaria link after the inserted text.">Insert Sefaria link</label>
-                      <label class="switch" for="insert-sefaria-link"><input id="insert-sefaria-link" type="checkbox" class="insert-sefaria-link"><span class="slider"></span></label>
-                    </div>
-                  </div>
-                </div>
-              </details>
             </div>
-          </details>
+            <div class="source-card-actions">
+              <button type="button" class="source-card-sefaria-btn" id="source-card-sefaria" disabled aria-label="Open on Sefaria" title="Open on Sefaria">
+                <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon">
+              </button>
+            </div>
+          </div>
         </section>
+
+        <!-- Voices insert options: appears when a source sheet result is selected.
+             Advanced options (showMediaLabel, preserveSheetSpacing, etc.) are kept
+             as hidden defaults and sent by the footer-actions insert handler. -->
+        <section class="voices-insert-options voices-options-section" style="display:none;" aria-label="Voices insert options">
+          <div class="voices-insert-controls">
+            <div class="compact-section-label" id="voices-insert-mode-label">What to insert</div>
+            <div class="insert-mode-selector" id="voices-insert-mode" role="radiogroup" aria-labelledby="voices-insert-mode-label">
+              <button type="button" class="insert-mode-btn is-active" data-value="reference" role="radio" aria-checked="true">Citation</button>
+              <button type="button" class="insert-mode-btn" data-value="contents" role="radio" aria-checked="false">Text</button>
+              <button type="button" class="insert-mode-btn" data-value="both" role="radio" aria-checked="false">Citation + text</button>
+            </div>
+            <div class="compact-section-label" id="voices-translit-label" style="margin-top:8px;">Transliteration</div>
+            <select id="voices-translit-select" class="translation-version-select" aria-labelledby="voices-translit-label">
+              <option value="none">None</option>
+              <option value="simple_english">Simple English</option>
+              <option value="traditional">Traditional</option>
+              <option value="modern_israeli">Modern Israeli</option>
+              <option value="ashkenazi">Ashkenazi</option>
+              <option value="academic_full">Academic (Full)</option>
+              <option value="ipa_modern">IPA (Modern Israeli)</option>
+              <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
+            </select>
+            <div class="voices-insertion-summary" aria-live="polite">Will insert: Citation only</div>
+          </div>
+          <div class="voices-fetch-loading preview-loading" style="display:none;" aria-live="polite" aria-label="Fetching sheet contents">
+            <span class="preview-loading-spinner" aria-hidden="true"></span>
+            <span>Fetching sheet contents…</span>
+          </div>
+        </section>
+
+        <!-- Lexicon insert options: appears when a lexicon entry is selected. -->
+        <section class="lexicon-insert-options" style="display:none;" aria-label="Lexicon insert options">
+          <p class="lexicon-section-label" id="lexicon-format-label">What to insert</p>
+          <div class="insert-mode-selector lexicon-format-row" role="radiogroup" aria-labelledby="lexicon-format-label" id="lexicon-format-group">
+            <button type="button" class="insert-mode-btn lexicon-format-btn is-active" data-value="entry" role="radio" aria-checked="true">Full entry</button>
+            <button type="button" class="insert-mode-btn lexicon-format-btn" data-value="headword" role="radio" aria-checked="false">Headword &amp; source</button>
+            <button type="button" class="insert-mode-btn lexicon-format-btn" data-value="definition" role="radio" aria-checked="false">Definition only</button>
+          </div>
+          <!-- No-preview caveat shown when selected entry has no definition text -->
+          <p class="lexicon-no-preview-note" id="lexicon-no-preview-note" style="display:none;">Preview unavailable for this entry — definition text could not be loaded.</p>
+        </section>
+
+        <!-- Lexicon bookmarks (Enhancement 4) — shown when there are saved entries -->
+        <section class="lexicon-bookmarks-section lexicon-only" style="display:none;" aria-label="Bookmarked entries" id="lexicon-bookmarks-section">
+          <div class="lexicon-bookmarks-header" id="lexicon-bookmarks-header" role="button" tabindex="0" aria-expanded="true" aria-controls="lexicon-bookmarks-list">
+            <span class="lexicon-bookmarks-title">⭐ Starred entries</span>
+            <button type="button" class="lexicon-bookmarks-toggle" id="lexicon-bookmarks-toggle" aria-label="Toggle bookmarks">▾</button>
+          </div>
+          <ul class="lexicon-bookmarks-list" id="lexicon-bookmarks-list" aria-label="Starred entries"></ul>
+        </section>
+
 
         <section class="versions-section text-mode-only" style="display:none;">
           <details class="sidebar-accordion versions-accordion" open>
@@ -245,68 +328,130 @@
 
         <section class="preview-section text-mode-only" style="display:none;">
           <details class="sidebar-accordion preview-accordion" open>
-            <summary class="section-label accordion-summary">Preview</summary>
+            <summary class="section-label accordion-summary">🔁 Preview</summary>
             <div class="preview-panel accordion-panel">
-              <section class="suggestions">
-                <b>Please enter the title of a text or a source to insert.</b>
+              <section class="suggestions" style="text-align:center;">
+                <b>Enter a text or source to preview.</b>
               </section>
             </div>
           </details>
         </section>
 
-        <section class="experimental-section" style="display:none;">
-          <details class="sidebar-accordion experimental-accordion surprise-feature" open>
-            <summary class="section-label accordion-summary">Surprise Me</summary>
-            <div class="accordion-panel">
-              <p class="helper-text">Discover a random source and open it instantly.</p>
-              <button type="button" class="submit tertiary-action-button open-surprise-tool">Open Surprise Me</button>
+        <section class="voices-preview-section voices-only" style="display:none;">
+          <details class="sidebar-accordion preview-accordion" open>
+            <summary class="section-label accordion-summary">🔁 Preview</summary>
+            <div class="preview-panel accordion-panel">
+              <section class="voices-suggestions suggestions" style="text-align:center;" aria-live="polite">
+                <b>Select a sheet to preview.</b>
+              </section>
             </div>
           </details>
-          <details class="sidebar-accordion experimental-accordion ai-shiur-feature" open>
-            <summary class="section-label accordion-summary">AI Shiur</summary>
-            <div class="accordion-panel">
-              <p class="helper-text">Generate an AI-assisted lesson draft directly from the sidebar.</p>
-              <div class="ai-shiur-inline">
-                <div class="ai-shiur-mode-toggle" role="tablist" aria-label="AI Shiur mode">
-                  <button type="button" class="ai-shiur-mode-button is-active" data-ai-mode="basic" aria-pressed="true">Basic</button>
-                  <button type="button" class="ai-shiur-mode-button" data-ai-mode="advanced" aria-pressed="false">Advanced</button>
-                </div>
-                <div class="ai-shiur-fields">
-                  <label for="ai-shiur-topic-input">Topic</label>
-                  <input id="ai-shiur-topic-input" class="ai-shiur-topic-input" type="text" placeholder="Speech ethics, teshuvah and memory">
-                  <div class="ai-shiur-advanced-fields" style="display:none;">
-                    <label for="ai-shiur-provider-select">Provider route</label>
-                    <select id="ai-shiur-provider-select" class="ai-shiur-provider-select">
-                      <option value="default">Site decides</option>
-                    </select>
-                    <label for="ai-shiur-model-input">Model (optional)</label>
-                    <input id="ai-shiur-model-input" class="ai-shiur-model-input" type="text" placeholder="Auto">
-                    <label for="ai-shiur-key-strategy-select">Key source</label>
-                    <select id="ai-shiur-key-strategy-select" class="ai-shiur-key-strategy-select">
-                      <option value="auto">Automatic</option>
-                      <option value="managed">Use site-managed key</option>
-                      <option value="saved">Use my saved key</option>
-                      <option value="manual">Paste key for this request</option>
-                    </select>
-                    <input id="ai-shiur-manual-key-input" class="ai-shiur-manual-key-input" type="password" autocomplete="off" placeholder="Paste a request-level key" style="display:none;">
-                  </div>
-                </div>
-                <div class="ai-shiur-actions">
-                  <button type="button" class="submit tertiary-action-button ai-shiur-quick-action-button" data-quick-action="daf">Today's Daf</button>
-                  <button type="button" class="submit tertiary-action-button ai-shiur-quick-action-button" data-quick-action="929">Today's 929</button>
-                  <button type="button" class="submit tertiary-action-button ai-shiur-quick-action-button" data-quick-action="parashah">This Week's Parashah</button>
-                  <button type="button" class="submit tertiary-action-button ai-shiur-generate-button">Generate &amp; Insert</button>
-                </div>
-                <p class="helper-text ai-shiur-status" aria-live="polite"></p>
-              </div>
-            </div>
-          </details>
-          <section class="experimental-menu-row" style="display:none;">
-            <button type="button" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental">Experimental Features</button>
-          </section>
         </section>
 
-        
+        <section class="experimental-section" style="display:none;" aria-label="Experimental Features">
+          <!-- Early Access intro -->
+          <div class="exp-section-intro">
+            <span aria-hidden="true">⚗</span>
+            <div>
+              <p class="exp-intro-label">Early Access</p>
+              <p class="exp-intro-desc">These tools are still evolving. Review output before use.</p>
+            </div>
+          </div>
+
+          <!-- AI Shiur card -->
+          <div class="exp-card" id="exp-card-shiur">
+            <div class="exp-card-header">
+              <h3 class="exp-card-title"><span aria-hidden="true">🤖</span> AI Shiur</h3>
+              <span class="exp-badge" title="This is an experimental feature — output may vary.">⚗ Beta</span>
+            </div>
+            <p class="exp-card-desc">Generates a shiur outline and inserts it into your document at the cursor.</p>
+            <div class="exp-form">
+              <div class="exp-field">
+                <label class="exp-label" for="ai-inline-topic">Topic or reference <span class="exp-required" aria-label="required">*</span></label>
+                <input id="ai-inline-topic" type="text" class="exp-input" placeholder="Berakhot 2a, teshuvah, gratitude…" autocomplete="off" aria-required="true" aria-describedby="ai-topic-error">
+                <p class="exp-field-error" id="ai-topic-error" role="alert" hidden></p>
+              </div>
+              <div class="exp-field">
+                <p class="exp-label" id="ai-audience-label">Audience</p>
+                <div class="exp-chip-group" role="radiogroup" aria-labelledby="ai-audience-label" data-field="ai-audience">
+                  <button type="button" role="radio" class="exp-chip" aria-checked="true"  data-value="Adult learners">Adults</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="High school students">High school</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Intro / beginners">Beginner</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Educators">Educators</button>
+                </div>
+              </div>
+              <div class="exp-field">
+                <p class="exp-label" id="ai-style-label">Style</p>
+                <div class="exp-chip-group" role="radiogroup" aria-labelledby="ai-style-label" data-field="ai-style">
+                  <button type="button" role="radio" class="exp-chip" aria-checked="true"  data-value="Interactive shiur">Interactive</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Source-sheet chavruta">Chavruta</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Text-study seminar">Seminar</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Accessible intro session">Intro</button>
+                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Drash">Drash</button>
+                </div>
+              </div>
+              <details class="exp-advanced">
+                <summary class="exp-advanced-toggle">More options</summary>
+                <div class="exp-advanced-content">
+                  <div class="exp-field">
+                    <p class="exp-sublabel">LENGTH</p>
+                    <div class="exp-segmented" role="radiogroup" aria-label="Lesson length" data-field="ai-length">
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="25">Short</button>
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="true"  data-value="45">Standard</button>
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="70">Long</button>
+                    </div>
+                  </div>
+                  <div class="exp-field">
+                    <p class="exp-sublabel">LANGUAGE</p>
+                    <div class="exp-segmented" role="radiogroup" aria-label="Language balance" data-field="ai-language">
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="he">Hebrew</button>
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="true"  data-value="balanced">Balanced</button>
+                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="en">English</button>
+                    </div>
+                  </div>
+                  <div class="exp-field exp-field-toggle">
+                    <label class="exp-toggle-label" for="ai-inline-discussion">Include discussion questions</label>
+                    <input type="checkbox" id="ai-inline-discussion" class="exp-toggle" role="switch" checked>
+                  </div>
+                </div>
+              </details>
+            </div>
+            <div class="exp-action-row">
+              <button type="button" id="ai-inline-generate" class="exp-action-btn">Generate &amp; Insert</button>
+            </div>
+            <p class="exp-status" id="ai-inline-status" role="status" aria-live="polite"></p>
+          </div>
+
+          <!-- Surprise Me card -->
+          <div class="exp-card" id="exp-card-surprise">
+            <div class="exp-card-header">
+              <h3 class="exp-card-title"><span aria-hidden="true">🎲</span> Surprise Me</h3>
+              <span class="exp-badge" title="This is an experimental feature — output may vary.">⚗ Beta</span>
+            </div>
+            <p class="exp-card-desc">Inserts sources that match a word or theme. Leave blank to let us pick.</p>
+            <div class="exp-form">
+              <div class="exp-field">
+                <label class="exp-label" for="sm-inline-term">Topic hint <span class="exp-label-optional">(optional)</span></label>
+                <input id="sm-inline-term" type="text" class="exp-input" placeholder="e.g. shabbat, forgiveness, water, joy…" autocomplete="off">
+              </div>
+              <div class="exp-field">
+                <p class="exp-label" id="sm-count-label">Sources</p>
+                <div class="exp-stepper" role="group" aria-labelledby="sm-count-label">
+                  <button type="button" class="exp-stepper-btn" id="sm-count-dec" aria-label="Decrease source count" aria-controls="sm-inline-count">−</button>
+                  <input type="number" id="sm-inline-count" class="exp-stepper-val" min="1" max="10" value="3" aria-label="Number of sources" readonly>
+                  <button type="button" class="exp-stepper-btn" id="sm-count-inc" aria-label="Increase source count" aria-controls="sm-inline-count">+</button>
+                  <span class="exp-stepper-hint" aria-hidden="true">1–10</span>
+                </div>
+              </div>
+            </div>
+            <div class="exp-action-row">
+              <button type="button" id="sm-inline-launch" class="exp-action-btn">Discover Sources</button>
+            </div>
+            <p class="exp-status" id="sm-inline-status" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+
+
       </div>
 
       <select class="output-mode-selection visually-hidden" aria-hidden="true">
@@ -321,69 +466,171 @@
       </select>
       <input type="checkbox" class="translation-only-filter ui-hidden-checkbox" aria-hidden="true">
       <input type="checkbox" class="wants-relevance ui-hidden-checkbox" aria-hidden="true" checked>
+      <input type="checkbox" class="wants-vowels ui-hidden-checkbox" aria-hidden="true" checked>
+      <input type="checkbox" class="wants-cantillation ui-hidden-checkbox" aria-hidden="true" checked>
+      <input type="checkbox" class="wants-pesukim ui-hidden-checkbox" aria-hidden="true" checked>
+      <input type="checkbox" class="include-translation-source-info ui-hidden-checkbox" aria-hidden="true">
+      <input type="checkbox" class="include-transliteration ui-hidden-checkbox" aria-hidden="true">
+      <input type="checkbox" class="insert-sefaria-link ui-hidden-checkbox" aria-hidden="true" checked>
     
-      <div class="modal-backdrop session-library-modal-backdrop" id="session-library-modal" hidden>
+<div class="modal-backdrop session-library-modal-backdrop" id="session-library-modal" hidden>
         <div class="modal-card session-library-modal-card" role="dialog" aria-modal="true" aria-labelledby="session-library-modal-title">
-          <div class="session-library-modal-header">
-            <h2 id="session-library-modal-title">Session Library</h2>
-            <button type="button" class="session-library-modal-close" id="close-session-library" aria-label="Close Session Library">×</button>
+
+          <!-- Header -->
+          <div class="sl-modal-header">
+            <div class="sl-modal-header-text">
+              <h2 class="sl-modal-title" id="session-library-modal-title">Session Library</h2>
+              <p class="sl-modal-subtitle" id="sl-modal-subtitle" aria-live="polite">0 references in this session</p>
+            </div>
+            <button type="button" class="sl-modal-close" id="close-session-library" aria-label="Close Session Library">×</button>
           </div>
-          <section class="session-library-panel" ><p class="session-library-note">Pinned references and recent selections from this sidebar session.</p>
-          <div class="results-header session-library-header">
-            <div class="result-group-label" style="margin:0;">Session Library</div>
-            <div class="results-header-tools session-library-tools" aria-label="Session library tools">
-              <select class="results-tool corpus-filter-select session-library-filter-select" id="session-library-corpus-filter" aria-label="Filter session library by corpus">
-                <option value="all">All Corpora</option>
-              </select>
+
+          <!-- Toolbar -->
+          <div class="sl-toolbar">
+            <div class="sl-toolbar-row sl-toolbar-row--search">
+              <label for="sl-search-input" class="visually-hidden">Search references</label>
+              <input type="search" id="sl-search-input" class="sl-search-input" placeholder="Search references…" autocomplete="off">
+              <button type="button" class="sl-action-btn sl-action-btn--destructive" id="sl-clear-recent" title="Remove all non-pinned items" disabled>Clear Recent</button>
+              <button type="button" class="sl-action-btn sl-action-btn--destructive" id="sl-reset-session" title="Clear all items and start fresh" disabled>Reset Session</button>
+            </div>
+            <div class="sl-toolbar-row sl-toolbar-row--filters">
+              <div class="sl-filter-chips" id="sl-filter-chips" role="radiogroup" aria-label="Filter by type">
+                <button type="button" class="sl-filter-chip sl-filter-chip--active" data-filter="all" role="radio" aria-checked="true">All</button>
+              </div>
+              <div class="sl-toolbar-extras">
+                <select class="sl-sort-select" id="sl-sort-select" aria-label="Sort references">
+                  <option value="category">By Category</option>
+                  <option value="recent">Recently Added</option>
+                  <option value="alpha">Alphabetical</option>
+                </select>
+                <button type="button" class="sl-density-btn" id="sl-density-toggle" title="Switch to compact view" aria-label="Toggle density">⊟</button>
+              </div>
             </div>
           </div>
-          <div class="session-library-group">
-            <div class="session-library-title">Pinned</div>
-            <ul class="result-list session-library-results pinned-results"></ul>
+
+          <!-- Inline confirmation banner -->
+          <div class="sl-confirmation" id="sl-confirmation" role="alert" hidden>
+            <p class="sl-confirmation-message" id="sl-confirmation-message"></p>
+            <div class="sl-confirmation-actions">
+              <button type="button" class="sl-btn sl-btn--ghost" id="sl-confirmation-cancel">Cancel</button>
+              <button type="button" class="sl-btn sl-btn--destructive" id="sl-confirmation-confirm">Confirm</button>
+            </div>
           </div>
-          <div class="session-library-group">
-            <div class="session-library-title">Recent</div>
-            <ul class="result-list session-library-results inserted-results"></ul>
+
+          <!-- Scrollable content area -->
+          <div class="sl-content" id="sl-content" tabindex="-1"></div>
+
+          <!-- Undo toast (always in DOM, hidden until needed) -->
+          <div class="sl-undo-region" id="sl-undo-region" aria-live="polite" aria-atomic="true" hidden>
+            <span class="sl-undo-message" id="sl-undo-message"></span>
+            <button type="button" class="sl-undo-btn" id="sl-undo-btn">Undo</button>
           </div>
-        </section>
+
+          <!-- Footer -->
+          <div class="sl-modal-footer">
+            <button type="button" class="sl-btn sl-btn--ghost" id="sl-copy-refs" title="Copy all references as plain text" disabled>Copy References</button>
+            <button type="button" class="sl-btn sl-btn--primary" id="sl-modal-done">Done</button>
+          </div>
+
         </div>
       </div>
 
-    </main>
+      <!-- Hidden legacy button kept for JS compatibility -->
+      <button id="open-on-sefaria" style="display:none;" disabled aria-hidden="true"></button>
 
-    <footer class="sidebar-footer">
+      <footer class="sidebar-footer">
       <section class="primary-actions" aria-label="Primary actions">
-        <button class="submit primary-action-button" id="insert-source" disabled>Add Source</button>
-        <button type="button" class="submit tertiary-action-button session-library-primary-button" id="open-session-library" title="Session Library" aria-label="Session Library">
-          <span class="footer-icon" aria-hidden="true">📜</span>
-        </button>
-        <button class="submit secondary-action-button" id="open-on-sefaria" disabled title="Open the selected item on Sefaria" aria-label="Open the selected item on Sefaria">
-          <span class="open-sefaria-label icon-only" aria-hidden="true"><img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon"></span>
-        </button>
+        <button class="submit primary-action-button" id="insert-source" disabled title="Add Source (Ctrl+Enter)">Add Source</button>
+        <button class="submit secondary-action-button" id="open-layout-settings" title="Layout Settings" aria-label="Layout Settings">&#x1F4F0; Layout</button>
       </section>
-      <section class="sidebar-footer-tools quick-actions-row standard-quick-actions" aria-label="Quick actions">
+      <section class="sidebar-footer-tools footer-tool-row standard-quick-actions" aria-label="Quick actions">
+        <button type="button" class="footer-tool-button sl-footer-btn" id="open-session-library" title="Session Library" aria-label="Session Library"><span class="footer-icon" aria-hidden="true">📜</span><span class="sl-footer-count" id="sl-footer-count" hidden></span></button>
+		<button type="button" class="footer-tool-button open-actions-panel" title="Quick Actions" aria-label="Quick Actions"><span class="footer-icon footer-running-icon">🏃‍️</span></button>
+        <button type="button" class="footer-tool-button open-preferences-tool" title="Preferences" aria-label="Preferences"><span class="footer-icon footer-gear-icon">⚙︎</span></button>
+        
+      </section>
+      <div class="sidebar-footer-tools footer-actions-panel" id="footer-actions-panel" style="display:none;" aria-label="Actions panel">
         <button type="button" class="footer-tool-button open-divine-names-tool" title="Transform Divine Names" aria-label="Transform Divine Names"><span class="tool-icon-stack"><span class="samekh-sized">ה</span><span class="tool-arrow">→</span><span class="samekh-sized">ש</span></span></button>
         <button type="button" class="footer-tool-button open-linker-tool" title="Link Texts with Sefaria" aria-label="Link Texts with Sefaria"><span class="tool-icon-stack"><span class="link-emoji">🔗</span><span class="tool-arrow">→</span><span class="sefaria-badge samekh" aria-hidden="true">ס</span></span></button>
-      </section>
-      <section class="sidebar-footer-tools quick-actions-row experimental-quick-actions" aria-label="Experimental quick actions" style="display:none;">
-        <button type="button" class="footer-tool-button open-surprise-tool" title="Surprise Me" aria-label="Surprise Me"><span class="footer-icon">🎲</span></button>
         <button type="button" class="footer-tool-button open-ai-lesson-tool" title="AI Shiur" aria-label="AI Shiur"><span class="footer-icon">🧠</span></button>
-      </section>
-      <section class="session-override-actions text-mode-only footer-settings-row" style="display:none;" aria-label="Settings">
-        <div class="session-override-label">Session Settings</div>
-        <div class="session-override-buttons">
-          <button type="button" class="footer-tool-button reset-session-overrides-button" title="Reset Session Settings" aria-label="Reset Session Settings" disabled><span class="footer-icon">↺</span></button>
-          <button type="button" class="footer-tool-button save-session-defaults-button" title="Save Settings as Defaults" aria-label="Save Settings as Defaults" disabled><span class="footer-icon">💾</span></button>
-          <button type="button" class="footer-tool-button open-preferences-tool" title="Preferences" aria-label="Preferences"><span class="footer-icon footer-gear-icon">⚙︎</span></button>
-        </div>
-      </section>
-      <div class="footer footer-inline">
-        <a target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244">Help</a>
-        <a target="_blank" href="https://sefaria.formstack.com/forms/google_docs_extension_feedback">Feedback</a>
-        <span class="footer-logo-inline"><img src="https://www.sefaria.org/static/img/logo.svg" alt="Sefaria Logo"></span>
+        <button type="button" class="footer-tool-button open-surprise-tool" title="Surprise Me" aria-label="Surprise Me" style="display:none;"><span class="footer-icon">🎲</span></button>
       </div>
-    </footer>
+      <div class="footer footer-inline">
+        <button type="button" class="footer-help-button" id="open-help-modal" aria-label="Help">Help</button>
+        <span class="footer-logo-inline"><img src="https://www.sefaria.org/static/img/logo.svg" alt="Sefaria Logo"></span>
+        <button type="button" class="footer-help-button" id="open-feedback-modal" aria-label="Feedback">Feedback</button>
+      </div>
+      </footer>
 
+      <!-- Layout Settings tray -->
+      <div class="layout-tray" id="layout-tray" role="dialog" aria-modal="true" aria-label="Layout Settings">
+        <div class="tray-backdrop" id="layout-tray-backdrop"></div>
+        <div class="tray-sheet">
+          <div class="tray-handle" aria-hidden="true"></div>
+          <div class="tray-header">
+            <span class="tray-title">Layout Settings</span>
+            <button type="button" class="tray-close" id="layout-tray-close" aria-label="Close Layout Settings">&times;</button>
+          </div>
+          <div class="tray-body">
+
+            <!-- Display & Layout controls (actual sidebar controls, not simplified) -->
+            <div class="tray-section tray-display-layout-section text-mode-only">
+              <div class="tray-section-label">Display &amp; Layout</div>
+              <div class="display-layout-section">
+                <details class="display-choice-detail display-choice-dropdown" open>
+                  <summary class="display-choice-summary" aria-label="Display selector" title="Display"><span class="display-choice-label" aria-hidden="true">Display</span><span class="display-choice-selected display-choice-selected--display" id="display-choice-summary-text" data-mode="both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></span></summary>
+                  <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-label="Display mode">
+                    <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
+                    <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
+                    <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
+                  </div>
+                </details>
+                <details class="display-choice-detail bilingual-layout-wrapper display-choice-dropdown" open>
+                  <summary class="display-choice-summary" aria-label="Layout selector" title="Layout"><span class="display-choice-label" aria-hidden="true">Layout</span><span class="display-choice-selected display-choice-selected--layout" id="layout-choice-summary-text" data-layout="he-right"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></span></summary>
+                  <div class="layout-option-group" role="radiogroup" aria-label="Bilingual layout">
+                    <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
+                      <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>
+                    </button>
+                    <button type="button" class="layout-option" data-layout="he-right" role="radio" aria-checked="false" title="Right–Left">
+                      <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>
+                    </button>
+                    <button type="button" class="layout-option" data-layout="he-left" role="radio" aria-checked="false" title="Left–Right">
+                      <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>
+                    </button>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            <!-- Insertion Format (composition card) -->
+            <div class="tray-section tray-insertion-format-section text-mode-only">
+              <div class="tray-section-label">Insertion Format</div>
+              <div class="cc-card hebrew-options-row" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills" aria-label="Composition for this insertion">
+                <?!= include('shared/composition-card/markup') ?>
+              </div>
+            </div>
+
+            <!-- Session override actions -->
+            <div class="tray-section tray-session-section session-override-actions" style="display:none;">
+              <div class="tray-section-label">Session</div>
+              <div class="tray-pills tray-action-pills">
+                <button type="button" class="tray-action-pill reset-session-overrides-button" aria-label="Revert to saved defaults" disabled>&#x21BA; Revert to defaults</button>
+                <button type="button" class="tray-action-pill save-session-defaults-button" aria-label="Save as defaults" disabled>&#x1F4BE; Save as defaults</button>
+              </div>
+            </div>
+
+            <!-- Open on Sefaria -->
+            <div class="tray-section tray-sefaria-section" style="display:none;">
+              <button type="button" class="tray-open-sefaria-btn" id="tray-open-on-sefaria" disabled>
+                <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon">
+                Open on Sefaria
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
     <div class="sidebar-toast" id="sidebar-toast" hidden></div>
     <div class="sidebar-notice-backdrop" id="sidebar-notice" hidden>
       <div class="sidebar-notice-card" role="alertdialog" aria-modal="true" aria-labelledby="sidebar-notice-title">
@@ -396,11 +643,25 @@
       </div>
     </div>
 
-    <?!= include('ui_core.js'); ?>
-    <?!= include('ui_api.js'); ?>
-    <?!= include('ui_state.js'); ?>
-    <?!= include('ui_dom.js'); ?>
-    <?!= include('ui_feedback.js'); ?>
-    <?!= include('sidebar.page.js'); ?>
+    <?!= include('shared/ui/core-shared'); ?>
+    <?!= include('shared/ui/api'); ?>
+    <?!= include('shared/ui/dom'); ?>
+    <?!= include('shared/ui/feedback'); ?>
+    <?!= include('shared/ui/state'); ?>
+    <?!= include('sidebar/js/results-render'); ?>
+    <?!= include('sidebar/js/session-library'); ?>
+    <?!= include('sidebar/js/preferences-state'); ?>
+    <?!= include('sidebar/js/search-utils'); ?>
+    <?!= include('sidebar/js/footer-actions'); ?>
+    <?!= include('sidebar/js/preview-core'); ?>
+    <?!= include('sidebar/js/search-controller'); ?>
+    <?!= include('sidebar/js/mode-controller'); ?>
+    <?!= include('sidebar/js/display-controls'); ?>
+    <?!= include('sidebar/js/event-bindings'); ?>
+    <?!= include('sidebar/js/bootstrap'); ?>
+    <?!= include('sidebar/js/preview-render'); ?>
+    <?!= include('shared/composition-card/shared'); ?>
+    <?!= include('sidebar/js/composition-controls'); ?>
+    <?!= include('sidebar/js/layout-tray'); ?>
   </body>
 </html>
