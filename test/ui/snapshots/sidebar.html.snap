@@ -28,8 +28,8 @@
       </aside>
 
       <nav class="mode-switch-section" role="tablist" aria-label="Search mode selector">
-        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="texts" aria-selected="true">Texts</button>
-        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="voices" aria-selected="false">Voices</button>
+        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="texts" aria-selected="true">Texts<span class="tab-result-badge" id="texts-tab-badge" hidden aria-hidden="true"></span></button>
+        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="voices" aria-selected="false">Voices<span class="tab-result-badge" id="voices-tab-badge" hidden aria-hidden="true"></span></button>
         <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="lexicon" id="tab-lexicon-btn" aria-selected="false">Lexicon<span class="lexicon-tab-badge" id="lexicon-tab-badge" hidden aria-hidden="true"></span></button>
         <button type="button" role="tab" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental" style="display:none;" aria-label="Experimental Features" aria-selected="false">🧪</button>
       </nav>

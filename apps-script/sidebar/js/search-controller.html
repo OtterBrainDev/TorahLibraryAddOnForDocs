@@ -69,6 +69,7 @@ function runUnifiedQuery() {
     updateActionabilityUI({ isInsertable: false });
     $('.suggestions').html("<b>Please enter a reference, title, or phrase.</b>");
     setResultsLoading(false);
+    updateTextsTabBadge(0);
     return;
   }
 
@@ -151,6 +152,7 @@ function runUnifiedQuery() {
       setResultsLoading(false);
       maybeShowZeroResultsSuggestions(input);
       maybeAutoSelectSingleResult();
+      updateTextsTabBadge(getAllProcessedResults().length);
     }
   }
 
@@ -426,6 +428,7 @@ function runVoicesQuery() {
     reprocessAndRenderResults();
     setInsertButtonState(false);
     $('#open-on-sefaria').prop('disabled', true);
+    updateVoicesTabBadge(0);
     return;
   }
   setResultsLoading(true);
@@ -437,12 +440,14 @@ function runVoicesQuery() {
     if (!items.length) setResultsHint('No source sheets matched this search.');
     updateModeDependentSections();
     setResultsLoading(false);
+    updateVoicesTabBadge(items.length);
   }).withFailureHandler(function(error) {
     queryState.rawLibraryMatches = [];
     queryState.rawSearchResults = [];
     reprocessAndRenderResults();
     setResultsHint((error && error.message) || 'Voices search is temporarily unavailable.');
     setResultsLoading(false);
+    updateVoicesTabBadge(0);
   }).searchVoices(input, {});
 }
 
@@ -738,10 +743,30 @@ $(document).on('click', '.lexicon-dup-expand-btn', function (e) {
   }
 });
 
-/* ── Tab badge (Enhancement 5) ─────────────────────────────────────────────── */
+/* ── Tab badges ─────────────────────────────────────────────────────────────── */
 
 function updateLexiconTabBadge(count) {
   var $badge = $('#lexicon-tab-badge');
+  if (!$badge.length) return;
+  if (count > 0) {
+    $badge.text(count).removeAttr('hidden');
+  } else {
+    $badge.attr('hidden', true).text('');
+  }
+}
+
+function updateTextsTabBadge(count) {
+  var $badge = $('#texts-tab-badge');
+  if (!$badge.length) return;
+  if (count > 0) {
+    $badge.text(count).removeAttr('hidden');
+  } else {
+    $badge.attr('hidden', true).text('');
+  }
+}
+
+function updateVoicesTabBadge(count) {
+  var $badge = $('#voices-tab-badge');
   if (!$badge.length) return;
   if (count > 0) {
     $badge.text(count).removeAttr('hidden');
