@@ -1072,7 +1072,7 @@
     background: transparent;
     border: 0;
     border-radius: 8px;
-    color: #444;
+    color: rgba(255,255,255,0.75);
     font: inherit;
     font-size: 13px;
     font-weight: 500;
@@ -1080,15 +1080,20 @@
     transition: background 0.12s, color 0.12s;
   }
 
+  .pref-workflow-tab:hover:not(.is-active):not([aria-selected="true"]) {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+  }
+
   .pref-workflow-tab.is-active,
   .pref-workflow-tab[aria-selected="true"] {
-    background: var(--selected);
-    font-weight: bold;    
+    background: #fff;
+    font-weight: bold;
     color: #1f3b68;
   }
 
   .pref-workflow-tab:focus-visible {
-    outline: 2px solid var(--selected);
+    outline: 2px solid #fff;
     outline-offset: 2px;
   }
 
