@@ -2,7 +2,6 @@
 // ── Layout Tray: open/close, sync ─────────────────────────────────────────
 
 function openLayoutTray() {
-  syncTrayFromCurrentState();
   $('#layout-tray').addClass('is-open');
   $('#layout-tray-close').focus();
 }
@@ -11,12 +10,6 @@ function closeLayoutTray() {
   $('#layout-tray').removeClass('is-open');
   $('#open-layout-settings').focus();
 }
-
-// function syncTrayFromCurrentState() {
-//  var canOpen = !!(appMode === 'texts' && hasResolvedReference && data && data.ref);
-//  $('#tray-open-on-sefaria').prop('disabled', !canOpen);
-//  $('.tray-sefaria-section').toggle(canOpen);
-//}
 
 // ── Open tray ─────────────────────────────────────────────────────────────
 
@@ -48,28 +41,11 @@ $('#source-card-sefaria').on('click', function () {
   if (url) window.open(url, '_blank', 'noopener');
 });
 
-// ── Tray "Open on Sefaria" button ─────────────────────────────────────────
-
-//$('#tray-open-on-sefaria').on('click', function () {
-//  var url = typeof buildSefariaOpenUrl === 'function' ? buildSefariaOpenUrl() : null;
-//  if (url) window.open(url, '_blank', 'noopener');
-// });
-
-// ── Results panel "Open on Sefaria" button ────────────────────────────────
-
-//$('#results-panel-sefaria').on('click', function () {
-//  var url = typeof buildSefariaOpenUrl === 'function' ? buildSefariaOpenUrl() : null;
-//  if (url) window.open(url, '_blank', 'noopener');
-//});
-
-// ── Update source card + tray + results-panel Sefaria btns ───────────────
+// ── Update source card Sefaria button ────────────────────────────────────
 
 function updateSourceCardSefariaState() {
   var canOpen = !!(appMode === 'texts' && hasResolvedReference && data && data.ref);
   $('#source-card-sefaria').prop('disabled', !canOpen);
-  //$('#tray-open-on-sefaria').prop('disabled', !canOpen);
-  //$('.tray-sefaria-section').toggle(canOpen);
-  //$('#results-panel-sefaria').prop('disabled', !canOpen).toggle(!!selectedResultSummary && resultsCollapsed);
 }
 
 // =====================================================================

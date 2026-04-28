@@ -477,8 +477,6 @@ function updateResultsVisibility() {
   // selected-result-summary is suppressed via CSS (display:none !important);
   // source card is the canonical display of the selected result.
   $('.selected-result-summary').hide().empty();
-  // Show results-panel-sefaria only when collapsed + result selected
-  $('#results-panel-sefaria').toggle(shouldCollapse);
   // Populate new source card
   updateSourceCard();
 }
