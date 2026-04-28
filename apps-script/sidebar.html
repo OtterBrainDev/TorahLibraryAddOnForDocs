@@ -135,10 +135,7 @@
   <div class="results-header"></div>
 
   <div class="results-toggle-row">
-    <button type="button" class="results-toggle-button" style="display:none;">Show results</button>
-    <button type="button" class="results-panel-sefaria-btn" id="results-panel-sefaria" style="display:none;" disabled aria-label="Open on Sefaria" title="Open on Sefaria">
-      <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon"> Open on Sefaria
-    </button>
+    <button type="button" class="results-toggle-button" style="display:none;">Show results</button>    
   </div>
 
   <div class="selected-result-summary" style="display:none;"></div>
@@ -535,9 +532,6 @@
         </div>
       </div>
 
-      <!-- Hidden legacy button kept for JS compatibility -->
-      <button id="open-on-sefaria" style="display:none;" disabled aria-hidden="true"></button>
-
       <footer class="sidebar-footer">
       <section class="primary-actions" aria-label="Primary actions">
         <button class="submit primary-action-button" id="insert-source" disabled title="Add Source (Ctrl+Enter)">Add Source</button>
@@ -618,15 +612,6 @@
                 <button type="button" class="tray-action-pill save-session-defaults-button" aria-label="Save as defaults" disabled>&#x1F4BE; Save as defaults</button>
               </div>
             </div>
-
-            <!-- Open on Sefaria -->
-            <div class="tray-section tray-sefaria-section" style="display:none;">
-              <button type="button" class="tray-open-sefaria-btn" id="tray-open-on-sefaria" disabled>
-                <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon">
-                Open on Sefaria
-              </button>
-            </div>
-
           </div>
         </div>
       </div>
