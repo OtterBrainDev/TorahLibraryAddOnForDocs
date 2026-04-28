@@ -527,6 +527,8 @@
                 setPrefButtonGroup(groupId, val);
               });
 
+              setPrefTranslitDropdown(preferences.voices_translit_default || 'none');
+
               try {
                 transliterationOverrides = JSON.parse(preferences.transliteration_overrides || '{}') || {};
               } catch (e) {
@@ -783,6 +785,56 @@
       });
     }
 
+    // ── Voices transliteration dropdown ────────────────────────────────────
+
+    var PREF_TRANSLIT_LABELS = {
+      none: 'None', simple_english: 'Simple English', traditional: 'Traditional',
+      modern_israeli: 'Modern Israeli', ashkenazi: 'Ashkenazi',
+      academic_full: 'Academic (Full)', ipa_modern: 'IPA (Modern Israeli)',
+      ipa_tiberian: 'IPA (Tiberian-ish)'
+    };
+
+    function setPrefTranslitDropdown(value) {
+      var label = PREF_TRANSLIT_LABELS[value] || 'None';
+      var trigger = byId('pref-voices-translit-trigger');
+      var hidden  = byId('voices_translit_default');
+      if (hidden)  hidden.value = value;
+      if (trigger) {
+        trigger.textContent = label + ' ▾';
+        trigger.classList.toggle('is-none', value === 'none');
+      }
+      document.querySelectorAll('.pref-voices-translit-option').forEach(function(btn) {
+        btn.classList.toggle('is-selected', btn.getAttribute('data-value') === value);
+      });
+    }
+
+    function initPrefTranslitDropdown() {
+      var trigger = byId('pref-voices-translit-trigger');
+      var menu    = byId('pref-voices-translit-menu');
+      if (!trigger || !menu) return;
+
+      trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var opening = menu.classList.contains('hidden');
+        menu.classList.toggle('hidden', !opening);
+        trigger.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      });
+
+      document.querySelectorAll('.pref-voices-translit-option').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          setPrefTranslitDropdown(btn.getAttribute('data-value'));
+          menu.classList.add('hidden');
+          trigger.setAttribute('aria-expanded', 'false');
+        });
+      });
+
+      document.addEventListener('click', function(e) {
+        if (trigger.contains(e.target) || menu.contains(e.target)) return;
+        menu.classList.add('hidden');
+        trigger.setAttribute('aria-expanded', 'false');
+      });
+    }
+
     // ── Workflow sub-tabs (Texts / Voices / Lexicon) ────────────────────────
 
     function initWorkflowTabs() {
@@ -899,6 +951,7 @@
 
     _initPreferencesTabs();
     initPrefButtonGroups();
+    initPrefTranslitDropdown();
     initWorkflowTabs();
     _initPreferencesCompositionCard();
     loadPreferencesIntoForm();

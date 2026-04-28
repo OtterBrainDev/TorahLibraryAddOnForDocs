@@ -244,7 +244,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     $('#open-on-sefaria').prop('disabled', !(item && item.url));
     if (item) {
       renderVoicesCard(item);
-      var currentMode = $('.insert-mode-btn[aria-checked="true"]').data('value') || 'reference';
+      var currentMode = $('#voices-insert-mode .icon-mode-card[aria-checked="true"]').data('value') || 'reference';
       $('.voices-insertion-summary').text('Will insert: ' + (VOICE_MODE_SUMMARY_LABELS[currentMode] || 'Citation only'));
     }
     updateModeDependentSections();
@@ -446,23 +446,47 @@ function runVoicesQuery() {
   }).searchVoices(input, {});
 }
 
-// Insert mode button: update summary line only; do not re-render the card.
+// Insert mode card: update summary line only; do not re-render the card.
 var VOICE_MODE_SUMMARY_LABELS = { reference: 'Citation only', contents: 'Full text', both: 'Citation + text' };
-$(document).on('click', '.insert-mode-btn', function () {
-  if (appMode !== 'voices') return;
+$(document).on('click', '#voices-insert-mode .icon-mode-card', function () {
   var $group = $(this).closest('[role="radiogroup"]');
-  $group.find('.insert-mode-btn').removeClass('is-active').attr('aria-checked', 'false');
+  $group.find('.icon-mode-card').removeClass('is-active').attr('aria-checked', 'false');
   $(this).addClass('is-active').attr('aria-checked', 'true');
   var mode = $(this).data('value') || 'reference';
   $('.voices-insertion-summary').text('Will insert: ' + (VOICE_MODE_SUMMARY_LABELS[mode] || 'Citation only'));
 });
 
-// Transliteration: persist selection to account preferences.
-$(document).on('change', '#voices-translit-select', function () {
+// Transliteration dropdown: open/close trigger.
+$(document).on('click', '#voices-translit-trigger', function (e) {
+  e.stopPropagation();
+  var $menu = $('#voices-translit-menu');
+  var opening = $menu.hasClass('hidden');
+  $menu.toggleClass('hidden', !opening);
+  $(this).attr('aria-expanded', opening ? 'true' : 'false');
+});
+
+// Transliteration dropdown: option selected — persist to preferences.
+$(document).on('click', '.voices-translit-option', function () {
   if (appMode !== 'voices') return;
+  var value = $(this).attr('data-value');
+  var label = $(this).text();
+  $('#voices-translit-menu').find('.cc-translit-option').removeClass('is-selected');
+  $(this).addClass('is-selected');
+  $('#voices-translit-trigger')
+    .text(label + ' ▾')
+    .toggleClass('is-none', value === 'none')
+    .attr('aria-expanded', 'false');
+  $('#voices-translit-menu').addClass('hidden');
   if (typeof saveAccountPreference === 'function') {
-    saveAccountPreference({ voices_translit_default: $(this).val() });
+    saveAccountPreference({ voices_translit_default: value });
   }
+});
+
+// Dismiss voices translit menu when clicking outside the wrap.
+$(document).on('click.voicesTranslitDismiss', function (e) {
+  if ($(e.target).closest('#voices-translit-trigger, #voices-translit-menu').length) return;
+  $('#voices-translit-menu').addClass('hidden');
+  $('#voices-translit-trigger').attr('aria-expanded', 'false');
 });
 
 // Excerpt expand/collapse toggle.

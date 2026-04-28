@@ -8,6 +8,7 @@
 <? var devFlags = JSON.parse(devFlagsJson); ?>
     <?!= include('preferences/css'); ?>
     <?!= include('shared/composition-card/css'); ?>
+    <?!= include('shared/css/icon-mode-card'); ?>
   </head>
   <body>
     <aside class="hide"><img src="https://www.sefaria.org/static/img/ajax-loader.gif" name="loading"></aside>
@@ -28,6 +29,101 @@
         </nav>
 
         <div class="pref-tab-panel" id="pref-tab-fonts" role="tabpanel" aria-labelledby="pref-tab-fonts-btn">
+          <details class="section-card section-accordion" id="title-typography" name="title-typography">
+            <summary class="section-card-summary"><span>🔗 Title Typography</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Fonts and styling used when source titles are inserted with text.</p>
+
+              <div class="subsection-card">
+                <div class="subsection-title">Title formatting</div>
+                <p class="subsection-note">Used for source titles when a title is inserted without a hyperlink.</p>
+                <div class="compact-row compact-row--comfortable">
+                  <div class="compact-field">
+                    <label for="source_title_font">Title font</label>
+                    <select name="source_title_font" id="source_title_font">
+                      <optgroup label="Sefaria Fonts">
+                        <option value="Ezra SIL">Ezra SIL</option>
+                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
+                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                        <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
+                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>                        
+                        <option value="SBL Hebrew">SBL Hebrew</option>
+                      </optgroup>
+                      <optgroup label="System Fonts">
+                        <option value="Arial">Arial</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Crimson Text">Crimson Text</option>
+                        <option value="EB Garamond">EB Garamond</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Verdana">Verdana</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div class="compact-field compact-field--size">
+                    <label for="source_title_font_size">Size</label>
+                    <input id="source_title_font_size" type="number" name="source_title_font_size" min="1" max="400" step="0.1">
+                  </div>
+                  <div class="compact-field compact-field--style">
+                    <label>Style</label>
+                    <div class="style-control" data-style-control="source_title_font_style">
+                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                    </div>
+                    <input type="hidden" id="source_title_font_style" name="source_title_font_style">
+                  </div>
+                </div>
+                <div class="inline-preview" id="source_title_preview"><span class="label">Title Preview</span>Deuteronomy 11:18</div>
+              </div>
+
+              <div class="subsection-card">
+                <div class="subsection-title">Linked title formatting</div>
+                <p class="subsection-note">Used when the linked source title option is turned on.</p>
+                <div class="compact-row compact-row--comfortable">
+                  <div class="compact-field">
+                    <label for="sefaria_link_font">Hyperlink font</label>
+                    <select name="sefaria_link_font" id="sefaria_link_font">
+                      <optgroup label="Sefaria Fonts">
+                        <option value="Ezra SIL">Ezra SIL</option>
+                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
+                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                        <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
+                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>                        
+                        <option value="SBL Hebrew">SBL Hebrew</option>
+                      </optgroup>
+                      <optgroup label="System Fonts">
+                        <option value="Arial">Arial</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Crimson Text">Crimson Text</option>
+                        <option value="EB Garamond">EB Garamond</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Verdana">Verdana</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div class="compact-field compact-field--size">
+                    <label for="sefaria_link_font_size">Size</label>
+                    <input id="sefaria_link_font_size" type="number" name="sefaria_link_font_size" min="1" max="400" step="0.1">
+                  </div>
+                  <div class="compact-field compact-field--style">
+                    <label>Style</label>
+                    <div class="style-control" data-style-control="sefaria_link_font_style">
+                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                    </div>
+                    <input type="hidden" id="sefaria_link_font_style" name="sefaria_link_font_style">
+                  </div>
+                </div>
+                <div class="inline-preview" id="sefaria_link_preview"><span class="label">Hyperlink Preview</span><span class="preview-link-sample">Deuteronomy 11:18</span></div>
+              </div>
+            </div>
+          </details>
+
           <details class="section-card section-accordion" id="translation" name="translation">
             <summary class="section-card-summary"><span>Translation</span></summary>
             <div class="section-card-body">
@@ -69,21 +165,22 @@
                   <label for="translation_font">Font</label>
                   <select name="translation_font" id="translation_font">
                     <optgroup label="Sefaria Fonts">
-                      <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
                       <option value="Crimson Text">Crimson Text</option>
                       <option value="EB Garamond">EB Garamond</option>
                       <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                      <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
+                      <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                      <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
+                      <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>                        
+                      <option value="SBL Hebrew">SBL Hebrew</option>
                     </optgroup>
                     <optgroup label="System Fonts">
-                      <option value="Roboto">Roboto</option>
-                      <option value="Georgia">Georgia</option>
-                      <option value="Verdana">Verdana</option>
                       <option value="Arial">Arial</option>
                       <option value="Calibri">Calibri</option>
+                      <option value="David">David</option>                        
+                      <option value="Georgia">Georgia</option>
+                      <option value="Roboto">Roboto</option>
                       <option value="Times New Roman">Times New Roman</option>
-                      <option value="David">David</option>
-                      <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                      <option value="Verdana">Verdana</option>
                     </optgroup>
                   </select>
                 </div>
@@ -116,22 +213,22 @@
                     <label for="hebrew_font">Font</label>
                     <select name="hebrew_font" id="hebrew_font">
                       <optgroup label="Sefaria Fonts">
-                        <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
                         <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
+                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
                         <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                        <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
+                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>                        
+                        <option value="SBL Hebrew">SBL Hebrew</option>
                       </optgroup>
-                      <optgroup label="System Fonts">
+                      <optgroup label="System Fonts">                        
+                        <option value="Arial">Arial</option>
+                        <option value="Calibri">Calibri</option>
                         <option value="Crimson Text">Crimson Text</option>
                         <option value="EB Garamond">EB Garamond</option>
                         <option value="Georgia">Georgia</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Calibri">Calibri</option>
+                        <option value="Roboto">Roboto</option>
                         <option value="Times New Roman">Times New Roman</option>
                         <option value="Verdana">Verdana</option>
-                        <option value="Roboto">Roboto</option>
                       </optgroup>
                     </select>
                   </div>
@@ -220,100 +317,7 @@
             </div>
           </details>
 
-          <details class="section-card section-accordion" id="title-typography" name="title-typography">
-            <summary class="section-card-summary"><span>🔗 Title Typography</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Fonts and styling used when source titles are inserted with text.</p>
-
-              <div class="subsection-card">
-                <div class="subsection-title">Title formatting</div>
-                <p class="subsection-note">Used for source titles when a title is inserted without a hyperlink.</p>
-                <div class="compact-row compact-row--comfortable">
-                  <div class="compact-field">
-                    <label for="source_title_font">Title font</label>
-                    <select name="source_title_font" id="source_title_font">
-                      <optgroup label="Sefaria Fonts">
-                        <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                      </optgroup>
-                      <optgroup label="System Fonts">
-                        <option value="Crimson Text">Crimson Text</option>
-                        <option value="EB Garamond">EB Garamond</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Calibri">Calibri</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Verdana">Verdana</option>
-                        <option value="Roboto">Roboto</option>
-                      </optgroup>
-                    </select>
-                  </div>
-                  <div class="compact-field compact-field--size">
-                    <label for="source_title_font_size">Size</label>
-                    <input id="source_title_font_size" type="number" name="source_title_font_size" min="1" max="400" step="0.1">
-                  </div>
-                  <div class="compact-field compact-field--style">
-                    <label>Style</label>
-                    <div class="style-control" data-style-control="source_title_font_style">
-                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                    </div>
-                    <input type="hidden" id="source_title_font_style" name="source_title_font_style">
-                  </div>
-                </div>
-                <div class="inline-preview" id="source_title_preview"><span class="label">Title Preview</span>Deuteronomy 11:18</div>
-              </div>
-
-              <div class="subsection-card">
-                <div class="subsection-title">Linked title formatting</div>
-                <p class="subsection-note">Used when the linked source title option is turned on.</p>
-                <div class="compact-row compact-row--comfortable">
-                  <div class="compact-field">
-                    <label for="sefaria_link_font">Hyperlink font</label>
-                    <select name="sefaria_link_font" id="sefaria_link_font">
-                      <optgroup label="Sefaria Fonts">
-                        <option value="Noto Sans Hebrew" selected>Noto Sans Hebrew</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                      </optgroup>
-                      <optgroup label="System Fonts">
-                        <option value="Crimson Text">Crimson Text</option>
-                        <option value="EB Garamond">EB Garamond</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Calibri">Calibri</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Verdana">Verdana</option>
-                        <option value="Roboto">Roboto</option>
-                      </optgroup>
-                    </select>
-                  </div>
-                  <div class="compact-field compact-field--size">
-                    <label for="sefaria_link_font_size">Size</label>
-                    <input id="sefaria_link_font_size" type="number" name="sefaria_link_font_size" min="1" max="400" step="0.1">
-                  </div>
-                  <div class="compact-field compact-field--style">
-                    <label>Style</label>
-                    <div class="style-control" data-style-control="sefaria_link_font_style">
-                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                    </div>
-                    <input type="hidden" id="sefaria_link_font_style" name="sefaria_link_font_style">
-                  </div>
-                </div>
-                <div class="inline-preview" id="sefaria_link_preview"><span class="label">Hyperlink Preview</span><span class="preview-link-sample">Deuteronomy 11:18</span></div>
-              </div>
-            </div>
-          </details>
+          
         </div>
 
         <div class="pref-tab-panel" id="pref-tab-insertion" role="tabpanel" aria-labelledby="pref-tab-insertion-btn" hidden>
@@ -381,31 +385,44 @@
                 <p class="section-note">Set the default insert options for the Voices (source sheets) workflow. These apply each time you open the sidebar in Voices mode.</p>
                 <div class="pref-field-group">
                   <div class="compact-section-label" id="pref-voices-insert-mode-label">What to insert</div>
-                  <div class="pref-insert-mode-selector" role="radiogroup" aria-labelledby="pref-voices-insert-mode-label" data-pref-group="voices_insert_mode_default">
-                    <button type="button" class="pref-insert-mode-btn is-active" data-value="reference" role="radio" aria-checked="true">Reference</button>
-                    <button type="button" class="pref-insert-mode-btn" data-value="contents" role="radio" aria-checked="false">Contents</button>
-                    <button type="button" class="pref-insert-mode-btn" data-value="both" role="radio" aria-checked="false">Both</button>
+                  <div class="icon-mode-card-group" role="radiogroup" aria-labelledby="pref-voices-insert-mode-label" data-pref-group="voices_insert_mode_default">
+                    <button type="button" class="icon-mode-card is-active" data-value="reference" role="radio" aria-checked="true" title="Citation only — inserts the source reference">
+                      <span class="icon-mode-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 12" fill="none" aria-hidden="true"><path d="M 0,6 C 7.3,1 12.7,1 20,6 C 27.3,11 32.7,11 40,6" stroke="#777" stroke-width="2.5" stroke-linecap="round"/></svg>
+                      </span>
+                      <span class="icon-mode-card-label">Citation</span>
+                    </button>
+                    <button type="button" class="icon-mode-card" data-value="contents" role="radio" aria-checked="false" title="Text only — inserts the sheet text without citation">
+                      <span class="icon-mode-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 12" fill="none" aria-hidden="true"><path d="M 0,6 C 7.3,1 12.7,1 20,6 C 27.3,11 32.7,11 40,6" stroke="#3174bc" stroke-width="2.5" stroke-linecap="round"/></svg>
+                      </span>
+                      <span class="icon-mode-card-label">Text</span>
+                    </button>
+                    <button type="button" class="icon-mode-card" data-value="both" role="radio" aria-checked="false" title="Citation + text — inserts both the reference and sheet text">
+                      <span class="icon-mode-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 20" fill="none" aria-hidden="true"><path d="M 0,6 C 7.3,1 12.7,1 20,6 C 27.3,11 32.7,11 40,6" stroke="#3174bc" stroke-width="2.5" stroke-linecap="round"/><path d="M 0,14 C 7.3,9 12.7,9 20,14 C 27.3,19 32.7,19 40,14" stroke="#777" stroke-width="2.5" stroke-linecap="round"/></svg>
+                      </span>
+                      <span class="icon-mode-card-label">Both</span>
+                    </button>
                   </div>
                   <input type="hidden" id="voices_insert_mode_default" name="voices_insert_mode_default" value="reference">
                 </div>
                 <div class="pref-field-group">
-                  <div class="scheme-inline-row">
-                    <div class="compact-field compact-field--label">
-                      <label for="voices_translit_default">Transliteration</label>
-                    </div>
-                    <div class="compact-field">
-                      <select id="voices_translit_default" name="voices_translit_default">
-                        <option value="none">None</option>
-                        <option value="simple_english">Simple English</option>
-                        <option value="traditional">Traditional</option>
-                        <option value="modern_israeli">Modern Israeli</option>
-                        <option value="ashkenazi">Ashkenazi</option>
-                        <option value="academic_full">Academic (Full)</option>
-                        <option value="ipa_modern">IPA (Modern Israeli)</option>
-                        <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
-                      </select>
+                  <div class="compact-section-label" id="pref-voices-translit-label">Transliteration</div>
+                  <div class="cc-translit-wrap" style="margin-top:4px;">
+                    <button type="button" class="cc-translit-button is-none" id="pref-voices-translit-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="pref-voices-translit-label">None &#x25be;</button>
+                    <div class="cc-translit-menu hidden" id="pref-voices-translit-menu" role="listbox" aria-labelledby="pref-voices-translit-label">
+                      <button type="button" class="cc-translit-option pref-voices-translit-option is-selected" data-value="none">None</button>
+                      <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="simple_english">Simple English</button>
+                      <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="traditional">Traditional</button>
+                      <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="modern_israeli">Modern Israeli</button>
+                      <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="ashkenazi">Ashkenazi</button>
+                      <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="academic_full">Academic (Full)</button>
+                      <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="ipa_modern">IPA (Modern Israeli)</button>
+                      <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="ipa_tiberian">IPA (Tiberian-ish)</button>
                     </div>
                   </div>
+                  <input type="hidden" id="voices_translit_default" name="voices_translit_default" value="none">
                 </div>
               </div>
 
@@ -414,10 +431,25 @@
                 <p class="section-note">Set the default insert option for the Lexicon (dictionary) workflow.</p>
                 <div class="pref-field-group">
                   <div class="compact-section-label" id="pref-lexicon-insert-mode-label">What to insert</div>
-                  <div class="pref-insert-mode-selector pref-insert-mode-selector--column" role="radiogroup" aria-labelledby="pref-lexicon-insert-mode-label" data-pref-group="lexicon_insert_mode_default">
-                    <button type="button" class="pref-insert-mode-btn is-active" data-value="entry" role="radio" aria-checked="true">Full entry (headword, notes &amp; definition)</button>
-                    <button type="button" class="pref-insert-mode-btn" data-value="headword" role="radio" aria-checked="false">Headword &amp; source only</button>
-                    <button type="button" class="pref-insert-mode-btn" data-value="definition" role="radio" aria-checked="false">Definition only</button>
+                  <div class="icon-mode-card-group" role="radiogroup" aria-labelledby="pref-lexicon-insert-mode-label" data-pref-group="lexicon_insert_mode_default">
+                    <button type="button" class="icon-mode-card is-active" data-value="entry" role="radio" aria-checked="true" title="Full entry — headword, definition, and source reference">
+                      <span class="icon-mode-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 24" fill="none" aria-hidden="true"><rect x="0" y="2" width="26" height="3" rx="1.5" fill="#3174bc"/><rect x="0" y="10" width="36" height="2" rx="1" fill="#777"/><rect x="0" y="15" width="28" height="2" rx="1" fill="#777"/><rect x="0" y="20" width="18" height="2" rx="1" fill="#aaa"/></svg>
+                      </span>
+                      <span class="icon-mode-card-label">Full entry</span>
+                    </button>
+                    <button type="button" class="icon-mode-card" data-value="headword" role="radio" aria-checked="false" title="Headword &amp; source — the word and its source reference only">
+                      <span class="icon-mode-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 24" fill="none" aria-hidden="true"><rect x="0" y="5" width="24" height="3" rx="1.5" fill="#3174bc"/><rect x="0" y="15" width="20" height="2" rx="1" fill="#aaa"/></svg>
+                      </span>
+                      <span class="icon-mode-card-label">Word + ref</span>
+                    </button>
+                    <button type="button" class="icon-mode-card" data-value="definition" role="radio" aria-checked="false" title="Definition only — the definition text without headword or source">
+                      <span class="icon-mode-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 24" fill="none" aria-hidden="true"><rect x="0" y="4" width="36" height="2" rx="1" fill="#777"/><rect x="0" y="11" width="28" height="2" rx="1" fill="#777"/><rect x="0" y="18" width="20" height="2" rx="1" fill="#777"/></svg>
+                      </span>
+                      <span class="icon-mode-card-label">Definition</span>
+                    </button>
                   </div>
                   <input type="hidden" id="lexicon_insert_mode_default" name="lexicon_insert_mode_default" value="entry">
                 </div>

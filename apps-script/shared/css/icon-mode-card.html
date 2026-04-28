@@ -1,0 +1,77 @@
+<style>
+/* ── Graphical icon-card group (Voices + Lexicon insert-mode selectors) ──
+   Shared by sidebar.html and preferences.html. */
+.icon-mode-card-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  background: #f4f3f1;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.icon-mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  gap: 5px;
+  padding: 8px 4px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  font: inherit;
+  transition: background 0.12s;
+}
+
+.icon-mode-card:hover:not([aria-checked="true"]) {
+  background: rgba(0,0,0,0.05);
+}
+
+.icon-mode-card[aria-checked="true"] {
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+.icon-mode-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  max-width: 100%;
+  height: 24px;
+  overflow: hidden;
+}
+
+.icon-mode-card-icon svg {
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+  transition: opacity 0.12s;
+}
+
+.icon-mode-card[aria-checked="true"] .icon-mode-card-icon svg {
+  opacity: 1;
+}
+
+.icon-mode-card-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8a9aaa;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.icon-mode-card[aria-checked="true"] .icon-mode-card-label {
+  color: var(--selected, #18345d);
+}
+
+.icon-mode-card:focus-visible {
+  outline: 2px solid var(--selected);
+  outline-offset: 2px;
+}
+</style>

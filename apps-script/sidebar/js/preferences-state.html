@@ -146,13 +146,8 @@ function mergePreferenceDefaults(preferences) {
 
   // Apply Voices workflow defaults
   var voicesInsertMode = preferences.voices_insert_mode_default || 'reference';
-  $('.voices-insert-controls .insert-mode-btn:not(.voices-translit-btn)').each(function() {
+  $('#voices-insert-mode .icon-mode-card').each(function() {
     var active = $(this).data('value') === voicesInsertMode;
-    $(this).toggleClass('is-active', active).attr('aria-checked', active ? 'true' : 'false');
-  });
-  var voicesTranslit = preferences.voices_translit_default || 'none';
-  $('.voices-translit-btn').each(function() {
-    var active = $(this).data('value') === voicesTranslit;
     $(this).toggleClass('is-active', active).attr('aria-checked', active ? 'true' : 'false');
   });
 
@@ -163,9 +158,13 @@ function mergePreferenceDefaults(preferences) {
     $(this).toggleClass('is-active', active).attr('aria-checked', active ? 'true' : 'false');
   });
 
-  // Apply Voices transliteration default (Enhancement 9.1)
+  // Sync voices transliteration dropdown to saved preference
   var voicesTranslit = preferences.voices_translit_default || 'none';
-  $('#voices-translit-select').val(voicesTranslit);
+  $('#voices-translit-menu').find('.cc-translit-option').each(function() {
+    $(this).toggleClass('is-selected', $(this).attr('data-value') === voicesTranslit);
+  });
+  var translitLabel = voicesTranslit === 'none' ? 'None' : ($('#voices-translit-menu .cc-translit-option[data-value="' + voicesTranslit + '"]').text() || voicesTranslit);
+  $('#voices-translit-trigger').text(translitLabel + ' ▾').toggleClass('is-none', voicesTranslit === 'none');
 
   preferredTranslationLanguage = String(preferences.preferred_translation_language || 'en').toLowerCase();
   var savedTranslationLanguages = parseStoredArrayPreference(preferences.last_translation_languages, ['en']);

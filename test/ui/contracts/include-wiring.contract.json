@@ -4,6 +4,7 @@
     "<?!= include('css/tokens'); ?>",
     "<?!= include('css/base'); ?>",
     "<?!= include('css/layout'); ?>",
+    "<?!= include('shared/css/icon-mode-card'); ?>",
     "<?!= include('shared/ui/core-shared'); ?>",
     "<?!= include('shared/ui/api'); ?>",
     "<?!= include('shared/ui/dom'); ?>",
@@ -24,6 +25,7 @@
   "preferences.html": [
     "<?!= include('shared/ui/head'); ?>",
     "<?!= include('preferences/css'); ?>",
+    "<?!= include('shared/css/icon-mode-card'); ?>",
     "<?!= include('shared/ui/core-shared'); ?>",
     "<?!= include('shared/ui/api'); ?>",
     "<?!= include('shared/ui/dom'); ?>",
