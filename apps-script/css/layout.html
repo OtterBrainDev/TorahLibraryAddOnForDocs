@@ -1113,7 +1113,7 @@
 
 .voice-preview-header {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: start;
 }
@@ -1151,6 +1151,11 @@
   outline-offset: 2px;
 }
 
+.voice-preview-title {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
 .voice-preview-byline { margin-top: 2px; }
 
 .voice-preview-divider {
@@ -1163,6 +1168,7 @@
   font-size: 13px;
   line-height: 1.5;
   overflow: hidden;
+  overflow-wrap: break-word;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
