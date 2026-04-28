@@ -23,8 +23,7 @@
     return {
       term: ($('#surprise-term').val() || '').trim(),
       count: Math.max(1, Math.min(10, isNaN(count) ? 5 : count)),
-      corpuses: getSelectedCorpuses(),
-      sortMode: ($('#surprise-sort').val() || 'relevance')
+      corpuses: getSelectedCorpuses()
     };
   }
 

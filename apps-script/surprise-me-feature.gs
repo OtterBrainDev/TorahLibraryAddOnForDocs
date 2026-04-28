@@ -135,17 +135,10 @@ function getInsertableRefsFromSearchHits_(hits, allowedCorpuses) {
 
 function looksTooBroadForInsertion_(source) {
   if (!source) return true;
-  if (source.is_section === true || source.isSection === true) return true;
-
-  const sections = Array.isArray(source.sections) ? source.sections.filter(function (value) {
-    return value !== null && typeof value !== 'undefined' && value !== '';
-  }) : [];
-  const toSections = Array.isArray(source.toSections) ? source.toSections.filter(function (value) {
-    return value !== null && typeof value !== 'undefined' && value !== '';
-  }) : [];
-
-  if (!sections.length && !toSections.length) return true;
-  return false;
+  // Search hit _source does not include sections/toSections; use the ref string instead.
+  // Any passage-level ref (verse, folio, mishnah) contains a digit; a bare book name does not.
+  const ref = String(source.ref || '').trim();
+  return !ref || !/\d/.test(ref);
 }
 
 function isInsertableResolvedRef_(data) {
