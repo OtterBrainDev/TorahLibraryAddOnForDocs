@@ -16,7 +16,7 @@ function surpriseMeHTML() {
   }
 
   const template = HtmlService.createTemplateFromFile('surprise-me');
-  template.appConfigJson = JSON.stringify(getUiAppConfig_('surprise-me', 'experimental'));
+  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('surprise-me', 'experimental'));
   const output = template.evaluate()
     .setWidth(430)
     .setHeight(620);

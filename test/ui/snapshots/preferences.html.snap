@@ -3,7 +3,8 @@
   <head>
     <?!= include('shared/ui/head'); ?>
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/themes/smoothness/jquery-ui.css" />
-    <script>window.APP_CONFIG = <?= appConfigJson ?>;</script>
+    <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
+    <script>window.APP_CONFIG = JSON.parse(document.getElementById('app-config-json').textContent);</script>
 <? var devFlags = JSON.parse(devFlagsJson); ?>
     <?!= include('preferences/css'); ?>
     <?!= include('shared/composition-card/css'); ?>

@@ -2,7 +2,8 @@
 <html>
   <head>
     <?!= include('shared/ui/head'); ?>
-    <script>window.APP_CONFIG = <?= appConfigJson ?>;</script>
+    <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
+    <script>window.APP_CONFIG = JSON.parse(document.getElementById('app-config-json').textContent);</script>
     <?!= include('surprise-me/css'); ?>
   </head>
   <body>

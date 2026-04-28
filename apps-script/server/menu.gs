@@ -56,7 +56,7 @@ function openSharedSidebar_(mode) {
   var resolvedMode = setSearchMode_(mode || getSearchMode_());
   var template = HtmlService.createTemplateFromFile('sidebar');
   template.initialMode = resolvedMode;
-  template.appConfigJson = JSON.stringify(getUiAppConfig_('sidebar', resolvedMode));
+  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode));
   var output = template.evaluate()
     .setTitle('Sefaria')
     .setWidth(300);
@@ -224,7 +224,7 @@ function sefariaSearch() {
 
 function preferencesPopup() {
   const template = HtmlService.createTemplateFromFile('preferences');
-  template.appConfigJson = JSON.stringify(getUiAppConfig_('preferences', 'preferences'));
+  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences'));
   template.devFlagsJson = JSON.stringify(DEV_FLAGS);
   const output = template.evaluate()
     .setTitle('Preferences')
