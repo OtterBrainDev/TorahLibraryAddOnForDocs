@@ -112,6 +112,8 @@ function setSidebarMode(mode, skipPreferenceSave) {
   $('.text-mode-only').toggle(appMode === 'texts');
   $('.experimental-section').toggle(appMode === 'experimental');
 
+  if (appMode !== 'texts' && typeof closeLayoutTray === 'function') closeLayoutTray();
+
   $('.reference-row .search-submit, .reference-row .history-submit').show();
   $('.advanced-version-details').toggle(appMode === 'texts' && $('.output-mode-selection').val() !== 'en');
   var placeholders = { texts: 'Search texts…', voices: 'Search voices…', lexicon: 'Search dictionary…' };
