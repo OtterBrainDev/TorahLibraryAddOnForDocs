@@ -3,7 +3,7 @@ name: Deploy to Apps Script
 on:
   push:
     branches:
-      - main
+      - master
       - claude/appscript-github-sync-EOqjD
 
 jobs:
@@ -20,7 +20,36 @@ jobs:
         run: npm install -g @google/clasp
 
       - name: Authenticate with Google
-        run: echo "${{ secrets.CLASP_TOKEN }}" > ~/.clasprc.json \ chmod 600 ~/.clasprc.json
-
+        run: |
+          echo "${{ secrets.CLASP_TOKEN }}" | base64 -d > ~/.clasprc_v3.json
+          python3 <<'PY'
+          import json, os
+          home = os.path.expanduser('~')
+          with open(f'{home}/.clasprc_v3.json') as f:
+              v3 = json.load(f)
+          tok = v3['tokens']['default']
+          v2 = {
+              "token": {
+                  "access_token":  tok.get('access_token'),
+                  "refresh_token": tok.get('refresh_token'),
+                  "scope":         tok.get('scope', ''),
+                  "token_type":    tok.get('token_type', 'Bearer'),
+                  "expiry_date":   tok.get('expiry_date'),
+                  "id_token":      tok.get('id_token'),
+              },
+              "oauth2ClientSettings": {
+                  "clientId":     tok['client_id'],
+                  "clientSecret": tok['client_secret'],
+                  "redirectUri":  "http://localhost"
+              },
+              "isLocalCreds": False
+          }
+          v2['token'] = {k: v for k, v in v2['token'].items() if v is not None}
+          with open(f'{home}/.clasprc.json', 'w') as f:
+              json.dump(v2, f)
+          print('Converted v3 → v2 format. Token keys:', list(v2['token'].keys()))
+          PY
+          chmod 600 ~/.clasprc.json
+      
       - name: Push to Apps Script
         run: clasp push -f
