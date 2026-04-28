@@ -313,22 +313,36 @@ function renderResultGroup(selector, items, groupName) {
     return;
   }
 
-  var lastCluster = '';
+  // Pre-group items by cluster, preserving within-cluster order and the order
+  // clusters first appear. This prevents the same label (e.g. "Library") from
+  // being emitted as multiple disconnected headers when the incoming sort
+  // interleaves clusters.
+  var clusterOrder = [];
+  var clusterBuckets = {};
   items.forEach(function (item) {
     var cluster = getResultCorpusLabel(item, groupName);
-    var corpusKey = getResultCorpusKey(item, groupName);
-    var accentClass = getCorpusAccentClass(corpusKey);
-    if (cluster && cluster !== lastCluster) {
-      $list.append("<li class='result-group-header " + accentClass + "'><button type='button' class='result-group-remove' data-corpus-key='" + escapeHTML(corpusKey) + "' title='Hide corpus'>❌</button><span class='result-cluster-label'>" + escapeHTML(cluster) + "</span></li>");
-      lastCluster = cluster;
+    if (!clusterBuckets.hasOwnProperty(cluster)) {
+      clusterBuckets[cluster] = [];
+      clusterOrder.push(cluster);
     }
-    var selectedClass = item.key === selectedResultKey ? 'selected' : '';
-    var metaLine = "<div class='result-meta'><span>" + escapeHTML(cluster) + "</span><span> • </span><span>" + escapeHTML(describeResultLanguages(item)) + "</span></div>";
-    var subtitle = item.subtitle ? "<div class='result-subtitle'>" + escapeHTML(item.subtitle) + "</div>" : '';
-    var snippet = item.snippet ? "<div class='result-snippet'>" + item.snippet + "</div>" : subtitle;
-    var titleText = (appMode === 'voices') ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
-    var sefariaBtn = appMode !== 'voices' ? "<button type='button' class='result-sefaria-btn' data-ref='" + escapeHTML(item.ref) + "' aria-label='Open on Sefaria' title='Open on Sefaria'><img src='https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png' alt='' class='open-sefaria-icon'></button>" : '';
-    $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(item.label || item.ref) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(item.label || item.ref) + "</div>" + sefariaBtn + "</div>" + metaLine + snippet + "</li>");
+    clusterBuckets[cluster].push(item);
+  });
+
+  clusterOrder.forEach(function (cluster) {
+    var corpusKey = getResultCorpusKey(clusterBuckets[cluster][0], groupName);
+    var accentClass = getCorpusAccentClass(corpusKey);
+    if (cluster) {
+      $list.append("<li class='result-group-header " + accentClass + "'><button type='button' class='result-group-remove' data-corpus-key='" + escapeHTML(corpusKey) + "' title='Hide corpus'>❌</button><span class='result-cluster-label'>" + escapeHTML(cluster) + "</span></li>");
+    }
+    clusterBuckets[cluster].forEach(function (item) {
+      var selectedClass = item.key === selectedResultKey ? 'selected' : '';
+      var metaLine = "<div class='result-meta'><span>" + escapeHTML(cluster) + "</span><span> • </span><span>" + escapeHTML(describeResultLanguages(item)) + "</span></div>";
+      var subtitle = item.subtitle ? "<div class='result-subtitle'>" + escapeHTML(item.subtitle) + "</div>" : '';
+      var snippet = item.snippet ? "<div class='result-snippet'>" + item.snippet + "</div>" : subtitle;
+      var titleText = (appMode === 'voices') ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
+      var sefariaBtn = appMode !== 'voices' ? "<button type='button' class='result-sefaria-btn' data-ref='" + escapeHTML(item.ref) + "' aria-label='Open on Sefaria' title='Open on Sefaria'><img src='https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png' alt='' class='open-sefaria-icon'></button>" : '';
+      $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(item.label || item.ref) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(item.label || item.ref) + "</div>" + sefariaBtn + "</div>" + metaLine + snippet + "</li>");
+    });
   });
 }
 
