@@ -15,18 +15,46 @@
 
 /*
  * Two closed selector controls sit side-by-side.
- * When one opens, it spans the full row so its option group is not squashed.
+ * Dropdowns float their options panel absolutely so neither trigger shifts position.
+ * Only non-dropdown details elements span both columns when open.
  */
 .display-layout-section {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   align-items: start;
 }
 
-.display-layout-section .display-choice-detail[open],
-.display-layout-section .display-choice-dropdown[open] {
+.display-layout-section .display-choice-detail[open]:not(.display-choice-dropdown) {
   grid-column: 1 / -1;
+}
+
+/*
+ * Reset the position:relative from accordion.html so the containing block for
+ * the absolutely-positioned options panel is .display-layout-section (full width).
+ */
+.display-layout-section .display-choice-dropdown {
+  position: static;
+}
+
+/*
+ * Options panel floats below the trigger row as an overlay, full-section width.
+ * margin-top:0 overrides the in-flow margin from accordion.html.
+ */
+.display-layout-section .display-choice-dropdown[open] .mode-card-group,
+.display-layout-section .display-choice-dropdown[open] .layout-option-group {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin-top: 0;
+  padding: 8px 10px;
+  background: #fbfaf8;
+  border: 1px solid #ebe6dc;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 /* =============================================================
