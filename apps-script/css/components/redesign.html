@@ -465,32 +465,14 @@
 .result-sefaria-btn:hover { opacity: 1 !important; background: var(--card, #f3f1ed); }
 .result-sefaria-btn .open-sefaria-icon { width: 13px; height: 13px; }
 
-/* ── Preview fills remaining space when result is selected (State B) ─────── */
-.unified-sidebar.has-selected-result .sidebar-scroll {
-  overflow: hidden;
-}
-.unified-sidebar.has-selected-result .preview-section {
-  flex: 1 1 auto !important;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.unified-sidebar.has-selected-result .preview-section .preview-accordion {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-.unified-sidebar.has-selected-result .preview-section .preview-panel {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
+/* ── Preview when a result is selected (State B) ─────────────────────────── */
+/* The flex-fill-through-<details> chain is unreliable in Chrome 131+ because
+ * <details> now uses a shadow DOM that breaks flex height propagation to
+ * non-summary children. Restoring the sidebar's natural scroll and using an
+ * explicit max-height on .suggestions is the correct, browser-stable approach.
+ * See: versions-preview.html SCROLL CONTAINMENT note. */
 .unified-sidebar.has-selected-result .preview-section .preview-panel .suggestions {
-  flex: 1 1 auto;
-  max-height: none !important;
-  overflow-y: auto;
+  max-height: 400px;
 }
 
 /* ── Tray display & layout section (real sidebar controls) ───────── */
