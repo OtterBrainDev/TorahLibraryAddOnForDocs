@@ -160,6 +160,13 @@ function runUnifiedQuery() {
     if (validationRequestId !== latestDirectRefValidationRequestId || requestId !== latestQueryRequestId) return;
     var isValidDirectRef = getResolvedNodeState(response).resolved;
     if (isValidDirectRef) {
+      var resolvedLangs = Array.isArray(response && response.availableLangs)
+        ? response.availableLangs.map(function(l) { return String(l || '').toLowerCase(); }).filter(Boolean)
+        : (Array.isArray(response && response.versions)
+            ? response.versions.map(function(v) { return String((v && v.language) || '').toLowerCase(); }).filter(Boolean)
+            : []);
+      directRefMatch.availableLangs = resolvedLangs;
+      directRefMatch.hasTranslation = resolvedLangs.length > 0;
       queryState.rawLibraryMatches = [directRefMatch].concat(queryState.rawLibraryMatches).slice(0, 10);
       setResultsHint('');
     } else if (isHebrewScript) {

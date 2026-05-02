@@ -594,7 +594,7 @@ function itemMatchesTranslationLanguages(item, languages) {
   var selected = Array.isArray(languages) ? languages.filter(Boolean) : [];
   if (!selected.length) return item.hasTranslation !== false;
   var available = Array.isArray(item.availableLangs) ? item.availableLangs.map(function (lang) { return String(lang || '').toLowerCase(); }) : [];
-  if (!available.length) return item.hasTranslation !== false;
+  if (!available.length) return false;
   return selected.some(function (lang) { return available.indexOf(String(lang || '').toLowerCase()) >= 0; });
 }
 
