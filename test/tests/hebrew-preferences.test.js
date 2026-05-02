@@ -143,6 +143,19 @@ test('transliteration honors explicit override maps during insertion path', () =
   assert.equal(output, 'chag');
 });
 
+test('transliterateHebrewHtmlPreservingBasicBreaks strips HTML entities before transliterating', () => {
+  const ctx = loadAppsScriptFiles(['apps-script/server/utils.gs', 'apps-script/transliteration.gs'], {});
+  // Sefaria returns Hebrew with &nbsp; between words; it must not appear literally in output.
+  const html = '<b>בְּרֵאשִׁית</b>&nbsp;<b>בָּרָא</b>';
+  const output = ctx.transliterateHebrewHtmlPreservingBasicBreaks(html, 'simple_english', {
+    keepNiqqud: false,
+    isBiblicalHebrew: false,
+    dageshMode: 'none',
+  });
+  assert.ok(!output.includes('&nbsp;'), 'literal &nbsp; must not appear in transliteration output');
+  assert.ok(!output.includes('&amp;'), 'literal &amp; must not appear in transliteration output');
+  assert.ok(output.trim().length > 0, 'transliteration must produce non-empty output');
+});
 
 test('builds search-wrapper payload from new search configuration object', () => {
   const ctx = loadAppsScriptFiles(['apps-script/server/search.gs'], {});

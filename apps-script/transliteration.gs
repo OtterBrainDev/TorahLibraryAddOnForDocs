@@ -241,10 +241,12 @@ function transliterateHebrewText(text, schemeKey, options) {
 }
 
 function transliterateHebrewHtmlPreservingBasicBreaks(html, schemeKey, options) {
-  var text = String(html || "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n")
-    .replace(/<[^>]*>/g, "");
+  var text = decodeHTMLEntities(
+    String(html || "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<[^>]*>/g, "")
+  );
   var lines = text.split(/\n+/);
   var out = [];
   for (var i = 0; i < lines.length; i += 1) {

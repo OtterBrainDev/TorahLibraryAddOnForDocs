@@ -504,7 +504,7 @@ function insertRichTextFromHTML(element, htmlString) {
   if (Array.isArray(htmlString)) {
     htmlString = htmlString.join("");
   }
-  let iterableString = htmlString.split(/(<\/?[a-zA-Z]+[a-zA-Z'"0-9= \-/]*>)/g);
+  let iterableString = htmlString.split(/(<\/?[a-zA-Z]+[^>]*>)/g);
 
   let inserterFn = (textModification) => {
     let snippet = buf.join("");
