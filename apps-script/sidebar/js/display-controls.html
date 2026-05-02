@@ -25,7 +25,13 @@ function updateTranslationDetailsVisibility() {
 
 function updateHebrewOptionsVisibility() {
   var outputMode = $('.output-mode-selection').val();
-  $('.hebrew-options-row').toggle(outputMode !== 'en');
+  var isTranslationOnly = outputMode === 'en';
+  $('.hebrew-options-row').toggle(!isTranslationOnly);
+  // In translation-only mode, hide only the Hebrew-specific parts of the composition
+  // card (cantillation/vowels preview and transliteration) so source and link settings
+  // remain accessible via the secondary pills.
+  $('#composition-card-container .cc-hebrew-stage, #composition-card-container .cc-translit-wrap')
+    .toggle(!isTranslationOnly);
 }
 
 function updateVersionControlsVisibility() {

@@ -632,7 +632,7 @@
             <!-- Insertion Format (composition card) -->
             <div class="tray-section tray-insertion-format-section text-mode-only">
               <div class="tray-section-label">Insertion Format</div>
-              <div class="cc-card hebrew-options-row" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills" aria-label="Composition for this insertion">
+              <div class="cc-card" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills" aria-label="Composition for this insertion">
                 <?!= include('shared/composition-card/markup') ?>
               </div>
             </div>
