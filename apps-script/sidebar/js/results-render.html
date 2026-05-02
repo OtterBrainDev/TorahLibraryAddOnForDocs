@@ -276,6 +276,7 @@ function renderLexiconResultItem(item, selectedClass) {
 
 function renderResultGroup(selector, items, groupName) {
   var $list = $(selector);
+  if (!items.length && resultsLoading) return;
   $list.empty();
   if (!items.length) {
     if (selector === '.search-results') return;
