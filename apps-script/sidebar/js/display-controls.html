@@ -134,6 +134,7 @@ $('.mode-card').on('click', function () {
   updateHebrewOptionsVisibility();
   updateVersionControlsVisibility();
   updateTransliterationVisibility();
+  if (typeof applyMultiSelectMode === 'function') applyMultiSelectMode();
   closeCompactChoicePanels();
 });
 
@@ -141,6 +142,7 @@ $('.layout-option').on('click', function () {
   var layout = $(this).attr('data-layout');
   $('.bilingual-layout-selection').val(layout).trigger('change');
   syncLayoutCards();
+  if (typeof applyMultiSelectMode === 'function') applyMultiSelectMode();
   closeCompactChoicePanels();
 });
 </script>

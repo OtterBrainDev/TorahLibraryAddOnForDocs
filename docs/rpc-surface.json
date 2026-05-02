@@ -13,6 +13,7 @@
     { "name": "getSidebarBootstrapData", "arity": 2, "definedIn": "apps-script/server/menu.gs" },
     { "name": "insertLexiconEntry", "arity": 1, "definedIn": "apps-script/server/lexicon.gs" },
     { "name": "insertReference", "arity": 2, "definedIn": "apps-script/server/insertion.gs" },
+    { "name": "insertReferenceVersions", "arity": 2, "definedIn": "apps-script/server/insertion.gs" },
     { "name": "insertSheet", "arity": 2, "definedIn": "apps-script/server/sheets.gs" },
     { "name": "insertSurpriseMe", "arity": 1, "definedIn": "apps-script/surprise-me-feature.gs" },
     { "name": "linkerHTML", "arity": 0, "definedIn": "apps-script/server/menu.gs" },

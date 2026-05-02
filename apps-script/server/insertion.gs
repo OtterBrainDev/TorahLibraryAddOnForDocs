@@ -490,6 +490,144 @@ function insertReference(data, opts) {
   }
 }
 
+/**
+ * Insert the same reference in multiple translation versions into the active document.
+ * Only valid for "translation only" (singleLanguage="en") and "Hebrew on top" (bilingualLayout="he-top") modes.
+ * For he-top: inserts the Hebrew block once, then each translation in sequence.
+ * For en: inserts each translation as its own title + body block in sequence.
+ *
+ * @param {string} ref           Resolved Sefaria reference string.
+ * @param {Object} opts
+ * @param {string[]} opts.versionTitles        Array of English version titles to insert.
+ * @param {string}  [opts.heVersionTitle]      Hebrew version title.
+ * @param {string}  [opts.singleLanguage]      "en" for translation-only mode; omit for he-top.
+ * @param {string}  [opts.bilingualLayout]     Expected "he-top" when not singleLanguage.
+ * @param {boolean} [opts.pasukPreference]     Include line markers.
+ * @param {string}  [opts.preferredTitle]      Override displayed title (e.g. "Bereishit 1:1").
+ * @param {boolean} [opts.includeTranslationSourceInfo] Append attribution.
+ * @param {boolean} [opts.insertSefariaLink]   Hyperlink title to sefaria.org.
+ */
+function insertReferenceVersions(ref, opts) {
+  const options = opts || {};
+  const versionTitles = Array.isArray(options.versionTitles) ? options.versionTitles.filter(Boolean) : [];
+  const heVersionTitle = options.heVersionTitle || '';
+  const singleLanguage = options.singleLanguage;
+  const pasukPreference = options.pasukPreference !== undefined ? options.pasukPreference : true;
+  const preferredTitle = options.preferredTitle || null;
+  const includeTranslationSourceInfo = options.includeTranslationSourceInfo === true;
+  const insertSefariaLink = options.insertSefariaLink === true;
+
+  if (!ref) throw new Error('insertReferenceVersions: no reference provided.');
+  if (!versionTitles.length) throw new Error('insertReferenceVersions: no version titles provided.');
+
+  const dataList = versionTitles.map(function (vt) {
+    return findReference(ref, { en: vt, he: heVersionTitle });
+  }).filter(Boolean);
+
+  if (!dataList.length) throw new Error('Could not resolve any of the requested versions.');
+
+  const includeLineMarkers = pasukPreference === true || pasukPreference === 'true';
+  const typography = getTypographySettings();
+  const sefariaUrl = 'https://www.sefaria.org/' + encodeURIComponent(ref || '').replace(/%20/g, '_');
+
+  let doc = DocumentApp.getActiveDocument().getBody();
+  let docWrapper = DocumentApp.getActiveDocument();
+  let cursor = docWrapper.getCursor();
+  let index = doc.getNumChildren();
+
+  if (cursor) {
+    let currentElement = cursor.getElement();
+    if (currentElement && currentElement.getParent()) {
+      index = currentElement.getParent().getChildIndex(currentElement) + 1;
+    }
+  }
+
+  let headerStyle = {};
+  headerStyle[DocumentApp.Attribute.BOLD] = true;
+  headerStyle[DocumentApp.Attribute.UNDERLINE] = true;
+  let nullStyle = {};
+  nullStyle[DocumentApp.Attribute.BOLD] = false;
+  let noUnderline = {};
+  noUnderline[DocumentApp.Attribute.UNDERLINE] = false;
+
+  if (singleLanguage === 'en') {
+    // Translation-only: each version gets its own title + body block.
+    for (let i = 0; i < dataList.length; i++) {
+      let d = formatDataForPesukim(dataList[i], includeLineMarkers);
+      let vTitle = preferredTitle || d.ref;
+      if (dataList.length > 1) {
+        let shortVt = String(versionTitles[i] || '').trim().substring(0, 50);
+        if (shortVt) vTitle = vTitle + ' (' + shortVt + ')';
+      }
+      let displayTitle = insertSefariaLink ? buildLinkedTitleText(vTitle, d, 'en') : vTitle;
+      doc.insertParagraph(index, displayTitle).setAttributes(headerStyle).setLeftToRight(true);
+      let titlePara = doc.getChild(index).asParagraph();
+      applyTitleTypography(titlePara, typography, insertSefariaLink);
+      if (insertSefariaLink) titlePara.editAsText().setLinkUrl(sefariaUrl);
+
+      let textPara = doc.insertParagraph(index + 1, '');
+      insertRichTextFromHTML(textPara, d.text);
+      textPara.setAttributes(noUnderline).setLeftToRight(true);
+      applyTypographyToParagraph(textPara, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+      index += 2;
+
+      if (includeTranslationSourceInfo) {
+        let attrLines = getEnglishAttributionLines(d);
+        if (attrLines.length) {
+          let attrPara = doc.insertParagraph(index, '');
+          insertAttributionParagraph(attrPara, attrLines);
+          index += 1;
+        }
+      }
+    }
+  } else {
+    // Hebrew on top: insert Hebrew once from the first version, then each translation.
+    let firstData = formatDataForPesukim(dataList[0], includeLineMarkers);
+    let heTitle = insertSefariaLink ? buildLinkedTitleText(firstData.heRef, firstData, 'he') : firstData.heRef;
+    doc.insertParagraph(index, heTitle).setAttributes(headerStyle).setLeftToRight(false);
+    let heTitlePara = doc.getChild(index).asParagraph();
+    applyTitleTypography(heTitlePara, typography, insertSefariaLink);
+    if (insertSefariaLink) heTitlePara.editAsText().setLinkUrl(sefariaUrl);
+
+    let heTextPara = doc.insertParagraph(index + 1, '');
+    heTextPara.setLeftToRight(false).setAttributes(nullStyle);
+    insertRichTextFromHTML(heTextPara, firstData.he);
+    heTextPara.setAttributes(noUnderline);
+    applyTypographyToParagraph(heTextPara, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle);
+    index += 2;
+
+    for (let i = 0; i < dataList.length; i++) {
+      let d = formatDataForPesukim(dataList[i], includeLineMarkers);
+      let enTitle = preferredTitle || d.ref;
+      if (dataList.length > 1) {
+        let shortVt = String(versionTitles[i] || '').trim().substring(0, 50);
+        if (shortVt) enTitle = enTitle + ' (' + shortVt + ')';
+      }
+      let displayTitle = insertSefariaLink ? buildLinkedTitleText(enTitle, d, 'en') : enTitle;
+      doc.insertParagraph(index, displayTitle).setAttributes(headerStyle).setLeftToRight(true);
+      let enTitlePara = doc.getChild(index).asParagraph();
+      applyTitleTypography(enTitlePara, typography, insertSefariaLink);
+      if (insertSefariaLink) enTitlePara.editAsText().setLinkUrl(sefariaUrl);
+
+      let enTextPara = doc.insertParagraph(index + 1, '');
+      enTextPara.setLeftToRight(true).setAttributes(nullStyle);
+      insertRichTextFromHTML(enTextPara, d.text);
+      enTextPara.setAttributes(noUnderline);
+      applyTypographyToParagraph(enTextPara, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+      index += 2;
+
+      if (includeTranslationSourceInfo) {
+        let attrLines = getEnglishAttributionLines(d);
+        if (attrLines.length) {
+          let attrPara = doc.insertParagraph(index, '');
+          insertAttributionParagraph(attrPara, attrLines);
+          index += 1;
+        }
+      }
+    }
+  }
+}
+
 // Converts HTML from Sefaria API to rich-text in Google Docs.
 // Handles <b>, <i>, <br>, <sup> (footnotes) tags and escapes HTML entities.
 function insertRichTextFromHTML(element, htmlString) {

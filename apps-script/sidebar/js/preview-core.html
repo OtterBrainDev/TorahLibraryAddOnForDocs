@@ -1,4 +1,39 @@
 <script>
+// Enable/disable the multiple-selection attribute on the translation version <select>.
+// Multi-select is only meaningful when the output will be stacked (he-top) or translation-only (en),
+// because those are the two layouts where inserting several translations in sequence makes sense.
+function applyMultiSelectMode() {
+  var outputMode = $('.output-mode-selection').val();
+  var layout = $('.bilingual-layout-selection').val();
+  var allowMulti = outputMode === 'en' || (outputMode === 'both' && layout === 'he-top');
+  var $select = $('.translation-version-select').not('.he-version-selection');
+  if (!$select.length) return;
+
+  var isMulti = $select.prop('multiple');
+  if (allowMulti && !isMulti) {
+    $select.prop('multiple', true);
+    $select.attr('size', '6');
+  } else if (!allowMulti && isMulti) {
+    // Collapse to single selection: keep the first selected option.
+    var vals = $select.val();
+    var first = Array.isArray(vals) ? vals[0] : vals;
+    $select.prop('multiple', false);
+    if (first) $select.val(first);
+  }
+
+  // Update the hint text below the select.
+  var $hint = $('.translation-multi-hint');
+  if (!$hint.length) {
+    $hint = $('<p class="translation-multi-hint version-multi-hint"></p>');
+    $select.after($hint);
+  }
+  if (allowMulti) {
+    $hint.text('Hold Ctrl / Cmd to select multiple versions.').show();
+  } else {
+    $hint.hide();
+  }
+}
+
 function updatePesukimAvailability(response) {
   var supportsLineMarkers = !!(response && (Array.isArray(response.he) || Array.isArray(response.text) || response.lineMarkersAvailable === true));
   $('.pesukim-wrapper').toggle(supportsLineMarkers);
@@ -204,8 +239,20 @@ function updateSuggestion(dataIn, inputTitle) {
   var currentHeVersion = heSelectedVersionTitle;
 
   function syncSelectedTranslationDisplay() {
-    var selectedOption = $('.translation-version-select option:selected').first();
-    var displayText = normalizeOptionText(selectedOption.attr('title') || selectedOption.text() || 'No translation selected.');
+    var $select = $('.translation-version-select').not('.he-version-selection');
+    var displayText;
+    if ($select.prop('multiple')) {
+      var vals = $select.val();
+      if (Array.isArray(vals) && vals.length > 1) {
+        displayText = vals.length + ' versions selected';
+      } else {
+        var selectedOption = $select.find('option:selected').first();
+        displayText = normalizeOptionText(selectedOption.attr('title') || selectedOption.text() || 'No translation selected.');
+      }
+    } else {
+      var selectedOption = $select.find('option:selected').first();
+      displayText = normalizeOptionText(selectedOption.attr('title') || selectedOption.text() || 'No translation selected.');
+    }
     $('.translation-selected-display').first().text(displayText).attr('title', displayText);
   }
 
@@ -351,10 +398,12 @@ function updateSuggestion(dataIn, inputTitle) {
 
   $('.translation-version-select').off('change.translationVersion').on('change.translationVersion', function () {
     var selected = $(this).val();
+    // With multiple selection, val() returns an array; preview uses only the primary (first) pick.
+    var primarySelected = Array.isArray(selected) ? selected[0] : selected;
     syncSelectedTranslationDisplay();
-    if (!selected) return;
-    currentEnVersion = selected;
-    getVersions(selected);
+    if (!primarySelected) return;
+    currentEnVersion = primarySelected;
+    getVersions(primarySelected);
   });
 
   $('.he-version-selection').off('change.heVersion').on('change.heVersion', function () {
@@ -378,6 +427,7 @@ function updateSuggestion(dataIn, inputTitle) {
 
   updateVersionControlsVisibility();
   updateModeDependentSections();
+  applyMultiSelectMode();
   if (typeof renderPreviewTransliteration === 'function') renderPreviewTransliteration(dataIn);
 }
 
