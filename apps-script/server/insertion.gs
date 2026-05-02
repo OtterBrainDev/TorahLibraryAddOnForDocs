@@ -185,11 +185,26 @@ function insertReference(data, opts) {
 
     let firstElement = rangeElements[0].getElement();
     let bodyLevelElement = firstElement;
-    while (bodyLevelElement.getParent && bodyLevelElement.getParent() && bodyLevelElement.getParent() !== doc) {
-      bodyLevelElement = bodyLevelElement.getParent();
+    let foundBodyLevel = false;
+    // Use getType() instead of reference equality — Apps Script proxy objects for the same
+    // Body returned by getParent() vs getBody() are not === equal, so reference comparison
+    // silently walks past the body and always throws for normal paragraph selections.
+    try {
+      while (bodyLevelElement) {
+        if (!bodyLevelElement.getParent) break;
+        const parent = bodyLevelElement.getParent();
+        if (!parent) break;
+        if (parent.getType() === DocumentApp.ElementType.BODY_SECTION) {
+          foundBodyLevel = true;
+          break;
+        }
+        bodyLevelElement = parent;
+      }
+    } catch (e) {
+      foundBodyLevel = false;
     }
 
-    if (!bodyLevelElement || bodyLevelElement.getParent() !== doc) {
+    if (!foundBodyLevel || bodyLevelElement.getType() === DocumentApp.ElementType.TABLE) {
       throw new Error("Your selection is inside a table, header, or footer, which isn't supported. Click to place your cursor in the main body of the document, then try again.");
     }
 
@@ -215,7 +230,9 @@ function insertReference(data, opts) {
               el.asText().deleteText(0, text.length - 1);
             }
           } else if (type === DocumentApp.ElementType.PARAGRAPH || type === DocumentApp.ElementType.LIST_ITEM) {
-            if (el.getParent() === doc && doc.getNumChildren() > 1) {
+            const elParent = el.getParent();
+            const elParentIsBody = elParent && elParent.getType() === DocumentApp.ElementType.BODY_SECTION;
+            if (elParentIsBody && doc.getNumChildren() > 1) {
               let elIndex = doc.getChildIndex(el);
               el.removeFromParent();
               if (elIndex < insertionIndex) {
