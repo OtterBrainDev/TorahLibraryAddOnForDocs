@@ -151,7 +151,7 @@ INCLUDE_RE = re.compile(r"""include\s*\(\s*['\"]([^'\"]+)['\"]\s*\)""")
 ENTRY_TEMPLATES = [
     "sidebar.html", "preferences.html", "ai_lesson.html", "surprise-me.html",
     "help-modal.html", "feedback-modal.html", "release-notes.html",
-    "gematriya-count.html", "session-library-modal.html",
+    "gematriya-count.html", "session-library-modal.html", "linker-results.html",
 ]
 
 def walk(exts):
@@ -266,7 +266,7 @@ ENTRY_TEMPLATES = {
     "sidebar.html", "preferences.html", "ai_lesson.html",
     "surprise-me.html", "help-modal.html", "feedback-modal.html",
     "release-notes.html", "gematriya-count.html",
-    "session-library-modal.html",
+    "session-library-modal.html", "linker-results.html",
 }
 
 INCLUDE_RE = re.compile(r"""include\s*\(\s*['\"]([^'\"]+)['\"]\s*\)""")

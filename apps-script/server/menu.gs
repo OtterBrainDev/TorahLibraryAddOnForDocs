@@ -277,3 +277,11 @@ function divineNamePopup() {
 function linkerHTML() {
   linkTextsWithSefaria();
 }
+
+function showLinkerResultsDialog_(linkedCount, linkedRefItems) {
+  const template = HtmlService.createTemplateFromFile('linker-results');
+  template.linkedCount = linkedCount;
+  template.linkedRefItemsJson = JSON.stringify(linkedRefItems);
+  const html = template.evaluate().setWidth(560).setHeight(500);
+  DocumentApp.getUi().showModalDialog(html, 'Link Texts with Sefaria');
+}
