@@ -122,7 +122,7 @@ function linkTextsWithSefaria() {
   const linkerMatches = findRefsInDocumentText(docText);
   const prefs = getPreferences();
   const insertAfterLinking = prefs.link_sources_insert_after_linking == "true" || prefs.link_sources_insert_after_linking === true;
-  const linkedRefs = [];
+  const linkedRefItems = [];
   let linkedCount = 0;
   linkerMatches.forEach((match) => {
     if (!match || match.linkFailed || !Array.isArray(match.refs) || !match.refs.length) {
@@ -147,38 +147,59 @@ function linkTextsWithSefaria() {
     const url = `https://www.sefaria.org/${encodeURIComponent(ref).replace(/%20/g, '_')}`;
     bodyText.setLinkUrl(start, end, url);
     linkedCount++;
-    linkedRefs.push(ref);
+
+    const snippetStart = Math.max(0, start - 30);
+    const snippetEnd = Math.min(docText.length, endExclusive + 30);
+    const snippet = docText.substring(snippetStart, snippetEnd).replace(/\n/g, ' ').trim();
+    linkedRefItems.push({ ref, startChar: start, endChar: endExclusive, snippet });
   });
 
-  let insertedCount = 0;
-  let insertFailures = 0;
-  if (insertAfterLinking && linkedRefs.length) {
-    const insertOptions = buildLinkSourcesInsertOptions_(prefs);
-    linkedRefs.forEach((ref) => {
-      try {
-        const resolved = findReference(ref);
-        if (!resolved || !resolved.ref) {
-          insertFailures++;
-          return;
-        }
-        insertReference(resolved, Object.assign({ preferredTitle: ref }, insertOptions));
-        insertedCount++;
-      } catch (error) {
-        insertFailures++;
-        Logger.log(`Link-sources insert failed for ${ref}: ${error.message}`);
-      }
-    });
+  if (insertAfterLinking && linkedRefItems.length > 0) {
+    showLinkerResultsDialog_(linkedCount, linkedRefItems);
+  } else {
+    DocumentApp.getUi().alert(`Linked ${linkedCount} recognizable reference${linkedCount === 1 ? '' : 's'} to Sefaria.`);
+  }
+}
+
+function insertLinkedSourceAtPosition(ref, startChar) {
+  const doc = DocumentApp.getActiveDocument();
+  const body = doc.getBody();
+  const numChildren = body.getNumChildren();
+
+  // Walk body children to find the paragraph containing startChar
+  let charCount = 0;
+  let targetChildIndex = numChildren - 1;
+  for (let i = 0; i < numChildren; i++) {
+    const child = body.getChild(i);
+    let childText = '';
+    try { childText = child.getText(); } catch (e) {}
+    const nextCharCount = charCount + childText.length + 1;
+    if (startChar < nextCharCount) {
+      targetChildIndex = i;
+      break;
+    }
+    charCount = nextCharCount;
   }
 
-  let message = `Linked ${linkedCount} recognizable reference${linkedCount === 1 ? '' : 's'} to Sefaria.`;
-  if (insertAfterLinking) {
-    message += ` Inserted ${insertedCount} source${insertedCount === 1 ? '' : 's'}`;
-    if (insertFailures > 0) {
-      message += ` (${insertFailures} could not be fetched)`;
-    }
-    message += '.';
+  // Set selection to that paragraph so insertReference inserts after it,
+  // mirroring the insertSourceFromSelection path with preserveSelection: true.
+  try {
+    const targetChild = body.getChild(targetChildIndex);
+    const range = doc.newRange().addElement(targetChild).build();
+    doc.setSelection(range);
+  } catch (e) {
+    // Falls back to cursor or end of document
   }
-  DocumentApp.getUi().alert(message);
+
+  const resolved = findReference(ref);
+  if (!resolved || !resolved.ref) {
+    return { success: false, ref };
+  }
+
+  const prefs = getPreferences();
+  const insertOptions = buildLinkSourcesInsertOptions_(prefs);
+  insertReference(resolved, Object.assign({ preferredTitle: ref, preserveSelection: true }, insertOptions));
+  return { success: true, ref };
 }
 
 function buildLinkSourcesInsertOptions_(prefs) {

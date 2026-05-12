@@ -34,6 +34,7 @@
     { "name": "surpriseMeHTML", "arity": 0, "definedIn": "apps-script/surprise-me-feature.gs" },
     { "name": "transformDivineNames", "arity": 0, "definedIn": "apps-script/server/document-actions.gs" },
     { "name": "unlinkSefariaSources", "arity": 0, "definedIn": "apps-script/server/document-actions.gs" },
-    { "name": "insertSourceFromSelection", "arity": 0, "definedIn": "apps-script/server/document-actions.gs" }
+    { "name": "insertSourceFromSelection", "arity": 0, "definedIn": "apps-script/server/document-actions.gs" },
+    { "name": "insertLinkedSourceAtPosition", "arity": 2, "definedIn": "apps-script/server/document-actions.gs" }
   ]
 }

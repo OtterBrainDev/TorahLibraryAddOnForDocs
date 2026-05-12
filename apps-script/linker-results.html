@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <script type="application/json" id="linker-data-json"><?= linkedRefItemsJson ?></script>
+    <style>
+      :root {
+        --bg: #f5f5f3;
+        --panel: #ffffff;
+        --border: #d4d0ca;
+        --text: #222222;
+        --muted: #666666;
+        --blue: #1f3b68;
+        --blue-soft: #eef3fb;
+        --radius: 10px;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      main {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        padding: 16px 20px 12px;
+      }
+
+      h2 {
+        margin: 0 0 4px;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--blue);
+      }
+
+      .helper {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .controls-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .btn-link {
+        background: none;
+        border: none;
+        padding: 2px 4px;
+        cursor: pointer;
+        color: var(--blue);
+        font-size: 13px;
+        text-decoration: underline;
+      }
+      .btn-link:hover { opacity: 0.75; }
+
+      .selection-count {
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .table-scroll {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--panel);
+        min-height: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead th {
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        padding: 7px 10px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      thead th:first-child { width: 36px; text-align: center; }
+
+      tbody tr { border-bottom: 1px solid #efefed; }
+      tbody tr:last-child { border-bottom: none; }
+      tbody tr:hover { background: var(--blue-soft); }
+
+      tbody td {
+        padding: 7px 10px;
+        vertical-align: top;
+      }
+
+      tbody td:first-child { text-align: center; padding-top: 9px; }
+
+      .ref-name {
+        font-weight: 500;
+        white-space: nowrap;
+        padding-right: 12px;
+        min-width: 140px;
+      }
+
+      .snippet {
+        color: var(--muted);
+        font-size: 12px;
+        font-style: italic;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 240px;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 8px;
+        padding-top: 12px;
+      }
+
+      .btn {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 7px 16px;
+        cursor: pointer;
+        font-size: 14px;
+        background: var(--panel);
+        color: var(--text);
+      }
+      .btn:hover { background: #e8e8e5; }
+
+      .btn-primary {
+        background: var(--blue);
+        color: #fff;
+        border-color: var(--blue);
+        font-weight: 600;
+      }
+      .btn-primary:hover { background: #162d52; }
+      .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+      /* Progress state */
+      #state-progress { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+
+      .progress-label {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .progress-track {
+        height: 8px;
+        background: #e0deda;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: var(--blue);
+        border-radius: 4px;
+        transition: width 0.25s ease;
+        width: 0%;
+      }
+
+      .progress-detail {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0;
+      }
+
+      /* Done state */
+      #state-done { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 16px; }
+      .done-message { font-size: 15px; font-weight: 500; text-align: center; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <main>
+
+      <div id="state-idle">
+        <h2>Linked <?= linkedCount ?> reference<?= linkedCount === 1 ? '' : 's' ?> to Sefaria</h2>
+        <p class="helper">Choose which sources to insert after their references in the document.</p>
+
+        <div class="controls-row">
+          <button type="button" class="btn-link" id="select-all-btn">Select all</button>
+          <button type="button" class="btn-link" id="deselect-all-btn">Deselect all</button>
+          <span class="selection-count" id="selection-count"></span>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="master-cb" title="Toggle all" checked></th>
+                <th>Reference</th>
+                <th>Context</th>
+              </tr>
+            </thead>
+            <tbody id="refs-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn" id="skip-btn">Skip</button>
+          <button type="button" class="btn btn-primary" id="insert-btn">Insert Selected Sources</button>
+        </div>
+      </div>
+
+      <div id="state-progress" hidden>
+        <p class="progress-label" id="progress-label">Inserting sources…</p>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p class="progress-detail" id="progress-detail"></p>
+      </div>
+
+      <div id="state-done" hidden>
+        <p class="done-message" id="done-message"></p>
+        <button type="button" class="btn btn-primary" id="done-close-btn">Close</button>
+      </div>
+
+    </main>
+
+    <script>
+      (function () {
+        var data = JSON.parse(document.getElementById('linker-data-json').textContent);
+        var tbody = document.getElementById('refs-tbody');
+
+        // Build table rows — all textContent, no innerHTML
+        data.forEach(function (item, i) {
+          var tr = document.createElement('tr');
+
+          var tdCb = document.createElement('td');
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = true;
+          cb.dataset.index = String(i);
+          cb.className = 'ref-cb';
+          cb.addEventListener('change', syncMasterCheckbox);
+          cb.addEventListener('change', updateSelectionCount);
+          tdCb.appendChild(cb);
+          tr.appendChild(tdCb);
+
+          var tdRef = document.createElement('td');
+          tdRef.className = 'ref-name';
+          tdRef.textContent = item.ref;
+          tr.appendChild(tdRef);
+
+          var tdSnippet = document.createElement('td');
+          tdSnippet.className = 'snippet';
+          tdSnippet.title = item.snippet;
+          tdSnippet.textContent = item.snippet;
+          tr.appendChild(tdSnippet);
+
+          tbody.appendChild(tr);
+        });
+
+        function getCheckboxes() {
+          return Array.prototype.slice.call(document.querySelectorAll('.ref-cb'));
+        }
+
+        function updateSelectionCount() {
+          var n = getCheckboxes().filter(function (cb) { return cb.checked; }).length;
+          document.getElementById('selection-count').textContent = n + ' of ' + data.length + ' selected';
+          document.getElementById('insert-btn').disabled = n === 0;
+        }
+
+        function syncMasterCheckbox() {
+          var cbs = getCheckboxes();
+          var allChecked = cbs.every(function (cb) { return cb.checked; });
+          var noneChecked = cbs.every(function (cb) { return !cb.checked; });
+          var masterCb = document.getElementById('master-cb');
+          masterCb.checked = allChecked;
+          masterCb.indeterminate = !allChecked && !noneChecked;
+        }
+
+        document.getElementById('master-cb').addEventListener('change', function () {
+          getCheckboxes().forEach(function (cb) { cb.checked = this.checked; }, this);
+          updateSelectionCount();
+        });
+
+        document.getElementById('select-all-btn').addEventListener('click', function () {
+          getCheckboxes().forEach(function (cb) { cb.checked = true; });
+          document.getElementById('master-cb').checked = true;
+          document.getElementById('master-cb').indeterminate = false;
+          updateSelectionCount();
+        });
+
+        document.getElementById('deselect-all-btn').addEventListener('click', function () {
+          getCheckboxes().forEach(function (cb) { cb.checked = false; });
+          document.getElementById('master-cb').checked = false;
+          document.getElementById('master-cb').indeterminate = false;
+          updateSelectionCount();
+        });
+
+        document.getElementById('skip-btn').addEventListener('click', function () {
+          google.script.host.close();
+        });
+
+        document.getElementById('done-close-btn').addEventListener('click', function () {
+          google.script.host.close();
+        });
+
+        document.getElementById('insert-btn').addEventListener('click', function () {
+          var selected = getCheckboxes()
+            .filter(function (cb) { return cb.checked; })
+            .map(function (cb) { return data[parseInt(cb.dataset.index, 10)]; });
+
+          if (!selected.length) {
+            google.script.host.close();
+            return;
+          }
+
+          // Process end-to-start so earlier paragraph indices stay valid
+          selected.sort(function (a, b) { return b.startChar - a.startChar; });
+
+          document.getElementById('state-idle').hidden = true;
+          document.getElementById('state-progress').hidden = false;
+
+          var total = selected.length;
+          var completed = 0;
+          var failed = 0;
+
+          function updateProgress() {
+            var done = completed + failed;
+            var pct = Math.round(done / total * 100);
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('progress-detail').textContent =
+              done + ' of ' + total + ' processed';
+          }
+
+          function insertNext(index) {
+            if (index >= selected.length) {
+              document.getElementById('state-progress').hidden = true;
+              document.getElementById('state-done').hidden = false;
+              var msg = 'Inserted ' + completed + ' source' + (completed === 1 ? '' : 's') + '.';
+              if (failed > 0) {
+                msg += ' ' + failed + ' could not be fetched.';
+              }
+              document.getElementById('done-message').textContent = msg;
+              return;
+            }
+
+            var item = selected[index];
+            document.getElementById('progress-label').textContent =
+              'Inserting ' + item.ref + '… (' + (index + 1) + ' of ' + total + ')';
+
+            google.script.run
+              .withSuccessHandler(function (result) {
+                if (result && result.success) {
+                  completed++;
+                } else {
+                  failed++;
+                }
+                updateProgress();
+                insertNext(index + 1);
+              })
+              .withFailureHandler(function () {
+                failed++;
+                updateProgress();
+                insertNext(index + 1);
+              })
+              .insertLinkedSourceAtPosition(item.ref, item.startChar);
+          }
+
+          updateProgress();
+          insertNext(0);
+        });
+
+        updateSelectionCount();
+      }());
+    </script>
+  </body>
+</html>
