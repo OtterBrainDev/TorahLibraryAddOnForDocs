@@ -32,6 +32,8 @@
     { "name": "setPreferences", "arity": 1, "definedIn": "apps-script/server/preferences.gs" },
     { "name": "setSidebarSessionState", "arity": 2, "definedIn": "apps-script/server/preferences.gs" },
     { "name": "surpriseMeHTML", "arity": 0, "definedIn": "apps-script/surprise-me-feature.gs" },
-    { "name": "transformDivineNames", "arity": 0, "definedIn": "apps-script/server/document-actions.gs" }
+    { "name": "transformDivineNames", "arity": 0, "definedIn": "apps-script/server/document-actions.gs" },
+    { "name": "unlinkSefariaSources", "arity": 0, "definedIn": "apps-script/server/document-actions.gs" },
+    { "name": "insertSourceFromSelection", "arity": 0, "definedIn": "apps-script/server/document-actions.gs" }
   ]
 }
