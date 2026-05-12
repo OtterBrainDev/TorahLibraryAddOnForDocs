@@ -284,7 +284,7 @@ function insertSourceFromSelection() {
   const prefs = getPreferences();
   const insertOptions = buildLinkSourcesInsertOptions_(prefs);
   try {
-    insertReference(resolved, Object.assign({ preferredTitle: selectedText }, insertOptions));
+    insertReference(resolved, Object.assign({ preferredTitle: selectedText, preserveSelection: true }, insertOptions));
   } catch (error) {
     ui.alert(`Failed to insert source: ${error.message}`);
   }

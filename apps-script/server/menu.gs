@@ -19,7 +19,6 @@ function buildAndInstallMenu() {
       .addItem('Transform Divine Names', 'transformDivineNames')
       .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
       .addItem('Unlink Sources', 'unlinkSefariaSources')
-      .addItem('Insert Source from Selection', 'insertSourceFromSelection')
       .addSeparator()
       .addItem('Gematriya Count', 'gematriyaCountPopup');
 
@@ -30,6 +29,7 @@ function buildAndInstallMenu() {
       .addItem('Texts', 'textsHTML')
       .addItem('Voices', 'voicesHTML')
       .addItem('Lexicon', 'lexiconHTML')
+      .addItem('Insert Source from Selection', 'insertSourceFromSelection')
       .addSubMenu(quickActionsMenu);
 
   if (DEV_FLAGS.SURPRISE_ME && surpriseEnabled) {
