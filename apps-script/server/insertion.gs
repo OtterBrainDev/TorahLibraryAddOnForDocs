@@ -177,7 +177,7 @@ function insertReference(data, opts) {
   let selection = docWrapper.getSelection();
   let index = doc.getNumChildren();
 
-  const resolveSafeSelectionInsertionIndex = () => {
+  const resolveSafeSelectionInsertionIndex = (preserveSelection) => {
     if (!selection) return null;
 
     let rangeElements = selection.getRangeElements();
@@ -208,43 +208,66 @@ function insertReference(data, opts) {
       throw new Error("Your selection is inside a table, header, or footer, which isn't supported. Click to place your cursor in the main body of the document, then try again.");
     }
 
-    let insertionIndex = doc.getChildIndex(bodyLevelElement) + 1;
-
-    for (let i = rangeElements.length - 1; i >= 0; i--) {
-      let re = rangeElements[i];
-      let el = re.getElement();
+    // Walk to the last body-level element in the selection so we insert after it.
+    let lastBodyLevelElement = bodyLevelElement;
+    if (!preserveSelection) {
+      // When deleting we only need the first element's index (deletions adjust it inline).
+    } else {
+      const lastEl = rangeElements[rangeElements.length - 1].getElement();
+      let candidate = lastEl;
       try {
-        if (re.isPartial()) {
-          if (el.getType() === DocumentApp.ElementType.TEXT) {
-            let start = re.getStartOffset();
-            let end = re.getEndOffsetInclusive();
-            if (start >= 0 && end >= start) {
-              el.asText().deleteText(start, end);
-            }
+        while (candidate) {
+          if (!candidate.getParent) break;
+          const parent = candidate.getParent();
+          if (!parent) break;
+          if (parent.getType() === DocumentApp.ElementType.BODY_SECTION) {
+            lastBodyLevelElement = candidate;
+            break;
           }
-        } else {
-          let type = el.getType();
-          if (type === DocumentApp.ElementType.TEXT) {
-            let text = el.asText().getText();
-            if (text.length > 0) {
-              el.asText().deleteText(0, text.length - 1);
-            }
-          } else if (type === DocumentApp.ElementType.PARAGRAPH || type === DocumentApp.ElementType.LIST_ITEM) {
-            const elParent = el.getParent();
-            const elParentIsBody = elParent && elParent.getType() === DocumentApp.ElementType.BODY_SECTION;
-            if (elParentIsBody && doc.getNumChildren() > 1) {
-              let elIndex = doc.getChildIndex(el);
-              el.removeFromParent();
-              if (elIndex < insertionIndex) {
-                insertionIndex--;
-              }
-            } else {
-              try { el.clear(); } catch (e) {}
-            }
-          }
+          candidate = parent;
         }
-      } catch (e) {
-        // Skip any element that cannot be deleted
+      } catch (e) {}
+    }
+
+    let insertionIndex = doc.getChildIndex(preserveSelection ? lastBodyLevelElement : bodyLevelElement) + 1;
+
+    if (!preserveSelection) {
+      for (let i = rangeElements.length - 1; i >= 0; i--) {
+        let re = rangeElements[i];
+        let el = re.getElement();
+        try {
+          if (re.isPartial()) {
+            if (el.getType() === DocumentApp.ElementType.TEXT) {
+              let start = re.getStartOffset();
+              let end = re.getEndOffsetInclusive();
+              if (start >= 0 && end >= start) {
+                el.asText().deleteText(start, end);
+              }
+            }
+          } else {
+            let type = el.getType();
+            if (type === DocumentApp.ElementType.TEXT) {
+              let text = el.asText().getText();
+              if (text.length > 0) {
+                el.asText().deleteText(0, text.length - 1);
+              }
+            } else if (type === DocumentApp.ElementType.PARAGRAPH || type === DocumentApp.ElementType.LIST_ITEM) {
+              const elParent = el.getParent();
+              const elParentIsBody = elParent && elParent.getType() === DocumentApp.ElementType.BODY_SECTION;
+              if (elParentIsBody && doc.getNumChildren() > 1) {
+                let elIndex = doc.getChildIndex(el);
+                el.removeFromParent();
+                if (elIndex < insertionIndex) {
+                  insertionIndex--;
+                }
+              } else {
+                try { el.clear(); } catch (e) {}
+              }
+            }
+          }
+        } catch (e) {
+          // Skip any element that cannot be deleted
+        }
       }
     }
 
@@ -252,7 +275,7 @@ function insertReference(data, opts) {
   };
 
   if (!cursor && selection) {
-    index = resolveSafeSelectionInsertionIndex();
+    index = resolveSafeSelectionInsertionIndex(options.preserveSelection === true);
   }
 
   if (cursor) {
