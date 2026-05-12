@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '3';
+var PREFS_SCHEMA_CURRENT_ = '4';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -34,8 +34,17 @@ function runUserPreferenceMigrationsIfNeeded_() {
     migrateToV2_(userProperties);
   }
   // v2 -> v3: AI feature was detached; remove any stored AI state.
-  if (current !== '3') {
+  if (current !== '3' && current !== '4') {
     migrateToV3_(userProperties);
+  }
+  // v3 -> v4: introduces `link_sources_insert_after_linking` (new
+  // behavior for the Link Texts with Sefaria quick action). The
+  // default is intentionally `false` because this is a NEW feature,
+  // not a gate on existing behavior — existing users keep their
+  // current "link only" behavior unchanged. We still record the
+  // explicit value so the stored state and code default stay aligned.
+  if (current !== '4') {
+    migrateToV4_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -67,6 +76,21 @@ function migrateToV2_(userProperties) {
  * user safer: stale plaintext keys disappear from PropertiesService on
  * first open after the upgrade.
  */
+/**
+ * V4: introduces `link_sources_insert_after_linking`. When the user
+ * runs the "Link Texts with Sefaria" quick action with this enabled,
+ * the action additionally inserts each linked source using the user's
+ * default insertion preferences. Default is `false`: this is a new
+ * feature, not a gate on existing behavior — leaving it off preserves
+ * the legacy "link only" experience for upgrading users.
+ */
+function migrateToV4_(userProperties) {
+  if (userProperties.getProperty('link_sources_insert_after_linking') == null) {
+    userProperties.setProperty('link_sources_insert_after_linking', 'false');
+  }
+  return true;
+}
+
 function migrateToV3_(userProperties) {
   var aiKeys = [
     'experimental_ai_source_sheet_enabled',

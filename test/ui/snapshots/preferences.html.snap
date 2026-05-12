@@ -457,6 +457,25 @@
             </div>
           </details>
 
+          <!-- Quick Actions defaults -->
+          <details class="section-card section-accordion" id="quick-actions-defaults" name="quick-actions-defaults">
+            <summary class="section-card-summary"><span>Quick Actions</span></summary>
+            <div class="section-card-body">
+              <div class="subsection-card">
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Insert Source after linking</div>
+                    <div class="toggle-help">When running "Link Texts with Sefaria", also insert each linked source into the document using your default insertion preferences.</div>
+                  </div>
+                  <label class="switch" for="link_sources_insert_after_linking">
+                    <input id="link_sources_insert_after_linking" type="checkbox" name="link_sources_insert_after_linking">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </details>
+
           <!-- Transliteration Mapping — above Divine Name Mappings per UX requirement -->
           <details class="section-card section-accordion" id="transliteration-mapping" name="transliteration-mapping">
             <summary class="section-card-summary"><span>Transliteration Mapping</span></summary>

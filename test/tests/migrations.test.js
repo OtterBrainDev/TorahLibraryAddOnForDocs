@@ -44,7 +44,7 @@ test('fresh install at current schema version does not rewrite anything', () => 
   // A new user installs the add-on; onInstall has already populated defaults,
   // and the schema version is already up to date. No migration work.
   const { context, userProperties } = loadMigrations({
-    prefs_schema_version: '3',
+    prefs_schema_version: '4',
     apply_sheimot_on_insertion: 'true',
   });
   const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
@@ -64,7 +64,7 @@ test('upgrading user without apply_sheimot_on_insertion gets it set to "true"', 
   const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(rewrote, true);
   assert.equal(userProperties.getProperty('apply_sheimot_on_insertion'), 'true');
-  assert.equal(userProperties.getProperty('prefs_schema_version'), '3');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), '4');
 });
 
 test('migration is idempotent — second call does nothing', () => {
@@ -83,7 +83,27 @@ test('user who explicitly set apply_sheimot_on_insertion to "false" before migra
   });
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('apply_sheimot_on_insertion'), 'false');
-  assert.equal(userProperties.getProperty('prefs_schema_version'), '3');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), '4');
+});
+
+test('v4 migration sets link_sources_insert_after_linking to "false" for upgraders', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '3',
+    apply_sheimot_on_insertion: 'true',
+  });
+  const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(rewrote, true);
+  assert.equal(userProperties.getProperty('prefs_schema_version'), '4');
+  assert.equal(userProperties.getProperty('link_sources_insert_after_linking'), 'false');
+});
+
+test('v4 migration does not clobber an explicit user choice', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '3',
+    link_sources_insert_after_linking: 'true',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('link_sources_insert_after_linking'), 'true');
 });
 
 test('v3 migration scrubs stored AI state', () => {
@@ -99,7 +119,7 @@ test('v3 migration scrubs stored AI state', () => {
   });
   const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(rewrote, true);
-  assert.equal(userProperties.getProperty('prefs_schema_version'), '3');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), '4');
   // Every AI key is gone.
   assert.equal(userProperties.getProperty('ai_user_key_openai'), null);
   assert.equal(userProperties.getProperty('ai_user_key_anthropic'), null);
