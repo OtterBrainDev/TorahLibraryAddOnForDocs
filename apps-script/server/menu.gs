@@ -18,6 +18,8 @@ function buildAndInstallMenu() {
   const quickActionsMenu = ui.createMenu('Quick Actions')
       .addItem('Transform Divine Names', 'transformDivineNames')
       .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
+      .addItem('Unlink Sources', 'unlinkSefariaSources')
+      .addItem('Insert Source from Selection', 'insertSourceFromSelection')
       .addSeparator()
       .addItem('Gematriya Count', 'gematriyaCountPopup');
 
