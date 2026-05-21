@@ -66,10 +66,19 @@ function initializeSidebar(receivedTitles) {
   syncSessionOverrideButtons();
 }
 
+function maybeAutoSearchFromSelection_() {
+  var iq = window.APP_CONFIG && window.APP_CONFIG.initialQuery;
+  if (!iq) return;
+  $('.input').val(iq);
+  if (typeof runUnifiedQuery === 'function') runUnifiedQuery();
+}
+
 google.script.run.withSuccessHandler(function (receivedTitles) {
   initializeSidebar(receivedTitles);
+  maybeAutoSearchFromSelection_();
 }).withFailureHandler(function () {
   initializeSidebar([]);
+  maybeAutoSearchFromSelection_();
 }).returnTitles();
 
 setSidebarMode(appMode, true);

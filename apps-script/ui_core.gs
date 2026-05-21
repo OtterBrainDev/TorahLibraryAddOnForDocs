@@ -1,12 +1,16 @@
 /**
  * Shared UI config payload for HTML templates.
  */
-function getUiAppConfig_(pageId, mode) {
-  return {
+function getUiAppConfig_(pageId, mode, extraFields) {
+  var config = {
     pageId: pageId || '',
     mode: mode || '',
     generatedAt: new Date().toISOString()
   };
+  if (extraFields && typeof extraFields === 'object') {
+    Object.keys(extraFields).forEach(function(k) { config[k] = extraFields[k]; });
+  }
+  return config;
 }
 
 // JSON safe to embed inside <script type="application/json">...</script>
