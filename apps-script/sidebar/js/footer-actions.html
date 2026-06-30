@@ -120,7 +120,12 @@ $('#insert-source').click(function () {
   // Multi-version insertion: only available in translation-only (en) or Hebrew-on-top (he-top) modes.
   var allowMulti = outputMode === 'en' || (outputMode === 'both' && bilingualLayout === 'he-top');
   var $translationSelect = $('.translation-version-select').not('.he-version-selection');
-  var selectedVersions = $translationSelect.prop('multiple') ? ($translationSelect.val() || []) : [];
+  // Prefer selection-order tracking; fall back to DOM order from $select.val().
+  var selectedVersions = $translationSelect.prop('multiple')
+    ? (typeof orderedTranslationVersions !== 'undefined' && orderedTranslationVersions.length > 0
+        ? orderedTranslationVersions.slice()
+        : ($translationSelect.val() || []))
+    : [];
   var isMultiInsert = allowMulti && Array.isArray(selectedVersions) && selectedVersions.length > 1;
 
   if (isMultiInsert) {

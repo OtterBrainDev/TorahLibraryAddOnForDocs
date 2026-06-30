@@ -1,4 +1,8 @@
 <script>
+// Tracks which translation version titles the user has selected, in the order they clicked them.
+// DOM order is the fallback (what $select.val() returns); this array gives selection-order insertion.
+var orderedTranslationVersions = [];
+
 // Enable/disable the multiple-selection attribute on the translation version <select>.
 // Multi-select is only meaningful when the output will be stacked (he-top) or translation-only (en),
 // because those are the two layouts where inserting several translations in sequence makes sense.
@@ -14,11 +18,14 @@ function applyMultiSelectMode() {
     $select.prop('multiple', true);
     $select.attr('size', '6');
   } else if (!allowMulti && isMulti) {
-    // Collapse to single selection: keep the first selected option.
+    // Collapse to single selection: keep the first selected option (selection-order first if tracked).
     var vals = $select.val();
-    var first = Array.isArray(vals) ? vals[0] : vals;
+    var first = (orderedTranslationVersions.length > 0) ? orderedTranslationVersions[0] : (Array.isArray(vals) ? vals[0] : vals);
     $select.prop('multiple', false);
     if (first) $select.val(first);
+    orderedTranslationVersions = first ? [first] : [];
+    // Re-render the preview for the now-single selection.
+    if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
   }
 
   // Update the hint text below the select.
@@ -32,6 +39,15 @@ function applyMultiSelectMode() {
   } else {
     $hint.hide();
   }
+}
+
+function updateMultiSelectPreviewNotice() {
+  var count = orderedTranslationVersions.length;
+  if (count <= 1) return;
+  $('.suggestions').html(
+    "<p class='preview-state-message'><strong>Preview not available for multiple translations.</strong><br>" +
+    count + " translation" + (count === 1 ? '' : 's') + " selected—they will be inserted in the order you selected them.</p>"
+  );
 }
 
 function updatePesukimAvailability(response) {
@@ -168,6 +184,8 @@ function renderPreviewHTML(dataIn, inputTitle) {
 }
 
 function updateSuggestion(dataIn, inputTitle) {
+  // Reset selection-order tracking whenever the version UI is fully rebuilt for a new result/version.
+  orderedTranslationVersions = [];
   var resolvedRef = dataIn && dataIn.ref ? dataIn.ref : inputTitle;
   var versionEntries = buildVersionModel(dataIn);
   var enSelectedVersionTitle = dataIn.versionTitle || "";
@@ -305,6 +323,23 @@ function updateSuggestion(dataIn, inputTitle) {
       }
     }
     if (currentEnVersion && !$('.translation-version-select option:selected').length) currentEnVersion = '';
+
+    // Restore multi-selection order when the list is re-rendered (e.g., after filtering).
+    if (orderedTranslationVersions.length > 1) {
+      var $ts = $('.translation-version-select').not('.he-version-selection');
+      $ts.find('option').prop('selected', false);
+      orderedTranslationVersions.forEach(function (vt) {
+        $ts.find('option').filter(function () {
+          return $(this).val() === vt && !$(this).prop('disabled');
+        }).prop('selected', true);
+      });
+      var restoredVals = $ts.val();
+      if (!restoredVals || !restoredVals.length) {
+        $ts.find('option:not(:disabled)').first().prop('selected', true);
+        orderedTranslationVersions = [];
+      }
+    }
+
     syncSelectedTranslationDisplay();
   }
 
@@ -383,6 +418,9 @@ function updateSuggestion(dataIn, inputTitle) {
   }
 
   renderTranslationOptions('');
+  // Seed selection-order tracking with the single version auto-selected on initial render.
+  var _initEnVal = $('.translation-version-select').not('.he-version-selection').val();
+  orderedTranslationVersions = Array.isArray(_initEnVal) ? _initEnVal.slice() : (_initEnVal ? [_initEnVal] : []);
   renderHebrewOptions('');
 
   $('.translation-filter-input').off('input.translationFilter').on('input.translationFilter', function () {
@@ -398,9 +436,25 @@ function updateSuggestion(dataIn, inputTitle) {
 
   $('.translation-version-select').off('change.translationVersion').on('change.translationVersion', function () {
     var selected = $(this).val();
-    // With multiple selection, val() returns an array; preview uses only the primary (first) pick.
-    var primarySelected = Array.isArray(selected) ? selected[0] : selected;
+    var selectedArr = Array.isArray(selected) ? selected : (selected ? [selected] : []);
+
+    // Maintain selection order: drop deselected items, append newly selected items.
+    orderedTranslationVersions = orderedTranslationVersions.filter(function (vt) {
+      return selectedArr.indexOf(vt) >= 0;
+    });
+    selectedArr.forEach(function (vt) {
+      if (orderedTranslationVersions.indexOf(vt) < 0) orderedTranslationVersions.push(vt);
+    });
+
     syncSelectedTranslationDisplay();
+
+    if (orderedTranslationVersions.length > 1) {
+      // Multiple translations selected: show notice instead of re-fetching a single-version preview.
+      updateMultiSelectPreviewNotice();
+      return;
+    }
+
+    var primarySelected = orderedTranslationVersions[0] || selectedArr[0];
     if (!primarySelected) return;
     currentEnVersion = primarySelected;
     getVersions(primarySelected);
