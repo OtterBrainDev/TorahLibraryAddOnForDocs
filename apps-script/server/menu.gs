@@ -26,6 +26,11 @@ function buildAndInstallMenu() {
 
   const prefs = getPreferences();
   const surpriseEnabled = prefs.surprise_me_enabled == "true";
+  const insertAtTop = prefs.insert_from_selection_at_top == "true";
+
+  if (insertAtTop) {
+    addOnMenu.addItem('Insert Source from Selection', 'insertSourceFromSelection');
+  }
 
   addOnMenu
       .addItem('Texts', 'textsHTML')
@@ -56,11 +61,11 @@ function getSearchMode_() {
   return (stored === 'voices' || stored === 'experimental' || stored === 'lexicon') ? stored : 'texts';
 }
 
-function openSharedSidebar_(mode, initialQuery) {
+function openSharedSidebar_(mode, options) {
   var resolvedMode = setSearchMode_(mode || getSearchMode_());
   var template = HtmlService.createTemplateFromFile('sidebar');
   template.initialMode = resolvedMode;
-  var extra = (initialQuery && typeof initialQuery === 'string') ? { initialQuery: initialQuery } : {};
+  var extra = (options && typeof options === 'object') ? options : {};
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode, extra));
   var output = template.evaluate()
     .setTitle('Sefaria')
@@ -117,7 +122,7 @@ function quickActionsHTML() {
     }
   } catch (e) {}
   selectionText = String(selectionText || '').trim();
-  openSharedSidebar_('texts', selectionText || null);
+  openSharedSidebar_('texts', { initialQuery: selectionText || null, openActionsPanel: true });
 }
 
 function getSidebarBootstrapData(mode, sessionId) {

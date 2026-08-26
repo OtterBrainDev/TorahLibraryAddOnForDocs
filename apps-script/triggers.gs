@@ -51,7 +51,8 @@ function onInstall() {
     "voices_translit_default": "none",
     "lexicon_insert_mode_default": "entry",
     "yaw_replace": false,
-    "search_mode": "texts"
+    "search_mode": "texts",
+    "insert_from_selection_at_top": false
   };
   setPreferences(initialPrefs);
 

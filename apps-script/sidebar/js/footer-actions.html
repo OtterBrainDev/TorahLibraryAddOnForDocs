@@ -120,7 +120,12 @@ $('#insert-source').click(function () {
   // Multi-version insertion: only available in translation-only (en) or Hebrew-on-top (he-top) modes.
   var allowMulti = outputMode === 'en' || (outputMode === 'both' && bilingualLayout === 'he-top');
   var $translationSelect = $('.translation-version-select').not('.he-version-selection');
-  var selectedVersions = $translationSelect.prop('multiple') ? ($translationSelect.val() || []) : [];
+  // Prefer selection-order tracking; fall back to DOM order from $select.val().
+  var selectedVersions = $translationSelect.prop('multiple')
+    ? (typeof orderedTranslationVersions !== 'undefined' && orderedTranslationVersions.length > 0
+        ? orderedTranslationVersions.slice()
+        : ($translationSelect.val() || []))
+    : [];
   var isMultiInsert = allowMulti && Array.isArray(selectedVersions) && selectedVersions.length > 1;
 
   if (isMultiInsert) {
@@ -185,6 +190,17 @@ $(document).on('click', function (event) {
   if (!$(event.target).closest('.open-actions-panel, #footer-actions-panel').length) {
     $('#footer-actions-panel').hide();
   }
+});
+
+$('.insert-from-selection-tool').on('click', function () {
+  $('#footer-actions-panel').hide();
+  $('.hide').fadeIn('200');
+  google.script.run.withSuccessHandler(function () {
+    $('.hide').fadeOut('200');
+  }).withFailureHandler(function (error) {
+    $('.hide').fadeOut('200');
+    if (typeof showSidebarToast === 'function') showSidebarToast((error && error.message) || 'Insert from Selection failed.');
+  }).insertSourceFromSelection();
 });
 
 $('.open-divine-names-tool').on('click', function () {

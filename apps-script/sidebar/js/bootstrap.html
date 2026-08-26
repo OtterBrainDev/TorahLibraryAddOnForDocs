@@ -66,19 +66,23 @@ function initializeSidebar(receivedTitles) {
   syncSessionOverrideButtons();
 }
 
-function maybeAutoSearchFromSelection_() {
-  var iq = window.APP_CONFIG && window.APP_CONFIG.initialQuery;
-  if (!iq) return;
-  $('.input').val(iq);
-  if (typeof runUnifiedQuery === 'function') runUnifiedQuery();
+function applyQuickOpenConfig_() {
+  var cfg = window.APP_CONFIG || {};
+  if (cfg.openActionsPanel) {
+    $('#footer-actions-panel').show();
+  }
+  if (cfg.initialQuery) {
+    $('.input').val(cfg.initialQuery);
+    if (typeof runUnifiedQuery === 'function') runUnifiedQuery();
+  }
 }
 
 google.script.run.withSuccessHandler(function (receivedTitles) {
   initializeSidebar(receivedTitles);
-  maybeAutoSearchFromSelection_();
+  applyQuickOpenConfig_();
 }).withFailureHandler(function () {
   initializeSidebar([]);
-  maybeAutoSearchFromSelection_();
+  applyQuickOpenConfig_();
 }).returnTitles();
 
 setSidebarMode(appMode, true);
