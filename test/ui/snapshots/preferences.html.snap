@@ -561,6 +561,23 @@
             </div>
           </details>
 
+          <details class="section-card section-accordion" id="quick-access" name="quick-access">
+            <summary class="section-card-summary"><span>Quick Access</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Customize which actions are fastest to reach from the menu.</p>
+              <div class="toggle-row">
+                <div class="toggle-copy">
+                  <div class="toggle-title">Pin "Insert from Selection" at top of menu</div>
+                  <div class="toggle-help">Adds Insert Source from Selection as the first item in the add-on menu, above Texts. Reload Google Docs after saving for the menu to update.</div>
+                </div>
+                <label class="switch" for="insert_from_selection_at_top">
+                  <input id="insert_from_selection_at_top" type="checkbox" name="insert_from_selection_at_top">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </details>
+
         </div>
 
 <? if (devFlags.SURPRISE_ME) { ?>
