@@ -35,9 +35,15 @@ function buildAndInstallMenu() {
   addOnMenu
       .addItem('Texts', 'textsHTML')
       .addItem('Voices', 'voicesHTML')
-      .addItem('Lexicon', 'lexiconHTML')
-      .addItem('Insert Source from Selection', 'insertSourceFromSelection')
-      .addSubMenu(quickActionsMenu);
+      .addItem('Lexicon', 'lexiconHTML');
+
+  // Only add the un-pinned copy when it was not already pinned above,
+  // otherwise the item renders twice in the add-on menu.
+  if (!insertAtTop) {
+    addOnMenu.addItem('Insert Source from Selection', 'insertSourceFromSelection');
+  }
+
+  addOnMenu.addSubMenu(quickActionsMenu);
 
   if (DEV_FLAGS.SURPRISE_ME && surpriseEnabled) {
     addOnMenu.addSeparator().addItem('Surprise Me', 'surpriseMeHTML');
@@ -160,7 +166,7 @@ function releaseNotesPopup() {
   var html = HtmlService.createHtmlOutputFromFile('release-notes')
     .setWidth(700)
     .setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Release Notes');
+  DocumentApp.getUi().showModalDialog(html, 'Release Notes');
 }
 
 function gematriyaCountPopup() {

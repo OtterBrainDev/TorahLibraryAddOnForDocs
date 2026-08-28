@@ -115,11 +115,24 @@ function fetchSefariaSheetById_(sheetId) {
   return JSON.parse(response.getContentText() || '{}');
 }
 
+// Sheet content (media URLs, sheet URLs) is third-party user-generated data:
+// any Sefaria user can publish a source sheet. Only ever hand Docs a link we
+// have positively identified as http(s) or mailto, so a `javascript:` or
+// `data:` URL from a sheet can never become a live link in someone's document.
+function safeLinkUrl_(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  // Reject anything with control characters or embedded whitespace, which are
+  // the usual way a blocked scheme is smuggled past a naive prefix check.
+  if (/[\u0000-\u0020\u007f-\u009f]/.test(raw)) return '';
+  return /^(?:https?:\/\/|mailto:)/i.test(raw) ? raw : '';
+}
+
 function insertSheetReferenceBlock_(body, index, sheetPayload, typography, linkedTitle) {
   const title = String(sheetPayload.label || 'Sefaria Source Sheet').trim();
   const summary = String(sheetPayload.summary || '').trim();
   const owner = String(sheetPayload.owner || '').trim();
-  const url = String(sheetPayload.url || '').trim();
+  const url = safeLinkUrl_(sheetPayload.url);
   const topics = Array.isArray(sheetPayload.topics) ? sheetPayload.topics.filter(Boolean) : [];
 
   const titleParagraph = body.insertParagraph(index, title);
@@ -354,8 +367,11 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
   }
 
   if (source.media) {
-    const mediaUrl = String(source.media).trim();
-    const mediaLabel = normalizedOptions.showMediaLabel ? buildMediaLabel_(mediaUrl) : mediaUrl;
+    const rawMediaUrl = String(source.media).trim();
+    const mediaUrl = safeLinkUrl_(rawMediaUrl);
+    // Show the raw value as text even when it is not a linkable scheme, so the
+    // source block still round-trips visibly instead of silently disappearing.
+    const mediaLabel = normalizedOptions.showMediaLabel ? buildMediaLabel_(rawMediaUrl) : rawMediaUrl;
 
     const mediaParagraph = body.insertParagraph(index, mediaLabel);
     mediaParagraph.setLeftToRight(true);
@@ -528,6 +544,9 @@ function htmlToPlainText_(html, normalizedOptions) {
 
   const preserveSpacing = !normalizedOptions || normalizedOptions.preserveSheetSpacing !== false;
 
+  // Order matters: strip real tags FIRST, then decode entities. Decoding first
+  // turns an escaped `a &lt; b` into `a < b`, which the tag-strip below then
+  // eats as if it were markup, silently deleting the author's text.
   let text = String(html)
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n\n')
@@ -535,14 +554,14 @@ function htmlToPlainText_(html, normalizedOptions) {
     .replace(/<li>/gi, '• ')
     .replace(/<\/li>/gi, '\n')
     .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&#160;/gi, ' ')
-    .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&#39;/gi, "'")
     .replace(/&quot;/gi, '"')
-    .replace(/<[^>]+>/g, '');
+    .replace(/&amp;/gi, '&');
 
   if (preserveSpacing) {
     text = text

@@ -30,26 +30,38 @@ function runUserPreferenceMigrationsIfNeeded_() {
     return false;
   }
 
-  if (!current) {
+  // Compare numerically against the version the user is ON, so each migration
+  // states the single fact that matters ("run this when coming from below N").
+  // The previous form chained `current !== '4' && current !== '5'` guards,
+  // which happened to work but had to be edited in two places for every new
+  // version — and silently re-ran the newest migration for any version above
+  // it. Absent/unparseable version means "oldest": run everything.
+  var from = Number(current);
+  if (!isFinite(from)) {
+    from = 0;
+  }
+
+  // v1 -> v2: cover opt-in gates added by the rewrite that turned existing
+  // behavior off for upgraders.
+  if (from < 2) {
     migrateToV2_(userProperties);
   }
   // v2 -> v3: AI feature was detached; remove any stored AI state.
-  if (current !== '3' && current !== '4') {
+  if (from < 3) {
     migrateToV3_(userProperties);
   }
-  // v3 -> v4: introduces `link_sources_insert_after_linking` (new
-  // behavior for the Link Texts with Sefaria quick action). The
-  // default is intentionally `false` because this is a NEW feature,
-  // not a gate on existing behavior — existing users keep their
-  // current "link only" behavior unchanged. We still record the
-  // explicit value so the stored state and code default stay aligned.
-  if (current !== '4' && current !== '5') {
+  // v3 -> v4: introduces `link_sources_insert_after_linking` (new behavior for
+  // the Link Texts with Sefaria quick action). The default is intentionally
+  // `false` because this is a NEW feature, not a gate on existing behavior —
+  // existing users keep their current "link only" behavior unchanged. We still
+  // record the explicit value so stored state and the code default stay aligned.
+  if (from < 4) {
     migrateToV4_(userProperties);
   }
-  // v4 -> v5: introduces `insert_from_selection_at_top`. Defaults to
-  // false — this is a new UI preference, not a gate on existing
-  // behavior, so existing users keep the current menu layout unchanged.
-  if (current !== '5') {
+  // v4 -> v5: introduces `insert_from_selection_at_top`. Defaults to false —
+  // a new UI preference, not a gate on existing behavior, so existing users
+  // keep the current menu layout unchanged.
+  if (from < 5) {
     migrateToV5_(userProperties);
   }
 

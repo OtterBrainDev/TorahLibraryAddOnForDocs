@@ -175,7 +175,12 @@ function formatDataForPesukim(data, pesukim) {
   data.lineMarkersAvailable = lineMarkersAvailable;
   data.lineMarkersApplied = !!(lineMarkersAvailable && pesukim);
 
-  let heTextWrapper = "", enTextWrapper = "", fromVerse = (data["sections"][1]) ? data["sections"][1] : 1;
+  // `sections` is absent on some resolved payloads (dictionary entries, complex
+  // book-level refs). insertion.gs already guards this read; do the same here so
+  // a missing `sections` can't throw on the insertion path. Number() also keeps
+  // the `fromVerse + index` arithmetic below numeric.
+  const rawFromVerse = (data && Array.isArray(data.sections)) ? data.sections[1] : undefined;
+  let heTextWrapper = "", enTextWrapper = "", fromVerse = Number(rawFromVerse) || 1;
 
   function addHebrewVerse(text, wrapper, pesukim, number) {
     // When line markers are on, each verse gets a numbered header and its own

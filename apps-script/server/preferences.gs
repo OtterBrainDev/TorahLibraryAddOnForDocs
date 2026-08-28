@@ -102,6 +102,7 @@ function getDefaultPreferences() {
     meforash_replacement: "ה'",
     nekudot: true,
     nekudot_filter: "always",
+    experimental_features_enabled: false,
     surprise_me_enabled: false,
     teamim: true,
     teamim_filter: "available",

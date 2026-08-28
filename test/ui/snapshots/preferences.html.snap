@@ -567,7 +567,7 @@
               <p class="section-note">Customize which actions are fastest to reach from the menu.</p>
               <div class="toggle-row">
                 <div class="toggle-copy">
-                  <div class="toggle-title">Pin "Insert from Selection" at top of menu</div>
+                  <div class="toggle-title">Pin &ldquo;Insert from Selection&rdquo; at top of menu</div>
                   <div class="toggle-help">Adds Insert Source from Selection as the first item in the add-on menu, above Texts. Reload Google Docs after saving for the menu to update.</div>
                 </div>
                 <label class="switch" for="insert_from_selection_at_top">

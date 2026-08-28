@@ -199,8 +199,12 @@ function parseSefariaUrlInput(inputValue) {
     return null;
   }
 
-  var host = (parsedUrl.hostname || '').toLowerCase();
-  if (host.indexOf('sefaria.org') < 0) return null;
+  // Substring matching here would accept sefaria.org.evil.example and
+  // notsefaria.org.attacker.net. Require the host to BE sefaria.org or a
+  // genuine subdomain of it.
+  var host = (parsedUrl.hostname || '').toLowerCase().replace(/\.$/, '');
+  if (host !== 'sefaria.org' && host.slice(-12) !== '.sefaria.org') return null;
+  if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') return null;
 
   var path = (parsedUrl.pathname || '').replace(/^\/+/, '');
   if (!path) return null;

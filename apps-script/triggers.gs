@@ -13,48 +13,41 @@ Licensed under the MIT License. See repository LICENSE.md.
 // installs and opens cleanly. Domain logic lives in server/menu.gs; these
 // are the thinnest possible entry points. See docs/regression-log.md.
 
-function onInstall() {
-  const initialPrefs = {
-    "apply_sheimot_on_insertion": true,
-    "elodim_replace": false,
-    "extended_gemara": false,
-    "god_replace": false,
-    "god_replacement": "G-d",
-    "preferred_translation_language": "en",
-    "hebrew_font": "Noto Sans Hebrew",
-    "hebrew_font_size": 18,
-    "hebrew_font_style": "normal",
-    "include_translation_source_info": false,
-    "include_transliteration_default": false,
-    "insert_sefaria_link_default": true,
-    "show_line_markers_default": true,
-    "output_mode_default": "both",
-    "bilingual_layout_default": "he-right",
-    "meforash_replace": true,
-    "nekudot": true,
-    "nekudot_filter": "always",
-    "surprise_me_enabled": false,
-    "teamim": true,
-    "teamim_filter": "available",
-    "translation_font": "Noto Sans Hebrew",
-    "translation_font_size": 11,
-    "translation_font_style": "normal",
-    "transliteration_font": "Noto Sans Hebrew",
-    "transliteration_font_size": 11,
-    "transliteration_font_style": "italic",
-    "transliteration_scheme": "traditional",
-    "transliteration_overrides": "{}",
-    "transliteration_is_biblical_hebrew": true,
-    "transliteration_biblical_dagesh_mode": "none",
-    "versioning": true,
-    "voices_insert_mode_default": "reference",
-    "voices_translit_default": "none",
-    "lexicon_insert_mode_default": "entry",
-    "yaw_replace": false,
-    "search_mode": "texts",
-    "insert_from_selection_at_top": false
+/**
+ * Fresh-install preference values that intentionally differ from
+ * `getDefaultPreferences()`. Divine-name substitution ships ON for a new
+ * install (see AGENTS.md hard rule #1 and docs/regression-log.md); the
+ * unset-key fallback in `getDefaultPreferences()` stays `false` so that
+ * flipping it here can never silently enable substitution for an existing
+ * user who deliberately turned it off.
+ */
+function getFreshInstallPreferenceOverrides_() {
+  return {
+    apply_sheimot_on_insertion: true,
+    meforash_replace: true
   };
+}
+
+function onInstall() {
+  // Seed from the single source of truth rather than a second hand-maintained
+  // literal. The previous copy had drifted from getDefaultPreferences(): it
+  // omitted ~14 keys entirely and disagreed on the translation/transliteration
+  // font sizes, so a fresh install and a reset-to-defaults produced different
+  // documents.
+  const initialPrefs = Object.assign(
+    {},
+    getDefaultPreferences(),
+    getFreshInstallPreferenceOverrides_()
+  );
   setPreferences(initialPrefs);
+
+  // Stamp the schema version so a brand-new install does not re-run every
+  // historical migration on its first onOpen.
+  try {
+    PropertiesService.getUserProperties().setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
+  } catch (error) {
+    Logger.log(`Could not stamp preference schema version: ${error.message}`);
+  }
 
   let html = HtmlService.createHtmlOutputFromFile('release-notes')
       .setWidth(720)

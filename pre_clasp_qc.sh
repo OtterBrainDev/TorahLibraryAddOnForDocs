@@ -355,6 +355,58 @@ else:
 PY
 )
 
+blue "-- 9b) jQuery .html() writes are innerHTML sinks too --"
+while IFS= read -r line; do
+  case "$line" in
+    FAIL:*) note_fail "${line#FAIL: }" ;;
+    WARN:*) note_warn "${line#WARN: }" ;;
+    OK:*)   note_ok   "${line#OK: }" ;;
+    *)      [ -n "$line" ] && printf '   %s\n' "$line" ;;
+  esac
+done < <(python3 - <<'PYJQ'
+# Check 9 only sees `.innerHTML =`. jQuery's `$(sel).html(x)` is the same sink
+# and bypassed it entirely. Held at WARN (not FAIL) because the existing call
+# sites predate this check: the intent is to stop the count growing and to make
+# each one carry the same justification comment check 9 demands. A `.html()`
+# call whose only argument is a string literal is static markup and is skipped.
+import os, re
+from pathlib import Path
+
+JQUERY_HTML = re.compile(r'\$\([^)]*\)\s*(?:\.[A-Za-z_$][\w$]*\([^;]*?\))*\s*\.html\s*\(')
+STRING_LITERAL_ARG = re.compile(r"\.html\(\s*(['\"])(?:(?!\1).)*\1\s*\)")
+COMMENT_LINE = re.compile(r'^\s*(//|/\*|\*)')
+
+unannotated = []
+for dirpath, _dirs, files in os.walk("."):
+    if "node_modules" in dirpath.split(os.sep):
+        continue
+    for name in files:
+        if not name.endswith(".html"):
+            continue
+        path = os.path.join(dirpath, name)
+        try:
+            lines = Path(path).read_text(encoding="utf-8").split("\n")
+        except Exception:
+            continue
+        for i, ln in enumerate(lines):
+            if not JQUERY_HTML.search(ln):
+                continue
+            if STRING_LITERAL_ARG.search(ln):
+                continue
+            lo = max(0, i - 5)
+            if any(COMMENT_LINE.match(lines[j]) for j in range(lo, i)):
+                continue
+            unannotated.append(path + ":" + str(i + 1) + ": " + ln.strip()[:110])
+
+if unannotated:
+    print("WARN: " + str(len(unannotated)) + " jQuery .html() write(s) with dynamic content and no justification comment:")
+    for u in unannotated:
+        print("  - " + u)
+else:
+    print("OK: Every dynamic jQuery .html() write has an adjacent justification comment.")
+PYJQ
+)
+
 blue "-- 10) Optional: clasp status --"
 if command -v clasp >/dev/null 2>&1; then
   if clasp status >/dev/null 2>&1; then

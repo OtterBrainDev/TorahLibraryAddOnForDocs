@@ -2,6 +2,66 @@
 
 All notable changes in this fork are documented here.
 
+## Unreleased — pre-upstream review pass (2026-08)
+
+A safety/sanity review ahead of proposing this fork upstream. No feature
+changes; the Sefaria API surface, OAuth scopes, and a full code review are
+summarized in `docs/pre-upstream-review.md`.
+
+### Fixed
+
+- `releaseNotesPopup()` called `SpreadsheetApp.getUi()` in a Docs-only add-on.
+  Dead code today (nothing calls it), but it would have thrown on first use and
+  is the only reference in the project that could cause a Sheets OAuth scope to
+  be inferred. Now `DocumentApp.getUi()`.
+- Enabling **Pin "Insert from Selection" at top of menu** showed the menu item
+  twice; the unconditional copy is now suppressed when the item is pinned.
+- `htmlToPlainText_()` (source-sheet rendering) decoded HTML entities *before*
+  stripping tags, so an escaped `a &lt; b` decoded to `a < b` and was then eaten
+  by the tag-stripper. Tags are stripped first now, and `&amp;` is decoded last
+  so `&amp;lt;` no longer double-decodes.
+- `formatDataForPesukim()` read `data["sections"][1]` unguarded and threw on
+  resolved payloads that carry no `sections` (dictionary entries, some complex
+  book-level refs). `insertion.gs` already guarded the same read.
+- `onInstall` seeded preferences from a second, drifted copy of the defaults —
+  it omitted ~14 keys and disagreed with `getDefaultPreferences()` on the
+  translation and transliteration font sizes. It now derives from
+  `getDefaultPreferences()` plus an explicit `getFreshInstallPreferenceOverrides_()`
+  (divine-name substitution stays ON for new installs), and stamps
+  `prefs_schema_version` so a new install does not re-run every migration.
+  **Note:** new installs now get 12pt translation/transliteration text instead
+  of 11pt. Existing users are unaffected.
+- `experimental_features_enabled` is listed in `SETTINGS` and read by the
+  sidebar but had no entry in `getDefaultPreferences()`, so it resolved to
+  `undefined`. Added with an explicit `false`.
+- `test/ui/snapshots/preferences.html.snap` was stale (hand-edited rather than
+  regenerated), leaving `npm test` red on the branch. The Hebrew preview string
+  in `preferences.html` was also accidentally de-normalized away from NFC;
+  restored, and the snapshot regenerated.
+
+### Changed
+
+- `runUserPreferenceMigrationsIfNeeded_()` now compares the stored schema
+  version numerically (`from < N`) instead of chaining `current !== 'N'`
+  guards. The old form worked but required editing two conditions per new
+  version and would re-run the newest migration for any version above it.
+
+### Security
+
+- Source-sheet content is third-party user-generated data (anyone can publish a
+  Sefaria sheet). Media-node URLs and the sheet URL were written into the user's
+  document as live hyperlinks with no scheme check. Both now go through
+  `safeLinkUrl_()`, which allows only `http:`, `https:` and `mailto:` and
+  rejects values containing control characters. Non-linkable values still render
+  as visible text.
+- `parseSefariaUrlInput()` accepted any hostname *containing* `sefaria.org`,
+  including `sefaria.org.evil.example`. It now requires the host to be
+  `sefaria.org` or a true subdomain, over http/https only.
+- `pre_clasp_qc.sh` gained check **9b**: jQuery `$(sel).html(x)` is the same
+  sink as `.innerHTML =` but check 9 never saw it. 9b applies the same
+  justification-comment standard to dynamic `.html()` writes. It reports at WARN
+  (16 pre-existing sites) so CI stays green while the count is burned down.
+
 ## v1.0 — cleanup pass (2026-04)
 
 Everything below is grouped under the one-shot cleanup that brought the rewrite branch to a shippable state. The eight stages were individually commits; see `git log --grep='^Stage '` for the commit history.
