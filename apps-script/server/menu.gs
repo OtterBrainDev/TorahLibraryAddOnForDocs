@@ -16,6 +16,8 @@ function buildAndInstallMenu() {
   const ui = DocumentApp.getUi();
   const addOnMenu = ui.createAddonMenu();
   const quickActionsMenu = ui.createMenu('Quick Actions')
+      .addItem('Quick Actions Sidebar', 'quickActionsHTML')
+      .addSeparator()
       .addItem('Transform Divine Names', 'transformDivineNames')
       .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
       .addItem('Unlink Sources', 'unlinkSefariaSources')
@@ -24,6 +26,11 @@ function buildAndInstallMenu() {
 
   const prefs = getPreferences();
   const surpriseEnabled = prefs.surprise_me_enabled == "true";
+  const insertAtTop = prefs.insert_from_selection_at_top == "true";
+
+  if (insertAtTop) {
+    addOnMenu.addItem('Insert Source from Selection', 'insertSourceFromSelection');
+  }
 
   addOnMenu
       .addItem('Texts', 'textsHTML')
@@ -54,11 +61,12 @@ function getSearchMode_() {
   return (stored === 'voices' || stored === 'experimental' || stored === 'lexicon') ? stored : 'texts';
 }
 
-function openSharedSidebar_(mode) {
+function openSharedSidebar_(mode, options) {
   var resolvedMode = setSearchMode_(mode || getSearchMode_());
   var template = HtmlService.createTemplateFromFile('sidebar');
   template.initialMode = resolvedMode;
-  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode));
+  var extra = (options && typeof options === 'object') ? options : {};
+  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode, extra));
   var output = template.evaluate()
     .setTitle('Sefaria')
     .setWidth(300);
@@ -90,6 +98,31 @@ function voicesHTML() {
 
 function lexiconHTML() {
   openSharedSidebar_('lexicon');
+}
+
+function quickActionsHTML() {
+  var selectionText = '';
+  try {
+    var doc = DocumentApp.getActiveDocument();
+    var selection = doc.getSelection();
+    if (selection) {
+      var rangeElements = selection.getRangeElements();
+      for (var i = 0; i < rangeElements.length; i++) {
+        var re = rangeElements[i];
+        var el = re.getElement();
+        if (el.getType && el.getType() === DocumentApp.ElementType.TEXT) {
+          var textEl = el.asText();
+          if (re.isPartial()) {
+            selectionText += textEl.getText().substring(re.getStartOffset(), re.getEndOffsetInclusive() + 1);
+          } else {
+            selectionText += textEl.getText();
+          }
+        }
+      }
+    }
+  } catch (e) {}
+  selectionText = String(selectionText || '').trim();
+  openSharedSidebar_('texts', { initialQuery: selectionText || null, openActionsPanel: true });
 }
 
 function getSidebarBootstrapData(mode, sessionId) {

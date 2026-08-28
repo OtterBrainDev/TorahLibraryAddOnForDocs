@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '4';
+var PREFS_SCHEMA_CURRENT_ = '5';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -43,8 +43,14 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // not a gate on existing behavior — existing users keep their
   // current "link only" behavior unchanged. We still record the
   // explicit value so the stored state and code default stay aligned.
-  if (current !== '4') {
+  if (current !== '4' && current !== '5') {
     migrateToV4_(userProperties);
+  }
+  // v4 -> v5: introduces `insert_from_selection_at_top`. Defaults to
+  // false — this is a new UI preference, not a gate on existing
+  // behavior, so existing users keep the current menu layout unchanged.
+  if (current !== '5') {
+    migrateToV5_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -87,6 +93,13 @@ function migrateToV2_(userProperties) {
 function migrateToV4_(userProperties) {
   if (userProperties.getProperty('link_sources_insert_after_linking') == null) {
     userProperties.setProperty('link_sources_insert_after_linking', 'false');
+  }
+  return true;
+}
+
+function migrateToV5_(userProperties) {
+  if (userProperties.getProperty('insert_from_selection_at_top') == null) {
+    userProperties.setProperty('insert_from_selection_at_top', 'false');
   }
   return true;
 }

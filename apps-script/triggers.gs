@@ -51,7 +51,8 @@ function onInstall() {
     "voices_translit_default": "none",
     "lexicon_insert_mode_default": "entry",
     "yaw_replace": false,
-    "search_mode": "texts"
+    "search_mode": "texts",
+    "insert_from_selection_at_top": false
   };
   setPreferences(initialPrefs);
 
@@ -72,6 +73,8 @@ function onOpen(e) {
     const ui = DocumentApp.getUi();
     const addOnMenu = ui.createAddonMenu();
     const quickActionsMenu = ui.createMenu('Quick Actions')
+        .addItem('Quick Actions Sidebar', 'quickActionsHTML')
+        .addSeparator()
         .addItem('Transform Divine Names', 'transformDivineNames')
         .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
         .addItem('Unlink Sources', 'unlinkSefariaSources')

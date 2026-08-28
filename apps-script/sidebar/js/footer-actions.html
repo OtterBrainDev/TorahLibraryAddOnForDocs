@@ -192,6 +192,17 @@ $(document).on('click', function (event) {
   }
 });
 
+$('.insert-from-selection-tool').on('click', function () {
+  $('#footer-actions-panel').hide();
+  $('.hide').fadeIn('200');
+  google.script.run.withSuccessHandler(function () {
+    $('.hide').fadeOut('200');
+  }).withFailureHandler(function (error) {
+    $('.hide').fadeOut('200');
+    if (typeof showSidebarToast === 'function') showSidebarToast((error && error.message) || 'Insert from Selection failed.');
+  }).insertSourceFromSelection();
+});
+
 $('.open-divine-names-tool').on('click', function () {
   $('.hide').fadeIn('200');
   google.script.run.withSuccessHandler(function () {
