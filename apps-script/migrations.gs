@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '5';
+var PREFS_SCHEMA_CURRENT_ = '7';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -63,6 +63,25 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // keep the current menu layout unchanged.
   if (from < 5) {
     migrateToV5_(userProperties);
+  }
+  // v5 -> v6: introduces `preserve_source_emphasis`, defaulting to TRUE. This
+  // one is a gate on behavior the source intended and the add-on was
+  // destroying, so upgraders get it ON — the same reasoning as the v2
+  // divine-name migration, and the reason it is not a `false` opt-in.
+  if (from < 6) {
+    migrateToV6_(userProperties);
+  }
+  // v6 -> v7: introduces `linker_scan_mode`, defaulting to "candidates".
+  //
+  // This one DOES change existing behavior: "Link Texts with Sefaria" used to
+  // upload the whole document body, and upgraders will now upload only the
+  // windows that look like references. That is a deliberate privacy decision
+  // rather than a new feature gate — uploading a user's entire document was
+  // never disclosed to them — and the trade-off (slightly lower recall on
+  // unusual citation forms) is reversible from Preferences. Called out loudly
+  // in docs/CHANGELOG.md.
+  if (from < 7) {
+    migrateToV7_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -112,6 +131,31 @@ function migrateToV4_(userProperties) {
 function migrateToV5_(userProperties) {
   if (userProperties.getProperty('insert_from_selection_at_top') == null) {
     userProperties.setProperty('insert_from_selection_at_top', 'false');
+  }
+  return true;
+}
+
+/**
+ * V6: introduces `preserve_source_emphasis`. Sefaria's own markup carries
+ * meaning — the Steinsaltz Talmud bolds the Talmud's words to separate them
+ * from Steinsaltz's interpolated explanation — and the insertion path was
+ * flattening it. Existing users get `true`, because the emphasis was always
+ * meant to be there; the previous behavior was a bug, not a preference.
+ */
+function migrateToV6_(userProperties) {
+  if (userProperties.getProperty('preserve_source_emphasis') == null) {
+    userProperties.setProperty('preserve_source_emphasis', 'true');
+  }
+  return true;
+}
+
+/**
+ * V7: introduces `linker_scan_mode`. See the driver comment above for why the
+ * default is "candidates" rather than preserving the old whole-document upload.
+ */
+function migrateToV7_(userProperties) {
+  if (userProperties.getProperty('linker_scan_mode') == null) {
+    userProperties.setProperty('linker_scan_mode', 'candidates');
   }
   return true;
 }

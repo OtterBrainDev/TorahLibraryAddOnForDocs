@@ -29,6 +29,26 @@
         </nav>
 
         <div class="pref-tab-panel" id="pref-tab-fonts" role="tabpanel" aria-labelledby="pref-tab-fonts-btn">
+          <details class="section-card section-accordion" id="source-emphasis" name="source-emphasis" open>
+            <summary class="section-card-summary"><span>✒️ Source Emphasis</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Some Sefaria texts use bold and italics to carry meaning — the Steinsaltz Talmud bolds the Talmud’s own words to separate them from Steinsaltz’s explanation, and many translations italicize interpolated words.</p>
+
+              <div class="subsection-card">
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Keep the source’s bold and italics</div>
+                    <div class="toggle-help">On: the font styles you choose below set the baseline, and the source’s own emphasis is kept on top of it. Off: your font styles are applied uniformly and the source’s emphasis is dropped.</div>
+                  </div>
+                  <label class="switch" for="preserve_source_emphasis">
+                    <input id="preserve_source_emphasis" type="checkbox" name="preserve_source_emphasis" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </details>
+
           <details class="section-card section-accordion" id="title-typography" name="title-typography">
             <summary class="section-card-summary"><span>🔗 Title Typography</span></summary>
             <div class="section-card-body">
@@ -557,6 +577,24 @@
                 </div>
 
                 <div class="mini-help">These define the replacement rules themselves. The document-wide transform command remains separate from insertion-time replacement. <span id="sheimot_summary_note">None</span></div>
+              </div>
+            </div>
+          </details>
+
+          <details class="section-card section-accordion" id="privacy-scanning" name="privacy-scanning">
+            <summary class="section-card-summary"><span>🔒 Privacy &amp; Document Scanning</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">&ldquo;Link Texts with Sefaria&rdquo; has to send text to sefaria.org so their reference linker can find citations. This setting controls how much of your document is sent.</p>
+              <div class="pref-field-group">
+                <div class="compact-field">
+                  <label for="linker_scan_mode">Document scanning</label>
+                  <select name="linker_scan_mode" id="linker_scan_mode">
+                    <option value="candidates" selected>Candidate passages only (recommended)</option>
+                    <option value="full">Whole document</option>
+                  </select>
+                </div>
+                <p class="subsection-note"><strong>Candidate passages only</strong> scans your document on your own machine first and uploads just the passages that look like they contain a citation — a book title, a chapter:verse number, or a Hebrew abbreviation. Your other writing never leaves the document. <strong>Whole document</strong> uploads the entire body, which can catch unusual citation forms the local scan misses.</p>
+                <p class="subsection-note">Nothing is sent to sefaria.org unless you run &ldquo;Link Texts with Sefaria&rdquo;, search, or insert a source. This add-on stores no account data and sends your text to no one else. See <a href="https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer">the privacy policy</a>.</p>
               </div>
             </div>
           </details>

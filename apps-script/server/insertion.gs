@@ -3,7 +3,84 @@
 // transliteration rendering, and rich-text HTML-to-Docs conversion.
 // All functions called from menu.gs or client-side insertReference handlers.
 
-function applyTypographyToParagraph(paragraph, font, size, style) {
+/**
+ * Read the emphasis (bold / italic) runs already present in a text element.
+ *
+ * Uses getTextAttributeIndices() rather than probing every character: it
+ * returns only the offsets where formatting changes, so a passage with three
+ * bolded phrases costs a handful of Apps Script calls instead of one per
+ * character. Only runs that actually carry emphasis are returned — the absence
+ * of emphasis is not something we need to restore.
+ */
+function captureEmphasisRuns_(text, length) {
+  const runs = [];
+  if (!text || !(length > 0)) {
+    return runs;
+  }
+
+  let boundaries;
+  try {
+    boundaries = text.getTextAttributeIndices() || [];
+  } catch (error) {
+    return runs;
+  }
+
+  if (boundaries.indexOf(0) < 0) {
+    boundaries = [0].concat(boundaries);
+  }
+
+  for (let i = 0; i < boundaries.length; i++) {
+    const start = boundaries[i];
+    const end = (i + 1 < boundaries.length ? boundaries[i + 1] : length) - 1;
+    if (!(start >= 0) || end < start || end >= length) {
+      continue;
+    }
+    let bold = false;
+    let italic = false;
+    try {
+      bold = text.isBold(start) === true;
+      italic = text.isItalic(start) === true;
+    } catch (error) {
+      continue;
+    }
+    if (bold || italic) {
+      runs.push({ start: start, end: end, bold: bold, italic: italic });
+    }
+  }
+
+  return runs;
+}
+
+function sourceEmphasisPreservationEnabled_() {
+  // Read at call time, not from a module-scope cache. See the
+  // `extendedGemaraPreference` row in docs/regression-log.md.
+  try {
+    return PropertiesService.getUserProperties().getProperty("preserve_source_emphasis") !== "false";
+  } catch (error) {
+    return true;
+  }
+}
+
+/**
+ * Apply the user's font family / size / style to a whole paragraph.
+ *
+ * @param {Paragraph} paragraph
+ * @param {string} font
+ * @param {number} size
+ * @param {string} style               Comma-separated flags, or "normal".
+ * @param {Object} [opts]
+ * @param {boolean} [opts.preserveSourceEmphasis=false]
+ *        Opt in for paragraphs whose text came from Sefaria markup. The style
+ *        flags are applied as the BASELINE across the paragraph, then the
+ *        bold/italic runs the source specified are re-asserted on top. Without
+ *        this, `setBold(0, len - 1, false)` flattened every run that
+ *        `insertRichTextFromHTML` had just set — which is why the Steinsaltz
+ *        Talmud lost the bolding that distinguishes the Talmud's own words
+ *        from Steinsaltz's interpolated explanation. Titles and metadata lines
+ *        deliberately do NOT opt in: their emphasis is ours, not the source's,
+ *        and the user's style preference must stay authoritative there.
+ */
+function applyTypographyToParagraph(paragraph, font, size, style, opts) {
   if (!paragraph) {
     return;
   }
@@ -13,6 +90,9 @@ function applyTypographyToParagraph(paragraph, font, size, style) {
   if (len <= 0) {
     return;
   }
+
+  const preserveEmphasis = !!(opts && opts.preserveSourceEmphasis) && sourceEmphasisPreservationEnabled_();
+  const emphasisRuns = preserveEmphasis ? captureEmphasisRuns_(text, len) : [];
 
   if (font) {
     text.setFontFamily(0, len - 1, font);
@@ -26,7 +106,23 @@ function applyTypographyToParagraph(paragraph, font, size, style) {
   text.setBold(0, len - 1, flags.indexOf("bold") >= 0);
   text.setItalic(0, len - 1, flags.indexOf("italic") >= 0);
   text.setUnderline(0, len - 1, flags.indexOf("underline") >= 0);
+
+  // Re-assert only what the source emphasized. We never set an attribute back
+  // to false here, so the baseline style above still governs everywhere the
+  // source said nothing.
+  for (let i = 0; i < emphasisRuns.length; i++) {
+    const run = emphasisRuns[i];
+    if (run.bold) {
+      text.setBold(run.start, run.end, true);
+    }
+    if (run.italic) {
+      text.setItalic(run.start, run.end, true);
+    }
+  }
 }
+
+// Paragraphs built from Sefaria's own markup opt into emphasis preservation.
+const PRESERVE_SOURCE_EMPHASIS_ = { preserveSourceEmphasis: true };
 
 function applyTitleTypography(paragraph, typography, insertSefariaLink) {
   applyTypographyToParagraph(
@@ -355,17 +451,21 @@ function insertReference(data, opts) {
     }
 
     let mainTextParagraph = doc.insertParagraph(index+1, "");
-    insertRichTextFromHTML(mainTextParagraph, mainText);
-    mainTextParagraph.setAttributes(noUnderline);
+    // nullStyle carries BOLD=false, so it has to land on the still-empty
+    // paragraph. Applying it after insertRichTextFromHTML flattened the
+    // source's own bold runs before they could be preserved.
     if (singleLanguage == "he") {
       mainTextParagraph.setAttributes(nullStyle);
     }
+    insertRichTextFromHTML(mainTextParagraph, mainText);
+    mainTextParagraph.setAttributes(noUnderline);
     mainTextParagraph.setLeftToRight(ltr);
     applyTypographyToParagraph(
       mainTextParagraph,
       singleLanguage == "he" ? typography.hebrewFont : typography.translationFont,
       singleLanguage == "he" ? typography.hebrewFontSize : typography.translationFontSize,
-      singleLanguage == "he" ? typography.hebrewFontStyle : typography.translationFontStyle
+      singleLanguage == "he" ? typography.hebrewFontStyle : typography.translationFontStyle,
+      PRESERVE_SOURCE_EMPHASIS_
     );
 
     if (singleLanguage == "he" && transliterationText) {
@@ -402,7 +502,7 @@ function insertReference(data, opts) {
       hebTextParagraph.setAttributes(nullStyle);
       insertRichTextFromHTML(hebTextParagraph, data.he);
       hebTextParagraph.setAttributes(noUnderline);
-      applyTypographyToParagraph(hebTextParagraph, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle);
+      applyTypographyToParagraph(hebTextParagraph, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle, PRESERVE_SOURCE_EMPHASIS_);
 
       if (transliterationText) {
         insertTransliterationParagraphAfter(doc, index + 2, transliterationText, typography, true);
@@ -422,7 +522,7 @@ function insertReference(data, opts) {
       engTextParagraph.setAttributes(nullStyle);
       insertRichTextFromHTML(engTextParagraph, data.text);
       engTextParagraph.setAttributes(noUnderline);
-      applyTypographyToParagraph(engTextParagraph, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+      applyTypographyToParagraph(engTextParagraph, typography.translationFont, typography.translationFontSize, typography.translationFontStyle, PRESERVE_SOURCE_EMPHASIS_);
 
       let heTopNextIndex = index + (transliterationText ? 5 : 4);
 
@@ -476,7 +576,7 @@ function insertReference(data, opts) {
       engText.setAttributes(nullStyle);
       insertRichTextFromHTML(engText, data.text);
       engText.setAttributes(noUnderline);
-      applyTypographyToParagraph(engText, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+      applyTypographyToParagraph(engText, typography.translationFont, typography.translationFontSize, typography.translationFontStyle, PRESERVE_SOURCE_EMPHASIS_);
 
       let hebText = table.getCell(1, hebrewColumn)
         .setText("")
@@ -485,7 +585,7 @@ function insertReference(data, opts) {
       hebText.setAttributes(nullStyle);
       insertRichTextFromHTML(hebText, data.he);
       hebText.setAttributes(noUnderline);
-      applyTypographyToParagraph(hebText, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle);
+      applyTypographyToParagraph(hebText, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle, PRESERVE_SOURCE_EMPHASIS_);
 
       let sideBySideNextIndex = index + 1;
 
@@ -591,7 +691,7 @@ function insertReferenceVersions(ref, opts) {
       let textPara = doc.insertParagraph(index + 1, '');
       insertRichTextFromHTML(textPara, d.text);
       textPara.setAttributes(noUnderline).setLeftToRight(true);
-      applyTypographyToParagraph(textPara, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+      applyTypographyToParagraph(textPara, typography.translationFont, typography.translationFontSize, typography.translationFontStyle, PRESERVE_SOURCE_EMPHASIS_);
       index += 2;
 
       if (includeTranslationSourceInfo) {
@@ -616,7 +716,7 @@ function insertReferenceVersions(ref, opts) {
     heTextPara.setLeftToRight(false).setAttributes(nullStyle);
     insertRichTextFromHTML(heTextPara, firstData.he);
     heTextPara.setAttributes(noUnderline);
-    applyTypographyToParagraph(heTextPara, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle);
+    applyTypographyToParagraph(heTextPara, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle, PRESERVE_SOURCE_EMPHASIS_);
     index += 2;
 
     for (let i = 0; i < dataList.length; i++) {
@@ -636,7 +736,7 @@ function insertReferenceVersions(ref, opts) {
       enTextPara.setLeftToRight(true).setAttributes(nullStyle);
       insertRichTextFromHTML(enTextPara, d.text);
       enTextPara.setAttributes(noUnderline);
-      applyTypographyToParagraph(enTextPara, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+      applyTypographyToParagraph(enTextPara, typography.translationFont, typography.translationFontSize, typography.translationFontStyle, PRESERVE_SOURCE_EMPHASIS_);
       index += 2;
 
       if (includeTranslationSourceInfo) {
@@ -759,7 +859,9 @@ function insertRichTextFromHTML(element, htmlString) {
     snippet = decodeHTMLEntities(snippet);
     element.insertText(textLength, snippet);
     let snippetIndex = snippet.length - 1;
-    element.setBold(textLength, textLength+snippetIndex, false);
-    element.setItalic(textLength, textLength+snippetIndex, false);
+    // Use the live flags, not a hardcoded false: markup that never closes its
+    // <b>/<i> would otherwise drop the emphasis on the final run.
+    element.setBold(textLength, textLength+snippetIndex, bolded);
+    element.setItalic(textLength, textLength+snippetIndex, italicized);
   }
 }

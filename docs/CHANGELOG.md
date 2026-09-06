@@ -2,6 +2,79 @@
 
 All notable changes in this fork are documented here.
 
+## Unreleased — privacy, emphasis, and search fixes (2026-08)
+
+### Added
+
+- **Privacy policy** (`docs/PRIVACY.md`), linked from Preferences and from
+  Help & Support → About. Documents every scope, everything sent to Sefaria,
+  and the fact that the add-on has no server, no analytics, and no account.
+- **Preferences → Privacy & Document Scanning.** New `linker_scan_mode`
+  setting controlling how much of your document "Link Texts with Sefaria"
+  uploads.
+- **Client-side linker pre-filter** (`apps-script/server/linker-prefilter.gs`).
+  The document is now scanned locally first; only passages that could contain
+  a citation — a known Sefaria book title, a chapter:verse number, a Talmudic
+  daf, or a Hebrew abbreviation — are uploaded, with padding for context.
+  Prose containing no citation never leaves the document.
+- **First-run disclosure** before "Link Texts with Sefaria" uploads anything,
+  naming which scan mode is active. Shown once, then remembered.
+- **Preferences → Source Emphasis** toggle (`preserve_source_emphasis`).
+
+### Fixed
+
+- **Search returned nothing for titles containing an apostrophe.**
+  `expandShevaApostrophe` rewrote every consonant-apostrophe pair, so
+  "A Woman's Commentary" was searched for as "A Womanes Commentary" — and the
+  same mangled string was used for the /api/name lookup, the direct-reference
+  resolve and the content search, so all three failed at once. The rule now
+  only fires on a word-initial 1-2 consonant cluster, which is the only shape
+  a transliterated sheva takes. "P'sukei D'Zimra" → "Pesukei DeZimra" still
+  works; "Jacob's Ladder" and "don't" are left alone.
+- **Inserted text lost the source's bold and italics.**
+  `applyTypographyToParagraph` blanket-cleared bold/italic across the whole
+  paragraph right after `insertRichTextFromHTML` had set it per-run from
+  Sefaria's markup. This destroyed, among others, the Steinsaltz Talmud's
+  bolding of the Talmud's own words against Steinsaltz's interpolated
+  explanation. Emphasis is now captured before the baseline style is applied
+  and re-asserted after it, so your font-style preference sets the baseline
+  and the source's emphasis layers on top. Titles and metadata lines
+  deliberately do not preserve — their emphasis is the add-on's, not the
+  source's.
+- Text following an unclosed `<b>`/`<i>` in Sefaria markup no longer loses its
+  emphasis (`insertRichTextFromHTML` forced the trailing run to un-emphasized
+  instead of using the live state).
+- Hebrew single-language insertion applied `nullStyle` (which carries
+  `BOLD=false`) *after* the text was inserted, unlike every other body path.
+  Moved to the empty paragraph, matching the others.
+- **No size guard on the linker upload.** A document over 100,000 characters
+  silently timed out and reported "0 references". It now fails with an
+  explicit message naming the limit.
+
+### Changed — read this one
+
+- **"Link Texts with Sefaria" no longer uploads your whole document by
+  default.** Existing users are migrated to `linker_scan_mode: "candidates"`
+  (schema v7). This is a deliberate privacy decision, not a new feature gate:
+  the whole-document upload was never disclosed to users. The trade-off is
+  slightly lower recall on unusual citation forms the local scan does not
+  recognize. **Preferences → Privacy & Document Scanning → Whole document**
+  restores the previous behavior exactly.
+- `preserve_source_emphasis` defaults to `true` and is migrated ON for
+  existing users (schema v6), because the previous flattening was a bug rather
+  than a preference.
+- CI deploy workflow (`.github/workflows/deploy.yml`) rebuilt: the job is now
+  gated on `github.repository`, so a fork — including an upstream maintainer
+  merging from this one — never attempts to deploy into this fork's Apps
+  Script project. It also runs `npm test` and `pre_clasp_qc.sh` in a separate
+  `verify` job before the deploy job runs, pins `@google/clasp` (the token
+  conversion targets clasp 2.x, and "latest" silently moved to 3.x), passes
+  the token via `env:`, adds a concurrency group, and fails with a clear
+  message when `CLASP_TOKEN` is unset. The stale personal branch trigger is
+  gone; `workflow_dispatch` replaces it.
+- `test/tests/migrations.test.js` reads `PREFS_SCHEMA_CURRENT_` from the
+  source instead of hardcoding it in five assertions.
+
 ## Unreleased — pre-upstream review pass (2026-08)
 
 A safety/sanity review ahead of proposing this fork upstream. No feature

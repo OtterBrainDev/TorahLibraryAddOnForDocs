@@ -116,11 +116,102 @@ function transformDivineNames() {
   });
 }
 
+/**
+ * Resolve the document text that will actually be uploaded to Sefaria, and the
+ * mapping needed to place the results back in the document.
+ *
+ * In `candidates` mode (the default) only windows that could plausibly hold a
+ * reference leave the user's machine — see linker-prefilter.gs. In `full` mode
+ * the whole body is sent, which is what this feature always used to do.
+ *
+ * Returns null when the pre-filter found nothing worth sending.
+ */
+function buildLinkerScanRequest_(docText, prefs) {
+  const scanMode = String((prefs && prefs.linker_scan_mode) || 'candidates');
+
+  if (scanMode === 'full') {
+    return { payload: docText, segments: null, scannedChars: docText.length, totalChars: docText.length };
+  }
+
+  const titles = getSefariaTitlesCached_();
+  const scan = buildLinkerScanPayload_(docText, titles);
+  if (!scan.payload) {
+    return null;
+  }
+  return scan;
+}
+
+/**
+ * One-time, up-front disclosure that this command uploads document text.
+ *
+ * Every other feature sends only what the user typed into the search box. This
+ * one reads their document, so they are told before it happens rather than
+ * after — and told which mode is active, because the answer to "how much of my
+ * document?" differs between them. Returns false if the user declines.
+ */
+function confirmLinkerUploadOnce_(scanMode) {
+  const ACK_KEY = 'linker_upload_acknowledged';
+  const userProperties = PropertiesService.getUserProperties();
+
+  if (userProperties.getProperty(ACK_KEY) === 'true') {
+    return true;
+  }
+
+  const scopeSentence = (scanMode === 'full')
+    ? 'Right now it is set to send the ENTIRE text of this document.'
+    : 'Right now it is set to send only the passages that look like they contain a citation — the rest of your writing stays in the document.';
+
+  const ui = DocumentApp.getUi();
+  const response = ui.alert(
+    'Send text to Sefaria?',
+    'To find citations, this command sends text from your document to sefaria.org.\n\n' +
+    scopeSentence + '\n\n' +
+    'You can change this any time in Preferences \u2192 Privacy & Document Scanning. ' +
+    'Nothing is stored by this add-on, and this message will not be shown again.\n\n' +
+    'Continue?',
+    ui.ButtonSet.YES_NO
+  );
+
+  if (response !== ui.Button.YES) {
+    return false;
+  }
+
+  userProperties.setProperty(ACK_KEY, 'true');
+  return true;
+}
+
 function linkTextsWithSefaria() {
   const bodyText = DocumentApp.getActiveDocument().getBody().editAsText();
   const docText = bodyText.getText();
-  const linkerMatches = findRefsInDocumentText(docText);
   const prefs = getPreferences();
+
+  if (!confirmLinkerUploadOnce_(String(prefs.linker_scan_mode || 'candidates'))) {
+    return;
+  }
+
+  const scan = buildLinkerScanRequest_(docText, prefs);
+  if (!scan) {
+    DocumentApp.getUi().alert('No text in this document looks like a Sefaria reference, so nothing was sent to Sefaria. If you expected a match, switch "Document scanning" to "Whole document" in Preferences.');
+    return;
+  }
+
+  const rawMatches = findRefsInDocumentText(scan.payload);
+
+  // Translate offsets from the uploaded payload back onto the document. In
+  // `full` mode the payload IS the document, so offsets pass through.
+  const linkerMatches = [];
+  for (let i = 0; i < rawMatches.length; i++) {
+    const match = rawMatches[i];
+    if (!match) continue;
+    if (!scan.segments) {
+      linkerMatches.push(match);
+      continue;
+    }
+    const mapped = mapPayloadRangeToDocRange_(scan.segments, Number(match.startChar), Number(match.endChar));
+    if (!mapped) continue;
+    linkerMatches.push(Object.assign({}, match, { startChar: mapped.startChar, endChar: mapped.endChar }));
+  }
+
   const insertAfterLinking = prefs.link_sources_insert_after_linking == "true" || prefs.link_sources_insert_after_linking === true;
   const linkedRefItems = [];
   let linkedCount = 0;

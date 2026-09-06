@@ -28,11 +28,29 @@ function normalizeReferenceInput(reference) {
   return normalized;
 }
 
+// Upper bound on what we will upload in one linker request. The endpoint is an
+// async task with a bounded poll window below, so an oversized body does not
+// fail loudly — it just times out and reports "0 references", which reads like
+// a bug. Refuse it explicitly instead.
+var FIND_REFS_MAX_CHARS_ = 100000;
+
 function findRefsInDocumentText(documentText) {
+  const body = String(documentText || '');
+  if (!body.trim()) {
+    return [];
+  }
+  if (body.length > FIND_REFS_MAX_CHARS_) {
+    throw new Error(
+      'This document is too large to scan in one pass (' + body.length.toLocaleString() +
+      ' characters; the limit is ' + FIND_REFS_MAX_CHARS_.toLocaleString() +
+      '). Link a section at a time, or turn on candidate-only scanning in Preferences.'
+    );
+  }
+
   const payload = {
     text: {
       title: '',
-      body: String(documentText || '')
+      body: body
     }
   };
 
@@ -138,6 +156,59 @@ function findReference(reference, versions=undefined, skipNormalization=false) {
     return;
   }
 
+}
+
+/**
+ * Cached title list for the linker pre-filter.
+ *
+ * /api/index/titles is a large, near-static payload. The linker needs it on
+ * every run, so cache it per user for 6 hours rather than re-downloading it.
+ * CacheService values are capped at 100KB, so the list is chunked; if it does
+ * not fit or anything goes wrong we simply fetch fresh — the cache is an
+ * optimization, never a correctness dependency.
+ */
+function getSefariaTitlesCached_() {
+  var CACHE_KEY = 'sefaria_titles_v1';
+  var CACHE_TTL_SECONDS = 21600;
+  var cache = null;
+
+  try {
+    cache = CacheService.getUserCache();
+    var cached = cache.get(CACHE_KEY);
+    if (cached) {
+      var parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length) {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    // Fall through to a fresh fetch.
+  }
+
+  var titles;
+  try {
+    titles = returnTitles();
+  } catch (error) {
+    Logger.log('Could not load Sefaria titles for the linker pre-filter: ' + error.message);
+    return [];
+  }
+
+  if (!Array.isArray(titles)) {
+    return [];
+  }
+
+  if (cache) {
+    try {
+      var serialized = JSON.stringify(titles);
+      if (serialized.length < 95000) {
+        cache.put(CACHE_KEY, serialized, CACHE_TTL_SECONDS);
+      }
+    } catch (error) {
+      // A cache write failure is not worth surfacing.
+    }
+  }
+
+  return titles;
 }
 
 function returnTitles() {

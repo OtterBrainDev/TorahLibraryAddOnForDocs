@@ -20,7 +20,9 @@ const SETTINGS = [
   "insert_sefaria_link_default",
   "link_texts_default",
   "link_sources_insert_after_linking",
+  "linker_scan_mode",
   "show_line_markers_default",
+  "preserve_source_emphasis",
   "output_mode_default",
   "bilingual_layout_default",
   "last_translation_languages",
@@ -90,8 +92,16 @@ function getDefaultPreferences() {
     insert_citation_default: false,
     insert_sefaria_link_default: true,
     link_texts_default: false,
+    // "candidates": only windows that look like they could hold a reference
+    // are uploaded to /api/find-refs. "full": the entire document body is
+    // uploaded, which is what this feature originally did.
+    linker_scan_mode: "candidates",
     link_sources_insert_after_linking: false,
     show_line_markers_default: true,
+    // Sefaria marks up its own emphasis (the Steinsaltz Talmud bolds the Talmud's
+    // words against Steinsaltz's interpolation). Default ON: the source knows
+    // what it meant, and the font-style preference still sets the baseline.
+    preserve_source_emphasis: true,
     output_mode_default: "both",
     bilingual_layout_default: "he-right",
     last_translation_languages: JSON.stringify(["en"]),

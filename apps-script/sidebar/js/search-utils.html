@@ -86,8 +86,21 @@ function normalizeUnifiedReferenceInput(value) {
 }
 
 function expandShevaApostrophe(str) {
-  // Converts sheva-apostrophe transliteration to vocalized form: P'sukei → Pesukei, D'Zimra → Dezimra
-  return String(str || '').replace(/([^aeiouAEIOU\s\d])'([^'\s])/g, '$1e$2');
+  // Converts sheva-apostrophe transliteration to vocalized form: P'sukei → Pesukei, D'Zimra → Dezimra.
+  //
+  // The apostrophe must follow a WORD-INITIAL run of 1-2 consonants, which is the
+  // only shape a transliterated sheva takes (P', B', D', K', L', M', Sh', Ch', Tz').
+  // Without that anchor the rule also fired on English possessives and
+  // contractions — "A Woman's Commentary" became "A Womanes Commentary" and
+  // "don't" became "donet" — which poisoned every downstream search path,
+  // because `inputExpanded` feeds the name API, the direct-ref lookup and the
+  // content search alike. See docs/regression-log.md.
+  return String(str || '').replace(
+    /(^|[\s"'“”‘’([{\-])([bcdfghjklmnpqrstvwxyz]{1,2})'(?=[A-Za-z])/gi,
+    function (match, boundary, consonants) {
+      return boundary + consonants + 'e';
+    }
+  );
 }
 
 function applyConsonantClusterVoweling(str) {
