@@ -80,6 +80,55 @@ function sourceEmphasisPreservationEnabled_() {
  *        deliberately do NOT opt in: their emphasis is ours, not the source's,
  *        and the user's style preference must stay authoritative there.
  */
+/**
+ * Apply one emphasis mapping to a range. Only ever turns formatting ON, so the
+ * baseline style applied across the paragraph still governs everywhere the
+ * source said nothing.
+ */
+function applyEmphasisMapping_(text, start, end, mapping) {
+  if (!mapping || end < start) {
+    return;
+  }
+
+  const flags = String(mapping.style || '')
+    .split(',')
+    .map(function (flag) { return flag.trim().toLowerCase(); })
+    .filter(Boolean);
+
+  if (flags.indexOf('bold') >= 0) text.setBold(start, end, true);
+  if (flags.indexOf('italic') >= 0) text.setItalic(start, end, true);
+  if (flags.indexOf('underline') >= 0) text.setUnderline(start, end, true);
+
+  if (mapping.color) text.setForegroundColor(start, end, mapping.color);
+  if (mapping.background) text.setBackgroundColor(start, end, mapping.background);
+  if (mapping.font) text.setFontFamily(start, end, mapping.font);
+}
+
+/**
+ * Apply the user's font family / size / style / colour to a whole paragraph.
+ *
+ * @param {Paragraph} paragraph
+ * @param {string} font
+ * @param {number} size
+ * @param {string} style               Comma-separated flags, or "normal".
+ * @param {Object} [opts]
+ * @param {string} [opts.color]        Foreground colour, "#rrggbb". Omitted or
+ *                                     null leaves the existing colour alone.
+ * @param {string} [opts.background]   Background colour, same convention.
+ * @param {boolean} [opts.preserveSourceEmphasis=false]
+ *        Opt in for paragraphs whose text came from Sefaria markup. The style
+ *        flags are applied as the BASELINE across the paragraph, then the
+ *        bold/italic runs the source specified are re-rendered on top via
+ *        `opts.emphasisMap`. Without this, `setBold(0, len - 1, false)`
+ *        flattened every run that `insertRichTextFromHTML` had just set —
+ *        which is why the Steinsaltz Talmud lost the bolding that
+ *        distinguishes the Talmud's own words from Steinsaltz's interpolated
+ *        explanation. Titles and metadata lines deliberately do NOT opt in:
+ *        their emphasis is ours, not the source's, and the user's style
+ *        preference must stay authoritative there.
+ * @param {Object} [opts.emphasisMap]  {bold: mapping, italic: mapping}. When
+ *        absent, source emphasis is re-asserted as itself.
+ */
 function applyTypographyToParagraph(paragraph, font, size, style, opts) {
   if (!paragraph) {
     return;
@@ -91,7 +140,8 @@ function applyTypographyToParagraph(paragraph, font, size, style, opts) {
     return;
   }
 
-  const preserveEmphasis = !!(opts && opts.preserveSourceEmphasis) && sourceEmphasisPreservationEnabled_();
+  const options = opts || {};
+  const preserveEmphasis = !!options.preserveSourceEmphasis && sourceEmphasisPreservationEnabled_();
   const emphasisRuns = preserveEmphasis ? captureEmphasisRuns_(text, len) : [];
 
   if (font) {
@@ -107,29 +157,73 @@ function applyTypographyToParagraph(paragraph, font, size, style, opts) {
   text.setItalic(0, len - 1, flags.indexOf("italic") >= 0);
   text.setUnderline(0, len - 1, flags.indexOf("underline") >= 0);
 
-  // Re-assert only what the source emphasized. We never set an attribute back
-  // to false here, so the baseline style above still governs everywhere the
-  // source said nothing.
+  if (options.color) {
+    text.setForegroundColor(0, len - 1, options.color);
+  }
+  if (options.background) {
+    text.setBackgroundColor(0, len - 1, options.background);
+  }
+
+  // Re-render what the source emphasized, through the user's mapping. The
+  // default mapping is the identity (bold renders as bold), but a user can map
+  // Sefaria's bold to a colour, a different font, or nothing at all.
+  const emphasisMap = options.emphasisMap || DEFAULT_EMPHASIS_MAP_;
   for (let i = 0; i < emphasisRuns.length; i++) {
     const run = emphasisRuns[i];
     if (run.bold) {
-      text.setBold(run.start, run.end, true);
+      applyEmphasisMapping_(text, run.start, run.end, emphasisMap.bold);
     }
     if (run.italic) {
-      text.setItalic(run.start, run.end, true);
+      applyEmphasisMapping_(text, run.start, run.end, emphasisMap.italic);
     }
   }
 }
 
-// Paragraphs built from Sefaria's own markup opt into emphasis preservation.
-const PRESERVE_SOURCE_EMPHASIS_ = { preserveSourceEmphasis: true };
+// Identity mapping, used when a caller preserves emphasis without supplying a
+// typography bag (keeps old behaviour for any call site that predates the map).
+const DEFAULT_EMPHASIS_MAP_ = {
+  bold: { style: 'bold', color: null, background: null, font: '' },
+  italic: { style: 'italic', color: null, background: null, font: '' }
+};
 
-function applyTitleTypography(paragraph, typography, insertSefariaLink) {
+/**
+ * Apply a named typography role (hebrew / translation / transliteration /
+ * sourceTitle / sefariaLink) to a paragraph.
+ *
+ * This is the shape new code should use: it carries colour and background,
+ * which the positional form cannot, and it keeps role lookup in one place.
+ *
+ * @param {Object} [overrides] {size, style, preserveSourceEmphasis}
+ */
+function applyRoleTypography_(paragraph, typography, roleName, overrides) {
+  const role = (typography && typography.roles && typography.roles[roleName]) || null;
+  if (!role) {
+    return;
+  }
+  const extra = overrides || {};
   applyTypographyToParagraph(
     paragraph,
-    insertSefariaLink ? typography.sefariaLinkFont : typography.sourceTitleFont,
-    insertSefariaLink ? typography.sefariaLinkFontSize : typography.sourceTitleFontSize,
-    insertSefariaLink ? typography.sefariaLinkFontStyle : typography.sourceTitleFontStyle
+    role.font,
+    extra.size !== undefined ? extra.size : role.size,
+    extra.style !== undefined ? extra.style : role.style,
+    {
+      color: role.color,
+      background: role.background,
+      preserveSourceEmphasis: extra.preserveSourceEmphasis === true,
+      emphasisMap: typography ? typography.emphasisMap : null
+    }
+  );
+}
+
+
+function applyTitleTypography(paragraph, typography, insertSefariaLink) {
+  // Titles deliberately do NOT preserve source emphasis: the bold/underline on
+  // a title is applied by this add-on, so the user's title style stays
+  // authoritative there.
+  applyRoleTypography_(
+    paragraph,
+    typography,
+    insertSefariaLink ? 'sefariaLink' : 'sourceTitle'
   );
 }
 
@@ -140,7 +234,7 @@ function insertTransliterationParagraphAfter(doc, index, transliterationText, ty
   let paragraph = doc.insertParagraph(index, transliterationText);
   paragraph.setLeftToRight(ltr !== false);
   paragraph.setAttributes({});
-  applyTypographyToParagraph(paragraph, typography.transliterationFont, typography.transliterationFontSize, typography.transliterationFontStyle);
+  applyRoleTypography_(paragraph, typography, 'transliteration');
 }
 
 function insertTransliterationIntoCell(cell, transliterationText, typography) {
@@ -150,7 +244,7 @@ function insertTransliterationIntoCell(cell, transliterationText, typography) {
   let paragraph = cell.insertParagraph(cell.getNumChildren(), transliterationText);
   paragraph.setLeftToRight(true);
   paragraph.setAttributes({});
-  applyTypographyToParagraph(paragraph, typography.transliterationFont, typography.transliterationFontSize, typography.transliterationFontStyle);
+  applyRoleTypography_(paragraph, typography, 'transliteration');
 }
 
 function getAttributionParagraphText(attributionLines) {
@@ -460,12 +554,11 @@ function insertReference(data, opts) {
     insertRichTextFromHTML(mainTextParagraph, mainText);
     mainTextParagraph.setAttributes(noUnderline);
     mainTextParagraph.setLeftToRight(ltr);
-    applyTypographyToParagraph(
+    applyRoleTypography_(
       mainTextParagraph,
-      singleLanguage == "he" ? typography.hebrewFont : typography.translationFont,
-      singleLanguage == "he" ? typography.hebrewFontSize : typography.translationFontSize,
-      singleLanguage == "he" ? typography.hebrewFontStyle : typography.translationFontStyle,
-      PRESERVE_SOURCE_EMPHASIS_
+      typography,
+      singleLanguage == "he" ? 'hebrew' : 'translation',
+      { preserveSourceEmphasis: true }
     );
 
     if (singleLanguage == "he" && transliterationText) {
@@ -502,7 +595,7 @@ function insertReference(data, opts) {
       hebTextParagraph.setAttributes(nullStyle);
       insertRichTextFromHTML(hebTextParagraph, data.he);
       hebTextParagraph.setAttributes(noUnderline);
-      applyTypographyToParagraph(hebTextParagraph, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle, PRESERVE_SOURCE_EMPHASIS_);
+      applyRoleTypography_(hebTextParagraph, typography, 'hebrew', { preserveSourceEmphasis: true });
 
       if (transliterationText) {
         insertTransliterationParagraphAfter(doc, index + 2, transliterationText, typography, true);
@@ -522,7 +615,7 @@ function insertReference(data, opts) {
       engTextParagraph.setAttributes(nullStyle);
       insertRichTextFromHTML(engTextParagraph, data.text);
       engTextParagraph.setAttributes(noUnderline);
-      applyTypographyToParagraph(engTextParagraph, typography.translationFont, typography.translationFontSize, typography.translationFontStyle, PRESERVE_SOURCE_EMPHASIS_);
+      applyRoleTypography_(engTextParagraph, typography, 'translation', { preserveSourceEmphasis: true });
 
       let heTopNextIndex = index + (transliterationText ? 5 : 4);
 
@@ -576,7 +669,7 @@ function insertReference(data, opts) {
       engText.setAttributes(nullStyle);
       insertRichTextFromHTML(engText, data.text);
       engText.setAttributes(noUnderline);
-      applyTypographyToParagraph(engText, typography.translationFont, typography.translationFontSize, typography.translationFontStyle, PRESERVE_SOURCE_EMPHASIS_);
+      applyRoleTypography_(engText, typography, 'translation', { preserveSourceEmphasis: true });
 
       let hebText = table.getCell(1, hebrewColumn)
         .setText("")
@@ -585,7 +678,7 @@ function insertReference(data, opts) {
       hebText.setAttributes(nullStyle);
       insertRichTextFromHTML(hebText, data.he);
       hebText.setAttributes(noUnderline);
-      applyTypographyToParagraph(hebText, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle, PRESERVE_SOURCE_EMPHASIS_);
+      applyRoleTypography_(hebText, typography, 'hebrew', { preserveSourceEmphasis: true });
 
       let sideBySideNextIndex = index + 1;
 
@@ -691,7 +784,7 @@ function insertReferenceVersions(ref, opts) {
       let textPara = doc.insertParagraph(index + 1, '');
       insertRichTextFromHTML(textPara, d.text);
       textPara.setAttributes(noUnderline).setLeftToRight(true);
-      applyTypographyToParagraph(textPara, typography.translationFont, typography.translationFontSize, typography.translationFontStyle, PRESERVE_SOURCE_EMPHASIS_);
+      applyRoleTypography_(textPara, typography, 'translation', { preserveSourceEmphasis: true });
       index += 2;
 
       if (includeTranslationSourceInfo) {
@@ -716,7 +809,7 @@ function insertReferenceVersions(ref, opts) {
     heTextPara.setLeftToRight(false).setAttributes(nullStyle);
     insertRichTextFromHTML(heTextPara, firstData.he);
     heTextPara.setAttributes(noUnderline);
-    applyTypographyToParagraph(heTextPara, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle, PRESERVE_SOURCE_EMPHASIS_);
+    applyRoleTypography_(heTextPara, typography, 'hebrew', { preserveSourceEmphasis: true });
     index += 2;
 
     for (let i = 0; i < dataList.length; i++) {
@@ -736,7 +829,7 @@ function insertReferenceVersions(ref, opts) {
       enTextPara.setLeftToRight(true).setAttributes(nullStyle);
       insertRichTextFromHTML(enTextPara, d.text);
       enTextPara.setAttributes(noUnderline);
-      applyTypographyToParagraph(enTextPara, typography.translationFont, typography.translationFontSize, typography.translationFontStyle, PRESERVE_SOURCE_EMPHASIS_);
+      applyRoleTypography_(enTextPara, typography, 'translation', { preserveSourceEmphasis: true });
       index += 2;
 
       if (includeTranslationSourceInfo) {

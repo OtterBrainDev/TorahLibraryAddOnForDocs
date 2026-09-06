@@ -2,6 +2,53 @@
 
 All notable changes in this fork are documented here.
 
+## Unreleased — formatting control and search recovery (2026-08)
+
+### Added
+
+- **Text colour and highlight for every insertion role.** Hebrew, translation,
+  transliteration, source title and hyperlink each gain a colour and a
+  highlight control in Preferences → Fonts. Both default to *unset*, meaning
+  "leave the document's own formatting alone" — a native colour input cannot
+  express that, so the state is carried alongside the picker and shown as a
+  muted field with an **Auto** / **None** button. Defaulting these to
+  `#000000` would have silently restyled every existing user's documents,
+  including anyone working in a themed or dark document.
+- **Advanced: map the source's emphasis to your own formatting**
+  (Preferences → Source Emphasis). Sefaria's bold and italic no longer have to
+  render as bold and italic. Each channel maps independently to any
+  combination of bold / italic / underline, a text colour, a highlight, and a
+  font override — so the Steinsaltz Talmud's bolding can come through as, say,
+  blue text if that matches your document's conventions. Turning every option
+  off in a card drops that emphasis entirely. Defaults are the identity
+  mapping, so nothing changes until you touch it.
+- **Zero-result searches now suggest related catalogue entries.** Searching
+  something the library does not match exactly offers up to five real titles
+  to click, instead of an empty panel. When nothing is close enough to
+  suggest, the panel says so and names the query shapes that work rather than
+  rendering blank.
+
+### Fixed
+
+- **"Did you mean" never fired for a fragment from the middle of a title.**
+  The suggester only considered titles beginning with the same letter as the
+  query — right for typos, useless for fragments. Searching *A Woman's
+  Commentary* offered nothing, because the catalogue entry is *The Torah: A
+  Women's Commentary*: different first letter, and one letter different in the
+  token that matters. A second token-overlap pass now matches titles
+  containing every significant word of the query, tolerating a one-character
+  difference per token and ignoring stopwords. Suggestions remain suggestions —
+  they are never auto-selected.
+
+### Changed
+
+- All typography now flows through a role-based helper
+  (`applyRoleTypography_`), so colour and background reach every insertion
+  path — texts, source sheets and lexicon entries alike — rather than only the
+  ones that happened to be updated. `getTypographySettings()` gained a `roles`
+  map; the previous flat keys are kept as aliases.
+- Suggestion cap raised from 3 to 5.
+
 ## Unreleased — privacy, emphasis, and search fixes (2026-08)
 
 ### Added

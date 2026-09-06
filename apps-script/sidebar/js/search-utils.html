@@ -333,6 +333,87 @@ function levenshteinDistance(a, b) {
   return matrix[b.length][a.length];
 }
 
+// Tokens that carry no discriminating power in a Sefaria title. Dropping them
+// stops "A ... Commentary" from matching on "a" alone.
+var FUZZY_STOPWORDS_ = { a: true, an: true, the: true, of: true, on: true, to: true, in: true, and: true };
+
+function fuzzyTokens_(normalizedText) {
+  return String(normalizedText || '')
+    .split(/[^0-9a-zא-ת]+/)
+    .filter(function (token) {
+      return token && token.length >= 2 && !FUZZY_STOPWORDS_[token];
+    });
+}
+
+/**
+ * Does `titleTokens` contain something close enough to `queryToken`?
+ * Exact match, a prefix of at least 4 characters, or a single-character typo.
+ */
+function fuzzyTokenMatches_(queryToken, titleTokens) {
+  for (var i = 0; i < titleTokens.length; i++) {
+    var titleToken = titleTokens[i];
+    if (titleToken === queryToken) return true;
+    if (queryToken.length >= 4 && titleToken.indexOf(queryToken) === 0) return true;
+    if (titleToken.length >= 4 && queryToken.indexOf(titleToken) === 0) return true;
+    // "woman" vs "women" — a single substitution, which is exactly the kind of
+    // near-miss that used to produce a dead end.
+    if (Math.abs(titleToken.length - queryToken.length) <= 1 &&
+        queryToken.length >= 4 &&
+        levenshteinDistance(queryToken, titleToken) <= 1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Second pass over the title list: titles that contain EVERY significant token
+ * of the query, in any position and any order.
+ *
+ * The original pass only considered titles starting with the same letter as the
+ * query, which is right for typos ("Bereshit" → "Bereshit") but leaves a dead
+ * end whenever the user types a fragment from the middle of a title. Searching
+ * "A Woman's Commentary" found nothing, because the catalogue entry is
+ * "The Torah: A Women's Commentary" — different first letter, and one letter
+ * different in the one token that matters.
+ */
+function getTokenOverlapSuggestions_(titlePart, queryLooksHebrew) {
+  var queryTokens = fuzzyTokens_(titlePart);
+  if (!queryTokens.length) return [];
+
+  var results = [];
+
+  for (var i = 0; i < titles.length; i++) {
+    var rawTitle = String(titles[i] || '').trim();
+    if (!rawTitle) continue;
+    if (isLikelyHebrewScriptInput(rawTitle) !== queryLooksHebrew) continue;
+
+    var normalizedTitle = normalizeFuzzyText(rawTitle);
+    if (!normalizedTitle) continue;
+
+    var titleTokens = fuzzyTokens_(normalizedTitle);
+    if (!titleTokens.length) continue;
+
+    var allMatched = true;
+    for (var t = 0; t < queryTokens.length; t++) {
+      if (!fuzzyTokenMatches_(queryTokens[t], titleTokens)) {
+        allMatched = false;
+        break;
+      }
+    }
+    if (!allMatched) continue;
+
+    // Prefer the tightest title that still covers the query: "The Torah: A
+    // Women's Commentary" beats a 200-character sub-reference of it.
+    results.push({ rawTitle: rawTitle, score: normalizedTitle.length - titlePart.length });
+  }
+
+  return results.sort(function (a, b) {
+    if (a.score !== b.score) return a.score - b.score;
+    return a.rawTitle.localeCompare(b.rawTitle);
+  });
+}
+
 function getFuzzyReferenceSuggestions(query) {
   var split = splitReferenceForFuzzy(query);
   var titlePart = normalizeFuzzyText(split.titlePart);
@@ -359,6 +440,11 @@ function getFuzzyReferenceSuggestions(query) {
     return a.rawTitle.localeCompare(b.rawTitle);
   });
 
+  // The same-first-letter pass above handles typos. Append the token-overlap
+  // pass so a fragment from the middle of a title is not a dead end. Order
+  // matters: near-spellings of what the user typed stay first.
+  scored = scored.concat(getTokenOverlapSuggestions_(titlePart, queryLooksHebrew));
+
   var seen = {};
   return scored.filter(function (entry) {
     var suggestion = entry.rawTitle + split.suffixPart;
@@ -372,19 +458,36 @@ function getFuzzyReferenceSuggestions(query) {
 
 function renderFuzzySuggestions(query) {
   var suggestions = getFuzzyReferenceSuggestions(query);
-  if (!suggestions.length) return;
-  var html = "<div class='results-suggestion-wrap'><div class='results-suggestion-title'>Did you mean</div><div class='results-suggestion-buttons'>" + suggestions.map(function (suggestion) {
+  if (!suggestions.length) return false;
+  // Every value is escaped with escapeHTML before it reaches setResultsHint,
+  // which renders HTML; suggestions come from the Sefaria title list, and the
+  // query is user input.
+  var html = "<div class='results-suggestion-wrap'><div class='results-suggestion-title'>No exact match. Related entries in the library:</div><div class='results-suggestion-buttons'>" + suggestions.map(function (suggestion) {
     return "<button type='button' class='results-suggestion-button' data-suggested-query='" + escapeHTML(suggestion) + "'>" + escapeHTML(suggestion) + "</button>";
   }).join('') + "</div></div>";
   setResultsHint(html, true);
+  return true;
 }
 
 function maybeShowZeroResultsSuggestions(input) {
   var hasRawResults = getAllRawResults().length > 0;
   var currentHint = $.trim($('.results-hint').text());
-  if (!hasRawResults && !currentHint) {
-    renderFuzzySuggestions(input);
-  }
+  if (hasRawResults || currentHint) return;
+
+  // Offer near matches from the title list rather than leaving a blank panel.
+  // These are real catalogue entries, so each one resolves — but they are
+  // presented as suggestions to click, never auto-selected, because a fuzzy
+  // match is a guess about intent and the user is the one who knows.
+  if (renderFuzzySuggestions(input)) return;
+
+  // Nothing close enough to suggest. Say so, and say what tends to work,
+  // instead of rendering an empty results area.
+  setResultsHint(
+    "<div class='results-suggestion-wrap'><div class='results-suggestion-title'>No results for &ldquo;" +
+    escapeHTML(String(input || '')) +
+    "&rdquo;</div><div class='results-suggestion-note'>Try a book name on its own (Berakhot), a reference (Genesis 1:1), or a phrase from the text itself.</div></div>",
+    true
+  );
 }
 
 function describeResultLanguages(item) {

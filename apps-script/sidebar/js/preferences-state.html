@@ -19,7 +19,10 @@ var hasResolvedReference = false;
 var searchDebounceHandle = null;
 var keyboardResultIndex = -1;
 var resultsLoading = false;
-var MAX_FUZZY_SUGGESTIONS = 3;
+// Enough to cover a near-miss plus a couple of genuine alternatives, few
+// enough that the panel still reads as "did you mean" rather than a result set
+// — the point is to avoid guessing the user's intent for them.
+var MAX_FUZZY_SUGGESTIONS = 5;
 var preferredTranslationLanguage = "en";
 var sidebarSessionId = null;
 var accountPreferences = {};

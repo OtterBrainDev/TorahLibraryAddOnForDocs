@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '7';
+var PREFS_SCHEMA_CURRENT_ = '8';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -82,6 +82,15 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // in docs/CHANGELOG.md.
   if (from < 7) {
     migrateToV7_(userProperties);
+  }
+  // v7 -> v8: per-role text/background colour, plus the emphasis mapping.
+  // Every one of these is a no-op default (no colour; emphasis renders as
+  // itself), so nothing changes for anyone until they open Preferences. The
+  // migration exists because hard rule #1 requires every new key to have one,
+  // and because writing the values explicitly keeps stored state and code
+  // defaults from drifting.
+  if (from < 8) {
+    migrateToV8_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -156,6 +165,46 @@ function migrateToV6_(userProperties) {
 function migrateToV7_(userProperties) {
   if (userProperties.getProperty('linker_scan_mode') == null) {
     userProperties.setProperty('linker_scan_mode', 'candidates');
+  }
+  return true;
+}
+
+/**
+ * V8: per-role colour/background, and the source-emphasis mapping.
+ *
+ * Colour defaults are the EMPTY STRING, which every consumer reads as "leave
+ * the document's own formatting alone". Defaulting to "#000000" would force
+ * black text on every existing user, including anyone using a themed or dark
+ * document — a silent, document-wide restyle on upgrade.
+ */
+function migrateToV8_(userProperties) {
+  var noOpDefaults = {
+    hebrew_font_color: '',
+    hebrew_font_background: '',
+    translation_font_color: '',
+    translation_font_background: '',
+    transliteration_font_color: '',
+    transliteration_font_background: '',
+    source_title_font_color: '',
+    source_title_font_background: '',
+    sefaria_link_font_color: '',
+    sefaria_link_font_background: '',
+    // Identity mapping: bold renders as bold, italic as italic. Same as the
+    // behavior shipped with the v6 preserve-emphasis fix.
+    emphasis_bold_style: 'bold',
+    emphasis_bold_color: '',
+    emphasis_bold_background: '',
+    emphasis_bold_font: '',
+    emphasis_italic_style: 'italic',
+    emphasis_italic_color: '',
+    emphasis_italic_background: '',
+    emphasis_italic_font: ''
+  };
+
+  for (var key in noOpDefaults) {
+    if (userProperties.getProperty(key) == null) {
+      userProperties.setProperty(key, noOpDefaults[key]);
+    }
   }
   return true;
 }

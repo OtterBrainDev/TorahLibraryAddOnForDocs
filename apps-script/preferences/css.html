@@ -389,6 +389,96 @@
     text-decoration: underline;
   }
 
+  /* ---- Colour / highlight controls -------------------------------------
+     A native <input type=color> cannot express "no colour", so the field is
+     paired with a clear button and muted via .is-unset when the stored value
+     is empty. The muted state has to read as "inheriting", not "black".      */
+
+  .color-control {
+    display: flex;
+    align-items: stretch;
+    height: 38px;
+    border: 1px solid #d2d0ca;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .color-control input[type="color"] {
+    width: 38px;
+    min-width: 38px;
+    height: 100%;
+    padding: 4px;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .color-clear-btn {
+    flex: 1;
+    min-width: 44px;
+    margin: 0;
+    padding: 0 8px;
+    border: 0;
+    border-left: 1px solid #d2d0ca;
+    background: transparent;
+    color: #444;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+  }
+
+  .color-clear-btn:hover {
+    background: #eef2f8;
+  }
+
+  .color-control.is-unset input[type="color"] {
+    opacity: 0.28;
+  }
+
+  .color-control.is-unset .color-clear-btn {
+    background: #1f3b68;
+    color: #fff;
+  }
+
+  .compact-field--color {
+    min-width: 116px;
+  }
+
+  /* ---- Emphasis mapping (advanced) ------------------------------------- */
+
+  .emphasis-map-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  @media (min-width: 620px) {
+    .emphasis-map-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .emphasis-map-card {
+    border: 1px solid #d2d0ca;
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #fbfaf7;
+  }
+
+  .emphasis-map-card > .subsection-title {
+    margin-top: 0;
+  }
+
+  .emphasis-sample {
+    display: block;
+    margin: 2px 0 10px;
+    font-size: 12px;
+    color: #5a5a5a;
+  }
+
   .replacement-grid {
     display: grid;
     gap: 8px;
