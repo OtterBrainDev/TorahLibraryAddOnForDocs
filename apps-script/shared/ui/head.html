@@ -1,3 +1,26 @@
+<!--
+  Content Security Policy — deliberately narrow.
+
+  This restricts ONLY image loading, plugin embedding, and <base href>. It does
+  NOT set default-src, script-src, style-src or connect-src, and that omission
+  is intentional rather than an oversight: HtmlService injects its own bootstrap
+  script and the google.script.run bridge into this page, and every one of the
+  sidebar's own scripts is inline. A script-src that misses something Google
+  injects would not fail loudly — it would silently break google.script.run,
+  which is the entire server bridge, in a surface that is hard to test outside a
+  real Google Doc.
+
+  What it does buy: a text served by Sefaria cannot make this page fetch an
+  image from an arbitrary host. Sefaria's own server-side allowlist permits
+  <img src>, so that was reachable. sanitizeSourceHtml (shared/ui/dom.html)
+  strips such markup before it is rendered; this is the backstop for any render
+  path added later that forgets to call it, and it covers the source-sheet and
+  lexicon surfaces too. docs/PRIVACY.md states the add-on contacts no host other
+  than sefaria.org — between these two, that is enforced rather than promised.
+
+  If you widen this, verify in a real Docs sidebar, not just in preview.
+-->
+<meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://the-merkaz.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
 <base target="_top">
 <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
 <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>

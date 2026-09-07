@@ -2,6 +2,36 @@
 
 All notable changes in this fork are documented here.
 
+## Unreleased — preview hardening (2026-09)
+
+### Security
+
+- **Sefaria HTML is stripped of subresource-loading markup before it is
+  rendered.** Sefaria bleaches text records on save, so event handlers and
+  `javascript:` URLs cannot reach the add-on — but their allowlist does permit
+  `<img src>` and `<a href>`. A text naming a third-party host would make the
+  reader's browser fetch it, leaking an IP and the fact that a particular
+  passage was opened. New `sanitizeSourceHtml()` removes elements that fetch a
+  subresource or execute, unwraps anchors (keeping their words), keeps an
+  `<img alt>` as text, and strips `on*` and URL-bearing attributes. It is a
+  strip, not an allowlist: `b`, `i`, `em`, `strong`, `sup`, `sub`, `span`,
+  `br`, and the `class`/`dir` attributes that footnotes and RTL runs depend on
+  all pass through untouched.
+- Applied at the three places raw Sefaria HTML reached the DOM: the text
+  preview, the Elasticsearch highlight snippets in the results list, and
+  `extractTextFromHtml_`.
+- **`extractTextFromHtml_` was making a network request.** It assigned
+  untrusted markup to a detached `<div>`'s `innerHTML` to read its plain text —
+  and a detached div still causes the browser to fetch any `<img src>` in the
+  markup. It now parses into an inert `DOMParser` document.
+- **Content Security Policy** added to the shared head partial, restricting
+  `img-src` to sefaria.org, the-merkaz.org and Google's own hosts, plus
+  `object-src 'none'` and `base-uri 'self'`. It deliberately does **not** set
+  `default-src` or `script-src`: HtmlService injects its own bootstrap and the
+  `google.script.run` bridge, and a script-src that missed one of them would
+  silently break the server bridge rather than fail loudly. This is the backstop
+  for any render path added later that forgets to sanitize.
+
 ## Unreleased — formatting control and search recovery (2026-08)
 
 ### Added
