@@ -339,7 +339,10 @@ function renderResultGroup(selector, items, groupName) {
       var selectedClass = item.key === selectedResultKey ? 'selected' : '';
       var metaLine = "<div class='result-meta'><span>" + escapeHTML(cluster) + "</span><span> • </span><span>" + escapeHTML(describeResultLanguages(item)) + "</span></div>";
       var subtitle = item.subtitle ? "<div class='result-subtitle'>" + escapeHTML(item.subtitle) + "</div>" : '';
-      var snippet = item.snippet ? "<div class='result-snippet'>" + item.snippet + "</div>" : subtitle;
+      // Highlight fragments come back as Sefaria HTML (<b> around the match),
+      // so they are rendered rather than escaped — after the same strip the
+      // preview uses.
+      var snippet = item.snippet ? "<div class='result-snippet'>" + sanitizeSourceHtml(item.snippet) + "</div>" : subtitle;
       var titleText = (appMode === 'voices') ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
       var sefariaBtn = appMode !== 'voices' ? "<button type='button' class='result-sefaria-btn' data-ref='" + escapeHTML(item.ref) + "' aria-label='Open on Sefaria' title='Open on Sefaria'><img src='https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png' alt='' class='open-sefaria-icon'></button>" : '';
       $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(item.label || item.ref) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(item.label || item.ref) + "</div>" + sefariaBtn + "</div>" + metaLine + snippet + "</li>");

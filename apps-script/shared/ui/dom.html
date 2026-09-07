@@ -11,4 +11,89 @@
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
   }
+
+  // ---- Sefaria HTML sanitizing --------------------------------------------
+  //
+  // Sefaria's library texts legitimately carry markup (<b>, <i>, footnote
+  // <sup>/<i class="footnote">), and the preview is supposed to render it. But
+  // their server-side allowlist also permits <img src> and <a href>, so a text
+  // could reference a third-party host — which would make the reader's browser
+  // fetch it, leaking their IP and the fact that they opened that passage. The
+  // add-on's privacy policy says it contacts no host other than sefaria.org;
+  // this is what keeps that literally true.
+  //
+  // Note this is a strip, not an allowlist: everything Sefaria uses for
+  // typography survives untouched. We remove only the elements that pull in a
+  // subresource or execute, and the attributes that could carry a URL or a
+  // handler.
+
+  var SANITIZE_DROP_ELEMENTS_ = [
+    'script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base',
+    'img', 'svg', 'video', 'audio', 'source', 'track', 'form', 'input',
+    'button', 'textarea', 'select', 'template', 'noscript'
+  ].join(',');
+
+  var SANITIZE_DROP_ATTRIBUTES_ = [
+    'src', 'href', 'xlink:href', 'srcset', 'formaction', 'action',
+    'background', 'poster', 'data', 'codebase', 'style'
+  ];
+
+  /**
+   * Parse HTML into an INERT document. DOMParser does not load subresources and
+   * does not run scripts, which is the whole point — assigning to the innerHTML
+   * of a detached <div> still causes the browser to fetch any <img src> it
+   * finds, so that is not a safe way to inspect untrusted markup.
+   */
+  function parseInertHtml(html) {
+    if (typeof DOMParser === 'undefined') return null;
+    try {
+      return new DOMParser().parseFromString(String(html || ''), 'text/html');
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function sanitizeSourceHtml(html) {
+    var raw = String(html || '');
+    if (!raw) return '';
+
+    var doc = parseInertHtml(raw);
+    // No DOMParser: fall back to plain escaped text rather than trusting the
+    // markup. Losing italics is a much smaller cost than rendering it unchecked.
+    if (!doc || !doc.body) return escapeHTML(raw.replace(/<[^>]*>/g, ''));
+
+    Array.prototype.forEach.call(
+      doc.body.querySelectorAll(SANITIZE_DROP_ELEMENTS_),
+      function (node) {
+        // Keep an image's alt text so a footnote or figure caption is not
+        // silently lost; everything else goes.
+        var alt = node.tagName === 'IMG' ? String(node.getAttribute('alt') || '').trim() : '';
+        if (alt && node.parentNode) {
+          node.parentNode.replaceChild(doc.createTextNode(alt), node);
+          return;
+        }
+        if (node.parentNode) node.parentNode.removeChild(node);
+      }
+    );
+
+    // Anchors: keep what they say, drop where they point.
+    Array.prototype.forEach.call(doc.body.querySelectorAll('a'), function (anchor) {
+      var parent = anchor.parentNode;
+      if (!parent) return;
+      while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
+      parent.removeChild(anchor);
+    });
+
+    Array.prototype.forEach.call(doc.body.querySelectorAll('*'), function (element) {
+      var attributes = Array.prototype.slice.call(element.attributes || []);
+      attributes.forEach(function (attribute) {
+        var name = String(attribute.name || '').toLowerCase();
+        if (name.indexOf('on') === 0 || SANITIZE_DROP_ATTRIBUTES_.indexOf(name) >= 0) {
+          element.removeAttribute(attribute.name);
+        }
+      });
+    });
+
+    return doc.body.innerHTML;
+  }
 </script>
