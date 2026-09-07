@@ -95,6 +95,17 @@ function resolveReferenceWithFallbacks(reference, versions) {
     candidates.push(original);
   }
 
+  // Try traditional abbreviations last, after the literal forms. "Hil. Shabbat
+  // 1:1" is indexed by Sefaria as "Mishneh Torah, Hilchot Shabbat 1:1"; these
+  // expansions only ever ADD words, so they cannot silently retarget the query
+  // at a different work. See citation-abbreviations.gs.
+  const expansions = expandCitationAbbreviations_(normalized || original);
+  for (let e = 0; e < expansions.length; e++) {
+    if (candidates.indexOf(expansions[e]) < 0) {
+      candidates.push(expansions[e]);
+    }
+  }
+
   for (let i = 0; i < candidates.length; i++) {
     const resolved = findReference(candidates[i], versions, true);
     if (resolved && resolved.ref && !resolved.error) {

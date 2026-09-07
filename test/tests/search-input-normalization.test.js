@@ -85,25 +85,23 @@ test('applyConsonantClusterVoweling only touches word-initial clusters', () => {
 
 function loadSuggester(titles) {
   const html = fs.readFileSync(SEARCH_UTILS, 'utf8');
-  const names = [
-    'normalizeFuzzyText',
-    'splitReferenceForFuzzy',
-    'levenshteinDistance',
-    'isLikelyHebrewScriptInput',
-    'fuzzyTokens_',
-    'fuzzyTokenMatches_',
-    'getTokenOverlapSuggestions_',
-    'getFuzzyReferenceSuggestions',
-  ];
   const context = { console, titles, MAX_FUZZY_SUGGESTIONS: 5 };
   vm.createContext(context);
 
-  // FUZZY_STOPWORDS_ is a module-level var the functions close over.
-  const stopwords = html.match(/var FUZZY_STOPWORDS_ = \{[^}]*\};/);
-  assert.ok(stopwords, 'expected FUZZY_STOPWORDS_ in search-utils.html');
-  vm.runInContext(stopwords[0], context);
+  // Module-level constants the functions close over.
+  [/var FUZZY_STOPWORDS_ = \{[^}]*\};/, /var HILCHOT_ABBREVIATIONS_CLIENT_ = \[[^\]]*\];/]
+    .forEach((pattern) => {
+      const match = html.match(pattern);
+      assert.ok(match, `expected ${pattern} in search-utils.html`);
+      vm.runInContext(match[0], context);
+    });
 
-  names.forEach((name) => {
+  [
+    'normalizeFuzzyText', 'splitReferenceForFuzzy', 'levenshteinDistance',
+    'isLikelyHebrewScriptInput', 'canonicalizeCitationAbbreviation',
+    'fuzzyTokens_', 'fuzzyTokenMatches_', 'getTokenOverlapSuggestions_',
+    'getPartialOverlapSuggestions_', 'getFuzzyReferenceSuggestions',
+  ].forEach((name) => {
     const match = html.match(new RegExp(`function ${name}\\b[\\s\\S]*?\\n}`));
     assert.ok(match, `Could not find function ${name}`);
     vm.runInContext(match[0], context);
@@ -168,4 +166,83 @@ test('stopwords alone never match a title', () => {
   // prototype, which strict deepEqual treats as a different type.
   assert.deepEqual(Array.from(fuzzyTokens_('the a of on')), []);
   assert.deepEqual(Array.from(fuzzyTokens_('a womans commentary')), ['womans', 'commentary']);
+});
+
+// ---------------------------------------------------------------------------
+// Traditional citation forms in the suggester
+// ---------------------------------------------------------------------------
+//
+// "Hil. Avodah Zarah 12:11" is a different failure from a typo or a fragment:
+// it is a whole different naming convention. Sefaria files that section as
+// "Mishneh Torah, Hilchot Avodah Kochavim" — so "Hil." has to be canonicalized
+// before any token can match, and "Zarah" will never match "Kochavim", which is
+// why a partial-overlap pass is needed and an all-tokens pass is not enough.
+
+const RAMBAM_CATALOGUE = [
+  'Genesis',
+  'Avodah Zarah',                            // the Talmud tractate — a real title
+  'Mishna Avodah Zarah',
+  'Mishneh Torah, Hilchot Avodah Kochavim',  // what the reader actually wants
+  'Rambam, Hilchot Avodah Kochavim',         // same section, alternate name
+  'Mishneh Torah, Hilchot Shabbat',
+  'Rambam, Hilchot Shabbat',
+  'Berakhot',
+];
+
+function loadRambamSuggester() {
+  return loadSuggester(RAMBAM_CATALOGUE);
+}
+
+test('an abbreviated Rambam citation suggests the right section first', () => {
+  const { getFuzzyReferenceSuggestions } = loadRambamSuggester();
+
+  const suggestions = Array.from(getFuzzyReferenceSuggestions('Hil. Avodah Zarah 12:11'));
+
+  assert.equal(
+    suggestions[0],
+    'Mishneh Torah, Hilchot Avodah Kochavim 12:11',
+    `expected the Rambam section ranked first, got ${JSON.stringify(suggestions)}`
+  );
+});
+
+test('the Talmud tractate is still offered, just not first', () => {
+  const { getFuzzyReferenceSuggestions } = loadRambamSuggester();
+
+  // "Avodah Zarah" is a legitimate reading of the query — the reader might mean
+  // the tractate. Suppressing it would be assuming intent just as surely as
+  // ranking it first would.
+  const suggestions = Array.from(getFuzzyReferenceSuggestions('Hil. Avodah Zarah 12:11'));
+
+  assert.ok(
+    suggestions.includes('Avodah Zarah 12:11'),
+    `expected the tractate to still be offered: ${JSON.stringify(suggestions)}`
+  );
+});
+
+test('one section is never offered twice under two work names', () => {
+  const { getFuzzyReferenceSuggestions } = loadRambamSuggester();
+
+  const suggestions = Array.from(getFuzzyReferenceSuggestions('Hil. Shabbat 1:1'));
+
+  assert.deepEqual(suggestions, ['Mishneh Torah, Hilchot Shabbat 1:1']);
+});
+
+test('the partial pass does not fire when a tighter pass already matched', () => {
+  const { getFuzzyReferenceSuggestions } = loadRambamSuggester();
+
+  // "Berakhot" matches exactly, so the loose pass must stay out of the way
+  // rather than padding the list with weakly-related titles.
+  const suggestions = Array.from(getFuzzyReferenceSuggestions('Berakhos'));
+
+  assert.ok(suggestions.includes('Berakhot'), JSON.stringify(suggestions));
+  assert.ok(suggestions.length <= 2, `too loose: ${JSON.stringify(suggestions)}`);
+});
+
+test('a single shared token is not enough to suggest a title', () => {
+  const { getPartialOverlapSuggestions_ } = loadRambamSuggester();
+
+  // Otherwise every "Mishneh Torah, Hilchot ..." section surfaces for any
+  // Rambam query, which is noise dressed up as help.
+  const results = Array.from(getPartialOverlapSuggestions_('hilchot', false));
+  assert.equal(results.length, 0, JSON.stringify(results));
 });

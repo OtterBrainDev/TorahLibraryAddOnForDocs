@@ -2,6 +2,45 @@
 
 All notable changes in this fork are documented here.
 
+## Unreleased — traditional citation forms (2026-09)
+
+### Added
+
+- **Traditional Hebrew citation abbreviations now resolve.** "Hil. Shabbat 1:1"
+  is how people cite Rambam; Sefaria indexes that section as "Mishneh Torah,
+  Hilchot Shabbat" — so the literal string resolved to nothing and the failure
+  read as "Sefaria doesn't have it". `server/citation-abbreviations.gs` now
+  offers the indexed forms as additional lookup candidates, covering the 81
+  Mishneh Torah sections Sefaria registers under a `Hilchot X` title. Accepts
+  `Hil.`, `Hil`, `Hilchos`, `Hilkhot` and friends, and canonicalizes in place
+  when the reader already named the work ("Rambam, Hil. Teshuvah 3:4").
+- **A partial-overlap pass for suggestions**, used only when the exact and
+  all-tokens passes both come back empty. This is what rescues "Hil. Avodah
+  Zarah 12:11": Sefaria files that section as "Mishneh Torah, Hilchot Avodah
+  **Kochavim**", so "Zarah" can never match and no amount of string
+  normalization will find it — but "Hilchot" and "Avodah" do, which is enough to
+  offer the section and let the reader decide.
+
+### Changed
+
+- Suggestion ranking weights matches by **characters** rather than token count.
+  "Hilchot Avodah Zarah" matches two tokens against both *Avodah Zarah* (the
+  Talmud tractate) and *Mishneh Torah, Hilchot Avodah Kochavim*. Counting tokens
+  equally ranked the tractate first — the wrong work. Weighting by length lets
+  "Hilchot", the word that says which work this is, outweigh the shorter
+  "Zarah".
+- A section registered under several work names is offered once, under the name
+  Sefaria displays when you open it ("Mishneh Torah, …" rather than
+  "Rambam, …"), so the suggestion matches where the reader lands.
+
+### A note on what is deliberately NOT done
+
+Expansions may only **add** words, never drop them. "Hil. Avodah Zarah" must not
+become "Avodah Zarah", because that is a real Sefaria title — the Talmud
+tractate — and rewriting the query would resolve confidently to the wrong work.
+Queries that cannot be expanded safely fall through to suggestions instead. A
+confident wrong answer is worse than no answer.
+
 ## Unreleased — jQuery upgrade (2026-09)
 
 ### Security

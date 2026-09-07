@@ -377,6 +377,89 @@ function fuzzyTokenMatches_(queryToken, titleTokens) {
  * "The Torah: A Women's Commentary" — different first letter, and one letter
  * different in the one token that matters.
  */
+// Collapse a leading Hilchot abbreviation so it can be compared against the
+// title list. The AUTHORITATIVE expansion map (including the work prefixes used
+// for actual reference resolution) lives in server/citation-abbreviations.gs;
+// this is only the spelling normalization the client needs for MATCHING, and is
+// deliberately kept to that one job so the two cannot meaningfully drift.
+var HILCHOT_ABBREVIATIONS_CLIENT_ = [
+  'hil', 'hil.', 'hilc', 'hilch', 'hilch.', 'hilchos', 'hilchot',
+  'hilkhot', 'hilkhos', 'hilchoth', 'hilchote'
+];
+
+function canonicalizeCitationAbbreviation(value) {
+  var input = String(value || '').trim();
+  if (!input) return '';
+  return input.replace(/(^|,\s*)([A-Za-z.]+)(\s+)/, function (match, boundary, word, space) {
+    if (HILCHOT_ABBREVIATIONS_CLIENT_.indexOf(word.toLowerCase()) < 0) return match;
+    return boundary + 'Hilchot' + space;
+  });
+}
+
+/**
+ * Last-resort pass: titles sharing SOME of the query's distinctive tokens.
+ *
+ * Runs only when the exact and all-tokens passes found nothing, because it is
+ * the loosest of the three and the point is to avoid a dead end, not to guess.
+ * The bar is at least two matching distinctive tokens AND half the query
+ * covered — one shared token would surface every "Mishneh Torah, Hilchot ..."
+ * section for any Rambam query, which is noise dressed up as help.
+ *
+ * This is what rescues "Hil. Avodah Zarah 12:11": Sefaria indexes that section
+ * as "Mishneh Torah, Hilchot Avodah Kochavim", so "zarah" never matches, but
+ * "hilchot" and "avodah" do — enough to offer it and let the reader decide.
+ */
+function getPartialOverlapSuggestions_(titlePart, queryLooksHebrew) {
+  var queryTokens = fuzzyTokens_(titlePart);
+  if (queryTokens.length < 2) return [];
+
+  var results = [];
+
+  for (var i = 0; i < titles.length; i++) {
+    var rawTitle = String(titles[i] || '').trim();
+    if (!rawTitle) continue;
+    if (isLikelyHebrewScriptInput(rawTitle) !== queryLooksHebrew) continue;
+
+    var normalizedTitle = normalizeFuzzyText(rawTitle);
+    if (!normalizedTitle) continue;
+
+    var titleTokens = fuzzyTokens_(normalizedTitle);
+    if (!titleTokens.length) continue;
+
+    var matched = 0;
+    var matchedChars = 0;
+    var totalChars = 0;
+    for (var t = 0; t < queryTokens.length; t++) {
+      totalChars += queryTokens[t].length;
+      if (fuzzyTokenMatches_(queryTokens[t], titleTokens)) {
+        matched++;
+        matchedChars += queryTokens[t].length;
+      }
+    }
+
+    if (matched < 2 || (matched / queryTokens.length) < 0.5) continue;
+
+    // Score by matched CHARACTERS, not matched token count. Longer tokens are
+    // more distinctive, and counting tokens equally ranks badly in exactly the
+    // case this pass exists for: "Hilchot Avodah Zarah" matches two tokens
+    // against both "Avodah Zarah" (the Talmud tractate) and "Mishneh Torah,
+    // Hilchot Avodah Kochavim" (what the reader actually wants). Weighting by
+    // length lets "hilchot" — the word that says which work this is — outweigh
+    // the shorter "zarah", and the Rambam section ranks first.
+    results.push({
+      rawTitle: rawTitle,
+      coverage: totalChars > 0 ? (matchedChars / totalChars) : 0,
+      length: normalizedTitle.length
+    });
+  }
+
+  return results.sort(function (a, b) {
+    if (a.coverage !== b.coverage) return b.coverage - a.coverage;
+    if (a.length !== b.length) return a.length - b.length;
+    return a.rawTitle.localeCompare(b.rawTitle);
+  });
+}
+
 function getTokenOverlapSuggestions_(titlePart, queryLooksHebrew) {
   var queryTokens = fuzzyTokens_(titlePart);
   if (!queryTokens.length) return [];
@@ -419,7 +502,12 @@ function getFuzzyReferenceSuggestions(query) {
   var titlePart = normalizeFuzzyText(split.titlePart);
   if (!titlePart || titlePart.length < 2 || !Array.isArray(titles) || !titles.length) return [];
   var queryLooksHebrew = isLikelyHebrewScriptInput(split.titlePart);
-  var firstChar = titlePart.charAt(0);
+  var firstChar;
+  // Compare against the canonical spelling: "Hil. Shabbat" has to look like
+  // "Hilchot Shabbat" before any token can match a Sefaria title.
+  titlePart = normalizeFuzzyText(canonicalizeCitationAbbreviation(split.titlePart)) || titlePart;
+  firstChar = titlePart.charAt(0);
+
   var scored = titles.map(function (title) {
     var rawTitle = String(title || '').trim();
     var normalizedTitle = normalizeFuzzyText(rawTitle);
@@ -445,12 +533,54 @@ function getFuzzyReferenceSuggestions(query) {
   // matters: near-spellings of what the user typed stay first.
   scored = scored.concat(getTokenOverlapSuggestions_(titlePart, queryLooksHebrew));
 
+  // Only if both tighter passes came back empty. See getPartialOverlapSuggestions_.
+  if (!scored.length) {
+    scored = getPartialOverlapSuggestions_(titlePart, queryLooksHebrew);
+  }
+
+  // Sefaria registers the same section under several work names — "Mishneh
+  // Torah, Hilchot Shabbat" and "Rambam, Hilchot Shabbat" are one passage. Pick
+  // ONE spelling per section before deduping, preferring the name Sefaria shows
+  // when the passage is opened, so the suggestion matches what the reader lands
+  // on. Ranking alone would keep whichever happened to be shorter.
+  var PREFERRED_WORK_NAMES_ = ['mishneh torah', 'shulchan arukh'];
+  var bodyOf = function (rawTitle) {
+    var commaIndex = rawTitle.indexOf(',');
+    return commaIndex > 0 ? rawTitle.slice(commaIndex + 1).trim().toLowerCase() : '';
+  };
+  var workRankOf = function (rawTitle) {
+    var commaIndex = rawTitle.indexOf(',');
+    if (commaIndex <= 0) return PREFERRED_WORK_NAMES_.length;
+    var work = rawTitle.slice(0, commaIndex).trim().toLowerCase();
+    var rank = PREFERRED_WORK_NAMES_.indexOf(work);
+    return rank < 0 ? PREFERRED_WORK_NAMES_.length : rank;
+  };
+
+  var preferredForBody = {};
+  scored.forEach(function (entry) {
+    var body = bodyOf(entry.rawTitle);
+    if (!body) return;
+    var current = preferredForBody[body];
+    if (!current || workRankOf(entry.rawTitle) < workRankOf(current)) {
+      preferredForBody[body] = entry.rawTitle;
+    }
+  });
+
   var seen = {};
+  var seenBody = {};
   return scored.filter(function (entry) {
     var suggestion = entry.rawTitle + split.suffixPart;
     if (seen[suggestion]) return false;
     seen[suggestion] = true;
-    return suggestion.toLowerCase() !== String(query || '').trim().toLowerCase();
+    if (suggestion.toLowerCase() === String(query || '').trim().toLowerCase()) return false;
+
+    var bodyKey = bodyOf(entry.rawTitle);
+    if (bodyKey) {
+      if (seenBody[bodyKey]) return false;
+      if (preferredForBody[bodyKey] !== entry.rawTitle) return false;
+      seenBody[bodyKey] = true;
+    }
+    return true;
   }).slice(0, MAX_FUZZY_SUGGESTIONS).map(function (entry) {
     return entry.rawTitle + split.suffixPart;
   });

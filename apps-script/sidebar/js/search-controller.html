@@ -55,7 +55,9 @@ function runUnifiedQuery() {
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
   $('.input').val(input);
   var inputExpanded = expandShevaApostrophe(input);
-  var inputForNameApi = applyConsonantClusterVoweling(inputExpanded);
+  // Canonicalize traditional abbreviations before the title lookup: Sefaria's
+  // autocompleter indexes "Hilchot Shabbat", never "Hil. Shabbat".
+  var inputForNameApi = applyConsonantClusterVoweling(canonicalizeCitationAbbreviation(inputExpanded));
   var useNameApi = isLikelyTitleQuery(inputExpanded);
   clearSelectedResult();
   setResultsHint('');
