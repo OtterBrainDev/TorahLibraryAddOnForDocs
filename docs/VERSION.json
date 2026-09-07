@@ -1,0 +1,29 @@
+{
+  "_description": "Single source of truth for the add-on's version. Everything user-facing that shows a version reads from here (see `surfaces`), and `test/ui/version-manifest.test.js` fails if any of them drift. Update this file in the same commit as the release, never separately.",
+
+  "version": "2.1.0",
+  "status": "pending-release",
+  "released": null,
+  "previous": "2.0.0",
+
+  "_prefsSchemaVersion": "Must equal PREFS_SCHEMA_CURRENT_ in apps-script/migrations.gs. This is the user-data schema, not the add-on version: it only ever increases, and it increases whenever a new preference key ships. A mismatch means either a migration landed without a version bump or the reverse — both leave upgrading users in a state no migration covers.",
+  "prefsSchemaVersion": "9",
+
+  "_surfaces": "Every place the version string is shown to a user. An agent bumping the version must update all of them; the manifest test checks they agree.",
+  "surfaces": [
+    {
+      "file": "apps-script/help-modal.html",
+      "shows": "Current line: 2.1",
+      "note": "About tab meta-pill. Shows MAJOR.MINOR only — patch releases do not change it."
+    },
+    {
+      "file": "apps-script/release-notes.html",
+      "shows": "Version 2.1",
+      "note": "Shown on install and from the release-notes dialog."
+    }
+  ],
+
+  "_changelog": "docs/CHANGELOG.md must carry a heading for this version once status is 'released'. While 'pending-release' the entries live under 'Unreleased' headings and get consolidated at release time.",
+
+  "_deployment": "Apps Script has no manifest version field — appsscript.json carries no version, and `clasp push` overwrites the head deployment. This file is the only version record the project has, which is exactly why it must not drift."
+}

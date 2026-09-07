@@ -2,6 +2,19 @@
 // and the raw text endpoint. Returns payloads that downstream code
 // (text-processing.gs, insertion.gs) transforms before showing to the user.
 
+/**
+ * Canonicalize the punctuation of a reference WITHOUT discarding meaning.
+ *
+ * The rule this function follows, learned the hard way from the sheva-apostrophe
+ * bug: a normalization applied to raw user input may only make characters
+ * CONSISTENT. It may not remove a character that carries meaning — because when
+ * that guess is wrong the lookup fails silently, and "no results" reads as
+ * "Sefaria doesn't have it" rather than "we mangled your query".
+ *
+ * Anything genuinely lossy (stripping Hebrew numeral marks) is emitted as an
+ * ADDITIONAL candidate by stripHebrewNumeralMarks_ instead, so the un-mangled
+ * form is always tried too.
+ */
 function normalizeReferenceInput(reference) {
   let normalized = String(reference || '').trim();
   if (!normalized) {
@@ -9,24 +22,52 @@ function normalizeReferenceInput(reference) {
   }
 
   normalized = normalized
+    // Unify the many dash and quote characters onto one spelling each. Lossless:
+    // the character stays, only its codepoint changes.
     .replace(/[־‐-―]/g, '-')
     .replace(/[“”„‟″״]/g, '"')
     .replace(/[‘’‚‛′׳]/g, "'")
+    // Invisible bidi controls carry no reference meaning and break exact match.
     .replace(/[‎‏‪-‮]/g, '')
     .replace(/׃/g, ':')
-    .replace(/\s*[:：]\s*/g, ':')
-    .replace(/\s*[-–—]\s*/g, '-')
     .replace(/\s+/g, ' ')
     .trim();
 
-  // Normalize common Hebrew numeral punctuation: א׳:א׳-ב׳ => א:א-ב
+  // Collapse spaces around ":" and "-" ONLY between numerals — "Genesis 1:1 - 1:5"
+  // is a range and should tighten to "Genesis 1:1-1:5". An unconditional collapse
+  // also rewrote titles: "The Torah: A Women's Commentary" became
+  // "The Torah:A Women's Commentary", and "Sefer HaChinukh — Introduction" became
+  // "Sefer HaChinukh-Introduction". Neither matches anything.
   normalized = normalized
+    .replace(/([0-9\u05D0-\u05EA'"])\s*:\s*(?=[0-9\u05D0-\u05EA])/g, '$1:')
+    .replace(/([0-9\u05D0-\u05EA'"])\s*-\s*(?=[0-9\u05D0-\u05EA])/g, '$1-');
+
+  return normalized;
+}
+
+/**
+ * Hebrew numerals are written with a geresh or gershayim — א׳ for 1, ל״ב for 32.
+ * Sefaria will also accept them bare, so a stripped form is worth trying.
+ *
+ * This is NOT part of normalizeReferenceInput, because the same marks are what
+ * make a Hebrew ABBREVIATION an abbreviation: רמב״ם (Rambam) and ב״מ (Bava
+ * Metzia) become רמבם and במ, which are not words in any catalogue. Nothing
+ * distinguishes the two cases by shape — ל״ב and ב״מ are identical in form — so
+ * stripping is offered as an extra candidate rather than imposed on the query.
+ *
+ * @returns {string} the stripped form, or '' when nothing would change.
+ */
+function stripHebrewNumeralMarks_(reference) {
+  const input = String(reference || '');
+  if (!input) return '';
+
+  const stripped = input
     .replace(/([֐-׿])['"׳״]+(?=[\s:.-]|$)/g, '$1')
     .replace(/([֐-׿])['"׳״]+(?=[֐-׿])/g, '$1');
 
-  normalized = normalized.replace(/([֐-׿])\s+([֐-׿])/g, '$1 $2');
-  return normalized;
+  return stripped === input ? '' : stripped;
 }
+
 
 // Upper bound on what we will upload in one linker request. The endpoint is an
 // async task with a bounded poll window below, so an oversized body does not
@@ -100,6 +141,13 @@ function resolveReferenceWithFallbacks(reference, versions) {
   const original = String(reference || '').trim();
   if (original && candidates.indexOf(original) < 0) {
     candidates.push(original);
+  }
+
+  // Hebrew numerals also resolve without their geresh/gershayim. Tried after the
+  // faithful forms, never instead of them — see stripHebrewNumeralMarks_.
+  const stripped = stripHebrewNumeralMarks_(normalized || original);
+  if (stripped && candidates.indexOf(stripped) < 0) {
+    candidates.push(stripped);
   }
 
   // Try traditional abbreviations last, after the literal forms. "Hil. Shabbat

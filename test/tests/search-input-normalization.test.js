@@ -246,3 +246,40 @@ test('a single shared token is not enough to suggest a title', () => {
   const results = Array.from(getPartialOverlapSuggestions_('hilchot', false));
   assert.equal(results.length, 0, JSON.stringify(results));
 });
+
+// ---------------------------------------------------------------------------
+// Consonant-cluster voweling
+// ---------------------------------------------------------------------------
+//
+// "Bshalach" -> "Beshalach" is the point. But nothing distinguishes a
+// transliterated sheva from an ordinary English onset cluster by shape, so the
+// same rule produces "Pesalms" and "Setone Edition". It is therefore used as a
+// FALLBACK for the title lookup, never as the query — see the comment at its
+// call site in search-controller.html.
+
+test('consonant voweling expands transliterated sheva', () => {
+  const vowel = loadFunction('applyConsonantClusterVoweling');
+
+  assert.equal(vowel('Bshalach'), 'Beshalach');
+  assert.equal(vowel('Ktubot'), 'Ketubot');
+  assert.equal(vowel('Dvarim'), 'Devarim');
+  assert.equal(vowel('Bmidbar'), 'Bemidbar');
+});
+
+test('consonant voweling is known to over-fire on English words', () => {
+  const vowel = loadFunction('applyConsonantClusterVoweling');
+
+  // Pinned as a KNOWN LIMITATION rather than a bug: "Psalms" is one of the most
+  // searched titles in the library, and this rule mangles it. That is safe only
+  // because the lookup tries the reader's own spelling first and reaches for
+  // this form only when that returns nothing. If anyone ever makes this the
+  // primary query again, these assertions are the reason not to.
+  assert.equal(vowel('Psalms'), 'Pesalms');
+  assert.equal(vowel('Stone Edition'), 'Setone Edition');
+
+  // Digraphs and r/l clusters are already excluded.
+  assert.equal(vowel('Shema'), 'Shema');
+  assert.equal(vowel('Chanukah'), 'Chanukah');
+  assert.equal(vowel('Prayer'), 'Prayer');
+  assert.equal(vowel('Blessing'), 'Blessing');
+});

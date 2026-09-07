@@ -2,6 +2,61 @@
 
 All notable changes in this fork are documented here.
 
+> The `## Unreleased` sections below become **v2.1.0**. The version and the
+> preference-schema number live in [`docs/VERSION.json`](VERSION.json); the
+> policy for bumping them is [`docs/versioning.md`](versioning.md). At release,
+> consolidate those sections under one `## v2.1.0 — … (YYYY-MM-DD)` heading and
+> flip `status` in the manifest.
+
+## Unreleased — reference-normalization hardening, and versioning (2026-09)
+
+### Fixed
+
+A pass over every normalization applied to raw user input, prompted by the
+sheva-apostrophe bug. It was not a one-off — the same shape appeared three more
+times, each failing silently, each looking like a gap in Sefaria's library
+rather than a bug here.
+
+- **Hebrew abbreviations were destroyed.** `normalizeReferenceInput` stripped
+  gershayim from anything between two Hebrew letters, so `רמב״ם` (Rambam)
+  became `רמבם` and `ב״מ` (Bava Metzia) became `במ` — neither is a word in any
+  catalogue. The rule exists for Hebrew *numerals* (`ל״ב` = 32, which does
+  resolve bare), and nothing distinguishes a numeral from an abbreviation by
+  shape. Stripping is now offered as an **additional candidate** rather than
+  imposed on the query, so the faithful form is always tried too.
+- **English titles containing a colon or dash were rewritten.**
+  `The Torah: A Women's Commentary` became `The Torah:A Women's Commentary`,
+  and `Sefer HaChinukh — Introduction` became `Sefer HaChinukh-Introduction`.
+  The collapse has a real job — `Genesis 1:1 - 1:5` should tighten to
+  `Genesis 1:1-1:5` — so it is now confined to numerals on both sides.
+- **`Psalms` was searched for as `Pesalms`.** `applyConsonantClusterVoweling`
+  turns `Bshalach` into `Beshalach`, which is the point, but the same rule hits
+  ordinary English onsets: `Stone Edition` → `Setone Edition`. It is now a
+  **fallback** for the title lookup rather than the query — tried only when the
+  reader's own spelling returns nothing, so it can add matches but never lose
+  one.
+
+### Added
+
+- **`docs/VERSION.json`** — single source of truth for the version and the
+  preference-schema number, with `test/ui/version-manifest.test.js` enforcing
+  it against `migrations.gs`, against the existence of every migration the
+  schema claims, and against every user-facing surface that shows a version.
+  Apps Script has no version field of its own, so this is a fact the repository
+  asserts; a claim nothing checks is a claim that drifts.
+- **`docs/versioning.md`** — what bumps what, and the coupling that matters: a
+  new preference key needs a default, a migration, a schema bump, a manifest
+  bump and a version bump, all in one commit. Includes a section for AI agents.
+- **`docs/live-test-checklist-2.1.0.md`** — the manual pass, covering what the
+  119 automated tests structurally cannot: sidebar rendering, the CSP, the
+  upgrade path, and anything that needs a real `DocumentApp` or a live Sefaria
+  request.
+
+### Changed
+
+- Version set to **2.1.0** (was 2.0). Surfaces updated in `help-modal.html` and
+  `release-notes.html`.
+
 ## Unreleased — linker: recover clipped matches, separate the two failure kinds (2026-09)
 
 ### Fixed

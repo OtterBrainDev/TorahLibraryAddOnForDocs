@@ -111,7 +111,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **104 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **119 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -147,6 +147,9 @@ and in `test/ui/`:
   by hand-editing a `.snap` file.
 - `rpc-surface.test.js` — the server/client contract described in
   §Hard rules above.
+- `version-manifest.test.js` — `docs/VERSION.json` against the schema
+  version, the migrations that must exist for it, and every surface that
+  shows a version string.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy
@@ -207,6 +210,12 @@ different repo.
 - `docs/CHANGELOG.md` — user-facing changes by release.
 - `docs/architecture.md` — the server/client boundary, the include
   graph, the storage layers, the RPC surface.
+- `docs/VERSION.json` — the single source of truth for the version and
+  the preference-schema number. Enforced by
+  `test/ui/version-manifest.test.js`.
+- `docs/versioning.md` — what bumps what, and the one coupling that
+  matters: a new preference key needs a default, a migration, a schema
+  bump, a manifest bump and a version bump, all in one commit.
 - `docs/regression-log.md` — every bug that has regressed more than
   once, with the pinning test that now holds it down.
 - `docs/rpc-surface.json` — frozen server-function surface.
