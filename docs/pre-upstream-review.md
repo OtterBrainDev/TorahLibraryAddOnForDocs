@@ -17,6 +17,28 @@ the developer portal from a machine that can reach it.
 
 ---
 
+## 0. Blockers — status
+
+> **Update (2026-09):** both blockers below are resolved in code. What remains
+> is console work that cannot live in the repository —
+> see [`docs/marketplace-listing.md`](marketplace-listing.md).
+>
+> - **0.1 deploy workflow** — **resolved.** Both jobs are gated on
+>   `github.repository`, so a fork (or an upstream maintainer merging from this
+>   one) skips the deploy entirely rather than pushing into this fork's script
+>   project. A `verify` job now runs `npm ci`, `npm test` and `pre_clasp_qc.sh`,
+>   and the deploy job `needs` it. `@google/clasp` is pinned, the token goes
+>   through `env:`, and a missing `CLASP_TOKEN` fails with a clear message.
+> - **0.2 privacy policy** — **resolved in the repo.** `docs/PRIVACY.md` is
+>   written and linked from the README, from Preferences → Privacy & Document
+>   Scanning, and from Help & Support → About. The linker's upload is disclosed
+>   in the policy, in Preferences, and by a one-time confirmation before the
+>   first run — and it no longer uploads the whole document by default.
+>   **Still outstanding, and not repo work:** pasting the published policy URL
+>   into the OAuth consent screen and the Marketplace SDK listing.
+
+The original findings follow, unedited.
+
 ## 0. Blockers — resolve before pushing upstream
 
 ### 0.1 `.github/workflows/deploy.yml` must not go upstream as-is

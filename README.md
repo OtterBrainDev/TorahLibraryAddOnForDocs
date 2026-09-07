@@ -4,6 +4,20 @@ A Google Docs add-on that brings Sefaria-powered source finding, previewing, ins
 
 > This is not an official Sefaria project.
 
+## Privacy
+
+This add-on has no server of its own, no account, and no analytics. It talks to
+exactly two parties: Google (to read and edit **only** the document you have it
+open in) and Sefaria (to fetch the texts you ask for).
+
+Read the full policy: **[`docs/PRIVACY.md`](./docs/PRIVACY.md)**.
+
+The one command that sends text you did not type is **Link Texts with Sefaria**,
+which uploads document text so Sefaria's reference linker can find citations in
+it. By default only the passages that look like they contain a citation are
+uploaded — see *Preferences → Privacy & Document Scanning*, and §2.1 of the
+policy.
+
 ## Contributing (human or AI)
 
 Before editing anything beyond a typo, read **[`AGENTS.md`](./AGENTS.md)** (also duplicated as `CLAUDE.md`). It covers: what this codebase actually is, the non-negotiable rules, the anti-pattern catalog, and where the canonical documents live. Companion docs:
