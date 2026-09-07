@@ -24,11 +24,11 @@ const assert = require('node:assert/strict');
 
 const DOM_PARTIAL = path.resolve(__dirname, '../../apps-script/shared/ui/dom.html');
 
-// Node has no DOMParser, and this repo deliberately carries no npm
-// dependencies. Hand-rolling an HTML parser here would test the shim rather
-// than the sanitizer, so the behavioural tests run only when one is present
-// (`npm i -D linkedom`); the policy tests below and the no-DOMParser fallback
-// test run unconditionally.
+// Node has no DOMParser, so `linkedom` provides one as a devDependency. It is
+// the ONLY dependency in the repo and it is test-only — the add-on itself ships
+// no packages (see AGENTS.md: Apps Script has no module loader). The behavioural
+// tests skip rather than fail if it is ever missing, so a fresh checkout that
+// has not run `npm ci` still gets the policy tests and the fallback test.
 let DOMParserImpl = null;
 try {
   // eslint-disable-next-line global-require
@@ -196,4 +196,30 @@ describeDom('handles empty and non-string input', () => {
   assert.equal(sanitizeSourceHtml(''), '');
   assert.equal(sanitizeSourceHtml(null), '');
   assert.equal(sanitizeSourceHtml(undefined), '');
+});
+
+describeDom('a stray </body> cannot smuggle an element past the sweep', () => {
+  const { sanitizeSourceHtml } = load();
+
+  // Content is wrapped in <body> before parsing so the parse is deterministic
+  // across DOM implementations. That wrapper is closeable from inside the
+  // input, which could hoist later nodes out of body — so the strip runs over
+  // the whole document, and the output is read from body alone.
+  const out = sanitizeSourceHtml('ok</body><img src="https://evil.example/p.png"><script>x=1</script>');
+
+  assert.ok(!out.includes('evil.example'), `leaked a URL: ${out}`);
+  assert.ok(!/<(img|script)\b/i.test(out), `kept a tag: ${out}`);
+  assert.ok(out.includes('ok'), `lost the real text: ${out}`);
+});
+
+describeDom('an empty parse result is not mistaken for successful sanitizing', () => {
+  const { sanitizeSourceHtml } = load();
+
+  // The failure that motivated the wrapper: a parser that drops a bare fragment
+  // returns an empty document, and every "did it strip X?" assertion passes
+  // trivially while the content is simply gone. Non-empty input must survive.
+  const out = sanitizeSourceHtml('plain text with <b>emphasis</b>');
+
+  assert.ok(out.includes('plain text'), `content was discarded: ${out}`);
+  assert.ok(out.includes('<b>'), `formatting was discarded: ${out}`);
 });

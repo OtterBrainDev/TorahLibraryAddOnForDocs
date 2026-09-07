@@ -47,7 +47,15 @@
   function parseInertHtml(html) {
     if (typeof DOMParser === 'undefined') return null;
     try {
-      return new DOMParser().parseFromString(String(html || ''), 'text/html');
+      // Wrap explicitly rather than relying on the parser inserting an implicit
+      // <body> around a bare fragment. Browsers do that per spec; not every
+      // DOM implementation does, and a parser that skips it silently returns an
+      // EMPTY document — which would make this function look like it sanitized
+      // the content when it had in fact discarded all of it.
+      return new DOMParser().parseFromString(
+        '<html><body>' + String(html || '') + '</body></html>',
+        'text/html'
+      );
     } catch (error) {
       return null;
     }
@@ -62,8 +70,12 @@
     // markup. Losing italics is a much smaller cost than rendering it unchecked.
     if (!doc || !doc.body) return escapeHTML(raw.replace(/<[^>]*>/g, ''));
 
+    // Sweep the whole document, not only body. A stray "</body>" in the input
+    // can push later nodes out of body in some parsers; stripping document-wide
+    // means such a node is removed no matter where it landed, and the output
+    // below is still read from body alone.
     Array.prototype.forEach.call(
-      doc.body.querySelectorAll(SANITIZE_DROP_ELEMENTS_),
+      doc.querySelectorAll(SANITIZE_DROP_ELEMENTS_),
       function (node) {
         // Keep an image's alt text so a footnote or figure caption is not
         // silently lost; everything else goes.
@@ -77,14 +89,14 @@
     );
 
     // Anchors: keep what they say, drop where they point.
-    Array.prototype.forEach.call(doc.body.querySelectorAll('a'), function (anchor) {
+    Array.prototype.forEach.call(doc.querySelectorAll('a'), function (anchor) {
       var parent = anchor.parentNode;
       if (!parent) return;
       while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
       parent.removeChild(anchor);
     });
 
-    Array.prototype.forEach.call(doc.body.querySelectorAll('*'), function (element) {
+    Array.prototype.forEach.call(doc.querySelectorAll('*'), function (element) {
       var attributes = Array.prototype.slice.call(element.attributes || []);
       attributes.forEach(function (attribute) {
         var name = String(attribute.name || '').toLowerCase();

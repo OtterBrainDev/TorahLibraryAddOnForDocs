@@ -18,12 +18,21 @@ fixed more than once.
   is not a Node module format.
 - **Not** a web app, not a Node.js project, not a generic JavaScript
   library. Web-app assumptions (NPM deps, `require('./file.gs')`,
-  ES modules, bundlers) do not apply.
+  ES modules, bundlers) do not apply **to the add-on**: Apps Script has
+  no module loader, and nothing under `apps-script/` may depend on a
+  package.
+- The one exception is the **test harness**. `linkedom` is a
+  devDependency supplying the `DOMParser` that Node lacks, which the
+  HTML-sanitizer tests need. It is test-only, never shipped (`clasp`
+  pushes `rootDir: apps-script` and `node_modules/` is git-ignored), and
+  the tests skip rather than fail when it is absent. Run `npm ci` before
+  `npm test` on a fresh checkout. Adding a *second* dependency deserves
+  the same scrutiny as the first.
 
 ## Hard rules (violating these has broken production)
 
 1. **Never add a new top-level preference key without adding a default
-   to the `SETTINGS` defaults block in `Code.gs` _and_ a migration
+   to the `getDefaultPreferences()` block in `apps-script/server/preferences.gs` _and_ a migration
    entry in `apps-script/migrations.gs`.** Existing users upgrade in
    place; a new opt-in flag defaulting to `false` silently disables
    behavior they had before. This was the root cause of the divine-name
@@ -40,7 +49,8 @@ fixed more than once.
    `loadAppsScriptFiles` pattern in `test/tests/hebrew-preferences.test.js`.
 4. **Never store a credential in `PropertiesService`.** If ephemeral
    is sufficient, use `CacheService.getUserCache()` — the existing
-   session-state helpers at `Code.gs:getSidebarSessionState` show the
+   session-state helpers at
+   `apps-script/server/preferences.gs:getSidebarSessionState` show the
    pattern. If persistent storage is genuinely required, it belongs
    server-side (i.e. not in the add-on), bound to a real account.
    See `docs/ai-lesson/DESIGN.md` for the longer argument.
@@ -97,25 +107,47 @@ dated list. Short form of the worst offenders:
 ## How to run tests locally
 
 ```bash
+npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: 30 passing, 0 failing. If anything is red, stop and fix it
-before touching the feature you came to change. `npm test` runs:
+Expected: **104 passing, 0 failing, 0 skipped**. A *skipped* count above
+zero usually means `npm ci` has not been run and the sanitizer tests are
+sitting out — treat that as red, not as a pass. If anything is red, stop
+and fix it before touching the feature you came to change.
 
-- `test/tests/attribution.test.js` — attribution-line formatting.
-- `test/tests/hebrew-preferences.test.js` — Hebrew display filters,
-  divine-name replacements, transliteration, search payload shape.
-- `test/ui/include-wiring.test.js` — every entry template pulls in
-  the expected partials.
-- `test/ui/js-contracts.test.js` — each JS partial defines the
-  functions it claims to own.
-- `test/ui/selector-contracts.test.js` — DOM ids the server RPC
-  depends on still exist in the rendered HTML.
-- `test/ui/template-snapshots.test.js` — byte-for-byte snapshots of
-  the four entry templates. Update via `UPDATE_UI_SNAPSHOTS=1 npm test`.
-- `test/ui/rpc-surface.test.js` — the server/client contract
-  described in §Hard rules above.
+`npm test` runs, in `test/tests/`:
+
+- `attribution.test.js` — attribution-line formatting.
+- `hebrew-preferences.test.js` — Hebrew display filters, divine-name
+  replacements, transliteration, search payload shape.
+- `migrations.test.js` — the UserProperties schema migrations.
+- `extended-gemara.test.js`, `format-data-for-pesukim.test.js` — the
+  regressions named in `docs/regression-log.md`.
+- `search-input-normalization.test.js` — query normalization and the
+  zero-result suggester.
+- `citation-abbreviations.test.js` — traditional citation forms
+  ("Hil. Shabbat 1:1").
+- `linker-prefilter.test.js` — what leaves the machine, and offset
+  mapping back onto the document.
+- `linker-classify.test.js` — which citation becomes a link, a
+  question, or a counted failure.
+- `sanitize-source-html.test.js` — the Sefaria-HTML strip.
+
+and in `test/ui/`:
+
+- `include-wiring.test.js` — every entry template pulls in the expected
+  partials.
+- `js-contracts.test.js` — each JS partial defines the functions it
+  claims to own.
+- `selector-contracts.test.js` — DOM ids the server RPC depends on
+  still exist in the rendered HTML.
+- `template-snapshots.test.js` — byte-for-byte snapshots of the entry
+  templates. Update via `UPDATE_UI_SNAPSHOTS=1 npm test`, and **never**
+  by hand-editing a `.snap` file.
+- `rpc-surface.test.js` — the server/client contract described in
+  §Hard rules above.
+- `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy
 

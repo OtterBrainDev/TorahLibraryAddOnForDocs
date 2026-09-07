@@ -52,6 +52,9 @@ jobs:
       # environment: whatever `clasp push` uploads is live for everyone on
       # their next document open. These are the same checks CI runs on every
       # branch; running them here too is what makes the deploy gate real.
+      - name: Install test dependencies
+        run: npm ci
+
       - name: Run Node test suite
         run: npm test
 
