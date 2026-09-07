@@ -478,6 +478,14 @@
         preferenceObject[el.name] = el.checked;
       });
 
+      // A native colour input cannot hold "no colour", but "" is exactly what
+      // we need to store for "leave the document's own formatting alone".
+      // `data-unset` carries that state alongside the picker's value.
+      document.querySelectorAll('input[type="color"]').forEach(function(el) {
+        if (!el.name) return;
+        preferenceObject[el.name] = el.dataset.unset === 'true' ? '' : el.value;
+      });
+
       document.querySelectorAll('input[type="text"], input[type="number"], input[type="hidden"]').forEach(function(el) {
         if (!el.name) return;
         if (el.dataset.customFor) return;
@@ -487,10 +495,52 @@
       return preferenceObject;
     }
 
+    /**
+     * Set a colour field from a stored preference. An empty stored value means
+     * "inherit the document's own colour", which a native <input type=color>
+     * has no way to represent — so the state lives in data-unset and the field
+     * is visually muted.
+     */
+    function setColorFieldValue(el, storedValue) {
+      var value = String(storedValue == null ? '' : storedValue).trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+        el.value = value.toLowerCase();
+        el.dataset.unset = 'false';
+      } else {
+        el.dataset.unset = 'true';
+      }
+      el.closest('.color-control').classList.toggle('is-unset', el.dataset.unset === 'true');
+    }
+
+    function bindColorControls() {
+      document.querySelectorAll('input[type="color"]').forEach(function(el) {
+        if (!el.name) return;
+        if (!el.dataset.unset) setColorFieldValue(el, '');
+        el.addEventListener('input', function() {
+          el.dataset.unset = 'false';
+          el.closest('.color-control').classList.remove('is-unset');
+        });
+      });
+
+      document.querySelectorAll('[data-color-clear]').forEach(function(button) {
+        button.addEventListener('click', function() {
+          var target = byId(button.dataset.colorClear);
+          if (!target) return;
+          setColorFieldValue(target, '');
+        });
+      });
+    }
+
     function applyPreferencesToForm(preferences) {
       try {
               document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
                 el.checked = preferences[el.name] == 'true' || preferences[el.name] === true;
+              });
+
+              document.querySelectorAll('input[type="color"]').forEach(function(el) {
+                if (!el.name) return;
+                var stored = preferences[el.name];
+                setColorFieldValue(el, stored);
               });
 
               document.querySelectorAll('select').forEach(function(el) {
@@ -550,7 +600,7 @@
 
               ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size'].forEach(normalizeFontSizeField);
 
-              ['hebrew_font_style','translation_font_style','transliteration_font_style','source_title_font_style','sefaria_link_font_style'].forEach(function(id) {
+              ['hebrew_font_style','translation_font_style','transliteration_font_style','source_title_font_style','sefaria_link_font_style','emphasis_bold_style','emphasis_italic_style'].forEach(function(id) {
                 const input = byId(id);
                 if (input && !input.value) input.value = 'normal';
                 applyStyleControlState(id);
@@ -613,6 +663,10 @@
     bindStyleControl('transliteration_font_style', 'transliteration_preview');
     bindStyleControl('source_title_font_style', 'source_title_preview');
     bindStyleControl('sefaria_link_font_style', 'sefaria_link_preview');
+    // Emphasis mapping has no live preview element; bindStyleControl tolerates
+    // a missing previewId and just keeps the button state in sync.
+    bindStyleControl('emphasis_bold_style', null);
+    bindStyleControl('emphasis_italic_style', null);
 
     enhanceNativeSelect([
       'select#hebrew_font',
@@ -953,6 +1007,7 @@
     initPrefButtonGroups();
     initPrefTranslitDropdown();
     initWorkflowTabs();
+    bindColorControls();
     _initPreferencesCompositionCard();
     loadPreferencesIntoForm();
   });

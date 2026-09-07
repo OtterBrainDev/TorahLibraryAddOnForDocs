@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '5';
+var PREFS_SCHEMA_CURRENT_ = '9';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -30,27 +30,78 @@ function runUserPreferenceMigrationsIfNeeded_() {
     return false;
   }
 
-  if (!current) {
+  // Compare numerically against the version the user is ON, so each migration
+  // states the single fact that matters ("run this when coming from below N").
+  // The previous form chained `current !== '4' && current !== '5'` guards,
+  // which happened to work but had to be edited in two places for every new
+  // version — and silently re-ran the newest migration for any version above
+  // it. Absent/unparseable version means "oldest": run everything.
+  var from = Number(current);
+  if (!isFinite(from)) {
+    from = 0;
+  }
+
+  // v1 -> v2: cover opt-in gates added by the rewrite that turned existing
+  // behavior off for upgraders.
+  if (from < 2) {
     migrateToV2_(userProperties);
   }
   // v2 -> v3: AI feature was detached; remove any stored AI state.
-  if (current !== '3' && current !== '4') {
+  if (from < 3) {
     migrateToV3_(userProperties);
   }
-  // v3 -> v4: introduces `link_sources_insert_after_linking` (new
-  // behavior for the Link Texts with Sefaria quick action). The
-  // default is intentionally `false` because this is a NEW feature,
-  // not a gate on existing behavior — existing users keep their
-  // current "link only" behavior unchanged. We still record the
-  // explicit value so the stored state and code default stay aligned.
-  if (current !== '4' && current !== '5') {
+  // v3 -> v4: introduces `link_sources_insert_after_linking` (new behavior for
+  // the Link Texts with Sefaria quick action). The default is intentionally
+  // `false` because this is a NEW feature, not a gate on existing behavior —
+  // existing users keep their current "link only" behavior unchanged. We still
+  // record the explicit value so stored state and the code default stay aligned.
+  if (from < 4) {
     migrateToV4_(userProperties);
   }
-  // v4 -> v5: introduces `insert_from_selection_at_top`. Defaults to
-  // false — this is a new UI preference, not a gate on existing
-  // behavior, so existing users keep the current menu layout unchanged.
-  if (current !== '5') {
+  // v4 -> v5: introduces `insert_from_selection_at_top`. Defaults to false —
+  // a new UI preference, not a gate on existing behavior, so existing users
+  // keep the current menu layout unchanged.
+  if (from < 5) {
     migrateToV5_(userProperties);
+  }
+  // v5 -> v6: introduces `preserve_source_emphasis`, defaulting to TRUE. This
+  // one is a gate on behavior the source intended and the add-on was
+  // destroying, so upgraders get it ON — the same reasoning as the v2
+  // divine-name migration, and the reason it is not a `false` opt-in.
+  if (from < 6) {
+    migrateToV6_(userProperties);
+  }
+  // v6 -> v7: introduces `linker_scan_mode`, defaulting to "candidates".
+  //
+  // This one DOES change existing behavior: "Link Texts with Sefaria" used to
+  // upload the whole document body, and upgraders will now upload only the
+  // windows that look like references. That is a deliberate privacy decision
+  // rather than a new feature gate — uploading a user's entire document was
+  // never disclosed to them — and the trade-off (slightly lower recall on
+  // unusual citation forms) is reversible from Preferences. Called out loudly
+  // in docs/CHANGELOG.md.
+  if (from < 7) {
+    migrateToV7_(userProperties);
+  }
+  // v7 -> v8: per-role text/background colour, plus the emphasis mapping.
+  // Every one of these is a no-op default (no colour; emphasis renders as
+  // itself), so nothing changes for anyone until they open Preferences. The
+  // migration exists because hard rule #1 requires every new key to have one,
+  // and because writing the values explicitly keeps stored state and code
+  // defaults from drifting.
+  if (from < 8) {
+    migrateToV8_(userProperties);
+  }
+  // v8 -> v9: introduces `linker_review_mode`, defaulting to "summary".
+  //
+  // This changes behaviour for existing users, deliberately. The published
+  // add-on links the first candidate of an ambiguous citation without saying
+  // so — an arbitrary choice presented as a result. "summary" keeps every
+  // unambiguous link automatic and only asks about the genuine ties, so the
+  // interruption is proportional to the actual uncertainty. "quiet" restores
+  // the old non-interactive flow (now with honest counts).
+  if (from < 9) {
+    migrateToV9_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -100,6 +151,82 @@ function migrateToV4_(userProperties) {
 function migrateToV5_(userProperties) {
   if (userProperties.getProperty('insert_from_selection_at_top') == null) {
     userProperties.setProperty('insert_from_selection_at_top', 'false');
+  }
+  return true;
+}
+
+/**
+ * V6: introduces `preserve_source_emphasis`. Sefaria's own markup carries
+ * meaning — the Steinsaltz Talmud bolds the Talmud's words to separate them
+ * from Steinsaltz's interpolated explanation — and the insertion path was
+ * flattening it. Existing users get `true`, because the emphasis was always
+ * meant to be there; the previous behavior was a bug, not a preference.
+ */
+function migrateToV6_(userProperties) {
+  if (userProperties.getProperty('preserve_source_emphasis') == null) {
+    userProperties.setProperty('preserve_source_emphasis', 'true');
+  }
+  return true;
+}
+
+/**
+ * V7: introduces `linker_scan_mode`. See the driver comment above for why the
+ * default is "candidates" rather than preserving the old whole-document upload.
+ */
+function migrateToV7_(userProperties) {
+  if (userProperties.getProperty('linker_scan_mode') == null) {
+    userProperties.setProperty('linker_scan_mode', 'candidates');
+  }
+  return true;
+}
+
+/**
+ * V8: per-role colour/background, and the source-emphasis mapping.
+ *
+ * Colour defaults are the EMPTY STRING, which every consumer reads as "leave
+ * the document's own formatting alone". Defaulting to "#000000" would force
+ * black text on every existing user, including anyone using a themed or dark
+ * document — a silent, document-wide restyle on upgrade.
+ */
+function migrateToV8_(userProperties) {
+  var noOpDefaults = {
+    hebrew_font_color: '',
+    hebrew_font_background: '',
+    translation_font_color: '',
+    translation_font_background: '',
+    transliteration_font_color: '',
+    transliteration_font_background: '',
+    source_title_font_color: '',
+    source_title_font_background: '',
+    sefaria_link_font_color: '',
+    sefaria_link_font_background: '',
+    // Identity mapping: bold renders as bold, italic as italic. Same as the
+    // behavior shipped with the v6 preserve-emphasis fix.
+    emphasis_bold_style: 'bold',
+    emphasis_bold_color: '',
+    emphasis_bold_background: '',
+    emphasis_bold_font: '',
+    emphasis_italic_style: 'italic',
+    emphasis_italic_color: '',
+    emphasis_italic_background: '',
+    emphasis_italic_font: ''
+  };
+
+  for (var key in noOpDefaults) {
+    if (userProperties.getProperty(key) == null) {
+      userProperties.setProperty(key, noOpDefaults[key]);
+    }
+  }
+  return true;
+}
+
+/**
+ * V9: introduces `linker_review_mode`. See the driver comment for why the
+ * default is "summary" rather than preserving the silent first-candidate pick.
+ */
+function migrateToV9_(userProperties) {
+  if (userProperties.getProperty('linker_review_mode') == null) {
+    userProperties.setProperty('linker_review_mode', 'summary');
   }
   return true;
 }

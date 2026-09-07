@@ -176,7 +176,7 @@ function insertLexiconEntry(lexiconPayload) {
   if (includeHeadword && headWord) {
     const titleParagraph = body.insertParagraph(index, headWord);
     titleParagraph.setHeading(DocumentApp.ParagraphHeading.HEADING3);
-    applyTypographyToParagraph(titleParagraph, typography.hebrewFont, typography.hebrewFontSize, typography.hebrewFontStyle);
+    applyRoleTypography_(titleParagraph, typography, 'hebrew');
     index++;
   }
 
@@ -184,12 +184,12 @@ function insertLexiconEntry(lexiconPayload) {
     const metaParts = [alternates, morphology, lexiconName].filter(Boolean);
     if (metaParts.length) {
       const metaParagraph = body.insertParagraph(index, metaParts.join(' · '));
-      applyTypographyToParagraph(metaParagraph, typography.translationFont, typography.translationFontSize, 'italic');
+      applyRoleTypography_(metaParagraph, typography, 'translation', { style: 'italic' });
       index++;
     }
   } else if (insertMode === 'headword' && lexiconName) {
     const sourceParagraph = body.insertParagraph(index, lexiconName);
-    applyTypographyToParagraph(sourceParagraph, typography.translationFont, typography.translationFontSize, 'italic');
+    applyRoleTypography_(sourceParagraph, typography, 'translation', { style: 'italic' });
     index++;
   }
 
@@ -197,7 +197,7 @@ function insertLexiconEntry(lexiconPayload) {
     const definitionText = extractLexiconSnippet_(lexiconPayload.content, 2000);
     if (definitionText) {
       const defParagraph = body.insertParagraph(index, definitionText);
-      applyTypographyToParagraph(defParagraph, typography.translationFont, typography.translationFontSize, typography.translationFontStyle);
+      applyRoleTypography_(defParagraph, typography, 'translation');
       index++;
     }
   }

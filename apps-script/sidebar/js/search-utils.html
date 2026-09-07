@@ -86,8 +86,21 @@ function normalizeUnifiedReferenceInput(value) {
 }
 
 function expandShevaApostrophe(str) {
-  // Converts sheva-apostrophe transliteration to vocalized form: P'sukei → Pesukei, D'Zimra → Dezimra
-  return String(str || '').replace(/([^aeiouAEIOU\s\d])'([^'\s])/g, '$1e$2');
+  // Converts sheva-apostrophe transliteration to vocalized form: P'sukei → Pesukei, D'Zimra → Dezimra.
+  //
+  // The apostrophe must follow a WORD-INITIAL run of 1-2 consonants, which is the
+  // only shape a transliterated sheva takes (P', B', D', K', L', M', Sh', Ch', Tz').
+  // Without that anchor the rule also fired on English possessives and
+  // contractions — "A Woman's Commentary" became "A Womanes Commentary" and
+  // "don't" became "donet" — which poisoned every downstream search path,
+  // because `inputExpanded` feeds the name API, the direct-ref lookup and the
+  // content search alike. See docs/regression-log.md.
+  return String(str || '').replace(
+    /(^|[\s"'“”‘’([{\-])([bcdfghjklmnpqrstvwxyz]{1,2})'(?=[A-Za-z])/gi,
+    function (match, boundary, consonants) {
+      return boundary + consonants + 'e';
+    }
+  );
 }
 
 function applyConsonantClusterVoweling(str) {
@@ -199,8 +212,12 @@ function parseSefariaUrlInput(inputValue) {
     return null;
   }
 
-  var host = (parsedUrl.hostname || '').toLowerCase();
-  if (host.indexOf('sefaria.org') < 0) return null;
+  // Substring matching here would accept sefaria.org.evil.example and
+  // notsefaria.org.attacker.net. Require the host to BE sefaria.org or a
+  // genuine subdomain of it.
+  var host = (parsedUrl.hostname || '').toLowerCase().replace(/\.$/, '');
+  if (host !== 'sefaria.org' && host.slice(-12) !== '.sefaria.org') return null;
+  if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') return null;
 
   var path = (parsedUrl.pathname || '').replace(/^\/+/, '');
   if (!path) return null;
@@ -316,12 +333,181 @@ function levenshteinDistance(a, b) {
   return matrix[b.length][a.length];
 }
 
+// Tokens that carry no discriminating power in a Sefaria title. Dropping them
+// stops "A ... Commentary" from matching on "a" alone.
+var FUZZY_STOPWORDS_ = { a: true, an: true, the: true, of: true, on: true, to: true, in: true, and: true };
+
+function fuzzyTokens_(normalizedText) {
+  return String(normalizedText || '')
+    .split(/[^0-9a-zא-ת]+/)
+    .filter(function (token) {
+      return token && token.length >= 2 && !FUZZY_STOPWORDS_[token];
+    });
+}
+
+/**
+ * Does `titleTokens` contain something close enough to `queryToken`?
+ * Exact match, a prefix of at least 4 characters, or a single-character typo.
+ */
+function fuzzyTokenMatches_(queryToken, titleTokens) {
+  for (var i = 0; i < titleTokens.length; i++) {
+    var titleToken = titleTokens[i];
+    if (titleToken === queryToken) return true;
+    if (queryToken.length >= 4 && titleToken.indexOf(queryToken) === 0) return true;
+    if (titleToken.length >= 4 && queryToken.indexOf(titleToken) === 0) return true;
+    // "woman" vs "women" — a single substitution, which is exactly the kind of
+    // near-miss that used to produce a dead end.
+    if (Math.abs(titleToken.length - queryToken.length) <= 1 &&
+        queryToken.length >= 4 &&
+        levenshteinDistance(queryToken, titleToken) <= 1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Second pass over the title list: titles that contain EVERY significant token
+ * of the query, in any position and any order.
+ *
+ * The original pass only considered titles starting with the same letter as the
+ * query, which is right for typos ("Bereshit" → "Bereshit") but leaves a dead
+ * end whenever the user types a fragment from the middle of a title. Searching
+ * "A Woman's Commentary" found nothing, because the catalogue entry is
+ * "The Torah: A Women's Commentary" — different first letter, and one letter
+ * different in the one token that matters.
+ */
+// Collapse a leading Hilchot abbreviation so it can be compared against the
+// title list. The AUTHORITATIVE expansion map (including the work prefixes used
+// for actual reference resolution) lives in server/citation-abbreviations.gs;
+// this is only the spelling normalization the client needs for MATCHING, and is
+// deliberately kept to that one job so the two cannot meaningfully drift.
+var HILCHOT_ABBREVIATIONS_CLIENT_ = [
+  'hil', 'hil.', 'hilc', 'hilch', 'hilch.', 'hilchos', 'hilchot',
+  'hilkhot', 'hilkhos', 'hilchoth', 'hilchote'
+];
+
+function canonicalizeCitationAbbreviation(value) {
+  var input = String(value || '').trim();
+  if (!input) return '';
+  return input.replace(/(^|,\s*)([A-Za-z.]+)(\s+)/, function (match, boundary, word, space) {
+    if (HILCHOT_ABBREVIATIONS_CLIENT_.indexOf(word.toLowerCase()) < 0) return match;
+    return boundary + 'Hilchot' + space;
+  });
+}
+
+/**
+ * Last-resort pass: titles sharing SOME of the query's distinctive tokens.
+ *
+ * Runs only when the exact and all-tokens passes found nothing, because it is
+ * the loosest of the three and the point is to avoid a dead end, not to guess.
+ * The bar is at least two matching distinctive tokens AND half the query
+ * covered — one shared token would surface every "Mishneh Torah, Hilchot ..."
+ * section for any Rambam query, which is noise dressed up as help.
+ *
+ * This is what rescues "Hil. Avodah Zarah 12:11": Sefaria indexes that section
+ * as "Mishneh Torah, Hilchot Avodah Kochavim", so "zarah" never matches, but
+ * "hilchot" and "avodah" do — enough to offer it and let the reader decide.
+ */
+function getPartialOverlapSuggestions_(titlePart, queryLooksHebrew) {
+  var queryTokens = fuzzyTokens_(titlePart);
+  if (queryTokens.length < 2) return [];
+
+  var results = [];
+
+  for (var i = 0; i < titles.length; i++) {
+    var rawTitle = String(titles[i] || '').trim();
+    if (!rawTitle) continue;
+    if (isLikelyHebrewScriptInput(rawTitle) !== queryLooksHebrew) continue;
+
+    var normalizedTitle = normalizeFuzzyText(rawTitle);
+    if (!normalizedTitle) continue;
+
+    var titleTokens = fuzzyTokens_(normalizedTitle);
+    if (!titleTokens.length) continue;
+
+    var matched = 0;
+    var matchedChars = 0;
+    var totalChars = 0;
+    for (var t = 0; t < queryTokens.length; t++) {
+      totalChars += queryTokens[t].length;
+      if (fuzzyTokenMatches_(queryTokens[t], titleTokens)) {
+        matched++;
+        matchedChars += queryTokens[t].length;
+      }
+    }
+
+    if (matched < 2 || (matched / queryTokens.length) < 0.5) continue;
+
+    // Score by matched CHARACTERS, not matched token count. Longer tokens are
+    // more distinctive, and counting tokens equally ranks badly in exactly the
+    // case this pass exists for: "Hilchot Avodah Zarah" matches two tokens
+    // against both "Avodah Zarah" (the Talmud tractate) and "Mishneh Torah,
+    // Hilchot Avodah Kochavim" (what the reader actually wants). Weighting by
+    // length lets "hilchot" — the word that says which work this is — outweigh
+    // the shorter "zarah", and the Rambam section ranks first.
+    results.push({
+      rawTitle: rawTitle,
+      coverage: totalChars > 0 ? (matchedChars / totalChars) : 0,
+      length: normalizedTitle.length
+    });
+  }
+
+  return results.sort(function (a, b) {
+    if (a.coverage !== b.coverage) return b.coverage - a.coverage;
+    if (a.length !== b.length) return a.length - b.length;
+    return a.rawTitle.localeCompare(b.rawTitle);
+  });
+}
+
+function getTokenOverlapSuggestions_(titlePart, queryLooksHebrew) {
+  var queryTokens = fuzzyTokens_(titlePart);
+  if (!queryTokens.length) return [];
+
+  var results = [];
+
+  for (var i = 0; i < titles.length; i++) {
+    var rawTitle = String(titles[i] || '').trim();
+    if (!rawTitle) continue;
+    if (isLikelyHebrewScriptInput(rawTitle) !== queryLooksHebrew) continue;
+
+    var normalizedTitle = normalizeFuzzyText(rawTitle);
+    if (!normalizedTitle) continue;
+
+    var titleTokens = fuzzyTokens_(normalizedTitle);
+    if (!titleTokens.length) continue;
+
+    var allMatched = true;
+    for (var t = 0; t < queryTokens.length; t++) {
+      if (!fuzzyTokenMatches_(queryTokens[t], titleTokens)) {
+        allMatched = false;
+        break;
+      }
+    }
+    if (!allMatched) continue;
+
+    // Prefer the tightest title that still covers the query: "The Torah: A
+    // Women's Commentary" beats a 200-character sub-reference of it.
+    results.push({ rawTitle: rawTitle, score: normalizedTitle.length - titlePart.length });
+  }
+
+  return results.sort(function (a, b) {
+    if (a.score !== b.score) return a.score - b.score;
+    return a.rawTitle.localeCompare(b.rawTitle);
+  });
+}
+
 function getFuzzyReferenceSuggestions(query) {
   var split = splitReferenceForFuzzy(query);
   var titlePart = normalizeFuzzyText(split.titlePart);
   if (!titlePart || titlePart.length < 2 || !Array.isArray(titles) || !titles.length) return [];
   var queryLooksHebrew = isLikelyHebrewScriptInput(split.titlePart);
-  var firstChar = titlePart.charAt(0);
+  var firstChar;
+  // Compare against the canonical spelling: "Hil. Shabbat" has to look like
+  // "Hilchot Shabbat" before any token can match a Sefaria title.
+  titlePart = normalizeFuzzyText(canonicalizeCitationAbbreviation(split.titlePart)) || titlePart;
+  firstChar = titlePart.charAt(0);
+
   var scored = titles.map(function (title) {
     var rawTitle = String(title || '').trim();
     var normalizedTitle = normalizeFuzzyText(rawTitle);
@@ -342,12 +528,59 @@ function getFuzzyReferenceSuggestions(query) {
     return a.rawTitle.localeCompare(b.rawTitle);
   });
 
+  // The same-first-letter pass above handles typos. Append the token-overlap
+  // pass so a fragment from the middle of a title is not a dead end. Order
+  // matters: near-spellings of what the user typed stay first.
+  scored = scored.concat(getTokenOverlapSuggestions_(titlePart, queryLooksHebrew));
+
+  // Only if both tighter passes came back empty. See getPartialOverlapSuggestions_.
+  if (!scored.length) {
+    scored = getPartialOverlapSuggestions_(titlePart, queryLooksHebrew);
+  }
+
+  // Sefaria registers the same section under several work names — "Mishneh
+  // Torah, Hilchot Shabbat" and "Rambam, Hilchot Shabbat" are one passage. Pick
+  // ONE spelling per section before deduping, preferring the name Sefaria shows
+  // when the passage is opened, so the suggestion matches what the reader lands
+  // on. Ranking alone would keep whichever happened to be shorter.
+  var PREFERRED_WORK_NAMES_ = ['mishneh torah', 'shulchan arukh'];
+  var bodyOf = function (rawTitle) {
+    var commaIndex = rawTitle.indexOf(',');
+    return commaIndex > 0 ? rawTitle.slice(commaIndex + 1).trim().toLowerCase() : '';
+  };
+  var workRankOf = function (rawTitle) {
+    var commaIndex = rawTitle.indexOf(',');
+    if (commaIndex <= 0) return PREFERRED_WORK_NAMES_.length;
+    var work = rawTitle.slice(0, commaIndex).trim().toLowerCase();
+    var rank = PREFERRED_WORK_NAMES_.indexOf(work);
+    return rank < 0 ? PREFERRED_WORK_NAMES_.length : rank;
+  };
+
+  var preferredForBody = {};
+  scored.forEach(function (entry) {
+    var body = bodyOf(entry.rawTitle);
+    if (!body) return;
+    var current = preferredForBody[body];
+    if (!current || workRankOf(entry.rawTitle) < workRankOf(current)) {
+      preferredForBody[body] = entry.rawTitle;
+    }
+  });
+
   var seen = {};
+  var seenBody = {};
   return scored.filter(function (entry) {
     var suggestion = entry.rawTitle + split.suffixPart;
     if (seen[suggestion]) return false;
     seen[suggestion] = true;
-    return suggestion.toLowerCase() !== String(query || '').trim().toLowerCase();
+    if (suggestion.toLowerCase() === String(query || '').trim().toLowerCase()) return false;
+
+    var bodyKey = bodyOf(entry.rawTitle);
+    if (bodyKey) {
+      if (seenBody[bodyKey]) return false;
+      if (preferredForBody[bodyKey] !== entry.rawTitle) return false;
+      seenBody[bodyKey] = true;
+    }
+    return true;
   }).slice(0, MAX_FUZZY_SUGGESTIONS).map(function (entry) {
     return entry.rawTitle + split.suffixPart;
   });
@@ -355,19 +588,36 @@ function getFuzzyReferenceSuggestions(query) {
 
 function renderFuzzySuggestions(query) {
   var suggestions = getFuzzyReferenceSuggestions(query);
-  if (!suggestions.length) return;
-  var html = "<div class='results-suggestion-wrap'><div class='results-suggestion-title'>Did you mean</div><div class='results-suggestion-buttons'>" + suggestions.map(function (suggestion) {
+  if (!suggestions.length) return false;
+  // Every value is escaped with escapeHTML before it reaches setResultsHint,
+  // which renders HTML; suggestions come from the Sefaria title list, and the
+  // query is user input.
+  var html = "<div class='results-suggestion-wrap'><div class='results-suggestion-title'>No exact match. Related entries in the library:</div><div class='results-suggestion-buttons'>" + suggestions.map(function (suggestion) {
     return "<button type='button' class='results-suggestion-button' data-suggested-query='" + escapeHTML(suggestion) + "'>" + escapeHTML(suggestion) + "</button>";
   }).join('') + "</div></div>";
   setResultsHint(html, true);
+  return true;
 }
 
 function maybeShowZeroResultsSuggestions(input) {
   var hasRawResults = getAllRawResults().length > 0;
   var currentHint = $.trim($('.results-hint').text());
-  if (!hasRawResults && !currentHint) {
-    renderFuzzySuggestions(input);
-  }
+  if (hasRawResults || currentHint) return;
+
+  // Offer near matches from the title list rather than leaving a blank panel.
+  // These are real catalogue entries, so each one resolves — but they are
+  // presented as suggestions to click, never auto-selected, because a fuzzy
+  // match is a guess about intent and the user is the one who knows.
+  if (renderFuzzySuggestions(input)) return;
+
+  // Nothing close enough to suggest. Say so, and say what tends to work,
+  // instead of rendering an empty results area.
+  setResultsHint(
+    "<div class='results-suggestion-wrap'><div class='results-suggestion-title'>No results for &ldquo;" +
+    escapeHTML(String(input || '')) +
+    "&rdquo;</div><div class='results-suggestion-note'>Try a book name on its own (Berakhot), a reference (Genesis 1:1), or a phrase from the text itself.</div></div>",
+    true
+  );
 }
 
 function describeResultLanguages(item) {

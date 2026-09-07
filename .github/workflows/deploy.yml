@@ -1,32 +1,107 @@
 name: Deploy to Apps Script
 
+# Deployment is fork-local infrastructure, not part of the add-on.
+#
+# `.clasp.json` pins ONE Apps Script project (this fork's). Anyone who forks
+# this repository — including an upstream maintainer merging a PR from it —
+# would otherwise inherit a workflow that tries to push their code into this
+# fork's script project. The `if:` guard on the job below is what stops that:
+# the job is skipped entirely unless it is running in the repository that owns
+# the script ID. Forks see a skipped job, never a wrong or failing deploy.
+#
+# If you fork this repo and want your own deploys, change DEPLOY_REPOSITORY to
+# your own `owner/name` and set the CLASP_TOKEN secret.
+
 on:
   push:
     branches:
       - master
-      - claude/appscript-github-sync-EOqjD
+  workflow_dispatch:
+
+env:
+  # The only repository allowed to deploy. Must match the owner of the
+  # scriptId in .clasp.json.
+  DEPLOY_REPOSITORY: OtterBrainDev/TorahLibraryAddOnForDocs
+  # Pinned deliberately. The token conversion below emits clasp's v2
+  # `.clasprc.json` shape; installing "latest" silently moves to clasp 3.x,
+  # which expects a different credential format, and the deploy fails at the
+  # push step with an unhelpful auth error.
+  CLASP_VERSION: 2.4.2
+
+# Never let two deploys race into the same Apps Script project.
+concurrency:
+  group: apps-script-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  deploy:
+  verify:
+    # Gate the whole pipeline, not just the push step, so a fork does no work.
+    if: github.repository == 'OtterBrainDev/TorahLibraryAddOnForDocs'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: "22"
+
+      # The add-on ships to tens of thousands of users and there is no staging
+      # environment: whatever `clasp push` uploads is live for everyone on
+      # their next document open. These are the same checks CI runs on every
+      # branch; running them here too is what makes the deploy gate real.
+      - name: Install test dependencies
+        run: npm ci
+
+      - name: Run Node test suite
+        run: npm test
+
+      - name: Run pre-clasp QC on apps-script/
+        run: bash pre_clasp_qc.sh apps-script
+
+  deploy:
+    needs: verify
+    if: github.repository == 'OtterBrainDev/TorahLibraryAddOnForDocs'
+    runs-on: ubuntu-latest
+    environment: apps-script-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check deploy credentials are configured
+        env:
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
+        run: |
+          if [ -z "${CLASP_TOKEN}" ]; then
+            echo "::error::CLASP_TOKEN secret is not set. Add it in Settings → Secrets and variables → Actions, or disable this workflow."
+            exit 1
+          fi
+          echo "CLASP_TOKEN is present."
 
       - name: Install clasp
-        run: npm install -g @google/clasp
+        run: npm install -g "@google/clasp@${CLASP_VERSION}"
 
       - name: Authenticate with Google
+        env:
+          # Passed through the environment rather than interpolated into the
+          # script body, so the value never becomes part of the command line.
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
         run: |
-          echo "${{ secrets.CLASP_TOKEN }}" | base64 -d > ~/.clasprc_v3.json
+          set -euo pipefail
+          umask 077
+          printf '%s' "${CLASP_TOKEN}" | base64 -d > "${HOME}/.clasprc_v3.json"
           python3 <<'PY'
           import json, os
+
           home = os.path.expanduser('~')
           with open(f'{home}/.clasprc_v3.json') as f:
               v3 = json.load(f)
+
           tok = v3['tokens']['default']
           v2 = {
               "token": {
@@ -45,11 +120,20 @@ jobs:
               "isLocalCreds": False
           }
           v2['token'] = {k: v for k, v in v2['token'].items() if v is not None}
+
           with open(f'{home}/.clasprc.json', 'w') as f:
               json.dump(v2, f)
-          print('Converted v3 → v2 format. Token keys:', list(v2['token'].keys()))
+
+          # Key names only — never values.
+          print('Converted v3 -> v2 credential format. Token keys:', sorted(v2['token']))
           PY
-          chmod 600 ~/.clasprc.json
-      
+          chmod 600 "${HOME}/.clasprc.json"
+          rm -f "${HOME}/.clasprc_v3.json"
+
+      - name: Confirm the target script project
+        run: |
+          set -euo pipefail
+          echo "Deploying to scriptId: $(python3 -c "import json;print(json.load(open('.clasp.json'))['scriptId'])")"
+
       - name: Push to Apps Script
         run: clasp push -f

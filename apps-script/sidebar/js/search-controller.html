@@ -55,7 +55,17 @@ function runUnifiedQuery() {
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
   $('.input').val(input);
   var inputExpanded = expandShevaApostrophe(input);
-  var inputForNameApi = applyConsonantClusterVoweling(inputExpanded);
+  // Canonicalize traditional abbreviations before the title lookup: Sefaria's
+  // autocompleter indexes "Hilchot Shabbat", never "Hil. Shabbat".
+  // The title lookup is tried with the reader's own spelling first, and only
+  // falls back to the voweled form. applyConsonantClusterVoweling turns
+  // "Bshalach" into "Beshalach", which is the point — but it also turns
+  // "Psalms" into "Pesalms" and "Stone Edition" into "Setone Edition", because
+  // nothing distinguishes a transliterated sheva from an ordinary English onset
+  // cluster by shape. Used as a FALLBACK it can only add matches; used as the
+  // query it silently loses one of the most-searched titles in the library.
+  var inputForNameApi = canonicalizeCitationAbbreviation(inputExpanded);
+  var inputForNameApiFallback = applyConsonantClusterVoweling(inputForNameApi);
   var useNameApi = isLikelyTitleQuery(inputExpanded);
   clearSelectedResult();
   setResultsHint('');
@@ -214,28 +224,48 @@ function runUnifiedQuery() {
   }).findSearchAdvanced(inputExpanded, searchParameters);
 
   if (useNameApi) {
-    google.script.run.withSuccessHandler(function(nameCandidates) {
-      if (requestId !== latestQueryRequestId) return;
-      var nameMatches = (Array.isArray(nameCandidates) ? nameCandidates : [])
-        .filter(function(c) { return nameCandidatePassesFullQueryGuard(c, inputExpanded); })
-        .map(function(c, idx) {
-          return {
-            key: 'name-candidate-' + idx + '-' + c,
-            ref: c,
-            label: c,
-            subtitle: 'Title match',
-            typeLabel: 'Library',
-            hasTranslation: true,
-            availableLangs: []
-          };
-        });
-      queryState.rawLibraryMatches = nameMatches.concat(queryState.rawLibraryMatches).slice(0, 10);
-      reprocessAndRenderResults();
-      finishResultGroup();
-    }).withFailureHandler(function() {
-      if (requestId !== latestQueryRequestId) return;
-      finishResultGroup();
-    }).getNameCandidates(inputForNameApi);
+    requestNameCandidates(inputForNameApi, function (candidates) {
+      if (candidates.length || inputForNameApiFallback === inputForNameApi) {
+        applyNameCandidates(candidates);
+        return;
+      }
+      // Nothing matched the reader's spelling; try the voweled form before
+      // giving up. Two calls only in the miss case, one in the hit case.
+      requestNameCandidates(inputForNameApiFallback, applyNameCandidates);
+    });
+  }
+
+  function requestNameCandidates(query, done) {
+    google.script.run
+      .withSuccessHandler(function (candidates) {
+        if (requestId !== latestQueryRequestId) return;
+        done(Array.isArray(candidates) ? candidates : []);
+      })
+      .withFailureHandler(function () {
+        if (requestId !== latestQueryRequestId) return;
+        finishResultGroup();
+      })
+      .getNameCandidates(query);
+  }
+
+  function applyNameCandidates(candidates) {
+    if (requestId !== latestQueryRequestId) return;
+    var nameMatches = candidates
+      .filter(function(c) { return nameCandidatePassesFullQueryGuard(c, inputExpanded); })
+      .map(function(c, idx) {
+        return {
+          key: 'name-candidate-' + idx + '-' + c,
+          ref: c,
+          label: c,
+          subtitle: 'Title match',
+          typeLabel: 'Library',
+          hasTranslation: true,
+          availableLangs: []
+        };
+      });
+    queryState.rawLibraryMatches = nameMatches.concat(queryState.rawLibraryMatches).slice(0, 10);
+    reprocessAndRenderResults();
+    finishResultGroup();
   }
 }
 

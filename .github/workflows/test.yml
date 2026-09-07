@@ -15,6 +15,13 @@ jobs:
         with:
           node-version: "22"
 
+      # linkedom is the repo's only dependency and it is test-only: it supplies
+      # the DOMParser that Node lacks, which the sanitizer tests need. Without
+      # this step those assertions skip rather than fail, so CI would go green
+      # without ever having run them.
+      - name: Install test dependencies
+        run: npm ci
+
       - name: Run Node test suite
         run: npm test
 

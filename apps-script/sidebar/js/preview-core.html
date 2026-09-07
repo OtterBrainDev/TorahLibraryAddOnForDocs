@@ -152,27 +152,29 @@ function renderPreviewHTML(dataIn, inputTitle) {
   var mode = $('.output-mode-selection').val();
   var layout = $('.bilingual-layout-selection').val() || 'he-right';
 
+  // Sefaria's markup is rendered, not escaped — footnotes and emphasis are the
+  // point of the preview — but it is stripped of anything that would load a
+  // subresource or execute first. See sanitizeSourceHtml in shared/ui/dom.
+  var heHtml = sanitizeSourceHtml(dataIn.he) || '<p class="preview-state-message">No source text available.</p>';
+  var enHtml = sanitizeSourceHtml(dataIn.text) || '<p class="preview-state-message">No translation text available.</p>';
+
   if (mode === 'he') {
     return buildPreviewMeta(dataIn.heRef, dataIn) +
-      "<div class='preview-he'>" +
-      (dataIn.he || '<p class="preview-state-message">No source text available.</p>') +
-      "</div>";
+      "<div class='preview-he'>" + heHtml + "</div>";
   }
 
   if (mode === 'en') {
     return buildPreviewMeta(dataIn.ref, inputTitle) +
-      "<div>" +
-      (dataIn.text || '<p class="preview-state-message">No translation text available.</p>') +
-      "</div>";
+      "<div>" + enHtml + "</div>";
   }
 
-  var englishCell = "<td>" + buildPreviewMeta(dataIn.ref, inputTitle) + (dataIn.text || '<p class="preview-state-message">No translation text available.</p>') + "</td>";
-  var hebrewCell = "<td class='preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + (dataIn.he || '<p class="preview-state-message">No source text available.</p>') + "</td>";
+  var englishCell = "<td>" + buildPreviewMeta(dataIn.ref, inputTitle) + enHtml + "</td>";
+  var hebrewCell = "<td class='preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + heHtml + "</td>";
 
   if (layout === 'he-top') {
     return "<div class='preview-stack'>" +
-      "<div class='preview-stack-block preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + (dataIn.he || '<p class="preview-state-message">No source text available.</p>') + "</div>" +
-      "<div class='preview-stack-block'>" + buildPreviewMeta(dataIn.ref, inputTitle) + (dataIn.text || '<p class="preview-state-message">No translation text available.</p>') + "</div>" +
+      "<div class='preview-stack-block preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + heHtml + "</div>" +
+      "<div class='preview-stack-block'>" + buildPreviewMeta(dataIn.ref, inputTitle) + enHtml + "</div>" +
       "</div>";
   }
 
@@ -182,6 +184,7 @@ function renderPreviewHTML(dataIn, inputTitle) {
 
   return "<table class='preview-table'><tr>" + englishCell + hebrewCell + "</tr></table>";
 }
+
 
 function updateSuggestion(dataIn, inputTitle) {
   // Reset selection-order tracking whenever the version UI is fully rebuilt for a new result/version.

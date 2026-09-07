@@ -2,6 +2,422 @@
 
 All notable changes in this fork are documented here.
 
+> The `## Unreleased` sections below become **v2.1.0**. The version and the
+> preference-schema number live in [`docs/VERSION.json`](VERSION.json); the
+> policy for bumping them is [`docs/versioning.md`](versioning.md). At release,
+> consolidate those sections under one `## v2.1.0 — … (YYYY-MM-DD)` heading and
+> flip `status` in the manifest.
+
+## Unreleased — reference-normalization hardening, and versioning (2026-09)
+
+### Fixed
+
+A pass over every normalization applied to raw user input, prompted by the
+sheva-apostrophe bug. It was not a one-off — the same shape appeared three more
+times, each failing silently, each looking like a gap in Sefaria's library
+rather than a bug here.
+
+- **Hebrew abbreviations were destroyed.** `normalizeReferenceInput` stripped
+  gershayim from anything between two Hebrew letters, so `רמב״ם` (Rambam)
+  became `רמבם` and `ב״מ` (Bava Metzia) became `במ` — neither is a word in any
+  catalogue. The rule exists for Hebrew *numerals* (`ל״ב` = 32, which does
+  resolve bare), and nothing distinguishes a numeral from an abbreviation by
+  shape. Stripping is now offered as an **additional candidate** rather than
+  imposed on the query, so the faithful form is always tried too.
+- **English titles containing a colon or dash were rewritten.**
+  `The Torah: A Women's Commentary` became `The Torah:A Women's Commentary`,
+  and `Sefer HaChinukh — Introduction` became `Sefer HaChinukh-Introduction`.
+  The collapse has a real job — `Genesis 1:1 - 1:5` should tighten to
+  `Genesis 1:1-1:5` — so it is now confined to numerals on both sides.
+- **`Psalms` was searched for as `Pesalms`.** `applyConsonantClusterVoweling`
+  turns `Bshalach` into `Beshalach`, which is the point, but the same rule hits
+  ordinary English onsets: `Stone Edition` → `Setone Edition`. It is now a
+  **fallback** for the title lookup rather than the query — tried only when the
+  reader's own spelling returns nothing, so it can add matches but never lose
+  one.
+
+### Added
+
+- **`docs/VERSION.json`** — single source of truth for the version and the
+  preference-schema number, with `test/ui/version-manifest.test.js` enforcing
+  it against `migrations.gs`, against the existence of every migration the
+  schema claims, and against every user-facing surface that shows a version.
+  Apps Script has no version field of its own, so this is a fact the repository
+  asserts; a claim nothing checks is a claim that drifts.
+- **`docs/versioning.md`** — what bumps what, and the coupling that matters: a
+  new preference key needs a default, a migration, a schema bump, a manifest
+  bump and a version bump, all in one commit. Includes a section for AI agents.
+- **`docs/live-test-checklist-2.1.0.md`** — the manual pass, covering what the
+  119 automated tests structurally cannot: sidebar rendering, the CSP, the
+  upgrade path, and anything that needs a real `DocumentApp` or a live Sefaria
+  request.
+
+### Changed
+
+- Version set to **2.1.0** (was 2.0). Surfaces updated in `help-modal.html` and
+  `release-notes.html`.
+
+## Unreleased — linker: recover clipped matches, separate the two failure kinds (2026-09)
+
+### Fixed
+
+- **The pre-filter was discarding matches it could have placed exactly.** When a
+  citation ran past the end of its scan window, the mapper dropped it. But
+  Sefaria routinely includes trailing whitespace in a citation's character
+  range, and the separator joining scan windows *is* whitespace — so in those
+  cases the citation sat entirely inside one window and was recoverable. The
+  mapper now clamps the overrun to the window boundary and places the link.
+  Only an overrun that reaches real text in a *later* window is refused, and
+  that refusal is correct: such a "match" is text stitched together from two
+  non-adjacent parts of the document, so no contiguous span of the document
+  contains it and linking it would hyperlink the wrong words.
+
+### Changed
+
+- **"Could not be placed" is now reported separately from "could not be
+  resolved."** They are different problems with different remedies:
+  *unresolved* means Sefaria could not identify the source, and *unplaceable*
+  means the citation was recognised but fell across a gap in the partial scan.
+  Only the second has an action the reader can take, so the message now names
+  it: switch **Document scanning** to **Whole document**. Lumping them together
+  hid an actionable failure inside an unactionable count.
+
+### A note on why these are not offered in the review table
+
+An unplaceable match has no document text to hyperlink — that is precisely what
+makes it unplaceable. Putting it in the review table would ask the reader to
+choose a destination for a phrase that does not exist anywhere in their
+document as written. Counting it and naming the remedy is the useful answer.
+
+## Unreleased — linker review and ambiguity resolution (2026-09)
+
+### Added
+
+- **"Link Texts with Sefaria" now shows what it is doing and asks when it isn't
+  sure.** The command opens a dialog immediately, so a multi-second scan shows a
+  progress state instead of only Google's generic "running script" toast. When
+  the scan finishes it presents a three-column review: a checkbox, the exact
+  words in your document that will become the hyperlink, and the Sefaria
+  reference it will point to — as a dropdown whenever there is more than one
+  candidate, each with the reference's Hebrew title and an excerpt so you can
+  tell them apart before applying anything.
+- **New `linker_review_mode` preference** (Preferences → Privacy & Document
+  Scanning → *After linking*):
+  - **Show a summary, and ask about ambiguous citations** (default) — links
+    everything unambiguous automatically, and only asks about genuine ties.
+  - **Show every match for review** — lists them all before anything is applied.
+  - **Just link and report a count** — never interrupts; skips ambiguous
+    citations rather than guessing.
+
+### Fixed
+
+- **Ambiguous citations were resolved silently, to an arbitrary destination.**
+  The previous code took `refs[0]` for every match. Sefaria returns those
+  candidates *unranked* — `is_ambiguous` is binary, with no confidence score —
+  so "the first one" was not a best guess, it was the first item in a list.
+  Ambiguous citations are now surfaced rather than guessed at, and the candidate
+  order shown is Sefaria's own, with no ranking invented on top.
+- **Unresolvable citations vanished without a word.** "Linked 4 references" was
+  the entire report whether 4 or 40 citations had been found. Every category
+  that cannot become a link — unresolvable, out-of-range, or straddling two
+  pre-filter windows — is now counted and reported.
+
+### Changed
+
+- Existing users are migrated to `summary` (schema v9). This changes behaviour
+  deliberately: the published add-on's silent first-candidate pick presented an
+  arbitrary choice as a result. `summary` keeps every unambiguous link
+  automatic, so the interruption is proportional to the actual uncertainty;
+  **Just link and report a count** restores the non-interactive flow, now with
+  honest counts.
+- `/api/find-refs` is called with `with_text=1&max_segments=1`, so candidate
+  excerpts arrive in the same request — the preview costs no extra round-trip.
+- `findRefsInDocumentText` returns `{results, refData}` rather than a bare
+  results array.
+- New RPCs `scanDocumentForReferences` (read-only) and `applyLinkerDecisions`,
+  registered in `docs/rpc-surface.json`. Splitting scan from apply is what
+  allows the dialog to open before the work starts.
+
+## Unreleased — traditional citation forms (2026-09)
+
+### Added
+
+- **Traditional Hebrew citation abbreviations now resolve.** "Hil. Shabbat 1:1"
+  is how people cite Rambam; Sefaria indexes that section as "Mishneh Torah,
+  Hilchot Shabbat" — so the literal string resolved to nothing and the failure
+  read as "Sefaria doesn't have it". `server/citation-abbreviations.gs` now
+  offers the indexed forms as additional lookup candidates, covering the 81
+  Mishneh Torah sections Sefaria registers under a `Hilchot X` title. Accepts
+  `Hil.`, `Hil`, `Hilchos`, `Hilkhot` and friends, and canonicalizes in place
+  when the reader already named the work ("Rambam, Hil. Teshuvah 3:4").
+- **A partial-overlap pass for suggestions**, used only when the exact and
+  all-tokens passes both come back empty. This is what rescues "Hil. Avodah
+  Zarah 12:11": Sefaria files that section as "Mishneh Torah, Hilchot Avodah
+  **Kochavim**", so "Zarah" can never match and no amount of string
+  normalization will find it — but "Hilchot" and "Avodah" do, which is enough to
+  offer the section and let the reader decide.
+
+### Changed
+
+- Suggestion ranking weights matches by **characters** rather than token count.
+  "Hilchot Avodah Zarah" matches two tokens against both *Avodah Zarah* (the
+  Talmud tractate) and *Mishneh Torah, Hilchot Avodah Kochavim*. Counting tokens
+  equally ranked the tractate first — the wrong work. Weighting by length lets
+  "Hilchot", the word that says which work this is, outweigh the shorter
+  "Zarah".
+- A section registered under several work names is offered once, under the name
+  Sefaria displays when you open it ("Mishneh Torah, …" rather than
+  "Rambam, …"), so the suggestion matches where the reader lands.
+
+### A note on what is deliberately NOT done
+
+Expansions may only **add** words, never drop them. "Hil. Avodah Zarah" must not
+become "Avodah Zarah", because that is a real Sefaria title — the Talmud
+tractate — and rewriting the query would resolve confidently to the wrong work.
+Queries that cannot be expanded safely fall through to suggestions instead. A
+confident wrong answer is worse than no answer.
+
+## Unreleased — jQuery upgrade (2026-09)
+
+### Security
+
+- **jQuery upgraded from 1.9.1 (2013) to 3.7.1, pinned with Subresource
+  Integrity** and loaded over an explicit `https://` rather than a
+  protocol-relative URL. 1.9.1 carries known XSS-relevant advisories, and it is
+  the code interpreting every `$(...).html()` call in the add-on — jQuery's
+  `.html()` executes script elements in the markup it is handed, which plain
+  `innerHTML` does not, so the version implementing it matters more than the
+  call count alone suggests.
+- The integrity hash was computed from the bytes `ajax.googleapis.com` actually
+  serves rather than copied from a published list, and CORS was confirmed
+  (`Access-Control-Allow-Origin: *`) so SRI can be enforced. **If the hash is
+  wrong, jQuery does not load and the sidebar is inert** — re-verify it, never
+  guess it, when bumping the version.
+
+### Migration notes
+
+The codebase was audited for APIs removed between 1.9 and 3.x — `.andSelf`,
+`.size`, `.live`/`.die`, the `.load`/`.unload`/`.error` shorthands,
+`$.browser`, two-argument `.toggle` — and none were in use. The single
+`:visible` selector (`shared/composition-card/shared.html`) is safe: jQuery 3
+widened that test rather than narrowing it, and the element it guards is a
+`<div>` with initial text, so it always has a layout box.
+
+**This one wants a real sidebar before the Marketplace push.** The audit is
+static; a 14-year version jump deserves the sidebar, preferences dialog, and
+Voices/Lexicon tabs each opened once. It is deliberately its own commit so it
+can be reverted independently of the sanitizer and CSP work.
+
+## Unreleased — preview hardening (2026-09)
+
+### Security
+
+- **Sefaria HTML is stripped of subresource-loading markup before it is
+  rendered.** Sefaria bleaches text records on save, so event handlers and
+  `javascript:` URLs cannot reach the add-on — but their allowlist does permit
+  `<img src>` and `<a href>`. A text naming a third-party host would make the
+  reader's browser fetch it, leaking an IP and the fact that a particular
+  passage was opened. New `sanitizeSourceHtml()` removes elements that fetch a
+  subresource or execute, unwraps anchors (keeping their words), keeps an
+  `<img alt>` as text, and strips `on*` and URL-bearing attributes. It is a
+  strip, not an allowlist: `b`, `i`, `em`, `strong`, `sup`, `sub`, `span`,
+  `br`, and the `class`/`dir` attributes that footnotes and RTL runs depend on
+  all pass through untouched.
+- Applied at the three places raw Sefaria HTML reached the DOM: the text
+  preview, the Elasticsearch highlight snippets in the results list, and
+  `extractTextFromHtml_`.
+- **`extractTextFromHtml_` was making a network request.** It assigned
+  untrusted markup to a detached `<div>`'s `innerHTML` to read its plain text —
+  and a detached div still causes the browser to fetch any `<img src>` in the
+  markup. It now parses into an inert `DOMParser` document.
+- **Content Security Policy** added to the shared head partial, restricting
+  `img-src` to sefaria.org, the-merkaz.org and Google's own hosts, plus
+  `object-src 'none'` and `base-uri 'self'`. It deliberately does **not** set
+  `default-src` or `script-src`: HtmlService injects its own bootstrap and the
+  `google.script.run` bridge, and a script-src that missed one of them would
+  silently break the server bridge rather than fail loudly. This is the backstop
+  for any render path added later that forgets to sanitize.
+
+## Unreleased — formatting control and search recovery (2026-08)
+
+### Added
+
+- **Text colour and highlight for every insertion role.** Hebrew, translation,
+  transliteration, source title and hyperlink each gain a colour and a
+  highlight control in Preferences → Fonts. Both default to *unset*, meaning
+  "leave the document's own formatting alone" — a native colour input cannot
+  express that, so the state is carried alongside the picker and shown as a
+  muted field with an **Auto** / **None** button. Defaulting these to
+  `#000000` would have silently restyled every existing user's documents,
+  including anyone working in a themed or dark document.
+- **Advanced: map the source's emphasis to your own formatting**
+  (Preferences → Source Emphasis). Sefaria's bold and italic no longer have to
+  render as bold and italic. Each channel maps independently to any
+  combination of bold / italic / underline, a text colour, a highlight, and a
+  font override — so the Steinsaltz Talmud's bolding can come through as, say,
+  blue text if that matches your document's conventions. Turning every option
+  off in a card drops that emphasis entirely. Defaults are the identity
+  mapping, so nothing changes until you touch it.
+- **Zero-result searches now suggest related catalogue entries.** Searching
+  something the library does not match exactly offers up to five real titles
+  to click, instead of an empty panel. When nothing is close enough to
+  suggest, the panel says so and names the query shapes that work rather than
+  rendering blank.
+
+### Fixed
+
+- **"Did you mean" never fired for a fragment from the middle of a title.**
+  The suggester only considered titles beginning with the same letter as the
+  query — right for typos, useless for fragments. Searching *A Woman's
+  Commentary* offered nothing, because the catalogue entry is *The Torah: A
+  Women's Commentary*: different first letter, and one letter different in the
+  token that matters. A second token-overlap pass now matches titles
+  containing every significant word of the query, tolerating a one-character
+  difference per token and ignoring stopwords. Suggestions remain suggestions —
+  they are never auto-selected.
+
+### Changed
+
+- All typography now flows through a role-based helper
+  (`applyRoleTypography_`), so colour and background reach every insertion
+  path — texts, source sheets and lexicon entries alike — rather than only the
+  ones that happened to be updated. `getTypographySettings()` gained a `roles`
+  map; the previous flat keys are kept as aliases.
+- Suggestion cap raised from 3 to 5.
+
+## Unreleased — privacy, emphasis, and search fixes (2026-08)
+
+### Added
+
+- **Privacy policy** (`docs/PRIVACY.md`), linked from Preferences and from
+  Help & Support → About. Documents every scope, everything sent to Sefaria,
+  and the fact that the add-on has no server, no analytics, and no account.
+- **Preferences → Privacy & Document Scanning.** New `linker_scan_mode`
+  setting controlling how much of your document "Link Texts with Sefaria"
+  uploads.
+- **Client-side linker pre-filter** (`apps-script/server/linker-prefilter.gs`).
+  The document is now scanned locally first; only passages that could contain
+  a citation — a known Sefaria book title, a chapter:verse number, a Talmudic
+  daf, or a Hebrew abbreviation — are uploaded, with padding for context.
+  Prose containing no citation never leaves the document.
+- **First-run disclosure** before "Link Texts with Sefaria" uploads anything,
+  naming which scan mode is active. Shown once, then remembered.
+- **Preferences → Source Emphasis** toggle (`preserve_source_emphasis`).
+
+### Fixed
+
+- **Search returned nothing for titles containing an apostrophe.**
+  `expandShevaApostrophe` rewrote every consonant-apostrophe pair, so
+  "A Woman's Commentary" was searched for as "A Womanes Commentary" — and the
+  same mangled string was used for the /api/name lookup, the direct-reference
+  resolve and the content search, so all three failed at once. The rule now
+  only fires on a word-initial 1-2 consonant cluster, which is the only shape
+  a transliterated sheva takes. "P'sukei D'Zimra" → "Pesukei DeZimra" still
+  works; "Jacob's Ladder" and "don't" are left alone.
+- **Inserted text lost the source's bold and italics.**
+  `applyTypographyToParagraph` blanket-cleared bold/italic across the whole
+  paragraph right after `insertRichTextFromHTML` had set it per-run from
+  Sefaria's markup. This destroyed, among others, the Steinsaltz Talmud's
+  bolding of the Talmud's own words against Steinsaltz's interpolated
+  explanation. Emphasis is now captured before the baseline style is applied
+  and re-asserted after it, so your font-style preference sets the baseline
+  and the source's emphasis layers on top. Titles and metadata lines
+  deliberately do not preserve — their emphasis is the add-on's, not the
+  source's.
+- Text following an unclosed `<b>`/`<i>` in Sefaria markup no longer loses its
+  emphasis (`insertRichTextFromHTML` forced the trailing run to un-emphasized
+  instead of using the live state).
+- Hebrew single-language insertion applied `nullStyle` (which carries
+  `BOLD=false`) *after* the text was inserted, unlike every other body path.
+  Moved to the empty paragraph, matching the others.
+- **No size guard on the linker upload.** A document over 100,000 characters
+  silently timed out and reported "0 references". It now fails with an
+  explicit message naming the limit.
+
+### Changed — read this one
+
+- **"Link Texts with Sefaria" no longer uploads your whole document by
+  default.** Existing users are migrated to `linker_scan_mode: "candidates"`
+  (schema v7). This is a deliberate privacy decision, not a new feature gate:
+  the whole-document upload was never disclosed to users. The trade-off is
+  slightly lower recall on unusual citation forms the local scan does not
+  recognize. **Preferences → Privacy & Document Scanning → Whole document**
+  restores the previous behavior exactly.
+- `preserve_source_emphasis` defaults to `true` and is migrated ON for
+  existing users (schema v6), because the previous flattening was a bug rather
+  than a preference.
+- CI deploy workflow (`.github/workflows/deploy.yml`) rebuilt: the job is now
+  gated on `github.repository`, so a fork — including an upstream maintainer
+  merging from this one — never attempts to deploy into this fork's Apps
+  Script project. It also runs `npm test` and `pre_clasp_qc.sh` in a separate
+  `verify` job before the deploy job runs, pins `@google/clasp` (the token
+  conversion targets clasp 2.x, and "latest" silently moved to 3.x), passes
+  the token via `env:`, adds a concurrency group, and fails with a clear
+  message when `CLASP_TOKEN` is unset. The stale personal branch trigger is
+  gone; `workflow_dispatch` replaces it.
+- `test/tests/migrations.test.js` reads `PREFS_SCHEMA_CURRENT_` from the
+  source instead of hardcoding it in five assertions.
+
+## Unreleased — pre-upstream review pass (2026-08)
+
+A safety/sanity review ahead of proposing this fork upstream. No feature
+changes; the Sefaria API surface, OAuth scopes, and a full code review are
+summarized in `docs/pre-upstream-review.md`.
+
+### Fixed
+
+- `releaseNotesPopup()` called `SpreadsheetApp.getUi()` in a Docs-only add-on.
+  Dead code today (nothing calls it), but it would have thrown on first use and
+  is the only reference in the project that could cause a Sheets OAuth scope to
+  be inferred. Now `DocumentApp.getUi()`.
+- Enabling **Pin "Insert from Selection" at top of menu** showed the menu item
+  twice; the unconditional copy is now suppressed when the item is pinned.
+- `htmlToPlainText_()` (source-sheet rendering) decoded HTML entities *before*
+  stripping tags, so an escaped `a &lt; b` decoded to `a < b` and was then eaten
+  by the tag-stripper. Tags are stripped first now, and `&amp;` is decoded last
+  so `&amp;lt;` no longer double-decodes.
+- `formatDataForPesukim()` read `data["sections"][1]` unguarded and threw on
+  resolved payloads that carry no `sections` (dictionary entries, some complex
+  book-level refs). `insertion.gs` already guarded the same read.
+- `onInstall` seeded preferences from a second, drifted copy of the defaults —
+  it omitted ~14 keys and disagreed with `getDefaultPreferences()` on the
+  translation and transliteration font sizes. It now derives from
+  `getDefaultPreferences()` plus an explicit `getFreshInstallPreferenceOverrides_()`
+  (divine-name substitution stays ON for new installs), and stamps
+  `prefs_schema_version` so a new install does not re-run every migration.
+  **Note:** new installs now get 12pt translation/transliteration text instead
+  of 11pt. Existing users are unaffected.
+- `experimental_features_enabled` is listed in `SETTINGS` and read by the
+  sidebar but had no entry in `getDefaultPreferences()`, so it resolved to
+  `undefined`. Added with an explicit `false`.
+- `test/ui/snapshots/preferences.html.snap` was stale (hand-edited rather than
+  regenerated), leaving `npm test` red on the branch. The Hebrew preview string
+  in `preferences.html` was also accidentally de-normalized away from NFC;
+  restored, and the snapshot regenerated.
+
+### Changed
+
+- `runUserPreferenceMigrationsIfNeeded_()` now compares the stored schema
+  version numerically (`from < N`) instead of chaining `current !== 'N'`
+  guards. The old form worked but required editing two conditions per new
+  version and would re-run the newest migration for any version above it.
+
+### Security
+
+- Source-sheet content is third-party user-generated data (anyone can publish a
+  Sefaria sheet). Media-node URLs and the sheet URL were written into the user's
+  document as live hyperlinks with no scheme check. Both now go through
+  `safeLinkUrl_()`, which allows only `http:`, `https:` and `mailto:` and
+  rejects values containing control characters. Non-linkable values still render
+  as visible text.
+- `parseSefariaUrlInput()` accepted any hostname *containing* `sefaria.org`,
+  including `sefaria.org.evil.example`. It now requires the host to be
+  `sefaria.org` or a true subdomain, over http/https only.
+- `pre_clasp_qc.sh` gained check **9b**: jQuery `$(sel).html(x)` is the same
+  sink as `.innerHTML =` but check 9 never saw it. 9b applies the same
+  justification-comment standard to dynamic `.html()` writes. It reports at WARN
+  (16 pre-existing sites) so CI stays green while the count is burned down.
+
 ## v1.0 — cleanup pass (2026-04)
 
 Everything below is grouped under the one-shot cleanup that brought the rewrite branch to a shippable state. The eight stages were individually commits; see `git log --grep='^Stage '` for the commit history.

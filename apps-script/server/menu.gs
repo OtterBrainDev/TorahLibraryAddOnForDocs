@@ -35,9 +35,15 @@ function buildAndInstallMenu() {
   addOnMenu
       .addItem('Texts', 'textsHTML')
       .addItem('Voices', 'voicesHTML')
-      .addItem('Lexicon', 'lexiconHTML')
-      .addItem('Insert Source from Selection', 'insertSourceFromSelection')
-      .addSubMenu(quickActionsMenu);
+      .addItem('Lexicon', 'lexiconHTML');
+
+  // Only add the un-pinned copy when it was not already pinned above,
+  // otherwise the item renders twice in the add-on menu.
+  if (!insertAtTop) {
+    addOnMenu.addItem('Insert Source from Selection', 'insertSourceFromSelection');
+  }
+
+  addOnMenu.addSubMenu(quickActionsMenu);
 
   if (DEV_FLAGS.SURPRISE_ME && surpriseEnabled) {
     addOnMenu.addSeparator().addItem('Surprise Me', 'surpriseMeHTML');
@@ -160,7 +166,7 @@ function releaseNotesPopup() {
   var html = HtmlService.createHtmlOutputFromFile('release-notes')
     .setWidth(700)
     .setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Release Notes');
+  DocumentApp.getUi().showModalDialog(html, 'Release Notes');
 }
 
 function gematriyaCountPopup() {
@@ -311,10 +317,3 @@ function linkerHTML() {
   linkTextsWithSefaria();
 }
 
-function showLinkerResultsDialog_(linkedCount, linkedRefItems) {
-  const template = HtmlService.createTemplateFromFile('linker-results');
-  template.linkedCount = linkedCount;
-  template.linkedRefItemsJson = JSON.stringify(linkedRefItems);
-  const html = template.evaluate().setWidth(560).setHeight(500);
-  DocumentApp.getUi().showModalDialog(html, 'Link Texts with Sefaria');
-}
