@@ -2,6 +2,37 @@
 
 All notable changes in this fork are documented here.
 
+## Unreleased — jQuery upgrade (2026-09)
+
+### Security
+
+- **jQuery upgraded from 1.9.1 (2013) to 3.7.1, pinned with Subresource
+  Integrity** and loaded over an explicit `https://` rather than a
+  protocol-relative URL. 1.9.1 carries known XSS-relevant advisories, and it is
+  the code interpreting every `$(...).html()` call in the add-on — jQuery's
+  `.html()` executes script elements in the markup it is handed, which plain
+  `innerHTML` does not, so the version implementing it matters more than the
+  call count alone suggests.
+- The integrity hash was computed from the bytes `ajax.googleapis.com` actually
+  serves rather than copied from a published list, and CORS was confirmed
+  (`Access-Control-Allow-Origin: *`) so SRI can be enforced. **If the hash is
+  wrong, jQuery does not load and the sidebar is inert** — re-verify it, never
+  guess it, when bumping the version.
+
+### Migration notes
+
+The codebase was audited for APIs removed between 1.9 and 3.x — `.andSelf`,
+`.size`, `.live`/`.die`, the `.load`/`.unload`/`.error` shorthands,
+`$.browser`, two-argument `.toggle` — and none were in use. The single
+`:visible` selector (`shared/composition-card/shared.html`) is safe: jQuery 3
+widened that test rather than narrowing it, and the element it guards is a
+`<div>` with initial text, so it always has a layout box.
+
+**This one wants a real sidebar before the Marketplace push.** The audit is
+static; a 14-year version jump deserves the sidebar, preferences dialog, and
+Voices/Lexicon tabs each opened once. It is deliberately its own commit so it
+can be reverted independently of the sanitizer and CSP work.
+
 ## Unreleased — preview hardening (2026-09)
 
 ### Security

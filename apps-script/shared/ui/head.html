@@ -23,4 +23,31 @@
 <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://the-merkaz.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
 <base target="_top">
 <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<!--
+  jQuery 3.7.1, pinned with Subresource Integrity.
+
+  Was 1.9.1 (2013), loaded protocol-relative and unpinned. That version carries
+  known XSS-relevant advisories, and it is the code interpreting every
+  $(...).html() call in this add-on — jQuery's .html() executes script elements
+  in the markup it is given, which plain innerHTML does not, so the version that
+  implements it matters more here than the raw call count suggests.
+
+  (Deliberately no literal script tag written out in this comment: QC checks 2
+  and 4 count tags textually and cannot tell a comment from real markup.)
+
+  The integrity hash was computed from the bytes this CDN actually serves, not
+  copied from a published list. It requires CORS, which ajax.googleapis.com
+  provides (Access-Control-Allow-Origin: *). If the hash is ever wrong the
+  script does not load at all and the sidebar is inert — so re-verify it, do not
+  guess it, if the version is bumped.
+
+  Kept on one line: pre_clasp_qc.sh check 4 matches the opening tag with a
+  regex that has no dotall flag, so a tag split across lines is mis-read as a
+  script body.
+
+  Migration note: the codebase was audited for APIs removed between 1.9 and 3.x
+  (.andSelf, .size, .live/.die, .load/.unload/.error shorthands, $.browser,
+  two-argument .toggle) — none were in use. The single ':visible' selector is
+  safe: jQuery 3 widened that test rather than narrowing it.
+-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
