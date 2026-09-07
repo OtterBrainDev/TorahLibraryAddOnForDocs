@@ -37,7 +37,7 @@ var FIND_REFS_MAX_CHARS_ = 100000;
 function findRefsInDocumentText(documentText) {
   const body = String(documentText || '');
   if (!body.trim()) {
-    return [];
+    return { results: [], refData: {} };
   }
   if (body.length > FIND_REFS_MAX_CHARS_) {
     throw new Error(
@@ -55,7 +55,11 @@ function findRefsInDocumentText(documentText) {
   };
 
   try {
-    const enqueueResponse = UrlFetchApp.fetch('https://www.sefaria.org/api/find-refs', {
+    // with_text gives us `refData`: heRef, url and a short excerpt for every
+    // candidate ref, in the SAME request. That is what makes it possible to show
+    // the reader what a link points to before applying it, without a second
+    // round-trip per candidate. max_segments keeps the payload small.
+    const enqueueResponse = UrlFetchApp.fetch('https://www.sefaria.org/api/find-refs?with_text=1&max_segments=1', {
       method: 'post',
       contentType: 'application/json',
       payload: JSON.stringify(payload),
@@ -64,7 +68,7 @@ function findRefsInDocumentText(documentText) {
     const enqueueData = JSON.parse(enqueueResponse.getContentText() || '{}');
     const taskId = enqueueData.task_id;
     if (!taskId) {
-      return [];
+      return { results: [], refData: {} };
     }
 
     for (let attempt = 0; attempt < 12; attempt++) {
@@ -75,13 +79,16 @@ function findRefsInDocumentText(documentText) {
         continue;
       }
       const body = (((statusData || {}).result || {}).body || {});
-      return Array.isArray(body.results) ? body.results : [];
+      return {
+        results: Array.isArray(body.results) ? body.results : [],
+        refData: (body.refData && typeof body.refData === 'object') ? body.refData : {}
+      };
     }
   } catch (error) {
     Logger.log(`Failed to fetch find-refs output: ${error.message}`);
   }
 
-  return [];
+  return { results: [], refData: {} };
 }
 
 function resolveReferenceWithFallbacks(reference, versions) {

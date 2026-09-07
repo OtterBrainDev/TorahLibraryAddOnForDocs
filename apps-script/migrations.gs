@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '8';
+var PREFS_SCHEMA_CURRENT_ = '9';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -91,6 +91,17 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // defaults from drifting.
   if (from < 8) {
     migrateToV8_(userProperties);
+  }
+  // v8 -> v9: introduces `linker_review_mode`, defaulting to "summary".
+  //
+  // This changes behaviour for existing users, deliberately. The published
+  // add-on links the first candidate of an ambiguous citation without saying
+  // so — an arbitrary choice presented as a result. "summary" keeps every
+  // unambiguous link automatic and only asks about the genuine ties, so the
+  // interruption is proportional to the actual uncertainty. "quiet" restores
+  // the old non-interactive flow (now with honest counts).
+  if (from < 9) {
+    migrateToV9_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -205,6 +216,17 @@ function migrateToV8_(userProperties) {
     if (userProperties.getProperty(key) == null) {
       userProperties.setProperty(key, noOpDefaults[key]);
     }
+  }
+  return true;
+}
+
+/**
+ * V9: introduces `linker_review_mode`. See the driver comment for why the
+ * default is "summary" rather than preserving the silent first-candidate pick.
+ */
+function migrateToV9_(userProperties) {
+  if (userProperties.getProperty('linker_review_mode') == null) {
+    userProperties.setProperty('linker_review_mode', 'summary');
   }
   return true;
 }

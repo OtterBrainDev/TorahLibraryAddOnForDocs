@@ -761,6 +761,16 @@
                   </select>
                 </div>
                 <p class="subsection-note"><strong>Candidate passages only</strong> scans your document on your own machine first and uploads just the passages that look like they contain a citation — a book title, a chapter:verse number, or a Hebrew abbreviation. Your other writing never leaves the document. <strong>Whole document</strong> uploads the entire body, which can catch unusual citation forms the local scan misses.</p>
+                <div class="compact-field">
+                  <label for="linker_review_mode">After linking</label>
+                  <select name="linker_review_mode" id="linker_review_mode">
+                    <option value="summary" selected>Show a summary, and ask about ambiguous citations (recommended)</option>
+                    <option value="full">Show every match for review before linking</option>
+                    <option value="quiet">Just link and report a count</option>
+                  </select>
+                </div>
+                <p class="subsection-note">Some citations match more than one Sefaria source &mdash; &ldquo;Avodah Zarah 2a&rdquo; could be the Talmud or a commentary on it. <strong>Show a summary</strong> links everything unambiguous automatically and only asks about the genuine ties. <strong>Show every match</strong> lists them all first, so you can uncheck anything before it is applied. <strong>Just link and report a count</strong> never interrupts, and skips ambiguous citations rather than guessing.</p>
+
                 <p class="subsection-note">Nothing is sent to sefaria.org unless you run &ldquo;Link Texts with Sefaria&rdquo;, search, or insert a source. This add-on stores no account data and sends your text to no one else. See <a href="https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer">the privacy policy</a>.</p>
               </div>
             </div>

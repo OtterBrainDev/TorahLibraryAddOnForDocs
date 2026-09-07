@@ -180,76 +180,309 @@ function confirmLinkerUploadOnce_(scanMode) {
   return true;
 }
 
-function linkTextsWithSefaria() {
+/**
+ * Turn Sefaria's raw find-refs results into the rows the review dialog shows.
+ *
+ * Pure apart from the injected `isAlreadyLinked` probe, so the classification —
+ * which is the heart of this feature — is unit-testable without DocumentApp.
+ * See test/tests/linker-classify.test.js.
+ *
+ * Sefaria's classification is binary: `refs` holds exactly one entry when the
+ * resolver is confident, and several UNRANKED entries when the citation is
+ * genuinely ambiguous. There is no partial-confidence signal to threshold on,
+ * which is why "auto-link the confident ones, ask about the ties" is a faithful
+ * reading of the API rather than a heuristic of ours.
+ *
+ * Everything that cannot become a link is counted rather than dropped. The
+ * published add-on returned "Linked N references" with no hint that anything
+ * else had happened, which is the silence this replaces.
+ *
+ * @param {Object} input {rawMatches, refData, segments, docText, isAlreadyLinked}
+ * @returns {{matches: Array, unresolvedCount: number}}
+ */
+function classifyLinkerMatches_(input) {
+  const rawMatches = (input && input.rawMatches) || [];
+  const refData = (input && input.refData) || {};
+  const segments = input && input.segments;
+  const docText = String((input && input.docText) || '');
+  const isAlreadyLinked = (input && input.isAlreadyLinked) || function () { return false; };
+
+  const matches = [];
+  let unresolvedCount = 0;
+
+  for (let i = 0; i < rawMatches.length; i++) {
+    const raw = rawMatches[i];
+    if (!raw) continue;
+
+    // Sefaria recognised a citation but could not resolve it.
+    if (raw.linkFailed || !Array.isArray(raw.refs) || !raw.refs.length) {
+      unresolvedCount++;
+      continue;
+    }
+
+    const range = segments
+      ? mapPayloadRangeToDocRange_(segments, Number(raw.startChar), Number(raw.endChar))
+      : { startChar: Number(raw.startChar), endChar: Number(raw.endChar) };
+    if (!range) {
+      // Straddled two pre-filter windows, so its document position is not
+      // recoverable. Counted, not silently discarded.
+      unresolvedCount++;
+      continue;
+    }
+
+    const start = range.startChar;
+    const endExclusive = range.endChar;
+    if (!isFinite(start) || !isFinite(endExclusive) || start < 0 ||
+        endExclusive <= start || endExclusive > docText.length) {
+      unresolvedCount++;
+      continue;
+    }
+
+    // Already hyperlinked: leave it alone, and do not report it as a problem.
+    if (isAlreadyLinked(start, endExclusive - 1)) {
+      continue;
+    }
+
+    const candidates = [];
+    for (let c = 0; c < raw.refs.length; c++) {
+      const candidate = buildLinkerCandidate_(raw.refs[c], refData);
+      if (candidate) candidates.push(candidate);
+    }
+    if (!candidates.length) {
+      unresolvedCount++;
+      continue;
+    }
+
+    matches.push({
+      key: 'match-' + i + '-' + start,
+      documentText: docText.substring(start, endExclusive),
+      snippet: buildLinkerSnippet_(docText, start, endExclusive),
+      startChar: start,
+      endChar: endExclusive,
+      ambiguous: candidates.length > 1,
+      candidates: candidates
+    });
+  }
+
+  return { matches: matches, unresolvedCount: unresolvedCount };
+}
+
+/**
+ * Scan the document and report what CAN be linked, without changing anything.
+ *
+ * Split out from the apply step so the dialog can open immediately and show
+ * progress while this runs. Previously the whole thing happened inside the menu
+ * handler, so the only feedback during a multi-second scan was Google's generic
+ * "running script" toast.
+ *
+ * Sefaria's resolver classifies each citation for us, and the classification is
+ * binary — `refs` holds one ref when it is confident and several when it is
+ * genuinely ambiguous, with no ranking between them. So "auto-link the
+ * confident ones and ask about the rest" is a faithful reading of its output
+ * rather than a threshold we invented.
+ *
+ * @returns {Object} scan report; see linker-results.html for the consumer.
+ */
+function scanDocumentForReferences() {
   const bodyText = DocumentApp.getActiveDocument().getBody().editAsText();
   const docText = bodyText.getText();
+  const prefs = getPreferences();
+
+  const scan = buildLinkerScanRequest_(docText, prefs);
+  if (!scan) {
+    return {
+      matches: [],
+      unresolvedCount: 0,
+      reviewMode: getLinkerReviewMode_(prefs),
+      insertAfterLinking: linkerInsertsAfterLinking_(prefs),
+      nothingToScan: true,
+      scannedChars: 0,
+      totalChars: docText.length
+    };
+  }
+
+  const response = findRefsInDocumentText(scan.payload);
+
+  const classified = classifyLinkerMatches_({
+    rawMatches: Array.isArray(response.results) ? response.results : [],
+    refData: response.refData || {},
+    segments: scan.segments,
+    docText: docText,
+    isAlreadyLinked: function (start, endInclusive) {
+      return !!(bodyText.getLinkUrl(start) || bodyText.getLinkUrl(endInclusive));
+    }
+  });
+  const matches = classified.matches;
+  const unresolvedCount = classified.unresolvedCount;
+
+  return {
+    matches: matches,
+    unresolvedCount: unresolvedCount,
+    reviewMode: getLinkerReviewMode_(prefs),
+    insertAfterLinking: linkerInsertsAfterLinking_(prefs),
+    nothingToScan: false,
+    scannedChars: scan.scannedChars,
+    totalChars: scan.totalChars
+  };
+}
+
+function getLinkerReviewMode_(prefs) {
+  const mode = String((prefs && prefs.linker_review_mode) || 'summary');
+  return (mode === 'full' || mode === 'quiet') ? mode : 'summary';
+}
+
+function linkerInsertsAfterLinking_(prefs) {
+  return prefs.link_sources_insert_after_linking == 'true' || prefs.link_sources_insert_after_linking === true;
+}
+
+/**
+ * One selectable destination for an ambiguous citation, with enough text for
+ * the reader to tell the candidates apart.
+ */
+function buildLinkerCandidate_(ref, refData) {
+  const safeRef = String(ref || '').trim();
+  if (!safeRef) return null;
+
+  const data = (refData && refData[safeRef]) || {};
+  // Excerpts arrive as Sefaria markup. Flatten to plain text here rather than
+  // in the dialog: linker-results.html builds its DOM with textContent only,
+  // and keeping it that way means the dialog has no HTML sink at all.
+  const english = htmlToPlainText_(data.en || '', null);
+  const hebrew = htmlToPlainText_(data.he || '', null);
+  const preview = truncateLinkerPreview_(english || hebrew, 220);
+
+  return {
+    ref: safeRef,
+    heRef: String(data.heRef || ''),
+    preview: preview,
+    category: String(data.primaryCategory || '')
+  };
+}
+
+function truncateLinkerPreview_(text, maxLength) {
+  const flat = String(text || '').replace(/\s+/g, ' ').trim();
+  if (flat.length <= maxLength) return flat;
+  return flat.substring(0, maxLength).replace(/\s\S*$/, '') + '…';
+}
+
+function buildLinkerSnippet_(docText, start, endExclusive) {
+  const from = Math.max(0, start - 40);
+  const to = Math.min(docText.length, endExclusive + 40);
+  return docText.substring(from, to).replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Apply the reader's decisions. Each decision names a match position and the
+ * ref chosen for it.
+ *
+ * Applied end-to-start so that setLinkUrl on a later position cannot be
+ * invalidated by an earlier edit.
+ *
+ * @param {string} decisionsJson JSON array of {startChar, endChar, ref}
+ * @returns {Object} {linked, skipped}
+ */
+function applyLinkerDecisions(decisionsJson) {
+  let decisions;
+  try {
+    decisions = JSON.parse(decisionsJson || '[]');
+  } catch (error) {
+    throw new Error('Could not read the link selections.');
+  }
+  if (!Array.isArray(decisions) || !decisions.length) {
+    return { linked: 0, skipped: 0 };
+  }
+
+  const bodyText = DocumentApp.getActiveDocument().getBody().editAsText();
+  const docLength = bodyText.getText().length;
+
+  decisions.sort(function (a, b) { return Number(b.startChar) - Number(a.startChar); });
+
+  let linked = 0;
+  let skipped = 0;
+
+  for (let i = 0; i < decisions.length; i++) {
+    const decision = decisions[i] || {};
+    const start = Number(decision.startChar);
+    const endExclusive = Number(decision.endChar);
+    const ref = String(decision.ref || '').trim();
+
+    if (!ref || !isFinite(start) || !isFinite(endExclusive) || start < 0 || endExclusive <= start || endExclusive > docLength) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      const url = 'https://www.sefaria.org/' + encodeURIComponent(ref).replace(/%20/g, '_');
+      bodyText.setLinkUrl(start, endExclusive - 1, url);
+      linked++;
+    } catch (error) {
+      Logger.log('Could not link ' + ref + ': ' + error.message);
+      skipped++;
+    }
+  }
+
+  return { linked: linked, skipped: skipped };
+}
+
+function linkTextsWithSefaria() {
   const prefs = getPreferences();
 
   if (!confirmLinkerUploadOnce_(String(prefs.linker_scan_mode || 'candidates'))) {
     return;
   }
 
-  const scan = buildLinkerScanRequest_(docText, prefs);
-  if (!scan) {
-    DocumentApp.getUi().alert('No text in this document looks like a Sefaria reference, so nothing was sent to Sefaria. If you expected a match, switch "Document scanning" to "Whole document" in Preferences.');
+  // "quiet" keeps the published add-on's behaviour: link what is unambiguous,
+  // say how many, and do not interrupt. The only change is that the summary now
+  // reports what was skipped instead of staying silent about it.
+  if (getLinkerReviewMode_(prefs) === 'quiet') {
+    runQuietLinkPass_();
     return;
   }
 
-  const rawMatches = findRefsInDocumentText(scan.payload);
+  const html = HtmlService.createHtmlOutputFromFile('linker-results')
+    .setWidth(720)
+    .setHeight(560);
+  DocumentApp.getUi().showModalDialog(html, 'Link Texts with Sefaria');
+}
 
-  // Translate offsets from the uploaded payload back onto the document. In
-  // `full` mode the payload IS the document, so offsets pass through.
-  const linkerMatches = [];
-  for (let i = 0; i < rawMatches.length; i++) {
-    const match = rawMatches[i];
-    if (!match) continue;
-    if (!scan.segments) {
-      linkerMatches.push(match);
-      continue;
-    }
-    const mapped = mapPayloadRangeToDocRange_(scan.segments, Number(match.startChar), Number(match.endChar));
-    if (!mapped) continue;
-    linkerMatches.push(Object.assign({}, match, { startChar: mapped.startChar, endChar: mapped.endChar }));
+function runQuietLinkPass_() {
+  const ui = DocumentApp.getUi();
+  let report;
+  try {
+    report = scanDocumentForReferences();
+  } catch (error) {
+    ui.alert(error.message);
+    return;
   }
 
-  const insertAfterLinking = prefs.link_sources_insert_after_linking == "true" || prefs.link_sources_insert_after_linking === true;
-  const linkedRefItems = [];
-  let linkedCount = 0;
-  linkerMatches.forEach((match) => {
-    if (!match || match.linkFailed || !Array.isArray(match.refs) || !match.refs.length) {
-      return;
-    }
-    const start = Number(match.startChar);
-    const endExclusive = Number(match.endChar);
-    if (!isFinite(start) || !isFinite(endExclusive)) {
-      return;
-    }
-    const end = endExclusive - 1;
-    if (start < 0 || end < start || end >= docText.length) {
-      return;
-    }
-    if (bodyText.getLinkUrl(start) || bodyText.getLinkUrl(end)) {
-      return;
-    }
-    const ref = String(match.refs[0] || '').trim();
-    if (!ref) {
-      return;
-    }
-    const url = `https://www.sefaria.org/${encodeURIComponent(ref).replace(/%20/g, '_')}`;
-    bodyText.setLinkUrl(start, end, url);
-    linkedCount++;
+  if (report.nothingToScan) {
+    ui.alert('No text in this document looks like a Sefaria reference, so nothing was sent to Sefaria. If you expected a match, switch "Document scanning" to "Whole document" in Preferences.');
+    return;
+  }
 
-    const snippetStart = Math.max(0, start - 30);
-    const snippetEnd = Math.min(docText.length, endExclusive + 30);
-    const snippet = docText.substring(snippetStart, snippetEnd).replace(/\n/g, ' ').trim();
-    linkedRefItems.push({ ref, startChar: start, endChar: endExclusive, snippet });
+  const decisions = [];
+  let ambiguousCount = 0;
+  report.matches.forEach(function (match) {
+    if (match.ambiguous) {
+      ambiguousCount++;
+      return;
+    }
+    decisions.push({ startChar: match.startChar, endChar: match.endChar, ref: match.candidates[0].ref });
   });
 
-  if (insertAfterLinking && linkedRefItems.length > 0) {
-    showLinkerResultsDialog_(linkedCount, linkedRefItems);
-  } else {
-    DocumentApp.getUi().alert(`Linked ${linkedCount} recognizable reference${linkedCount === 1 ? '' : 's'} to Sefaria.`);
+  const result = applyLinkerDecisions(JSON.stringify(decisions));
+
+  const parts = ['Linked ' + result.linked + ' reference' + (result.linked === 1 ? '' : 's') + ' to Sefaria.'];
+  if (ambiguousCount) {
+    parts.push(ambiguousCount + ' citation' + (ambiguousCount === 1 ? ' matched more than one source and was' : 's matched more than one source and were') + ' skipped.');
   }
+  if (report.unresolvedCount) {
+    parts.push(report.unresolvedCount + ' could not be resolved.');
+  }
+  if (ambiguousCount || report.unresolvedCount) {
+    parts.push('\nTo review these instead of skipping them, change "After linking" in Preferences.');
+  }
+  ui.alert(parts.join(' '));
 }
 
 function insertLinkedSourceAtPosition(ref, startChar) {

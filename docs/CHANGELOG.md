@@ -2,6 +2,55 @@
 
 All notable changes in this fork are documented here.
 
+## Unreleased — linker review and ambiguity resolution (2026-09)
+
+### Added
+
+- **"Link Texts with Sefaria" now shows what it is doing and asks when it isn't
+  sure.** The command opens a dialog immediately, so a multi-second scan shows a
+  progress state instead of only Google's generic "running script" toast. When
+  the scan finishes it presents a three-column review: a checkbox, the exact
+  words in your document that will become the hyperlink, and the Sefaria
+  reference it will point to — as a dropdown whenever there is more than one
+  candidate, each with the reference's Hebrew title and an excerpt so you can
+  tell them apart before applying anything.
+- **New `linker_review_mode` preference** (Preferences → Privacy & Document
+  Scanning → *After linking*):
+  - **Show a summary, and ask about ambiguous citations** (default) — links
+    everything unambiguous automatically, and only asks about genuine ties.
+  - **Show every match for review** — lists them all before anything is applied.
+  - **Just link and report a count** — never interrupts; skips ambiguous
+    citations rather than guessing.
+
+### Fixed
+
+- **Ambiguous citations were resolved silently, to an arbitrary destination.**
+  The previous code took `refs[0]` for every match. Sefaria returns those
+  candidates *unranked* — `is_ambiguous` is binary, with no confidence score —
+  so "the first one" was not a best guess, it was the first item in a list.
+  Ambiguous citations are now surfaced rather than guessed at, and the candidate
+  order shown is Sefaria's own, with no ranking invented on top.
+- **Unresolvable citations vanished without a word.** "Linked 4 references" was
+  the entire report whether 4 or 40 citations had been found. Every category
+  that cannot become a link — unresolvable, out-of-range, or straddling two
+  pre-filter windows — is now counted and reported.
+
+### Changed
+
+- Existing users are migrated to `summary` (schema v9). This changes behaviour
+  deliberately: the published add-on's silent first-candidate pick presented an
+  arbitrary choice as a result. `summary` keeps every unambiguous link
+  automatic, so the interruption is proportional to the actual uncertainty;
+  **Just link and report a count** restores the non-interactive flow, now with
+  honest counts.
+- `/api/find-refs` is called with `with_text=1&max_segments=1`, so candidate
+  excerpts arrive in the same request — the preview costs no extra round-trip.
+- `findRefsInDocumentText` returns `{results, refData}` rather than a bare
+  results array.
+- New RPCs `scanDocumentForReferences` (read-only) and `applyLinkerDecisions`,
+  registered in `docs/rpc-surface.json`. Splitting scan from apply is what
+  allows the dialog to open before the work starts.
+
 ## Unreleased — traditional citation forms (2026-09)
 
 ### Added

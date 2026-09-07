@@ -21,6 +21,7 @@ const SETTINGS = [
   "link_texts_default",
   "link_sources_insert_after_linking",
   "linker_scan_mode",
+  "linker_review_mode",
   "show_line_markers_default",
   "preserve_source_emphasis",
   "hebrew_font_color",
@@ -114,6 +115,16 @@ function getDefaultPreferences() {
     // are uploaded to /api/find-refs. "full": the entire document body is
     // uploaded, which is what this feature originally did.
     linker_scan_mode: "candidates",
+    // What happens after the scan finds citations.
+    //   "summary" (default): a count of what will be linked, plus a panel to
+    //                        resolve any citation that matched more than one
+    //                        source. Nothing is silently skipped.
+    //   "full":              every match listed for review before anything is
+    //                        applied.
+    //   "quiet":             link the unambiguous ones, report counts, skip the
+    //                        rest without asking — closest to the published
+    //                        add-on's behaviour.
+    linker_review_mode: "summary",
     link_sources_insert_after_linking: false,
     show_line_markers_default: true,
     // Sefaria marks up its own emphasis (the Steinsaltz Talmud bolds the Talmud's
