@@ -129,7 +129,11 @@ test('an out-of-range offset is counted rather than corrupting the document', ()
   ]);
 
   assert.equal(result.matches.length, 0);
-  assert.equal(result.unresolvedCount, 3);
+  // "Unplaceable", not "unresolved": Sefaria identified the source fine — we
+  // could not put it anywhere. The two get reported differently because only
+  // one of them has a remedy the reader can act on.
+  assert.equal(result.unplaceableCount, 3);
+  assert.equal(result.unresolvedCount, 0);
 });
 
 test('offsets are mapped back through pre-filter segments', () => {
@@ -167,9 +171,60 @@ test('a match straddling two pre-filter windows is counted, not mis-placed', () 
   });
 
   // Placing this link would hyperlink the wrong words — a silent document
-  // corruption. Counting it is the only safe outcome.
+  // corruption. Counting it is the only safe outcome, and there is nothing to
+  // offer the reader in the review table: no contiguous span of the document
+  // contains this text at all.
   assert.equal(result.matches.length, 0);
-  assert.equal(result.unresolvedCount, 1);
+  assert.equal(result.unplaceableCount, 1);
+  assert.equal(result.unresolvedCount, 0);
+});
+
+test('a match that overruns only into the separator is placed, not discarded', () => {
+  const context = load();
+  // Sefaria routinely includes trailing whitespace in a citation's character
+  // range. The separator IS whitespace, so the citation sits entirely inside
+  // the first window — dropping it would lose a link we can place exactly.
+  const segments = [
+    { docStart: 0, payloadStart: 0, length: 11 },
+    { docStart: 500, payloadStart: 13, length: 10 },
+  ];
+  const docText = 'Genesis 1:1' + ' '.repeat(489) + 'z'.repeat(10);
+
+  const result = context.classifyLinkerMatches_({
+    rawMatches: [{ startChar: 0, endChar: 12, linkFailed: false, refs: ['Genesis 1:1'] }],
+    refData: {},
+    segments,
+    docText,
+    isAlreadyLinked: () => false,
+  });
+
+  assert.equal(result.unplaceableCount, 0);
+  assert.equal(result.matches.length, 1);
+  assert.equal(result.matches[0].startChar, 0);
+  assert.equal(result.matches[0].endChar, 11, 'clamped to the window, losing only the separator');
+  assert.equal(result.matches[0].documentText, 'Genesis 1:1');
+});
+
+test('unresolved and unplaceable are counted in separate buckets', () => {
+  const context = load();
+  const segments = [
+    { docStart: 0, payloadStart: 0, length: 10 },
+    { docStart: 500, payloadStart: 12, length: 10 },
+  ];
+
+  const result = context.classifyLinkerMatches_({
+    rawMatches: [
+      { startChar: 0, endChar: 5, linkFailed: true, refs: null },
+      { startChar: 8, endChar: 15, linkFailed: false, refs: ['Genesis 1:1'] },
+    ],
+    refData: {},
+    segments,
+    docText: 'q'.repeat(600),
+    isAlreadyLinked: () => false,
+  });
+
+  assert.equal(result.unresolvedCount, 1, 'Sefaria could not identify this one');
+  assert.equal(result.unplaceableCount, 1, 'this one we could not position');
 });
 
 test('candidate previews are flattened to plain text', () => {

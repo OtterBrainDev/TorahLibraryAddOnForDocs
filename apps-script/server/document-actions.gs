@@ -209,6 +209,7 @@ function classifyLinkerMatches_(input) {
 
   const matches = [];
   let unresolvedCount = 0;
+  let unplaceableCount = 0;
 
   for (let i = 0; i < rawMatches.length; i++) {
     const raw = rawMatches[i];
@@ -224,9 +225,12 @@ function classifyLinkerMatches_(input) {
       ? mapPayloadRangeToDocRange_(segments, Number(raw.startChar), Number(raw.endChar))
       : { startChar: Number(raw.startChar), endChar: Number(raw.endChar) };
     if (!range) {
-      // Straddled two pre-filter windows, so its document position is not
-      // recoverable. Counted, not silently discarded.
-      unresolvedCount++;
+      // Sefaria resolved this one, but it was stitched together across two
+      // pre-filter windows, so no contiguous span of the document holds it.
+      // Distinct from "unresolved": the citation is fine, our upload shape lost
+      // it, and the reader has a remedy — scan the whole document. Nothing to
+      // put in the review table, because there is no document text to link.
+      unplaceableCount++;
       continue;
     }
 
@@ -234,7 +238,7 @@ function classifyLinkerMatches_(input) {
     const endExclusive = range.endChar;
     if (!isFinite(start) || !isFinite(endExclusive) || start < 0 ||
         endExclusive <= start || endExclusive > docText.length) {
-      unresolvedCount++;
+      unplaceableCount++;
       continue;
     }
 
@@ -264,7 +268,11 @@ function classifyLinkerMatches_(input) {
     });
   }
 
-  return { matches: matches, unresolvedCount: unresolvedCount };
+  return {
+    matches: matches,
+    unresolvedCount: unresolvedCount,
+    unplaceableCount: unplaceableCount
+  };
 }
 
 /**
@@ -293,6 +301,7 @@ function scanDocumentForReferences() {
     return {
       matches: [],
       unresolvedCount: 0,
+      unplaceableCount: 0,
       reviewMode: getLinkerReviewMode_(prefs),
       insertAfterLinking: linkerInsertsAfterLinking_(prefs),
       nothingToScan: true,
@@ -314,10 +323,12 @@ function scanDocumentForReferences() {
   });
   const matches = classified.matches;
   const unresolvedCount = classified.unresolvedCount;
+  const unplaceableCount = classified.unplaceableCount;
 
   return {
     matches: matches,
     unresolvedCount: unresolvedCount,
+    unplaceableCount: unplaceableCount,
     reviewMode: getLinkerReviewMode_(prefs),
     insertAfterLinking: linkerInsertsAfterLinking_(prefs),
     nothingToScan: false,
@@ -477,7 +488,11 @@ function runQuietLinkPass_() {
     parts.push(ambiguousCount + ' citation' + (ambiguousCount === 1 ? ' matched more than one source and was' : 's matched more than one source and were') + ' skipped.');
   }
   if (report.unresolvedCount) {
-    parts.push(report.unresolvedCount + ' could not be resolved.');
+    parts.push(report.unresolvedCount + ' could not be matched to a Sefaria source.');
+  }
+  if (report.unplaceableCount) {
+    parts.push('\n' + report.unplaceableCount + ' citation' + (report.unplaceableCount === 1 ? ' was' : 's were') +
+      ' recognised but fell across a gap in the partial scan. Set "Document scanning" to "Whole document" in Preferences to catch these.');
   }
   if (ambiguousCount || report.unresolvedCount) {
     parts.push('\nTo review these instead of skipping them, change "After linking" in Preferences.');

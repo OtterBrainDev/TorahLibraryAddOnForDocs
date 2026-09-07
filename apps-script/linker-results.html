@@ -341,7 +341,11 @@
             var nothing = 'No new references to link.';
             if (report.unresolvedCount) {
               nothing += '\n\n' + plural(report.unresolvedCount, 'citation') +
-                ' looked like a reference but could not be resolved to a Sefaria source.';
+                ' looked like a reference but could not be matched to a Sefaria source.';
+            }
+            if (report.unplaceableCount) {
+              nothing += '\n\n' + plural(report.unplaceableCount, 'citation') +
+                ' was recognised but fell across a gap in the partial scan. Set "Document scanning" to "Whole document" in Preferences to catch these.';
             }
             finish(nothing);
             return;
@@ -377,7 +381,14 @@
             summaryParts.push(plural(ambiguous.length, 'citation') + ' matched more than one source — choose below, or uncheck to skip.');
           }
           if (report.unresolvedCount) {
-            summaryParts.push(plural(report.unresolvedCount, 'citation') + ' could not be resolved and will be left alone.');
+            summaryParts.push(plural(report.unresolvedCount, 'citation') + ' could not be matched to a Sefaria source and will be left alone.');
+          }
+          // Kept separate from "unresolved" because the reader can act on this
+          // one: the citation was recognised, but the partial scan uploaded it
+          // in two pieces, so there is no single span of the document to link.
+          if (report.unplaceableCount) {
+            summaryParts.push(plural(report.unplaceableCount, 'citation') +
+              ' fell across a gap in the partial scan — set "Document scanning" to "Whole document" in Preferences to catch these.');
           }
           if (summaryParts.length) {
             var summary = byId('summary-line');
@@ -616,7 +627,10 @@
           if (failed) lines.push(plural(failed, 'source') + ' could not be fetched.');
           if (skipped) lines.push(plural(skipped, 'reference') + ' could not be linked.');
           if (report && report.unresolvedCount) {
-            lines.push(plural(report.unresolvedCount, 'citation') + ' could not be resolved to a Sefaria source.');
+            lines.push(plural(report.unresolvedCount, 'citation') + ' could not be matched to a Sefaria source.');
+          }
+          if (report && report.unplaceableCount) {
+            lines.push(plural(report.unplaceableCount, 'citation') + ' fell across a gap in the partial scan.');
           }
           return lines.join('\n');
         }

@@ -2,6 +2,38 @@
 
 All notable changes in this fork are documented here.
 
+## Unreleased — linker: recover clipped matches, separate the two failure kinds (2026-09)
+
+### Fixed
+
+- **The pre-filter was discarding matches it could have placed exactly.** When a
+  citation ran past the end of its scan window, the mapper dropped it. But
+  Sefaria routinely includes trailing whitespace in a citation's character
+  range, and the separator joining scan windows *is* whitespace — so in those
+  cases the citation sat entirely inside one window and was recoverable. The
+  mapper now clamps the overrun to the window boundary and places the link.
+  Only an overrun that reaches real text in a *later* window is refused, and
+  that refusal is correct: such a "match" is text stitched together from two
+  non-adjacent parts of the document, so no contiguous span of the document
+  contains it and linking it would hyperlink the wrong words.
+
+### Changed
+
+- **"Could not be placed" is now reported separately from "could not be
+  resolved."** They are different problems with different remedies:
+  *unresolved* means Sefaria could not identify the source, and *unplaceable*
+  means the citation was recognised but fell across a gap in the partial scan.
+  Only the second has an action the reader can take, so the message now names
+  it: switch **Document scanning** to **Whole document**. Lumping them together
+  hid an actionable failure inside an unactionable count.
+
+### A note on why these are not offered in the review table
+
+An unplaceable match has no document text to hyperlink — that is precisely what
+makes it unplaceable. Putting it in the review table would ask the reader to
+choose a destination for a phrase that does not exist anywhere in their
+document as written. Counting it and naming the remedy is the useful answer.
+
 ## Unreleased — linker review and ambiguity resolution (2026-09)
 
 ### Added

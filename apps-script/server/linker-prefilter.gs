@@ -192,17 +192,63 @@ function mapPayloadOffsetToDocOffset_(segments, payloadOffset) {
 }
 
 /**
+ * Which window contains this payload offset? -1 when it lands in a join.
+ */
+function findLinkerSegmentIndex_(segments, offset) {
+  for (var i = 0; i < segments.length; i++) {
+    var segment = segments[i];
+    if (offset >= segment.payloadStart && offset < segment.payloadStart + segment.length) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+/**
  * Translate a [startChar, endChar) match from payload space to document space.
- * Both ends must land inside the SAME segment; a match straddling a separator
- * is not a real match in the document and is dropped.
+ *
+ * Two different things can happen when a match runs past the end of its window,
+ * and they deserve different answers:
+ *
+ *   1. The overrun lands in the SEPARATOR between windows. Sefaria's matcher
+ *      routinely includes trailing whitespace in a citation's character range,
+ *      and the separator is whitespace, so the citation itself sits entirely
+ *      inside this window. Clamp to the window's end and place the link — an
+ *      earlier version dropped these, losing links it could have placed exactly.
+ *
+ *   2. The overrun reaches real text in a LATER window. Then the "match" is
+ *      text stitched together from two non-adjacent parts of the document by
+ *      the join; no contiguous span of the document contains it. Return null.
+ *      There is nothing to link and nothing meaningful to offer the reader —
+ *      placing it would hyperlink the wrong words.
  */
 function mapPayloadRangeToDocRange_(segments, payloadStart, payloadEndExclusive) {
-  var start = mapPayloadOffsetToDocOffset_(segments, payloadStart);
-  if (start < 0) return null;
-  var lastInclusive = mapPayloadOffsetToDocOffset_(segments, payloadEndExclusive - 1);
-  if (lastInclusive < 0) return null;
-  if (lastInclusive < start) return null;
-  // Same-segment check: a contiguous document range has the same length.
-  if (lastInclusive - start !== (payloadEndExclusive - 1) - payloadStart) return null;
-  return { startChar: start, endChar: lastInclusive + 1 };
+  if (!Array.isArray(segments)) return null;
+
+  var start = Number(payloadStart);
+  var endExclusive = Number(payloadEndExclusive);
+  if (!isFinite(start) || !isFinite(endExclusive) || start < 0 || endExclusive <= start) {
+    return null;
+  }
+
+  var index = findLinkerSegmentIndex_(segments, start);
+  if (index < 0) return null;
+
+  var segment = segments[index];
+  var segmentEndExclusive = segment.payloadStart + segment.length;
+
+  if (endExclusive > segmentEndExclusive) {
+    var next = segments[index + 1];
+    if (next && (endExclusive - 1) >= next.payloadStart) {
+      return null; // case 2 — stitched across the join
+    }
+  }
+
+  var effectiveEnd = Math.min(endExclusive, segmentEndExclusive);
+  if (effectiveEnd <= start) return null;
+
+  return {
+    startChar: segment.docStart + (start - segment.payloadStart),
+    endChar: segment.docStart + (effectiveEnd - segment.payloadStart)
+  };
 }
