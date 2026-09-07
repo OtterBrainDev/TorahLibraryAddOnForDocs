@@ -93,7 +93,7 @@ Interim: the GitHub URL works and is what the in-app links currently use.
 
 ## 4. Before you submit
 
-- [ ] `npm ci && npm test` — 104 passing, 0 failing, **0 skipped**
+- [ ] `npm ci && npm test` — 119 passing, 0 failing, **0 skipped**
 - [ ] `bash pre_clasp_qc.sh apps-script` — exit 0
 - [ ] `grep -rn "getActiveUser\|getEffectiveUser\|getEmail" apps-script/` — empty
 - [ ] Every `UrlFetchApp` call still targets `sefaria.org`:
