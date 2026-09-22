@@ -57,7 +57,9 @@ fixed more than once.
 5. **Never write `.innerHTML` without a one-line comment explaining
    why `textContent` won't do.** Every current `.innerHTML` assignment
    in `apps-script/**/*.html` has a justification comment on the line
-   above; `pre_clasp_qc.sh` check 9 flags any new unannotated write.
+   above; `pre_clasp_qc.sh` check 9 flags any new unannotated write,
+   and check 9b does the same for jQuery `.html(...)`, which is the
+   same sink.
    If you're adding one, either (a) refactor to `textContent` +
    `document.createElement`, or (b) add the justification comment
    next to the assignment explaining the static/escaped provenance

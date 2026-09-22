@@ -44,6 +44,7 @@ function applyMultiSelectMode() {
 function updateMultiSelectPreviewNotice() {
   var count = orderedTranslationVersions.length;
   if (count <= 1) return;
+  // Static text plus a number (the translation count).
   $('.suggestions').html(
     "<p class='preview-state-message'><strong>Preview not available for multiple translations.</strong><br>" +
     count + " translation" + (count === 1 ? '' : 's') + " selected—they will be inserted in the order you selected them.</p>"
@@ -271,6 +272,9 @@ function updateSuggestion(dataIn, inputTitle) {
     };
   });
 
+  // Version-control shells interpolate only entry counts. The preview is
+  // Sefaria HTML run through sanitizeSourceHtml (an allowlist; see
+  // shared/ui/dom.html), with refs and titles escaped by buildPreviewMeta.
   $('.translation-version-control').html(translationInput);
   $('.hebrew-version-control').html(selectVersionHebrew);
   $('.suggestions').html(renderPreviewHTML(dataIn, inputTitle));
@@ -343,6 +347,7 @@ function updateSuggestion(dataIn, inputTitle) {
       optionsHTML += '<option value="" disabled>No available translations for this ref</option>';
     }
 
+    // Every option value and label goes through escapeHTML above.
     $('.translation-version-select').html(optionsHTML);
     if (!$('.translation-version-select').val()) {
       var firstEnabled = $('.translation-version-select option:not(:disabled)').first();
@@ -386,6 +391,7 @@ function updateSuggestion(dataIn, inputTitle) {
       });
     }
 
+    // Every option value and label goes through escapeHTML above.
     $('.he-version-selection').html(optionsHTML);
     if (!$('.he-version-selection').val()) {
       var firstOption = $('.he-version-selection option:not(:disabled)').first();
@@ -407,6 +413,7 @@ function updateSuggestion(dataIn, inputTitle) {
     hasResolvedReference = false;
     setInsertButtonState(false);
     $('#open-on-sefaria').prop('disabled', true);
+    // buildPreviewLoadingHTML escapes its message.
     $('.suggestions').html(buildPreviewLoadingHTML('Refreshing preview…'));
 
     google.script.run.withSuccessHandler(function (response) {
@@ -419,6 +426,7 @@ function updateSuggestion(dataIn, inputTitle) {
         clearVersionSelectors();
         updatePesukimAvailability(null);
         updateActionabilityUI(nodeState);
+        // buildNonInsertableMessage escapes the ref (buildPreviewMeta) and the prompt.
         $('.suggestions').html('<br>' + buildNonInsertableMessage(response));
         return;
       }

@@ -29,7 +29,7 @@
 
   Was 1.9.1 (2013), loaded protocol-relative and unpinned. That version carries
   known XSS-relevant advisories, and it is the code interpreting every
-  $(...).html() call in this add-on — jQuery's .html() executes script elements
+  jQuery .html() call in this add-on — jQuery's .html() executes script elements
   in the markup it is given, which plain innerHTML does not, so the version that
   implements it matters more here than the raw call count suggests.
 

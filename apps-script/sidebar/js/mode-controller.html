@@ -16,7 +16,7 @@ function focusResultByIndex(index) {
 function showSidebarNotice(message, onConfirm) {
   var $notice = $('#sidebar-notice');
   if (!$notice.length) return;
-  $('#sidebar-notice-message').html(escapeHTML(message || ''));
+  $('#sidebar-notice-message').text(String(message || ''));
   $notice.removeAttr('hidden');
   $('#sidebar-notice-ok').off('click.sidebarNotice').on('click.sidebarNotice', function () {
     $notice.attr('hidden', true);
