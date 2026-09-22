@@ -76,6 +76,7 @@ const SETTINGS = [
   "source_title_font",
   "source_title_font_size",
   "source_title_font_style",
+  "source_title_heading",
   "sefaria_link_font",
   "sefaria_link_font_size",
   "sefaria_link_font_style",
@@ -97,15 +98,20 @@ function getVersioningPreference() {
 
 function getDefaultPreferences() {
   return {
-    apply_sheimot_on_insertion: false,
+    // Divine-name substitution is on for every new user, יהוה only. (This used
+    // to be an install-only override, so "Reset to defaults" turned it off.)
+    apply_sheimot_on_insertion: true,
     elodim_replace: false,
     elodim_replacement: "אלוקים",
     extended_gemara: false,
     god_replace: false,
     god_replacement: "G-d",
     preferred_translation_language: "en",
-    hebrew_font: "Noto Sans Hebrew",
-    hebrew_font_size: 18,
+    // Font and size default to EMPTY for every role: "match the document" —
+    // take the font and size of the text at the insertion point (for a title
+    // with a heading style, the heading's own).
+    hebrew_font: "",
+    hebrew_font_size: "",
     hebrew_font_style: "normal",
     include_translation_source_info: false,
     include_transliteration_default: false,
@@ -164,19 +170,19 @@ function getDefaultPreferences() {
     last_translation_only_filter: false,
     last_search_sort_mode: "relevance",
     last_search_relevance_sort: true,
-    meforash_replace: false,
-    meforash_replacement: "ה'",
+    meforash_replace: true,
+    meforash_replacement: "יי",
     nekudot: true,
     nekudot_filter: "always",
     experimental_features_enabled: false,
     surprise_me_enabled: false,
     teamim: true,
     teamim_filter: "available",
-    translation_font: "Noto Sans Hebrew",
-    translation_font_size: 12,
+    translation_font: "",
+    translation_font_size: "",
     translation_font_style: "normal",
-    transliteration_font: "Noto Sans Hebrew",
-    transliteration_font_size: 12,
+    transliteration_font: "",
+    transliteration_font_size: "",
     transliteration_font_style: "italic",
     transliteration_scheme: "traditional",
     transliteration_overrides: "{}",
@@ -185,11 +191,14 @@ function getDefaultPreferences() {
     versioning: true,
     yaw_replace: false,
     yaw_replacement: "קה",
-    source_title_font: "Noto Sans Hebrew",
-    source_title_font_size: 14,
+    source_title_font: "",
+    source_title_font_size: "",
     source_title_font_style: "normal",
-    sefaria_link_font: "Noto Sans Hebrew",
-    sefaria_link_font_size: 14,
+    // Paragraph style for inserted titles: "normal" or "heading1".."heading6".
+    // "normal" is what titles have always been.
+    source_title_heading: "normal",
+    sefaria_link_font: "",
+    sefaria_link_font_size: "",
     sefaria_link_font_style: "underline",
     search_mode: "texts",
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
@@ -318,10 +327,19 @@ function normalizeDocsColor_(value) {
   return null;
 }
 
+/**
+ * An unset font/size falls back to the role default; a stored EMPTY value
+ * means "match the document" and comes back as font "" / size null, which
+ * getTypographySettings then fills from the text at the insertion point.
+ */
 function readTypographyRole_(userProperties, prefix, fallbackFont, fallbackSize, fallbackStyle) {
+  const storedFont = userProperties.getProperty(prefix + "_font");
+  const storedSize = userProperties.getProperty(prefix + "_font_size");
+  const rawSize = storedSize == null ? fallbackSize : storedSize;
+  const size = (rawSize == null || String(rawSize).trim() === "") ? NaN : Number(rawSize);
   return {
-    font: userProperties.getProperty(prefix + "_font") || fallbackFont,
-    size: Number(userProperties.getProperty(prefix + "_font_size") || fallbackSize),
+    font: String(storedFont == null ? fallbackFont : storedFont).trim(),
+    size: size > 0 ? size : null,
     style: userProperties.getProperty(prefix + "_font_style") || fallbackStyle,
     color: normalizeDocsColor_(userProperties.getProperty(prefix + "_font_color")),
     background: normalizeDocsColor_(userProperties.getProperty(prefix + "_font_background"))
@@ -343,19 +361,77 @@ function readEmphasisMapping_(userProperties, prefix, fallbackStyle) {
   };
 }
 
+var TITLE_HEADINGS_ = ["normal", "heading1", "heading2", "heading3", "heading4", "heading5", "heading6"];
+
+function normalizeTitleHeading_(value) {
+  const v = String(value == null ? "" : value).trim().toLowerCase();
+  return TITLE_HEADINGS_.indexOf(v) >= 0 ? v : "normal";
+}
+
+function isTitleRole_(roleName) {
+  return roleName === "sourceTitle" || roleName === "sefariaLink";
+}
+
+/**
+ * Roles that "match the document". A title with a heading style is left out:
+ * there, an empty font/size means the heading's own look, which the paragraph
+ * gets by not having one set at all.
+ */
+function rolesMatchingDocument_(roles, titleHeading) {
+  return Object.keys(roles).filter(function (name) {
+    const role = roles[name];
+    if (!role || (role.font !== "" && role.size != null)) return false;
+    return !(isTitleRole_(name) && titleHeading !== "normal");
+  });
+}
+
+function typographyNeedsSurroundingText_(roles, titleHeading) {
+  return rolesMatchingDocument_(roles, titleHeading).length > 0;
+}
+
+/**
+ * Fill "match the document" font/size from the text at the insertion point.
+ * Pure: `surrounding` is {font, size} (either may be empty/null — Docs reports
+ * null when the text just follows the Normal text style). Whatever stays
+ * empty is simply not applied, so the paragraph follows the document's
+ * Normal text style.
+ */
+function fillTypographyFromSurroundingText_(roles, surrounding, titleHeading) {
+  const font = surrounding && surrounding.font ? String(surrounding.font) : "";
+  const size = surrounding && Number(surrounding.size) > 0 ? Number(surrounding.size) : null;
+  rolesMatchingDocument_(roles, titleHeading).forEach(function (name) {
+    const role = roles[name];
+    if (role.font === "" && font) role.font = font;
+    if (role.size == null && size) role.size = size;
+  });
+  return roles;
+}
+
 function getTypographySettings() {
   const userProperties = PropertiesService.getUserProperties();
 
   const roles = {
-    hebrew:          readTypographyRole_(userProperties, "hebrew", "Noto Sans Hebrew", 18, "normal"),
-    translation:     readTypographyRole_(userProperties, "translation", "Noto Sans Hebrew", 12, "normal"),
-    transliteration: readTypographyRole_(userProperties, "transliteration", "Noto Sans Hebrew", 12, "italic"),
-    sourceTitle:     readTypographyRole_(userProperties, "source_title", "Noto Sans Hebrew", 14, "normal"),
-    sefariaLink:     readTypographyRole_(userProperties, "sefaria_link", "Noto Sans Hebrew", 14, "underline")
+    hebrew:          readTypographyRole_(userProperties, "hebrew", "", null, "normal"),
+    translation:     readTypographyRole_(userProperties, "translation", "", null, "normal"),
+    transliteration: readTypographyRole_(userProperties, "transliteration", "", null, "italic"),
+    sourceTitle:     readTypographyRole_(userProperties, "source_title", "", null, "normal"),
+    sefariaLink:     readTypographyRole_(userProperties, "sefaria_link", "", null, "underline")
   };
+  const titleHeading = normalizeTitleHeading_(userProperties.getProperty("source_title_heading"));
+
+  if (typographyNeedsSurroundingText_(roles, titleHeading)) {
+    let surrounding = null;
+    try {
+      surrounding = readSurroundingTextStyle_();
+    } catch (error) {
+      surrounding = null;
+    }
+    fillTypographyFromSurroundingText_(roles, surrounding, titleHeading);
+  }
 
   return {
     roles: roles,
+    titleHeading: titleHeading,
 
     // Flat aliases kept for the existing call sites. `roles` is the shape new
     // code should read; these mirror it so nothing had to change at once.

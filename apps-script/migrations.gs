@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '11';
+var PREFS_SCHEMA_CURRENT_ = '13';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -36,6 +36,14 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // which happened to work but had to be edited in two places for every new
   // version — and silently re-ran the newest migration for any version above
   // it. Absent/unparseable version means "oldest": run everything.
+  // No schema version at all means a user this add-on has never set up: the
+  // published add-on stored no preferences, and every run of this one stamps
+  // the version. Save the defaults for them now, so that a default changed in
+  // a later release never moves a user who is already using the add-on.
+  if (current == null) {
+    seedDefaultPreferences_(userProperties);
+  }
+
   var from = Number(current);
   if (!isFinite(from)) {
     from = 0;
@@ -121,9 +129,48 @@ function runUserPreferenceMigrationsIfNeeded_() {
   if (from < 11) {
     migrateToV11_(userProperties);
   }
+  // v11 -> v12: no-op. The יהוה replacement default changed from ה' to יי, and
+  // this step briefly pinned ה' for upgraders with no stored value. Dropped
+  // before release: nobody upgrading from the published add-on has these
+  // preferences stored, so pinning would only have denied them the new
+  // default. Kept as a step so the schema number stays monotonic.
+  if (from < 12) {
+    migrateToV12_(userProperties);
+  }
+  // v12 -> v13: introduces `source_title_heading` ("normal", what titles have
+  // always been). Hebrew, translation and transliteration font/size also
+  // default to "match the document" now; as with v12, nothing is pinned for
+  // upgraders — the published add-on stored none of these.
+  if (from < 13) {
+    migrateToV13_(userProperties);
+  }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
   return true;
+}
+
+/**
+ * Write every default preference the user has no stored value for. Never
+ * overwrites a stored value. Called on install and on the first run of a user
+ * onInstall never reached (e.g. an admin-installed add-on).
+ *
+ * `menu_layout` is left out on purpose: an unset layout tracks the code
+ * default, so new menu items keep appearing (see migrateToV10_).
+ * Depends on getDefaultPreferences in server/preferences.gs (one global scope
+ * at runtime).
+ */
+var SEED_EXCLUDED_PREFERENCES_ = ['menu_layout'];
+
+function seedDefaultPreferences_(userProperties) {
+  var defaults = getDefaultPreferences();
+  var wrote = false;
+  Object.keys(defaults).forEach(function(key) {
+    if (SEED_EXCLUDED_PREFERENCES_.indexOf(key) >= 0) return;
+    if (userProperties.getProperty(key) != null) return;
+    userProperties.setProperty(key, String(defaults[key]));
+    wrote = true;
+  });
+  return wrote;
 }
 
 /**
@@ -278,6 +325,24 @@ function migrateToV10_(userProperties) {
 function migrateToV11_(userProperties) {
   if (userProperties.getProperty('insert_from_selection_replace') == null) {
     userProperties.setProperty('insert_from_selection_replace', 'true');
+  }
+  return true;
+}
+
+/**
+ * V12: intentionally empty — see the driver comment.
+ */
+function migrateToV12_(userProperties) {
+  return false;
+}
+
+/**
+ * V13: introduces `source_title_heading`. See the driver comment for why the
+ * new "match the document" font defaults are not pinned for upgraders.
+ */
+function migrateToV13_(userProperties) {
+  if (userProperties.getProperty('source_title_heading') == null) {
+    userProperties.setProperty('source_title_heading', 'normal');
   }
   return true;
 }

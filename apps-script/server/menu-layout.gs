@@ -12,12 +12,16 @@ Licensed under the MIT License. See repository LICENSE.md.
 //
 //   {
 //     "top":           ["texts", "voices", ..., "quick_actions", "-", ...],
-//     "quick_actions": ["quick_actions_sidebar", "-", "transform_divine_names", ...]
+//     "quick_actions": ["quick_actions_sidebar", "-", "transform_divine_names", ...],
+//     "hidden":        ["lexicon", ...]
 //   }
 //
 // "top" is the add-on menu itself; "quick_actions" is the Quick Actions
 // submenu, which appears in "top" as the "quick_actions" placeholder. "-" is a
-// divider. Preferences and Help & Support are NOT part of the layout: they are
+// divider. "hidden" (optional) lists items the user switched off: they keep
+// their place in "top"/"quick_actions" so switching one back on restores it
+// where it was, but they are left out of the built menu. Hiding the
+// "quick_actions" placeholder hides the whole submenu. Preferences and Help & Support are NOT part of the layout: they are
 // always appended after a divider, so the user can never lose the way back to
 // this very screen.
 
@@ -85,7 +89,9 @@ function normalizeMenuLayout_(raw) {
     }
   }
   if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.top)) {
-    return getDefaultMenuLayout_();
+    var fallback = getDefaultMenuLayout_();
+    fallback.hidden = [];
+    return fallback;
   }
 
   var seen = {};
@@ -118,14 +124,22 @@ function normalizeMenuLayout_(raw) {
   if (!seen[MENU_SUBMENU_ID_] && layout.quick_actions.some(function(id) { return id !== MENU_DIVIDER_; })) {
     layout.top.push(MENU_SUBMENU_ID_);
   }
+
+  var hiddenSeen = {};
+  layout.hidden = (Array.isArray(parsed.hidden) ? parsed.hidden : []).map(String).filter(function(id) {
+    var known = Object.prototype.hasOwnProperty.call(MENU_LAYOUT_ITEMS_, id) || id === MENU_SUBMENU_ID_;
+    if (!known || hiddenSeen[id]) return false;
+    hiddenSeen[id] = true;
+    return true;
+  });
   return layout;
 }
 
 /**
  * Turn a layout into the concrete menu to build. Items that are unavailable
- * right now (Surprise Me while it is switched off) are skipped; dividers are
- * collapsed so no two are adjacent and none leads or trails a list; an empty
- * submenu is left out. Preferences and Help & Support are always appended.
+ * right now (Surprise Me while it is switched off) and items the user hid are
+ * skipped; dividers are collapsed so no two are adjacent and none leads or
+ * trails a list; an empty submenu is left out. Preferences and Help & Support are always appended.
  *
  * @param {*} layout  anything normalizeMenuLayout_ accepts
  * @param {{surpriseMeEnabled: boolean}} availability
@@ -135,8 +149,11 @@ function normalizeMenuLayout_(raw) {
 function planMenuFromLayout_(layout, availability) {
   var normalized = normalizeMenuLayout_(layout);
   var surpriseOn = !!(availability && availability.surpriseMeEnabled);
+  var hidden = {};
+  normalized.hidden.forEach(function(id) { hidden[id] = true; });
 
   function isAvailable(id) {
+    if (hidden[id]) return false;
     return id !== 'surprise_me' || surpriseOn;
   }
 
@@ -158,6 +175,7 @@ function planMenuFromLayout_(layout, availability) {
       if (id === MENU_DIVIDER_) {
         entries.push({ type: 'separator' });
       } else if (id === MENU_SUBMENU_ID_) {
+        if (hidden[id]) return;
         var children = collapse(toEntries(normalized.quick_actions));
         if (children.length) {
           entries.push({ type: 'submenu', label: MENU_SUBMENU_LABEL_, entries: children });

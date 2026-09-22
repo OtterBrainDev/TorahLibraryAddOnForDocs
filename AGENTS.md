@@ -111,7 +111,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **161 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **177 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -142,6 +142,8 @@ and fix it before touching the feature you came to change.
   through the client-reachable preference setters.
 - `triggers.test.js` — `onInstall` seeds preferences and then builds the
   menu; `onOpen` falls back to the default menu instead of ending with none.
+- `typography-defaults.test.js` — "Match the document" fonts, the title
+  heading style, and reading the style at the insertion point.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped; HTML-entity
   decoding (`&thinsp;` and friends).

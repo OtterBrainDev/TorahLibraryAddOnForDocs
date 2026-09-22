@@ -193,7 +193,7 @@ side by side"*).
 
 ### Repository
 
-- [ ] `npm ci && npm test` — 161 passing, 0 failing, **0 skipped**
+- [ ] `npm ci && npm test` — 177 passing, 0 failing, **0 skipped**
 - [ ] `bash pre_clasp_qc.sh apps-script` — exit 0
 - [ ] `grep -rn "getActiveUser\|getEffectiveUser\|getEmail" apps-script/` — empty
 - [ ] Every `UrlFetchApp` call still targets `sefaria.org`:

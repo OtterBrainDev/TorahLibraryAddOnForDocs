@@ -26,19 +26,12 @@ function load(overrides = {}) {
     console,
     Logger: { log() {} },
     ScriptApp: { AuthMode },
-    PREFS_SCHEMA_KEY_: 'prefs_schema_version',
-    PREFS_SCHEMA_CURRENT_: '11',
-    PropertiesService: {
-      getUserProperties: () => ({
-        setProperty(key, value) { store[key] = String(value); calls.push(`setProperty:${key}`); },
-      }),
-    },
+    PropertiesService: { getUserProperties: () => ({ store }) },
     HtmlService: {
       createHtmlOutputFromFile: () => ({ setWidth() { return this; }, setHeight() { return this; } }),
     },
     DocumentApp: { getUi: () => ({ showModalDialog() { calls.push('releaseNotes'); } }) },
-    getDefaultPreferences: () => ({ nekudot: true }),
-    setPreferences: (prefs) => { calls.push('setPreferences'); Object.assign(store, prefs); },
+    seedDefaultPreferences_: (props) => { calls.push('seed'); props.store.nekudot = 'true'; },
     runUserPreferenceMigrationsIfNeeded_: () => calls.push('migrate'),
     buildAndInstallMenu: () => calls.push('buildMenu'),
     getDefaultMenuLayout_: () => ['default'],
@@ -53,26 +46,24 @@ function load(overrides = {}) {
 
 const noOverrides = () => ({});
 
-test('onInstall seeds preferences, then builds the menu, then shows release notes', () => {
+test('onInstall seeds preferences and migrates, then builds the menu, then shows release notes', () => {
   const { context, calls, store } = load(noOverrides);
 
   context.onInstall({ authMode: AuthMode.FULL });
 
-  const seeded = calls.indexOf('setPreferences');
-  const stamped = calls.indexOf('setProperty:prefs_schema_version');
+  const seeded = calls.indexOf('seed');
+  const migrated = calls.indexOf('migrate');
   const menu = calls.indexOf('buildMenu');
   const notes = calls.indexOf('releaseNotes');
-  assert.ok(seeded >= 0 && stamped >= 0, `preferences not seeded: ${calls}`);
-  assert.ok(menu > stamped, `menu must be built after seeding: ${calls}`);
+  assert.ok(seeded >= 0 && migrated > seeded, `preferences not seeded then migrated: ${calls}`);
+  assert.ok(menu > migrated, `menu must be built after seeding: ${calls}`);
   assert.ok(notes > menu, `release notes must come after the menu: ${calls}`);
-  assert.equal(store.prefs_schema_version, '11');
-  // Fresh-install overrides still apply.
-  assert.equal(store.apply_sheimot_on_insertion, true);
+  assert.equal(store.nekudot, 'true');
 });
 
 test('onInstall still builds the menu if seeding preferences fails', () => {
   const { context, calls } = load(() => ({
-    setPreferences: () => { throw new Error('quota'); },
+    seedDefaultPreferences_: () => { throw new Error('quota'); },
   }));
 
   context.onInstall({ authMode: AuthMode.FULL });

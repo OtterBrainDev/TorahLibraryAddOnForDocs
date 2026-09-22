@@ -103,8 +103,62 @@ All notable changes in this fork are documented here.
 > (Preferences → Insertion → Insert from Selection) is written as `true` for every
 > upgrading user; turn it off to keep the selection and insert below it.
 
+> **Defaults, and how they are kept.** Every Fonts role — title, linked
+> title, Hebrew, transliteration, translation — defaults to **Match the
+> document**: the font and size of the text where you insert (the paragraph at
+> the cursor, or the nearest body-text paragraph above it). Titles are Normal
+> text unless you pick a heading. Divine-name substitution is **on**, for יהוה
+> only, replaced with **יי**.
+>
+> **Every user's defaults are now saved on their first run**, whether or not
+> the install trigger fired, and a reinstall no longer overwrites saved
+> choices. A default changed in a later release therefore reaches new users
+> only; anyone already using the add-on keeps what they had. (The menu layout
+> is the one exception: left unsaved, it keeps picking up new menu items.)
+> Schema steps v12 (a no-op) and v13 (writes the new `source_title_heading`)
+> keep the schema number monotonic.
+
+### Added
+
+- **Preferences → Fonts → Title → Paragraph style.** Inserted titles can be
+  Heading 1–6 instead of normal text, so they appear in the document outline
+  and table of contents. With a heading, **Match the document** and a blank
+  size leave the heading's own font and size showing. Default: Normal text.
+- **Match the document** as a font choice (and a blank size) for every Fonts
+  tab role.
+
+### Changed
+
+- **Preferences → Fonts is laid out the same way for every role.**
+  Transliteration is its own section instead of a nested dropdown inside
+  Hebrew. Title, Hebrew, Transliteration and Translation (in insertion order)
+  each have a one-line note, an optional choice row (paragraph style, scheme,
+  language), and a Typography card with the same Font / Size / Style row,
+  Text colour / Highlight pair, and preview. All four offer the same font list.
+- **The יהוה replacement list is יי, ה', יקוק, השם.** ד', ידוד, יהו-ה and יחוח
+  were removed; a stored value from those is kept and shows under Other.
+
 ### Fixed
 
+- **Preferences → Source Emphasis: the Text colour and Highlight controls
+  overlapped.** The mapping cards reused the font/size/style grid, whose middle
+  track is narrower than a colour control. The row now wraps instead.
+- **Preferences: dropdowns sat about 20px below their labels.** The hidden
+  native `<select>` behind each custom dropdown was made `position: relative`
+  again by a broader rule, and its empty line pushed the dropdown down.
+- **Preferences: scrolled content showed above and below the tab bar.** The
+  intro card and the tab bar were both pinned to the top, so the intro peeked
+  out beneath the tabs, and the scroll area's top padding left a strip above
+  the tabs where content showed through. Only the tab bar is pinned now, flush
+  to the top edge.
+- **Preferences → Menu Bar listed Surprise Me while the feature was off.** It
+  now appears in the editor only while its switch (Experimental tab) is on, and
+  keeps its place in the layout for when it is switched back on.
+- **Preferences → Menu Bar had no way to turn an item off.** Each item (and the
+  Quick Actions submenu as a whole) now has a checkbox; an unticked item keeps
+  its place in the editor but is left out of the add-on menu, and ticking it
+  restores it where it was. Stored inside the existing `menu_layout` value as
+  an optional `hidden` list — no new preference key, no migration.
 - **Link Texts with Sefaria: the review table rendered inside the scanning and
   finished states.** Each dialog state is switched with the `hidden`
   attribute, but the states also set `display: flex`, which overrides it — so

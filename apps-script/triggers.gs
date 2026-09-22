@@ -13,38 +13,15 @@ Licensed under the MIT License. See repository LICENSE.md.
 // installs and opens cleanly. Domain logic lives in server/menu.gs; these
 // are the thinnest possible entry points. See docs/regression-log.md.
 
-/**
- * Fresh-install preference values that intentionally differ from
- * `getDefaultPreferences()`. Divine-name substitution ships ON for a new
- * install (see AGENTS.md hard rule #1 and docs/regression-log.md); the
- * unset-key fallback in `getDefaultPreferences()` stays `false` so that
- * flipping it here can never silently enable substitution for an existing
- * user who deliberately turned it off.
- */
-function getFreshInstallPreferenceOverrides_() {
-  return {
-    apply_sheimot_on_insertion: true,
-    meforash_replace: true
-  };
-}
-
 function onInstall(e) {
-  // Seed from the single source of truth rather than a second hand-maintained
-  // literal. The previous copy had drifted from getDefaultPreferences(): it
-  // omitted ~14 keys entirely and disagreed on the translation/transliteration
-  // font sizes, so a fresh install and a reset-to-defaults produced different
-  // documents.
+  // Save every default the user does not already have (a reinstall keeps the
+  // user's own choices), then bring the schema up to date. Going through the
+  // migration driver rather than stamping the current version directly means
+  // a reinstall over an older schema still gets its pending migrations. See
+  // seedDefaultPreferences_ in migrations.gs.
   try {
-    const initialPrefs = Object.assign(
-      {},
-      getDefaultPreferences(),
-      getFreshInstallPreferenceOverrides_()
-    );
-    setPreferences(initialPrefs);
-
-    // Stamp the schema version so a brand-new install does not re-run every
-    // historical migration on its first onOpen.
-    PropertiesService.getUserProperties().setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
+    seedDefaultPreferences_(PropertiesService.getUserProperties());
+    runUserPreferenceMigrationsIfNeeded_();
   } catch (error) {
     Logger.log(`Could not seed preferences on install: ${error.message}`);
   }
