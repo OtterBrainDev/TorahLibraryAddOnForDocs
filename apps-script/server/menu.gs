@@ -13,47 +13,33 @@ Licensed under the MIT License. See repository LICENSE.md.
 // under apps-script/server/.
 
 function buildAndInstallMenu() {
-  const ui = DocumentApp.getUi();
-  const addOnMenu = ui.createAddonMenu();
-  const quickActionsMenu = ui.createMenu('Quick Actions')
-      .addItem('Quick Actions Sidebar', 'quickActionsHTML')
-      .addSeparator()
-      .addItem('Transform Divine Names', 'transformDivineNames')
-      .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
-      .addItem('Unlink Sources', 'unlinkSefariaSources')
-      .addSeparator()
-      .addItem('Gematriya Count', 'gematriyaCountPopup');
-
   const prefs = getPreferences();
-  const surpriseEnabled = prefs.surprise_me_enabled == "true";
-  const insertAtTop = prefs.insert_from_selection_at_top == "true";
+  const plan = planMenuFromLayout_(prefs.menu_layout, {
+    surpriseMeEnabled: DEV_FLAGS.SURPRISE_ME && prefs.surprise_me_enabled == "true"
+  });
+  installMenuPlan_(plan);
+}
 
-  if (insertAtTop) {
-    addOnMenu.addItem('Insert Source from Selection', 'insertSourceFromSelection');
-  }
-
-  addOnMenu
-      .addItem('Texts', 'textsHTML')
-      .addItem('Voices', 'voicesHTML')
-      .addItem('Lexicon', 'lexiconHTML');
-
-  // Only add the un-pinned copy when it was not already pinned above,
-  // otherwise the item renders twice in the add-on menu.
-  if (!insertAtTop) {
-    addOnMenu.addItem('Insert Source from Selection', 'insertSourceFromSelection');
-  }
-
-  addOnMenu.addSubMenu(quickActionsMenu);
-
-  if (DEV_FLAGS.SURPRISE_ME && surpriseEnabled) {
-    addOnMenu.addSeparator().addItem('Surprise Me', 'surpriseMeHTML');
-  }
-
-  addOnMenu
-      .addSeparator()
-      .addItem('Preferences', 'preferencesPopup')
-      .addItem('Help & Support', 'openHelpModal')
-      .addToUi();
+/**
+ * Build the add-on menu from a plan produced by planMenuFromLayout_
+ * (server/menu-layout.gs). Also used by onOpen in AuthMode.NONE, where
+ * preferences cannot be read, with the default layout.
+ */
+function installMenuPlan_(plan) {
+  const ui = DocumentApp.getUi();
+  const addEntries = function(menu, entries) {
+    entries.forEach(function(entry) {
+      if (entry.type === 'separator') {
+        menu.addSeparator();
+      } else if (entry.type === 'submenu') {
+        menu.addSubMenu(addEntries(ui.createMenu(entry.label), entry.entries));
+      } else {
+        menu.addItem(entry.label, entry.fn);
+      }
+    });
+    return menu;
+  };
+  addEntries(ui.createAddonMenu(), plan).addToUi();
 }
 
 function setSearchMode_(mode) {
@@ -265,7 +251,9 @@ function sefariaSearch() {
 
 function preferencesPopup() {
   const template = HtmlService.createTemplateFromFile('preferences');
-  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences'));
+  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences', {
+    menuLayoutEditor: getMenuLayoutEditorConfig_(DEV_FLAGS)
+  }));
   template.devFlagsJson = JSON.stringify(DEV_FLAGS);
   const output = template.evaluate()
     .setTitle('Preferences')
