@@ -28,65 +28,62 @@
     </style>
   </head>
   <body>
-    <h2>Torah Library Add-on for Docs — Release Notes</h2>
-    <p>This release continues the 2.0 fork stream with a stronger focus on coherent front-end behavior, clearer working-state controls, and more understandable internal help. The goal is not just to add features, but to make the add-on behave more consistently while people are actually using it inside Google Docs.</p>
-
-    <h3>What changed in this phase</h3>
-    <ul>
-      <li><b>Internal documentation refresh:</b> Support, User Guide, and Release Notes content were updated to reflect the intended modern workflow more clearly.</li>
-      <li><b>Clearer workspace framing:</b> documentation now distinguishes more explicitly between Texts, Voices, Preferences, and session-level overrides.</li>
-      <li><b>Better explanation of live state:</b> the docs now explain the difference between saved defaults, current sidebar state, and Preview.</li>
-      <li><b>Stronger support guidance:</b> bug-report instructions now ask for the workspace, current settings, expected behavior, actual behavior, and whether refresh or reopen changed the result.</li>
-      <li><b>More explicit expectation-setting:</b> the docs now acknowledge stale sidebar state, session-specific overrides, and workflow-context differences instead of treating them as user error.</li>
-    </ul>
-
-    <h3>Major updates already present in the fork</h3>
-    <ul>
-      <li><b>Unified sidebar workflow:</b> a more coherent Find, Preview, and Insert flow for reference lookup, title lookup, and content search results.</li>
-      <li><b>Translation selector overhaul:</b> normalized and grouped translation entries, improved filtering, and cleaner option labeling.</li>
-      <li><b>Layout and display controls:</b> stronger output mode and bilingual layout controls with clearer actionability.</li>
-      <li><b>Structural-node handling:</b> non-insertable structural nodes are detected and messaged clearly before insertion.</li>
-      <li><b>Hebrew orthography controls:</b> niqqud and ta'amim controls remain available and are more consistently explained.</li>
-      <li><b>Linking improvements:</b> document linking uses Sefaria's find-refs pipeline with async polling instead of relying only on local regex matching.</li>
-      <li><b>Preferences and typography additions:</b> persistent Hebrew and translation font and size settings with improved save ergonomics.</li>
-      <li><b>Divine-name workflow updates:</b> preference-driven Hebrew and English divine-name replacement and document-level transforms.</li>
-    </ul>
-
-    <h3>Focused refinements</h3>
-    <ul>
-      <li>Improved Hebrew-script reference normalization in unified lookup, including quotes, geresh or gershayim variants, colon or dash variants, and spacing cleanup.</li>
-      <li>Translation option cleanup to remove rendering artifacts such as stray prefixes or leading whitespace.</li>
-      <li>Preferences layout simplified to a single-scroll form with a persistent bottom save action bar.</li>
-      <li>Legacy or experimental features are framed more clearly so they do not compete with the primary workflow unless enabled.</li>
-    </ul>
+    <h2>Torah Library for Google Docs &mdash; Release Notes</h2>
+    <p>Torah Library helps you find texts in Sefaria&rsquo;s library and insert them into your document, formatted the way you want. It is an independent add-on built on Sefaria&rsquo;s public library and API, and is not made by Sefaria.</p>
 
     <h3>Version 2.1</h3>
-    <p>This release makes the add-on say what it is doing. &ldquo;Link Texts with Sefaria&rdquo; now shows progress while it scans, asks which source you meant when a citation matches more than one, and reports what it could not link instead of staying silent. It also stops uploading your whole document by default &mdash; only passages that look like they contain a citation are sent. See the privacy policy for exactly what leaves your document and when.</p>
+    <p>This release makes the add-on say what it is doing. &ldquo;Link Texts with Sefaria&rdquo; now shows progress while it scans, asks which source you meant when a citation matches more than one, and reports what it could not link instead of staying silent. The review dialog lets you link a citation, insert its text below the paragraph, or both. Linking also stops uploading your whole document by default &mdash; only passages that look like they contain a citation are sent. See the privacy policy for exactly what leaves your document and when.</p>
     <p>Formatting gained text colour and highlight for every insertion role, and the source&rsquo;s own bold and italics are now preserved rather than flattened &mdash; so the Steinsaltz Talmud keeps the bolding that separates the Talmud&rsquo;s words from Steinsaltz&rsquo;s explanation. Search recovers better too: abbreviated citations like &ldquo;Hil. Shabbat 1:1&rdquo; resolve, and a search that matches nothing now suggests related titles instead of a blank panel.</p>
-
-    <h3>Version 2.0 context</h3>
-    <p>Version 2.0 marked the largest overhaul to the codebase in many years. It moved the project away from accumulated patchwork toward a more maintainable interface and insertion pipeline. That shift also means some behaviors are now stricter, more explicit, and easier to reason about than in earlier versions.</p>
     <ul>
-      <li>Inserted content no longer carries the old visible HTML-tag artifacts that users reported in earlier generations of the add-on.</li>
-      <li>Formatting is preserved more faithfully during insertion, improving the display of bold and italic-rich sources.</li>
-      <li>Reference numbering is based on API response data rather than fragile input assumptions, avoiding older edge cases such as missing or invalid numbering.</li>
-      <li>Preferences were overhauled to support stronger divine-name and orthography defaults.</li>
-      <li>Translation selection became available at preview time when multiple versions exist.</li>
-      <li>Search behavior improved with stronger ranking and matching options.</li>
-      <li>Inserted titles can preserve user-entered form instead of always forcing normalized labels.</li>
+      <li><b>Arrange the menu:</b> Preferences &rarr; Menu Bar lets you reorder the add-on&rsquo;s menu and choose what goes in Quick Actions.</li>
+      <li><b>Several translations at once:</b> each selected translation is inserted as its own block; translations with no text for the passage are skipped and marked.</li>
+      <li><b>Insert Source from Selection</b> replaces the selected citation with the source again. To keep your selection and insert below it instead, change it in Preferences &rarr; Insertion.</li>
+      <li><b>Help, reorganized:</b> Help, Support, and About each have their own tab, with a search box for finding topics.</li>
     </ul>
 
-    <h3>What users should know</h3>
+    <h3>What you can do with Torah Library</h3>
     <ul>
-      <li><b>Preferences</b> define how the add-on starts for you.</li>
-      <li><b>The sidebar</b> reflects your current working state in this session.</li>
-      <li><b>Preview</b> should show what will be inserted right now.</li>
-      <li>If behavior seems wrong immediately after an update, refresh the document and reopen the add-on before assuming a setting itself is broken.</li>
+      <li><b>Find and insert:</b> search by reference, title, phrase, or Sefaria link, preview the result, and insert it.</li>
+      <li><b>Choose a translation:</b> pick from the translations Sefaria has for a passage, with clear labels.</li>
+      <li><b>Lay it out:</b> Hebrew, translation, or both &mdash; side by side or stacked.</li>
+      <li><b>Know what can be inserted:</b> sections that can&rsquo;t be inserted directly are flagged before you try.</li>
+      <li><b>Hebrew display:</b> show or hide niqqud and ta&rsquo;amim.</li>
+      <li><b>Link your document:</b> turn citations already in your document into Sefaria links.</li>
+      <li><b>Fonts and sizes:</b> set Hebrew and translation fonts once in Preferences.</li>
+      <li><b>Divine names:</b> choose how divine names are written in Hebrew and English, on insert or across the whole document.</li>
     </ul>
 
-    <h3>Deferred backlog</h3>
+    <h3>Smaller improvements</h3>
     <ul>
-      <li>Misspelling-tolerant Hebrew reference matching remains deferred until after current linker stability work.</li>
+      <li>Hebrew references are recognized with any style of quotation mark, geresh or gershayim, colon or dash, and spacing.</li>
+      <li>Cleaner translation names, without stray characters.</li>
+      <li>Preferences is a single scrolling page with the Save button always in reach.</li>
+      <li>Optional features stay out of the way unless you turn them on.</li>
+    </ul>
+
+    <h3>About version 2.0</h3>
+    <p>Version 2.0 rebuilt the add-on from the ground up. Some behavior is stricter and more predictable than in earlier versions:</p>
+    <ul>
+      <li>Inserted text no longer shows stray HTML tags.</li>
+      <li>Bold and italics in the source are kept when you insert.</li>
+      <li>Verse and line numbers come from Sefaria, so they are correct even for unusual references.</li>
+      <li>Stronger divine-name and Hebrew display preferences.</li>
+      <li>Choose a translation while you preview, when there is more than one.</li>
+      <li>Better search ranking and matching.</li>
+      <li>Inserted titles can keep the wording you typed.</li>
+    </ul>
+
+    <h3>Good to know</h3>
+    <ul>
+      <li><b>Preferences</b> set how the add-on starts for you.</li>
+      <li><b>The sidebar</b> shows your choices for this session.</li>
+      <li><b>Preview</b> shows exactly what will be inserted.</li>
+      <li>If something looks wrong right after an update, reload the document and reopen the add-on before changing settings.</li>
+    </ul>
+
+    <h3>Coming later</h3>
+    <ul>
+      <li>Recognizing Hebrew references even when they&rsquo;re misspelled.</li>
     </ul>
 
     <h3>Credits and thanks</h3>

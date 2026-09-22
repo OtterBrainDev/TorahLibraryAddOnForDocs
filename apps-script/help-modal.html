@@ -451,10 +451,10 @@
               <li>Insert once Preview matches what you want in the document.</li>
             </ol>
             <div class="mini-card-grid" style="margin-top:10px;">
-              <div class="mini-card"><h3>Language layout</h3><p class="muted">This is a live working control and should stay easy to access in Texts.</p></div>
+              <div class="mini-card"><h3>Language layout</h3><p class="muted">Choose Hebrew, translation, or both. You can change it any time before you insert.</p></div>
               <div class="mini-card"><h3>Display layout</h3><p class="muted">Use this to change how the inserted content is arranged before you insert.</p></div>
               <div class="mini-card"><h3>Translation selection</h3><p class="muted">When multiple translations exist, choose directly in the sidebar. In <strong>Translation only</strong> or <strong>Hebrew on top</strong> layout, hold <kbd>Ctrl</kbd> / <kbd>Cmd</kbd> to select multiple versions — each will be inserted in sequence.</p></div>
-              <div class="mini-card"><h3>Preview</h3><p class="muted">Preview should show what will be inserted right now.</p></div>
+              <div class="mini-card"><h3>Preview</h3><p class="muted">Preview shows exactly what will be inserted with your current settings.</p></div>
             </div>
           </section>
 
@@ -466,7 +466,7 @@
               <li>Select the result and review the available preview or metadata.</li>
               <li>Insert or use the relevant Voices action.</li>
             </ol>
-            <p class="muted">Voices is intentionally narrower than Texts. Text-specific controls should stay out of the way here so the source-sheet workflow remains focused.</p>
+            <p class="muted">Voices is for source sheets, so the text-specific controls from Texts (translation choice, Hebrew display options) are not shown here.</p>
           </section>
 
           <section class="card topic-section" id="text-links" data-search-title="Text and Links" data-search-terms="text links citation source citation transliteration niqqud vowels cantillation taamim overrides current session">
@@ -551,8 +551,8 @@
         <section class="tab-panel" id="about-tab" role="tabpanel" hidden>
           <section class="hero">
             <h2>About</h2>
-            <p class="muted">Torah Library Add-on for Docs · UX and maintenance fork</p>
-            <p>This tab is the long-term home for version information, current release context, and the running changelog. The separate release-notes popup should stay brief and point here for the fuller record.</p>
+            <p class="muted">Torah Library for Google Docs · Find and insert texts from Sefaria&rsquo;s library</p>
+            <p>Version information, what&rsquo;s new, and where to get help. Torah Library is an independent add-on built on Sefaria&rsquo;s public library and API; it is not made by Sefaria.</p>
             <div class="meta-row">
               <span class="meta-pill">Current line: 2.1</span>
               <a class="meta-pill" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244" rel="noopener noreferrer">Sefaria Help Center</a>
@@ -563,50 +563,53 @@
           </section>
 
           <section class="card">
-            <h2>Current release summary</h2>
-            <p>This phase focuses on making the add-on feel more understandable while people are actively using it. The work emphasizes cleaner front-end behavior, clearer distinctions between defaults and live state, and documentation that matches the actual workflows more closely.</p>
+            <h2>What&rsquo;s new in 2.1</h2>
             <ul>
-              <li><strong>Help surface redesign:</strong> Help, Support, and About are now framed as distinct purposes rather than overlapping documents.</li>
-              <li><strong>Clearer workflow language:</strong> the docs now distinguish more explicitly between Texts, Voices, Preferences, and current-session overrides.</li>
-              <li><strong>Live-state clarity:</strong> Preview, saved defaults, and current sidebar state are explained in more practical terms.</li>
-              <li><strong>Support-oriented troubleshooting:</strong> the docs now acknowledge stale sidebar state, session-specific overrides, and context differences instead of treating them as user error.</li>
-              <li><strong>Human-centered navigation:</strong> the Help content now supports task-based scanning and lightweight topic search.</li>
-            </ul>
-            <div class="callout">What users may notice: the documentation should feel less like a wall of text and more like a guided support surface.</div>
-          </section>
-
-          <section class="card">
-            <h2>What is in this fork</h2>
-            <ul>
-              <li>Unified Find &amp; Insert sidebar flow</li>
-              <li>Improved display and bilingual layout controls</li>
-              <li>Normalized translation and source-version selection</li>
-              <li>Persistent preferences across documents</li>
-              <li>Safer insertion pipeline for richer formatting</li>
-              <li>More intentional internal documentation and support framing</li>
+              <li><strong>Link Texts with Sefaria explains itself:</strong> it shows progress while it scans, asks which source you meant when a citation matches more than one, and tells you what it couldn&rsquo;t link.</li>
+              <li><strong>Link and insert in one pass:</strong> the review dialog has separate Link and Insert columns, so you can hyperlink a citation, insert its text below the paragraph, or both.</li>
+              <li><strong>Less of your document leaves it:</strong> by default only passages that look like they contain a citation are sent to Sefaria. See the privacy policy for details.</li>
+              <li><strong>Your formatting, your way:</strong> text colour and highlight for every part of an inserted source, and the source&rsquo;s own bold and italics are kept.</li>
+              <li><strong>A menu you can arrange:</strong> Preferences &rarr; Menu Bar lets you reorder the add-on&rsquo;s menu and choose what goes in Quick Actions.</li>
+              <li><strong>Better search:</strong> traditional abbreviations like &ldquo;Hil. Shabbat 1:1&rdquo; resolve, and a search with no results suggests related titles.</li>
+              <li><strong>Several translations at once:</strong> each selected translation is inserted as its own block, and translations with no text for the passage are skipped and marked.</li>
             </ul>
           </section>
 
           <section class="card">
-            <h2>Running changelog</h2>
+            <h2>What Torah Library does</h2>
+            <ul>
+              <li>Find a text by reference, title, phrase, or Sefaria link, preview it, and insert it</li>
+              <li>Hebrew, translation, or both, side by side or stacked</li>
+              <li>Choose among the translations Sefaria has for a passage</li>
+              <li>Control niqqud, ta&rsquo;amim, and divine-name spellings</li>
+              <li>Search Sefaria source sheets in Voices</li>
+              <li>Turn citations already in your document into Sefaria links</li>
+              <li>Preferences that follow you across documents</li>
+            </ul>
+          </section>
+
+          <section class="card">
+            <h2>Version history</h2>
             <details open>
-              <summary>Current documentation and support refresh</summary>
+              <summary>Version 2.1</summary>
               <ul>
-                <li>Reframed the internal help system around three clearer purposes: Help, Support, and About.</li>
-                <li>Added a lightweight Help search bar for topic finding inside the guide.</li>
-                <li>Moved long-term version and changelog context into About, leaving Support focused on troubleshooting and escalation.</li>
-                <li>Reworked release notes into a cleaner current-release summary plus expandable changelog model.</li>
+                <li>Link Texts with Sefaria: progress, a review step for ambiguous citations, and separate Link and Insert choices per citation.</li>
+                <li>Only likely citation passages are uploaded by default when linking.</li>
+                <li>Colour, highlight, and emphasis controls for inserted text.</li>
+                <li>Customizable add-on menu, and a new Linking tab in Preferences.</li>
+                <li>Insert Source from Selection replaces the selected citation again (can be changed in Preferences).</li>
+                <li>Help reorganized into Help, Support, and About, with topic search.</li>
               </ul>
             </details>
             <details>
-              <summary>Core 2.0 fork direction</summary>
+              <summary>Version 2.0</summary>
               <ul>
-                <li>Unified sidebar workflow for finding, previewing, and inserting sources.</li>
-                <li>Translation selector cleanup and normalized option labeling.</li>
-                <li>Stronger output and bilingual layout controls.</li>
-                <li>Structural-node handling with clearer preview messaging.</li>
-                <li>Hebrew orthography controls applied more consistently.</li>
-                <li>Preferences and typography improvements with better save ergonomics.</li>
+                <li>One sidebar for finding, previewing, and inserting sources.</li>
+                <li>Clearer translation choices.</li>
+                <li>More layout options for Hebrew and translation.</li>
+                <li>Clear messages for sections that can&rsquo;t be inserted directly.</li>
+                <li>More consistent niqqud and ta&rsquo;amim controls.</li>
+                <li>Better font and size settings in Preferences.</li>
               </ul>
             </details>
           </section>
