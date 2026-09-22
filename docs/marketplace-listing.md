@@ -193,7 +193,7 @@ side by side"*).
 
 ### Repository
 
-- [ ] `npm ci && npm test` — 177 passing, 0 failing, **0 skipped**
+- [ ] `npm ci && npm test` — 188 passing, 0 failing, **0 skipped**
 - [ ] `bash pre_clasp_qc.sh apps-script` — exit 0
 - [ ] `grep -rn "getActiveUser\|getEffectiveUser\|getEmail" apps-script/` — empty
 - [ ] Every `UrlFetchApp` call still targets `sefaria.org`:
@@ -227,23 +227,17 @@ side by side"*).
 
 ### Still open in the code — resolve or accept before submitting
 
-These came out of the 2026-09 pre-publication review and are **not** fixed in
-this package. The first two are the ones most likely to draw a reviewer's (or
-Sefaria's) attention.
+These came out of the 2026-09 pre-publication review and are waiting on a
+decision outside the code.
 
-- [ ] **Reads as an official Sefaria product.** The sidebar title is `'Sefaria'`
-      (`apps-script/server/menu.gs:63`); the sidebar footer shows Sefaria's logo
-      (`apps-script/sidebar.html:523`). Change the title to `Torah Library`, and
-      use the logo only with Sefaria's permission.
-- [ ] **Feedback goes to Sefaria.** `apps-script/feedback-modal.html:70` embeds
-      Sefaria's own Formstack form, so Sefaria receives this add-on's bug
-      reports. Replace it with the publisher's contact route unless Sefaria
-      agrees to it.
-- [ ] **Attribution off by default.** New installs insert texts with no
-      citation or license line (`insert_citation_default` and
-      `include_translation_source_info` are `false` in
-      `server/preferences.gs`). Many Sefaria translations are CC-BY or
-      CC-BY-NC.
+- [ ] **Sefaria's name and logo.** The sidebar title is `'Sefaria'`
+      (`apps-script/server/menu.gs`) and the footer shows Sefaria's logo
+      (`apps-script/sidebar.html`). Left as is on purpose, pending Sefaria's
+      agreement; if they don't agree, change the title to `Torah Library` and
+      drop the logo.
+- [ ] **Feedback form.** `apps-script/feedback-modal.html` embeds Sefaria's
+      Formstack form, so reports reach Sefaria. Pending: whether Sefaria can
+      forward them to help@the-merkaz.org as well.
 - [ ] **Deploy target.** In TheMerkazDev, set the `CLASP_SCRIPT_ID` variable to
       the publishing project and add a `CLASP_TOKEN` secret with access to it
       (§0). Until then the deploy workflow is skipped there.

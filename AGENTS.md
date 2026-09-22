@@ -113,7 +113,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **177 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **188 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -144,6 +144,10 @@ and fix it before touching the feature you came to change.
   through the client-reachable preference setters.
 - `triggers.test.js` — `onInstall` seeds preferences and then builds the
   menu; `onOpen` falls back to the default menu instead of ending with none.
+- `source-attribution.test.js` — source credit on by default; the Hebrew
+  edition and its license are credited.
+- `divine-name-rules.test.js` — יה only as a whole word, replacement text
+  used literally, punctuation kept when niqqud is stripped.
 - `typography-defaults.test.js` — "Match the document" fonts, the title
   heading style, and reading the style at the insertion point.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
@@ -170,6 +174,8 @@ and in `test/ui/`:
   shows a version string.
 - `embedded-json.test.js` — server data force-printed into an inline
   `<script>` goes through `toEmbeddedJson_`.
+- `csp-coverage.test.js` — every entry page carries the same
+  Content-Security-Policy.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy
