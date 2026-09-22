@@ -158,3 +158,30 @@ test('every menu item points at a function the server defines', () => {
     assert.match(all, new RegExp(`function ${fn}\\s*\\(`), `${fn} is not defined in apps-script/`);
   }
 });
+
+test('hidden items keep their place in the layout but are left out of the menu', () => {
+  const ctx = load();
+  const d = ctx.getDefaultMenuLayout_();
+  const layout = { top: d.top, quick_actions: d.quick_actions, hidden: ['lexicon', 'link_texts', 'bogus', 'lexicon'] };
+  const normalized = JSON.parse(JSON.stringify(ctx.normalizeMenuLayout_(layout)));
+  assert.deepEqual(normalized.hidden, ['lexicon', 'link_texts'], 'unknown and duplicate ids dropped');
+  assert.ok(normalized.top.includes('lexicon'), 'a hidden item is not moved or dropped');
+
+  const plan = describe(ctx.planMenuFromLayout_(layout, { surpriseMeEnabled: false }));
+  assert.ok(!plan.includes('Lexicon'));
+  assert.ok(!plan[3]['Quick Actions'].includes('Link Texts with Sefaria'));
+  assert.ok(plan.includes('Voices'));
+});
+
+test('hiding the submenu placeholder hides the whole Quick Actions submenu', () => {
+  const ctx = load();
+  const d = ctx.getDefaultMenuLayout_();
+  const plan = ctx.planMenuFromLayout_({ top: d.top, quick_actions: d.quick_actions, hidden: ['quick_actions'] }, { surpriseMeEnabled: false });
+  assert.ok(!plan.some((e) => e.type === 'submenu'));
+});
+
+test('a layout without "hidden" hides nothing', () => {
+  const ctx = load();
+  const normalized = ctx.normalizeMenuLayout_(ctx.getDefaultMenuLayoutJson_());
+  assert.equal(normalized.hidden.length, 0);
+});

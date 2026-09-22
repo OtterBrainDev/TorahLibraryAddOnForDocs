@@ -111,7 +111,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **146 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **162 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -136,6 +136,8 @@ and fix it before touching the feature you came to change.
 - `linker-classify.test.js` — which citation becomes a link, a
   question, or a counted failure.
 - `sanitize-source-html.test.js` — the Sefaria-HTML strip.
+- `typography-defaults.test.js` — "Match the document" fonts, the title
+  heading style, and reading the style at the insertion point.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped; HTML-entity
   decoding (`&thinsp;` and friends).
