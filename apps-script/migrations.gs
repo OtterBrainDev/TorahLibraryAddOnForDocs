@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '12';
+var PREFS_SCHEMA_CURRENT_ = '13';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -127,6 +127,14 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // them. Pin ה' for anyone without a stored value; new installs get יי.
   if (from < 12) {
     migrateToV12_(userProperties);
+  }
+  // v12 -> v13: Hebrew, translation and transliteration font/size default to
+  // "match the document" (empty), and titles gain `source_title_heading`.
+  // Upgraders who never set a font or size were reading the old fixed
+  // defaults; those are stored so their insertions look the same. The new
+  // heading key is written as "normal" — what titles have always been.
+  if (from < 13) {
+    migrateToV13_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -298,6 +306,29 @@ function migrateToV12_(userProperties) {
   if (userProperties.getProperty('meforash_replacement') == null) {
     userProperties.setProperty('meforash_replacement', "ה'");
   }
+  return true;
+}
+
+/**
+ * V13: pin the pre-v13 fixed typography for upgraders with no stored value,
+ * now that the default is "match the document". Explicit choices, including
+ * an explicit empty one, are left alone.
+ */
+function migrateToV13_(userProperties) {
+  var previousDefaults = {
+    hebrew_font: 'Noto Sans Hebrew',
+    hebrew_font_size: '18',
+    translation_font: 'Noto Sans Hebrew',
+    translation_font_size: '12',
+    transliteration_font: 'Noto Sans Hebrew',
+    transliteration_font_size: '12',
+    source_title_heading: 'normal'
+  };
+  Object.keys(previousDefaults).forEach(function(key) {
+    if (userProperties.getProperty(key) == null) {
+      userProperties.setProperty(key, previousDefaults[key]);
+    }
+  });
   return true;
 }
 

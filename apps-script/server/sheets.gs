@@ -158,7 +158,7 @@ function insertSheetReferenceBlock_(body, index, sheetPayload, typography, linke
   if (metaBits.length) {
     const metaParagraph = body.insertParagraph(index, metaBits.join(' • '));
     metaParagraph.setLeftToRight(true);
-    applyRoleTypography_(metaParagraph, typography, 'sefariaLink', { size: Math.max(10, typography.sefariaLinkFontSize - 1) });
+    applyRoleTypography_(metaParagraph, typography, 'sefariaLink', { size: smallerFontSize_(typography.sefariaLinkFontSize) });
     if (url) {
       metaParagraph.editAsText().setLinkUrl(url);
     }
@@ -191,7 +191,7 @@ function insertSheetContentsBlock_(body, index, sheetPayload, fullSheet, typogra
     const ownerParagraph = body.insertParagraph(index, 'By ' + owner);
     ownerParagraph.setItalic(true);
     ownerParagraph.setLeftToRight(true);
-    applyRoleTypography_(ownerParagraph, typography, 'translation', { size: Math.max(10, typography.translationFontSize - 1) });
+    applyRoleTypography_(ownerParagraph, typography, 'translation', { size: smallerFontSize_(typography.translationFontSize) });
     index += 1;
   }
 
@@ -512,4 +512,13 @@ function htmlToPlainText_(html, normalizedOptions) {
   }
 
   return text.trim();
+}
+
+/**
+ * One point smaller than a role's size, floored at 10. A role that matches the
+ * document may have no size of its own (null); then there is nothing to be
+ * smaller than, so the paragraph keeps the document's size too.
+ */
+function smallerFontSize_(size) {
+  return size > 0 ? Math.max(10, size - 1) : null;
 }

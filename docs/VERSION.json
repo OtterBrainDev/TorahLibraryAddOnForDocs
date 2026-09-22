@@ -7,7 +7,7 @@
   "previous": "2.0.0",
 
   "_prefsSchemaVersion": "Must equal PREFS_SCHEMA_CURRENT_ in apps-script/migrations.gs. This is the user-data schema, not the add-on version: it only ever increases, and it increases whenever a new preference key ships. A mismatch means either a migration landed without a version bump or the reverse — both leave upgrading users in a state no migration covers.",
-  "prefsSchemaVersion": "12",
+  "prefsSchemaVersion": "13",
 
   "_surfaces": "Every place the version string is shown to a user. An agent bumping the version must update all of them; the manifest test checks they agree.",
   "surfaces": [

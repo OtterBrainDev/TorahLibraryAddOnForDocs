@@ -251,3 +251,24 @@ test('v12 migration does not overwrite an explicit יהוה replacement', () => 
 
   assert.equal(userProperties.getProperty('meforash_replacement'), 'יקוק');
 });
+
+test('v13 migration keeps the old fixed fonts for upgraders who never set one', () => {
+  // The Hebrew / translation / transliteration default moved to "match the
+  // document". Upgraders were reading the fixed defaults, so those are stored.
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '12',
+    translation_font: 'Georgia',
+    hebrew_font_size: '',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('hebrew_font'), 'Noto Sans Hebrew');
+  assert.equal(userProperties.getProperty('hebrew_font_size'), '', 'an explicit "match the document" is kept');
+  assert.equal(userProperties.getProperty('translation_font'), 'Georgia', 'an explicit font is kept');
+  assert.equal(userProperties.getProperty('translation_font_size'), '12');
+  assert.equal(userProperties.getProperty('transliteration_font'), 'Noto Sans Hebrew');
+  assert.equal(userProperties.getProperty('transliteration_font_size'), '12');
+  assert.equal(userProperties.getProperty('source_title_heading'), 'normal');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+});

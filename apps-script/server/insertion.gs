@@ -216,7 +216,82 @@ function applyRoleTypography_(paragraph, typography, roleName, overrides) {
 }
 
 
+/**
+ * Font family and size of the text where the user is inserting, for the
+ * "match the document" typography default. Reads the paragraph holding the
+ * cursor (or the start of the selection); if that is a heading or empty, the
+ * nearest preceding body-text paragraph. Returns {font, size}, either of which
+ * may be null — Docs reports null when the text just follows the Normal text
+ * style, and leaving it unset gives the same result.
+ */
+function readSurroundingTextStyle_() {
+  const doc = DocumentApp.getActiveDocument();
+  let element = null;
+  let offset = 0;
+  const cursor = doc.getCursor();
+  if (cursor) {
+    element = cursor.getElement();
+    offset = cursor.getOffset();
+  } else {
+    const selection = doc.getSelection();
+    const ranges = selection ? selection.getRangeElements() : [];
+    if (ranges.length) {
+      element = ranges[0].getElement();
+      offset = ranges[0].isPartial() ? ranges[0].getStartOffset() : 0;
+    }
+  }
+  if (!element) return null;
+
+  const isTextElement = element.getType() === DocumentApp.ElementType.TEXT;
+  let paragraph = element;
+  while (paragraph && !isBodyTextBlock_(paragraph)) {
+    paragraph = paragraph.getParent ? paragraph.getParent() : null;
+  }
+
+  // Up to a screenful back; past that the "surrounding" text is not really
+  // surrounding any more, and the Normal text style is the better answer.
+  let charIndex = isTextElement ? offset - 1 : 0;
+  for (let steps = 0; paragraph && steps < 20; steps++) {
+    const text = paragraph.editAsText();
+    const length = text.getText().length;
+    if (length > 0 && isNormalTextParagraph_(paragraph)) {
+      const at = Math.max(0, Math.min(length - 1, charIndex));
+      return { font: text.getFontFamily(at), size: text.getFontSize(at) };
+    }
+    charIndex = Infinity; // earlier paragraphs: sample their last character
+    do {
+      paragraph = paragraph.getPreviousSibling();
+    } while (paragraph && !isBodyTextBlock_(paragraph));
+  }
+  return null;
+}
+
+function isBodyTextBlock_(element) {
+  const type = element.getType();
+  return type === DocumentApp.ElementType.PARAGRAPH || type === DocumentApp.ElementType.LIST_ITEM;
+}
+
+function isNormalTextParagraph_(block) {
+  try {
+    return block.getHeading() === DocumentApp.ParagraphHeading.NORMAL;
+  } catch (error) {
+    return true;
+  }
+}
+
+/** "heading1".."heading6" → DocumentApp.ParagraphHeading; anything else → null. */
+function titleParagraphHeading_(titleHeading) {
+  const match = /^heading([1-6])$/.exec(String(titleHeading || ''));
+  return match ? DocumentApp.ParagraphHeading['HEADING' + match[1]] : null;
+}
+
 function applyTitleTypography(paragraph, typography, insertSefariaLink) {
+  // The heading goes on first, so any font/size the user set explicitly still
+  // overrides the heading's look, and an empty one leaves it showing.
+  const heading = titleParagraphHeading_(typography && typography.titleHeading);
+  if (heading && paragraph && paragraph.setHeading) {
+    paragraph.setHeading(heading);
+  }
   // Titles deliberately do NOT preserve source emphasis: the bold/underline on
   // a title is applied by this add-on, so the user's title style stays
   // authoritative there.

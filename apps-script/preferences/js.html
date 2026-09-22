@@ -28,6 +28,8 @@
       ipa_tiberian: "wəsamtem ʔet dəvaʁaj ʔele ʕal ləvavχem"
     };
 
+    const FONT_SIZE_FIELDS = ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size'];
+
     const overrideChars = ["א","ב","ג","ד","ה","ו","ז","ח","ט","י","כ","ך","ל","מ","ם","נ","ן","ס","ע","פ","ף","צ","ץ","ק","ר","ש","ת"];
     const customReplacementFields = [
       'meforash_replacement',
@@ -94,7 +96,8 @@
       const preview = byId(previewId);
       if (!select || !preview) return;
       const meta = fontMeta[select.value];
-      if (meta) preview.style.fontFamily = meta.stack;
+      // "Match the document" has no font of its own: show the dialog's.
+      preview.style.fontFamily = meta ? meta.stack : '';
     }
 
     function updateStandardPreview(selectId, previewId, styleId) {
@@ -103,7 +106,7 @@
       if (!select || !preview) return;
       updateFontPreview(selectId, previewId);
       const sizeInput = byId(selectId + '_size') || byId(selectId.replace('_font', '_font_size'));
-      if (sizeInput && sizeInput.value) preview.style.fontSize = Number(sizeInput.value) + 'px';
+      preview.style.fontSize = (sizeInput && sizeInput.value) ? Number(sizeInput.value) + 'px' : '';
       applyPreviewStyles(previewId, styleId);
     }
 
@@ -554,6 +557,8 @@
                 if (el.dataset.customFor) return;
                 if (preferences[el.name] !== undefined && preferences[el.name] !== null && preferences[el.name] !== '') {
                   el.value = preferences[el.name];
+                } else if (FONT_SIZE_FIELDS.indexOf(el.name) >= 0 && preferences[el.name] === '') {
+                  el.value = ''; // blank size = match the document
                 }
               });
 
@@ -588,7 +593,7 @@
               setSegmentedValue('vowels', inferVowelsValue(preferences));
               setSegmentedValue('cantillation', inferCantillationValue(preferences));
 
-              ['hebrew_font','translation_font','transliteration_font','source_title_font','sefaria_link_font','transliteration_scheme','preferred_translation_language']
+              ['hebrew_font','translation_font','transliteration_font','source_title_font','sefaria_link_font','source_title_heading','transliteration_scheme','preferred_translation_language']
                 .forEach(function(id) {
                   const el = byId(id);
                   if (!el) return;
@@ -598,7 +603,7 @@
                   syncCustomSelect(el);
                 });
 
-              ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size'].forEach(normalizeFontSizeField);
+              FONT_SIZE_FIELDS.forEach(normalizeFontSizeField);
 
               ['hebrew_font_style','translation_font_style','transliteration_font_style','source_title_font_style','sefaria_link_font_style','emphasis_bold_style','emphasis_italic_style'].forEach(function(id) {
                 const input = byId(id);
@@ -689,6 +694,7 @@
       'select#transliteration_font',
       'select#source_title_font',
       'select#sefaria_link_font',
+      'select#source_title_heading',
       'select#transliteration_scheme',
       'select#preferred_translation_language',
       'select#meforash_replacement',
@@ -722,7 +728,7 @@
     if (byId('include_translation_source_info')) byId('include_translation_source_info').addEventListener('change', function(){ updateCompositionCard(); });
     // insert_citation_default removed — citation feature was dropped.
 
-    ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size'].forEach(function(id) {
+    FONT_SIZE_FIELDS.forEach(function(id) {
       const el = byId(id);
       if (!el) return;
       function updateForField() {

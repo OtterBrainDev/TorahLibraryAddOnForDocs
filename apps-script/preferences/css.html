@@ -228,7 +228,7 @@
 
   .compact-row {
     display: grid;
-    align-items: end;
+    align-items: start;
     gap: 8px;
     grid-template-columns: minmax(0, 1fr) minmax(64px, 76px) minmax(96px, 112px);
   }
@@ -261,10 +261,19 @@
 
   .scheme-inline-row {
     display: grid;
-    align-items: end;
+    align-items: center;
     gap: 8px;
     grid-template-columns: 112px minmax(0, 1fr);
     margin: 10px 0 12px;
+  }
+
+  .scheme-inline-row .compact-field--label label {
+    margin-bottom: 0;
+  }
+
+  /* The note explaining a Fonts-tab choice row sits right under it. */
+  .scheme-inline-row + .subsection-note {
+    margin: -4px 0 14px;
   }
 
   .scheme-inline-row--translation {
@@ -667,6 +676,14 @@
   .preferences-shell .custom-select.open {
     position: relative;
     z-index: 50;
+  }
+
+  /* ...except the native <select> a custom dropdown replaces: without this it
+     turned `position: relative` again (the rule above out-ranks
+     .enhanced-native-select) and its empty line pushed every enhanced dropdown
+     ~20px below its label. */
+  .preferences-shell select.enhanced-native-select {
+    position: absolute;
   }
 
   .inline-preview {
