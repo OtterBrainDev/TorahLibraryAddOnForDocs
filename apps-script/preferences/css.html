@@ -285,6 +285,11 @@
     margin: 12px 0;
   }
 
+  /* display:flex above would otherwise override the hidden attribute. */
+  .toggle-row[hidden] {
+    display: none;
+  }
+
   .toggle-help,
   .segmented-help,
   .mini-help {

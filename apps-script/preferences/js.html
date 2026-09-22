@@ -616,6 +616,7 @@
               renderOverrideGrid();
               renderOverrideList();
               syncExperimentalChildToggles();
+              syncLinkerInsertToggle();
               loadMenuLayoutEditor(preferences.menu_layout);
       } catch (error) {
         console.error('Preferences modal apply failed:', error);
@@ -635,6 +636,19 @@
     }
 
     $('#experimental_features_enabled').on('change', syncExperimentalChildToggles);
+
+    // "Insert text after linking" only means something in quiet mode. The
+    // review dialog has its own per-row Insert column, so the toggle is hidden
+    // for the other modes rather than shown as a setting that does nothing.
+    // Hiding keeps the stored value; switching back to quiet restores it.
+    function syncLinkerInsertToggle() {
+      var row = byId('link_sources_insert_after_linking_row');
+      var mode = byId('linker_review_mode');
+      if (!row || !mode) return;
+      row.hidden = mode.value !== 'quiet';
+    }
+
+    $('#linker_review_mode').on('change', syncLinkerInsertToggle);
 
     function setResultsMessage(message, isHtml) {
       if (isHtml) $("#results").html(message);
