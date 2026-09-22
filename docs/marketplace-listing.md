@@ -209,9 +209,13 @@ side by side"*).
 - [ ] Every external host the add-on's pages load is listed in `PRIVACY.md`
       §2.2 — `grep -rhoE "(src|href)=[\"']https?://[^\"' ]+" apps-script --include=*.html`
       plus any `@import`
-- [ ] `docs/VERSION.json` `status: "released"` with a date, and the CHANGELOG's
+- [x] `docs/VERSION.json` `status: "released"` with a date, and the CHANGELOG's
       `Unreleased` sections consolidated under one `v2.1.0` heading
-      (`test/ui/version-manifest.test.js` enforces both)
+      (`test/ui/version-manifest.test.js` enforces both). The date is
+      2026-09-22; if the release goes out on another day, change it in both
+      files together
+- [ ] Tag the release commit `v2.1.0` and use the same text for the Apps
+      Script version: `clasp version "v2.1.0"`
 
 ### Live
 

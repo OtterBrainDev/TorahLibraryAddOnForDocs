@@ -2,8 +2,8 @@
   "_description": "Single source of truth for the add-on's version. Everything user-facing that shows a version reads from here (see `surfaces`), and `test/ui/version-manifest.test.js` fails if any of them drift. Update this file in the same commit as the release, never separately.",
 
   "version": "2.1.0",
-  "status": "pending-release",
-  "released": null,
+  "status": "released",
+  "released": "2026-09-22",
   "previous": "2.0.0",
 
   "_prefsSchemaVersion": "Must equal PREFS_SCHEMA_CURRENT_ in apps-script/migrations.gs. This is the user-data schema, not the add-on version: it only ever increases, and it increases whenever a new preference key ships. A mismatch means either a migration landed without a version bump or the reverse — both leave upgrading users in a state no migration covers.",
