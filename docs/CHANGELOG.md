@@ -17,13 +17,13 @@ All notable changes in this fork are documented here.
 > (Preferences → Insertion → Insert from Selection) is written as `true` for every
 > upgrading user; turn it off to keep the selection and insert below it.
 
-> **Default change — migration v13.** Hebrew, translation and transliteration
-> now default to **Match the document**: the font and size of the text where you
+> **New defaults, no pinning.** Hebrew, translation and transliteration now
+> default to **Match the document** — the font and size of the text where you
 > insert (the paragraph at the cursor, or the nearest body-text paragraph above
-> it). New installs get this; migration v13 stores the old fixed fonts
-> (Noto Sans Hebrew at 18 / 12 / 12pt) for existing users who never picked one,
-> so nothing they insert changes. Pick **Match the document** in Preferences →
-> Fonts to switch.
+> it) — and the יהוה replacement defaults to **יי**. Upgraders get these too:
+> the published add-on stored none of these preferences, so there is nothing to
+> preserve. Schema steps v12 (a no-op) and v13 (writes the new
+> `source_title_heading` as "normal") keep the schema number monotonic.
 
 ### Added
 
@@ -44,12 +44,6 @@ All notable changes in this fork are documented here.
   Text colour / Highlight pair, and preview. All four offer the same font list.
 - **The יהוה replacement list is יי, ה', יקוק, השם.** ד', ידוד, יהו-ה and יחוח
   were removed; a stored value from those is kept and shows under Other.
-
-> **Default change — migration v12.** The replacement for יהוה now offers
-> **יי**, first in the list and the default for new installs. Existing users who
-> never picked a replacement were getting ה' from the old default; migration
-> v12 stores ה' for them so their output does not change. An explicit choice
-> is untouched.
 
 ### Fixed
 

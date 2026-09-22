@@ -107,8 +107,7 @@ function getDefaultPreferences() {
     preferred_translation_language: "en",
     // Font and size default to EMPTY for the passage roles (Hebrew,
     // translation, transliteration): "match the document" — take the font and
-    // size of the text at the insertion point. Upgraders keep the fixed values
-    // they had via migration v13. Titles keep a fixed default.
+    // size of the text at the insertion point. Titles keep a fixed default.
     hebrew_font: "",
     hebrew_font_size: "",
     hebrew_font_style: "normal",

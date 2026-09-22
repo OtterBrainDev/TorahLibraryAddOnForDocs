@@ -121,18 +121,18 @@ function runUserPreferenceMigrationsIfNeeded_() {
   if (from < 11) {
     migrateToV11_(userProperties);
   }
-  // v11 -> v12: the default replacement for יהוה changes from ה' to יי. Not a
-  // new key, but a changed default reaches every upgrader who never picked a
-  // value (they read the code default), so their text would change under
-  // them. Pin ה' for anyone without a stored value; new installs get יי.
+  // v11 -> v12: no-op. The יהוה replacement default changed from ה' to יי, and
+  // this step briefly pinned ה' for upgraders with no stored value. Dropped
+  // before release: nobody upgrading from the published add-on has these
+  // preferences stored, so pinning would only have denied them the new
+  // default. Kept as a step so the schema number stays monotonic.
   if (from < 12) {
     migrateToV12_(userProperties);
   }
-  // v12 -> v13: Hebrew, translation and transliteration font/size default to
-  // "match the document" (empty), and titles gain `source_title_heading`.
-  // Upgraders who never set a font or size were reading the old fixed
-  // defaults; those are stored so their insertions look the same. The new
-  // heading key is written as "normal" — what titles have always been.
+  // v12 -> v13: introduces `source_title_heading` ("normal", what titles have
+  // always been). Hebrew, translation and transliteration font/size also
+  // default to "match the document" now; as with v12, nothing is pinned for
+  // upgraders — the published add-on stored none of these.
   if (from < 13) {
     migrateToV13_(userProperties);
   }
@@ -298,37 +298,20 @@ function migrateToV11_(userProperties) {
 }
 
 /**
- * V12: the `meforash_replacement` default moved from ה' to יי. An upgrader
- * with no stored value was getting ה' from the old default; store it so their
- * output does not change. An explicit choice is left alone.
+ * V12: intentionally empty — see the driver comment.
  */
 function migrateToV12_(userProperties) {
-  if (userProperties.getProperty('meforash_replacement') == null) {
-    userProperties.setProperty('meforash_replacement', "ה'");
-  }
-  return true;
+  return false;
 }
 
 /**
- * V13: pin the pre-v13 fixed typography for upgraders with no stored value,
- * now that the default is "match the document". Explicit choices, including
- * an explicit empty one, are left alone.
+ * V13: introduces `source_title_heading`. See the driver comment for why the
+ * new "match the document" font defaults are not pinned for upgraders.
  */
 function migrateToV13_(userProperties) {
-  var previousDefaults = {
-    hebrew_font: 'Noto Sans Hebrew',
-    hebrew_font_size: '18',
-    translation_font: 'Noto Sans Hebrew',
-    translation_font_size: '12',
-    transliteration_font: 'Noto Sans Hebrew',
-    transliteration_font_size: '12',
-    source_title_heading: 'normal'
-  };
-  Object.keys(previousDefaults).forEach(function(key) {
-    if (userProperties.getProperty(key) == null) {
-      userProperties.setProperty(key, previousDefaults[key]);
-    }
-  });
+  if (userProperties.getProperty('source_title_heading') == null) {
+    userProperties.setProperty('source_title_heading', 'normal');
+  }
   return true;
 }
 

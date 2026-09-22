@@ -228,47 +228,31 @@ test('v11 migration does not overwrite an explicit keep-selection choice', () =>
   assert.equal(userProperties.getProperty('insert_from_selection_replace'), 'false');
 });
 
-test('v12 migration keeps ה\' for upgraders who never chose a יהוה replacement', () => {
-  // The default moved from ה' to יי. An upgrader with no stored value was
-  // reading the old default, so the migration pins it.
+test('upgraders get the new יהוה and font defaults — nothing is pinned to the old ones', () => {
+  // The published add-on stored none of these preferences, so an upgrader
+  // with nothing stored reads the new code defaults (יי; "match the
+  // document"), exactly like a new install. v12 is a deliberate no-op.
   const { context, userProperties } = loadMigrations({
     prefs_schema_version: '11',
   });
 
   context.runUserPreferenceMigrationsIfNeeded_();
 
-  assert.equal(userProperties.getProperty('meforash_replacement'), "ה'");
-  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
-});
-
-test('v12 migration does not overwrite an explicit יהוה replacement', () => {
-  const { context, userProperties } = loadMigrations({
-    prefs_schema_version: '11',
-    meforash_replacement: 'יקוק',
-  });
-
-  context.runUserPreferenceMigrationsIfNeeded_();
-
-  assert.equal(userProperties.getProperty('meforash_replacement'), 'יקוק');
-});
-
-test('v13 migration keeps the old fixed fonts for upgraders who never set one', () => {
-  // The Hebrew / translation / transliteration default moved to "match the
-  // document". Upgraders were reading the fixed defaults, so those are stored.
-  const { context, userProperties } = loadMigrations({
-    prefs_schema_version: '12',
-    translation_font: 'Georgia',
-    hebrew_font_size: '',
-  });
-
-  context.runUserPreferenceMigrationsIfNeeded_();
-
-  assert.equal(userProperties.getProperty('hebrew_font'), 'Noto Sans Hebrew');
-  assert.equal(userProperties.getProperty('hebrew_font_size'), '', 'an explicit "match the document" is kept');
-  assert.equal(userProperties.getProperty('translation_font'), 'Georgia', 'an explicit font is kept');
-  assert.equal(userProperties.getProperty('translation_font_size'), '12');
-  assert.equal(userProperties.getProperty('transliteration_font'), 'Noto Sans Hebrew');
-  assert.equal(userProperties.getProperty('transliteration_font_size'), '12');
+  for (const key of ['meforash_replacement', 'hebrew_font', 'hebrew_font_size', 'translation_font',
+    'translation_font_size', 'transliteration_font', 'transliteration_font_size']) {
+    assert.equal(userProperties.getProperty(key), null, key);
+  }
   assert.equal(userProperties.getProperty('source_title_heading'), 'normal');
   assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+});
+
+test('v13 migration does not overwrite an explicit title heading', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '12',
+    source_title_heading: 'heading2',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('source_title_heading'), 'heading2');
 });
