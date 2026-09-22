@@ -1,16 +1,21 @@
 name: Deploy to Apps Script
 
-# Deployment is fork-local infrastructure, not part of the add-on.
+# Deployment is per-repository configuration, not part of the add-on.
 #
-# `.clasp.json` pins ONE Apps Script project (this fork's). Anyone who forks
-# this repository — including an upstream maintainer merging a PR from it —
-# would otherwise inherit a workflow that tries to push their code into this
-# fork's script project. The `if:` guard on the job below is what stops that:
-# the job is skipped entirely unless it is running in the repository that owns
-# the script ID. Forks see a skipped job, never a wrong or failing deploy.
+# The same code lives in more than one repository (the OtterBrainDev fork, where
+# it is developed, and TheMerkazDev, which publishes it), and each pushes to its
+# own Apps Script project — or to none. So nothing here names a repository or a
+# script. Each repository opts in with its own settings
+# (Settings → Secrets and variables → Actions):
 #
-# If you fork this repo and want your own deploys, change DEPLOY_REPOSITORY to
-# your own `owner/name` and set the CLASP_TOKEN secret.
+#   variable CLASP_SCRIPT_ID  the Apps Script project this repository pushes to
+#   secret   CLASP_TOKEN      base64 of a clasp credential file with access to it
+#
+# With no CLASP_SCRIPT_ID the whole workflow is skipped — a fork, or a
+# repository that has not set up deploys yet, sees skipped jobs, never a failed
+# deploy or a push into someone else's project. The scriptId in `.clasp.json`
+# is only the default for running `clasp` by hand; this workflow replaces it
+# with CLASP_SCRIPT_ID before pushing.
 #
 # What this does and does NOT do for users
 # ----------------------------------------
@@ -39,9 +44,6 @@ on:
   workflow_dispatch:
 
 env:
-  # The only repository allowed to deploy. Must match the owner of the
-  # scriptId in .clasp.json.
-  DEPLOY_REPOSITORY: OtterBrainDev/TorahLibraryAddOnForDocs
   # Pinned deliberately. The token conversion below emits clasp's v2
   # `.clasprc.json` shape; installing "latest" silently moves to clasp 3.x,
   # which expects a different credential format, and the deploy fails at the
@@ -58,8 +60,9 @@ permissions:
 
 jobs:
   verify:
-    # Gate the whole pipeline, not just the push step, so a fork does no work.
-    if: github.repository == 'OtterBrainDev/TorahLibraryAddOnForDocs'
+    # Gate the whole pipeline, not just the push step, so a repository that has
+    # not opted in (see the header) does no work.
+    if: vars.CLASP_SCRIPT_ID != ''
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -83,7 +86,7 @@ jobs:
 
   deploy:
     needs: verify
-    if: github.repository == 'OtterBrainDev/TorahLibraryAddOnForDocs'
+    if: vars.CLASP_SCRIPT_ID != ''
     runs-on: ubuntu-latest
     environment: apps-script-production
     steps:
@@ -150,10 +153,24 @@ jobs:
           chmod 600 "${HOME}/.clasprc.json"
           rm -f "${HOME}/.clasprc_v3.json"
 
-      - name: Confirm the target script project
+      - name: Select the target script project
+        env:
+          CLASP_SCRIPT_ID: ${{ vars.CLASP_SCRIPT_ID }}
         run: |
           set -euo pipefail
-          echo "Deploying to scriptId: $(python3 -c "import json;print(json.load(open('.clasp.json'))['scriptId'])")"
+          python3 <<'PY'
+          import json, os, re
+
+          script_id = os.environ['CLASP_SCRIPT_ID'].strip()
+          if not re.fullmatch(r'[A-Za-z0-9_-]{20,}', script_id):
+              raise SystemExit('::error::CLASP_SCRIPT_ID does not look like an Apps Script script ID.')
+          with open('.clasp.json') as f:
+              config = json.load(f)
+          config['scriptId'] = script_id
+          with open('.clasp.json', 'w') as f:
+              json.dump(config, f, indent=2)
+          print(f'Deploying to scriptId: {script_id} (rootDir: {config.get("rootDir")})')
+          PY
 
       - name: Push to the script project's HEAD (test deployments only)
         run: clasp push -f

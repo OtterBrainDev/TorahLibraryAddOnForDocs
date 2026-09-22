@@ -182,6 +182,12 @@ version set in Marketplace SDK → App Configuration. To release: run the live
 test checklist against HEAD, `clasp version "v<version>"`, then set that
 version number in the SDK and save; users get it on their next document open.
 
+The deploy workflow pushes to the project named by the repository variable
+`CLASP_SCRIPT_ID` (with the `CLASP_TOKEN` secret), not to the `scriptId` in
+`.clasp.json`, and is skipped in any repository that has not set it. Don't
+hard-code a repository or script ID into the workflow — the same code is
+deployed from more than one repository.
+
 The QC script must exit 0 before you push. It walks the nested tree
 under `apps-script/` and checks basename collisions among `.gs` files
 (they share one global scope at runtime), balanced `<style>/<script>`

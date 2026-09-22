@@ -166,9 +166,9 @@ listing.
 
 ## 9. Contact
 
-Questions about this policy, or about the add-on's data handling, can be
-raised as an issue on the project's GitHub repository:
-<https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/issues>
+Questions about this policy, or about the add-on's data handling:
+**help@the-merkaz.org**. The add-on's source code is public at
+<https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs>.
 
 ---
 

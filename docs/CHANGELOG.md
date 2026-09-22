@@ -42,6 +42,17 @@ All notable changes in this fork are documented here.
   sidebar card, footer button and supporting code still shipped, hidden. It is
   preserved on the OtterBrainDev `ai-shiur` branch.
 
+- **Links point at the publishing repository.** The privacy-policy links
+  (Preferences, Help → About) pointed at the OtterBrainDev fork, and the GitHub
+  links at the original `shelfgot/SefariaAddOnForDocs`. Both now point at
+  `TheMerkazDev/TorahLibraryAddOnForDocs`. Bug reports go to
+  help@the-merkaz.org, since that repository has Issues turned off.
+- **The deploy workflow is no longer tied to one repository.** It pushes to the
+  Apps Script project in the `CLASP_SCRIPT_ID` repository variable and is
+  skipped where that is unset, so it behaves correctly in both OtterBrainDev
+  and TheMerkazDev. **OtterBrainDev must set `CLASP_SCRIPT_ID` to keep
+  deploying** — it no longer comes from `.clasp.json`.
+
 ### Documentation
 
 - `docs/marketplace-listing.md` is now the full store console package: consent

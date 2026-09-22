@@ -26,15 +26,15 @@ inside the add-on.
 | Decision | Recommended | Where else it must match |
 | --- | --- | --- |
 | Publisher shown on the listing | The Merkaz | Terms §intro (legal name), OAuth consent screen |
-| Cloud project / Apps Script project that publishes | One owned by a The Merkaz account — **not** the current `.clasp.json` script, which belongs to the OtterBrainDev fork | `.clasp.json` `scriptId`; `DEPLOY_REPOSITORY` and both `if:` lines in `.github/workflows/deploy.yml` |
-| Privacy policy URL | `https://the-merkaz.org/torah-library/privacy` (publish `docs/PRIVACY.md` there) | `apps-script/preferences.html` (Privacy note), `apps-script/help-modal.html` (About → Privacy policy) |
+| Cloud project / Apps Script project that publishes | One owned by a The Merkaz account. The `scriptId` in `.clasp.json` belongs to the OtterBrainDev fork's project and is only the default for running `clasp` by hand | In TheMerkazDev: repository variable `CLASP_SCRIPT_ID` and secret `CLASP_TOKEN` (see `.github/workflows/deploy.yml`) |
+| Privacy policy URL | `https://the-merkaz.org/torah-library/privacy` (publish `docs/PRIVACY.md` there). Interim: `https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md`, which is what the add-on links to today | `apps-script/preferences.html` (Privacy note), `apps-script/help-modal.html` (About → Privacy policy) — update both if you move it |
 | Terms of service URL | `https://the-merkaz.org/torah-library/terms` (publish `docs/TERMS.md` there after review) | — |
 | Support URL | `https://the-merkaz.org/torah-library` with a contact route, or `mailto:help@the-merkaz.org` if the form accepts it | Help → Support, Release Notes |
-| Source-code / issues link | `https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs` | `help-modal.html` GitHub pills, `release-notes.html`, `PRIVACY.md` §9 |
+| Source-code link | `https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs` (already used in the add-on). Issues are turned off on that repository, so the add-on sends bug reports to `help@the-merkaz.org`; if you turn Issues on, the Release Notes and `PRIVACY.md` §9 can link to them | `help-modal.html` GitHub pills, `release-notes.html`, `PRIVACY.md` §9 |
 
-A GitHub blob URL works as an interim privacy/terms URL, but it is tied to a
-repository owner and branch name, both of which change when this fork is synced
-upstream. A page on the publisher's own domain is stable.
+A GitHub blob URL works as an interim privacy/terms URL — the TheMerkazDev
+repository is public — but it is tied to a repository owner and branch name. A
+page on the publisher's own domain is stable.
 
 ---
 
@@ -224,7 +224,7 @@ side by side"*).
 ### Still open in the code — resolve or accept before submitting
 
 These came out of the 2026-09 pre-publication review and are **not** fixed in
-this package. The first three are the ones most likely to draw a reviewer's (or
+this package. The first two are the ones most likely to draw a reviewer's (or
 Sefaria's) attention.
 
 - [ ] **Reads as an official Sefaria product.** The sidebar title is `'Sefaria'`
@@ -235,19 +235,14 @@ Sefaria's) attention.
       Sefaria's own Formstack form, so Sefaria receives this add-on's bug
       reports. Replace it with the publisher's contact route unless Sefaria
       agrees to it.
-- [ ] **Links point at the wrong repositories.** Privacy links go to the
-      OtterBrainDev fork (`preferences.html`, `help-modal.html:560`,
-      `PRIVACY.md` §9); GitHub links go to the original
-      `shelfgot/SefariaAddOnForDocs` (`help-modal.html:400, 559`,
-      `release-notes.html:93`). Point them at the URLs chosen in §0, then
-      `UPDATE_UI_SNAPSHOTS=1 npm test`.
 - [ ] **Attribution off by default.** New installs insert texts with no
       citation or license line (`insert_citation_default` and
       `include_translation_source_info` are `false` in
       `server/preferences.gs`). Many Sefaria translations are CC-BY or
       CC-BY-NC.
-- [ ] **Deploy target.** `.clasp.json` and `.github/workflows/deploy.yml` still
-      name the OtterBrainDev script and repository (§0).
+- [ ] **Deploy target.** In TheMerkazDev, set the `CLASP_SCRIPT_ID` variable to
+      the publishing project and add a `CLASP_TOKEN` secret with access to it
+      (§0). Until then the deploy workflow is skipped there.
 
 ---
 
