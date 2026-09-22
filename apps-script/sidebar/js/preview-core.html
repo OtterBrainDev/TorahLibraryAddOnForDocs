@@ -50,6 +50,28 @@ function updateMultiSelectPreviewNotice() {
   );
 }
 
+// Called after a multi-version insert reports translations the server skipped
+// for having no text on this ref: disable them in the list so they can't be
+// picked again, and drop them from the current selection.
+function markTranslationsUnavailable(ref, versionTitles) {
+  var $select = $('.translation-version-select').not('.he-version-selection');
+  (versionTitles || []).forEach(function (vt) {
+    translationAvailabilityByRef[ref + '::' + vt] = false;
+    $select.find('option').filter(function () { return $(this).val() === vt; }).each(function () {
+      var label = $(this).text() + ' – unavailable for this ref';
+      $(this).prop('selected', false).prop('disabled', true).text(label).attr('title', label);
+    });
+  });
+  orderedTranslationVersions = orderedTranslationVersions.filter(function (vt) {
+    return (versionTitles || []).indexOf(vt) < 0;
+  });
+  var remaining = orderedTranslationVersions.length;
+  var displayText = remaining > 1
+    ? remaining + ' versions selected'
+    : normalizeOptionText($select.find('option:selected').first().attr('title') || 'No translation selected.');
+  $('.translation-selected-display').first().text(displayText).attr('title', displayText);
+}
+
 function updatePesukimAvailability(response) {
   var supportsLineMarkers = !!(response && (Array.isArray(response.he) || Array.isArray(response.text) || response.lineMarkersAvailable === true));
   $('.pesukim-wrapper').toggle(supportsLineMarkers);
@@ -190,6 +212,10 @@ function updateSuggestion(dataIn, inputTitle) {
   // Reset selection-order tracking whenever the version UI is fully rebuilt for a new result/version.
   orderedTranslationVersions = [];
   var resolvedRef = dataIn && dataIn.ref ? dataIn.ref : inputTitle;
+  // A translation that resolves but has no text for this ref is not worth
+  // offering: record it before the option list is built so it renders disabled.
+  var resolvedTranslationIsEmpty = !!(dataIn && dataIn.versionTitle) && !hasRenderableText(dataIn.text);
+  if (resolvedTranslationIsEmpty) translationAvailabilityByRef[resolvedRef + '::' + dataIn.versionTitle] = false;
   var versionEntries = buildVersionModel(dataIn);
   var enSelectedVersionTitle = dataIn.versionTitle || "";
   var heSelectedVersionTitle = dataIn.heVersionTitle || "";
@@ -471,6 +497,7 @@ function updateSuggestion(dataIn, inputTitle) {
     getVersions();
   });
 
+  var refetchQueued = false;
   if (pendingPreferredVersions) {
     var prefEn = pendingPreferredVersions.en || '';
     var prefHe = pendingPreferredVersions.he || '';
@@ -478,8 +505,19 @@ function updateSuggestion(dataIn, inputTitle) {
     if (prefEn || prefHe) {
       var currentEn = $('.translation-version-select').val() || currentEnVersion || enSelectedVersionTitle;
       var currentHe = $('.he-version-selection').val() || currentHeVersion || heSelectedVersionTitle;
-      if (currentEn !== (dataIn.versionTitle || '') || currentHe !== (dataIn.heVersionTitle || '')) getVersions();
+      if (currentEn !== (dataIn.versionTitle || '') || currentHe !== (dataIn.heVersionTitle || '')) {
+        getVersions();
+        refetchQueued = true;
+      }
     }
+  }
+
+  // The empty translation is now disabled and the list has moved its selection
+  // to the next available one; load that, so the preview and a plain Insert
+  // don't carry the empty text. Terminates: each empty version is marked once.
+  if (!refetchQueued && resolvedTranslationIsEmpty && $('.output-mode-selection').val() !== 'he'
+      && currentEnVersion && currentEnVersion !== dataIn.versionTitle) {
+    getVersions(currentEnVersion);
   }
 
   updateVersionControlsVisibility();

@@ -8,6 +8,30 @@ All notable changes in this fork are documented here.
 > consolidate those sections under one `## v2.1.0 — … (YYYY-MM-DD)` heading and
 > flip `status` in the manifest.
 
+## Unreleased — multi-translation insert and Hebrew entity fixes (2026-09)
+
+### Fixed
+
+- **`&thinsp;` showed up literally in inserted Hebrew.** The entity decoder only
+  knew a fixed handful of names; Sefaria uses thin, en and em spaces and bidi
+  marks in Hebrew texts. The decoder is now a single table-driven pass covering
+  those (and decodes each entity exactly once — `&amp;lt;` used to become `<`).
+  Voices/sheet text goes through the same decoder.
+- **Multi-translation insert: version named twice in linked titles.** With
+  *Insert Sefaria link* on, each title read
+  `Genesis 1:1 (Koren) (Translation • Koren)`. It now reads
+  `Genesis 1:1 (Translation • Koren)`, and each block's link opens that
+  translation on sefaria.org rather than the default one.
+- **Multi-translation insert: blocks ran together.** A blank paragraph now
+  separates each translation block (after its citation, if shown) from the
+  next, and follows the last block.
+- **Multi-translation insert: empty translations.** A selected translation
+  with no text for the reference is no longer inserted as an empty block — nor
+  replaced by a second copy of Sefaria's default translation. The sidebar says
+  which were skipped and greys them out as *unavailable for this ref*; a
+  translation found empty while previewing is greyed out the same way and the
+  preview moves on to the next available one.
+
 ## Unreleased — reference-normalization hardening, and versioning (2026-09)
 
 ### Fixed
