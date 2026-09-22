@@ -39,7 +39,10 @@ function applyHebrewTextDisplayPreferences(value, context, filters) {
   }
   if (shouldStripNekudot) {
     output = output.replace(/[ְ-ֽ]/g, '');
-    output = output.replace(/[ֿ-ׇ]/g, '');
+    // Rafe, shin/sin dots, upper/lower dots and qamats qatan. Not the whole
+    // U+05BF-U+05C7 range: paseq (U+05C0), sof pasuq (U+05C3) and nun hafukha
+    // (U+05C6) sit inside it but are punctuation, not vowels.
+    output = output.replace(/[\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g, '');
   }
 
   return output;
@@ -82,7 +85,13 @@ function applyDivineNameReplacements(data, userProperties, options) {
   const allRules = [];
   if (includeHebrew) {
     allRules.push({ enabledBy: "meforash_replace", pattern: /י[֑-ׇ]*ה[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*/g, replacementKey: "meforash_replacement", requireReplacement: true, fields: ["he", "heRef"] });
-    allRules.push({ enabledBy: "yaw_replace",      pattern: /י[֑-ׇ]*ה[֑-ׇ]*/g,                    replacementKey: "yaw_replacement",      requireReplacement: false, fields: ["he", "heRef"] });
+    // יה only as a whole word. Without the boundaries it matched the start of
+    // יהודה, יהושע and friends (יהודה -> קהודה). A word here is Hebrew letters
+    // plus their vowel and cantillation marks; maqaf, paseq and sof pasuq end
+    // one, so הללו־יה still matches. The 4-letter names above and below stay
+    // unbounded on purpose: their prefixed forms (לַיהוָה, וֵאלֹהִים) are
+    // common and should be replaced too.
+    allRules.push({ enabledBy: "yaw_replace",      pattern: /(^|[^\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA])(י[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]*ה[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]*)(?![\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA])/g, keepPrefixGroup: true, replacementKey: "yaw_replacement", requireReplacement: false, fields: ["he", "heRef"] });
     allRules.push({ enabledBy: "elodim_replace",   pattern: /א[֑-ׇ]*ל[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*י[֑-ׇ]*ם[֑-ׇ]*/g, replacementKey: "elodim_replacement",   requireReplacement: false, fields: ["he", "heRef"] });
   }
   if (includeEnglish) {
@@ -94,9 +103,14 @@ function applyDivineNameReplacements(data, userProperties, options) {
     if (userProperties.getProperty(rule.enabledBy) != "true") continue;
     const replacement = userProperties.getProperty(rule.replacementKey);
     if (rule.requireReplacement && !replacement) continue;
+    // A function, not a string: String.replace expands `$&`, `$1` and friends
+    // in a replacement string, and this one is user-entered text.
+    const literal = replacement || rule.defaultReplacement || "";
     activeRules.push({
       pattern: rule.pattern,
-      replacement: replacement || rule.defaultReplacement || "",
+      replacement: rule.keepPrefixGroup
+        ? function (match, prefix) { return prefix + literal; }
+        : function () { return literal; },
       fields: rule.fields,
     });
   }
