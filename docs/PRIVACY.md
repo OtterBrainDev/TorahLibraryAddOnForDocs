@@ -86,6 +86,13 @@ the add-on's authors.
 sidebar session — is stored in Google's `CacheService` and expires
 automatically within 6 hours.
 
+**Your sidebar history** — the Session Library (sources you inserted or
+pinned), recent searches, and recent and starred Lexicon entries — is kept in
+your own browser's local storage, on the computer you used. It never leaves
+that browser and is not synced to other computers. **Reset Session** in the
+Session Library clears the Session Library; clearing your browser's site data
+removes all of it.
+
 **Nothing else is stored.** Specifically:
 
 - There is **no server** operated by this add-on's authors. There is nowhere
@@ -115,9 +122,10 @@ network traffic is to `sefaria.org`, as described in §2.
 
 ## 6. Data retention and deletion
 
-The add-on retains only your preference settings. To delete them:
+Apart from the browser-side sidebar history described in §3, the add-on
+retains only your preference settings. To delete them:
 
-- Use **Preferences → Reset Preferences** to restore defaults, or
+- Use **Preferences → Reset To Defaults** to restore defaults, or
 - Uninstall the add-on. Google removes the add-on's `PropertiesService`
   storage when you uninstall it.
 

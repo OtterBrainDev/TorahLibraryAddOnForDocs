@@ -1,138 +1,222 @@
 # Using the Torah Library Add-On for Google Docs
 
-This guide walks through the current forked version of the Torah Library Add-On for Google Docs.
+A walkthrough of the add-on as it is today (v2.1). The same material is inside
+the add-on under **Extensions → Torah Library → Help & Support**, or the
+**Help** button at the bottom of the sidebar.
 
 > This is not an official Sefaria project.
 
-## What this add-on does
+## Quick start
 
-The add-on helps you:
+1. Put your cursor where the source should go.
+2. Open **Extensions → Torah Library → Texts**. The sidebar opens on the right.
+3. Type a reference — `Genesis 1:1`, `Berakhot 2a`, `בראשית א:א`. Results
+   appear as you type.
+4. Click a result. The **Preview** shows exactly what will be inserted.
+5. Optional: open **📰 Layout** to choose Hebrew, translation or both, and how
+   they are arranged.
+6. Click **Add Source** (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).
 
-- find a source by reference, title, nested path, phrase, or Sefaria URL
-- preview the result before inserting it
-- insert Source, Translation, or Source with Translation into Google Docs
-- control layout and Hebrew formatting
-- link inserted or existing references to Sefaria
-- apply typography and divine-name preferences
+## The sidebar at a glance
 
-## Open the add-on
+**Along the top**
 
-From Google Docs, open the add-on menu and choose:
+| Control | What it does |
+| --- | --- |
+| **Texts** | Search Sefaria's library of texts. |
+| **Voices** | Search Sefaria source sheets and insert from them. |
+| **Lexicon** | Look up a Hebrew or Aramaic word in Sefaria's dictionaries. |
+| **🧪** | Experimental features — only shown when enabled in Preferences. |
+| **⌨︎** | On-screen Hebrew keyboard, with a Vowels row. |
+| **🔍** | Run the search. Click into the empty search box to see recent searches. |
 
-- **Find & Insert Source**
+**Along the bottom**
 
-This opens the unified sidebar.
+| Control | What it does |
+| --- | --- |
+| **Add Source** | Insert the selected source at the cursor. |
+| **📰 Layout** | Layout Settings: display, layout and formatting for this session. |
+| **📜** | The Session Library — sources you've inserted or pinned. |
+| **🏃** | Quick Actions: Insert from Selection, Transform Divine Names, Link Texts with Sefaria. |
+| **⚙︎** | Preferences — your saved defaults. |
+| **Help** · **Feedback** | Help & Support, and the feedback form. |
 
-## Find a source
+## Find a text (Texts tab)
 
-In the search box, you can enter:
+The search runs as you type (after two characters), or press <kbd>Enter</kbd>.
+You can search for:
 
-- a reference like `Genesis 1:1`
-- a tractate reference like `Berakhot 2a`
-- a nested/library path
-- a phrase
-- a Sefaria URL
+- a reference — `Exodus 20:1-14`, `Berakhot 2a`, `Mishnah Avot 1:1`
+- a reference in Hebrew — `שמות כ:א`, `ברכות ב.`
+- a traditional citation — `Hil. Shabbat 1:1`, `Rambam, Hil. Teshuvah 3:4`
+- a book title, a phrase from the text, or a sefaria.org link
 
-Results are grouped into:
+If nothing matches, the sidebar suggests related titles. While the search box
+is empty, the tab lists your most recent and pinned sources.
 
-- **Library matches**
-- **Search results**
+Result tools:
 
-Select a result to preview it.
+- **A א** — show only works with a translation in a given language.
+- **Rel. ▾** — sort by relevance, A–Z, Z–A, category, or most recent.
+- **❌** on a result group hides that group; **⤦ Restore Corpus** brings it back.
+- <kbd>↑</kbd> / <kbd>↓</kbd> from the search box move through results;
+  <kbd>Enter</kbd> picks one.
 
-## Choose how the source should appear
+The selected-source card has **‹ Prev** / **Next ›** to step to the
+neighbouring passage and **Open on Sefaria**. Whole books and section headings
+can't be inserted — the sidebar says so and keeps **Add Source** disabled until
+you pick a specific passage.
 
-The add-on supports three display modes:
+## Versions & Preview
 
-- **Source**
-- **Translation**
-- **Source with Translation**
+**Versions** chooses the translation (**Translation Versions**) and, when
+needed, a specific Hebrew edition (**Original Versions**). Your preferred
+translation language is set in **Preferences → Fonts → Translation**.
 
-If you choose **Source with Translation**, you can also choose a bilingual layout:
+With **Translation** only, or **Hebrew and translation** in the **Stacked**
+layout, hold <kbd>Ctrl</kbd> (<kbd>⌘</kbd>) to select several translations.
+Each is inserted as its own block, in the order selected. The Preview can't
+show several at once. A translation with no text for the passage is greyed out
+as *unavailable for this ref* and skipped.
 
-- **Hebrew on top**
-- **Hebrew left**
-- **Hebrew right**
+**🔁 Preview** shows what **Add Source** will insert right now.
 
-## Hebrew formatting controls
+## Layout Settings (📰 Layout)
 
-The sidebar includes visible Hebrew controls for:
+Everything here applies to the current sidebar session only.
 
-- **Vowels**
-- **Cantillation**
+- **Display** — **A** (translation), **A + א** (Hebrew with translation),
+  **א** (Hebrew only).
+- **Layout** (with both) — **Stacked**, **Right–Left** (Hebrew on the right),
+  **Left–Right** (Hebrew on the left).
+- **Insertion Format** — a live sample with switches for **🔗 Title** (link
+  the title to Sefaria), **Cantillation**, **Vowels**, **Translit** (with a
+  scheme menu), **Lines** (verse/line numbers) and **🔗 Sources** (a citation
+  of the translation used).
+- **Session** — **↺ Revert to defaults** returns to your Preferences;
+  **💾 Save as defaults** makes the current choices your Preferences.
 
-Use these to change how Hebrew text appears in preview and insertion.
+## Inserting
 
-## Translation versions
+An insertion is a title (linked if **🔗 Title** is on), then the Hebrew,
+transliteration and/or translation in your chosen layout, then the translation
+citation if **🔗 Sources** is on.
 
-When Translation is involved, you can:
+Fonts, sizes and colours come from **Preferences → Fonts**, and default to
+**Match the document** — the font and size of the text where you insert.
+Titles can be set to Heading 1–6 so they appear in the outline and table of
+contents. Sefaria's own bold and italics are kept; change how they look under
+**Preferences → Fonts → ✒️ Source Emphasis**.
 
-- filter translation versions
-- choose a translation
-- optionally include translation details
+## Voices (source sheets)
 
-## Insert links
+Open the **Voices** tab, search source sheets, pick one, then under **What to
+insert** choose **Citation**, **Text** or **Both** and optionally a
+transliteration scheme. Defaults live in **Preferences → Insertion → Insertion
+Defaults → Voices**.
 
-The add-on supports:
+## Lexicon (dictionary)
 
-- **Insert Sefaria link** when inserting a source
-- **Open on Sefaria** for the selected result
-- **Link Texts with Sefaria** to add hyperlinks to recognizable references already in the document
+Open the **Lexicon** tab and type a Hebrew or Aramaic word. Choose **Full
+entry**, **Word + ref** or **Definition**, then **Add Source**. Star entries to
+keep them under **⭐ Starred entries**; recent lookups show as chips.
+
+## Session Library (📜)
+
+Every inserted source is added (the most recent twelve, plus any you pin).
+Open it with **📜** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> +
+<kbd>L</kbd>. Click a source to reopen it, **📌** to pin it, filter and sort,
+**Copy References** for a plain-text list, **Clear Recent** (keeps pinned) or
+**Reset Session** (clears everything). The Session Library is kept in your
+browser only.
+
+## Quick Actions (🏃)
+
+| Action | What it does |
+| --- | --- |
+| **Sel → ס** Insert Source from Selection | Select a reference typed in the document and run it. By default the selection is replaced by the source; turn off **Preferences → Insertion → Insert from Selection** to keep it and insert below. |
+| **ה → ש** Transform Divine Names | Apply your divine-name replacements to text already in the document. |
+| **🔗 → ס** Link Texts with Sefaria | Find citations in the document and link them to Sefaria. |
+| **🎲** Surprise Me | Experimental; shown only when enabled in **Preferences → 🧪 Experimental**. |
+
+Menu-only: **Unlink Sources** removes every sefaria.org link from the
+document; **Gematriya Count** totals the gematria of the selection (or the
+whole document).
+
+## Link Texts with Sefaria
+
+1. Run it from Quick Actions or the menu. A dialog shows progress while the
+   document is scanned.
+2. Review the table: the words in your document and the Sefaria source each
+   will point to. Where a citation could mean more than one source, choose
+   from the dropdown (each option shows an excerpt).
+3. Each row has a **Link** and an **Insert** checkbox — hyperlink it, insert
+   the source's text below the paragraph, both, or neither.
+4. Apply. The dialog reports what was linked and what couldn't be.
+
+**Preferences → Linking → After linking** sets how much it asks: **Show a
+summary, and ask about ambiguous citations** (recommended), **Show every match
+for review**, or **Just link and report a count** (never asks, skips ambiguous
+citations; **Insert text after linking** inserts each linked source too).
+
+**Document scanning** controls what is sent to Sefaria: **Candidate passages
+only** (default — only passages that look like citations) or **Whole
+document**. If the report says citations *could not be placed*, switch to
+**Whole document** and run it again.
+
+## Divine names
+
+By default, inserted יהוה becomes יי. The rules are in **Preferences →
+Insertion → Divine Name Mappings**: a master switch for replacement on
+insertion, and a rule each for יהוה, יה, אלוהים and English *God*, each with a
+choice of replacement or **Other**. **Transform Divine Names** applies the same
+rules to text already in the document.
 
 ## Preferences
 
-The Preferences dialog lets you configure defaults such as:
+Open with **⚙︎** or **Extensions → Torah Library → Preferences**. Preferences
+are saved defaults and follow your Google account into every document.
 
-- Hebrew font
-- Hebrew font size
-- Translation font
-- Translation font size
-- divine-name transformations
-- Hebrew orthography settings
+| Tab | Contents |
+| --- | --- |
+| **Fonts** | Title (plain and linked; paragraph style), Hebrew, Transliteration (scheme), Translation (preferred language) — each with font, size, style, colour, highlight and preview — and ✒️ Source Emphasis. |
+| **Insertion** | Default Display & Layout; Insertion Defaults for Texts, Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection. |
+| **Linking** | After linking; Insert text after linking; Document scanning. |
+| **Menu Bar** | Reorder, group, hide and divide menu items. |
+| **🧪 Experimental** | Optional in-progress features such as Surprise Me. |
 
-These preferences are persisted and used during insertion.
+Buttons: **Save Defaults**, **Save & Close**, **🔁 Refresh** (reopen the
+sidebar from saved defaults) and **Reset To Defaults**.
 
-## Divine-name workflow
+## The menu
 
-The add-on includes:
+**Extensions → Torah Library** holds, by default: Texts, Voices, Lexicon,
+Insert Source from Selection, and a Quick Actions submenu (Quick Actions
+Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources,
+Gematriya Count), then Preferences and Help & Support. Customize it in
+**Preferences → Menu Bar**; Preferences and Help & Support always stay at the
+bottom. Reload the document if a change doesn't appear.
 
-- insertion-time divine-name transformations
-- a quick **Transform Divine Names** menu action for existing document text
+## Keyboard shortcuts
 
-If no divine-name transforms are configured, the add-on will prompt you accordingly.
+| Keys | Action |
+| --- | --- |
+| <kbd>/</kbd> | Jump to the search box |
+| <kbd>Enter</kbd> | Search, or pick the highlighted result |
+| <kbd>↑</kbd> <kbd>↓</kbd> | Move through results |
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | Add Source |
+| <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> | Open/close the Session Library |
+| <kbd>Esc</kbd> | Close Layout Settings, the Session Library, or the Hebrew keyboard |
 
-## Structural / non-insertable nodes
+## Getting help
 
-Some library hits are structural nodes rather than directly insertable text.
-
-In these cases, the sidebar will:
-
-- show a warning/explanation
-- keep Insert disabled
-- encourage choosing a more specific subsection or opening the result on Sefaria
-
-## Link existing references in a document
-
-Use the menu action:
-
-- **Link Texts with Sefaria**
-
-This scans the current Google Doc and attempts to hyperlink recognizable references to their corresponding Sefaria pages.
-
-## Worked example
-
-A worked example Google Doc is available here:
-
-- [Worked example Google Doc](PASTE_GOOGLE_DOC_LINK_HERE)
-
-## Changelog
-
-For a summary of major fork enhancements, see:
-
-- [CHANGELOG.md](./CHANGELOG.md)
+- Troubleshooting and a bug-report checklist: **Help & Support → Support**.
+- Email: [help@the-merkaz.org](mailto:help@the-merkaz.org)
+- [Privacy policy](./PRIVACY.md) · [Changelog](./CHANGELOG.md)
 
 ## Current limitations
 
-- Hebrew misspelling tolerance is deferred; valid Hebrew-script references are supported, but typo correction is not implemented.
-- Some matching/linking behavior remains intentionally conservative to avoid false positives.
-- Google Docs sidebar width and layout behavior remain subject to Apps Script platform constraints.
+- Hebrew misspelling tolerance is deferred; valid Hebrew-script references are
+  supported, but typo correction is not.
+- Linking is deliberately conservative: an ambiguous citation is asked about
+  or skipped, never guessed.
