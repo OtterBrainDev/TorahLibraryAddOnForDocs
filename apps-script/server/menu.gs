@@ -170,7 +170,7 @@ function gematriyaCountPopup() {
     Logger.log('Error in gematriyaCountPopup: ' + error.message);
   }
   const template = HtmlService.createTemplateFromFile('gematriya-count');
-  template.statsJson = JSON.stringify(stats);
+  template.statsJson = toEmbeddedJson_(stats);
   const html = template.evaluate().setWidth(480).setHeight(420);
   DocumentApp.getUi().showModalDialog(html, 'Gematriya Count');
 }
@@ -270,7 +270,7 @@ function sessionLibraryPopup(sessionDataJson) {
   if (!Array.isArray(parsed.pinned)) parsed.pinned = [];
   if (!Array.isArray(parsed.inserted)) parsed.inserted = [];
   const template = HtmlService.createTemplateFromFile('session-library-modal');
-  template.sessionDataJson = JSON.stringify(parsed);
+  template.sessionDataJson = toEmbeddedJson_(parsed);
   const html = template.evaluate().setWidth(680).setHeight(640);
   DocumentApp.getUi().showModalDialog(html, 'Session Library');
 }

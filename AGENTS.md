@@ -111,7 +111,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **129 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **150 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -122,6 +122,9 @@ and fix it before touching the feature you came to change.
 - `hebrew-preferences.test.js` — Hebrew display filters, divine-name
   replacements, transliteration, search payload shape.
 - `migrations.test.js` — the UserProperties schema migrations.
+- `menu-layout.test.js` — the customizable add-on menu: default layout
+  matches the pre-customization menu, Preferences and Help are always last,
+  dividers collapse, stored layouts are normalized.
 - `extended-gemara.test.js`, `format-data-for-pesukim.test.js` — the
   regressions named in `docs/regression-log.md`.
 - `search-input-normalization.test.js` — query normalization and the
@@ -132,7 +135,11 @@ and fix it before touching the feature you came to change.
   mapping back onto the document.
 - `linker-classify.test.js` — which citation becomes a link, a
   question, or a counted failure.
-- `sanitize-source-html.test.js` — the Sefaria-HTML strip.
+- `sanitize-source-html.test.js` — the Sefaria-HTML allowlist sanitizer.
+  linkedom cannot reproduce browser mutation XSS; verify sanitizer
+  changes in headless Chromium as well.
+- `set-preferences.test.js` — only `SETTINGS` keys can be written
+  through the client-reachable preference setters.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped; HTML-entity
   decoding (`&thinsp;` and friends).
@@ -153,6 +160,8 @@ and in `test/ui/`:
 - `version-manifest.test.js` — `docs/VERSION.json` against the schema
   version, the migrations that must exist for it, and every surface that
   shows a version string.
+- `embedded-json.test.js` — server data force-printed into an inline
+  `<script>` goes through `toEmbeddedJson_`.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

@@ -383,8 +383,10 @@ function logUnknownSheetNode_(source, ordinal, normalizedOptions) {
     return;
   }
 
+  // The shape (key names) is what the diagnostic needs; the node's content is
+  // not logged.
   try {
-    console.log('Unknown Sefaria sheet node shape at ordinal ' + ordinal + ': ' + JSON.stringify(source));
+    console.log('Unknown Sefaria sheet node shape at ordinal ' + ordinal + ': keys=' + Object.keys(source || {}).join(','));
   } catch (err) {
     console.log('Unknown Sefaria sheet node shape at ordinal ' + ordinal + '.');
   }

@@ -16,27 +16,47 @@
   //
   // Sefaria's library texts legitimately carry markup (<b>, <i>, footnote
   // <sup>/<i class="footnote">), and the preview is supposed to render it. But
-  // their server-side allowlist also permits <img src> and <a href>, so a text
-  // could reference a third-party host — which would make the reader's browser
-  // fetch it, leaking their IP and the fact that they opened that passage. The
-  // add-on's privacy policy says it contacts no host other than sefaria.org;
-  // this is what keeps that literally true.
+  // that markup is untrusted input: search highlights and Voices snippets come
+  // from user-published source sheets, and the sidebar that renders them holds
+  // google.script.run — script running there can call any server function
+  // against the user's live document. It also must not reference a third-party
+  // host: the add-on's privacy policy says it contacts no host other than
+  // sefaria.org, and an <img src> would make the reader's browser fetch it.
   //
-  // Note this is a strip, not an allowlist: everything Sefaria uses for
-  // typography survives untouched. We remove only the elements that pull in a
-  // subresource or execute, and the attributes that could carry a URL or a
-  // handler.
+  // So this is an ALLOWLIST, not a strip. An earlier version removed a list of
+  // known-bad elements and kept everything else, and was bypassed by mutation
+  // XSS: <math>/<mglyph>/<xmp> markup that serializes to one string and
+  // re-parses (when the caller hands the result to jQuery) into a different
+  // tree containing an <img onerror> the sanitizer never saw. The defences:
+  //
+  //   1. Only the inline typography Sefaria uses survives, and only in the
+  //      HTML namespace. SVG/MathML, raw-text elements (xmp, style,
+  //      noembed, ...) and everything else are removed or unwrapped.
+  //   2. Only class/dir/lang attributes survive. No handlers, no URLs, no ids
+  //      (DOM clobbering), no data-* (the sidebar's delegated click handlers
+  //      read data-ref).
+  //   3. The output is re-parsed and must come back as the same string with
+  //      the same allowlisted-only tree. If it does not, the parser mutated it,
+  //      and the caller gets escaped plain text instead of markup.
 
-  var SANITIZE_DROP_ELEMENTS_ = [
-    'script', 'style', 'iframe', 'object', 'embed', 'link', 'meta', 'base',
-    'img', 'svg', 'video', 'audio', 'source', 'track', 'form', 'input',
-    'button', 'textarea', 'select', 'template', 'noscript'
-  ].join(',');
-
-  var SANITIZE_DROP_ATTRIBUTES_ = [
-    'src', 'href', 'xlink:href', 'srcset', 'formaction', 'action',
-    'background', 'poster', 'data', 'codebase', 'style'
+  var SANITIZE_ALLOWED_ELEMENTS_ = [
+    'b', 'i', 'em', 'strong', 'u', 's', 'sup', 'sub', 'small', 'big',
+    'span', 'br', 'p', 'div', 'ul', 'ol', 'li'
   ];
+
+  // Removed together with everything inside them. Their content is either
+  // executable, not text at all, or parsed by rules (raw text, foreign
+  // content) that differ between the first parse and the caller's re-parse.
+  var SANITIZE_DROP_WITH_CONTENT_ = [
+    'script', 'style', 'template', 'noscript', 'iframe', 'frame', 'frameset',
+    'object', 'embed', 'applet', 'svg', 'math', 'xmp', 'noembed', 'noframes',
+    'plaintext', 'textarea', 'title', 'select', 'option', 'head', 'link',
+    'meta', 'base', 'video', 'audio', 'source', 'track', 'canvas', 'picture'
+  ];
+
+  var SANITIZE_ALLOWED_ATTRIBUTES_ = ['class', 'dir', 'lang'];
+
+  var HTML_NAMESPACE_ = 'http://www.w3.org/1999/xhtml';
 
   /**
    * Parse HTML into an INERT document. DOMParser does not load subresources and
@@ -61,51 +81,94 @@
     }
   }
 
+  function isHtmlNamespace_(element) {
+    // linkedom (the test DOM) leaves namespaceURI unset for HTML elements.
+    return !element.namespaceURI || element.namespaceURI === HTML_NAMESPACE_;
+  }
+
+  function sanitizeChildren_(doc, parent) {
+    Array.prototype.slice.call(parent.childNodes).forEach(function (node) {
+      if (node.nodeType === 3) return; // text is escaped on serialization
+      if (node.nodeType !== 1) { // comments, processing instructions, CDATA
+        parent.removeChild(node);
+        return;
+      }
+
+      var tag = String(node.localName || node.tagName || '').toLowerCase();
+      if (!isHtmlNamespace_(node) || SANITIZE_DROP_WITH_CONTENT_.indexOf(tag) >= 0) {
+        parent.removeChild(node);
+        return;
+      }
+
+      if (tag === 'img') {
+        // Keep an image's alt text so a footnote or figure caption is not
+        // silently lost.
+        var alt = String(node.getAttribute('alt') || '').trim();
+        if (alt) parent.replaceChild(doc.createTextNode(alt), node);
+        else parent.removeChild(node);
+        return;
+      }
+
+      sanitizeChildren_(doc, node);
+
+      if (SANITIZE_ALLOWED_ELEMENTS_.indexOf(tag) < 0) {
+        // Anything else (<a>, tables, <font>, unknown tags): keep what it
+        // says, drop the element and wherever it pointed.
+        while (node.firstChild) parent.insertBefore(node.firstChild, node);
+        parent.removeChild(node);
+        return;
+      }
+
+      Array.prototype.slice.call(node.attributes || []).forEach(function (attribute) {
+        var name = String(attribute.name || '').toLowerCase();
+        if (SANITIZE_ALLOWED_ATTRIBUTES_.indexOf(name) < 0) {
+          node.removeAttribute(attribute.name);
+        }
+      });
+    });
+  }
+
+  // True when every element under root is an allowlisted HTML element carrying
+  // only allowlisted attributes, and there is nothing but elements and text.
+  function isAllowlistedTree_(root) {
+    return Array.prototype.every.call(root.childNodes, function (node) {
+      if (node.nodeType === 3) return true;
+      if (node.nodeType !== 1 || !isHtmlNamespace_(node)) return false;
+      var tag = String(node.localName || node.tagName || '').toLowerCase();
+      if (SANITIZE_ALLOWED_ELEMENTS_.indexOf(tag) < 0) return false;
+      var attributesOk = Array.prototype.every.call(node.attributes || [], function (attribute) {
+        return SANITIZE_ALLOWED_ATTRIBUTES_.indexOf(String(attribute.name || '').toLowerCase()) >= 0;
+      });
+      return attributesOk && isAllowlistedTree_(node);
+    });
+  }
+
   function sanitizeSourceHtml(html) {
     var raw = String(html || '');
     if (!raw) return '';
 
+    // No DOMParser, or a parse that cannot be trusted: plain escaped text
+    // rather than unchecked markup. Losing italics is a much smaller cost.
+    var plainText = function () {
+      return escapeHTML(raw.replace(/<[^>]*>/g, ''));
+    };
+
     var doc = parseInertHtml(raw);
-    // No DOMParser: fall back to plain escaped text rather than trusting the
-    // markup. Losing italics is a much smaller cost than rendering it unchecked.
-    if (!doc || !doc.body) return escapeHTML(raw.replace(/<[^>]*>/g, ''));
+    if (!doc || !doc.body) return plainText();
 
-    // Sweep the whole document, not only body. A stray "</body>" in the input
-    // can push later nodes out of body in some parsers; stripping document-wide
-    // means such a node is removed no matter where it landed, and the output
-    // below is still read from body alone.
-    Array.prototype.forEach.call(
-      doc.querySelectorAll(SANITIZE_DROP_ELEMENTS_),
-      function (node) {
-        // Keep an image's alt text so a footnote or figure caption is not
-        // silently lost; everything else goes.
-        var alt = node.tagName === 'IMG' ? String(node.getAttribute('alt') || '').trim() : '';
-        if (alt && node.parentNode) {
-          node.parentNode.replaceChild(doc.createTextNode(alt), node);
-          return;
-        }
-        if (node.parentNode) node.parentNode.removeChild(node);
-      }
-    );
+    // Output is read from body alone, so anything a stray "</body>" hoisted
+    // out of it is simply not emitted.
+    sanitizeChildren_(doc, doc.body);
+    var clean = doc.body.innerHTML;
 
-    // Anchors: keep what they say, drop where they point.
-    Array.prototype.forEach.call(doc.querySelectorAll('a'), function (anchor) {
-      var parent = anchor.parentNode;
-      if (!parent) return;
-      while (anchor.firstChild) parent.insertBefore(anchor.firstChild, anchor);
-      parent.removeChild(anchor);
-    });
-
-    Array.prototype.forEach.call(doc.querySelectorAll('*'), function (element) {
-      var attributes = Array.prototype.slice.call(element.attributes || []);
-      attributes.forEach(function (attribute) {
-        var name = String(attribute.name || '').toLowerCase();
-        if (name.indexOf('on') === 0 || SANITIZE_DROP_ATTRIBUTES_.indexOf(name) >= 0) {
-          element.removeAttribute(attribute.name);
-        }
-      });
-    });
-
-    return doc.body.innerHTML;
+    // Mutation check: the caller will hand this string to the HTML parser
+    // again. It must come back as exactly the same allowlisted tree.
+    var reparsed = parseInertHtml(clean);
+    if (!reparsed || !reparsed.body ||
+        reparsed.body.innerHTML !== clean ||
+        !isAllowlistedTree_(reparsed.body)) {
+      return escapeHTML(String(doc.body.textContent || ''));
+    }
+    return clean;
   }
 </script>

@@ -8,6 +8,39 @@ All notable changes in this fork are documented here.
 > consolidate those sections under one `## v2.1.0 — … (YYYY-MM-DD)` heading and
 > flip `status` in the manifest.
 
+## Unreleased — pre-publication security fixes (2026-09)
+
+### Security
+
+- **The Sefaria-HTML sanitizer is now an allowlist.** The previous version
+  removed a list of dangerous elements and kept everything else, and was
+  bypassed by mutation XSS: MathML/`xmp` markup that serializes to one string
+  and re-parses into an `<img onerror>` once the sidebar renders it. Reproduced
+  in Chromium through the real preview and search-result render paths. Search
+  highlights and Voices snippets come from user-published source sheets, and
+  the sidebar can call every server function, so this was reachable. Only
+  inline typography (`b i em strong u s sup sub small big span br p div ul ol li`)
+  with `class`/`dir`/`lang` now survives; SVG/MathML and raw-text elements are
+  dropped with their content; and the output is re-parsed and must come back
+  unchanged, or the caller gets escaped plain text. Footnotes, bold, and RTL
+  spans render as before.
+- **Session Library: a source-sheet title could end the dialog's inline
+  `<script>`** (`</script>` in a title) and inject markup. Server data embedded
+  in templates now always goes through `toEmbeddedJson_`, and a test fails if a
+  force-printed template variable does not.
+- **`setPreferences` only stores known preference keys**, as strings of at
+  most 9,000 characters. Previously any caller could write internal state that
+  shares the store, including `linker_upload_acknowledged` (which skips the
+  privacy confirmation before the first linker upload) and
+  `prefs_schema_version`.
+- **Removed jQuery UI 1.9.1** from Preferences. Nothing used it, and it carries
+  known CVEs that Marketplace security scans flag.
+- **Selected document text is no longer written to the execution log.**
+  `findReference` logged the reference and the request URL, and via Insert
+  Source from Selection the reference is raw document text (hard rule 7). The
+  sheet-node debug log now records the node's key names, not its content.
+- GitHub Actions are pinned to commit SHAs.
+
 ## Unreleased — Preferences cleanup and a customizable menu (2026-09)
 
 ### Added
