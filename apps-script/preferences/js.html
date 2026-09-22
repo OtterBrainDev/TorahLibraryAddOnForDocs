@@ -962,7 +962,11 @@
     var menuDividerSeq = 0;
 
     function menuLayoutClone(layout) {
-      return { top: layout.top.slice(), quick_actions: layout.quick_actions.slice() };
+      return {
+        top: layout.top.slice(),
+        quick_actions: layout.quick_actions.slice(),
+        hidden: (layout.hidden || []).slice()
+      };
     }
 
     function menuLayoutNormalize(raw) {
@@ -989,11 +993,35 @@
           if (id !== MENU_DIVIDER && !seen[id]) layout[listName].push(id);
         });
       });
+      layout.hidden = (Array.isArray(parsed.hidden) ? parsed.hidden : []).filter(function(id, i, all) {
+        return seen[id] && all.indexOf(id) === i;
+      });
       return layout;
     }
 
     function menuLayoutIsDefault(layout) {
-      return JSON.stringify(layout) === JSON.stringify(menuEditorConfig.defaultLayout);
+      var d = menuEditorConfig.defaultLayout;
+      return !layout.hidden.length &&
+        JSON.stringify(layout.top) === JSON.stringify(d.top) &&
+        JSON.stringify(layout.quick_actions) === JSON.stringify(d.quick_actions);
+    }
+
+    // Surprise Me only reaches the real menu while its switch (Experimental
+    // tab) is on, so the editor leaves it out otherwise. It keeps its place in
+    // the layout, ready for when the feature is switched back on.
+    function menuLayoutIsSuppressed(id) {
+      if (id !== 'surprise_me') return false;
+      var toggle = byId('surprise_me_enabled');
+      return !(toggle && toggle.checked && !toggle.disabled);
+    }
+
+    // Neighbouring index among the rows actually drawn, so ↑/↓ never swap an
+    // item with an invisible one.
+    function menuLayoutVisibleNeighbour(list, index, step) {
+      for (var i = index + step; i >= 0 && i < list.length; i += step) {
+        if (!menuLayoutIsSuppressed(list[i])) return i;
+      }
+      return -1;
     }
 
     function menuLayoutLabel(id) {
@@ -1021,22 +1049,49 @@
       listEl.textContent = '';
 
       items.forEach(function(id, index) {
+        if (menuLayoutIsSuppressed(id)) return;
+        var isHidden = menuLayoutState.hidden.indexOf(id) !== -1;
         var li = document.createElement('li');
         li.className = 'menu-layout-row' +
           (id === MENU_DIVIDER ? ' menu-layout-row--divider' : '') +
-          (id === MENU_SUBMENU_ID ? ' menu-layout-row--submenu' : '');
+          (id === MENU_SUBMENU_ID ? ' menu-layout-row--submenu' : '') +
+          (isHidden ? ' menu-layout-row--hidden' : '');
         li.dataset.menuIndex = String(index);
+        var name = menuLayoutLabel(id);
 
-        var label = document.createElement('span');
-        label.className = 'menu-layout-label';
-        label.textContent = menuLayoutLabel(id);
-        li.appendChild(label);
+        if (id === MENU_DIVIDER) {
+          var label = document.createElement('span');
+          label.className = 'menu-layout-label';
+          label.textContent = name;
+          li.appendChild(label);
+        } else {
+          // A checkbox per item: unticked items stay in place here but are
+          // left out of the add-on menu.
+          var toggle = document.createElement('label');
+          toggle.className = 'menu-layout-label menu-layout-toggle';
+          toggle.title = isHidden ? 'Hidden from the menu. Tick to show it again.' : 'Untick to hide this from the menu.';
+          var box = document.createElement('input');
+          box.type = 'checkbox';
+          box.checked = !isHidden;
+          box.dataset.menuToggle = id;
+          box.setAttribute('aria-label', 'Show ' + name + ' in the menu');
+          toggle.appendChild(box);
+          var text = document.createElement('span');
+          text.textContent = name;
+          toggle.appendChild(text);
+          if (isHidden) {
+            var tag = document.createElement('span');
+            tag.className = 'menu-layout-hidden-tag';
+            tag.textContent = 'Hidden';
+            toggle.appendChild(tag);
+          }
+          li.appendChild(toggle);
+        }
 
         var actions = document.createElement('span');
         actions.className = 'menu-layout-actions';
-        var name = menuLayoutLabel(id);
-        actions.appendChild(menuLayoutButton('↑', 'Move ' + name + ' up', 'up', index === 0));
-        actions.appendChild(menuLayoutButton('↓', 'Move ' + name + ' down', 'down', index === items.length - 1));
+        actions.appendChild(menuLayoutButton('↑', 'Move ' + name + ' up', 'up', menuLayoutVisibleNeighbour(items, index, -1) === -1));
+        actions.appendChild(menuLayoutButton('↓', 'Move ' + name + ' down', 'down', menuLayoutVisibleNeighbour(items, index, 1) === -1));
         if (id === MENU_DIVIDER) {
           actions.appendChild(menuLayoutButton('✕', 'Remove divider', 'remove'));
         } else if (id !== MENU_SUBMENU_ID) {
@@ -1050,8 +1105,10 @@
 
       if (focus && focus.list === listName) {
         var row = listEl.querySelector('[data-menu-index="' + focus.index + '"]');
-        var target = row && (row.querySelector('[data-menu-action="' + focus.action + '"]:not([disabled])') ||
-          row.querySelector('button:not([disabled])'));
+        var target = row && (focus.action === 'toggle'
+          ? row.querySelector('[data-menu-toggle]')
+          : (row.querySelector('[data-menu-action="' + focus.action + '"]:not([disabled])') ||
+            row.querySelector('button:not([disabled])')));
         if (target) target.focus();
       }
     }
@@ -1073,12 +1130,11 @@
       var list = menuLayoutState[listName];
       var otherName = listName === 'top' ? 'quick_actions' : 'top';
       var focus = { list: listName, index: index, action: action };
-      if (action === 'up' && index > 0) {
-        list.splice(index - 1, 0, list.splice(index, 1)[0]);
-        focus.index = index - 1;
-      } else if (action === 'down' && index < list.length - 1) {
-        list.splice(index + 1, 0, list.splice(index, 1)[0]);
-        focus.index = index + 1;
+      var step = action === 'up' ? -1 : action === 'down' ? 1 : 0;
+      var target = step ? menuLayoutVisibleNeighbour(list, index, step) : -1;
+      if (step && target !== -1) {
+        list.splice(target, 0, list.splice(index, 1)[0]);
+        focus.index = target;
       } else if (action === 'remove') {
         list.splice(index, 1);
         focus.index = Math.min(index, list.length - 1);
@@ -1103,6 +1159,21 @@
           var row = btn.closest('[data-menu-index]');
           handleMenuLayoutAction(listEl.dataset.menuList, Number(row.dataset.menuIndex), btn.dataset.menuAction);
         });
+        listEl.addEventListener('change', function(ev) {
+          var box = ev.target.closest('[data-menu-toggle]');
+          if (!box) return;
+          var id = box.dataset.menuToggle;
+          var hidden = menuLayoutState.hidden;
+          var at = hidden.indexOf(id);
+          if (box.checked && at !== -1) hidden.splice(at, 1);
+          if (!box.checked && at === -1) hidden.push(id);
+          var row = box.closest('[data-menu-index]');
+          renderMenuLayoutEditor({ list: listEl.dataset.menuList, index: Number(row.dataset.menuIndex), action: 'toggle' });
+        });
+      });
+      // Surprise Me appears in the editor only while its switch is on.
+      $('#surprise_me_enabled, #experimental_features_enabled').on('change', function() {
+        if (menuLayoutState) renderMenuLayoutEditor();
       });
       document.querySelectorAll('[data-menu-add-divider]').forEach(function(btn) {
         btn.addEventListener('click', function() {

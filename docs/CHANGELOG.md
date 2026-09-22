@@ -19,6 +19,17 @@ All notable changes in this fork are documented here.
 
 ### Fixed
 
+- **Preferences → Source Emphasis: the Text colour and Highlight controls
+  overlapped.** The mapping cards reused the font/size/style grid, whose middle
+  track is narrower than a colour control. The row now wraps instead.
+- **Preferences → Menu Bar listed Surprise Me while the feature was off.** It
+  now appears in the editor only while its switch (Experimental tab) is on, and
+  keeps its place in the layout for when it is switched back on.
+- **Preferences → Menu Bar had no way to turn an item off.** Each item (and the
+  Quick Actions submenu as a whole) now has a checkbox; an unticked item keeps
+  its place in the editor but is left out of the add-on menu, and ticking it
+  restores it where it was. Stored inside the existing `menu_layout` value as
+  an optional `hidden` list — no new preference key, no migration.
 - **Link Texts with Sefaria: the review table rendered inside the scanning and
   finished states.** Each dialog state is switched with the `hidden`
   attribute, but the states also set `display: flex`, which overrides it — so

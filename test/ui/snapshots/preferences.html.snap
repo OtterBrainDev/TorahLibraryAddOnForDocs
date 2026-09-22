@@ -820,7 +820,7 @@
         <div class="pref-tab-panel" id="pref-tab-menu" role="tabpanel" aria-labelledby="pref-tab-menu-btn" hidden>
           <div class="section-card">
             <div class="section-card-body">
-              <p class="section-note">Arrange the add-on&rsquo;s menu under <strong>Extensions</strong>: reorder items, move them into or out of the Quick Actions submenu, and add dividers. Preferences and Help &amp; Support always stay at the bottom, so you can always get back here. Save to apply; if the menu does not change, reload the document.</p>
+              <p class="section-note">Arrange the add-on&rsquo;s menu under <strong>Extensions</strong>: reorder items, move them into or out of the Quick Actions submenu, add dividers, and untick an item to hide it (tick it again to bring it back). Preferences and Help &amp; Support always stay at the bottom, so you can always get back here. Save to apply; if the menu does not change, reload the document.</p>
               <input type="hidden" id="menu_layout" name="menu_layout" value="">
 
               <div class="subsection-card">
