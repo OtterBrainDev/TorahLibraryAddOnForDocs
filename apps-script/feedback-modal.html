@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <!-- Same image policy as shared/ui/head.html; this dialog is served as a plain file, so it cannot include() it. test/ui/csp-coverage.test.js keeps the copies identical. -->
+    <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
     <base target="_top">
     <style>
       :root {
