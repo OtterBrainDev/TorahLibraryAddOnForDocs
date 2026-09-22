@@ -3,10 +3,12 @@
 Run this in a real Google Doc against HEAD — after `clasp push`, installed via
 Apps Script → Deploy → Test deployments — before creating the release version
 and pointing the Marketplace SDK at it. Everything here is something the automated suite **cannot** reach:
-146 tests cover pure logic, contracts and snapshots, but nothing in CI opens a
-sidebar, holds a `DocumentApp` handle, or makes a request to Sefaria.
+`npm test` covers logic, contracts and snapshots, and every page has been
+loaded in headless Chromium without script errors, but nothing automated
+holds a `DocumentApp` handle or makes a request to Sefaria.
 
-**Version under test:** 2.1.0 · **preference schema:** 9
+**Version under test:** 2.1.0 · **preference schema:** 13 (both from
+`docs/VERSION.json`)
 Confirm both before starting — *Help & Support → About* should read
 **Current line: 2.1**. If it says 2.0, the push did not land.
 
@@ -16,8 +18,9 @@ in the *upgrade* path:
 - **Account A — upgrading user.** Already had the add-on installed before this
   push. Do **not** reset preferences. This is the account that proves the
   migrations work.
-- **Account B — fresh install.** Or Account A with preferences reset. Proves
-  `onInstall` seeds correctly.
+- **Account B — fresh install.** A Google account that has never had the
+  add-on. Proves `onInstall` seeds correctly and builds the menu. Resetting
+  preferences on Account A is *not* a substitute: it does not run `onInstall`.
 
 ---
 
@@ -25,6 +28,7 @@ in the *upgrade* path:
 
 | # | Check | Expected |
 | --- | --- | --- |
+| 0.0 | **Account B:** install the test deployment from a Doc, then open **Extensions** *without reloading* | The add-on's menu is already there, and the Release Notes dialog opened. (Marketplace reviewers check this first.) |
 | 0.1 | Open a Doc, open the add-on menu | Menu builds; **Texts / Voices / Lexicon / Insert Source from Selection / Quick Actions / Preferences / Help** all present |
 | 0.2 | Open the sidebar | Renders fully — not a blank or half-styled panel |
 | 0.3 | Type a query and press search | Results appear |
@@ -46,10 +50,13 @@ silently.
 | --- | --- | --- |
 | 1.1 | Sidebar footer | The Sefaria logo renders |
 | 1.2 | Trigger a loading state (search) | The spinner GIF renders, not a broken-image icon |
-| 1.3 | Voices tab → select a sheet | The "open on Sefaria" arrow icon renders |
+| 1.3 | Voices tab → select a sheet; and any Texts result row | The "open on Sefaria" arrow icon renders (it is bundled now, so it loads from nowhere) |
+| 1.4 | Open **Help**, **Feedback**, **Release Notes**, **Gematriya Count** and **Link Texts with Sefaria** | Each renders fully; Feedback shows the embedded form. These five dialogs now carry the CSP too |
 
 Any missing image here means the `img-src` list in
-`apps-script/shared/ui/head.html` is short a host. The browser console names it.
+`apps-script/shared/ui/head.html` is short a host (and the copies in the five
+dialogs — `test/ui/csp-coverage.test.js` keeps them identical). The browser
+console names it.
 
 ---
 
@@ -64,6 +71,7 @@ The most consequential and least reversible part of this release.
 | 2.3 | Fonts → colour and highlight fields | All show **Auto / None** (muted), *not* black |
 | 2.4 | Preferences → **Linking** | Document scanning = **Candidate passages only**; After linking = **Show a summary…** |
 | 2.5 | Divine Name Mappings | Your previous replacement settings are unchanged |
+| 2.6 | Insert any source | The source-credit block is on or off exactly as it was before the upgrade — the new default must not change an existing user's saved choice |
 
 > **2.3 is the one to look hardest at.** Colour defaults to *unset*. If any field
 > shows a solid black swatch instead of the muted Auto state, the v8 migration
@@ -84,6 +92,12 @@ The most consequential and least reversible part of this release.
 | 3.6 | Source Emphasis → **Advanced**: map bold → blue text, no bold. Insert 3.1 | The Talmud's words are blue and not bold |
 | 3.7 | Insert a **title** with a hyperlink | Title styling follows your *hyperlink* preference, not the source's emphasis |
 
+| 3.8 | **Account B:** insert `Genesis 1:1`, Hebrew + English | A small credit block under the source naming the translation and the Hebrew edition, each with its license where Sefaria provides one |
+| 3.9 | **Account B:** insert Hebrew only | A credit block for the Hebrew edition (Hebrew-only inserts used to get none) |
+| 3.10 | Divine Name Mappings → turn on the יה replacement; insert `Genesis 29:35` and `Exodus 15:2`, Hebrew | In Genesis 29:35 **יְהוּדָה stays intact**; in Exodus 15:2 the standalone **יָהּ** is replaced |
+| 3.11 | Set a replacement text containing `$&`, insert a text with that name | The replacement appears literally as typed |
+| 3.12 | Turn niqqud **off**, insert a Tanakh verse | Vowels gone; the sof pasuq **׃** (and any paseq ׀) is still there |
+
 > 3.3 is the layering claim: your style is the baseline, the source's emphasis
 > sits on top. 3.7 is its boundary — titles deliberately do *not* preserve
 > source emphasis.
@@ -102,7 +116,9 @@ The most consequential and least reversible part of this release.
 | 4.6 | `רמב״ם` (with gershayim) | Resolves or suggests — **not** silently nothing |
 | 4.7 | `בראשית א׳:א׳` | Resolves |
 | 4.8 | `qqqq zzzz` | An explicit "no results" message naming what to try — not a blank panel |
-| 4.9 | A footnoted text's **preview** in the sidebar | Bold/italic/footnotes render; no visible tags |
+| 4.9 | A footnoted text's **preview** in the sidebar — Rashi on Genesis 1:1, and a Steinsaltz Talmud page | Bold/italic/footnote markers render; no visible tags, and nothing missing compared with sefaria.org. **This is the check for the new sanitizer**, which only keeps a fixed set of formatting tags |
+| 4.10 | A phrase search, e.g. `in the beginning` | Results appear (text search now uses Sefaria's `/api/search-wrapper/es8` route) |
+| 4.11 | Voices: search a topic | Result snippets show highlighted matches, no raw tags |
 
 > 4.1–4.7 are the five normalization bugs found in this cycle. Each one failed
 > *silently* before — the query returned nothing and looked like a gap in
@@ -159,8 +175,9 @@ Build one test document containing, in this order:
 
 | # | Check | Expected |
 | --- | --- | --- |
-| 6.1 | Preferences → Linking → Privacy & Document Scanning → policy link | Opens the privacy policy |
+| 6.1 | Preferences → Linking → Privacy & Document Scanning → policy link | Opens the privacy policy in the **TheMerkazDev** repository (after the sync; before it, a 404 is expected) |
 | 6.2 | Help & Support → About → **Privacy policy** pill | Same |
+| 6.4 | Help → About and the **GitHub** pills | Open `TheMerkazDev/TorahLibraryAddOnForDocs`; About reads as user-facing text, with no "fork" wording |
 | 6.3 | Preferences shows both scanning controls | *Document scanning* and *After linking* |
 
 ---
@@ -177,13 +194,15 @@ refactor breaks quietly.
 | 7.3 | Quick Actions → **Transform Divine Names** | Applies your enabled replacements |
 | 7.4 | Quick Actions → **Unlink Sources** | Removes Sefaria links, leaves other links alone |
 | 7.5 | Quick Actions → **Gematriya Count** | Opens with a value |
-| 7.6 | **Insert Source from Selection** — select `Genesis 1:1`, run | Inserts; selection preserved |
+| 7.6 | **Insert Source from Selection** — select `Genesis 1:1`, run | Inserts, replacing the selection (the default — see 5.12d) |
 | 7.7 | Preferences → **Reset Preferences** | Returns to defaults; colours go back to Auto |
 | 7.8 | Preferences → **Refresh Sidebar** | Sidebar reopens |
 | 7.9 | Multi-select translations, insert | All selected translations inserted, in the order chosen |
 | 7.10 | 7.9 again with **Insert Sefaria link** and **translation source info** on | Each title names its version **once**; each link opens that translation; a blank line after every citation, including the last |
 | 7.11 | Multi-select a translation that has no text for the ref (e.g. a partial translation, on a verse it skips), insert | It is not inserted; the sidebar says it was skipped and the option is now greyed out *unavailable for this ref* |
 | 7.12 | Insert Hebrew for a text that uses thin spaces (the ref where `&thinsp;` was reported) | No literal `&thinsp;` (or any `&…;`) in the document |
+| 7.13 | Preferences → Experimental → enable, turn on Surprise Me; run it | Works. **No AI Shiur** card, footer 🧠 button, or AI option anywhere |
+| 7.14 | Session Library: insert a source, open Session Library | Lists it; opens without errors |
 
 ---
 
@@ -197,5 +216,16 @@ For anything that fails, the useful report is:
    `google.script.run`) show there and nowhere else
 4. Which account (A upgrading / B fresh) and the scan mode in effect
 
-State the version too: **2.1.0, schema 9**. "It broke" is not checkable
+State the version too: **2.1.0, schema 13**. "It broke" is not checkable
 later; the version and the check number are.
+
+---
+
+## Results
+
+Record each run here and commit it with the release, so there is evidence the
+checklist was run against the code that shipped.
+
+| Date | Tester | Account (A/B) | Apps Script version / commit | Result | Failures (check numbers) |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |
