@@ -43,13 +43,6 @@ on:
       - master
   workflow_dispatch:
 
-env:
-  # Pinned deliberately. The token conversion below emits clasp's v2
-  # `.clasprc.json` shape; installing "latest" silently moves to clasp 3.x,
-  # which expects a different credential format, and the deploy fails at the
-  # push step with an unhelpful auth error.
-  CLASP_VERSION: 2.4.2
-
 # Never let two deploys race into the same Apps Script project.
 concurrency:
   group: apps-script-deploy
@@ -106,8 +99,17 @@ jobs:
           fi
           echo "CLASP_TOKEN is present."
 
-      - name: Install clasp
-        run: npm install -g "@google/clasp@${CLASP_VERSION}"
+      # clasp and all of its dependencies come from tools/clasp/package-lock.json
+      # (every package pinned with an integrity hash), with install scripts
+      # disabled. This job holds the CLASP_TOKEN credential, so nothing may be
+      # resolved fresh from the registry here. The version is pinned to 2.4.2
+      # on purpose: the credential conversion below writes clasp 2's
+      # `.clasprc.json` shape. See tools/clasp/README.md to change it.
+      - name: Install pinned clasp
+        run: |
+          npm ci --prefix tools/clasp --ignore-scripts --no-audit --no-fund
+          echo "${GITHUB_WORKSPACE}/tools/clasp/node_modules/.bin" >> "$GITHUB_PATH"
+          "${GITHUB_WORKSPACE}/tools/clasp/node_modules/.bin/clasp" --version
 
       - name: Authenticate with Google
         env:

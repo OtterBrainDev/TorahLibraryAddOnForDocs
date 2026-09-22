@@ -176,7 +176,8 @@ and in `test/ui/`:
 
 ```bash
 bash pre_clasp_qc.sh apps-script
-clasp push   # from the repo root; .clasp.json pins rootDir=apps-script
+npm ci --prefix tools/clasp --ignore-scripts   # once; pinned clasp, see tools/clasp/README.md
+npx --prefix tools/clasp clasp push   # from the repo root; .clasp.json pins rootDir=apps-script
 ```
 
 `clasp push` (and the deploy workflow on `master`) only replaces the script
