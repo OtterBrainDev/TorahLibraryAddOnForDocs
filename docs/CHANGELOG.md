@@ -22,6 +22,11 @@ All notable changes in this fork are documented here.
 - **Preferences → Source Emphasis: the Text colour and Highlight controls
   overlapped.** The mapping cards reused the font/size/style grid, whose middle
   track is narrower than a colour control. The row now wraps instead.
+- **Preferences: scrolled content showed above and below the tab bar.** The
+  intro card and the tab bar were both pinned to the top, so the intro peeked
+  out beneath the tabs, and the scroll area's top padding left a strip above
+  the tabs where content showed through. Only the tab bar is pinned now, flush
+  to the top edge.
 - **Preferences → Menu Bar listed Surprise Me while the feature was off.** It
   now appears in the editor only while its switch (Experimental tab) is on, and
   keeps its place in the layout for when it is switched back on.
