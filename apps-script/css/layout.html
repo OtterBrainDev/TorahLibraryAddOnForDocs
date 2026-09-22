@@ -789,11 +789,17 @@
   font-weight: 700;
 }
 
+/* "Open on Sefaria" icon. Bundled as a data: URI so the sidebar loads it from
+   nowhere — the privacy policy lists every host the add-on contacts, and an
+   icon is not worth adding one. To use different artwork, replace this one
+   url() (an SVG, or a PNG as data:image/png;base64,...); every button that
+   shows the icon picks it up. Sizes are set per context elsewhere. */
 .open-sefaria-icon {
+  display: inline-block;
   width: 18px;
   height: 18px;
-  object-fit: contain;
   vertical-align: middle;
+  background: no-repeat center / contain url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2318345d' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6'/%3E%3Cpath d='M20 4l-9 9'/%3E%3Cpath d='M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'/%3E%3C/svg%3E");
 }
 
 .mode-voices #insert-source,

@@ -20,8 +20,9 @@
   // from user-published source sheets, and the sidebar that renders them holds
   // google.script.run — script running there can call any server function
   // against the user's live document. It also must not reference a third-party
-  // host: the add-on's privacy policy says it contacts no host other than
-  // sefaria.org, and an <img src> would make the reader's browser fetch it.
+  // host: the privacy policy (docs/PRIVACY.md §2.2) lists every host the
+  // add-on's pages load from, and an <img src> would make the reader's
+  // browser fetch from one it does not list.
   //
   // So this is an ALLOWLIST, not a strip. An earlier version removed a list of
   // known-bad elements and kept everything else, and was bypassed by mutation

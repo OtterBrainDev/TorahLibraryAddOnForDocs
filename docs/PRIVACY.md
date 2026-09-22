@@ -1,16 +1,18 @@
 # Privacy Policy — Torah Library Add-On for Google Docs
 
-**Last updated: 2026-08-28**
+**Last updated: 2026-09-22**
 
 This add-on inserts texts from [Sefaria](https://www.sefaria.org) into your
 Google Doc. This policy describes exactly what data it touches, what leaves
 your computer, and what is stored.
 
 Short version: the add-on has no server of its own, no account, and no
-analytics. It talks to exactly two parties — Google (to read and write the
-document you have open) and Sefaria (to fetch the texts you ask for). It
-stores nothing about you anywhere except your own preference settings, which
-live in Google's own per-user storage for this add-on.
+analytics. The only party that receives anything from your document is
+Sefaria, and only the text you ask for (§2). Its windows also load their
+page resources — a script library, a stylesheet, a font, and a few images —
+from Google and Sefaria, like any web page does (§2.2). It stores nothing
+about you anywhere except your own preference settings, which live in
+Google's own per-user storage for this add-on.
 
 ---
 
@@ -23,7 +25,7 @@ its job:
 | --- | --- | --- |
 | `.../auth/documents.currentonly` | Read and edit **only the single document the add-on is currently open in** | To read your selection and insert sources. This scope does **not** grant access to your Google Drive, to your other documents, or to any document you are not actively using the add-on in. |
 | `.../auth/script.container.ui` | Show the menu, sidebar, and dialogs | The add-on's entire interface. |
-| `.../auth/script.external_request` | Make outbound network requests | To fetch texts from `sefaria.org`. The add-on contacts no other host. |
+| `.../auth/script.external_request` | Make outbound network requests | To fetch texts from `sefaria.org`. The add-on's server code contacts no other host. |
 | `.../auth/script.storage` | Store per-user settings | To remember your font, layout, and insertion preferences. |
 
 The add-on does **not** request access to your email address, your Google
@@ -74,6 +76,29 @@ has access to those in the first place.
 Sefaria's handling of what it receives is governed by
 [Sefaria's own privacy policy](https://www.sefaria.org/privacy-policy).
 
+### 2.2 What your browser loads when the add-on's windows open
+
+The sidebar and dialogs are small web pages that Google displays inside
+Docs. Like any web page, they load a few resources when they open. Your
+browser makes these requests directly, so the host sees your IP address and
+browser details — but **none of these requests contains anything from your
+document, your searches, or your settings.**
+
+| Host | What is loaded | When |
+| --- | --- | --- |
+| `ajax.googleapis.com` (Google) | The jQuery script library, pinned to one version and checked with a Subresource Integrity hash | Every sidebar and dialog |
+| `ssl.gstatic.com` (Google) | Google's standard add-on stylesheet | Every sidebar and dialog |
+| `fonts.googleapis.com`, `fonts.gstatic.com` (Google) | A display font (EB Garamond) | Windows that use it |
+| `www.sefaria.org` | The Sefaria logo in the sidebar footer and a loading animation | Sidebar, Preferences, Surprise Me |
+| `sefaria.formstack.com` | Sefaria's feedback form, embedded in the dialog | Only when you open **Send Feedback**; anything you type into that form goes to Sefaria under their policy |
+
+Links in Help & Support and Release Notes (GitHub, Wikipedia, Sefaria's Help
+Center) open only if you click them.
+
+The add-on's own icons are bundled into the add-on and load from nowhere.
+The add-on's icon in the Docs **Extensions** menu is fetched by Google, not
+by your browser from us.
+
 ## 3. What is stored, and where
 
 **Your preferences** — fonts, sizes, layout, divine-name replacement
@@ -110,8 +135,10 @@ credentials are never logged.
 ## 5. Data sharing
 
 The add-on shares no data with anyone. It has no advertising partners, no
-data brokers, no third-party SDKs, and no subprocessors. The only outbound
-network traffic is to `sefaria.org`, as described in §2.
+data brokers, no third-party SDKs, and no subprocessors. The only party that
+receives text from your document, or anything you type into the add-on, is
+`sefaria.org`, as described in §2. The page resources in §2.2 are loaded
+without any of that data.
 
 ## 6. Data retention and deletion
 
