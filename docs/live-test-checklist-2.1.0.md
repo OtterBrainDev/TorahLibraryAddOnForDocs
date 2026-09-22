@@ -2,7 +2,7 @@
 
 Run this in a real Google Doc after `clasp push`, before the Marketplace
 submission. Everything here is something the automated suite **cannot** reach:
-119 tests cover pure logic, contracts and snapshots, but nothing in CI opens a
+129 tests cover pure logic, contracts and snapshots, but nothing in CI opens a
 sidebar, holds a `DocumentApp` handle, or makes a request to Sefaria.
 
 **Version under test:** 2.1.0 · **preference schema:** 9
@@ -176,6 +176,9 @@ refactor breaks quietly.
 | 7.7 | Preferences → **Reset Preferences** | Returns to defaults; colours go back to Auto |
 | 7.8 | Preferences → **Refresh Sidebar** | Sidebar reopens |
 | 7.9 | Multi-select translations, insert | All selected translations inserted, in the order chosen |
+| 7.10 | 7.9 again with **Insert Sefaria link** and **translation source info** on | Each title names its version **once**; each link opens that translation; a blank line after every citation, including the last |
+| 7.11 | Multi-select a translation that has no text for the ref (e.g. a partial translation, on a verse it skips), insert | It is not inserted; the sidebar says it was skipped and the option is now greyed out *unavailable for this ref* |
+| 7.12 | Insert Hebrew for a text that uses thin spaces (the ref where `&thinsp;` was reported) | No literal `&thinsp;` (or any `&…;`) in the document |
 
 ---
 

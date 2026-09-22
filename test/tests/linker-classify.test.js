@@ -41,11 +41,14 @@ function load() {
 
   // htmlToPlainText_ lives in sheets.gs; the classifier uses it to flatten
   // Sefaria's excerpt markup into text the dialog can render with textContent.
-  vm.runInContext(
-    fs.readFileSync(path.join(ROOT, 'apps-script/server/sheets.gs'), 'utf8'),
-    context,
-    { filename: 'sheets.gs' }
-  );
+  // It decodes entities through decodeHTMLEntities in utils.gs.
+  ['apps-script/server/utils.gs', 'apps-script/server/sheets.gs'].forEach((relative) => {
+    vm.runInContext(
+      fs.readFileSync(path.join(ROOT, relative), 'utf8'),
+      context,
+      { filename: relative }
+    );
+  });
 
   return context;
 }

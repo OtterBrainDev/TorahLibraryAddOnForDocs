@@ -496,14 +496,10 @@ function htmlToPlainText_(html, normalizedOptions) {
     .replace(/<li>/gi, '• ')
     .replace(/<\/li>/gi, '\n')
     .replace(/<\/h[1-6]>/gi, '\n\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&#160;/gi, ' ')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&#39;/gi, "'")
-    .replace(/&quot;/gi, '"')
-    .replace(/&amp;/gi, '&');
+    .replace(/<[^>]+>/g, '');
+  // Single-pass decode (utils.gs), which also covers the typographic spaces
+  // (&thinsp; etc.) that Sefaria puts in Hebrew.
+  text = decodeHTMLEntities(text);
 
   if (preserveSpacing) {
     text = text
