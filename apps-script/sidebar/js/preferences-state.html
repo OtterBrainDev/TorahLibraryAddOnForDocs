@@ -120,9 +120,8 @@ function saveSessionAsDefaults(onDone) {
 
 function mergePreferenceDefaults(preferences) {
   preferences = preferences || {};
-  if (preferences.include_translation_source_info == "true") {
-    $('.include-translation-source-info').prop('checked', true);
-  }
+  // Stored values are strings; an unset key falls back to the boolean default.
+  $('.include-translation-source-info').prop('checked', String(preferences.include_translation_source_info) === "true");
   $('.wants-vowels').prop('checked', String(preferences.nekudot) !== "false");
   $('.wants-cantillation').prop('checked', String(preferences.teamim) !== "false");
   $('.include-transliteration').prop('checked', String(preferences.include_transliteration_default) === "true");

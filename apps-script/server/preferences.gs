@@ -113,7 +113,9 @@ function getDefaultPreferences() {
     hebrew_font: "",
     hebrew_font_size: "",
     hebrew_font_style: "normal",
-    include_translation_source_info: false,
+    // Credit line (edition and license) under every inserted source. On by
+    // default: many Sefaria texts are CC-BY / CC-BY-NC and require attribution.
+    include_translation_source_info: true,
     include_transliteration_default: false,
     insert_citation_default: false,
     insert_sefaria_link_default: true,
