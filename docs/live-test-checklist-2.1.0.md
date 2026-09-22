@@ -1,7 +1,8 @@
 # Live test checklist — v2.1.0
 
-Run this in a real Google Doc after `clasp push`, before the Marketplace
-submission. Everything here is something the automated suite **cannot** reach:
+Run this in a real Google Doc against HEAD — after `clasp push`, installed via
+Apps Script → Deploy → Test deployments — before creating the release version
+and pointing the Marketplace SDK at it. Everything here is something the automated suite **cannot** reach:
 146 tests cover pure logic, contracts and snapshots, but nothing in CI opens a
 sidebar, holds a `DocumentApp` handle, or makes a request to Sefaria.
 

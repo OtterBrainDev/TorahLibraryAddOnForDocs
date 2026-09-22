@@ -25,5 +25,5 @@
 
   "_changelog": "docs/CHANGELOG.md must carry a heading for this version once status is 'released'. While 'pending-release' the entries live under 'Unreleased' headings and get consolidated at release time.",
 
-  "_deployment": "Apps Script has no manifest version field — appsscript.json carries no version, and `clasp push` overwrites the head deployment. This file is the only version record the project has, which is exactly why it must not drift."
+  "_deployment": "Apps Script has no manifest version field — appsscript.json carries no version. `clasp push` replaces the script project's HEAD, which only test deployments run. Users run the numbered script version (from `clasp version`) that the Marketplace SDK App Configuration points to, so a release is: live-test HEAD, `clasp version`, set that number in the SDK. Neither Apps Script version numbers nor the SDK record which add-on version a number corresponds to — this file, together with the `clasp version` description (use `v<version>`), is the only record, which is exactly why it must not drift."
 }

@@ -11,6 +11,26 @@ name: Deploy to Apps Script
 #
 # If you fork this repo and want your own deploys, change DEPLOY_REPOSITORY to
 # your own `owner/name` and set the CLASP_TOKEN secret.
+#
+# What this does and does NOT do for users
+# ----------------------------------------
+# `clasp push` replaces the script project's HEAD code. HEAD is what the
+# project's editors see through Apps Script's "Test deployments" (Deploy ->
+# Test deployments, installed into a test document). Marketplace users do not
+# run HEAD: they run the numbered script version that the Google Workspace
+# Marketplace SDK's App Configuration page points to. So a push to master
+# stages the code for testing; it does not change anything installed users
+# see.
+#
+# Releasing to users is a separate, manual step, taken after the live test
+# checklist passes against HEAD:
+#   1. `clasp version "v<version>"` (or Project history -> New version in the
+#      editor) freezes HEAD as a new numbered version.
+#   2. Marketplace SDK -> App Configuration -> set the add-on's script version
+#      to that number, and save.
+# Installed users then get the new version the next time they open a
+# document, with no action on their part and no way to stay on the old one.
+# Rolling back is the same step pointing at the previous version number.
 
 on:
   push:
@@ -48,10 +68,10 @@ jobs:
         with:
           node-version: "22"
 
-      # The add-on ships to tens of thousands of users and there is no staging
-      # environment: whatever `clasp push` uploads is live for everyone on
-      # their next document open. These are the same checks CI runs on every
-      # branch; running them here too is what makes the deploy gate real.
+      # HEAD is what gets live-tested and then frozen into the version users
+      # receive (see the header), so a broken push costs a test cycle and can
+      # end up released if nobody catches it. These are the same checks CI
+      # runs on every branch; running them here too is what makes the gate real.
       - name: Install test dependencies
         run: npm ci
 
@@ -135,5 +155,15 @@ jobs:
           set -euo pipefail
           echo "Deploying to scriptId: $(python3 -c "import json;print(json.load(open('.clasp.json'))['scriptId'])")"
 
-      - name: Push to Apps Script
+      - name: Push to the script project's HEAD (test deployments only)
         run: clasp push -f
+
+      - name: Next step for a release
+        run: |
+          {
+            echo "### Pushed to HEAD — not yet released to Marketplace users"
+            echo ""
+            echo "Test it through Apps Script → Deploy → Test deployments, then run docs/live-test-checklist-*.md."
+            echo "To release: \`clasp version \"v<version>\"\`, then set that version number in"
+            echo "Marketplace SDK → App Configuration and save. Users get it on their next document open."
+          } >> "$GITHUB_STEP_SUMMARY"

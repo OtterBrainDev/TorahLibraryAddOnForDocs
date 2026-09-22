@@ -173,6 +173,13 @@ bash pre_clasp_qc.sh apps-script
 clasp push   # from the repo root; .clasp.json pins rootDir=apps-script
 ```
 
+`clasp push` (and the deploy workflow on `master`) only replaces the script
+project's HEAD, which you test through Apps Script → Deploy → Test
+deployments. **It does not reach Marketplace users.** They run the numbered
+version set in Marketplace SDK → App Configuration. To release: run the live
+test checklist against HEAD, `clasp version "v<version>"`, then set that
+version number in the SDK and save; users get it on their next document open.
+
 The QC script must exit 0 before you push. It walks the nested tree
 under `apps-script/` and checks basename collisions among `.gs` files
 (they share one global scope at runtime), balanced `<style>/<script>`
