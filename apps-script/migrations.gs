@@ -36,6 +36,14 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // which happened to work but had to be edited in two places for every new
   // version — and silently re-ran the newest migration for any version above
   // it. Absent/unparseable version means "oldest": run everything.
+  // No schema version at all means a user this add-on has never set up: the
+  // published add-on stored no preferences, and every run of this one stamps
+  // the version. Save the defaults for them now, so that a default changed in
+  // a later release never moves a user who is already using the add-on.
+  if (current == null) {
+    seedDefaultPreferences_(userProperties);
+  }
+
   var from = Number(current);
   if (!isFinite(from)) {
     from = 0;
@@ -139,6 +147,30 @@ function runUserPreferenceMigrationsIfNeeded_() {
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
   return true;
+}
+
+/**
+ * Write every default preference the user has no stored value for. Never
+ * overwrites a stored value. Called on install and on the first run of a user
+ * onInstall never reached (e.g. an admin-installed add-on).
+ *
+ * `menu_layout` is left out on purpose: an unset layout tracks the code
+ * default, so new menu items keep appearing (see migrateToV10_).
+ * Depends on getDefaultPreferences in server/preferences.gs (one global scope
+ * at runtime).
+ */
+var SEED_EXCLUDED_PREFERENCES_ = ['menu_layout'];
+
+function seedDefaultPreferences_(userProperties) {
+  var defaults = getDefaultPreferences();
+  var wrote = false;
+  Object.keys(defaults).forEach(function(key) {
+    if (SEED_EXCLUDED_PREFERENCES_.indexOf(key) >= 0) return;
+    if (userProperties.getProperty(key) != null) return;
+    userProperties.setProperty(key, String(defaults[key]));
+    wrote = true;
+  });
+  return wrote;
 }
 
 /**

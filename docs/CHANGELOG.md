@@ -17,13 +17,20 @@ All notable changes in this fork are documented here.
 > (Preferences → Insertion → Insert from Selection) is written as `true` for every
 > upgrading user; turn it off to keep the selection and insert below it.
 
-> **New defaults, no pinning.** Hebrew, translation and transliteration now
-> default to **Match the document** — the font and size of the text where you
-> insert (the paragraph at the cursor, or the nearest body-text paragraph above
-> it) — and the יהוה replacement defaults to **יי**. Upgraders get these too:
-> the published add-on stored none of these preferences, so there is nothing to
-> preserve. Schema steps v12 (a no-op) and v13 (writes the new
-> `source_title_heading` as "normal") keep the schema number monotonic.
+> **Defaults, and how they are kept.** Every Fonts role — title, linked
+> title, Hebrew, transliteration, translation — defaults to **Match the
+> document**: the font and size of the text where you insert (the paragraph at
+> the cursor, or the nearest body-text paragraph above it). Titles are Normal
+> text unless you pick a heading. Divine-name substitution is **on**, for יהוה
+> only, replaced with **יי**.
+>
+> **Every user's defaults are now saved on their first run**, whether or not
+> the install trigger fired, and a reinstall no longer overwrites saved
+> choices. A default changed in a later release therefore reaches new users
+> only; anyone already using the add-on keeps what they had. (The menu layout
+> is the one exception: left unsaved, it keeps picking up new menu items.)
+> Schema steps v12 (a no-op) and v13 (writes the new `source_title_heading`)
+> keep the schema number monotonic.
 
 ### Added
 

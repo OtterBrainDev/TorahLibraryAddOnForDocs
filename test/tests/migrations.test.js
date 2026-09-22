@@ -14,6 +14,11 @@ const MENU_LAYOUT_SOURCE = fs.readFileSync(
   path.resolve(__dirname, '../../apps-script/server/menu-layout.gs'),
   'utf8'
 );
+// seedDefaultPreferences_ reads getDefaultPreferences.
+const PREFERENCES_SOURCE = fs.readFileSync(
+  path.resolve(__dirname, '../../apps-script/server/preferences.gs'),
+  'utf8'
+);
 
 function makeUserPropertiesMock(initial = {}) {
   const store = Object.assign({}, initial);
@@ -49,6 +54,7 @@ function loadMigrations(initialProps = {}) {
   };
   vm.createContext(context);
   vm.runInContext(MENU_LAYOUT_SOURCE, context, { filename: 'menu-layout.gs' });
+  vm.runInContext(PREFERENCES_SOURCE, context, { filename: 'preferences.gs' });
   vm.runInContext(MIGRATIONS_SOURCE, context, { filename: 'migrations.gs' });
   return { context, userProperties };
 }
@@ -255,4 +261,40 @@ test('v13 migration does not overwrite an explicit title heading', () => {
   context.runUserPreferenceMigrationsIfNeeded_();
 
   assert.equal(userProperties.getProperty('source_title_heading'), 'heading2');
+});
+
+test('a first run with no schema version saves every default, except the menu layout', () => {
+  // So a default changed in a later release never moves someone already using
+  // the add-on: from their first run, every preference is their own.
+  const { context, userProperties } = loadMigrations({});
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  const defaults = context.getDefaultPreferences();
+  for (const key of Object.keys(defaults)) {
+    if (key === 'menu_layout') continue;
+    assert.equal(userProperties.getProperty(key), String(defaults[key]), key);
+  }
+  assert.equal(userProperties.getProperty('menu_layout'), null, 'an unset layout keeps tracking the code default');
+  assert.equal(userProperties.getProperty('meforash_replace'), 'true');
+  assert.equal(userProperties.getProperty('meforash_replacement'), 'יי');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+});
+
+test('seeding never overwrites a stored preference', () => {
+  const { context, userProperties } = loadMigrations({
+    meforash_replace: 'false',
+    hebrew_font: 'SBL Hebrew',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('meforash_replace'), 'false');
+  assert.equal(userProperties.getProperty('hebrew_font'), 'SBL Hebrew');
+});
+
+test('a user already on the current schema is not re-seeded', () => {
+  // A later release that changes a default must not reach users who have
+  // already been set up — their unset keys stay unset rather than being
+  // written with the new value by a seeding pass.
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: CURRENT });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('hebrew_font'), null);
 });

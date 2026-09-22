@@ -98,16 +98,18 @@ function getVersioningPreference() {
 
 function getDefaultPreferences() {
   return {
-    apply_sheimot_on_insertion: false,
+    // Divine-name substitution is on for every new user, יהוה only. (This used
+    // to be an install-only override, so "Reset to defaults" turned it off.)
+    apply_sheimot_on_insertion: true,
     elodim_replace: false,
     elodim_replacement: "אלוקים",
     extended_gemara: false,
     god_replace: false,
     god_replacement: "G-d",
     preferred_translation_language: "en",
-    // Font and size default to EMPTY for the passage roles (Hebrew,
-    // translation, transliteration): "match the document" — take the font and
-    // size of the text at the insertion point. Titles keep a fixed default.
+    // Font and size default to EMPTY for every role: "match the document" —
+    // take the font and size of the text at the insertion point (for a title
+    // with a heading style, the heading's own).
     hebrew_font: "",
     hebrew_font_size: "",
     hebrew_font_style: "normal",
@@ -168,7 +170,7 @@ function getDefaultPreferences() {
     last_translation_only_filter: false,
     last_search_sort_mode: "relevance",
     last_search_relevance_sort: true,
-    meforash_replace: false,
+    meforash_replace: true,
     meforash_replacement: "יי",
     nekudot: true,
     nekudot_filter: "always",
@@ -189,14 +191,14 @@ function getDefaultPreferences() {
     versioning: true,
     yaw_replace: false,
     yaw_replacement: "קה",
-    source_title_font: "Noto Sans Hebrew",
-    source_title_font_size: 14,
+    source_title_font: "",
+    source_title_font_size: "",
     source_title_font_style: "normal",
     // Paragraph style for inserted titles: "normal" or "heading1".."heading6".
     // "normal" is what titles have always been.
     source_title_heading: "normal",
-    sefaria_link_font: "Noto Sans Hebrew",
-    sefaria_link_font_size: 14,
+    sefaria_link_font: "",
+    sefaria_link_font_size: "",
     sefaria_link_font_style: "underline",
     search_mode: "texts",
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
@@ -391,8 +393,8 @@ function getTypographySettings() {
     hebrew:          readTypographyRole_(userProperties, "hebrew", "", null, "normal"),
     translation:     readTypographyRole_(userProperties, "translation", "", null, "normal"),
     transliteration: readTypographyRole_(userProperties, "transliteration", "", null, "italic"),
-    sourceTitle:     readTypographyRole_(userProperties, "source_title", "Noto Sans Hebrew", 14, "normal"),
-    sefariaLink:     readTypographyRole_(userProperties, "sefaria_link", "Noto Sans Hebrew", 14, "underline")
+    sourceTitle:     readTypographyRole_(userProperties, "source_title", "", null, "normal"),
+    sefariaLink:     readTypographyRole_(userProperties, "sefaria_link", "", null, "underline")
   };
   const titleHeading = normalizeTitleHeading_(userProperties.getProperty("source_title_heading"));
 

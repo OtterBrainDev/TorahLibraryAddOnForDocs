@@ -32,13 +32,12 @@ const MENU = 'apps-script/server/menu-layout.gs';
 const INSERTION = 'apps-script/server/insertion.gs';
 const plain = (v) => JSON.parse(JSON.stringify(v));
 
-test('new installs default the passage roles to "match the document"; titles keep a fixed font', () => {
+test('every role defaults to "match the document"; titles are normal text', () => {
   const d = load([MENU, PREFS]).getDefaultPreferences();
-  for (const role of ['hebrew', 'translation', 'transliteration']) {
+  for (const role of ['hebrew', 'translation', 'transliteration', 'source_title', 'sefaria_link']) {
     assert.equal(d[`${role}_font`], '', `${role}_font`);
     assert.equal(d[`${role}_font_size`], '', `${role}_font_size`);
   }
-  assert.equal(d.source_title_font, 'Noto Sans Hebrew');
   assert.equal(d.source_title_heading, 'normal');
 });
 
@@ -50,7 +49,7 @@ test('a stored empty font/size means "match the document"; a stored value is use
   const tr = ctx.readTypographyRole_(props, 'translation', '', null, 'normal');
   assert.equal(tr.font, 'Georgia');
   assert.equal(tr.size, 13);
-  // Unset title keys still fall back to the fixed title default.
+  // An unset key falls back to the role default passed in.
   const title = ctx.readTypographyRole_(props, 'source_title', 'Noto Sans Hebrew', 14, 'normal');
   assert.equal(title.font, 'Noto Sans Hebrew');
   assert.equal(title.size, 14);
