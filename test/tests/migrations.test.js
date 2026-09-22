@@ -8,6 +8,12 @@ const MIGRATIONS_SOURCE = fs.readFileSync(
   path.resolve(__dirname, '../../apps-script/migrations.gs'),
   'utf8'
 );
+// migrateToV10_ reads the default menu layout. At runtime every .gs file
+// shares one global scope, so load the helper alongside.
+const MENU_LAYOUT_SOURCE = fs.readFileSync(
+  path.resolve(__dirname, '../../apps-script/server/menu-layout.gs'),
+  'utf8'
+);
 
 function makeUserPropertiesMock(initial = {}) {
   const store = Object.assign({}, initial);
@@ -42,6 +48,7 @@ function loadMigrations(initialProps = {}) {
     },
   };
   vm.createContext(context);
+  vm.runInContext(MENU_LAYOUT_SOURCE, context, { filename: 'menu-layout.gs' });
   vm.runInContext(MIGRATIONS_SOURCE, context, { filename: 'migrations.gs' });
   return { context, userProperties };
 }
@@ -101,7 +108,10 @@ test('v4 migration sets link_sources_insert_after_linking to "false" for upgrade
   assert.equal(rewrote, true);
   assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
   assert.equal(userProperties.getProperty('link_sources_insert_after_linking'), 'false');
-  assert.equal(userProperties.getProperty('insert_from_selection_at_top'), 'false');
+  // v5 wrote insert_from_selection_at_top='false'; v10 retired the key, and a
+  // user who never pinned anything keeps tracking the default menu.
+  assert.equal(userProperties.getProperty('insert_from_selection_at_top'), null);
+  assert.equal(userProperties.getProperty('menu_layout'), null);
 });
 
 test('v4 migration does not clobber an explicit user choice', () => {
@@ -162,4 +172,33 @@ test('v6 migration does not overwrite an explicit opt-out', () => {
   context.runUserPreferenceMigrationsIfNeeded_();
 
   assert.equal(userProperties.getProperty('preserve_source_emphasis'), 'false');
+});
+
+test('v10 migration carries a pinned "Insert from Selection" into menu_layout', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '9',
+    insert_from_selection_at_top: 'true',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('insert_from_selection_at_top'), null);
+  const layout = JSON.parse(userProperties.getProperty('menu_layout'));
+  assert.equal(layout.top[0], 'insert_from_selection');
+  assert.equal(layout.top.filter((id) => id === 'insert_from_selection').length, 1);
+  assert.deepEqual(layout.quick_actions, JSON.parse(JSON.stringify(context.getDefaultMenuLayout_().quick_actions)));
+});
+
+test('v10 migration leaves an unpinned user on the default menu and never clobbers a stored layout', () => {
+  const unpinned = loadMigrations({ prefs_schema_version: '9', insert_from_selection_at_top: 'false' });
+  unpinned.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(unpinned.userProperties.getProperty('menu_layout'), null);
+  assert.equal(unpinned.userProperties.getProperty('insert_from_selection_at_top'), null);
+
+  const stored = JSON.stringify({ top: ['lexicon'], quick_actions: [] });
+  const custom = loadMigrations({
+    prefs_schema_version: '9',
+    insert_from_selection_at_top: 'true',
+    menu_layout: stored,
+  });
+  custom.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(custom.userProperties.getProperty('menu_layout'), stored);
 });

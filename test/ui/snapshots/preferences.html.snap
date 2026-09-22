@@ -23,130 +23,14 @@
         <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
           <button type="button" id="pref-tab-fonts-btn" class="pref-tab" role="tab" data-pref-tab="fonts" aria-controls="pref-tab-fonts" aria-selected="true">Fonts</button>
           <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="false">Insertion</button>
+          <button type="button" id="pref-tab-menu-btn" class="pref-tab" role="tab" data-pref-tab="menu" aria-controls="pref-tab-menu" aria-selected="false">Menu Bar</button>
 <? if (devFlags.SURPRISE_ME) { ?>
           <button type="button" id="pref-tab-experimental-btn" class="pref-tab" role="tab" data-pref-tab="experimental" aria-controls="pref-tab-experimental" aria-selected="false">🧪 Experimental</button>
 <? } ?>
         </nav>
 
         <div class="pref-tab-panel" id="pref-tab-fonts" role="tabpanel" aria-labelledby="pref-tab-fonts-btn">
-          <details class="section-card section-accordion" id="source-emphasis" name="source-emphasis" open>
-            <summary class="section-card-summary"><span>✒️ Source Emphasis</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Some Sefaria texts use bold and italics to carry meaning — the Steinsaltz Talmud bolds the Talmud’s own words to separate them from Steinsaltz’s explanation, and many translations italicize interpolated words.</p>
-
-              <div class="subsection-card">
-                <div class="toggle-row">
-                  <div class="toggle-copy">
-                    <div class="toggle-title">Keep the source’s bold and italics</div>
-                    <div class="toggle-help">On: the font styles you choose below set the baseline, and the source’s own emphasis is kept on top of it. Off: your font styles are applied uniformly and the source’s emphasis is dropped.</div>
-                  </div>
-                  <label class="switch" for="preserve_source_emphasis">
-                    <input id="preserve_source_emphasis" type="checkbox" name="preserve_source_emphasis" checked>
-                    <span class="slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              <details class="subsection-card" id="emphasis-mapping">
-                <summary class="subsection-title">Advanced: map the source’s emphasis to your own formatting</summary>
-                <p class="subsection-note">Keeping the source’s bold as bold is the default. If your documents use a different convention — say, blue text instead of bold for the Talmud’s own words — map it here. Turn every option off in a card to drop that emphasis entirely. These settings do nothing while “Keep the source’s bold and italics” is off.</p>
-                <div class="emphasis-map-grid">
-                  <div class="emphasis-map-card">
-                    <div class="subsection-title">Where the source is bold</div>
-                    <span class="emphasis-sample">e.g. the Talmud’s own words in the Steinsaltz translation</span>
-                    <div class="compact-row compact-row--comfortable">
-                      <div class="compact-field compact-field--style">
-                        <label>Render as</label>
-                        <div class="style-control" data-style-control="emphasis_bold_style">
-                          <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                          <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                          <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                        </div>
-                        <input type="hidden" id="emphasis_bold_style" name="emphasis_bold_style" value="bold">
-                      </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="emphasis_bold_color">Text colour</label>
-                        <div class="color-control">
-                          <input id="emphasis_bold_color" type="color" name="emphasis_bold_color" value="#1f3b68" aria-label="Colour for bold source text">
-                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_bold_color" title="No colour change">Auto</button>
-                        </div>
-                      </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="emphasis_bold_background">Highlight</label>
-                        <div class="color-control">
-                          <input id="emphasis_bold_background" type="color" name="emphasis_bold_background" value="#fff3b0" aria-label="Highlight for bold source text">
-                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_bold_background" title="No highlight">None</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="compact-field">
-                      <label for="emphasis_bold_font">Font override</label>
-                      <select name="emphasis_bold_font" id="emphasis_bold_font">
-                        <option value="">Same as the surrounding text</option>
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                        <option value="Taamey Frank CLM">Taamey Frank CLM</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="emphasis-map-card">
-                    <div class="subsection-title">Where the source is italic</div>
-                    <span class="emphasis-sample">e.g. words a translator supplied that are not in the Hebrew</span>
-                    <div class="compact-row compact-row--comfortable">
-                      <div class="compact-field compact-field--style">
-                        <label>Render as</label>
-                        <div class="style-control" data-style-control="emphasis_italic_style">
-                          <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                          <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                          <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                        </div>
-                        <input type="hidden" id="emphasis_italic_style" name="emphasis_italic_style" value="italic">
-                      </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="emphasis_italic_color">Text colour</label>
-                        <div class="color-control">
-                          <input id="emphasis_italic_color" type="color" name="emphasis_italic_color" value="#1f3b68" aria-label="Colour for italic source text">
-                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_italic_color" title="No colour change">Auto</button>
-                        </div>
-                      </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="emphasis_italic_background">Highlight</label>
-                        <div class="color-control">
-                          <input id="emphasis_italic_background" type="color" name="emphasis_italic_background" value="#fff3b0" aria-label="Highlight for italic source text">
-                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_italic_background" title="No highlight">None</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="compact-field">
-                      <label for="emphasis_italic_font">Font override</label>
-                      <select name="emphasis_italic_font" id="emphasis_italic_font">
-                        <option value="">Same as the surrounding text</option>
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                        <option value="Taamey Frank CLM">Taamey Frank CLM</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </details>
-
-          <details class="section-card section-accordion" id="title-typography" name="title-typography">
+          <details class="section-card section-accordion" id="title-typography" name="title-typography" open>
             <summary class="section-card-summary"><span>🔗 Title Typography</span></summary>
             <div class="section-card-body">
               <p class="section-note">Fonts and styling used when source titles are inserted with text.</p>
@@ -504,7 +388,123 @@
             </div>
           </details>
 
-          
+          <details class="section-card section-accordion" id="source-emphasis" name="source-emphasis">
+            <summary class="section-card-summary"><span>✒️ Source Emphasis</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Some Sefaria texts use bold and italics to carry meaning — the Steinsaltz Talmud bolds the Talmud’s own words to separate them from Steinsaltz’s explanation, and many translations italicize interpolated words.</p>
+
+              <div class="subsection-card">
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Keep the source’s bold and italics</div>
+                    <div class="toggle-help">On: the font styles you choose below set the baseline, and the source’s own emphasis is kept on top of it. Off: your font styles are applied uniformly and the source’s emphasis is dropped.</div>
+                  </div>
+                  <label class="switch" for="preserve_source_emphasis">
+                    <input id="preserve_source_emphasis" type="checkbox" name="preserve_source_emphasis" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <details class="subsection-card" id="emphasis-mapping">
+                <summary class="subsection-title">Advanced: map the source’s emphasis to your own formatting</summary>
+                <p class="subsection-note">Keeping the source’s bold as bold is the default. If your documents use a different convention — say, blue text instead of bold for the Talmud’s own words — map it here. Turn every option off in a card to drop that emphasis entirely. These settings do nothing while “Keep the source’s bold and italics” is off.</p>
+                <div class="emphasis-map-grid">
+                  <div class="emphasis-map-card">
+                    <div class="subsection-title">Where the source is bold</div>
+                    <span class="emphasis-sample">e.g. the Talmud’s own words in the Steinsaltz translation</span>
+                    <div class="compact-row compact-row--comfortable">
+                      <div class="compact-field compact-field--style">
+                        <label>Render as</label>
+                        <div class="style-control" data-style-control="emphasis_bold_style">
+                          <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                          <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                          <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                        </div>
+                        <input type="hidden" id="emphasis_bold_style" name="emphasis_bold_style" value="bold">
+                      </div>
+                      <div class="compact-field compact-field--color">
+                        <label for="emphasis_bold_color">Text colour</label>
+                        <div class="color-control">
+                          <input id="emphasis_bold_color" type="color" name="emphasis_bold_color" value="#1f3b68" aria-label="Colour for bold source text">
+                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_bold_color" title="No colour change">Auto</button>
+                        </div>
+                      </div>
+                      <div class="compact-field compact-field--color">
+                        <label for="emphasis_bold_background">Highlight</label>
+                        <div class="color-control">
+                          <input id="emphasis_bold_background" type="color" name="emphasis_bold_background" value="#fff3b0" aria-label="Highlight for bold source text">
+                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_bold_background" title="No highlight">None</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="compact-field">
+                      <label for="emphasis_bold_font">Font override</label>
+                      <select name="emphasis_bold_font" id="emphasis_bold_font">
+                        <option value="">Same as the surrounding text</option>
+                        <option value="Ezra SIL">Ezra SIL</option>
+                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
+                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
+                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
+                        <option value="SBL Hebrew">SBL Hebrew</option>
+                        <option value="Taamey Frank CLM">Taamey Frank CLM</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="emphasis-map-card">
+                    <div class="subsection-title">Where the source is italic</div>
+                    <span class="emphasis-sample">e.g. words a translator supplied that are not in the Hebrew</span>
+                    <div class="compact-row compact-row--comfortable">
+                      <div class="compact-field compact-field--style">
+                        <label>Render as</label>
+                        <div class="style-control" data-style-control="emphasis_italic_style">
+                          <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                          <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                          <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                        </div>
+                        <input type="hidden" id="emphasis_italic_style" name="emphasis_italic_style" value="italic">
+                      </div>
+                      <div class="compact-field compact-field--color">
+                        <label for="emphasis_italic_color">Text colour</label>
+                        <div class="color-control">
+                          <input id="emphasis_italic_color" type="color" name="emphasis_italic_color" value="#1f3b68" aria-label="Colour for italic source text">
+                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_italic_color" title="No colour change">Auto</button>
+                        </div>
+                      </div>
+                      <div class="compact-field compact-field--color">
+                        <label for="emphasis_italic_background">Highlight</label>
+                        <div class="color-control">
+                          <input id="emphasis_italic_background" type="color" name="emphasis_italic_background" value="#fff3b0" aria-label="Highlight for italic source text">
+                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_italic_background" title="No highlight">None</button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="compact-field">
+                      <label for="emphasis_italic_font">Font override</label>
+                      <select name="emphasis_italic_font" id="emphasis_italic_font">
+                        <option value="">Same as the surrounding text</option>
+                        <option value="Ezra SIL">Ezra SIL</option>
+                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
+                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
+                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
+                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
+                        <option value="SBL Hebrew">SBL Hebrew</option>
+                        <option value="Taamey Frank CLM">Taamey Frank CLM</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </details>
+
         </div>
 
         <div class="pref-tab-panel" id="pref-tab-insertion" role="tabpanel" aria-labelledby="pref-tab-insertion-btn" hidden>
@@ -776,23 +776,39 @@
             </div>
           </details>
 
-          <details class="section-card section-accordion" id="quick-access" name="quick-access">
-            <summary class="section-card-summary"><span>Quick Access</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Customize which actions are fastest to reach from the menu.</p>
-              <div class="toggle-row">
-                <div class="toggle-copy">
-                  <div class="toggle-title">Pin &ldquo;Insert from Selection&rdquo; at top of menu</div>
-                  <div class="toggle-help">Adds Insert Source from Selection as the first item in the add-on menu, above Texts. Reload Google Docs after saving for the menu to update.</div>
-                </div>
-                <label class="switch" for="insert_from_selection_at_top">
-                  <input id="insert_from_selection_at_top" type="checkbox" name="insert_from_selection_at_top">
-                  <span class="slider"></span>
-                </label>
-              </div>
-            </div>
-          </details>
 
+        </div>
+
+        <div class="pref-tab-panel" id="pref-tab-menu" role="tabpanel" aria-labelledby="pref-tab-menu-btn" hidden>
+          <div class="section-card">
+            <div class="section-card-body">
+              <p class="section-note">Arrange the add-on&rsquo;s menu under <strong>Extensions</strong>: reorder items, move them into or out of the Quick Actions submenu, and add dividers. Preferences and Help &amp; Support always stay at the bottom, so you can always get back here. Save to apply; if the menu does not change, reload the document.</p>
+              <input type="hidden" id="menu_layout" name="menu_layout" value="">
+
+              <div class="subsection-card">
+                <div class="subsection-title">Menu</div>
+                <ol class="menu-layout-list" id="menu-layout-top" data-menu-list="top" aria-label="Menu items"></ol>
+                <button type="button" class="menu-layout-add" data-menu-add-divider="top">+ Add divider</button>
+              </div>
+
+              <div class="subsection-card">
+                <div class="subsection-title">Quick Actions submenu</div>
+                <p class="subsection-note">Leave this empty to remove the submenu.</p>
+                <ol class="menu-layout-list" id="menu-layout-quick-actions" data-menu-list="quick_actions" aria-label="Quick Actions submenu items"></ol>
+                <button type="button" class="menu-layout-add" data-menu-add-divider="quick_actions">+ Add divider</button>
+              </div>
+
+              <div class="subsection-card menu-layout-fixed">
+                <div class="subsection-title">Always at the bottom</div>
+                <ol class="menu-layout-list">
+                  <li class="menu-layout-row menu-layout-row--fixed"><span class="menu-layout-label">Preferences</span><span class="menu-layout-lock">Fixed</span></li>
+                  <li class="menu-layout-row menu-layout-row--fixed"><span class="menu-layout-label">Help &amp; Support</span><span class="menu-layout-lock">Fixed</span></li>
+                </ol>
+              </div>
+
+              <button type="button" class="submit menu-layout-reset">Restore default menu</button>
+            </div>
+          </div>
         </div>
 
 <? if (devFlags.SURPRISE_ME) { ?>

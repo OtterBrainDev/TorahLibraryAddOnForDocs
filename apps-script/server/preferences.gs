@@ -80,7 +80,7 @@ const SETTINGS = [
   "sefaria_link_font_size",
   "sefaria_link_font_style",
   "search_mode",
-  "insert_from_selection_at_top"
+  "menu_layout"
 ];
 
 //returns the user preference w.r.t. displaying the versioning dropdowns in the insertion module
@@ -191,7 +191,10 @@ function getDefaultPreferences() {
     sefaria_link_font_size: 14,
     sefaria_link_font_style: "underline",
     search_mode: "texts",
-    insert_from_selection_at_top: false
+    // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
+    // server/menu-layout.gs for the shape. Replaced `insert_from_selection_at_top`
+    // in schema v10; the migration carries a pinned item over.
+    menu_layout: getDefaultMenuLayoutJson_()
   };
 }
 

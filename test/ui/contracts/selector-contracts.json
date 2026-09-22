@@ -20,7 +20,10 @@
     "requiredSelectors": [
       "#source_title_font",
       "#hebrew_font",
-      "#transliteration_scheme"
+      "#transliteration_scheme",
+      "#menu_layout",
+      "#menu-layout-top",
+      "#menu-layout-quick-actions"
     ]
   },
   "surprise_me": {

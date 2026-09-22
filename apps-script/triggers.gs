@@ -62,27 +62,8 @@ function onOpen(e) {
     runUserPreferenceMigrationsIfNeeded_();
     buildAndInstallMenu();
   } else {
-    // During AuthMode.NONE, create a minimal menu without reading preferences
-    const ui = DocumentApp.getUi();
-    const addOnMenu = ui.createAddonMenu();
-    const quickActionsMenu = ui.createMenu('Quick Actions')
-        .addItem('Quick Actions Sidebar', 'quickActionsHTML')
-        .addSeparator()
-        .addItem('Transform Divine Names', 'transformDivineNames')
-        .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
-        .addItem('Unlink Sources', 'unlinkSefariaSources')
-        .addItem('Insert Source from Selection', 'insertSourceFromSelection')
-        .addSeparator()
-        .addItem('Gematriya Count', 'gematriyaCountPopup');
-
-    addOnMenu
-        .addItem('Texts', 'textsHTML')
-        .addItem('Voices', 'voicesHTML')
-        .addItem('Lexicon', 'lexiconHTML')
-        .addSubMenu(quickActionsMenu)
-        .addSeparator()
-        .addItem('Preferences', 'preferencesPopup')
-        .addItem('Help & Support', 'openHelpModal')
-        .addToUi();
+    // During AuthMode.NONE, build the default menu without reading preferences.
+    // Surprise Me is omitted because whether it is enabled is itself a preference.
+    installMenuPlan_(planMenuFromLayout_(getDefaultMenuLayout_(), { surpriseMeEnabled: false }));
   }
 }
