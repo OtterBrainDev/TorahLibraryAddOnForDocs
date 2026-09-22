@@ -617,6 +617,7 @@
               renderOverrideList();
               syncExperimentalChildToggles();
               syncLinkerInsertToggle();
+              loadMenuLayoutEditor(preferences.menu_layout);
       } catch (error) {
         console.error('Preferences modal apply failed:', error);
         setResultsMessage('Preferences loaded with an error: ' + (error && error.message ? error.message : error));
@@ -946,6 +947,179 @@
       });
     }
 
+    // ── Menu Bar tab: order and nesting of the add-on menu ─────────────────
+    //
+    // Edits the `menu_layout` preference (shape documented in
+    // server/menu-layout.gs). The server normalizes whatever is saved, so this
+    // only needs to keep the working copy sane for display. When the layout is
+    // the default, the hidden field is left EMPTY so the user keeps tracking the
+    // code default instead of freezing today's menu into their preferences.
+
+    var MENU_DIVIDER = '-';
+    var MENU_SUBMENU_ID = 'quick_actions';
+    var menuEditorConfig = (window.APP_CONFIG && window.APP_CONFIG.menuLayoutEditor) || null;
+    var menuLayoutState = null;
+    var menuDividerSeq = 0;
+
+    function menuLayoutClone(layout) {
+      return { top: layout.top.slice(), quick_actions: layout.quick_actions.slice() };
+    }
+
+    function menuLayoutNormalize(raw) {
+      var fallback = menuLayoutClone(menuEditorConfig.defaultLayout);
+      var parsed = raw;
+      if (typeof raw === 'string') {
+        try { parsed = raw ? JSON.parse(raw) : null; } catch (e) { parsed = null; }
+      }
+      if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.top)) return fallback;
+
+      var seen = {};
+      function clean(list, allowSubmenu) {
+        return (Array.isArray(list) ? list : []).filter(function(id) {
+          if (id === MENU_DIVIDER) return true;
+          var known = menuEditorConfig.items.hasOwnProperty(id) || (allowSubmenu && id === MENU_SUBMENU_ID);
+          if (!known || seen[id]) return false;
+          seen[id] = true;
+          return true;
+        });
+      }
+      var layout = { top: clean(parsed.top, true), quick_actions: clean(parsed.quick_actions, false) };
+      ['top', 'quick_actions'].forEach(function(listName) {
+        fallback[listName].forEach(function(id) {
+          if (id !== MENU_DIVIDER && !seen[id]) layout[listName].push(id);
+        });
+      });
+      return layout;
+    }
+
+    function menuLayoutIsDefault(layout) {
+      return JSON.stringify(layout) === JSON.stringify(menuEditorConfig.defaultLayout);
+    }
+
+    function menuLayoutLabel(id) {
+      if (id === MENU_DIVIDER) return 'Divider';
+      if (id === MENU_SUBMENU_ID) return menuEditorConfig.submenuLabel + ' ▸';
+      return menuEditorConfig.items[id].label;
+    }
+
+    function menuLayoutButton(text, title, action, disabled) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'menu-layout-btn';
+      btn.textContent = text;
+      btn.title = title;
+      btn.setAttribute('aria-label', title);
+      btn.dataset.menuAction = action;
+      btn.disabled = !!disabled;
+      return btn;
+    }
+
+    function renderMenuLayoutList(listName, focus) {
+      var listEl = document.querySelector('[data-menu-list="' + listName + '"]');
+      if (!listEl) return;
+      var items = menuLayoutState[listName];
+      listEl.textContent = '';
+
+      items.forEach(function(id, index) {
+        var li = document.createElement('li');
+        li.className = 'menu-layout-row' +
+          (id === MENU_DIVIDER ? ' menu-layout-row--divider' : '') +
+          (id === MENU_SUBMENU_ID ? ' menu-layout-row--submenu' : '');
+        li.dataset.menuIndex = String(index);
+
+        var label = document.createElement('span');
+        label.className = 'menu-layout-label';
+        label.textContent = menuLayoutLabel(id);
+        li.appendChild(label);
+
+        var actions = document.createElement('span');
+        actions.className = 'menu-layout-actions';
+        var name = menuLayoutLabel(id);
+        actions.appendChild(menuLayoutButton('↑', 'Move ' + name + ' up', 'up', index === 0));
+        actions.appendChild(menuLayoutButton('↓', 'Move ' + name + ' down', 'down', index === items.length - 1));
+        if (id === MENU_DIVIDER) {
+          actions.appendChild(menuLayoutButton('✕', 'Remove divider', 'remove'));
+        } else if (id !== MENU_SUBMENU_ID) {
+          actions.appendChild(listName === 'top'
+            ? menuLayoutButton('→', 'Move ' + name + ' into ' + menuEditorConfig.submenuLabel, 'move')
+            : menuLayoutButton('←', 'Move ' + name + ' to the main menu', 'move'));
+        }
+        li.appendChild(actions);
+        listEl.appendChild(li);
+      });
+
+      if (focus && focus.list === listName) {
+        var row = listEl.querySelector('[data-menu-index="' + focus.index + '"]');
+        var target = row && (row.querySelector('[data-menu-action="' + focus.action + '"]:not([disabled])') ||
+          row.querySelector('button:not([disabled])'));
+        if (target) target.focus();
+      }
+    }
+
+    function renderMenuLayoutEditor(focus) {
+      renderMenuLayoutList('top', focus);
+      renderMenuLayoutList('quick_actions', focus);
+      var field = byId('menu_layout');
+      if (field) field.value = menuLayoutIsDefault(menuLayoutState) ? '' : JSON.stringify(menuLayoutState);
+    }
+
+    function loadMenuLayoutEditor(storedLayout) {
+      if (!menuEditorConfig) return;
+      menuLayoutState = menuLayoutNormalize(storedLayout);
+      renderMenuLayoutEditor();
+    }
+
+    function handleMenuLayoutAction(listName, index, action) {
+      var list = menuLayoutState[listName];
+      var otherName = listName === 'top' ? 'quick_actions' : 'top';
+      var focus = { list: listName, index: index, action: action };
+      if (action === 'up' && index > 0) {
+        list.splice(index - 1, 0, list.splice(index, 1)[0]);
+        focus.index = index - 1;
+      } else if (action === 'down' && index < list.length - 1) {
+        list.splice(index + 1, 0, list.splice(index, 1)[0]);
+        focus.index = index + 1;
+      } else if (action === 'remove') {
+        list.splice(index, 1);
+        focus.index = Math.min(index, list.length - 1);
+      } else if (action === 'move') {
+        var moved = list.splice(index, 1)[0];
+        menuLayoutState[otherName].push(moved);
+        // Moving into an empty submenu must also put the submenu back in the menu.
+        if (otherName === 'quick_actions' && menuLayoutState.top.indexOf(MENU_SUBMENU_ID) === -1) {
+          menuLayoutState.top.push(MENU_SUBMENU_ID);
+        }
+        focus = { list: otherName, index: menuLayoutState[otherName].indexOf(moved), action: 'move' };
+      }
+      renderMenuLayoutEditor(focus);
+    }
+
+    function initMenuLayoutEditor() {
+      if (!menuEditorConfig) return;
+      document.querySelectorAll('[data-menu-list]').forEach(function(listEl) {
+        listEl.addEventListener('click', function(ev) {
+          var btn = ev.target.closest('[data-menu-action]');
+          if (!btn || btn.disabled) return;
+          var row = btn.closest('[data-menu-index]');
+          handleMenuLayoutAction(listEl.dataset.menuList, Number(row.dataset.menuIndex), btn.dataset.menuAction);
+        });
+      });
+      document.querySelectorAll('[data-menu-add-divider]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var listName = btn.dataset.menuAddDivider;
+          menuLayoutState[listName].push(MENU_DIVIDER);
+          renderMenuLayoutEditor({ list: listName, index: menuLayoutState[listName].length - 1, action: 'up' });
+        });
+      });
+      var reset = document.querySelector('.menu-layout-reset');
+      if (reset) {
+        reset.addEventListener('click', function() {
+          loadMenuLayoutEditor('');
+        });
+      }
+      loadMenuLayoutEditor('');
+    }
+
     function _initPreferencesTabs() {
       const tabs = Array.from(document.querySelectorAll('.pref-tab'));
       if (!tabs.length) return;
@@ -1021,6 +1195,7 @@
     initPrefButtonGroups();
     initPrefTranslitDropdown();
     initWorkflowTabs();
+    initMenuLayoutEditor();
     bindColorControls();
     _initPreferencesCompositionCard();
     loadPreferencesIntoForm();

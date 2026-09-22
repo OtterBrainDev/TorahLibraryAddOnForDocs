@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '10';
+var PREFS_SCHEMA_CURRENT_ = '11';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -103,15 +103,23 @@ function runUserPreferenceMigrationsIfNeeded_() {
   if (from < 9) {
     migrateToV9_(userProperties);
   }
-  // v9 -> v10: introduces `insert_from_selection_replace`, defaulting to TRUE.
+  // v9 -> v10: `menu_layout` replaces `insert_from_selection_at_top`. The old
+  // toggle could only pin one item; the Menu Bar tab now orders and nests the
+  // whole menu. A user who had pinned the item keeps it pinned; everyone else
+  // gets the unchanged default menu. The old key is removed so no dead
+  // preference outlives its last reader.
+  if (from < 10) {
+    migrateToV10_(userProperties);
+  }
+  // v10 -> v11: introduces `insert_from_selection_replace`, defaulting to TRUE.
   //
   // "Insert Source from Selection" originally replaced the selected citation
   // with the inserted source. Commit fefe9b9 (2026-05) switched it, with no
   // setting, to keeping the selection and inserting below it, and users who
   // relied on the replace behaviour reported it as a regression. The
   // preference makes both available; the default restores the original.
-  if (from < 10) {
-    migrateToV10_(userProperties);
+  if (from < 11) {
+    migrateToV11_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -242,11 +250,32 @@ function migrateToV9_(userProperties) {
 }
 
 /**
- * V10: introduces `insert_from_selection_replace`. See the driver comment for
+ * V10: converts `insert_from_selection_at_top` into `menu_layout`.
+ *
+ * `menu_layout` is written only when the user had customized the menu (pinned
+ * the item). Everyone else is left unset, so they read the code default and
+ * keep tracking it — a stored snapshot of the default would freeze today's
+ * menu for them. Depends on server/menu-layout.gs (one global scope at
+ * runtime).
+ */
+function migrateToV10_(userProperties) {
+  if (userProperties.getProperty('menu_layout') == null &&
+      userProperties.getProperty('insert_from_selection_at_top') === 'true') {
+    var layout = getDefaultMenuLayout_();
+    layout.top = layout.top.filter(function(id) { return id !== 'insert_from_selection'; });
+    layout.top.unshift('insert_from_selection');
+    userProperties.setProperty('menu_layout', JSON.stringify(layout));
+  }
+  try { userProperties.deleteProperty('insert_from_selection_at_top'); } catch (_e) { /* ignore */ }
+  return true;
+}
+
+/**
+ * V11: introduces `insert_from_selection_replace`. See the driver comment for
  * why the default is "true" (replace) rather than the keep-selection behaviour
  * that shipped without a setting in fefe9b9.
  */
-function migrateToV10_(userProperties) {
+function migrateToV11_(userProperties) {
   if (userProperties.getProperty('insert_from_selection_replace') == null) {
     userProperties.setProperty('insert_from_selection_replace', 'true');
   }

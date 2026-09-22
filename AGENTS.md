@@ -111,7 +111,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **135 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **146 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -122,6 +122,9 @@ and fix it before touching the feature you came to change.
 - `hebrew-preferences.test.js` — Hebrew display filters, divine-name
   replacements, transliteration, search payload shape.
 - `migrations.test.js` — the UserProperties schema migrations.
+- `menu-layout.test.js` — the customizable add-on menu: default layout
+  matches the pre-customization menu, Preferences and Help are always last,
+  dividers collapse, stored layouts are normalized.
 - `extended-gemara.test.js`, `format-data-for-pesukim.test.js` — the
   regressions named in `docs/regression-log.md`.
 - `search-input-normalization.test.js` — query normalization and the

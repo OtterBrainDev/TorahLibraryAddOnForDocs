@@ -10,11 +10,11 @@ All notable changes in this fork are documented here.
 
 ## Unreleased — linking tab, per-row Link/Insert, insert-from-selection replace (2026-09)
 
-> **Behaviour change for existing users — migration v10.** *Insert Source from
+> **Behaviour change for existing users — migration v11.** *Insert Source from
 > Selection* replaces the selected citation with the inserted source again, as
 > it did before commit `fefe9b9` (2026-05) switched it, without a setting, to
 > keeping the selection. The new `insert_from_selection_replace` preference
-> (Preferences → Insertion → Quick Access) is written as `true` for every
+> (Preferences → Insertion → Insert from Selection) is written as `true` for every
 > upgrading user; turn it off to keep the selection and insert below it.
 
 ### Fixed
@@ -42,6 +42,30 @@ All notable changes in this fork are documented here.
   (`link_sources_insert_after_linking`) is now **Insert text after linking**,
   shown only when *After linking* is *Just link and report a count*, and makes
   that quiet pass insert each linked source too. No key was added or renamed.
+
+## Unreleased — Preferences cleanup and a customizable menu (2026-09)
+
+### Added
+
+- **Menu Bar tab in Preferences.** Reorder the add-on's menu, move items into
+  or out of the Quick Actions submenu, and add or remove dividers. Preferences
+  and Help & Support are fixed at the bottom so the way back to this screen
+  can't be lost. Emptying the Quick Actions submenu removes it from the menu.
+
+### Changed
+
+- **Preference migration (schema 10): `insert_from_selection_at_top` is
+  replaced by `menu_layout`.** The old Quick Access toggle could only pin one
+  item; it is gone, and the Menu Bar tab covers it. Upgraders who had pinned
+  *Insert Source from Selection* keep it pinned at the top of the menu;
+  everyone else sees the unchanged default menu. The old key is removed.
+- **The Quick Access accordion moved** from the Insertion tab to the new Menu
+  Bar tab.
+- **Source Emphasis is now the last accordion on the Fonts tab**, and the tab
+  opens with Title Typography expanded instead.
+- Before the add-on is authorized (`AuthMode.NONE`), the menu now uses the same
+  default layout as everyone else; previously *Insert Source from Selection*
+  sat inside Quick Actions in that one case.
 
 ## Unreleased — multi-translation insert and Hebrew entity fixes (2026-09)
 

@@ -672,8 +672,8 @@ function insertSourceFromSelection() {
   const prefs = getPreferences();
   const insertOptions = buildLinkSourcesInsertOptions_(prefs);
   // Replace the selected citation by default: the inserted source's title is
-  // that same text, so nothing is lost. Preferences -> Insertion -> Quick
-  // Access can switch this to keep the selection and insert below it.
+  // that same text, so nothing is lost. Preferences -> Insertion -> Insert
+  // from Selection can switch this to keep the selection and insert below it.
   const replaceSelection = prefs.insert_from_selection_replace !== 'false' && prefs.insert_from_selection_replace !== false;
   try {
     insertReference(resolved, Object.assign({ preferredTitle: selectedText, preserveSelection: !replaceSelection }, insertOptions));

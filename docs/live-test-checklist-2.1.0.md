@@ -2,7 +2,7 @@
 
 Run this in a real Google Doc after `clasp push`, before the Marketplace
 submission. Everything here is something the automated suite **cannot** reach:
-135 tests cover pure logic, contracts and snapshots, but nothing in CI opens a
+146 tests cover pure logic, contracts and snapshots, but nothing in CI opens a
 sidebar, holds a `DocumentApp` handle, or makes a request to Sefaria.
 
 **Version under test:** 2.1.0 · **preference schema:** 9
@@ -138,7 +138,7 @@ Build one test document containing, in this order:
 | 5.12a | In the dialog, tick **Insert** on one row (Link left on) and **Insert only** on another, then apply | Both sources inserted below their paragraphs; only the first citation is hyperlinked |
 | 5.12b | Preferences → Linking: switch *After linking* between modes | **Insert text after linking** appears only for *Just link and report a count* |
 | 5.12c | Turn it on, re-run on a fresh copy | No dialog; each linked source is inserted below its paragraph, and the alert counts insertions |
-| 5.12d | Select `Genesis 1:1`, run **Insert Source from Selection** | The selection is **replaced** by the inserted source (titled `Genesis 1:1`). With Preferences → Insertion → Quick Access → *replaces the selection* off, the selection stays and the source goes below it |
+| 5.12d | Select `Genesis 1:1`, run **Insert Source from Selection** | The selection is **replaced** by the inserted source (titled `Genesis 1:1`). With Preferences → Insertion → Insert from Selection → *replaces the selection* off, the selection stays and the source goes below it |
 
 > **5.9 is the point of the whole feature.** The published add-on reported
 > "Linked N references" and nothing else. If a failure is still invisible here,
