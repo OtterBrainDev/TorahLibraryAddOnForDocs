@@ -23,6 +23,7 @@
         <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
           <button type="button" id="pref-tab-fonts-btn" class="pref-tab" role="tab" data-pref-tab="fonts" aria-controls="pref-tab-fonts" aria-selected="true">Fonts</button>
           <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="false">Insertion</button>
+          <button type="button" id="pref-tab-linking-btn" class="pref-tab" role="tab" data-pref-tab="linking" aria-controls="pref-tab-linking" aria-selected="false">Linking</button>
           <button type="button" id="pref-tab-menu-btn" class="pref-tab" role="tab" data-pref-tab="menu" aria-controls="pref-tab-menu" aria-selected="false">Menu Bar</button>
 <? if (devFlags.SURPRISE_ME) { ?>
           <button type="button" id="pref-tab-experimental-btn" class="pref-tab" role="tab" data-pref-tab="experimental" aria-controls="pref-tab-experimental" aria-selected="false">🧪 Experimental</button>
@@ -748,7 +749,56 @@
             </div>
           </details>
 
-          <details class="section-card section-accordion" id="privacy-scanning" name="privacy-scanning">
+          <details class="section-card section-accordion" id="insert-from-selection" name="insert-from-selection">
+            <summary class="section-card-summary"><span>Insert from Selection</span></summary>
+            <div class="section-card-body">
+              <div class="toggle-row">
+                <div class="toggle-copy">
+                  <div class="toggle-title">&ldquo;Insert from Selection&rdquo; replaces the selection</div>
+                  <div class="toggle-help">On: the selected reference is replaced by the inserted source, which is titled with the same reference. Off: the selection stays and the source is inserted below it.</div>
+                </div>
+                <label class="switch" for="insert_from_selection_replace">
+                  <input id="insert_from_selection_replace" type="checkbox" name="insert_from_selection_replace">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </details>
+
+        </div>
+
+        <div class="pref-tab-panel" id="pref-tab-linking" role="tabpanel" aria-labelledby="pref-tab-linking-btn" hidden>
+          <p class="section-note">How &ldquo;Link Texts with Sefaria&rdquo; scans your document, and what it does with the citations it finds.</p>
+
+          <details class="section-card section-accordion" id="linking-review" name="linking-review" open>
+            <summary class="section-card-summary"><span>🔗 Review &amp; Insertion</span></summary>
+            <div class="section-card-body">
+              <div class="pref-field-group">
+                <div class="compact-field">
+                  <label for="linker_review_mode">After linking</label>
+                  <select name="linker_review_mode" id="linker_review_mode">
+                    <option value="summary" selected>Show a summary, and ask about ambiguous citations (recommended)</option>
+                    <option value="full">Show every match for review before linking</option>
+                    <option value="quiet">Just link and report a count</option>
+                  </select>
+                </div>
+                <p class="subsection-note">Some citations match more than one Sefaria source &mdash; &ldquo;Avodah Zarah 2a&rdquo; could be the Talmud or a commentary on it. <strong>Show a summary</strong> links everything unambiguous automatically and only asks about the genuine ties. <strong>Show every match</strong> lists them all first. In both, each row has a <strong>Link</strong> and an <strong>Insert</strong> checkbox, so you choose per citation whether to hyperlink it, insert the source&rsquo;s text after it, or both. <strong>Just link and report a count</strong> never interrupts, and skips ambiguous citations rather than guessing.</p>
+
+                <div class="toggle-row" id="link_sources_insert_after_linking_row" hidden>
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Insert text after linking</div>
+                    <div class="toggle-help">After linking, insert each linked source below the paragraph that cites it, using your insertion defaults.</div>
+                  </div>
+                  <label class="switch" for="link_sources_insert_after_linking">
+                    <input id="link_sources_insert_after_linking" type="checkbox" name="link_sources_insert_after_linking">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <details class="section-card section-accordion" id="privacy-scanning" name="privacy-scanning" open>
             <summary class="section-card-summary"><span>🔒 Privacy &amp; Document Scanning</span></summary>
             <div class="section-card-body">
               <p class="section-note">&ldquo;Link Texts with Sefaria&rdquo; has to send text to sefaria.org so their reference linker can find citations. This setting controls how much of your document is sent.</p>
@@ -761,22 +811,10 @@
                   </select>
                 </div>
                 <p class="subsection-note"><strong>Candidate passages only</strong> scans your document on your own machine first and uploads just the passages that look like they contain a citation — a book title, a chapter:verse number, or a Hebrew abbreviation. Your other writing never leaves the document. <strong>Whole document</strong> uploads the entire body, which can catch unusual citation forms the local scan misses.</p>
-                <div class="compact-field">
-                  <label for="linker_review_mode">After linking</label>
-                  <select name="linker_review_mode" id="linker_review_mode">
-                    <option value="summary" selected>Show a summary, and ask about ambiguous citations (recommended)</option>
-                    <option value="full">Show every match for review before linking</option>
-                    <option value="quiet">Just link and report a count</option>
-                  </select>
-                </div>
-                <p class="subsection-note">Some citations match more than one Sefaria source &mdash; &ldquo;Avodah Zarah 2a&rdquo; could be the Talmud or a commentary on it. <strong>Show a summary</strong> links everything unambiguous automatically and only asks about the genuine ties. <strong>Show every match</strong> lists them all first, so you can uncheck anything before it is applied. <strong>Just link and report a count</strong> never interrupts, and skips ambiguous citations rather than guessing.</p>
-
                 <p class="subsection-note">Nothing is sent to sefaria.org unless you run &ldquo;Link Texts with Sefaria&rdquo;, search, or insert a source. This add-on stores no account data and sends your text to no one else. See <a href="https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer">the privacy policy</a>.</p>
               </div>
             </div>
           </details>
-
-
         </div>
 
         <div class="pref-tab-panel" id="pref-tab-menu" role="tabpanel" aria-labelledby="pref-tab-menu-btn" hidden>
@@ -842,21 +880,6 @@
 <? } ?>
               </div>
 
-            </div>
-          </div>
-
-          <div class="section-card">
-            <div class="section-card-body">
-              <div class="toggle-row">
-                <div class="toggle-copy">
-                  <div class="toggle-title">Enable Source Insertion after Linking</div>
-                  <div class="toggle-help">When "Link Texts with Sefaria" finds references, show a dialog to choose which sources to insert. Sources are inserted after their reference using your default insertion preferences.</div>
-                </div>
-                <label class="switch" for="link_sources_insert_after_linking">
-                  <input id="link_sources_insert_after_linking" type="checkbox" name="link_sources_insert_after_linking">
-                  <span class="slider"></span>
-                </label>
-              </div>
             </div>
           </div>
         </div>

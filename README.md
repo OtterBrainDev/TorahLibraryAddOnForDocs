@@ -15,7 +15,7 @@ Read the full policy: **[`docs/PRIVACY.md`](./docs/PRIVACY.md)**.
 The one command that sends text you did not type is **Link Texts with Sefaria**,
 which uploads document text so Sefaria's reference linker can find citations in
 it. By default only the passages that look like they contain a citation are
-uploaded — see *Preferences → Privacy & Document Scanning*, and §2.1 of the
+uploaded — see *Preferences → Linking → Privacy & Document Scanning*, and §2.1 of the
 policy.
 
 ## Contributing (human or AI)

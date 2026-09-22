@@ -18,6 +18,13 @@
 
       *, *::before, *::after { box-sizing: border-box; }
 
+      /* The four dialog states are toggled with the `hidden` attribute, but
+         several of them also carry `display: flex`, which beats the browser's
+         own [hidden] rule. Without this every state rendered at once: the
+         scanning bar, the review table, "Applying links" and the Close button
+         stacked in one column, with the table squeezed between them. */
+      [hidden] { display: none !important; }
+
       body {
         margin: 0;
         background: var(--bg);
@@ -59,23 +66,19 @@
         background: var(--amber-soft);
       }
 
+      #state-review {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
       .controls-row {
         display: flex;
         align-items: center;
         gap: 8px;
         margin-bottom: 8px;
       }
-
-      .btn-link {
-        background: none;
-        border: none;
-        padding: 2px 4px;
-        cursor: pointer;
-        color: var(--blue);
-        font-size: 13px;
-        text-decoration: underline;
-      }
-      .btn-link:hover { opacity: 0.75; }
 
       .selection-count {
         margin-left: auto;
@@ -119,7 +122,35 @@
 
       tbody tr.is-ambiguous { background: var(--amber-soft); }
 
-      td.cb-cell { width: 34px; }
+      th.cb-col, td.cb-cell {
+        width: 54px;
+        text-align: center;
+      }
+      th.cb-col label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        cursor: pointer;
+      }
+
+      tr.group-row td {
+        padding: 0;
+        background: #f7f6f3;
+      }
+      .group-toggle {
+        display: block;
+        width: 100%;
+        padding: 7px 10px;
+        border: none;
+        background: none;
+        text-align: left;
+        font-size: 12px;
+        font-family: inherit;
+        color: var(--blue);
+        cursor: pointer;
+      }
+      .group-toggle:hover { text-decoration: underline; }
 
       .doc-text {
         font-weight: 600;
@@ -255,8 +286,6 @@
         <p class="summary-line" id="summary-line" hidden></p>
 
         <div class="controls-row" id="review-controls">
-          <button type="button" class="btn-link" id="select-all-btn">Select all</button>
-          <button type="button" class="btn-link" id="deselect-all-btn">Deselect all</button>
           <span class="selection-count" id="selection-count"></span>
         </div>
 
@@ -264,12 +293,19 @@
           <table>
             <thead>
               <tr>
-                <th><input type="checkbox" id="master-cb" title="Toggle all"></th>
+                <th class="cb-col"><label>Link <input type="checkbox" id="master-link-cb" title="Link all"></label></th>
+                <th class="cb-col"><label>Insert <input type="checkbox" id="master-insert-cb" title="Insert all"></label></th>
                 <th>Text in your document</th>
-                <th>Links to</th>
+                <th>Source</th>
               </tr>
             </thead>
             <tbody id="matches-tbody"></tbody>
+            <tbody id="group-toggle-tbody" hidden>
+              <tr class="group-row">
+                <td colspan="4"><button type="button" class="group-toggle" id="group-toggle-btn" aria-expanded="false" aria-controls="confident-tbody"></button></td>
+              </tr>
+            </tbody>
+            <tbody id="confident-tbody"></tbody>
           </table>
         </div>
 
@@ -300,6 +336,9 @@
         // is Sefaria text and the reader's own document, and this dialog has no
         // innerHTML sink at all — keep it that way.
         var report = null;
+        // One entry per match: {match, linkCb, insertCb, select}. Link and
+        // Insert are independent, so a row can be linked, inserted, both, or
+        // neither (skipped).
         var rows = [];
 
         function byId(id) { return document.getElementById(id); }
@@ -332,7 +371,7 @@
           report = result || {};
 
           if (report.nothingToScan) {
-            finish('No text in this document looks like a Sefaria reference, so nothing was sent to Sefaria.\n\nIf you expected a match, switch "Document scanning" to "Whole document" in Preferences.');
+            finish('No text in this document looks like a Sefaria reference, so nothing was sent to Sefaria.\n\nIf you expected a match, switch "Document scanning" to "Whole document" in Preferences → Linking.');
             return;
           }
 
@@ -345,7 +384,7 @@
             }
             if (report.unplaceableCount) {
               nothing += '\n\n' + plural(report.unplaceableCount, 'citation') +
-                ' was recognised but fell across a gap in the partial scan. Set "Document scanning" to "Whole document" in Preferences to catch these.';
+                ' was recognised but fell across a gap in the partial scan. Set "Document scanning" to "Whole document" in Preferences → Linking to catch these.';
             }
             finish(nothing);
             return;
@@ -362,23 +401,19 @@
           var ambiguous = matches.filter(function (m) { return m.ambiguous; });
           var confident = matches.filter(function (m) { return !m.ambiguous; });
 
-          // "summary" only asks about the genuine ties; "full" lists everything.
-          var visible = (mode === 'full') ? matches : ambiguous;
-
           byId('review-title').textContent = (mode === 'full')
             ? 'Review ' + plural(matches.length, 'reference')
             : (ambiguous.length ? 'Resolve ' + plural(ambiguous.length, 'ambiguous citation') : 'Ready to link');
 
-          byId('review-helper').textContent = report.insertAfterLinking
-            ? 'Checked rows will be hyperlinked and their source inserted after the reference.'
-            : 'Checked rows will be hyperlinked to Sefaria.';
+          byId('review-helper').textContent =
+            'Tick Link to hyperlink the words in your document, and Insert to add the source’s text after them, using your insertion defaults.';
 
           var summaryParts = [];
           if (mode !== 'full' && confident.length) {
-            summaryParts.push(plural(confident.length, 'reference') + ' matched a single source and will be linked automatically.');
+            summaryParts.push(plural(confident.length, 'reference') + ' matched a single source and will be linked.');
           }
           if (ambiguous.length) {
-            summaryParts.push(plural(ambiguous.length, 'citation') + ' matched more than one source — choose below, or uncheck to skip.');
+            summaryParts.push(plural(ambiguous.length, 'citation') + ' matched more than one source — choose a source, then tick Link or Insert.');
           }
           if (report.unresolvedCount) {
             summaryParts.push(plural(report.unresolvedCount, 'citation') + ' could not be matched to a Sefaria source and will be left alone.');
@@ -388,7 +423,7 @@
           // in two pieces, so there is no single span of the document to link.
           if (report.unplaceableCount) {
             summaryParts.push(plural(report.unplaceableCount, 'citation') +
-              ' fell across a gap in the partial scan — set "Document scanning" to "Whole document" in Preferences to catch these.');
+              ' fell across a gap in the partial scan — set "Document scanning" to "Whole document" in Preferences → Linking to catch these.');
           }
           if (summaryParts.length) {
             var summary = byId('summary-line');
@@ -399,46 +434,70 @@
             }
           }
 
+          // Ambiguous rows always come first: they are the ones that need a
+          // decision. In "full" mode the confident rows follow in the same
+          // list. In "summary" mode they sit in a collapsed group — still
+          // linked by default, but one click away so Insert can be ticked.
           var tbody = byId('matches-tbody');
-          visible.forEach(function (match) {
-            tbody.appendChild(buildRow(match));
-          });
+          var confidentBody = (mode === 'full' || !ambiguous.length) ? tbody : byId('confident-tbody');
+          ambiguous.forEach(function (match) { tbody.appendChild(buildRow(match)); });
+          confident.forEach(function (match) { confidentBody.appendChild(buildRow(match)); });
 
-          // In summary mode the confident matches are applied without being
-          // listed, so they are carried as implicit rows.
-          if (mode !== 'full') {
-            confident.forEach(function (match) {
-              rows.push({ match: match, checkbox: null, select: null, implicit: true });
-            });
+          if (confidentBody !== tbody && confident.length) {
+            setupConfidentGroup(confident.length);
           }
 
-          byId('review-controls').hidden = visible.length === 0;
-          syncMasterCheckbox();
+          syncMasterCheckboxes();
           updateSelectionCount();
+        }
+
+        function setupConfidentGroup(count) {
+          var group = byId('confident-tbody');
+          var button = byId('group-toggle-btn');
+          byId('group-toggle-tbody').hidden = false;
+
+          function render(expanded) {
+            group.hidden = !expanded;
+            button.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            button.textContent = (expanded ? '▾ Hide ' : '▸ Show ') +
+              plural(count, 'reference') + ' that matched a single source';
+          }
+          button.addEventListener('click', function () { render(group.hidden); });
+          render(false);
+        }
+
+        function makeCheckbox(className, checked, label) {
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.className = className;
+          cb.checked = checked;
+          cb.setAttribute('aria-label', label);
+          cb.addEventListener('change', function () {
+            syncMasterCheckboxes();
+            updateSelectionCount();
+          });
+          return cb;
         }
 
         function buildRow(match) {
           var tr = document.createElement('tr');
           if (match.ambiguous) tr.className = 'is-ambiguous';
 
-          // Column 1 — include this one?
-          var tdCb = document.createElement('td');
-          tdCb.className = 'cb-cell';
-          var cb = document.createElement('input');
-          cb.type = 'checkbox';
-          // An ambiguous row starts unchecked: nobody has chosen yet, and
+          // Columns 1 and 2 — link it, insert it, or both. An ambiguous row
+          // starts with neither: nobody has chosen a source yet, and
           // pre-checking a guess is the behaviour this dialog exists to replace.
-          cb.checked = !match.ambiguous;
-          cb.className = 'match-cb';
-          cb.setAttribute('aria-label', 'Link "' + match.documentText + '"');
-          cb.addEventListener('change', function () {
-            syncMasterCheckbox();
-            updateSelectionCount();
+          // Insert always starts unchecked; it adds text to the document, so it
+          // is only ever done on request.
+          var linkCb = makeCheckbox('link-cb', !match.ambiguous, 'Link "' + match.documentText + '"');
+          var insertCb = makeCheckbox('insert-cb', false, 'Insert the source for "' + match.documentText + '"');
+          [linkCb, insertCb].forEach(function (cb) {
+            var td = document.createElement('td');
+            td.className = 'cb-cell';
+            td.appendChild(cb);
+            tr.appendChild(td);
           });
-          tdCb.appendChild(cb);
-          tr.appendChild(tdCb);
 
-          // Column 2 — the words in the document that become the hyperlink.
+          // Column 3 — the words in the document that become the hyperlink.
           var tdText = document.createElement('td');
           var strong = document.createElement('span');
           strong.className = 'doc-text';
@@ -450,10 +509,12 @@
           tdText.appendChild(snippet);
           tr.appendChild(tdText);
 
-          // Column 3 — where it points. A dropdown whenever there is a choice.
+          // Column 4 — where it points. A dropdown whenever there is a choice.
           var tdRef = document.createElement('td');
           tdRef.className = 'ref-cell';
           var select = null;
+          var preview = document.createElement('span');
+          preview.className = 'preview';
 
           if (match.ambiguous) {
             var tag = document.createElement('span');
@@ -472,9 +533,10 @@
             });
             select.addEventListener('change', function () {
               renderPreview(preview, match.candidates[parseInt(select.value, 10)]);
-              // Choosing a destination is the decision; opt the row in.
-              cb.checked = true;
-              syncMasterCheckbox();
+              // Choosing a destination is the decision; opt the row in to
+              // linking unless the reader has already said what they want.
+              if (!linkCb.checked && !insertCb.checked) linkCb.checked = true;
+              syncMasterCheckboxes();
               updateSelectionCount();
             });
             tdRef.appendChild(select);
@@ -485,14 +547,11 @@
             tdRef.appendChild(single);
           }
 
-          var preview = document.createElement('span');
-          preview.className = 'preview';
           tdRef.appendChild(preview);
           renderPreview(preview, match.candidates[0]);
-
           tr.appendChild(tdRef);
 
-          rows.push({ match: match, checkbox: cb, select: select, implicit: false });
+          rows.push({ match: match, linkCb: linkCb, insertCb: insertCb, select: select });
           return tr;
         }
 
@@ -504,79 +563,83 @@
           node.textContent = parts.join(' — ');
         }
 
-        function explicitRows() {
-          return rows.filter(function (row) { return !row.implicit; });
+        function countChecked(key) {
+          return rows.filter(function (row) { return row[key].checked; }).length;
         }
 
         function updateSelectionCount() {
-          var visible = explicitRows();
-          var checked = visible.filter(function (row) { return row.checkbox.checked; }).length;
-          var implicit = rows.length - visible.length;
-          var total = checked + implicit;
+          var toLink = countChecked('linkCb');
+          var toInsert = countChecked('insertCb');
 
-          byId('selection-count').textContent = visible.length
-            ? checked + ' of ' + visible.length + ' selected'
-            : '';
-          byId('apply-btn').disabled = total === 0;
-          byId('apply-btn').textContent = total
-            ? 'Link ' + plural(total, 'reference')
-            : 'Apply';
+          byId('selection-count').textContent =
+            toLink + ' of ' + rows.length + ' to link · ' + toInsert + ' to insert';
+
+          var label = [];
+          if (toLink) label.push('Link ' + toLink);
+          if (toInsert) label.push((toLink ? 'insert ' : 'Insert ') + toInsert);
+          byId('apply-btn').disabled = !toLink && !toInsert;
+          byId('apply-btn').textContent = label.length ? label.join(' & ') : 'Apply';
         }
 
-        function syncMasterCheckbox() {
-          var visible = explicitRows();
-          if (!visible.length) return;
-          var allChecked = visible.every(function (row) { return row.checkbox.checked; });
-          var noneChecked = visible.every(function (row) { return !row.checkbox.checked; });
-          var master = byId('master-cb');
-          master.checked = allChecked;
-          master.indeterminate = !allChecked && !noneChecked;
+        function syncMasterCheckboxes() {
+          [['linkCb', 'master-link-cb'], ['insertCb', 'master-insert-cb']].forEach(function (pair) {
+            var checked = countChecked(pair[0]);
+            var master = byId(pair[1]);
+            master.checked = rows.length > 0 && checked === rows.length;
+            master.indeterminate = checked > 0 && checked < rows.length;
+          });
         }
 
-        function setAll(checked) {
-          explicitRows().forEach(function (row) { row.checkbox.checked = checked; });
-          var master = byId('master-cb');
-          master.checked = checked;
-          master.indeterminate = false;
+        function setColumn(key, checked) {
+          rows.forEach(function (row) { row[key].checked = checked; });
+          syncMasterCheckboxes();
           updateSelectionCount();
         }
 
-        byId('master-cb').addEventListener('change', function () { setAll(this.checked); });
-        byId('select-all-btn').addEventListener('click', function () { setAll(true); });
-        byId('deselect-all-btn').addEventListener('click', function () { setAll(false); });
+        byId('master-link-cb').addEventListener('change', function () { setColumn('linkCb', this.checked); });
+        byId('master-insert-cb').addEventListener('change', function () { setColumn('insertCb', this.checked); });
         byId('cancel-btn').addEventListener('click', function () { google.script.host.close(); });
         byId('done-close-btn').addEventListener('click', function () { google.script.host.close(); });
 
         // ---- apply ----------------------------------------------------------
 
-        byId('apply-btn').addEventListener('click', function () {
-          var chosen = rows.filter(function (row) {
-            return row.implicit || row.checkbox.checked;
-          }).map(function (row) {
-            var index = row.select ? parseInt(row.select.value, 10) : 0;
-            var candidate = row.match.candidates[index] || row.match.candidates[0];
-            return {
-              startChar: row.match.startChar,
-              endChar: row.match.endChar,
-              ref: candidate.ref
-            };
-          });
+        function decisionFor(row) {
+          var index = row.select ? parseInt(row.select.value, 10) : 0;
+          var candidate = row.match.candidates[index] || row.match.candidates[0];
+          return {
+            startChar: row.match.startChar,
+            endChar: row.match.endChar,
+            ref: candidate.ref
+          };
+        }
 
-          if (!chosen.length) {
+        byId('apply-btn').addEventListener('click', function () {
+          var toLink = rows.filter(function (row) { return row.linkCb.checked; }).map(decisionFor);
+          var toInsert = rows.filter(function (row) { return row.insertCb.checked; }).map(decisionFor);
+
+          if (!toLink.length && !toInsert.length) {
             google.script.host.close();
             return;
           }
 
           showState('applying');
-          byId('apply-label').textContent = 'Linking ' + plural(chosen.length, 'reference') + '…';
+
+          if (!toLink.length) {
+            insertSources(toInsert, 0, 0);
+            return;
+          }
+
+          byId('apply-label').textContent = 'Linking ' + plural(toLink.length, 'reference') + '…';
           byId('apply-fill').style.width = '35%';
 
+          // Linking changes no text, so the character offsets the insert step
+          // relies on are still valid after it.
           google.script.run
             .withSuccessHandler(function (result) {
               var linked = (result && result.linked) || 0;
               var skipped = (result && result.skipped) || 0;
-              if (report.insertAfterLinking && linked) {
-                insertSources(chosen, linked, skipped);
+              if (toInsert.length) {
+                insertSources(toInsert, linked, skipped);
                 return;
               }
               byId('apply-fill').style.width = '100%';
@@ -585,7 +648,7 @@
             .withFailureHandler(function (error) {
               finish((error && error.message) || 'The links could not be applied.');
             })
-            .applyLinkerDecisions(JSON.stringify(chosen));
+            .applyLinkerDecisions(JSON.stringify(toLink));
         });
 
         // Insertion is done one source at a time so the reader sees it advance;
@@ -622,7 +685,8 @@
         }
 
         function buildDoneMessage(linked, skipped, inserted, failed) {
-          var lines = ['Linked ' + plural(linked, 'reference') + ' to Sefaria.'];
+          var lines = [];
+          if (linked || skipped) lines.push('Linked ' + plural(linked, 'reference') + ' to Sefaria.');
           if (inserted) lines.push('Inserted ' + plural(inserted, 'source') + '.');
           if (failed) lines.push(plural(failed, 'source') + ' could not be fetched.');
           if (skipped) lines.push(plural(skipped, 'reference') + ' could not be linked.');
@@ -632,7 +696,7 @@
           if (report && report.unplaceableCount) {
             lines.push(plural(report.unplaceableCount, 'citation') + ' fell across a gap in the partial scan.');
           }
-          return lines.join('\n');
+          return lines.join('\n') || 'Nothing was changed.';
         }
 
         function finish(message) {

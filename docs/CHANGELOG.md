@@ -8,6 +8,41 @@ All notable changes in this fork are documented here.
 > consolidate those sections under one `## v2.1.0 — … (YYYY-MM-DD)` heading and
 > flip `status` in the manifest.
 
+## Unreleased — linking tab, per-row Link/Insert, insert-from-selection replace (2026-09)
+
+> **Behaviour change for existing users — migration v11.** *Insert Source from
+> Selection* replaces the selected citation with the inserted source again, as
+> it did before commit `fefe9b9` (2026-05) switched it, without a setting, to
+> keeping the selection. The new `insert_from_selection_replace` preference
+> (Preferences → Insertion → Insert from Selection) is written as `true` for every
+> upgrading user; turn it off to keep the selection and insert below it.
+
+### Fixed
+
+- **Link Texts with Sefaria: the review table rendered inside the scanning and
+  finished states.** Each dialog state is switched with the `hidden`
+  attribute, but the states also set `display: flex`, which overrides it — so
+  the scanning bar, the ambiguous-citation table, "Applying links…" and the
+  Close button all showed at once, with the table squeezed between them. The
+  dialog now shows one state at a time and the table fills the dialog.
+
+### Changed
+
+- **Link and Insert are separate checkbox columns in the review dialog.** Every
+  row can be linked, inserted (the source's text below the paragraph that cites
+  it, using your insertion defaults), both, or neither. Header checkboxes set a
+  whole column. Ambiguous rows start with neither ticked; choosing a source
+  ticks Link. In *Show a summary* mode the single-source matches sit in a
+  collapsed group below the ambiguous ones — still linked by default, one click
+  away when you want to insert them.
+- **New Linking tab in Preferences.** *Document scanning*, *After linking* and
+  the privacy note moved there from the Insertion tab.
+- **"Enable Source Insertion after Linking" left the Experimental tab.** The
+  dialog's Insert column replaces it. The same preference
+  (`link_sources_insert_after_linking`) is now **Insert text after linking**,
+  shown only when *After linking* is *Just link and report a count*, and makes
+  that quiet pass insert each linked source too. No key was added or renamed.
+
 ## Unreleased — Preferences cleanup and a customizable menu (2026-09)
 
 ### Added

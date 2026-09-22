@@ -80,7 +80,8 @@ const SETTINGS = [
   "sefaria_link_font_size",
   "sefaria_link_font_style",
   "search_mode",
-  "menu_layout"
+  "menu_layout",
+  "insert_from_selection_replace"
 ];
 
 //returns the user preference w.r.t. displaying the versioning dropdowns in the insertion module
@@ -194,7 +195,11 @@ function getDefaultPreferences() {
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
     // server/menu-layout.gs for the shape. Replaced `insert_from_selection_at_top`
     // in schema v10; the migration carries a pinned item over.
-    menu_layout: getDefaultMenuLayoutJson_()
+    menu_layout: getDefaultMenuLayoutJson_(),
+    // Insert Source from Selection: true replaces the selected citation with
+    // the inserted source (whose title is that same citation text); false
+    // keeps the selection and inserts the source below it.
+    insert_from_selection_replace: true
   };
 }
 
