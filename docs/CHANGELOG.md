@@ -8,6 +8,49 @@ All notable changes in this fork are documented here.
 > consolidate those sections under one `## v2.1.0 — … (YYYY-MM-DD)` heading and
 > flip `status` in the manifest.
 
+## Unreleased — Marketplace readiness (2026-09)
+
+### Fixed
+
+- **The add-on's menu now appears right after installing.** `onInstall` never
+  built the menu, and `onOpen` does not fire for the document you install
+  from, so the menu only showed up after a reload. `onInstall` now seeds
+  preferences and then builds the menu. `onOpen` also no longer ends with no
+  menu at all if a preference migration or preference read fails: it falls
+  back to the default menu.
+
+### Changed
+
+- **The "Open on Sefaria" icon is bundled into the add-on** instead of being
+  loaded from the-merkaz.org, so opening the sidebar contacts one host fewer.
+  It is now a simple arrow; swapping in other artwork is a one-line change in
+  `css/layout.html`.
+- **Help and Release Notes are written for users.** The About tab and the
+  Release Notes dialog had developer notes in them ("UX and maintenance fork",
+  "Core 2.0 fork direction", "Deferred backlog"). They now describe what's new
+  in 2.1, what the add-on does, and its version history, and say that the
+  add-on is independent of Sefaria.
+- **Privacy policy lists every host the add-on's windows load from**
+  (§2.2): jQuery and a stylesheet and font from Google, images from Sefaria,
+  and Sefaria's feedback form when you open it. None of these requests carries
+  your document or your searches. The previous wording ("talks to exactly two
+  parties") was not accurate.
+
+### Removed
+
+- **The hidden AI Shiur interface.** The feature was detached earlier, but its
+  sidebar card, footer button and supporting code still shipped, hidden. It is
+  preserved on the OtterBrainDev `ai-shiur` branch.
+
+### Documentation
+
+- `docs/marketplace-listing.md` is now the full store console package: consent
+  screen, App Configuration, store listing copy, graphics and screenshot list,
+  pre-submission checklist, and open items.
+- New `docs/TERMS.md` (draft, for review) for the listing's Terms of Service URL.
+- Deployment is described as users experience it: `clasp push` updates HEAD for
+  test deployments only; users get the version selected in the Marketplace SDK.
+
 ## Unreleased — pre-publication security fixes (2026-09)
 
 ### Security

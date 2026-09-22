@@ -6,9 +6,12 @@ A Google Docs add-on that brings Sefaria-powered source finding, previewing, ins
 
 ## Privacy
 
-This add-on has no server of its own, no account, and no analytics. It talks to
-exactly two parties: Google (to read and edit **only** the document you have it
-open in) and Sefaria (to fetch the texts you ask for).
+This add-on has no server of its own, no account, and no analytics. Google runs
+it and lets it read and edit **only** the document you have it open in; Sefaria
+is the only party that receives anything you search for or anything from your
+document. Its sidebar and dialogs also load a script library, a stylesheet, a
+font and a few images from Google and Sefaria, like any web page — none of
+those requests carries your data.
 
 Read the full policy: **[`docs/PRIVACY.md`](./docs/PRIVACY.md)**.
 
