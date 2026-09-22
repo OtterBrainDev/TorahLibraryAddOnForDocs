@@ -163,3 +163,28 @@ test('v6 migration does not overwrite an explicit opt-out', () => {
 
   assert.equal(userProperties.getProperty('preserve_source_emphasis'), 'false');
 });
+
+test('v10 migration turns insert_from_selection_replace on for upgraders', () => {
+  // Insert Source from Selection replaced the selected citation until fefe9b9
+  // switched it, with no setting, to keeping the selection. The preference
+  // restores the original behaviour for upgraders, so this writes "true".
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '9',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('insert_from_selection_replace'), 'true');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+});
+
+test('v10 migration does not overwrite an explicit keep-selection choice', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '9',
+    insert_from_selection_replace: 'false',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('insert_from_selection_replace'), 'false');
+});

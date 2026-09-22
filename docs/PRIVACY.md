@@ -52,8 +52,8 @@ This feature finds citations already written in your document and turns them
 into Sefaria hyperlinks. To do that, Sefaria's reference-linker service has to
 see the text.
 
-You control how much text is sent, in **Preferences → Privacy & Document
-Scanning**:
+You control how much text is sent, in **Preferences → Linking → Privacy &
+Document Scanning**:
 
 - **Candidate passages only (the default).** Before anything is sent, the
   add-on scans your document *on your own machine* and identifies only the

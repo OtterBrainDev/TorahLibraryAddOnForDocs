@@ -2,7 +2,7 @@
 
 Run this in a real Google Doc after `clasp push`, before the Marketplace
 submission. Everything here is something the automated suite **cannot** reach:
-129 tests cover pure logic, contracts and snapshots, but nothing in CI opens a
+135 tests cover pure logic, contracts and snapshots, but nothing in CI opens a
 sidebar, holds a `DocumentApp` handle, or makes a request to Sefaria.
 
 **Version under test:** 2.1.0 · **preference schema:** 9
@@ -61,7 +61,7 @@ The most consequential and least reversible part of this release.
 | 2.1 | Open Preferences → Fonts | Your previous fonts, sizes and styles are intact |
 | 2.2 | Preferences → Fonts → **Source Emphasis** | Toggle is **on** |
 | 2.3 | Fonts → colour and highlight fields | All show **Auto / None** (muted), *not* black |
-| 2.4 | Preferences → **Privacy & Document Scanning** | Document scanning = **Candidate passages only**; After linking = **Show a summary…** |
+| 2.4 | Preferences → **Linking** | Document scanning = **Candidate passages only**; After linking = **Show a summary…** |
 | 2.5 | Divine Name Mappings | Your previous replacement settings are unchanged |
 
 > **2.3 is the one to look hardest at.** Colour defaults to *unset*. If any field
@@ -127,14 +127,18 @@ Build one test document containing, in this order:
 | 5.2 | Decline it | Nothing is uploaded, nothing changes in the document |
 | 5.3 | Run again, accept | Dialog opens **immediately** with a scanning state — not a frozen menu |
 | 5.4 | When the scan finishes | Summary line: how many will link automatically, how many need a choice, how many could not be resolved |
-| 5.5 | The ambiguous row | Checkbox **unchecked**, a dropdown of candidates, each showing a Hebrew title and an excerpt |
-| 5.6 | Pick a candidate from the dropdown | The row checks itself |
+| 5.5 | The ambiguous row | Link and Insert both **unchecked**, a dropdown of candidates; the selected one shows its Hebrew title and an excerpt below it. Only the review state is visible — no scanning bar or Close button around the table |
+| 5.6 | Pick a candidate from the dropdown | The row's Link box checks itself |
 | 5.7 | Apply | Progress advances; links land on the right words |
 | 5.8 | Check the linked text | `Genesis 1:1` links to Genesis; your chosen candidate links where you chose |
 | 5.9 | Item 3 (`Fakebook 99:99`) | Counted as unresolved in the summary — **not** silently absent |
 | 5.10 | Run the whole thing again | Already-linked references are **not** re-offered or double-linked |
 | 5.11 | Preferences → After linking → **Show every match**, re-run on a fresh copy | All matches listed, unambiguous ones pre-checked |
 | 5.12 | Preferences → After linking → **Just link and report a count**, re-run | No dialog; an alert with counts including what was skipped |
+| 5.12a | In the dialog, tick **Insert** on one row (Link left on) and **Insert only** on another, then apply | Both sources inserted below their paragraphs; only the first citation is hyperlinked |
+| 5.12b | Preferences → Linking: switch *After linking* between modes | **Insert text after linking** appears only for *Just link and report a count* |
+| 5.12c | Turn it on, re-run on a fresh copy | No dialog; each linked source is inserted below its paragraph, and the alert counts insertions |
+| 5.12d | Select `Genesis 1:1`, run **Insert Source from Selection** | The selection is **replaced** by the inserted source (titled `Genesis 1:1`). With Preferences → Insertion → Quick Access → *replaces the selection* off, the selection stays and the source goes below it |
 
 > **5.9 is the point of the whole feature.** The published add-on reported
 > "Linked N references" and nothing else. If a failure is still invisible here,
@@ -154,7 +158,7 @@ Build one test document containing, in this order:
 
 | # | Check | Expected |
 | --- | --- | --- |
-| 6.1 | Preferences → Privacy & Document Scanning → policy link | Opens the privacy policy |
+| 6.1 | Preferences → Linking → Privacy & Document Scanning → policy link | Opens the privacy policy |
 | 6.2 | Help & Support → About → **Privacy policy** pill | Same |
 | 6.3 | Preferences shows both scanning controls | *Document scanning* and *After linking* |
 

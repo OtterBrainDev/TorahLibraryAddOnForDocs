@@ -80,7 +80,8 @@ const SETTINGS = [
   "sefaria_link_font_size",
   "sefaria_link_font_style",
   "search_mode",
-  "insert_from_selection_at_top"
+  "insert_from_selection_at_top",
+  "insert_from_selection_replace"
 ];
 
 //returns the user preference w.r.t. displaying the versioning dropdowns in the insertion module
@@ -191,7 +192,11 @@ function getDefaultPreferences() {
     sefaria_link_font_size: 14,
     sefaria_link_font_style: "underline",
     search_mode: "texts",
-    insert_from_selection_at_top: false
+    insert_from_selection_at_top: false,
+    // Insert Source from Selection: true replaces the selected citation with
+    // the inserted source (whose title is that same citation text); false
+    // keeps the selection and inserts the source below it.
+    insert_from_selection_replace: true
   };
 }
 

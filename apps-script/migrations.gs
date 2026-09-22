@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '9';
+var PREFS_SCHEMA_CURRENT_ = '10';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -102,6 +102,16 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // the old non-interactive flow (now with honest counts).
   if (from < 9) {
     migrateToV9_(userProperties);
+  }
+  // v9 -> v10: introduces `insert_from_selection_replace`, defaulting to TRUE.
+  //
+  // "Insert Source from Selection" originally replaced the selected citation
+  // with the inserted source. Commit fefe9b9 (2026-05) switched it, with no
+  // setting, to keeping the selection and inserting below it, and users who
+  // relied on the replace behaviour reported it as a regression. The
+  // preference makes both available; the default restores the original.
+  if (from < 10) {
+    migrateToV10_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -227,6 +237,18 @@ function migrateToV8_(userProperties) {
 function migrateToV9_(userProperties) {
   if (userProperties.getProperty('linker_review_mode') == null) {
     userProperties.setProperty('linker_review_mode', 'summary');
+  }
+  return true;
+}
+
+/**
+ * V10: introduces `insert_from_selection_replace`. See the driver comment for
+ * why the default is "true" (replace) rather than the keep-selection behaviour
+ * that shipped without a setting in fefe9b9.
+ */
+function migrateToV10_(userProperties) {
+  if (userProperties.getProperty('insert_from_selection_replace') == null) {
+    userProperties.setProperty('insert_from_selection_replace', 'true');
   }
   return true;
 }

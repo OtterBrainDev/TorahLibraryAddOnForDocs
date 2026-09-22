@@ -166,7 +166,7 @@ function confirmLinkerUploadOnce_(scanMode) {
     'Send text to Sefaria?',
     'To find citations, this command sends text from your document to sefaria.org.\n\n' +
     scopeSentence + '\n\n' +
-    'You can change this any time in Preferences \u2192 Privacy & Document Scanning. ' +
+    'You can change this any time in Preferences \u2192 Linking. ' +
     'Nothing is stored by this add-on, and this message will not be shown again.\n\n' +
     'Continue?',
     ui.ButtonSet.YES_NO
@@ -303,7 +303,6 @@ function scanDocumentForReferences() {
       unresolvedCount: 0,
       unplaceableCount: 0,
       reviewMode: getLinkerReviewMode_(prefs),
-      insertAfterLinking: linkerInsertsAfterLinking_(prefs),
       nothingToScan: true,
       scannedChars: 0,
       totalChars: docText.length
@@ -330,7 +329,6 @@ function scanDocumentForReferences() {
     unresolvedCount: unresolvedCount,
     unplaceableCount: unplaceableCount,
     reviewMode: getLinkerReviewMode_(prefs),
-    insertAfterLinking: linkerInsertsAfterLinking_(prefs),
     nothingToScan: false,
     scannedChars: scan.scannedChars,
     totalChars: scan.totalChars
@@ -342,6 +340,11 @@ function getLinkerReviewMode_(prefs) {
   return (mode === 'full' || mode === 'quiet') ? mode : 'summary';
 }
 
+/**
+ * Whether the quiet pass should also insert each linked source. Only the
+ * "quiet" review mode reads this: the review dialog has its own Insert column,
+ * so the choice there is made per row rather than by a preference.
+ */
 function linkerInsertsAfterLinking_(prefs) {
   return prefs.link_sources_insert_after_linking == 'true' || prefs.link_sources_insert_after_linking === true;
 }
@@ -467,7 +470,7 @@ function runQuietLinkPass_() {
   }
 
   if (report.nothingToScan) {
-    ui.alert('No text in this document looks like a Sefaria reference, so nothing was sent to Sefaria. If you expected a match, switch "Document scanning" to "Whole document" in Preferences.');
+    ui.alert('No text in this document looks like a Sefaria reference, so nothing was sent to Sefaria. If you expected a match, switch "Document scanning" to "Whole document" in Preferences \u2192 Linking.');
     return;
   }
 
@@ -483,7 +486,32 @@ function runQuietLinkPass_() {
 
   const result = applyLinkerDecisions(JSON.stringify(decisions));
 
+  // "Insert text after linking" (Preferences -> Linking, shown only for this
+  // mode). End-to-start, like the dialog, so an insertion never shifts the
+  // position of one still to come. Linking changes no text, so the offsets the
+  // scan reported are still valid here.
+  let inserted = 0;
+  let insertFailed = 0;
+  if (linkerInsertsAfterLinking_(getPreferences())) {
+    decisions.sort(function (a, b) { return b.startChar - a.startChar; });
+    decisions.forEach(function (decision) {
+      try {
+        const outcome = insertLinkedSourceAtPosition(decision.ref, decision.startChar);
+        if (outcome && outcome.success) inserted++; else insertFailed++;
+      } catch (error) {
+        Logger.log('Could not insert ' + decision.ref + ': ' + error.message);
+        insertFailed++;
+      }
+    });
+  }
+
   const parts = ['Linked ' + result.linked + ' reference' + (result.linked === 1 ? '' : 's') + ' to Sefaria.'];
+  if (inserted) {
+    parts.push('Inserted ' + inserted + ' source' + (inserted === 1 ? '' : 's') + '.');
+  }
+  if (insertFailed) {
+    parts.push(insertFailed + ' source' + (insertFailed === 1 ? '' : 's') + ' could not be inserted.');
+  }
   if (ambiguousCount) {
     parts.push(ambiguousCount + ' citation' + (ambiguousCount === 1 ? ' matched more than one source and was' : 's matched more than one source and were') + ' skipped.');
   }
@@ -492,10 +520,10 @@ function runQuietLinkPass_() {
   }
   if (report.unplaceableCount) {
     parts.push('\n' + report.unplaceableCount + ' citation' + (report.unplaceableCount === 1 ? ' was' : 's were') +
-      ' recognised but fell across a gap in the partial scan. Set "Document scanning" to "Whole document" in Preferences to catch these.');
+      ' recognised but fell across a gap in the partial scan. Set "Document scanning" to "Whole document" in Preferences \u2192 Linking to catch these.');
   }
   if (ambiguousCount || report.unresolvedCount) {
-    parts.push('\nTo review these instead of skipping them, change "After linking" in Preferences.');
+    parts.push('\nTo review these instead of skipping them, change "After linking" in Preferences \u2192 Linking.');
   }
   ui.alert(parts.join(' '));
 }
@@ -643,8 +671,12 @@ function insertSourceFromSelection() {
 
   const prefs = getPreferences();
   const insertOptions = buildLinkSourcesInsertOptions_(prefs);
+  // Replace the selected citation by default: the inserted source's title is
+  // that same text, so nothing is lost. Preferences -> Insertion -> Quick
+  // Access can switch this to keep the selection and insert below it.
+  const replaceSelection = prefs.insert_from_selection_replace !== 'false' && prefs.insert_from_selection_replace !== false;
   try {
-    insertReference(resolved, Object.assign({ preferredTitle: selectedText, preserveSelection: true }, insertOptions));
+    insertReference(resolved, Object.assign({ preferredTitle: selectedText, preserveSelection: !replaceSelection }, insertOptions));
   } catch (error) {
     ui.alert(`Failed to insert source: ${error.message}`);
   }

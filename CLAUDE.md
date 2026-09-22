@@ -111,7 +111,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **129 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **135 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -150,6 +150,8 @@ and in `test/ui/`:
   by hand-editing a `.snap` file.
 - `rpc-surface.test.js` — the server/client contract described in
   §Hard rules above.
+- `linker-dialog.test.js` — the Link Texts dialog shows one state at a
+  time, has separate Link / Insert columns, and the Linking prefs tab.
 - `version-manifest.test.js` — `docs/VERSION.json` against the schema
   version, the migrations that must exist for it, and every surface that
   shows a version string.
