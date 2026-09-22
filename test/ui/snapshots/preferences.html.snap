@@ -697,6 +697,7 @@
                     <label class="switch" for="meforash_replace"><input id="meforash_replace" type="checkbox" name="meforash_replace"><span class="slider"></span></label>
                     <div class="replacement-label">יהוה</div>
                     <select name="meforash_replacement" id="meforash_replacement">
+                      <option value="יי">יי</option>
                       <option value="ה'">ה'</option>
                       <option value="יקוק">יקוק</option>
                       <option value="השם">השם</option>

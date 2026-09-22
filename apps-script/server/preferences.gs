@@ -165,7 +165,7 @@ function getDefaultPreferences() {
     last_search_sort_mode: "relevance",
     last_search_relevance_sort: true,
     meforash_replace: false,
-    meforash_replacement: "ה'",
+    meforash_replacement: "יי",
     nekudot: true,
     nekudot_filter: "always",
     experimental_features_enabled: false,

@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '11';
+var PREFS_SCHEMA_CURRENT_ = '12';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -120,6 +120,13 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // preference makes both available; the default restores the original.
   if (from < 11) {
     migrateToV11_(userProperties);
+  }
+  // v11 -> v12: the default replacement for יהוה changes from ה' to יי. Not a
+  // new key, but a changed default reaches every upgrader who never picked a
+  // value (they read the code default), so their text would change under
+  // them. Pin ה' for anyone without a stored value; new installs get יי.
+  if (from < 12) {
+    migrateToV12_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -278,6 +285,18 @@ function migrateToV10_(userProperties) {
 function migrateToV11_(userProperties) {
   if (userProperties.getProperty('insert_from_selection_replace') == null) {
     userProperties.setProperty('insert_from_selection_replace', 'true');
+  }
+  return true;
+}
+
+/**
+ * V12: the `meforash_replacement` default moved from ה' to יי. An upgrader
+ * with no stored value was getting ה' from the old default; store it so their
+ * output does not change. An explicit choice is left alone.
+ */
+function migrateToV12_(userProperties) {
+  if (userProperties.getProperty('meforash_replacement') == null) {
+    userProperties.setProperty('meforash_replacement', "ה'");
   }
   return true;
 }

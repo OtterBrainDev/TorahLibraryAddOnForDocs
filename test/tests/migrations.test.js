@@ -227,3 +227,27 @@ test('v11 migration does not overwrite an explicit keep-selection choice', () =>
 
   assert.equal(userProperties.getProperty('insert_from_selection_replace'), 'false');
 });
+
+test('v12 migration keeps ה\' for upgraders who never chose a יהוה replacement', () => {
+  // The default moved from ה' to יי. An upgrader with no stored value was
+  // reading the old default, so the migration pins it.
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '11',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('meforash_replacement'), "ה'");
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+});
+
+test('v12 migration does not overwrite an explicit יהוה replacement', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '11',
+    meforash_replacement: 'יקוק',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('meforash_replacement'), 'יקוק');
+});

@@ -17,6 +17,12 @@ All notable changes in this fork are documented here.
 > (Preferences → Insertion → Insert from Selection) is written as `true` for every
 > upgrading user; turn it off to keep the selection and insert below it.
 
+> **Default change — migration v12.** The replacement for יהוה now offers
+> **יי**, first in the list and the default for new installs. Existing users who
+> never picked a replacement were getting ה' from the old default; migration
+> v12 stores ה' for them so their output does not change. An explicit choice
+> is untouched.
+
 ### Fixed
 
 - **Preferences → Source Emphasis: the Text colour and Highlight controls
