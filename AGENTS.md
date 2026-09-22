@@ -71,7 +71,7 @@ fixed more than once.
    user already entered — keep it that way. If you need to diagnose
    a bug, add a structured payload with known-safe fields, not a
    blanket dump.
-7. **Never break an entry in `docs/rpc-surface.json`.** Every
+8. **Never break an entry in `docs/rpc-surface.json`.** Every
    server-side function reachable from `google.script.run` is listed
    there with its arity. Renaming, removing, or changing arity without
    updating the snapshot is caught by `test/ui/rpc-surface.test.js`.
