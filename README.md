@@ -45,7 +45,7 @@ See [docs/CHANGELOG.md](./docs/CHANGELOG.md) for a fuller summary of changes and
 
 ### Unified Find & Insert workflow
 
-The add-on now centers on a unified **Find & Insert Source** sidebar that combines direct lookup and search into a single workflow:
+The add-on centers on a unified sidebar (**Texts**, **Voices** and **Lexicon** tabs) that combines direct lookup and search into a single workflow:
 
 1. find a source by reference, title, nested path, phrase, or Sefaria URL,
 2. select a result,
@@ -60,21 +60,21 @@ The sidebar groups results into:
 
 ### Display and layout controls
 
-The unified sidebar supports:
+The sidebar's **📰 Layout** tray supports three display modes:
 
-- **Source**
-- **Translation**
-- **Source with Translation**
+- **A** — translation only
+- **A + א** — Hebrew with translation
+- **א** — Hebrew only
 
-For bilingual insertion, layout options include:
+For bilingual insertion, layout options are:
 
-- **Hebrew on top**
-- **Hebrew left**
-- **Hebrew right**
+- **Stacked** (Hebrew above the translation)
+- **Right–Left** (Hebrew on the right)
+- **Left–Right** (Hebrew on the left)
 
 ### Hebrew formatting controls
 
-The unified sidebar includes visible Hebrew formatting controls for:
+The **Insertion Format** card in the Layout tray includes Hebrew formatting controls for:
 
 - **Vowels**
 - **Cantillation**
@@ -148,15 +148,17 @@ An AI-assisted lesson / shiur drafting feature was developed on the rewrite bran
 
 ## Menu actions
 
-The add-on menu includes:
+The add-on menu (**Extensions → Torah Library**) includes, by default:
 
-- **Texts** — unified Find & Insert sidebar (default).
-- **Voices** — commentary/voices search with insert controls.
-- **Lexicon** — reverse-lookup dictionary.
-- **Quick Actions** submenu — Transform Divine Names, Link Texts with Sefaria, Gematriya Count.
-- **Preferences**
-- **Help & Support**
+- **Texts** — the unified search-and-insert sidebar.
+- **Voices** — source-sheet search with insert controls.
+- **Lexicon** — dictionary lookup.
+- **Insert Source from Selection** — look up the selected reference and insert it.
+- **Quick Actions** submenu — Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count.
 - **Surprise Me** — preference-gated experimental feature (random-reference discovery).
+- **Preferences** and **Help & Support** — always last.
+
+Users can reorder, group and hide items in **Preferences → Menu Bar**.
 
 ## Demo and walkthrough
 

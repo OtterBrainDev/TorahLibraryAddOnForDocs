@@ -135,6 +135,7 @@
         color: #fff;
         cursor: pointer;
       }
+      button.button-link { font: inherit; font-weight: 600; }
       .button-link.secondary, button.button-link.secondary {
         background: #fff;
         color: var(--selected);
@@ -251,6 +252,58 @@
       @media (max-width: 640px) {
         main { padding: 12px; }
       }
+      kbd {
+        display: inline-block;
+        min-width: 20px;
+        padding: 1px 6px;
+        border: 1px solid var(--border);
+        border-bottom-width: 2px;
+        border-radius: 6px;
+        background: #fff;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+      }
+      .ui-label {
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .icon {
+        display: inline-block;
+        min-width: 1.4em;
+        text-align: center;
+      }
+      .card h3 { margin-top: 14px; }
+      .card h2 + h3, .mini-card h3, .action-card h3, .compare-card h3 { margin-top: 0; }
+      .ref-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        margin-top: 8px;
+      }
+      .ref-table th, .ref-table td {
+        text-align: left;
+        vertical-align: top;
+        padding: 8px 10px;
+        border-top: 1px solid var(--border);
+      }
+      .ref-table th {
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-top: none;
+      }
+      .ref-table td:first-child { white-space: nowrap; width: 1%; }
+      .faq details { margin-top: 8px; }
+      .faq details p:last-child, .faq details ul:last-child { margin-bottom: 0; }
+      .faq summary { font-weight: 600; }
+      .faq details[open] summary { margin-bottom: 8px; }
+      [dir="rtl"], .he { font-family: "Frank Ruhl Libre", "SBL Hebrew", "Times New Roman", serif; }
+      .he { font-size: 1.1em; }
+      .hero + .card { margin-top: 12px; }
+      ul + p, ol + p, table + p { margin-top: 10px; }
     </style>
     <script>
       function switchTab(tabId) {
@@ -320,7 +373,7 @@
           // safe because the right-hand side is a constant empty string.
           results.innerHTML = '';
           if (!query) {
-            status.textContent = 'Try: citation, preview, translation, Voices, defaults, history, niqqud';
+            status.textContent = 'Try: layout, translation, Session Library, link, divine names, fonts, shortcuts';
             return;
           }
           if (!matches.length) {
@@ -392,12 +445,13 @@
       <section class="shell">
         <div class="shell-header">
           <div class="eyebrow">Torah Library Add-on for Docs</div>
-          <h1>Help Center</h1>
-          <p class="lede">One place for how-to guidance, troubleshooting, and version context. Use <strong>Help</strong> to get things done, <strong>Support</strong> when something feels wrong, and <strong>About</strong> for release notes and changelog context.</p>
+          <h1>Help &amp; Support</h1>
+          <p class="lede"><strong>Help</strong> explains every part of the sidebar, the Quick Actions and Preferences. <strong>Support</strong> is for when something isn't working. <strong>About</strong> has the version, what's new, and privacy.</p>
           <div class="global-links">
-            <a class="pill-link" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244" rel="noopener noreferrer">Full Sefaria Help Center</a>
             <a class="pill-link" href="mailto:help@the-merkaz.org">Email support</a>
-            <a class="pill-link" target="_blank" href="https://github.com/shelfgot/SefariaAddOnForDocs" rel="noopener noreferrer">GitHub</a>
+            <a class="pill-link" target="_blank" href="https://sefaria.formstack.com/forms/google_docs_extension_feedback" rel="noopener noreferrer">Send feedback</a>
+            <a class="pill-link" target="_blank" href="https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" rel="noopener noreferrer">Privacy policy</a>
+            <a class="pill-link" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244" rel="noopener noreferrer">Sefaria Help Center</a>
           </div>
         </div>
 
@@ -407,208 +461,406 @@
           <button class="tab-button" role="tab" aria-selected="false" aria-controls="about-tab" data-tab="about-tab" tabindex="-1">About</button>
         </div>
 
+        <!-- ═══════════════════════════════ HELP ═══════════════════════════════ -->
         <section class="tab-panel is-active" id="help-tab" role="tabpanel">
           <section class="hero">
-            <div class="section-nav">
-              <a href="#quick-start">Quick start</a>
-              <a href="#texts">Texts</a>
-              <a href="#voices">Voices</a>
-              <a href="#text-links">Text &amp; Links</a>
-              <a href="#preferences">Preferences</a>
-              <a href="#troubleshooting">Troubleshooting</a>
-            </div>
-            <h2 style="margin-top:12px;">Help</h2>
-            <p class="lede">Use this tab when you want to get something done. Start with the task cards below, or search for a topic like <em>citation</em>, <em>transliteration</em>, <em>preview</em>, or <em>Voices</em>.</p>
-
+            <h2>Help</h2>
+            <p class="lede">Search for a topic, or jump to a section.</p>
             <div class="search-shell">
               <div class="search-row">
                 <input id="helpSearch" type="search" placeholder="Search help topics" aria-label="Search help topics">
-                <a class="button-link secondary" href="#quick-start">Browse topics</a>
               </div>
-              <div class="search-status" id="searchStatus">Try: citation, preview, translation, Voices, defaults, history, niqqud</div>
+              <div class="search-status" id="searchStatus">Try: layout, translation, Session Library, link, divine names, fonts, shortcuts</div>
               <div class="search-results" id="searchResults"></div>
             </div>
-          </section>
-
-          <section class="card topic-section" id="quick-start" data-search-title="Quick start" data-search-terms="start begin insert text standard text search result preview workflow getting started">
-            <h2>What are you trying to do?</h2>
-            <div class="action-grid">
-              <div class="action-card"><a href="#texts"><h3>Insert a standard text</h3><p class="muted">Use Texts to search, preview, and insert from Sefaria.</p></a></div>
-              <div class="action-card"><a href="#voices"><h3>Use Voices</h3><p class="muted">Work with the source-sheet workflow without the extra text controls.</p></a></div>
-              <div class="action-card"><a href="#text-links"><h3>Change text and citation details</h3><p class="muted">Use Text &amp; Links for session-level overrides like citation and transliteration.</p></a></div>
-              <div class="action-card"><a href="#troubleshooting"><h3>Fix something unexpected</h3><p class="muted">Start with the quick checks before assuming a setting is broken.</p></a></div>
+            <div class="section-nav">
+              <a href="#quick-start">Quick start</a>
+              <a href="#sidebar-tour">The sidebar</a>
+              <a href="#texts">Find a text</a>
+              <a href="#versions-preview">Versions &amp; Preview</a>
+              <a href="#layout-settings">Layout Settings</a>
+              <a href="#inserting">Inserting</a>
+              <a href="#voices">Voices</a>
+              <a href="#lexicon">Lexicon</a>
+              <a href="#session-library">Session Library</a>
+              <a href="#quick-actions">Quick Actions</a>
+              <a href="#link-texts">Link Texts</a>
+              <a href="#divine-names">Divine names</a>
+              <a href="#preferences">Preferences</a>
+              <a href="#menu">The menu</a>
+              <a href="#shortcuts">Shortcuts</a>
+              <a href="#troubleshooting">Troubleshooting</a>
             </div>
-            <div class="callout">Most users should spend their working time in <strong>Texts</strong> or <strong>Voices</strong>. Use <strong>Preferences</strong> to set defaults, not for ordinary day-to-day insertion.</div>
           </section>
 
-          <section class="card topic-section" id="texts" data-search-title="Texts" data-search-terms="texts standard text search reference title phrase url translation preview insert layout language display">
-            <h2>Texts: the standard workflow</h2>
+          <section class="card topic-section" id="quick-start" data-search-title="Quick start" data-search-terms="start begin getting started first insert text open sidebar extensions menu how do i">
+            <h2>Quick start: insert your first source</h2>
             <ol class="steps">
-              <li>Open <strong>Texts</strong>.</li>
-              <li>Type a reference, title, phrase, or paste a Sefaria URL.</li>
-              <li>Run the search and select the result you want.</li>
-              <li>Review language layout, display layout, translation choice, and Preview.</li>
-              <li>Insert once Preview matches what you want in the document.</li>
+              <li>Put your cursor where the source should go.</li>
+              <li>Open <span class="ui-label">Extensions → Torah Library → Texts</span>. The sidebar opens on the right.</li>
+              <li>Type a reference such as <code>Genesis 1:1</code>, <code>Berakhot 2a</code> or <code dir="rtl">בראשית א:א</code>. Results appear as you type.</li>
+              <li>Click a result. The <strong>Preview</strong> shows exactly what will be inserted.</li>
+              <li>Optional: open <span class="ui-label">📰 Layout</span> to choose Hebrew, translation or both, and how they sit on the page.</li>
+              <li>Click <span class="ui-label">Add Source</span> (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).</li>
             </ol>
-            <div class="mini-card-grid" style="margin-top:10px;">
-              <div class="mini-card"><h3>Language layout</h3><p class="muted">This is a live working control and should stay easy to access in Texts.</p></div>
-              <div class="mini-card"><h3>Display layout</h3><p class="muted">Use this to change how the inserted content is arranged before you insert.</p></div>
-              <div class="mini-card"><h3>Translation selection</h3><p class="muted">When multiple translations exist, choose directly in the sidebar. In <strong>Translation only</strong> or <strong>Hebrew on top</strong> layout, hold <kbd>Ctrl</kbd> / <kbd>Cmd</kbd> to select multiple versions — each will be inserted in sequence.</p></div>
-              <div class="mini-card"><h3>Preview</h3><p class="muted">Preview should show what will be inserted right now.</p></div>
+            <div class="action-grid" style="margin-top:12px;">
+              <div class="action-card"><a href="#voices"><h3>Quote a source sheet</h3><p class="muted">Use the Voices tab.</p></a></div>
+              <div class="action-card"><a href="#lexicon"><h3>Look up a word</h3><p class="muted">Use the Lexicon tab.</p></a></div>
+              <div class="action-card"><a href="#link-texts"><h3>Link citations already in my document</h3><p class="muted">Quick Actions → Link Texts with Sefaria.</p></a></div>
+              <div class="action-card"><a href="#preferences"><h3>Change how inserted text looks</h3><p class="muted">Fonts, titles, vowels, divine names — in Preferences.</p></a></div>
             </div>
           </section>
 
-          <section class="card topic-section" id="voices" data-search-title="Voices" data-search-terms="voices source sheet sheets source-sheet workflow metadata narrower workspace">
-            <h2>Voices: the source-sheet workflow</h2>
-            <ol class="steps">
-              <li>Open <strong>Voices</strong>.</li>
-              <li>Search for the sheet or source-sheet content you want.</li>
-              <li>Select the result and review the available preview or metadata.</li>
-              <li>Insert or use the relevant Voices action.</li>
-            </ol>
-            <p class="muted">Voices is intentionally narrower than Texts. Text-specific controls should stay out of the way here so the source-sheet workflow remains focused.</p>
+          <section class="card topic-section" id="sidebar-tour" data-search-title="The sidebar at a glance" data-search-terms="sidebar tour overview tabs footer buttons icons what does this button do texts voices lexicon experimental flask keyboard footer add source layout session library quick actions preferences gear help feedback">
+            <h2>The sidebar at a glance</h2>
+            <h3>Along the top</h3>
+            <table class="ref-table">
+              <tbody>
+                <tr><td><span class="ui-label">Texts</span></td><td>Search Sefaria's library of texts. This is where most work happens.</td></tr>
+                <tr><td><span class="ui-label">Voices</span></td><td>Search Sefaria source sheets and insert from them.</td></tr>
+                <tr><td><span class="ui-label">Lexicon</span></td><td>Look up a Hebrew or Aramaic word in Sefaria's dictionaries.</td></tr>
+                <tr><td><span class="ui-label">🧪</span></td><td>Experimental features. Only shown when you turn them on in <span class="ui-label">Preferences → 🧪 Experimental</span>.</td></tr>
+                <tr><td><span class="ui-label">⌨︎</span></td><td>An on-screen Hebrew keyboard, with a <span class="ui-label">Vowels</span> row for niqqud.</td></tr>
+                <tr><td><span class="ui-label">🔍</span></td><td>Run the search. Click into the empty search box to see your recent searches.</td></tr>
+              </tbody>
+            </table>
+            <h3>Along the bottom</h3>
+            <table class="ref-table">
+              <tbody>
+                <tr><td><span class="ui-label">Add Source</span></td><td>Insert the selected source at your cursor.</td></tr>
+                <tr><td><span class="ui-label">📰 Layout</span></td><td>Opens <a href="#layout-settings">Layout Settings</a>: what to insert, how it's arranged, and the formatting for this insertion.</td></tr>
+                <tr><td><span class="ui-label">📜</span></td><td>The <a href="#session-library">Session Library</a> — sources you've inserted or pinned. The number shows how many.</td></tr>
+                <tr><td><span class="ui-label">🏃</span></td><td>The <a href="#quick-actions">Quick Actions</a> panel: Insert from Selection, Transform Divine Names, Link Texts with Sefaria.</td></tr>
+                <tr><td><span class="ui-label">⚙︎</span></td><td>Opens <a href="#preferences">Preferences</a>, your saved defaults.</td></tr>
+                <tr><td><span class="ui-label">Help</span> · <span class="ui-label">Feedback</span></td><td>This dialog, and the feedback form.</td></tr>
+              </tbody>
+            </table>
           </section>
 
-          <section class="card topic-section" id="text-links" data-search-title="Text and Links" data-search-terms="text links citation source citation transliteration niqqud vowels cantillation taamim overrides current session">
-            <h2>Text &amp; Links: current-session overrides</h2>
-            <p><strong>Text &amp; Links</strong> is for temporary overrides inside Texts. Use it when you want to change citation, transliteration, niqqud, or cantillation for the current session without changing your saved defaults.</p>
-            <div class="mini-card-grid">
-              <div class="mini-card"><h3>Source citation</h3><p class="muted">Turn the source citation block below the inserted text on or off for the current session.</p></div>
-              <div class="mini-card"><h3>Transliteration</h3><p class="muted">Include transliteration when needed without permanently changing your defaults.</p></div>
-              <div class="mini-card"><h3>Niqqud</h3><p class="muted">Match the Hebrew display details you want to insert.</p></div>
-              <div class="mini-card"><h3>Cantillation</h3><p class="muted">Use the viewer controls and confirm the result in Preview before inserting.</p></div>
-            </div>
-            <div class="callout">Changes in Text &amp; Links should update Preview immediately. They affect the current session unless you explicitly save them as new defaults.</div>
+          <section class="card topic-section" id="texts" data-search-title="Find a text (Texts tab)" data-search-terms="texts search find reference title phrase url link hebrew citation abbreviation hil hilchot rambam results filter language sort category relevance hide corpus restore suggestions no results recent searches history prev next open on sefaria">
+            <h2>Find a text (Texts tab)</h2>
+            <p>Type into the search box. The search runs as you type (after two characters), or press <kbd>Enter</kbd>. You can search for:</p>
+            <ul>
+              <li>a reference — <code>Exodus 20:1-14</code>, <code>Berakhot 2a</code>, <code>Mishnah Avot 1:1</code></li>
+              <li>a reference in Hebrew — <code dir="rtl">שמות כ:א</code>, <code dir="rtl">ברכות ב.</code></li>
+              <li>a traditional citation — <code>Hil. Shabbat 1:1</code>, <code>Rambam, Hil. Teshuvah 3:4</code></li>
+              <li>a book title, a phrase from the text, or a link copied from sefaria.org</li>
+            </ul>
+            <p>If nothing matches, the sidebar suggests related titles instead of leaving the list empty. Click one to search for it.</p>
+            <p>While the search box is empty, the Texts tab lists your most recent and pinned sources — click one to open it again.</p>
+            <h3>Working with results</h3>
+            <table class="ref-table">
+              <tbody>
+                <tr><td><span class="ui-label">A א</span></td><td>Show only works that have a translation in a given language. <span class="ui-label">Show all</span> lists every language.</td></tr>
+                <tr><td><span class="ui-label">Rel. ▾</span></td><td>Sort by relevance, A–Z, Z–A, category, or most recent.</td></tr>
+                <tr><td><span class="ui-label">❌</span> on a group</td><td>Hides that whole group of results (for example, all commentary). Bring it back with <span class="ui-label">⤦</span> <em>Restore Corpus</em>.</td></tr>
+                <tr><td><span class="ui-label">↑</span> <span class="ui-label">↓</span></td><td>Move through the results from the search box; <kbd>Enter</kbd> picks the highlighted one.</td></tr>
+              </tbody>
+            </table>
+            <p style="margin-top:10px;">Once you pick a result, a card shows the selected source. <span class="ui-label">‹ Prev</span> and <span class="ui-label">Next ›</span> step to the neighbouring passage; <span class="ui-label">Open on Sefaria</span> opens it on sefaria.org in a new tab.</p>
+            <div class="callout">Some results are whole books or chapters headings rather than text — for example <em>Genesis</em> on its own. The sidebar says so and keeps <span class="ui-label">Add Source</span> disabled. Pick a more specific passage.</div>
           </section>
 
-          <section class="card topic-section" id="preferences" data-search-title="Preferences and current session" data-search-terms="preferences defaults current session save reset preview live state saved defaults settings">
-            <h2>Preferences vs. current session</h2>
+          <section class="card topic-section" id="versions-preview" data-search-title="Versions and Preview" data-search-terms="versions translation version edition original hebrew edition multiple translations ctrl cmd select several preview unavailable for this ref live preview what will be inserted">
+            <h2>Versions &amp; Preview</h2>
+            <p>Under the selected source, <span class="ui-label">Versions</span> lets you choose which translation to insert (<span class="ui-label">Translation Versions</span>) and, when you need a specific edition, which Hebrew text (<span class="ui-label">Original Versions</span>). Your preferred translation language is set in <span class="ui-label">Preferences → Fonts → Translation</span>; if it isn't available the sidebar tries English, then any other language.</p>
+            <h3>Several translations at once</h3>
+            <p>When the Display is <strong>Translation</strong> only, or <strong>Hebrew and translation</strong> in the <strong>Stacked</strong> layout, hold <kbd>Ctrl</kbd> (<kbd>⌘</kbd> on a Mac) and click to select more than one translation. Each is inserted as its own block, in the order you picked them, with a blank line between. The Preview can't show several translations at once, so it tells you how many are selected instead.</p>
+            <p>A translation that turns out to have no text for this passage is greyed out as <em>unavailable for this ref</em> and skipped.</p>
+            <h3>Preview</h3>
+            <p><span class="ui-label">🔁 Preview</span> shows what <span class="ui-label">Add Source</span> will insert right now: the current version, display, layout, vowels, cantillation, transliteration and divine-name replacements. If the Preview looks right, the insertion will too.</p>
+          </section>
+
+          <section class="card topic-section" id="layout-settings" data-search-title="Layout Settings (📰 Layout)" data-search-terms="layout settings tray display translation original both hebrew only stacked right left left right bilingual insertion format linked title cantillation taamim trop vowels niqqud nikud nekudot transliteration lines line markers sources citation session revert save as defaults override this insertion">
+            <h2>Layout Settings (<span class="icon">📰</span> Layout)</h2>
+            <p>Click <span class="ui-label">📰 Layout</span> at the bottom of the sidebar. Everything here applies to <strong>this sidebar session only</strong> — your saved Preferences don't change unless you click <span class="ui-label">💾 Save as defaults</span>.</p>
+            <h3>Display &amp; Layout</h3>
             <div class="compare-grid">
-              <div class="compare-card"><h3>Preferences</h3><p class="muted">Your saved defaults. These populate Texts when you start a session.</p></div>
-              <div class="compare-card"><h3>Current session</h3><p class="muted">Your live choices in the sidebar right now. Preview follows these, not just your saved defaults.</p></div>
-              <div class="compare-card"><h3>Save as defaults</h3><p class="muted">Use this only when you want your current session choices to become your new starting defaults.</p></div>
-              <div class="compare-card"><h3>Reset to defaults</h3><p class="muted">Return the current session to your saved Preferences.</p></div>
+              <div class="compare-card"><h3>A</h3><p class="muted">Translation only.</p></div>
+              <div class="compare-card"><h3>A + א</h3><p class="muted">Hebrew with translation.</p></div>
+              <div class="compare-card"><h3>א</h3><p class="muted">Hebrew (original) only.</p></div>
             </div>
+            <p style="margin-top:10px;">With Hebrew and translation, <span class="ui-label">Layout</span> chooses <strong>Stacked</strong> (Hebrew above the translation), <strong>Right–Left</strong> (Hebrew on the right, side by side) or <strong>Left–Right</strong> (Hebrew on the left).</p>
+            <h3>Insertion Format</h3>
+            <p>The card shows a live sample. Click each switch to turn it on or off:</p>
+            <table class="ref-table">
+              <tbody>
+                <tr><td><span class="ui-label">🔗 Title</span></td><td>Link the inserted title to the passage on sefaria.org.</td></tr>
+                <tr><td><span class="ui-label">Cantillation</span></td><td>Keep the cantillation marks (ta'amim).</td></tr>
+                <tr><td><span class="ui-label">Vowels</span></td><td>Keep the vowels (niqqud).</td></tr>
+                <tr><td><span class="ui-label">Translit</span></td><td>Add a transliteration of the Hebrew. The menu beside it picks the scheme — Simple English, Traditional, Modern Israeli, Ashkenazi, Academic, or IPA.</td></tr>
+                <tr><td><span class="ui-label">Lines</span></td><td>Number each verse or line in the inserted text.</td></tr>
+                <tr><td><span class="ui-label">🔗 Sources</span></td><td>Add a short citation of the translation used, below the text.</td></tr>
+              </tbody>
+            </table>
+            <h3>Session</h3>
+            <p><span class="ui-label">↺ Revert to defaults</span> puts everything in this tray back to your saved Preferences. <span class="ui-label">💾 Save as defaults</span> makes the current choices your new Preferences.</p>
           </section>
 
-          <section class="card topic-section" id="troubleshooting" data-search-title="Troubleshooting" data-search-terms="problem bug toggle stuck output mismatch stale state refresh reopen sidebar layout broken old after update">
-            <h2>Troubleshooting</h2>
-            <div class="action-grid">
-              <div class="action-card"><h3>A toggle is not responding</h3><p class="muted">Reopen the section, then reopen the add-on. Refresh the document if the toggle still looks stuck.</p></div>
-              <div class="action-card"><h3>The output did not match the setting</h3><p class="muted">Check whether another setting, workspace, or current-session override changed the insertion state.</p></div>
-              <div class="action-card"><h3>The sidebar layout looks wrong</h3><p class="muted">Compressed or unstable layout is often fixed by reopening the add-on or refreshing the document.</p></div>
-              <div class="action-card"><h3>Things look old after an update</h3><p class="muted">This is often stale state rather than a broken setting. Refresh first, then test again.</p></div>
+          <section class="card topic-section" id="inserting" data-search-title="Inserting a source" data-search-terms="insert add source cursor where title heading font size match the document formatting ctrl enter output what gets inserted bold italic">
+            <h2>Inserting a source</h2>
+            <p><span class="ui-label">Add Source</span> inserts at your cursor in the document. The insertion is, in order:</p>
+            <ol class="steps">
+              <li>a <strong>title</strong> (the reference) — linked to Sefaria if <span class="ui-label">🔗 Title</span> is on;</li>
+              <li>the <strong>Hebrew</strong>, <strong>transliteration</strong> and/or <strong>translation</strong>, arranged by your Display and Layout;</li>
+              <li>a <strong>translation citation</strong>, if <span class="ui-label">🔗 Sources</span> is on.</li>
+            </ol>
+            <p style="margin-top:10px;">Fonts, sizes and colours come from <span class="ui-label">Preferences → Fonts</span>. By default each is <strong>Match the document</strong>: inserted text takes the font and size of the text where you're inserting, so it blends in. You can make titles a heading (Heading 1–6) so they appear in the document outline and table of contents.</p>
+            <p>Sefaria's own bold and italics are kept — for example, the Steinsaltz Talmud bolds the Talmud's words to set them apart from the explanation. You can change how that emphasis looks under <span class="ui-label">Preferences → Fonts → ✒️ Source Emphasis</span>.</p>
+          </section>
+
+          <section class="card topic-section" id="voices" data-search-title="Voices (source sheets)" data-search-terms="voices source sheet sheets sheet index citation only text only both what to insert transliteration">
+            <h2>Voices (source sheets)</h2>
+            <ol class="steps">
+              <li>Open the <span class="ui-label">Voices</span> tab (or <span class="ui-label">Extensions → Torah Library → Voices</span>).</li>
+              <li>Search Sefaria's source sheets by topic, title or text.</li>
+              <li>Pick a sheet. Under <span class="ui-label">What to insert</span> choose <strong>Citation</strong> (just the reference), <strong>Text</strong> (the sheet's text) or <strong>Both</strong>, and optionally a <span class="ui-label">Transliteration</span> scheme. The line underneath says what will be inserted.</li>
+              <li>Click <span class="ui-label">Add Source</span>.</li>
+            </ol>
+            <p class="small" style="margin-top:10px;">Your usual choices can be saved in <span class="ui-label">Preferences → Insertion → Insertion Defaults → Voices</span>.</p>
+          </section>
+
+          <section class="card topic-section" id="lexicon" data-search-title="Lexicon (dictionary)" data-search-terms="lexicon dictionary word lookup definition hebrew aramaic jastrow bdb headword full entry word ref definition star starred bookmark recent">
+            <h2>Lexicon (dictionary)</h2>
+            <ol class="steps">
+              <li>Open the <span class="ui-label">Lexicon</span> tab and type a Hebrew or Aramaic word. The <span class="ui-label">⌨︎</span> keyboard helps if you don't have Hebrew set up.</li>
+              <li>Pick an entry. Under <span class="ui-label">What to insert</span> choose <strong>Full entry</strong> (word, definition and source), <strong>Word + ref</strong>, or <strong>Definition</strong> only.</li>
+              <li>Click <span class="ui-label">Add Source</span>.</li>
+            </ol>
+            <p style="margin-top:10px;">Star an entry to keep it under <span class="ui-label">⭐ Starred entries</span>. Your recent lookups appear as chips under the search box.</p>
+          </section>
+
+          <section class="card topic-section" id="session-library" data-search-title="Session Library (📜)" data-search-terms="session library history inserted pinned pin recent copy references bibliography list reset clear undo filter sort compact">
+            <h2>Session Library (<span class="icon">📜</span>)</h2>
+            <p>Every source you insert is added to the Session Library (the most recent twelve, plus any you pin), so you can find it again. Open it with <span class="ui-label">📜</span> at the bottom of the sidebar, or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>.</p>
+            <ul>
+              <li>Click a source to open it in the sidebar again.</li>
+              <li><span class="ui-label">📌</span> pins a source so it stays at the top and isn't cleared.</li>
+              <li>Filter by <strong>Pinned</strong>, <strong>Recent</strong> or a category; search; and sort by category, date added, or A–Z. <span class="ui-label">⊟</span> switches to a compact list.</li>
+              <li><span class="ui-label">Copy References</span> copies every reference as plain text — handy for a bibliography.</li>
+              <li><span class="ui-label">Clear Recent</span> removes everything except pinned sources; <span class="ui-label">Reset Session</span> removes everything. Both ask first, and removing a single source can be undone.</li>
+            </ul>
+            <p class="small" style="margin-top:10px;">The Session Library is kept in this browser only. It isn't shared with other computers or collaborators.</p>
+          </section>
+
+          <section class="card topic-section" id="quick-actions" data-search-title="Quick Actions (🏃)" data-search-terms="quick actions panel insert from selection selected text replace transform divine names link texts unlink sources gematriya gematria count surprise me">
+            <h2>Quick Actions (<span class="icon">🏃</span>)</h2>
+            <p>Click <span class="ui-label">🏃</span> at the bottom of the sidebar, or use <span class="ui-label">Extensions → Torah Library → Quick Actions</span>.</p>
+            <table class="ref-table">
+              <tbody>
+                <tr><td><span class="ui-label">Sel → ס</span><br><span class="small">Insert Source from Selection</span></td><td>Select a reference you've typed in the document — say <code>Genesis 1:1</code> — and run this. By default the selected words are replaced by the source (titled with the same reference). To keep your words and insert the source below them, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>.</td></tr>
+                <tr><td><span class="ui-label">ה → ש</span><br><span class="small">Transform Divine Names</span></td><td>Applies your divine-name replacements to text already in the document. See <a href="#divine-names">Divine names</a>.</td></tr>
+                <tr><td><span class="ui-label">🔗 → ס</span><br><span class="small">Link Texts with Sefaria</span></td><td>Finds citations in your document and links them to Sefaria. See <a href="#link-texts">Link Texts with Sefaria</a>.</td></tr>
+                <tr><td><span class="ui-label">🎲</span><br><span class="small">Surprise Me</span></td><td>Experimental — inserts sources on a word or theme, or at random. Only shown when switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>.</td></tr>
+              </tbody>
+            </table>
+            <p style="margin-top:10px;">Two more are in the menu only:</p>
+            <ul>
+              <li><strong>Unlink Sources</strong> removes every sefaria.org link from the document, leaving the words in place.</li>
+              <li><strong>Gematriya Count</strong> totals the gematria of the Hebrew you've selected (or of the whole document if nothing is selected).</li>
+            </ul>
+          </section>
+
+          <section class="card topic-section" id="link-texts" data-search-title="Link Texts with Sefaria" data-search-terms="link texts linker hyperlink citations references existing document scan ambiguous review summary every match count insert after linking could not be placed unresolved whole document candidate passages privacy">
+            <h2>Link Texts with Sefaria</h2>
+            <p>Turns the citations already in your document — <em>Genesis 1:1</em>, <em>Berakhot 2a</em>, <em>Rambam, Hil. Teshuvah 3:4</em> — into links to Sefaria.</p>
+            <ol class="steps">
+              <li>Run <span class="ui-label">🔗 → ס</span> from Quick Actions, or <span class="ui-label">Extensions → Torah Library → Quick Actions → Link Texts with Sefaria</span>.</li>
+              <li>A dialog shows progress while your document is scanned.</li>
+              <li>You get a table of what was found. Each row shows the words in your document and the Sefaria source they'll point to. When a citation could mean more than one source, pick the right one from the dropdown — each option shows a short excerpt to help.</li>
+              <li>Each row has two checkboxes: <strong>Link</strong> (hyperlink the words) and <strong>Insert</strong> (insert that source's text below the paragraph). Tick either, both, or neither. The checkbox in a column header sets the whole column.</li>
+              <li>Apply. The dialog reports how many were linked, and how many couldn't be.</li>
+            </ol>
+            <h3>Choosing how much it asks</h3>
+            <p>In <span class="ui-label">Preferences → Linking → After linking</span>:</p>
+            <ul>
+              <li><strong>Show a summary, and ask about ambiguous citations</strong> (recommended) — links the clear matches and only asks about the unclear ones.</li>
+              <li><strong>Show every match for review</strong> — lists everything before anything is linked.</li>
+              <li><strong>Just link and report a count</strong> — never asks; unclear citations are skipped rather than guessed. Turn on <strong>Insert text after linking</strong> to insert each linked source as well.</li>
+            </ul>
+            <h3>What is sent to Sefaria</h3>
+            <p>Sefaria's linker has to read the text to find citations. With <strong>Candidate passages only</strong> (the default, in <span class="ui-label">Preferences → Linking → Document scanning</span>), your document is checked on your own computer first and only passages that look like they contain a citation are sent. <strong>Whole document</strong> sends everything, which can catch unusual citations the local check misses.</p>
+            <div class="callout">If the report says some citations <em>could not be placed</em>, switch Document scanning to <strong>Whole document</strong> and run it again. Citations that <em>could not be resolved</em> are ones Sefaria didn't recognise.</div>
+          </section>
+
+          <section class="card topic-section" id="divine-names" data-search-title="Divine names" data-search-terms="divine names god name hashem adonai yy yud yud yhvh elokim sheimot replacement transform replace on insertion g-d">
+            <h2>Divine names</h2>
+            <p>The add-on can replace names of God as text is inserted — by default, <span class="he" dir="rtl">יהוה</span> becomes <span class="he" dir="rtl">יי</span>. The rules are in <span class="ui-label">Preferences → Insertion → Divine Name Mappings</span>:</p>
+            <ul>
+              <li><strong>Apply Divine-Name Replacements On Insertion</strong> turns replacement on or off for new insertions.</li>
+              <li>Each rule has its own switch and a replacement to choose — <span class="he" dir="rtl">יהוה</span> (<span class="he" dir="rtl">יי</span>, <span class="he" dir="rtl">ה'</span>, <span class="he" dir="rtl">יקוק</span>, <span class="he" dir="rtl">השם</span>), <span class="he" dir="rtl">יה</span>, <span class="he" dir="rtl">אלוהים</span>, and English <em>God</em> (Adonai, HaShem, G-d) — or <strong>Other</strong> to type your own.</li>
+            </ul>
+            <p>To apply the same rules to text that's <em>already</em> in the document, run <span class="ui-label">ה → ש</span> <strong>Transform Divine Names</strong> from Quick Actions. If no rules are turned on, it tells you so and changes nothing.</p>
+          </section>
+
+          <section class="card topic-section" id="preferences" data-search-title="Preferences" data-search-terms="preferences settings defaults save save and close reset refresh fonts insertion linking menu bar experimental title heading hebrew transliteration translation language source emphasis transliteration mapping insertion defaults current session difference">
+            <h2>Preferences</h2>
+            <p>Open with <span class="ui-label">⚙︎</span> in the sidebar or <span class="ui-label">Extensions → Torah Library → Preferences</span>. Preferences are your <strong>saved defaults</strong>; they follow your Google account into every document. The sidebar's <span class="ui-label">📰 Layout</span> changes only the current session.</p>
+            <table class="ref-table">
+              <thead><tr><th>Tab</th><th>What's there</th></tr></thead>
+              <tbody>
+                <tr><td><span class="ui-label">Fonts</span></td><td><strong>Title</strong> (plain and linked; paragraph style, e.g. Heading 2), <strong>Hebrew</strong>, <strong>Transliteration</strong> (and its scheme), <strong>Translation</strong> (and preferred language). Each has font, size, bold/italic/underline, text colour and highlight, with a preview. <strong>✒️ Source Emphasis</strong> controls how Sefaria's own bold and italics come through.</td></tr>
+                <tr><td><span class="ui-label">Insertion</span></td><td>Default <strong>Display &amp; Layout</strong>; <strong>Insertion Defaults</strong> for Texts, Voices and Lexicon (the same switches as the sidebar's Insertion Format); <strong>Transliteration Mapping</strong> for adjusting individual letters; <strong>Divine Name Mappings</strong>; and <strong>Insert from Selection</strong>.</td></tr>
+                <tr><td><span class="ui-label">Linking</span></td><td>How <a href="#link-texts">Link Texts with Sefaria</a> reviews what it finds, and how much of your document it sends.</td></tr>
+                <tr><td><span class="ui-label">Menu Bar</span></td><td>Rearrange the add-on's menu. See <a href="#menu">The menu</a>.</td></tr>
+                <tr><td><span class="ui-label">🧪 Experimental</span></td><td>Optional features still in progress, such as Surprise Me. Off by default.</td></tr>
+              </tbody>
+            </table>
+            <h3>The buttons at the bottom</h3>
+            <div class="compare-grid">
+              <div class="compare-card"><h3>Save Defaults</h3><p class="muted">Save and keep the dialog open.</p></div>
+              <div class="compare-card"><h3>Save &amp; Close</h3><p class="muted">Save and close.</p></div>
+              <div class="compare-card"><h3>🔁 Refresh</h3><p class="muted">Reopen the sidebar from your saved defaults, dropping this session's Layout changes.</p></div>
+              <div class="compare-card"><h3>Reset To Defaults</h3><p class="muted">Put every preference back to the add-on's original settings. Asks first.</p></div>
             </div>
+            <div class="callout">Changed a preference but the sidebar still does the old thing? The sidebar keeps its session choices until you click <span class="ui-label">↺ Revert to defaults</span> in <span class="ui-label">📰 Layout</span>, or <span class="ui-label">🔁 Refresh</span> in Preferences.</div>
+          </section>
+
+          <section class="card topic-section" id="menu" data-search-title="The add-on menu (Menu Bar)" data-search-terms="menu extensions menu bar customize reorder hide items quick actions submenu divider restore default menu reload">
+            <h2>The add-on menu</h2>
+            <p>Everything is under <span class="ui-label">Extensions → Torah Library</span>. Out of the box the menu has: <strong>Texts</strong>, <strong>Voices</strong>, <strong>Lexicon</strong>, <strong>Insert Source from Selection</strong>, and a <strong>Quick Actions</strong> submenu (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count) — then <strong>Preferences</strong> and <strong>Help &amp; Support</strong>.</p>
+            <p>To change it, open <span class="ui-label">Preferences → Menu Bar</span>. Use the arrows to reorder items, move them into or out of the Quick Actions submenu, add dividers, or untick an item to hide it (tick it again to bring it back). <strong>Preferences</strong> and <strong>Help &amp; Support</strong> always stay at the bottom, so you can't lose your way back. <span class="ui-label">Restore default menu</span> undoes everything.</p>
+            <p class="small">After saving, reload the document if the menu hasn't changed — Google Docs builds the menu when the document opens.</p>
+          </section>
+
+          <section class="card topic-section" id="shortcuts" data-search-title="Keyboard shortcuts" data-search-terms="keyboard shortcuts keys hotkeys slash enter ctrl cmd escape arrow">
+            <h2>Keyboard shortcuts</h2>
+            <table class="ref-table">
+              <tbody>
+                <tr><td><kbd>/</kbd></td><td>Jump to the search box.</td></tr>
+                <tr><td><kbd>Enter</kbd></td><td>Search, or pick the highlighted result.</td></tr>
+                <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Move through the results.</td></tr>
+                <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd></td><td>Add Source.</td></tr>
+                <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd></td><td>Open or close the Session Library.</td></tr>
+                <tr><td><kbd>Esc</kbd></td><td>Close Layout Settings, the Session Library, or the Hebrew keyboard.</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="card topic-section faq" id="troubleshooting" data-search-title="Troubleshooting" data-search-terms="problem not working bug help nothing found no results can't insert disabled greyed out preview missing wrong font formatting divine name replaced menu not changed old stale after update refresh reopen link texts missed surprise me missing">
+            <h2>Troubleshooting</h2>
+            <details>
+              <summary>My search finds nothing, or the wrong book</summary>
+              <p>Try the reference the way Sefaria writes it (<code>Mishneh Torah, Repentance 3:4</code>), or click one of the suggested titles. Check that the <span class="ui-label">A א</span> language filter isn't set to a language the work lacks, and that you haven't hidden its group with <span class="ui-label">❌</span> — <span class="ui-label">⤦</span> restores hidden groups.</p>
+            </details>
+            <details>
+              <summary><span class="ui-label">Add Source</span> is greyed out</summary>
+              <p>Either nothing is selected yet, or the selection is a whole book or section rather than a passage. Choose a specific chapter, verse or daf.</p>
+            </details>
+            <details>
+              <summary>The Preview says it isn't available</summary>
+              <p>You have more than one translation selected. That's fine — they'll all be inserted. Select just one to see a Preview.</p>
+            </details>
+            <details>
+              <summary>The inserted text doesn't look like the Preview, or like my Preferences</summary>
+              <p>The sidebar uses this session's <span class="ui-label">📰 Layout</span> choices, which can differ from your saved Preferences. Click <span class="ui-label">↺ Revert to defaults</span> to go back to your Preferences, or <span class="ui-label">💾 Save as defaults</span> to keep what you have.</p>
+            </details>
+            <details>
+              <summary>The font or size is wrong</summary>
+              <p>With <strong>Match the document</strong>, inserted text copies the text at your cursor — so inserting inside a heading gives heading-sized text. Put the cursor in an ordinary paragraph, or pick a specific font and size in <span class="ui-label">Preferences → Fonts</span>.</p>
+            </details>
+            <details>
+              <summary>A name of God was replaced and I didn't want it to be</summary>
+              <p>Turn off <strong>Apply Divine-Name Replacements On Insertion</strong>, or the individual rule, in <span class="ui-label">Preferences → Insertion → Divine Name Mappings</span>. Use <em>Edit → Undo</em> in Google Docs to reverse a recent insertion.</p>
+            </details>
+            <details>
+              <summary>Link Texts with Sefaria missed some citations</summary>
+              <p>Read the report at the end. <em>Could not be placed</em> — set <span class="ui-label">Preferences → Linking → Document scanning</span> to <strong>Whole document</strong> and try again. <em>Could not be resolved</em> — Sefaria didn't recognise the citation; writing it in a standard form usually helps. In <strong>Just link and report a count</strong> mode, ambiguous citations are skipped on purpose.</p>
+            </details>
+            <details>
+              <summary>My menu changes didn't appear</summary>
+              <p>Reload the document. The menu is built when the document opens.</p>
+            </details>
+            <details>
+              <summary>Surprise Me is missing</summary>
+              <p>It's experimental. Turn on <strong>Enable Experimental Features</strong> and <strong>Surprise Me</strong> in <span class="ui-label">Preferences → 🧪 Experimental</span>, then reload the document.</p>
+            </details>
+            <details>
+              <summary>Things look broken or out of date after an update</summary>
+              <p>Close the sidebar and reopen it from <span class="ui-label">Extensions → Torah Library</span>. If that doesn't help, reload the document. Still stuck? See the <strong>Support</strong> tab.</p>
+            </details>
           </section>
         </section>
 
+        <!-- ══════════════════════════════ SUPPORT ═════════════════════════════ -->
         <section class="tab-panel" id="support-tab" role="tabpanel" hidden>
           <section class="hero">
             <h2>Support</h2>
-            <p class="lede">Use this tab when something is not behaving as expected, or when you need direct help after trying the self-serve guidance.</p>
-            <div class="button-row">
-              <button type="button" class="button-link" onclick="switchTab('help-tab')">Open Help</button>
-              <button type="button" class="button-link secondary" onclick="switchTab('about-tab')">Open About</button>
-              <a class="button-link secondary" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244" rel="noopener noreferrer">Full Sefaria Help Center</a>
-              <a class="button-link secondary" href="mailto:help@the-merkaz.org">Email support</a>
-            </div>
-          </section>
-
-          <section class="card">
-            <h2>Start here before emailing</h2>
-            <div class="action-grid">
-              <div class="action-card" data-jump-to="troubleshooting"><h3>Reopen the add-on</h3><p class="muted">Close the sidebar and reopen it from Extensions to clear temporary UI state.</p></div>
-              <div class="action-card" data-jump-to="troubleshooting"><h3>Refresh the document</h3><p class="muted">Google Docs sometimes holds stale sidebar state after updates or setting changes.</p></div>
-              <div class="action-card" data-jump-to="troubleshooting"><h3>Recheck Preview</h3><p class="muted">Preview should reflect the current working state, not just saved defaults.</p></div>
-              <div class="action-card" data-jump-to="troubleshooting"><h3>Confirm the active workspace</h3><p class="muted">Texts, Voices, Preferences, and session overrides do not all behave the same way.</p></div>
-            </div>
-          </section>
-
-          <section class="card">
-            <h2>What to include in a bug report</h2>
-            <p>If you email support, include enough detail to make the issue reproducible.</p>
-            <ul class="checklist">
-              <li>which workspace you were using: <strong>Texts</strong>, <strong>Voices</strong>, or <strong>Preferences</strong></li>
-              <li>what you searched for or selected</li>
-              <li>which settings or overrides were active</li>
-              <li>what you expected to happen</li>
-              <li>what happened instead</li>
-              <li>whether reopening the add-on or refreshing the document changed the result</li>
-            </ul>
-            <div class="callout">Screenshots are especially helpful for layout issues, Preview mismatches, and setting-sync problems.</div>
-          </section>
-
-          <section class="card">
-            <h2>When to email support</h2>
-            <p>Email support when the self-serve steps do not resolve the issue, when you have a reproducible bug, or when you need advanced guidance that is not covered in Help.</p>
+            <p class="lede">Something not working? Try the quick fixes first — they solve most problems. If they don't, we'd like to hear about it.</p>
             <div class="button-row">
               <a class="button-link" href="mailto:help@the-merkaz.org">Email support</a>
+              <a class="button-link secondary" target="_blank" href="https://sefaria.formstack.com/forms/google_docs_extension_feedback" rel="noopener noreferrer">Send feedback</a>
+              <button type="button" class="button-link secondary" onclick="scrollToSection('troubleshooting')">Troubleshooting</button>
             </div>
-            <p class="small">For version information, release notes, changelog context, and project links, use the About tab rather than Support.</p>
+          </section>
+
+          <section class="card">
+            <h2>Quick fixes</h2>
+            <ol class="steps">
+              <li><strong>Close and reopen the sidebar</strong> from <span class="ui-label">Extensions → Torah Library</span>. This clears anything stuck in the sidebar.</li>
+              <li><strong>Reload the document</strong> (your browser's refresh button). Needed after an update or after changing the menu.</li>
+              <li><strong>Revert to your defaults</strong> — <span class="ui-label">📰 Layout → ↺ Revert to defaults</span> — if the output doesn't match your Preferences.</li>
+              <li><strong>Check the Preview</strong> before inserting. If the Preview is right but the document isn't, that's a bug — please report it.</li>
+            </ol>
+          </section>
+
+          <section class="card">
+            <h2>Reporting a problem</h2>
+            <p>Email <a href="mailto:help@the-merkaz.org">help@the-merkaz.org</a>. These details help us fix it quickly:</p>
+            <ul class="checklist">
+              <li>where it happened — <strong>Texts</strong>, <strong>Voices</strong>, <strong>Lexicon</strong>, <strong>Preferences</strong>, <strong>Link Texts with Sefaria</strong>, or another Quick Action;</li>
+              <li>what you searched for or selected (for example, <code>Berakhot 2a</code>, William Davidson translation);</li>
+              <li>your <span class="ui-label">📰 Layout</span> settings — Display, Layout, and which Insertion Format switches were on;</li>
+              <li>what you expected, and what happened instead;</li>
+              <li>whether reopening the sidebar or reloading the document changed anything;</li>
+              <li>the add-on version, shown on the <strong>About</strong> tab.</li>
+            </ul>
+            <div class="callout">A screenshot of the sidebar and the document is the single most useful thing you can send. Please don't send private document text you'd rather we didn't see — a short sample that shows the problem is enough.</div>
+          </section>
+
+          <section class="card">
+            <h2>Ideas and feedback</h2>
+            <p>Suggestions are welcome. Use <span class="ui-label">Feedback</span> at the bottom of the sidebar, or the <a target="_blank" href="https://sefaria.formstack.com/forms/google_docs_extension_feedback" rel="noopener noreferrer">feedback form</a>.</p>
+            <p class="small">Questions about Sefaria's library itself — a missing text, a translation error — are best sent to Sefaria through the <a target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244" rel="noopener noreferrer">Sefaria Help Center</a>.</p>
           </section>
         </section>
 
+        <!-- ═══════════════════════════════ ABOUT ══════════════════════════════ -->
         <section class="tab-panel" id="about-tab" role="tabpanel" hidden>
           <section class="hero">
             <h2>About</h2>
-            <p class="muted">Torah Library Add-on for Docs · UX and maintenance fork</p>
-            <p>This tab is the long-term home for version information, current release context, and the running changelog. The separate release-notes popup should stay brief and point here for the fuller record.</p>
-            <div class="meta-row">
+            <p>Torah Library brings Sefaria's library into Google Docs: find a source, preview it, and insert it formatted the way you want. It is not an official Sefaria project.</p>
+            <div class="meta-row" style="margin-top:10px;">
               <span class="meta-pill">Current line: 2.1</span>
-              <a class="meta-pill" target="_blank" href="https://help.sefaria.org/hc/en-us/sections/20235182393244" rel="noopener noreferrer">Sefaria Help Center</a>
-              <a class="meta-pill" target="_blank" href="https://github.com/shelfgot/SefariaAddOnForDocs" rel="noopener noreferrer">GitHub</a>
               <a class="meta-pill" target="_blank" href="https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" rel="noopener noreferrer">Privacy policy</a>
+              <a class="meta-pill" target="_blank" href="https://github.com/shelfgot/SefariaAddOnForDocs" rel="noopener noreferrer">GitHub</a>
               <a class="meta-pill" href="mailto:help@the-merkaz.org">Contact support</a>
             </div>
           </section>
 
           <section class="card">
-            <h2>Current release summary</h2>
-            <p>This phase focuses on making the add-on feel more understandable while people are actively using it. The work emphasizes cleaner front-end behavior, clearer distinctions between defaults and live state, and documentation that matches the actual workflows more closely.</p>
+            <h2>New in 2.1</h2>
             <ul>
-              <li><strong>Help surface redesign:</strong> Help, Support, and About are now framed as distinct purposes rather than overlapping documents.</li>
-              <li><strong>Clearer workflow language:</strong> the docs now distinguish more explicitly between Texts, Voices, Preferences, and current-session overrides.</li>
-              <li><strong>Live-state clarity:</strong> Preview, saved defaults, and current sidebar state are explained in more practical terms.</li>
-              <li><strong>Support-oriented troubleshooting:</strong> the docs now acknowledge stale sidebar state, session-specific overrides, and context differences instead of treating them as user error.</li>
-              <li><strong>Human-centered navigation:</strong> the Help content now supports task-based scanning and lightweight topic search.</li>
+              <li><strong>Reorganised Preferences.</strong> The Fonts tab is laid out the same way for title, Hebrew, transliteration and translation, and linking settings have their own <span class="ui-label">Linking</span> tab.</li>
+              <li><strong>Link Texts with Sefaria shows its work.</strong> Progress while it scans, a review table with separate Link and Insert choices, a question when a citation could mean more than one source, and an honest count of what it couldn't link.</li>
+              <li><strong>Less of your document leaves your computer.</strong> Linking sends only passages that look like citations, unless you choose otherwise.</li>
+              <li><strong>Text that fits your document.</strong> Fonts and sizes match the text where you insert; titles can be headings; every role has text colour and highlight; the source's own bold and italics are kept.</li>
+              <li><strong>Several translations in one go</strong>, each in its own block.</li>
+              <li><strong>Better search.</strong> Traditional citations like <em>Hil. Shabbat 1:1</em> and Hebrew abbreviations like <span class="he" dir="rtl">רמב״ם</span> work, and a search that finds nothing suggests related titles.</li>
+              <li><strong>Your own menu.</strong> Reorder, hide and group menu items in <span class="ui-label">Preferences → Menu Bar</span>.</li>
+              <li><strong>Divine names:</strong> <span class="he" dir="rtl">יי</span> is now offered for <span class="he" dir="rtl">יהוה</span> and is the default for new users. If you used the add-on before, your existing choices are kept.</li>
             </ul>
-            <div class="callout">What users may notice: the documentation should feel less like a wall of text and more like a guided support surface.</div>
+            <p class="small">The full technical record is in the project's changelog on GitHub.</p>
           </section>
 
           <section class="card">
-            <h2>What is in this fork</h2>
-            <ul>
-              <li>Unified Find &amp; Insert sidebar flow</li>
-              <li>Improved display and bilingual layout controls</li>
-              <li>Normalized translation and source-version selection</li>
-              <li>Persistent preferences across documents</li>
-              <li>Safer insertion pipeline for richer formatting</li>
-              <li>More intentional internal documentation and support framing</li>
-            </ul>
+            <h2>Your privacy</h2>
+            <p>The add-on only talks to sefaria.org, and only when you search, insert a source, or run Link Texts with Sefaria. Your preferences are stored with your Google account; your Session Library, recent searches and starred Lexicon entries stay in your own browser. The add-on has no account or server of its own and sends your text to no one else. The <a target="_blank" href="https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" rel="noopener noreferrer">privacy policy</a> has the details.</p>
           </section>
 
           <section class="card">
-            <h2>Running changelog</h2>
-            <details open>
-              <summary>Current documentation and support refresh</summary>
-              <ul>
-                <li>Reframed the internal help system around three clearer purposes: Help, Support, and About.</li>
-                <li>Added a lightweight Help search bar for topic finding inside the guide.</li>
-                <li>Moved long-term version and changelog context into About, leaving Support focused on troubleshooting and escalation.</li>
-                <li>Reworked release notes into a cleaner current-release summary plus expandable changelog model.</li>
-              </ul>
-            </details>
-            <details>
-              <summary>Core 2.0 fork direction</summary>
-              <ul>
-                <li>Unified sidebar workflow for finding, previewing, and inserting sources.</li>
-                <li>Translation selector cleanup and normalized option labeling.</li>
-                <li>Stronger output and bilingual layout controls.</li>
-                <li>Structural-node handling with clearer preview messaging.</li>
-                <li>Hebrew orthography controls applied more consistently.</li>
-                <li>Preferences and typography improvements with better save ergonomics.</li>
-              </ul>
-            </details>
+            <h2>Credits</h2>
+            <p>Originally created by Shlomi Helfgot; this edition is maintained by Austin Swafford. Texts, translations and the reference linker are provided by <a target="_blank" href="https://www.sefaria.org" rel="noopener noreferrer">Sefaria</a>, whose open library and APIs make the add-on possible. <em>Surprise Me</em> is adapted from Shlomi Helfgot's original "Popcorn" feature.</p>
           </section>
         </section>
       </section>
