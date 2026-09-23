@@ -52,8 +52,8 @@ Preference schema **13** — upgrading users are migrated on first open.
 
 - **The "Open on Sefaria" icon is bundled into the add-on** instead of being
   loaded from the-merkaz.org, so opening the sidebar contacts one host fewer.
-  It is now a simple arrow; swapping in other artwork is a one-line change in
-  `css/layout.html`.
+  It is the same Sefarrow mark, as a transparent 64 px image that stays sharp
+  on high-density screens.
 - **Help and Release Notes are written for users.** The About tab and the
   Release Notes dialog had developer notes in them ("UX and maintenance fork",
   "Core 2.0 fork direction", "Deferred backlog"). They now describe what's new

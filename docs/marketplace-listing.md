@@ -152,9 +152,9 @@ Torah Library is an independent, open-source add-on built on Sefaria's public li
 
 | Asset | Size | Status |
 | --- | --- | --- |
-| Application icon | 128 × 128 PNG | **Needed.** Export from the source artwork of `sefarrow_32.png` (the manifest `logoUrl`), not by upscaling the 32 px file. It should not resemble Sefaria's own logo. |
-| Application icon | 32 × 32 PNG | The existing `sefarrow_32.png`. |
-| Application card banner | 220 × 140 PNG | **Needed.** Icon plus "Torah Library" on a plain background. |
+| Application icon | 128 × 128 PNG | Ready: [`store-assets/sefarrow-128.png`](store-assets/sefarrow-128.png) |
+| Application icon | 32 × 32 PNG | Ready: [`store-assets/sefarrow-32.png`](store-assets/sefarrow-32.png) (the same image as the manifest `logoUrl`) |
+| Application card banner | 220 × 140 PNG | Ready: [`store-assets/card-banner-220x140.png`](store-assets/card-banner-220x140.png) — the Sefarrow over "Torah Library" |
 | Screenshots | 1280 × 800 PNG (or the console's current size), 1–5 | **Needed** — shot list below. |
 | Promotional video | YouTube URL | Optional. |
 

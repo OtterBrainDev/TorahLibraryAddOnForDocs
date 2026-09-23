@@ -50,7 +50,7 @@ silently.
 | --- | --- | --- |
 | 1.1 | Sidebar footer | The Sefaria logo renders |
 | 1.2 | Trigger a loading state (search) | The spinner GIF renders, not a broken-image icon |
-| 1.3 | Voices tab → select a sheet; and any Texts result row | The "open on Sefaria" arrow icon renders (it is bundled now, so it loads from nowhere) |
+| 1.3 | Voices tab → select a sheet; and any Texts result row | The Sefarrow "open on Sefaria" icon renders, crisp and with no white box behind it (it is bundled now, so it loads from nowhere) |
 | 1.4 | Open **Help**, **Feedback**, **Release Notes**, **Gematriya Count** and **Link Texts with Sefaria** | Each renders fully; Feedback shows the embedded form. These five dialogs now carry the CSP too |
 
 Any missing image here means the `img-src` list in
