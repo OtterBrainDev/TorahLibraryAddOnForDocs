@@ -10,9 +10,9 @@ Short version: the add-on has no server of its own, no account, and no
 analytics. The only party that receives anything from your document is
 Sefaria, and only the text you ask for (§2). Its windows also load their
 page resources — a script library, a stylesheet, a font, and a few images —
-from Google and Sefaria, like any web page does (§2.2). It stores nothing
-about you anywhere except your own preference settings, which live in
-Google's own per-user storage for this add-on.
+from Google and Sefaria, like any web page does (§2.2). It stores only your
+own preference settings, in Google's per-user storage for this add-on, and
+your sidebar history, in your own browser (§3).
 
 ---
 
@@ -111,6 +111,13 @@ the add-on's authors.
 sidebar session — is stored in Google's `CacheService` and expires
 automatically within 6 hours.
 
+**Your sidebar history** — the Session Library (sources you inserted or
+pinned), recent searches, and recent and starred Lexicon entries — is kept in
+your own browser's local storage, on the computer you used. It never leaves
+that browser and is not synced to other computers. **Reset Session** in the
+Session Library clears the Session Library; clearing your browser's site data
+removes all of it.
+
 **Nothing else is stored.** Specifically:
 
 - There is **no server** operated by this add-on's authors. There is nowhere
@@ -142,9 +149,10 @@ without any of that data.
 
 ## 6. Data retention and deletion
 
-The add-on retains only your preference settings. To delete them:
+Apart from the browser-side sidebar history described in §3, the add-on
+retains only your preference settings. To delete them:
 
-- Use **Preferences → Reset Preferences** to restore defaults, or
+- Use **Preferences → Reset To Defaults** to restore defaults, or
 - Uninstall the add-on. Google removes the add-on's `PropertiesService`
   storage when you uninstall it.
 

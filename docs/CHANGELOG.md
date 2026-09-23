@@ -144,6 +144,7 @@ Preference schema **13** — upgrading users are migrated on first open.
   Source from Selection the reference is raw document text (hard rule 7). The
   sheet-node debug log now records the node's key names, not its content.
 - GitHub Actions are pinned to commit SHAs.
+
 ### Linking tab, per-row Link/Insert, insert-from-selection replace (2026-09)
 
 > **Behaviour change for existing users — migration v11.** *Insert Source from
@@ -167,6 +168,20 @@ Preference schema **13** — upgrading users are migrated on first open.
 > is the one exception: left unsaved, it keeps picking up new menu items.)
 > Schema steps v12 (a no-op) and v13 (writes the new `source_title_heading`)
 > keep the schema number monotonic.
+
+#### Documentation
+
+- **Help & Support rewritten for the current interface.** The dialog described
+  controls that no longer exist (a "Text & Links" panel, "Hebrew on top"
+  layouts). It now walks through the sidebar as it is — the tabs, result
+  tools, Versions and Preview, the 📰 Layout tray, Session Library, Quick
+  Actions, Link Texts with Sefaria, divine names, every Preferences tab, the
+  Menu Bar, and keyboard shortcuts — with a troubleshooting FAQ, a bug-report
+  checklist, and a user-facing "New in 2.1". `docs/google-docs-walkthrough.md`
+  and the README's menu and layout sections were brought into line.
+- **Privacy policy: the browser-side sidebar history is now disclosed.** The
+  Session Library, recent searches, and recent/starred Lexicon entries live in
+  the browser's local storage; §3 said nothing else was stored.
 
 #### Added
 
