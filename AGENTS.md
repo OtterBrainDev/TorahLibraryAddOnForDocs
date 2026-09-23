@@ -57,7 +57,9 @@ fixed more than once.
 5. **Never write `.innerHTML` without a one-line comment explaining
    why `textContent` won't do.** Every current `.innerHTML` assignment
    in `apps-script/**/*.html` has a justification comment on the line
-   above; `pre_clasp_qc.sh` check 9 flags any new unannotated write.
+   above; `pre_clasp_qc.sh` check 9 flags any new unannotated write,
+   and check 9b does the same for jQuery `.html(...)`, which is the
+   same sink.
    If you're adding one, either (a) refactor to `textContent` +
    `document.createElement`, or (b) add the justification comment
    next to the assignment explaining the static/escaped provenance
@@ -71,7 +73,7 @@ fixed more than once.
    user already entered — keep it that way. If you need to diagnose
    a bug, add a structured payload with known-safe fields, not a
    blanket dump.
-7. **Never break an entry in `docs/rpc-surface.json`.** Every
+8. **Never break an entry in `docs/rpc-surface.json`.** Every
    server-side function reachable from `google.script.run` is listed
    there with its arity. Renaming, removing, or changing arity without
    updating the snapshot is caught by `test/ui/rpc-surface.test.js`.
@@ -111,7 +113,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **146 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **188 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -135,7 +137,19 @@ and fix it before touching the feature you came to change.
   mapping back onto the document.
 - `linker-classify.test.js` — which citation becomes a link, a
   question, or a counted failure.
-- `sanitize-source-html.test.js` — the Sefaria-HTML strip.
+- `sanitize-source-html.test.js` — the Sefaria-HTML allowlist sanitizer.
+  linkedom cannot reproduce browser mutation XSS; verify sanitizer
+  changes in headless Chromium as well.
+- `set-preferences.test.js` — only `SETTINGS` keys can be written
+  through the client-reachable preference setters.
+- `triggers.test.js` — `onInstall` seeds preferences and then builds the
+  menu; `onOpen` falls back to the default menu instead of ending with none.
+- `source-attribution.test.js` — source credit on by default; the Hebrew
+  edition and its license are credited.
+- `divine-name-rules.test.js` — יה only as a whole word, replacement text
+  used literally, punctuation kept when niqqud is stripped.
+- `typography-defaults.test.js` — "Match the document" fonts, the title
+  heading style, and reading the style at the insertion point.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped; HTML-entity
   decoding (`&thinsp;` and friends).
@@ -158,14 +172,32 @@ and in `test/ui/`:
 - `version-manifest.test.js` — `docs/VERSION.json` against the schema
   version, the migrations that must exist for it, and every surface that
   shows a version string.
+- `embedded-json.test.js` — server data force-printed into an inline
+  `<script>` goes through `toEmbeddedJson_`.
+- `csp-coverage.test.js` — every entry page carries the same
+  Content-Security-Policy.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy
 
 ```bash
 bash pre_clasp_qc.sh apps-script
-clasp push   # from the repo root; .clasp.json pins rootDir=apps-script
+npm ci --prefix tools/clasp --ignore-scripts   # once; pinned clasp, see tools/clasp/README.md
+npx --prefix tools/clasp clasp push   # from the repo root; .clasp.json pins rootDir=apps-script
 ```
+
+`clasp push` (and the deploy workflow on `master`) only replaces the script
+project's HEAD, which you test through Apps Script → Deploy → Test
+deployments. **It does not reach Marketplace users.** They run the numbered
+version set in Marketplace SDK → App Configuration. To release: run the live
+test checklist against HEAD, `clasp version "v<version>"`, then set that
+version number in the SDK and save; users get it on their next document open.
+
+The deploy workflow pushes to the project named by the repository variable
+`CLASP_SCRIPT_ID` (with the `CLASP_TOKEN` secret), not to the `scriptId` in
+`.clasp.json`, and is skipped in any repository that has not set it. Don't
+hard-code a repository or script ID into the workflow — the same code is
+deployed from more than one repository.
 
 The QC script must exit 0 before you push. It walks the nested tree
 under `apps-script/` and checks basename collisions among `.gs` files
@@ -216,6 +248,10 @@ different repo.
 
 - `README.md` — user-facing project overview.
 - `docs/CHANGELOG.md` — user-facing changes by release.
+- `docs/PRIVACY.md`, `docs/TERMS.md` — the policies the Marketplace listing
+  links to. `PRIVACY.md` §2.2 lists every host the add-on's pages load from.
+- `docs/marketplace-listing.md` — the store console package: every console
+  field, the listing copy, and the release procedure.
 - `docs/architecture.md` — the server/client boundary, the include
   graph, the storage layers, the RPC surface.
 - `docs/VERSION.json` — the single source of truth for the version and

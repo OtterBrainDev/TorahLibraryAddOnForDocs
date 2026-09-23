@@ -2,7 +2,6 @@
 <html>
   <head>
     <?!= include('shared/ui/head'); ?>
-    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/themes/smoothness/jquery-ui.css" />
     <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
     <script>window.APP_CONFIG = JSON.parse(document.getElementById('app-config-json').textContent);</script>
 <? var devFlags = JSON.parse(devFlagsJson); ?>
@@ -855,7 +854,7 @@
                   </select>
                 </div>
                 <p class="subsection-note"><strong>Candidate passages only</strong> scans your document on your own machine first and uploads just the passages that look like they contain a citation — a book title, a chapter:verse number, or a Hebrew abbreviation. Your other writing never leaves the document. <strong>Whole document</strong> uploads the entire body, which can catch unusual citation forms the local scan misses.</p>
-                <p class="subsection-note">Nothing is sent to sefaria.org unless you run &ldquo;Link Texts with Sefaria&rdquo;, search, or insert a source. This add-on stores no account data and sends your text to no one else. See <a href="https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer">the privacy policy</a>.</p>
+                <p class="subsection-note">Nothing is sent to sefaria.org unless you run &ldquo;Link Texts with Sefaria&rdquo;, search, or insert a source. This add-on stores no account data and sends your text to no one else. See <a href="https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer">the privacy policy</a>.</p>
               </div>
             </div>
           </details>
@@ -959,7 +958,6 @@
       </div>
     </div>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js"></script>
     <?!= include('shared/ui/core-shared'); ?>
     <?!= include('shared/ui/api'); ?>
     <?!= include('shared/ui/dom'); ?>

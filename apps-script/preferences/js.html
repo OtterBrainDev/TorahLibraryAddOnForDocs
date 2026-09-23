@@ -656,6 +656,7 @@
     $('#linker_review_mode').on('change', syncLinkerInsertToggle);
 
     function setResultsMessage(message, isHtml) {
+      // isHtml callers pass only the static loader <img> literal; everything else goes through .text().
       if (isHtml) $("#results").html(message);
       else $("#results").text(message);
     }

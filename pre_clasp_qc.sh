@@ -365,10 +365,11 @@ while IFS= read -r line; do
   esac
 done < <(python3 - <<'PYJQ'
 # Check 9 only sees `.innerHTML =`. jQuery's `$(sel).html(x)` is the same sink
-# and bypassed it entirely. Held at WARN (not FAIL) because the existing call
-# sites predate this check: the intent is to stop the count growing and to make
-# each one carry the same justification comment check 9 demands. A `.html()`
-# call whose only argument is a string literal is static markup and is skipped.
+# and bypassed it entirely. It started at WARN while the pre-existing call sites
+# were reviewed; all of them now carry a justification comment, so it is a FAIL
+# like check 9: a new dynamic .html() write needs a comment saying why every
+# interpolated value is escaped, sanitized or static. A `.html()` call whose
+# only argument is a string literal is static markup and is skipped.
 import os, re
 from pathlib import Path
 
@@ -399,7 +400,7 @@ for dirpath, _dirs, files in os.walk("."):
             unannotated.append(path + ":" + str(i + 1) + ": " + ln.strip()[:110])
 
 if unannotated:
-    print("WARN: " + str(len(unannotated)) + " jQuery .html() write(s) with dynamic content and no justification comment:")
+    print("FAIL: " + str(len(unannotated)) + " jQuery .html() write(s) with dynamic content and no justification comment:")
     for u in unannotated:
         print("  - " + u)
 else:

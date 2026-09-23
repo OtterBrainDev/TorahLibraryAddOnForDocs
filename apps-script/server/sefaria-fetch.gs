@@ -182,7 +182,6 @@ function findReference(reference, versions=undefined, skipNormalization=false) {
     return resolveReferenceWithFallbacks(safeReference, versions);
   }
 
-  Logger.log(`Reference: ${safeReference}`);
   let url = 'https://www.sefaria.org/api/texts/'
 
   let encodedReference = encodeURIComponent(safeReference);
@@ -218,7 +217,9 @@ function findReference(reference, versions=undefined, skipNormalization=false) {
 
   } catch (error) {
     // return nothing
-    Logger.log(`The system has made a macha'ah: ${error.message} from url ${url}`)
+    // Not the URL: the reference can be raw selected document text (Insert
+    // Source from Selection), and hard rule 7 keeps that out of the logs.
+    Logger.log(`The system has made a macha'ah in findReference: ${error.message}`)
     return;
   }
 

@@ -345,6 +345,22 @@ function insertAttributionParagraph(paragraph, attributionLines) {
   paragraph.setLeftToRight(true);
 }
 
+/**
+ * Credit lines for the Hebrew edition, the counterpart of
+ * getEnglishAttributionLines (attribution.gs, which stays English-only). The
+ * v1 texts API returns the Hebrew version's title and license as
+ * heVersionTitle / heLicense; each edition carries its own license, which is
+ * the line that matters for reuse.
+ */
+function getHebrewAttributionLines_(data) {
+  const title = String((data && data.heVersionTitle) || '').trim();
+  if (!title) return [];
+  const lines = ['Hebrew: ' + title];
+  const license = String((data && (data.heLicense || data.heVersionLicense)) || '').trim();
+  if (license) lines.push('License: ' + license);
+  return lines;
+}
+
 function buildCitationLines(data, preferredTitle, includeTranslationSourceInfo) {
   const titleLine = String((preferredTitle || (data && data.ref) || '')).trim();
   const lines = [];
@@ -355,6 +371,7 @@ function buildCitationLines(data, preferredTitle, includeTranslationSourceInfo) 
   const hebrewVersion = String((data && data.heVersionTitle) || '').trim();
   const hebrewSource = String((data && data.heVersionSource) || '').trim();
   const license = String((data && (data.license || data.licenseName || data.licenseString)) || '').trim();
+  const hebrewLicense = String((data && (data.heLicense || data.heVersionLicense)) || '').trim();
   const author = String((data && (data.author || data.collectiveTitle || data.authors)) || '').trim();
 
   if (author) lines.push('Author: ' + author);
@@ -362,7 +379,12 @@ function buildCitationLines(data, preferredTitle, includeTranslationSourceInfo) 
   if (includeTranslationSourceInfo && englishSource) lines.push('Translation source: ' + englishSource);
   if (hebrewVersion) lines.push('Source edition: ' + hebrewVersion);
   if (hebrewSource) lines.push('Source edition URL: ' + hebrewSource);
-  if (license) lines.push('License: ' + license);
+  if (license && hebrewLicense && license !== hebrewLicense) {
+    lines.push('Translation license: ' + license);
+    lines.push('Source edition license: ' + hebrewLicense);
+  } else if (license || hebrewLicense) {
+    lines.push('License: ' + (license || hebrewLicense));
+  }
   return lines.filter(Boolean);
 }
 
@@ -561,8 +583,15 @@ function insertReference(data, opts) {
   let noUnderline = {};
     noUnderline[DocumentApp.Attribute.UNDERLINE] = false;
 
-  let shouldIncludeEnglishAttribution = includeTranslationSourceInfo && singleLanguage != "he";
-  let attributionLines = (shouldIncludeEnglishAttribution) ? getEnglishAttributionLines(data) : [];
+  // Credit every edition that is actually inserted: the translation unless
+  // this is a Hebrew-only insert, the Hebrew edition unless it is
+  // translation-only.
+  const shouldIncludeEnglishAttribution = includeTranslationSourceInfo && singleLanguage != "he";
+  const shouldIncludeHebrewAttribution = includeTranslationSourceInfo && singleLanguage != "en";
+  let attributionLines = [].concat(
+    shouldIncludeEnglishAttribution ? getEnglishAttributionLines(data) : [],
+    shouldIncludeHebrewAttribution ? getHebrewAttributionLines_(data) : []
+  );
   const typography = getTypographySettings();
   const currentPrefs = getPreferences();
   const transliterationScheme = currentPrefs.transliteration_scheme || "traditional";
@@ -646,8 +675,8 @@ function insertReference(data, opts) {
       singleLanguageNextIndex += 1;
     }
 
-    if (singleLanguage == "en" && attributionLines.length > 0) {
-      let attributionParagraph = doc.insertParagraph(index + 2, "");
+    if (attributionLines.length > 0) {
+      let attributionParagraph = doc.insertParagraph(singleLanguageNextIndex, "");
       insertAttributionParagraph(attributionParagraph, attributionLines);
       singleLanguageNextIndex += 1;
     }
@@ -694,7 +723,7 @@ function insertReference(data, opts) {
 
       let heTopNextIndex = index + (transliterationText ? 5 : 4);
 
-      if (shouldIncludeEnglishAttribution && attributionLines.length > 0) {
+      if (attributionLines.length > 0) {
         let attributionParagraph = doc.insertParagraph(heTopNextIndex, "");
         insertAttributionParagraph(attributionParagraph, attributionLines);
         heTopNextIndex += 1;
@@ -757,7 +786,7 @@ function insertReference(data, opts) {
 
       let sideBySideNextIndex = index + 1;
 
-      if (shouldIncludeEnglishAttribution && attributionLines.length > 0) {
+      if (attributionLines.length > 0) {
         let attributionParagraph = doc.insertParagraph(index + 1, "");
         insertAttributionParagraph(attributionParagraph, attributionLines);
         sideBySideNextIndex += 1;

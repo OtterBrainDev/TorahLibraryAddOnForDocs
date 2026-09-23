@@ -16,7 +16,7 @@ function focusResultByIndex(index) {
 function showSidebarNotice(message, onConfirm) {
   var $notice = $('#sidebar-notice');
   if (!$notice.length) return;
-  $('#sidebar-notice-message').html(escapeHTML(message || ''));
+  $('#sidebar-notice-message').text(String(message || ''));
   $notice.removeAttr('hidden');
   $('#sidebar-notice-ok').off('click.sidebarNotice').on('click.sidebarNotice', function () {
     $notice.attr('hidden', true);
@@ -58,15 +58,8 @@ function hasExperimentalFeaturesEnabled() {
       prefs.experimental_features_enabled !== true) {
     return false;
   }
-  return String(prefs.experimental_ai_source_sheet_enabled) === 'true' ||
-    prefs.experimental_ai_source_sheet_enabled === true ||
-    String(prefs.surprise_me_enabled) === 'true' ||
+  return String(prefs.surprise_me_enabled) === 'true' ||
     prefs.surprise_me_enabled === true;
-}
-
-function isExperimentalAiEnabled() {
-  return String((effectivePreferences || {}).experimental_ai_source_sheet_enabled) === 'true' ||
-    (effectivePreferences || {}).experimental_ai_source_sheet_enabled === true;
 }
 
 function isSurpriseEnabled() {
@@ -76,12 +69,9 @@ function isSurpriseEnabled() {
 
 function syncExperimentalAvailability() {
   var hasExperimental = hasExperimentalFeaturesEnabled();
-  var aiEnabled = isExperimentalAiEnabled();
   var surpriseEnabled = isSurpriseEnabled();
   $('.experimental-menu-button').toggle(hasExperimental);
-  $('#ai-inline-generate').closest('.exp-card').toggle(aiEnabled);
   $('#sm-inline-launch').closest('.exp-card').toggle(surpriseEnabled);
-  $('#footer-actions-panel .open-ai-lesson-tool').toggle(aiEnabled);
   $('#footer-actions-panel .open-surprise-tool').toggle(surpriseEnabled);
   if (!hasExperimental && appMode === 'experimental') {
     appMode = 'texts';
@@ -224,14 +214,6 @@ $('.open-surprise-tool').off('click').on('click', function (event) {
     .withSuccessHandler(function () { showSidebarToast('Launching Surprise Me…'); })
     .withFailureHandler(function () { showSidebarNotice('Surprise Me is enabled, but its workflow is not yet wired in this build.'); })
     .surpriseMeHTML();
-});
-
-// AI Shiur was detached from the shipped add-on — see docs/ai-lesson/DESIGN.md.
-// The button that used to trigger it stays hidden (preferences-state.html
-// disables it) but this inert handler guards against a direct click on a
-// stale DOM.
-$('.open-ai-lesson-tool').off('click').on('click', function (event) {
-  if (event) event.preventDefault();
 });
 
 $('#open-preferences-experimental').off('click').on('click', function (event) {

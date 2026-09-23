@@ -10,11 +10,16 @@ fails if anything drifts from it.
 
 ## Why this exists at all
 
-Apps Script gives you nothing to hang a version on. `appsscript.json` has no
-version field, and `clasp push` overwrites the head deployment in place — there
-is no artifact, no tag baked into the bundle, no registry entry. If a user
-reports "the linker stopped finding my Rambam citations", nothing in the
-deployed code says which build they are on.
+Apps Script gives you nothing meaningful to hang a version on. `appsscript.json`
+has no version field. `clasp push` overwrites the project's HEAD in place, and
+HEAD is only what test deployments run; users run a numbered script version
+(`clasp version`) chosen in the Marketplace SDK's App Configuration. Those
+numbers (1, 2, 3, …) say nothing about what changed, and nothing is baked into
+the bundle. If a user reports "the linker stopped finding my Rambam citations",
+nothing in the deployed code says which build they are on.
+
+So when you cut a release, describe the Apps Script version with the add-on
+version — `clasp version "v2.1.0"` — so the two can be matched later.
 
 So the version is a fact the repository asserts and keeps consistent, rather
 than one the platform records. That is fragile by construction, which is why it

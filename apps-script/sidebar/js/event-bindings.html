@@ -257,20 +257,7 @@ $(document).on('click', '.lang-filter-clear-chip', function (event) {
   }
 });
 
-// ── Experimental controls — chip groups, segmented controls, stepper ──────────
-
-// Read selected data-value from a chip/segmented radiogroup
-function expGetGroupValue(fieldAttr) {
-  return $('[data-field="' + fieldAttr + '"] [aria-checked="true"]').attr('data-value') || '';
-}
-
-// Select a chip or segment by data-value within its group
-function expSetGroupValue(fieldAttr, value) {
-  var $group = $('[data-field="' + fieldAttr + '"]');
-  $group.children('[aria-checked]').attr('aria-checked', 'false');
-  var $target = $group.children('[data-value="' + value + '"]');
-  if ($target.length) $target.attr('aria-checked', 'true');
-}
+// ── Experimental controls — card status, stepper ─────────────────────────────
 
 // Set busy state on an exp-card
 function expSetBusy($card, isBusy, loadingLabel, defaultLabel) {
@@ -297,29 +284,6 @@ function expSetStatusHTML($card, html, kind) {
   $s.html(html).removeClass('exp-error exp-success');
   if (kind) $s.addClass(kind);
 }
-
-// Chip group: click selects one chip, arrow keys navigate
-$(document).on('click', '.exp-chip-group .exp-chip', function () {
-  $(this).closest('.exp-chip-group').children('.exp-chip').attr('aria-checked', 'false');
-  $(this).attr('aria-checked', 'true');
-});
-$(document).on('keydown', '.exp-chip-group .exp-chip', function (e) {
-  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft' &&
-      e.key !== 'ArrowDown'  && e.key !== 'ArrowUp') return;
-  e.preventDefault();
-  var $chips = $(this).closest('.exp-chip-group').children('.exp-chip');
-  var idx = $chips.index(this);
-  var next = (e.key === 'ArrowRight' || e.key === 'ArrowDown')
-    ? (idx + 1) % $chips.length
-    : (idx - 1 + $chips.length) % $chips.length;
-  $chips.eq(next).trigger('click').trigger('focus');
-});
-
-// Segmented control: same radio pattern
-$(document).on('click', '.exp-segmented .exp-seg-btn', function () {
-  $(this).closest('.exp-segmented').children('.exp-seg-btn').attr('aria-checked', 'false');
-  $(this).attr('aria-checked', 'true');
-});
 
 // Stepper: decrement
 $(document).on('click', '#sm-count-dec', function () {
@@ -404,15 +368,6 @@ $(document).on('click', '.restore-corpus-menu-item', function (event) {
   var corpusKey = $(this).attr('data-corpus-key');
   if (!corpusKey) return;
   toggleCorpusVisibility(corpusKey);
-});
-
-// AI Shiur was detached from the shipped add-on; see reference/ai-lesson/ and
-// docs/ai-lesson/DESIGN.md. The previous `#ai-inline-generate` click handler
-// called `generateAiLessonDraft` against a server function that no longer
-// exists. The corresponding sidebar-experimental UI has been neutralized; if
-// a stale DOM still surfaces the button, this no-op handler keeps it quiet.
-$('#ai-inline-generate').off('click').on('click', function (event) {
-  if (event) event.preventDefault();
 });
 
 $(document).on('click', '.reset-session-overrides-button', function () {

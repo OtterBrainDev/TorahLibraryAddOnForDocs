@@ -248,7 +248,7 @@
             </div>
             <div class="source-card-actions">
               <button type="button" class="source-card-sefaria-btn" id="source-card-sefaria" disabled aria-label="Open on Sefaria" title="Open on Sefaria">
-                <img src="https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png" alt="" class="open-sefaria-icon">
+                <span class="open-sefaria-icon" aria-hidden="true"></span>
               </button>
             </div>
           </div>
@@ -388,70 +388,6 @@
             </div>
           </div>
 
-          <!-- AI Shiur card -->
-          <div class="exp-card" id="exp-card-shiur">
-            <div class="exp-card-header">
-              <h3 class="exp-card-title"><span aria-hidden="true">🤖</span> AI Shiur</h3>
-              <span class="exp-badge" title="This is an experimental feature — output may vary.">⚗ Beta</span>
-            </div>
-            <p class="exp-card-desc">Generates a shiur outline and inserts it into your document at the cursor.</p>
-            <div class="exp-form">
-              <div class="exp-field">
-                <label class="exp-label" for="ai-inline-topic">Topic or reference <span class="exp-required" aria-label="required">*</span></label>
-                <input id="ai-inline-topic" type="text" class="exp-input" placeholder="Berakhot 2a, teshuvah, gratitude…" autocomplete="off" aria-required="true" aria-describedby="ai-topic-error">
-                <p class="exp-field-error" id="ai-topic-error" role="alert" hidden></p>
-              </div>
-              <div class="exp-field">
-                <p class="exp-label" id="ai-audience-label">Audience</p>
-                <div class="exp-chip-group" role="radiogroup" aria-labelledby="ai-audience-label" data-field="ai-audience">
-                  <button type="button" role="radio" class="exp-chip" aria-checked="true"  data-value="Adult learners">Adults</button>
-                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="High school students">High school</button>
-                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Intro / beginners">Beginner</button>
-                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Educators">Educators</button>
-                </div>
-              </div>
-              <div class="exp-field">
-                <p class="exp-label" id="ai-style-label">Style</p>
-                <div class="exp-chip-group" role="radiogroup" aria-labelledby="ai-style-label" data-field="ai-style">
-                  <button type="button" role="radio" class="exp-chip" aria-checked="true"  data-value="Interactive shiur">Interactive</button>
-                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Source-sheet chavruta">Chavruta</button>
-                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Text-study seminar">Seminar</button>
-                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Accessible intro session">Intro</button>
-                  <button type="button" role="radio" class="exp-chip" aria-checked="false" data-value="Drash">Drash</button>
-                </div>
-              </div>
-              <details class="exp-advanced">
-                <summary class="exp-advanced-toggle">More options</summary>
-                <div class="exp-advanced-content">
-                  <div class="exp-field">
-                    <p class="exp-sublabel">LENGTH</p>
-                    <div class="exp-segmented" role="radiogroup" aria-label="Lesson length" data-field="ai-length">
-                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="25">Short</button>
-                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="true"  data-value="45">Standard</button>
-                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="70">Long</button>
-                    </div>
-                  </div>
-                  <div class="exp-field">
-                    <p class="exp-sublabel">LANGUAGE</p>
-                    <div class="exp-segmented" role="radiogroup" aria-label="Language balance" data-field="ai-language">
-                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="he">Hebrew</button>
-                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="true"  data-value="balanced">Balanced</button>
-                      <button type="button" role="radio" class="exp-seg-btn" aria-checked="false" data-value="en">English</button>
-                    </div>
-                  </div>
-                  <div class="exp-field exp-field-toggle">
-                    <label class="exp-toggle-label" for="ai-inline-discussion">Include discussion questions</label>
-                    <input type="checkbox" id="ai-inline-discussion" class="exp-toggle" role="switch" checked>
-                  </div>
-                </div>
-              </details>
-            </div>
-            <div class="exp-action-row">
-              <button type="button" id="ai-inline-generate" class="exp-action-btn">Generate &amp; Insert</button>
-            </div>
-            <p class="exp-status" id="ai-inline-status" role="status" aria-live="polite"></p>
-          </div>
-
           <!-- Surprise Me card -->
           <div class="exp-card" id="exp-card-surprise">
             <div class="exp-card-header">
@@ -580,7 +516,6 @@
         <button type="button" class="footer-tool-button insert-from-selection-tool" title="Insert from Selection" aria-label="Insert Source from Selection"><span class="tool-icon-stack"><span class="sel-icon" aria-hidden="true">Sel</span><span class="tool-arrow">→</span><span class="sefaria-badge samekh" aria-hidden="true">ס</span></span></button>
         <button type="button" class="footer-tool-button open-divine-names-tool" title="Transform Divine Names" aria-label="Transform Divine Names"><span class="tool-icon-stack"><span class="samekh-sized">ה</span><span class="tool-arrow">→</span><span class="samekh-sized">ש</span></span></button>
         <button type="button" class="footer-tool-button open-linker-tool" title="Link Texts with Sefaria" aria-label="Link Texts with Sefaria"><span class="tool-icon-stack"><span class="link-emoji">🔗</span><span class="tool-arrow">→</span><span class="sefaria-badge samekh" aria-hidden="true">ס</span></span></button>
-        <button type="button" class="footer-tool-button open-ai-lesson-tool" title="AI Shiur" aria-label="AI Shiur"><span class="footer-icon">🧠</span></button>
         <button type="button" class="footer-tool-button open-surprise-tool" title="Surprise Me" aria-label="Surprise Me" style="display:none;"><span class="footer-icon">🎲</span></button>
       </div>
       <div class="footer footer-inline">

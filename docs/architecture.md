@@ -56,23 +56,39 @@ QC check (see `pre_clasp_qc.sh` step 6).
   and the `css/` tokens and components.
 - **`preferences.html`** — preferences dialog. Composes `preferences/css`
   and `preferences/js`.
-- **`ai_lesson.html`** — AI lesson generator dialog (scheduled for
-  detachment in Stage 4; will be preserved under `reference/ai-lesson/`
-  rather than shipped).
 - **`surprise-me.html`** — "surprise me" random-text dialog.
 - **`help-modal.html`**, **`feedback-modal.html`**,
   **`session-library-modal.html`**, **`gematriya-count.html`**,
-  **`release-notes.html`** — standalone modal dialogs, each its own
-  scope.
+  **`release-notes.html`**, **`linker-results.html`** — standalone modal
+  dialogs, each its own scope.
 
 ## Server files
 
-- `apps-script/Code.gs` — the main server file. Menu, preferences,
-  Sefaria fetching, document insertion, text processing, sidebar
-  bootstrap. Scheduled to be split across `apps-script/server/*.gs`
-  in Stage 3.
-- `apps-script/AiLessonGateway.gs` — signed-HMAC gateway for the
-  Merkaz AI endpoint. Scheduled for detachment in Stage 4.
+- `apps-script/server/*.gs` — server logic, one file per domain.
+  All `.gs` files share one global scope at runtime, so the split is
+  organizational; `pre_clasp_qc.sh` rejects basename collisions.
+  - `menu.gs`, `menu-layout.gs` — the add-on menu (customizable from
+    Preferences → Menu Bar), sidebar bootstrap, and dialog launchers.
+  - `preferences.gs` — the `SETTINGS` list, `getDefaultPreferences()`,
+    account preferences (`UserProperties`) and sidebar session state
+    (`CacheService`).
+  - `sefaria-fetch.gs`, `search.gs`, `lexicon.gs`, `sheets.gs` — calls
+    to Sefaria's API (texts, search, dictionary, source sheets).
+  - `insertion.gs` — writing sources into the document, including
+    typography, attribution and multi-translation inserts.
+  - `document-actions.gs` — Link Texts with Sefaria, Transform Divine
+    Names, Insert Source from Selection, Unlink.
+  - `linker-prefilter.gs`, `citation-abbreviations.gs` — the local
+    citation scan that limits what the linker uploads, and traditional
+    citation forms.
+  - `text-processing.gs` — Hebrew display filters and divine-name
+    replacement.
+  - `utils.gs` — small shared helpers.
+- `apps-script/triggers.gs` — the `onInstall` / `onOpen` simple
+  triggers. Kept at the project root deliberately (see its header).
+- The AI lesson feature (formerly `AiLessonGateway.gs`) is detached:
+  its source is preserved under `reference/ai-lesson/`, which is not
+  pushed, and its sidebar UI on the OtterBrainDev `ai-shiur` branch.
 - `apps-script/attribution.gs` — dual-mode (server + Node test) pure
   helper for English translation attribution lines.
 - `apps-script/gematriya.gs` — gematriya numerals.
@@ -86,7 +102,8 @@ QC check (see `pre_clasp_qc.sh` step 6).
 ## Storage layers
 
 1. **`UserProperties`** (account-scoped, persistent). Holds every
-   user preference listed in the `SETTINGS` array in `Code.gs` — fonts,
+   user preference listed in the `SETTINGS` array in
+   `server/preferences.gs` — fonts,
    filters, divine-name replacement choices, display mode defaults.
    Migrations live in `apps-script/migrations.gs` and run on `onOpen`
    and first sidebar load, keyed by `prefs_schema_version`.
@@ -94,11 +111,11 @@ QC check (see `pre_clasp_qc.sh` step 6).
    per-session sidebar state — the in-progress selected result,
    temporary preference overrides, session-library entries. Accessed
    via `getSidebarSessionState` / `setSidebarSessionState` /
-   `clearSidebarSessionState` (`Code.gs`). This is the primitive a
+   `clearSidebarSessionState` (`server/preferences.gs`). This is the primitive a
    future AI-key Route-3 flow would reuse.
-3. **`Script Properties`** (deployment-scoped, persistent, admin-only).
-   Holds the Merkaz gateway shared secret, base URL, and cooldown
-   tuning. Never read from a client-exposed function.
+3. **`Script Properties`** — not used. (They held the AI gateway's
+   shared secret before that feature was detached.) The add-on stores no
+   credential anywhere; see hard rule #4 in `CLAUDE.md`.
 
 ## RPC surface (client → server)
 
@@ -160,27 +177,3 @@ covers, update the guardrail in the same commit. If a guardrail is
 in the way, ask whether the change is really correct before disabling
 the guardrail. These exist because the same bugs have landed more
 than once.
-
-## Follow-up: full Code.gs domain split
-
-The cleanup plan called for splitting `Code.gs` into per-domain files
-under `apps-script/server/*.gs` (menu / preferences / sefaria-fetch /
-text-processing / insertion / search / sheets). After Stage 4 removes
-the ~700-line AI block, `Code.gs` will be roughly 2,700 lines and the
-pressure to split drops significantly. The preferences-domain
-functions are scattered across multiple disjoint blocks (see git-blame
-or the list starting near `function onInstall` on line 98 and the
-cluster from `function getDefaultPreferences` around line 1424
-onward), so a clean split requires real surgery.
-
-This split is deferred to a later pass. It is purely a structural
-refactor — no behavior change — so the guardrails above will catch any
-misstep when it does happen. When picking it up:
-
-1. Move one domain at a time, each in its own commit.
-2. Start with the most self-contained: `text-processing.gs` (divine
-   names, Hebrew display, formatDataForPesukim, formatting helpers).
-3. Verify `npm test` and `bash pre_clasp_qc.sh apps-script` after each
-   domain move; never batch two together.
-4. Watch for hidden dependencies on execution order of top-level
-   declarations (only `SETTINGS` in this file, at line 35).

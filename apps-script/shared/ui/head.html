@@ -15,12 +15,13 @@
   <img src>, so that was reachable. sanitizeSourceHtml (shared/ui/dom.html)
   strips such markup before it is rendered; this is the backstop for any render
   path added later that forgets to call it, and it covers the source-sheet and
-  lexicon surfaces too. docs/PRIVACY.md states the add-on contacts no host other
-  than sefaria.org — between these two, that is enforced rather than promised.
+  lexicon surfaces too. docs/PRIVACY.md §2.2 lists every host these pages load
+  from — between these two, that list is enforced rather than promised. A new
+  image host belongs in both places.
 
   If you widen this, verify in a real Docs sidebar, not just in preview.
 -->
-<meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://the-merkaz.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
+<meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
 <base target="_top">
 <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
 <!--
@@ -28,7 +29,7 @@
 
   Was 1.9.1 (2013), loaded protocol-relative and unpinned. That version carries
   known XSS-relevant advisories, and it is the code interpreting every
-  $(...).html() call in this add-on — jQuery's .html() executes script elements
+  jQuery .html() call in this add-on — jQuery's .html() executes script elements
   in the markup it is given, which plain innerHTML does not, so the version that
   implements it matters more here than the raw call count suggests.
 

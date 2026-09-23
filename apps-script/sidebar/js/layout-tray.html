@@ -103,6 +103,7 @@ function renderRecentSources() {
       '</li>';
   }).join('');
 
+  // Markup built above; every dynamic value (label, category, ref, list name) goes through escapeHTML.
   $('.recent-sources-list').html(html);
   $section.show();
 }

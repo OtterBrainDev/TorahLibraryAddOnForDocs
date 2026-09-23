@@ -32,6 +32,7 @@ function setResultsLoading(isLoading) {
         "<div class='skeleton-bar skeleton-meta'></div>" +
         "</li>";
     }
+    // Static skeleton markup; nothing interpolated.
     $('.library-results').html(skeletonHtml);
     $('.search-results').empty();
   } else {
@@ -302,6 +303,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     setInsertButtonState(!!lexItem);
     $('#open-on-sefaria').prop('disabled', true);
     if (lexItem) {
+      // buildLexiconPreviewHtml escapes the headword, source, morphology and body text.
       $('.suggestions').html(buildLexiconPreviewHtml(lexItem));
     }
     updateModeDependentSections();
@@ -314,6 +316,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
   setInsertButtonState(false);
   $('#open-on-sefaria').prop('disabled', true);
   updatePesukimAvailability(null);
+  // buildPreviewLoadingHTML escapes its message.
   $('.suggestions').html(buildPreviewLoadingHTML('Loading preview…'));
 
   google.script.run.withSuccessHandler(function (response) {
@@ -344,6 +347,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     clearVersionSelectors();
     updatePesukimAvailability(null);
     updateActionabilityUI(nodeState);
+    // buildNonInsertableMessage escapes the ref (buildPreviewMeta) and the prompt.
     $('.suggestions').html("<br>" + buildNonInsertableMessage(response));
   }).withFailureHandler(function () {
     if (requestId !== latestResolveRequestId) return;
@@ -408,7 +412,7 @@ function buildVoicesPreviewHtml(item) {
   var accentAttr = accent ? " data-accent='" + accent + "'" : '';
 
   var openBtn = item.url
-    ? "<a class='voice-preview-open-btn' href='" + escapeHTML(item.url) + "' target='_blank' rel='noopener' aria-label='Open " + title + " on Sefaria'><img src='https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png' alt='' class='open-sefaria-icon'></a>"
+    ? "<a class='voice-preview-open-btn' href='" + escapeHTML(item.url) + "' target='_blank' rel='noopener' aria-label='Open " + title + " on Sefaria'><span class='open-sefaria-icon' aria-hidden='true'></span></a>"
     : '';
   var copyBtn = "<button type='button' class='voice-preview-copy-btn' aria-label='Copy citation to clipboard'>📋</button>";
 

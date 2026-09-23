@@ -113,7 +113,9 @@ function getDefaultPreferences() {
     hebrew_font: "",
     hebrew_font_size: "",
     hebrew_font_style: "normal",
-    include_translation_source_info: false,
+    // Credit line (edition and license) under every inserted source. On by
+    // default: many Sefaria texts are CC-BY / CC-BY-NC and require attribution.
+    include_translation_source_info: true,
     include_transliteration_default: false,
     insert_citation_default: false,
     insert_sefaria_link_default: true,
@@ -279,15 +281,36 @@ function getPreferences() {
   return getAccountPreferences();
 }
 
+// Apps Script caps a single property value at 9 KB. Anything longer would fail
+// inside setProperty anyway; rejecting it up front keeps the failure explicit.
+const PREFERENCE_VALUE_MAX_CHARS_ = 9000;
+
+// setPreferences is reachable from google.script.run, so its argument is
+// untrusted: only keys in SETTINGS are stored (nothing else is ever read back
+// through this path), and only primitive values of bounded size. Without this
+// a caller could write internal state that lives in the same UserProperties —
+// `linker_upload_acknowledged` (skips the privacy confirmation before the
+// first upload), `prefs_schema_version` (skips or re-runs migrations) — or
+// fill the store with junk keys.
 function setPreferences(preferenceObject) {
   const userProperties = PropertiesService.getUserProperties();
-  for (const property in (preferenceObject || {})) {
+  const input = (preferenceObject && typeof preferenceObject === 'object') ? preferenceObject : {};
+  Object.keys(input).forEach(function (property) {
+    if (SETTINGS.indexOf(property) < 0) return;
+    const value = input[property];
+    const type = typeof value;
+    if (value === null || (type !== 'string' && type !== 'boolean' && type !== 'number')) return;
+    const stored = String(value);
+    if (stored.length > PREFERENCE_VALUE_MAX_CHARS_) {
+      Logger.log(`setPreferences: value for ${property} exceeds ${PREFERENCE_VALUE_MAX_CHARS_} chars; not saved.`);
+      return;
+    }
     try {
-      userProperties.setProperty(property, preferenceObject[property]);
+      userProperties.setProperty(property, stored);
     } catch (error) {
       Logger.log(`The system has made a mach'ah: ${error.message}`);
     }
-  }
+  });
   return getAccountPreferences();
 }
 

@@ -63,45 +63,59 @@ function readPolicy() {
   const html = fs.readFileSync(DOM_PARTIAL, 'utf8');
   const context = {};
   vm.createContext(context);
-  const elements = html.match(/var SANITIZE_DROP_ELEMENTS_ = \[[\s\S]*?\.join\(','\);/);
-  const attributes = html.match(/var SANITIZE_DROP_ATTRIBUTES_ = \[[\s\S]*?\];/);
-  assert.ok(elements, 'expected SANITIZE_DROP_ELEMENTS_ in dom.html');
-  assert.ok(attributes, 'expected SANITIZE_DROP_ATTRIBUTES_ in dom.html');
-  vm.runInContext(elements[0] + '\n' + attributes[0], context);
+  const allowed = html.match(/var SANITIZE_ALLOWED_ELEMENTS_ = \[[\s\S]*?\];/);
+  const dropped = html.match(/var SANITIZE_DROP_WITH_CONTENT_ = \[[\s\S]*?\];/);
+  const attributes = html.match(/var SANITIZE_ALLOWED_ATTRIBUTES_ = \[[\s\S]*?\];/);
+  assert.ok(allowed, 'expected SANITIZE_ALLOWED_ELEMENTS_ in dom.html');
+  assert.ok(dropped, 'expected SANITIZE_DROP_WITH_CONTENT_ in dom.html');
+  assert.ok(attributes, 'expected SANITIZE_ALLOWED_ATTRIBUTES_ in dom.html');
+  vm.runInContext([allowed[0], dropped[0], attributes[0]].join('\n'), context);
   return {
-    elements: String(context.SANITIZE_DROP_ELEMENTS_).split(','),
-    attributes: Array.from(context.SANITIZE_DROP_ATTRIBUTES_),
+    allowed: Array.from(context.SANITIZE_ALLOWED_ELEMENTS_),
+    dropped: Array.from(context.SANITIZE_DROP_WITH_CONTENT_),
+    attributes: Array.from(context.SANITIZE_ALLOWED_ATTRIBUTES_),
   };
 }
 
-test('policy: every element that can fetch a subresource or execute is dropped', () => {
-  const { elements } = readPolicy();
+test('policy: no element that can fetch, execute, or link is allowlisted', () => {
+  const { allowed } = readPolicy();
 
-  // img and svg are the ones that matter most here: Sefaria's own allowlist
-  // permits <img src>, so this is the reachable case, not a theoretical one.
-  ['img', 'script', 'iframe', 'object', 'embed', 'link', 'svg', 'video', 'audio', 'source']
+  ['img', 'script', 'iframe', 'object', 'embed', 'link', 'svg', 'math', 'video', 'audio',
+    'source', 'a', 'form', 'input', 'button', 'style', 'template', 'details', 'table']
     .forEach((tag) => {
-      assert.ok(elements.includes(tag), `${tag} must be in the drop list`);
+      assert.ok(!allowed.includes(tag), `${tag} must NOT be allowlisted`);
     });
 });
 
-test('policy: URL-bearing attributes are dropped', () => {
+test('policy: raw-text and foreign-content elements are dropped with their content', () => {
+  const { dropped } = readPolicy();
+
+  // These are the mutation-XSS vectors: their content is parsed by different
+  // rules on the first parse and on the caller's re-parse, so unwrapping them
+  // (keeping their content) is not safe.
+  ['script', 'style', 'template', 'noscript', 'svg', 'math', 'xmp', 'noembed', 'noframes',
+    'plaintext', 'textarea', 'title', 'iframe', 'select']
+    .forEach((tag) => {
+      assert.ok(dropped.includes(tag), `${tag} must be dropped with its content`);
+    });
+});
+
+test('policy: only inert attributes are allowlisted', () => {
   const { attributes } = readPolicy();
 
-  ['src', 'href', 'srcset', 'formaction', 'background', 'poster', 'style']
-    .forEach((attribute) => {
-      assert.ok(attributes.includes(attribute), `${attribute} must be in the drop list`);
-    });
+  // No handlers, no URLs, no style, no id (DOM clobbering), no data-* (the
+  // sidebar's delegated click handlers read data-ref).
+  assert.deepEqual([...attributes].sort(), ['class', 'dir', 'lang']);
 });
 
-test('policy: the typography Sefaria relies on is NOT dropped', () => {
-  const { elements } = readPolicy();
+test('policy: the typography Sefaria relies on IS allowlisted', () => {
+  const { allowed } = readPolicy();
 
   // A sanitizer that ate these would pass every security assertion above and
   // still destroy the feature. Footnotes are <sup>/<i class="footnote">.
   ['b', 'i', 'em', 'strong', 'sup', 'sub', 'span', 'br', 'small', 'big', 'u']
     .forEach((tag) => {
-      assert.ok(!elements.includes(tag), `${tag} must NOT be dropped`);
+      assert.ok(allowed.includes(tag), `${tag} must be allowlisted`);
     });
 });
 
@@ -177,7 +191,7 @@ describeDom('keeps an image alt text rather than silently dropping the content',
   assert.ok(!out.includes('evil.example'));
 });
 
-describeDom('removes event-handler and URL-bearing attributes from surviving tags', () => {
+describeDom('removes every non-allowlisted attribute from surviving tags', () => {
   const { sanitizeSourceHtml } = load();
 
   const out = sanitizeSourceHtml(
@@ -188,6 +202,10 @@ describeDom('removes event-handler and URL-bearing attributes from surviving tag
   assert.ok(!/onmouseover/i.test(out), `kept onmouseover: ${out}`);
   assert.ok(!/evil\.example/.test(out), `kept a URL in style: ${out}`);
   assert.ok(out.includes('t'), 'lost the text');
+
+  const clobber = sanitizeSourceHtml('<span id="appConfig" data-ref="Genesis 1:1" name="x" title="t">u</span>');
+  assert.ok(!/\b(id|data-ref|name|title)=/.test(clobber), `kept a non-allowlisted attribute: ${clobber}`);
+  assert.ok(clobber.includes('u'), 'lost the text');
 });
 
 describeDom('handles empty and non-string input', () => {
@@ -222,4 +240,40 @@ describeDom('an empty parse result is not mistaken for successful sanitizing', (
 
   assert.ok(out.includes('plain text'), `content was discarded: ${out}`);
   assert.ok(out.includes('<b>'), `formatting was discarded: ${out}`);
+});
+
+// Mutation XSS. The earlier strip-list sanitizer was bypassed in real Chromium
+// by the first payload below: the parser foster-parents <mglyph> out of the
+// table, the serializer writes <xmp>'s content as raw text, and the caller's
+// re-parse (jQuery .html()/.append()) reads it back as an <img onerror>.
+// linkedom does not implement foster parenting or foreign content, so these
+// tests cannot reproduce the browser mutation itself; what they pin is that
+// every element involved is removed, so there is nothing left to mutate.
+describeDom('drops foreign-content and raw-text elements that enable mutation XSS', () => {
+  const { sanitizeSourceHtml } = load();
+
+  const cases = [
+    '<b>match</b> <math><mi><table><mglyph><xmp></math><img src=x onerror=alert(1)>',
+    '<svg></p><style><a id="</style><img src=1 onerror=alert(1)>">',
+    '<noembed><img title="</noembed><img src onerror=alert(1)>"></noembed>',
+    '<noframes><img title="</noframes><img src onerror=alert(1)>"></noframes>',
+    '<xmp></xmp><img src=x onerror=alert(1)>',
+    '<details open ontoggle=alert(1)>z</details>',
+  ];
+
+  cases.forEach((input) => {
+    const out = sanitizeSourceHtml(input);
+    assert.ok(!/<(math|svg|mglyph|xmp|noembed|noframes|style|img|details)\b/i.test(out), `kept a vector for ${input}: ${out}`);
+    assert.ok(!/\son\w+=/i.test(out.replace(/&lt;[^]*?&gt;/g, '')), `kept a handler for ${input}: ${out}`);
+  });
+});
+
+describeDom('unwraps unknown containers but keeps their text', () => {
+  const { sanitizeSourceHtml } = load();
+
+  const out = sanitizeSourceHtml('<font color="red"><b>kept</b></font> <custom-tag>also</custom-tag>');
+
+  assert.ok(out.includes('<b>kept</b>'), `lost allowlisted child: ${out}`);
+  assert.ok(out.includes('also'), `lost text: ${out}`);
+  assert.ok(!/<(font|custom-tag)\b/i.test(out), `kept an unknown element: ${out}`);
 });

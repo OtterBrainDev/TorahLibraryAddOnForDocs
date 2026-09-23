@@ -666,6 +666,7 @@ function syncCompactTranslationLanguageUI() {
     label = selected.slice(0, 2).map(function(lang){ return labelMap[lang] || String(lang || '').toUpperCase(); }).join(', ');
     if (selected.length > 2) label += ' +' + (selected.length - 2);
   }
+  // Static spans plus the language label, which goes through escapeHTML.
   $('#translation-language-toggle').html(
     '<span class="latin-part" aria-hidden="true">A</span>' +
     '<span class="alef-part" aria-hidden="true">א</span>' +
