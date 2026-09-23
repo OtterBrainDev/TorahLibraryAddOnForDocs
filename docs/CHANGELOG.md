@@ -97,6 +97,11 @@ Preference schema **13** — upgrading users are migrated on first open.
   skipped where that is unset, so it behaves correctly in both OtterBrainDev
   and TheMerkazDev. **OtterBrainDev must set `CLASP_SCRIPT_ID` to keep
   deploying** — it no longer comes from `.clasp.json`.
+- The deploy's `CLASP_TOKEN` may come from either clasp 2 or clasp 3's
+  `clasp login` (it only accepted clasp 3's before), and
+  `tools/clasp/README.md` walks through setting it up. Until it is set up, the
+  workflow is skipped instead of failing on every push to `master`, as it had
+  been.
 - Deployment is described as users experience it: `clasp push` updates HEAD for
   test deployments only; users get the version selected in the Marketplace SDK.
 

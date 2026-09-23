@@ -119,41 +119,53 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
-          printf '%s' "${CLASP_TOKEN}" | base64 -d > "${HOME}/.clasprc_v3.json"
+          # Remove the decoded input whether or not the conversion succeeds.
+          trap 'rm -f "${HOME}/.clasprc_in.json"' EXIT
+          printf '%s' "${CLASP_TOKEN}" | base64 -d > "${HOME}/.clasprc_in.json"
           python3 <<'PY'
           import json, os
 
           home = os.path.expanduser('~')
-          with open(f'{home}/.clasprc_v3.json') as f:
-              v3 = json.load(f)
+          with open(f'{home}/.clasprc_in.json') as f:
+              creds = json.load(f)
 
-          tok = v3['tokens']['default']
-          v2 = {
-              "token": {
-                  "access_token":  tok.get('access_token'),
-                  "refresh_token": tok.get('refresh_token'),
-                  "scope":         tok.get('scope', ''),
-                  "token_type":    tok.get('token_type', 'Bearer'),
-                  "expiry_date":   tok.get('expiry_date'),
-                  "id_token":      tok.get('id_token'),
-              },
-              "oauth2ClientSettings": {
-                  "clientId":     tok['client_id'],
-                  "clientSecret": tok['client_secret'],
-                  "redirectUri":  "http://localhost"
-              },
-              "isLocalCreds": False
-          }
-          v2['token'] = {k: v for k, v in v2['token'].items() if v is not None}
+          # CLASP_TOKEN is the base64 of ~/.clasprc.json from `clasp login`.
+          # clasp 2 (what tools/clasp pins) writes {"token", "oauth2ClientSettings"}
+          # and is used as is. clasp 3 writes {"tokens": {"default": ...}}, which
+          # is converted to the clasp 2 shape. See tools/clasp/README.md.
+          if 'token' in creds and 'oauth2ClientSettings' in creds:
+              v2 = creds
+              source = 'clasp 2'
+          elif 'tokens' in creds and 'default' in creds['tokens']:
+              tok = creds['tokens']['default']
+              v2 = {
+                  "token": {
+                      "access_token":  tok.get('access_token'),
+                      "refresh_token": tok.get('refresh_token'),
+                      "scope":         tok.get('scope', ''),
+                      "token_type":    tok.get('token_type', 'Bearer'),
+                      "expiry_date":   tok.get('expiry_date'),
+                      "id_token":      tok.get('id_token'),
+                  },
+                  "oauth2ClientSettings": {
+                      "clientId":     tok['client_id'],
+                      "clientSecret": tok['client_secret'],
+                      "redirectUri":  "http://localhost"
+                  },
+                  "isLocalCreds": False
+              }
+              v2['token'] = {k: v for k, v in v2['token'].items() if v is not None}
+              source = 'clasp 3, converted'
+          else:
+              raise SystemExit('::error::CLASP_TOKEN is not a clasp credential file (expected the base64 of ~/.clasprc.json after `clasp login`).')
 
           with open(f'{home}/.clasprc.json', 'w') as f:
               json.dump(v2, f)
 
           # Key names only — never values.
-          print('Converted v3 -> v2 credential format. Token keys:', sorted(v2['token']))
+          print(f'Credential format: {source}. Token keys:', sorted(v2['token']))
           PY
           chmod 600 "${HOME}/.clasprc.json"
-          rm -f "${HOME}/.clasprc_v3.json"
 
       - name: Select the target script project
         env:
