@@ -170,6 +170,7 @@ Users can reorder, group and hide items in **Preferences → Menu Bar**.
 ## Demo and walkthrough
 
 - [Google Docs walkthrough](./docs/google-docs-walkthrough.md)
+- [Live walkthroughs](./docs/walkthroughs/README.md) — five scripts for live demos: a stress test, a developer tour, a power-user tour, a guide for users of the original add-on, and a five-minute first run.
 
 
 ## Repository structure
