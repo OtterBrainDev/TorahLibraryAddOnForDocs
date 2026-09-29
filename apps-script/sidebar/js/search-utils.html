@@ -159,31 +159,135 @@ function isLikelyHebrewScriptInput(value) {
   return /[\u0590-\u05FF]/.test(normalized) && !/[A-Za-z]/.test(normalized);
 }
 
+// Title punctuation is not something a reader can be expected to reproduce.
+// Sefaria's title is "The Torah; A Women's Commentary" \u2014 with a SEMICOLON \u2014 and
+// the exact-match lookup used to require exactly that, so "The Torah, A Women's
+// Commentary", "The Torah: ..." and "The Torah A Womens ..." all found nothing.
+// A loose key compares titles by their words alone: case folded, apostrophes
+// and niqqud dropped (Women's = Womens), every other run of punctuation or
+// space collapsed to one space.
+var LOOSE_KEY_DROP_RE_ = /['"`\u2018\u2019\u201C\u201D\u02BC\u05F3\u05F4\u0591-\u05C7]/;
+var LOOSE_KEY_WORD_RE_ = /[0-9a-z\u00C0-\u024F\u05D0-\u05EA]/;
+
+/**
+ * @returns {{key: string, ends: number[]}} the loose key, and for each key
+ *   character the index in `value` just past the character that produced it,
+ *   so a match on the key can be mapped back onto what the reader typed.
+ */
+function buildLooseTitleKey_(value) {
+  var raw = String(value || '');
+  var key = '';
+  var ends = [];
+  for (var i = 0; i < raw.length; i++) {
+    var ch = raw.charAt(i).toLowerCase();
+    if (LOOSE_KEY_DROP_RE_.test(ch)) continue;
+    if (LOOSE_KEY_WORD_RE_.test(ch)) {
+      key += ch;
+      ends.push(i + 1);
+    } else if (key && key.charAt(key.length - 1) !== ' ') {
+      key += ' ';
+      ends.push(i + 1);
+    }
+  }
+  if (key.charAt(key.length - 1) === ' ') {
+    key = key.slice(0, -1);
+    ends.pop();
+  }
+  return { key: key, ends: ends };
+}
+
+// buildLooseTitleKey_ without the offset map, for keying the whole title list:
+// the same key, several times faster. search-input-normalization.test.js pins
+// that the two agree.
+var LOOSE_KEY_DROP_ALL_RE_ = /['"`\u2018\u2019\u201C\u201D\u02BC\u05F3\u05F4\u0591-\u05C7]/g;
+var LOOSE_KEY_BREAK_ALL_RE_ = /[^0-9a-z\u00C0-\u024F\u05D0-\u05EA]+/g;
+
+function looseTitleKey_(value) {
+  return String(value || '').toLowerCase()
+    .replace(LOOSE_KEY_DROP_ALL_RE_, '')
+    .replace(LOOSE_KEY_BREAK_ALL_RE_, ' ')
+    .trim();
+}
+
+// The title list is loaded once per sidebar; key it once, not per keystroke.
+var looseTitleIndexCache_ = { source: null, length: -1, entries: [] };
+
+function getLooseTitleIndex_() {
+  var list = Array.isArray(titles) ? titles : [];
+  if (looseTitleIndexCache_.source === list && looseTitleIndexCache_.length === list.length) {
+    return looseTitleIndexCache_.entries;
+  }
+  var entries = [];
+  for (var i = 0; i < list.length; i++) {
+    var title = String(list[i] || '').trim();
+    if (!title) continue;
+    // Keyed on the sheva-expanded form because every query is expanded before
+    // it gets here (see runUnifiedQuery).
+    var key = looseTitleKey_(title.indexOf("'") >= 0 ? expandShevaApostrophe(title) : title);
+    if (key) entries.push({ title: title, key: key });
+  }
+  looseTitleIndexCache_ = { source: list, length: list.length, entries: entries };
+  return entries;
+}
+
+/**
+ * Titles whose loose key starts with the query's \u2014 the as-you-type title list.
+ * Punctuation-blind, so "The Torah A Wom" still finds "The Torah; A Women's ...".
+ */
+function getLoosePrefixTitleMatches(queries, limit) {
+  var keys = (Array.isArray(queries) ? queries : [queries]).map(function (query) {
+    return buildLooseTitleKey_(query).key;
+  }).filter(Boolean);
+  if (!keys.length) return [];
+  var out = [];
+  var entries = getLooseTitleIndex_();
+  for (var i = 0; i < entries.length && out.length < limit; i++) {
+    for (var k = 0; k < keys.length; k++) {
+      if (entries[i].key.indexOf(keys[k]) === 0) {
+        out.push(entries[i].title);
+        break;
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Rewrite the title part of a reference to the catalogue's own spelling, so the
+ * direct lookup sends Sefaria a title it recognizes. The longest catalogue title
+ * whose words are a leading run of the query's words wins; what follows it
+ * (chapter, verse, a sub-section) is kept exactly as typed.
+ *
+ *   "the torah, a womens commentary, deuteronomy 29 9-14"
+ *     \u2192 "The Torah; A Women's Commentary, Deuteronomy 29 9-14"
+ */
 function normalizeLatinLookupTitleCase(value) {
   var input = String(value || '').trim();
   if (!input || !/[A-Za-z]/.test(input) || /[\u0590-\u05FF]/.test(input) || !Array.isArray(titles)) {
     return input;
   }
 
+  var query = buildLooseTitleKey_(input);
+  if (!query.key) return input;
   var lowerInput = input.toLowerCase();
-  var bestMatch = '';
-  var bestMatchLength = 0;
 
-  titles.forEach(function (title) {
-    var candidate = String(title || '').trim();
-    if (!candidate || !/[A-Za-z]/.test(candidate)) return;
-    var lowerCandidate = candidate.toLowerCase();
-    if (lowerInput !== lowerCandidate && lowerInput.indexOf(lowerCandidate + " ") !== 0 && lowerInput.indexOf(lowerCandidate + ":") !== 0) {
-      return;
-    }
-    if (candidate.length > bestMatchLength) {
-      bestMatch = candidate;
-      bestMatchLength = candidate.length;
+  var best = null;
+  var bestIsLiteral = false;
+  getLooseTitleIndex_().forEach(function (entry) {
+    if (!/[A-Za-z]/.test(entry.title)) return;
+    if (query.key !== entry.key && query.key.indexOf(entry.key + ' ') !== 0) return;
+    // Several catalogue spellings can share one loose key. Prefer the one the
+    // reader typed literally, so a query that already matched is left alone.
+    var isLiteral = lowerInput.indexOf(entry.title.toLowerCase()) === 0;
+    if (!best || entry.key.length > best.key.length ||
+        (entry.key.length === best.key.length && isLiteral && !bestIsLiteral)) {
+      best = entry;
+      bestIsLiteral = isLiteral;
     }
   });
 
-  if (!bestMatch) return input;
-  return bestMatch + input.slice(bestMatchLength);
+  if (!best) return input;
+  return best.title + input.slice(query.ends[best.key.length - 1]);
 }
 
 function mapSefariaRefSlugToLookupRef(slug) {
@@ -333,6 +437,74 @@ function levenshteinDistance(a, b) {
   return matrix[b.length][a.length];
 }
 
+/**
+ * levenshteinDistance(a, b) when it is at most `max`; otherwise any value
+ * greater than `max` (the computation stops as soon as that is certain).
+ */
+function levenshteinWithin_(a, b, max) {
+  a = String(a || '');
+  b = String(b || '');
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  if (!a) return b.length;
+  if (!b) return a.length;
+  // Runs over much of the title list on every search, so: typed arrays, char
+  // codes read once, and two rows instead of the full matrix.
+  var aLength = a.length;
+  var aCodes = new Uint16Array(aLength);
+  for (var c = 0; c < aLength; c++) aCodes[c] = a.charCodeAt(c);
+  var previous = new Uint16Array(aLength + 1);
+  var current = new Uint16Array(aLength + 1);
+  for (var j = 0; j <= aLength; j++) previous[j] = j;
+  for (var i = 1; i <= b.length; i++) {
+    var bCode = b.charCodeAt(i - 1);
+    current[0] = i;
+    var rowMin = i;
+    for (j = 1; j <= aLength; j++) {
+      var value = previous[j - 1] + (aCodes[j - 1] === bCode ? 0 : 1);
+      var deletion = previous[j] + 1;
+      var insertion = current[j - 1] + 1;
+      if (deletion < value) value = deletion;
+      if (insertion < value) value = insertion;
+      current[j] = value;
+      if (value < rowMin) rowMin = value;
+    }
+    if (rowMin > max) return max + 1;
+    var swap = previous;
+    previous = current;
+    current = swap;
+  }
+  return previous[aLength];
+}
+
+/**
+ * Character counts of a normalized string: a-z, 0-9, the Hebrew letters, and
+ * one bucket for anything else.
+ */
+function fuzzyCharHistogram_(text) {
+  var counts = [];
+  for (var k = 0; k < 64; k++) counts[k] = 0;
+  for (var i = 0; i < text.length; i++) {
+    var code = text.charCodeAt(i);
+    var bucket = 63;
+    if (code >= 97 && code <= 122) bucket = code - 97;
+    else if (code >= 48 && code <= 57) bucket = 26 + code - 48;
+    else if (code >= 0x05D0 && code <= 0x05EA) bucket = 36 + code - 0x05D0;
+    counts[bucket]++;
+  }
+  return counts;
+}
+
+/**
+ * A lower bound on the edit distance from two histograms: one edit changes the
+ * summed count difference by at most two. Much cheaper than the matrix, and
+ * enough to reject most of the title list outright.
+ */
+function fuzzyHistogramLowerBound_(left, right) {
+  var total = 0;
+  for (var k = 0; k < 64; k++) total += Math.abs(left[k] - right[k]);
+  return Math.ceil(total / 2);
+}
+
 // Tokens that carry no discriminating power in a Sefaria title. Dropping them
 // stops "A ... Commentary" from matching on "a" alone.
 var FUZZY_STOPWORDS_ = { a: true, an: true, the: true, of: true, on: true, to: true, in: true, and: true };
@@ -359,7 +531,7 @@ function fuzzyTokenMatches_(queryToken, titleTokens) {
     // near-miss that used to produce a dead end.
     if (Math.abs(titleToken.length - queryToken.length) <= 1 &&
         queryToken.length >= 4 &&
-        levenshteinDistance(queryToken, titleToken) <= 1) {
+        levenshteinWithin_(queryToken, titleToken, 1) <= 1) {
       return true;
     }
   }
@@ -396,6 +568,66 @@ function canonicalizeCitationAbbreviation(value) {
   });
 }
 
+// The suggester now runs on every search, not only on zero results, so the
+// per-title work that does not depend on the query (normalizing, tokenizing,
+// script detection) is done once per title list rather than per keystroke.
+var fuzzyTitleIndexCache_ = { source: null, length: -1, entries: [], vocabulary: [] };
+
+function getFuzzyTitleIndex_() {
+  var list = Array.isArray(titles) ? titles : [];
+  if (fuzzyTitleIndexCache_.source === list && fuzzyTitleIndexCache_.length === list.length) {
+    return fuzzyTitleIndexCache_;
+  }
+  var entries = [];
+  var seenToken = Object.create(null);
+  var vocabulary = [];
+  for (var i = 0; i < list.length; i++) {
+    var rawTitle = String(list[i] || '').trim();
+    if (!rawTitle) continue;
+    var normalized = normalizeFuzzyText(rawTitle);
+    if (!normalized) continue;
+    var tokens = fuzzyTokens_(normalized);
+    for (var t = 0; t < tokens.length; t++) {
+      if (!seenToken[tokens[t]]) {
+        seenToken[tokens[t]] = true;
+        vocabulary.push(tokens[t]);
+      }
+    }
+    entries.push({
+      rawTitle: rawTitle,
+      normalized: normalized,
+      histogram: fuzzyCharHistogram_(normalized),
+      tokens: tokens,
+      isHebrew: isLikelyHebrewScriptInput(rawTitle)
+    });
+  }
+  fuzzyTitleIndexCache_ = { source: list, length: list.length, entries: entries, vocabulary: vocabulary };
+  return fuzzyTitleIndexCache_;
+}
+
+/**
+ * For each query token, the set of title-list words it fuzzily matches
+ * (fuzzyTokenMatches_). Titles share a small vocabulary, so matching each word
+ * once and then testing titles by set lookup replaces a Levenshtein call per
+ * title per token.
+ */
+function buildQueryTokenMatchSets_(queryTokens, vocabulary) {
+  return queryTokens.map(function (queryToken) {
+    var set = Object.create(null);
+    for (var v = 0; v < vocabulary.length; v++) {
+      if (fuzzyTokenMatches_(queryToken, [vocabulary[v]])) set[vocabulary[v]] = true;
+    }
+    return set;
+  });
+}
+
+function titleHasTokenIn_(titleTokens, matchSet) {
+  for (var i = 0; i < titleTokens.length; i++) {
+    if (matchSet[titleTokens[i]]) return true;
+  }
+  return false;
+}
+
 /**
  * Last-resort pass: titles sharing SOME of the query's distinctive tokens.
  *
@@ -413,17 +645,16 @@ function getPartialOverlapSuggestions_(titlePart, queryLooksHebrew) {
   var queryTokens = fuzzyTokens_(titlePart);
   if (queryTokens.length < 2) return [];
 
+  var index = getFuzzyTitleIndex_();
+  var matchSets = buildQueryTokenMatchSets_(queryTokens, index.vocabulary);
   var results = [];
 
-  for (var i = 0; i < titles.length; i++) {
-    var rawTitle = String(titles[i] || '').trim();
-    if (!rawTitle) continue;
-    if (isLikelyHebrewScriptInput(rawTitle) !== queryLooksHebrew) continue;
-
-    var normalizedTitle = normalizeFuzzyText(rawTitle);
-    if (!normalizedTitle) continue;
-
-    var titleTokens = fuzzyTokens_(normalizedTitle);
+  for (var i = 0; i < index.entries.length; i++) {
+    var entry = index.entries[i];
+    if (entry.isHebrew !== queryLooksHebrew) continue;
+    var rawTitle = entry.rawTitle;
+    var normalizedTitle = entry.normalized;
+    var titleTokens = entry.tokens;
     if (!titleTokens.length) continue;
 
     var matched = 0;
@@ -431,7 +662,7 @@ function getPartialOverlapSuggestions_(titlePart, queryLooksHebrew) {
     var totalChars = 0;
     for (var t = 0; t < queryTokens.length; t++) {
       totalChars += queryTokens[t].length;
-      if (fuzzyTokenMatches_(queryTokens[t], titleTokens)) {
+      if (titleHasTokenIn_(titleTokens, matchSets[t])) {
         matched++;
         matchedChars += queryTokens[t].length;
       }
@@ -464,22 +695,21 @@ function getTokenOverlapSuggestions_(titlePart, queryLooksHebrew) {
   var queryTokens = fuzzyTokens_(titlePart);
   if (!queryTokens.length) return [];
 
+  var index = getFuzzyTitleIndex_();
+  var matchSets = buildQueryTokenMatchSets_(queryTokens, index.vocabulary);
   var results = [];
 
-  for (var i = 0; i < titles.length; i++) {
-    var rawTitle = String(titles[i] || '').trim();
-    if (!rawTitle) continue;
-    if (isLikelyHebrewScriptInput(rawTitle) !== queryLooksHebrew) continue;
-
-    var normalizedTitle = normalizeFuzzyText(rawTitle);
-    if (!normalizedTitle) continue;
-
-    var titleTokens = fuzzyTokens_(normalizedTitle);
+  for (var i = 0; i < index.entries.length; i++) {
+    var entry = index.entries[i];
+    if (entry.isHebrew !== queryLooksHebrew) continue;
+    var rawTitle = entry.rawTitle;
+    var normalizedTitle = entry.normalized;
+    var titleTokens = entry.tokens;
     if (!titleTokens.length) continue;
 
     var allMatched = true;
     for (var t = 0; t < queryTokens.length; t++) {
-      if (!fuzzyTokenMatches_(queryTokens[t], titleTokens)) {
+      if (!titleHasTokenIn_(titleTokens, matchSets[t])) {
         allMatched = false;
         break;
       }
@@ -507,21 +737,34 @@ function getFuzzyReferenceSuggestions(query) {
   // "Hilchot Shabbat" before any token can match a Sefaria title.
   titlePart = normalizeFuzzyText(canonicalizeCitationAbbreviation(split.titlePart)) || titlePart;
   firstChar = titlePart.charAt(0);
+  var queryHistogram = fuzzyCharHistogram_(titlePart);
 
-  var scored = titles.map(function (title) {
-    var rawTitle = String(title || '').trim();
-    var normalizedTitle = normalizeFuzzyText(rawTitle);
-    if (!normalizedTitle) return null;
-    var titleIsHebrew = isLikelyHebrewScriptInput(rawTitle);
-    if (queryLooksHebrew !== titleIsHebrew) return null;
-    if (firstChar && normalizedTitle.charAt(0) !== firstChar && normalizedTitle.indexOf(titlePart) !== 0 && titlePart.indexOf(normalizedTitle) !== 0) return null;
-    var distance = levenshteinDistance(titlePart, normalizedTitle);
+  var scored = getFuzzyTitleIndex_().entries.map(function (entry) {
+    var rawTitle = entry.rawTitle;
+    var normalizedTitle = entry.normalized;
+    if (queryLooksHebrew !== entry.isHebrew) return null;
+    var titleContainsQuery = normalizedTitle.indexOf(titlePart) >= 0;
+    var queryStartsWithTitle = titlePart.indexOf(normalizedTitle) === 0;
+    if (firstChar && normalizedTitle.charAt(0) !== firstChar && normalizedTitle.indexOf(titlePart) !== 0 && !queryStartsWithTitle) return null;
     var maxLen = Math.max(titlePart.length, normalizedTitle.length, 1);
+    var distance;
+    if (titleContainsQuery || queryStartsWithTitle) {
+      // One string contains the other, so the edit distance is exactly the
+      // difference in length: no need to run the matrix.
+      distance = Math.abs(normalizedTitle.length - titlePart.length);
+    } else {
+      // Only a ratio of 0.55 or better survives; stop the matrix as soon as it
+      // is out of reach. Most of the title list is rejected here in a few rows.
+      var maxDistance = Math.floor(0.55 * maxLen);
+      if (Math.abs(normalizedTitle.length - titlePart.length) > maxDistance) return null;
+      if (fuzzyHistogramLowerBound_(queryHistogram, entry.histogram) > maxDistance) return null;
+      distance = levenshteinWithin_(titlePart, normalizedTitle, maxDistance);
+    }
     var ratio = distance / maxLen;
     var startsBonus = normalizedTitle.indexOf(titlePart) === 0 ? -0.25 : 0;
-    var containsBonus = normalizedTitle.indexOf(titlePart) >= 0 ? -0.15 : 0;
+    var containsBonus = titleContainsQuery ? -0.15 : 0;
     var score = ratio + startsBonus + containsBonus;
-    if (ratio > 0.55 && normalizedTitle.indexOf(titlePart) < 0 && titlePart.indexOf(normalizedTitle) < 0) return null;
+    if (ratio > 0.55 && !titleContainsQuery && !queryStartsWithTitle) return null;
     return { rawTitle: rawTitle, score: score };
   }).filter(Boolean).sort(function (a, b) {
     if (a.score !== b.score) return a.score - b.score;
@@ -597,6 +840,54 @@ function renderFuzzySuggestions(query) {
   }).join('') + "</div></div>";
   setResultsHint(html, true);
   return true;
+}
+
+/**
+ * Near matches from the title list, as result rows shown alongside the exact
+ * ones on EVERY search — not only when nothing else came back. The content
+ * search nearly always returns something, so a zero-results-only suggester was
+ * a suggester that never ran: "The Torah A Women's Commentary, Deuteronomy
+ * 29:9" produced a list of unrelated content hits and no way to the text.
+ *
+ * Rows are marked isFuzzy and grouped under "Close matches". They are never
+ * auto-selected (see maybeAutoSelectSingleResult): a close match is a guess
+ * about intent, and one click from the reader is cheaper than a wrong preview.
+ */
+function buildFuzzyLibraryMatches(query) {
+  if (String(query || '').trim().length < 3) return [];
+  return getFuzzyReferenceSuggestions(query).map(function (suggestion, index) {
+    return {
+      key: 'fuzzy-' + index + '-' + suggestion,
+      ref: suggestion,
+      label: suggestion,
+      subtitle: 'Close match',
+      typeLabel: 'Library',
+      clusterLabel: 'Close matches',
+      hasTranslation: true,
+      availableLangs: [],
+      isFuzzy: true
+    };
+  });
+}
+
+/**
+ * The library list with close matches kept at the end: at most `limit` exact
+ * rows first, then every close match that is not already one of them. Without
+ * this the prepend-and-truncate that each async result group does would push
+ * the close matches off the list, or the close matches would crowd out real
+ * results.
+ */
+function mergeLibraryMatchesWithFuzzy(matches, fuzzyMatches, limit) {
+  var exact = (matches || []).filter(function (item) { return item && !item.isFuzzy; }).slice(0, limit);
+  var seen = {};
+  exact.forEach(function (item) { if (item.ref) seen[String(item.ref).trim().toLowerCase()] = true; });
+  var fuzzy = (fuzzyMatches || []).filter(function (item) {
+    var key = String((item && item.ref) || '').trim().toLowerCase();
+    if (!key || seen[key]) return false;
+    seen[key] = true;
+    return true;
+  });
+  return exact.concat(fuzzy);
 }
 
 function maybeShowZeroResultsSuggestions(input) {
