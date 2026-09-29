@@ -9,6 +9,31 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+> **Preference migration (schema 14).** `source_emphasis_mode` (`keep` /
+> `discard` / `only`) replaces the on/off `preserve_source_emphasis`.
+> Upgrading users are migrated on first open: on becomes `keep`, off becomes
+> `discard`, and the old key is removed. Inserted text doesn't change for
+> anyone until they pick the new option.
+
+### Source emphasis
+
+#### Added
+
+- **B&I button in the sidebar's Layout tray**, next to Lines and Sources. It
+  cycles through **Keep** the source's bold and italics (highlighted),
+  **Discard** them (faded), and **Keep only** (inverted). Keep only inserts
+  just the emphasized words. For example, from Sefaria's English Talmud
+  (Steinsaltz) it keeps the bold translation of the Talmud's own words and
+  leaves out Steinsaltz's explanation. Line markers are kept. Lines with no
+  emphasis are left out. A passage with no emphasis anywhere (the Aramaic
+  original) is inserted whole.
+
+#### Changed
+
+- **Preferences → Fonts → ✒️ Source Emphasis** has a three-way
+  **Keep / Discard / Keep only** control in place of the on/off switch. The
+  Insertion Defaults preview card has the same B&I button.
+
 ### Search
 
 #### Fixed

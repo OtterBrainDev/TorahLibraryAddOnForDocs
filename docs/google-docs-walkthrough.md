@@ -91,8 +91,9 @@ Everything here applies to the current sidebar session only.
   **Left–Right** (Hebrew on the left).
 - **Insertion Format** — a live sample with switches for **🔗 Title** (link
   the title to Sefaria), **Cantillation**, **Vowels**, **Translit** (with a
-  scheme menu), **Lines** (verse/line numbers) and **🔗 Sources** (a citation
-  of the translation used).
+  scheme menu), **Lines** (verse/line numbers), **🔗 Sources** (a citation
+  of the translation used) and **B&I** (the source's bold and italics, which
+  cycles through **Keep**, **Discard** and **Keep only**).
 - **Session** — **↺ Revert to defaults** returns to your Preferences;
   **💾 Save as defaults** makes the current choices your Preferences.
 
@@ -107,6 +108,16 @@ Fonts, sizes and colours come from **Preferences → Fonts**, and default to
 Titles can be set to Heading 1–6 so they appear in the outline and table of
 contents. Sefaria's own bold and italics are kept; change how they look under
 **Preferences → Fonts → ✒️ Source Emphasis**.
+
+**Keep only** inserts just the words the source puts in bold or italics. For
+example, Sefaria's English Talmud (Steinsaltz) bolds the Talmud's own words and
+leaves Steinsaltz's explanation plain. With **B&I** on **Keep only**, the
+Berakhot 2a passage *"**From when does one recite Shema in the evening? From
+the time when the priests enter** to immerse and purify themselves in order
+**to partake of their teruma.**"* is inserted as *"From when does one recite
+Shema in the evening? From the time when the priests enter to partake of their
+teruma."* Line markers are kept. Lines with no emphasis are left out. A passage
+with no emphasis anywhere, such as the Aramaic original, is inserted whole.
 
 ## Voices (source sheets)
 

@@ -441,21 +441,23 @@
               <p class="section-note">Some Sefaria texts use bold and italics to carry meaning — the Steinsaltz Talmud bolds the Talmud’s own words to separate them from Steinsaltz’s explanation, and many translations italicize interpolated words.</p>
 
               <div class="subsection-card">
-                <div class="toggle-row">
-                  <div class="toggle-copy">
-                    <div class="toggle-title">Keep the source’s bold and italics</div>
-                    <div class="toggle-help">On: the font styles you choose below set the baseline, and the source’s own emphasis is kept on top of it. Off: your font styles are applied uniformly and the source’s emphasis is dropped.</div>
+                <div class="segmented-row">
+                  <div class="segmented-copy">
+                    <div class="segmented-title" id="pref-source-emphasis-label">The source’s bold and italics</div>
+                    <div class="segmented-help"><strong>Keep</strong>: your font styles set the baseline and the source’s own emphasis is kept on top of it. <strong>Discard</strong>: your font styles are applied uniformly and the source’s emphasis is dropped. <strong>Keep only</strong>: only the words the source emphasizes are inserted — for example just the Talmud’s own words, without Steinsaltz’s explanation. The B&amp;I button in the sidebar’s Layout tray is the same setting.</div>
                   </div>
-                  <label class="switch" for="preserve_source_emphasis">
-                    <input id="preserve_source_emphasis" type="checkbox" name="preserve_source_emphasis" checked>
-                    <span class="slider"></span>
-                  </label>
+                  <div class="segmented-control emphasis-mode-control" role="radiogroup" aria-labelledby="pref-source-emphasis-label" data-pref-group="source_emphasis_mode">
+                    <button type="button" class="segmented-option is-active" data-value="keep" role="radio" aria-checked="true" title="Keep the source’s bold and italics"><span class="emphasis-mode-glyph emphasis-mode-glyph--keep" aria-hidden="true"><b>B&amp;I</b></span>Keep</button>
+                    <button type="button" class="segmented-option" data-value="discard" role="radio" aria-checked="false" title="Discard the source’s bold and italics"><span class="emphasis-mode-glyph emphasis-mode-glyph--discard" aria-hidden="true"><s>B&amp;I</s></span>Discard</button>
+                    <button type="button" class="segmented-option" data-value="only" role="radio" aria-checked="false" title="Keep ONLY the source’s bold and italics"><span class="emphasis-mode-glyph emphasis-mode-glyph--only" aria-hidden="true"><b><i><u>B&amp;I</u></i></b></span>Keep only</button>
+                  </div>
+                  <input type="hidden" id="source_emphasis_mode" name="source_emphasis_mode" value="keep">
                 </div>
               </div>
 
               <details class="subsection-card" id="emphasis-mapping">
                 <summary class="subsection-title">Advanced: map the source’s emphasis to your own formatting</summary>
-                <p class="subsection-note">Keeping the source’s bold as bold is the default. If your documents use a different convention — say, blue text instead of bold for the Talmud’s own words — map it here. Turn every option off in a card to drop that emphasis entirely. These settings do nothing while “Keep the source’s bold and italics” is off.</p>
+                <p class="subsection-note">Keeping the source’s bold as bold is the default. If your documents use a different convention — say, blue text instead of bold for the Talmud’s own words — map it here. Turn every option off in a card to drop that emphasis entirely. These settings do nothing while the source’s bold and italics are set to Discard.</p>
                 <div class="emphasis-map-grid">
                   <div class="emphasis-map-card">
                     <div class="subsection-title">Where the source is bold</div>

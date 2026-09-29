@@ -115,6 +115,7 @@ $('#insert-source').click(function () {
   var showPesukim = Boolean($('.wants-pesukim').prop('checked'));
   var includeTranslationSourceInfo = $('.include-translation-source-info').is(':checked');
   var insertSefariaLink = $('.insert-sefaria-link').is(':checked');
+  var sourceEmphasisMode = ccNormalizeEmphasisMode($('.source-emphasis-mode').val());
   var input = $('.input').val();
 
   // Multi-version insertion: only available in translation-only (en) or Hebrew-on-top (he-top) modes.
@@ -151,7 +152,8 @@ $('#insert-source').click(function () {
       pasukPreference: showPesukim,
       preferredTitle: input,
       includeTranslationSourceInfo: includeTranslationSourceInfo,
-      insertSefariaLink: insertSefariaLink
+      insertSefariaLink: insertSefariaLink,
+      sourceEmphasisMode: sourceEmphasisMode
     });
     return;
   }
@@ -172,7 +174,8 @@ $('#insert-source').click(function () {
     bilingualLayout: bilingualLayout,
     insertSefariaLink: insertSefariaLink,
     includeTransliteration: $('.include-transliteration').is(':checked'),
-    insertCitationOnly: false
+    insertCitationOnly: false,
+    sourceEmphasisMode: sourceEmphasisMode
   });
 });
 

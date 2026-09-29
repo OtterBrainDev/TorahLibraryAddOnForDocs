@@ -25,7 +25,15 @@
     "insertSheet",
     "insertReference",
     "sheetPayload",
-    "insertMode"
+    "insertMode",
+    "sourceEmphasisMode"
+  ],
+  "apps-script/shared/composition-card/shared.html": [
+    "function initCompositionCard",
+    "function updateCompositionCard",
+    "function ccNormalizeEmphasisMode",
+    "function ccNextEmphasisMode",
+    "#cc-emphasis-toggle"
   ],
   "apps-script/sidebar/js/bootstrap.html": [
     "function initializeSidebar",

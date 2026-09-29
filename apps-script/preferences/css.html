@@ -353,9 +353,25 @@
     border-left: 1px solid #d2d0ca;
   }
 
-  .segmented-option.active {
+  .segmented-option.active,
+  .segmented-option.is-active {
     background: #1f3b68;
     color: #fff;
+  }
+
+  /* Source Emphasis: the same B&I glyphs as the sidebar's Layout tray button. */
+  .emphasis-mode-control .segmented-option {
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .emphasis-mode-glyph {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .emphasis-mode-glyph--discard {
+    opacity: 0.6;
   }
 
   .style-control {

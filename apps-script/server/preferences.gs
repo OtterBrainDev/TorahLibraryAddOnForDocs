@@ -23,7 +23,7 @@ const SETTINGS = [
   "linker_scan_mode",
   "linker_review_mode",
   "show_line_markers_default",
-  "preserve_source_emphasis",
+  "source_emphasis_mode",
   "hebrew_font_color",
   "hebrew_font_background",
   "translation_font_color",
@@ -137,9 +137,12 @@ function getDefaultPreferences() {
     link_sources_insert_after_linking: false,
     show_line_markers_default: true,
     // Sefaria marks up its own emphasis (the Steinsaltz Talmud bolds the Talmud's
-    // words against Steinsaltz's interpolation). Default ON: the source knows
-    // what it meant, and the font-style preference still sets the baseline.
-    preserve_source_emphasis: true,
+    // words against Steinsaltz's interpolation). "keep" by default: the source
+    // knows what it meant, and the font-style preference still sets the
+    // baseline. "discard" flattens it; "only" keeps the emphasized words and
+    // drops the rest. See normalizeSourceEmphasisMode_. Replaced the boolean
+    // `preserve_source_emphasis` in schema v14.
+    source_emphasis_mode: "keep",
     // Colour and background are intentionally EMPTY by default: an empty
     // value means "leave the document's own formatting alone". Defaulting to
     // "#000000" would force black text on every user, including those with a
@@ -363,6 +366,25 @@ function readEmphasisMapping_(userProperties, prefix, fallbackStyle) {
   };
 }
 
+/**
+ * What happens to the bold and italics in Sefaria's own markup:
+ *   "keep"    — re-applied on top of the user's font style (the default).
+ *   "discard" — dropped; the user's font style applies uniformly.
+ *   "only"    — only the emphasized words are kept, e.g. just the Talmud's
+ *               own words (bold) out of the Steinsaltz translation.
+ * Also accepts the boolean `preserve_source_emphasis` values ("true"/"false")
+ * it replaced, so a value that was never migrated still means what it meant.
+ * Anything unrecognised is "keep", the default.
+ */
+var SOURCE_EMPHASIS_MODES_ = ["keep", "discard", "only"];
+
+function normalizeSourceEmphasisMode_(value) {
+  const v = String(value == null ? "" : value).trim().toLowerCase();
+  if (SOURCE_EMPHASIS_MODES_.indexOf(v) >= 0) return v;
+  if (v === "false") return "discard";
+  return "keep";
+}
+
 var TITLE_HEADINGS_ = ["normal", "heading1", "heading2", "heading3", "heading4", "heading5", "heading6"];
 
 function normalizeTitleHeading_(value) {
@@ -453,7 +475,7 @@ function getTypographySettings() {
     sefariaLinkFontSize: roles.sefariaLink.size,
     sefariaLinkFontStyle: roles.sefariaLink.style,
 
-    preserveSourceEmphasis: userProperties.getProperty("preserve_source_emphasis") !== "false",
+    sourceEmphasisMode: normalizeSourceEmphasisMode_(userProperties.getProperty("source_emphasis_mode")),
     emphasisMap: {
       bold: readEmphasisMapping_(userProperties, "emphasis_bold", "bold"),
       italic: readEmphasisMapping_(userProperties, "emphasis_italic", "italic")
