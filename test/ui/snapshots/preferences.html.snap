@@ -612,6 +612,17 @@
                   <input id="show_line_markers_default" type="checkbox" name="show_line_markers_default" checked>
                   <input id="include_translation_source_info" type="checkbox" name="include_translation_source_info">
                 </div>
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Vowels only in Tanakh</div>
+                    <div class="toggle-help">On: niqqud is kept in Tanakh and removed from every other text (Mishnah, Talmud, the Siddur, commentaries), as the original add-on did. Off: niqqud is kept wherever Sefaria has it. No effect while Vowels is off.</div>
+                  </div>
+                  <label class="switch" for="vowels_tanakh_only">
+                    <!-- No name: this switch only chooses the value of the hidden nekudot_filter field. -->
+                    <input id="vowels_tanakh_only" type="checkbox">
+                    <span class="slider"></span>
+                  </label>
+                </div>
               </div>
 
               <!-- Voices workflow -->

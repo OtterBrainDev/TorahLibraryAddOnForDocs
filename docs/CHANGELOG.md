@@ -9,6 +9,43 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Insertion and linking
+
+#### Fixed
+
+- **Inserting from inside a table now works, and says what it did.** With
+  the cursor in a table cell, the source used to land somewhere else in the
+  document without a word, and the same went for Voices sheets and Lexicon
+  entries. Now one language, the Stacked layout, several translations, sheets
+  and lexicon entries go **inside the cell**, below the cursor. Right–Left and
+  Left–Right are tables themselves, so they go **directly below the table**,
+  and the sidebar says why. A header, footer or footnote gets a message asking
+  you to click in the main text.
+- **Verse numbers across a chapter break.** `Genesis 1:31-2:3` with line
+  markers numbered the English (1), (1), (2), (3); it now reads (31), (1),
+  (2), (3), like the Hebrew.
+- **"Couldn't reach Sefaria" is no longer reported as "no match".** With no
+  connection, Insert Source from Selection said *No Sefaria source matched*,
+  and the sidebar said to check the spelling. Both now say Sefaria couldn't
+  be reached.
+- **Link Texts waits longer for long documents, and says so if it gives up.**
+  It used to stop after about 5 seconds and report *no citations found*. It now
+  waits about 30 seconds, and if Sefaria is still working, it says so.
+- **Editing the document while the Link Texts review is open no longer moves
+  links.** Each citation is found again when you click Apply. A citation you
+  deleted in the meantime is reported, not linked somewhere else.
+- **Link Texts' per-row Insert** puts the source below the citation's own
+  paragraph, including inside a table cell, and no longer moves your cursor.
+- **Sidebar messages are visible.** The short messages at the bottom of the
+  sidebar (for example after Insert from Selection fails) were shown fully
+  transparent.
+
+#### Added
+
+- **Preferences → Insertion → Vowels only in Tanakh.** Keeps niqqud in Tanakh
+  and removes it from everything else, as the original add-on did. Off by
+  default; no stored preference changes.
+
 ### Search
 
 #### Fixed

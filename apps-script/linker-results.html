@@ -342,6 +342,12 @@
         // Insert are independent, so a row can be linked, inserted, both, or
         // neither (skipped).
         var rows = [];
+        // Apply-time outcomes the done message reports.
+        var missingCount = 0;
+        var notices = [];
+        function addNotice(text) {
+          if (text && notices.indexOf(text) < 0) notices.push(text);
+        }
 
         function byId(id) { return document.getElementById(id); }
 
@@ -608,9 +614,14 @@
         function decisionFor(row) {
           var index = row.select ? parseInt(row.select.value, 10) : 0;
           var candidate = row.match.candidates[index] || row.match.candidates[0];
+          // documentText + occurrence let the server re-find the citation in
+          // the document as it is at Apply time, in case it was edited while
+          // this dialog was open.
           return {
             startChar: row.match.startChar,
             endChar: row.match.endChar,
+            documentText: row.match.documentText,
+            occurrence: row.match.occurrence,
             ref: candidate.ref
           };
         }
@@ -634,12 +645,11 @@
           byId('apply-label').textContent = 'Linking ' + plural(toLink.length, 'reference') + '…';
           byId('apply-fill').style.width = '35%';
 
-          // Linking changes no text, so the character offsets the insert step
-          // relies on are still valid after it.
           google.script.run
             .withSuccessHandler(function (result) {
               var linked = (result && result.linked) || 0;
               var skipped = (result && result.skipped) || 0;
+              missingCount = (result && result.missing) || 0;
               if (toInsert.length) {
                 insertSources(toInsert, linked, skipped);
                 return;
@@ -660,9 +670,11 @@
           var total = queue.length;
           var inserted = 0;
           var failed = 0;
+          var moved = 0;
 
           function step(index) {
             if (index >= queue.length) {
+              missingCount = Math.max(missingCount, moved);
               finish(buildDoneMessage(linked, skipped, inserted, failed));
               return;
             }
@@ -673,14 +685,18 @@
 
             google.script.run
               .withSuccessHandler(function (result) {
-                if (result && result.success) inserted++; else failed++;
+                if (result && result.success) inserted++;
+                else if (result && result.reason === 'moved') moved++;
+                else failed++;
+                addNotice(result && result.notice);
                 step(index + 1);
               })
-              .withFailureHandler(function () {
+              .withFailureHandler(function (error) {
                 failed++;
+                addNotice(error && error.message);
                 step(index + 1);
               })
-              .insertLinkedSourceAtPosition(item.ref, item.startChar);
+              .insertLinkedSourceAtPosition(item.ref, item);
           }
 
           step(0);
@@ -698,6 +714,14 @@
           if (report && report.unplaceableCount) {
             lines.push(plural(report.unplaceableCount, 'citation') + ' fell across a gap in the partial scan.');
           }
+          if (missingCount) {
+            lines.push(plural(missingCount, 'citation') + ' changed or disappeared from the document after the scan, so ' +
+              (missingCount === 1 ? 'it was' : 'they were') + ' left alone. Run Link Texts again to pick ' +
+              (missingCount === 1 ? 'it' : 'them') + ' up.');
+          }
+          // Why something went somewhere unexpected (below a table), or why an
+          // insert failed: once each.
+          notices.forEach(function (notice) { lines.push('', notice); });
           return lines.join('\n') || 'Nothing was changed.';
         }
 

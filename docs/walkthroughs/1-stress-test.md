@@ -26,18 +26,24 @@ should say so.
 
 ## Known suspects going in
 
-Found while writing this walkthrough, by reading the code. Check these first.
+Found while writing this walkthrough, by reading the code. K1–K5 and K8 are
+fixed on this branch, each with a pinning test; the steps below now check
+the fixed behaviour. K6 and K7 are left as they are: the published add-on
+stores no preferences, so there is nothing to carry over.
 
-| # | Suspect | Where | Status |
+| # | Was | Fix | Status |
 | --- | --- | --- | --- |
-| K1 | **English verse numbers reset across a chapter boundary.** Inserting `Genesis 1:31-2:3` with Lines on numbers the Hebrew לא, א, ב, ג but the English **(1), (1), (2), (3)**. Verse 31 is labelled (1). | `formatDataForPesukim` in `server/text-processing.gs`: the Hebrew loop resets `fromVerse = 1` after the first chapter, and the English loop starts from that reset value. | **Confirmed** in Node against the real `.gs` file. Step 3.2 reproduces it in the Doc. |
-| K2 | **A slow linker scan reads as "nothing found".** `findRefsInDocumentText` polls Sefaria's async task 12 times at 400 ms (about 5 s), then returns an empty result instead of an error. | `server/sefaria-fetch.gs` | Suspected. Step 7.9. |
-| K3 | **Linker offsets go stale if the document changes before Apply.** Scan offsets are applied as-is, so text typed above a citation between scan and Apply would shift every link. | `applyLinkerDecisions` in `server/document-actions.gs` | Suspected. Step 7.7. |
-| K4 | **Linker "Insert" on a citation inside a table.** The row's insert selects the table, and `insertReference` rejects table selections. | `insertLinkedSourceAtPosition` → `insertReference` | Suspected. Expect a per-row failure message, not a silent skip. Step 7.4. |
-| K5 | **Network failure reads as "no match".** `findReference` returns nothing on any exception, so Insert Source from Selection with no network says *No Sefaria source matched "Genesis 1:1"*. | `findReference` in `server/sefaria-fetch.gs` | Suspected. Step 11.1. |
-| K6 | **Users of the original add-on get different defaults, depending on whether its `onInstall` ran.** The original `onInstall` stored `meforash_replace=false`, `nekudot_filter=false` and others. The v2.1 seeding never overwrites a stored value. So an original user whose `onInstall` ran keeps divine-name replacement **off**, while one whose `onInstall` never ran (for example an admin install) gets the new default of יהוה → **יי**. The comment in `migrations.gs` says the published add-on "stored no preferences", but its `onInstall` did. | `seedDefaultPreferences_` in `migrations.gs` | Suspected inconsistency. Section 13. |
-| K7 | **Legacy `nekudot_filter="tanach"`.** The original Preferences stored `tanach`, while both the original and current code test for `tanakh`, so the value never worked. The current code treats it as "always". | `normalizeHebrewDisplayFilters_` | Latent, inherited. Section 13. |
-| K8 | **"Vowels only in Tanakh" has no control.** The server honours `nekudot_filter="tanakh"`, and Preferences reads it on load, but the only visible control is Vowels On/Off, and toggling it writes `always` or `false`. Returning users who want the original look (no niqqud outside Tanakh) can't get it. | `preferences/js.html` (`_prefSetCompositionVowels`), `shared/composition-card/` | Confirmed by reading; no UI option exists. Step 5.9. |
+| K1 | **English verse numbers reset across a chapter boundary.** `Genesis 1:31-2:3` with Lines on read (1), (1), (2), (3) in English; the Hebrew was right. | `formatDataForPesukim` keeps a separate verse counter per language. | **Fixed.** `format-data-for-pesukim.test.js`. Step 3.2. |
+| K2 | **A slow linker scan read as "nothing found".** Polling gave up after about 5 s and returned an empty result; so did a network error. | Polls for about 30 s, then says Sefaria was still scanning; network errors say Sefaria couldn't be reached. | **Fixed.** `sefaria-unavailable.test.js`. Step 7.9. |
+| K3 | **Linker offsets went stale if the document changed before Apply.** | Each match records which occurrence of its text it is; Apply re-finds it, and reports citations that are gone. | **Fixed.** `linker-classify.test.js`. Step 7.7. |
+| K4 | **Insert from a table** (linker per-row Insert, and the cursor in general). The cursor path in fact put the source at an unrelated place in the body, silently, for texts, sheets and lexicon alike. | One resolver for every insert path (`server/insertion-target.gs`): paragraph layouts go inside the cell; Right–Left / Left–Right go below the table with a notice; headers, footers and footnotes are refused with a message. | **Fixed.** `insertion-target.test.js`. Steps 2.5–2.8, 7.4, 8.4. |
+| K5 | **Network failure read as "no match".** | `findReference` throws "Couldn't reach Sefaria…" for no response, 5xx and 429; an unknown reference is still "no match". | **Fixed.** `sefaria-unavailable.test.js`. Step 11.1. |
+| K6 | Original-add-on users' stored preferences. | — | **Not applicable**: the published add-on stores no preferences. |
+| K7 | Legacy `nekudot_filter="tanach"`. | — | **Not applicable**, as K6. |
+| K8 | **"Vowels only in Tanakh" had no control**, and toggling Vowels reset it. | A **Vowels only in Tanakh** switch in Preferences → Insertion; turning Vowels on keeps it. | **Fixed.** `vowels-tanakh-only.test.js`. Step 5.9. |
+
+Also found while fixing K4: every sidebar toast was invisible (CSS opacity).
+Fixed; step 2.6 now depends on it.
 
 ---
 
@@ -49,7 +55,7 @@ Found while writing this walkthrough, by reading the code. Check these first.
 | --- | --- | --- |
 | **A — upgrader** | Had an earlier build of *this* add-on (2.0 or an early 2.1) with preferences you changed: a font, a divine-name rule, a layout. | Proves the migrations keep what users chose. |
 | **B — fresh** | Has never installed any version. | Proves `onInstall` seeding and the first-run experience. |
-| **C — original-add-on user** | Installed Shlomi Helfgot's original *Sefaria for Google Docs* (menu: *Insert Source / Search Texts / Preferences / Support / Popcorn (beta)*) and changed its Preferences. If you can't get one, simulate it (section 13). | Proves the path most Sefaria users will take. |
+| **C — original-add-on user** | Has the published *Sefaria for Google Docs* installed (menu: *Insert Source / Search Texts / Preferences / Support / Popcorn (beta)*). | Proves the path most Sefaria users will take. |
 
 ### Instruments
 
@@ -109,10 +115,10 @@ it took.
 | 2.2 | End of the document | Inserted at the end. | An extra blank paragraph piling up with each insert. |
 | 2.3 | A completely empty new Doc | Inserted. Fonts match the document default (Arial 11 in a new Doc). | Error, or an odd font because there was no text to match. |
 | 2.4 | Inside the Heading 1 | Title and body get their own styles, **not** Heading 1. | The whole source inherits the heading style. |
-| 2.5 | Inside a bulleted list item | Inserted after the list item. | Inserted *as* list items, with bullets on every verse. |
-| 2.6 | Inside a table cell | A clear message: the selection is in a table, header or footer; move the cursor. | Silent failure, or a table nested inside the cell. |
-| 2.7 | In the header | Same clear message. | Inserted at the end of the body with no explanation. |
-| 2.8 | In a footnote | Clear message, or inserted in the body. Note which. | A script error. |
+| 2.5 | Inside a bulleted list item | Inserted after the list item. | Inserted *as* list items, with bullets on every verse; or inserted after the first paragraph of the document (the old cursor-index bug). |
+| 2.6 | Inside a table cell: insert once with Hebrew only, once Stacked, once **Right–Left** | Hebrew only and Stacked go **inside the cell**, under the cursor's line. Right–Left goes **directly below the table**, and a message at the bottom of the sidebar says why. | The source anywhere else in the document; no message for Right–Left; a table nested in the cell. Repeat from a Voices sheet and a Lexicon entry: both go inside the cell. |
+| 2.7 | In the header, then the footer | A message asking you to click in the main text. Nothing inserted. | Inserted into the body with no explanation. |
+| 2.8 | In a footnote | The same message. | A script error, or an insert into the body. |
 | 2.9 | A selection across three paragraphs (no Insert-from-Selection, just Add Source) | Inserted after the selection; the selection is left alone. | Selected text deleted. |
 | 2.10 | An image selected | Inserted after it, or a clear message. | Script error. |
 | 2.11 | The Doc in **Suggesting** mode | Note whether the insert shows as a suggestion or a direct edit. Apps Script edits usually land as direct edits. | Worth knowing before a reviewer asks. Record the behaviour; it may belong in Help. |
@@ -129,7 +135,7 @@ preview, then insert.
 | # | Query | Expect | Watch for |
 | --- | --- | --- | --- |
 | 3.1 | `Genesis 1:1-5`, Lines on, both languages | Verses numbered 1–5 and א–ה. | Numbers off by one. |
-| 3.2 | `Genesis 1:31-2:3`, Lines on, both languages | English (31), (1), (2), (3); Hebrew לא, א, ב, ג. | **K1:** English reads (1), (1), (2), (3). There is also no chapter marker at the break; decide if that's acceptable. |
+| 3.2 | `Genesis 1:31-2:3`, Lines on, both languages | English (31), (1), (2), (3); Hebrew לא, א, ב, ג. | **K1 (fixed):** English reading (1), (1), (2), (3). There is still no chapter marker at the break; decide if that's acceptable. |
 | 3.3 | `Genesis 1:31-2:3`, Lines **off** | Verses joined as prose with single spaces; nothing lost at the chapter break. | Words run together at the boundary (`...good.The heaven...`). |
 | 3.4 | `Berakhot 2a:5-2b:2` | Spans the amud break; readable. | Missing segments or a doubled segment at the break. |
 | 3.5 | `Psalms 119` (176 verses), both, Lines on | Inserts in well under 30 s. | Timeout, or a sidebar stuck on the spinner. Time it. |
@@ -179,7 +185,7 @@ preview, then insert.
 | 5.6 | Source Emphasis → Advanced: bold → blue, no bold. Insert `Berakhot 2a` (Steinsaltz) | Talmud words blue, not bold. | Nothing blue; or the title also blue. |
 | 5.7 | Turn **Source Emphasis** off; insert the same | Flat text. | Leftover bold. |
 | 5.8 | Vowels off, Cantillation on | Cantillation kept, vowels gone, sof pasuq **׃** and paseq **׀** kept. | Punctuation stripped with the vowels. |
-| 5.9 | Look for a way to show vowels only in Tanakh, in Preferences or the Layout tray | **K8:** there isn't one. The server supports `nekudot_filter="tanakh"`, but the UI only has Vowels On/Off. | Decide whether returning users need it (walkthrough 4, item 1). |
+| 5.9 | Preferences → Insertion → turn on **Vowels only in Tanakh**; save. Insert `Mishnah Berakhot 1:1` and `Genesis 1:1`. Then turn Vowels off and on again in Preferences, save, and reopen | Mishnah without niqqud, Genesis with. After the off/on, the switch is still on. | **K8 (fixed):** the switch reset by the Vowels toggle. |
 | 5.10 | **Translit** on; cycle every scheme; insert `Genesis 1:1` each time | Transliteration present and different per scheme; font follows the Transliteration role. | Transliteration in the Hebrew font; an empty line. |
 | 5.11 | Insert a text with `&thinsp;` in the Hebrew (Talmud or Mishnah with thin spaces) | No literal `&thinsp;`, `&nbsp;` or `&…;`. | Any literal entity. |
 | 5.12 | **💾 Save as defaults** in the Layout tray while Preferences is open in a dialog; then **Save Defaults** in the dialog | The last save wins. Decide whether that's acceptable, and whether the dialog should warn. | Silent revert of the sidebar save. |
@@ -209,12 +215,12 @@ Use a **fresh copy** of the stress document for every row that says so.
 | 7.1 | First run ever on the account | One-time confirmation naming the active scan mode. Decline → nothing sent, nothing changed. | Anything sent before the answer (check Executions). |
 | 7.2 | Run, accept (Candidate passages) | Dialog opens immediately with a scanning state; then a summary: auto-linked, need a choice, could not be resolved, fell across a gap. | A frozen menu for several seconds with no dialog. |
 | 7.3 | Review the table | Paragraphs 2, 3 (both), 6, 7, 10 (both items) found. Avodah Zarah is a dropdown with excerpts, Link unchecked. Fakebook counted as unresolved. Psalms 23 (linked to example.com) **not** offered. | The paragraph 8 split-format citation, the footnote (12) and the header (13) are expected **misses** because the scan reads the body text only. Record whether any appear, and whether the report mentions them. |
-| 7.4 | Tick **Insert** on the table citation (Isaiah 40:1) and on one list item; apply | Both inserted below their paragraphs, or a per-row failure message for the table. | **K4:** a table row silently not inserted, or inserted at the end of the document. |
+| 7.4 | Tick **Insert** on the table citation (Isaiah 40:1) and on one list item; apply. Repeat with the default layout set to Hebrew only | Right–Left default: the Isaiah source goes below the table and the done message says why. Hebrew only: it goes inside the cell, under the citation. The list item's source goes below the list item. Your cursor doesn't move. | **K4 (fixed):** the source at the end of the document, or no explanation. |
 | 7.5 | Tick **Insert** on *both* citations in paragraph 3; apply | Two sources below paragraph 3, Exodus above Deuteronomy. | Wrong order, or one inserted inside the other. |
 | 7.6 | Pick the second Avodah Zarah candidate; apply; click the link | It opens the candidate you picked. | It opens the first candidate. |
-| 7.7 | **Fresh copy.** Run; while the review table is open, type a sentence at the top of the Doc; then Apply | Either a warning that the document changed, or links land on the right words. | **K3:** every link shifted by the length of what you typed. |
+| 7.7 | **Fresh copy.** Run; while the review table is open, type a sentence at the top of the Doc and delete `Exodus 20:1` from paragraph 3; then Apply | Links land on the right words. The done message says one citation changed or disappeared and was left alone. | **K3 (fixed):** links shifted by the length of what you typed; Exodus's link landing on other text. |
 | 7.8 | Run again on the linked copy | Nothing already linked is offered again. | Double links; the counts inflated by already-linked items. |
-| 7.9 | **Fresh copy**, Preferences → Linking → **Whole document**. Paste the stress document ten times (about 30 KB, about 150 citations). Run | Finishes with a full report. | **K2:** "no citations found" on a document full of them. Check Executions: a run that ends about 5 s after the find-refs POST is the polling limit, not an empty result. |
+| 7.9 | **Fresh copy**, Preferences → Linking → **Whole document**. Paste the stress document ten times (about 30 KB, about 150 citations). Run | Finishes with a full report, or, if Sefaria takes more than about 30 s, a message saying it was still scanning. | **K2 (fixed):** "no citations found" on a document full of them. |
 | 7.10 | Keep pasting until the body is over 100,000 characters; run in Whole document mode | An explicit message naming the 100,000-character limit. | A silent "0 references" or a timeout. |
 | 7.11 | Same large document in **Candidate** mode | Scans; the payload is well under the limit. | The limit hit anyway. |
 | 7.12 | Paragraph 14 (Micah 6:8 isolated by prose) in Candidate mode | Linked, or counted as "fell across a gap" with the Whole-document remedy named. | Silently absent. |
@@ -233,7 +239,7 @@ Use a **fresh copy** of the stress document for every row that says so.
 | 8.1 | Select `Genesis 1:1` exactly in paragraph 2; run | The selection is replaced by the source, titled `Genesis 1:1`. | The remainder `A clean citation: .` Note what the sentence looks like afterwards and whether that's acceptable. |
 | 8.2 | Turn off *replaces the selection*; repeat | Selection kept; source below the paragraph. | Source inserted mid-sentence. |
 | 8.3 | Select across paragraphs 2 and 3 | A clear "no match" message, or the first reference. | Script error; both paragraphs deleted. |
-| 8.4 | Select `Isaiah 40:1` in the table | A clear table message; the cell unchanged. The table check runs before replace mode deletes anything. | Cell text deleted before the error. Replace mode deletes before it inserts, so any other throw after the delete would lose text. |
+| 8.4 | Select `Isaiah 40:1` in the table; then select across two cells | One cell: the citation is replaced, and the source goes in the cell (one language or Stacked) or below the table with a message (Right–Left). Two cells: nothing deleted; the source goes below the table, with a message saying the selection was kept. | Text deleted from several cells. |
 | 8.5 | Select ordinary prose | *No Sefaria source matched "…"* | A random match inserted. |
 | 8.6 | Select `בראשית א:א` | Resolves; Hebrew title. | No match. |
 | 8.7 | Select `Hil. Shabbat 1:1` | Resolves via the abbreviation expansion. | No match. |
@@ -272,7 +278,7 @@ Use a **fresh copy** of the stress document for every row that says so.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
-| 11.1 | Disconnect the network (or block sefaria.org); search; Insert from Selection | A message that says Sefaria couldn't be reached. | **K5:** "No Sefaria source matched" when the real problem is the network. |
+| 11.1 | Disconnect the network (or block sefaria.org); search; click a result; Insert from Selection; Link Texts | Every one says Sefaria couldn't be reached. | **K5 (fixed):** "No Sefaria source matched", "Enter a valid reference" or "no citations found" when the real problem is the network. |
 | 11.2 | Type a long query fast, with backspaces | Only the final query's results shown. | Results from an older keystroke replacing newer ones. |
 | 11.3 | Throttle to "Slow 3G" in DevTools; insert `Psalms 119` | Spinner the whole time; completes. | A frozen UI with no progress. |
 
@@ -291,32 +297,17 @@ Use a **fresh copy** of the stress document for every row that says so.
 
 ## 13. Users of the original add-on (account C)
 
-If you don't have a real one, simulate the original add-on's stored state on a
-fresh account. In the Apps Script editor for your **test** project, run once:
-
-```js
-function simulateOriginalAddonUser_() {
-  // What the original add-on's onInstall stored, plus typical choices.
-  PropertiesService.getUserProperties().setProperties({
-    meforash_replace: 'true', meforash_replacement: "ה'",
-    yaw_replace: 'false', elodim_replace: 'false',
-    nekudot: 'true', nekudot_filter: 'tanach',
-    teamim: 'true', versioning: 'true', extended_gemara: 'false'
-  }, true); // true = delete everything else, including prefs_schema_version
-}
-```
-
-Then reload the Doc so `onOpen` runs the migrations. Delete the function
-afterwards; it is test scaffolding, not add-on code.
+The published add-on stores no preferences, so an account that used it opens
+this version as a new user would: it gets the defaults, and the migrations
+run once.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
-| 13.1 | Open Preferences | יהוה → **ה'** kept, not יי. | The old choice overwritten. |
-| 13.2 | Repeat with `meforash_replace: 'false'` | Replacement off, kept off. | **K6:** on for some original users and off for others. Decide which is right and make it consistent. |
-| 13.3 | Insert `Mishnah Berakhot 1:1` | Note whether niqqud appears. The original add-on stripped niqqud from **every** non-Tanakh text regardless of settings; this version shows it where Sefaria has it. | Returning users reporting "vowels appeared" as a bug. Covered in walkthrough 4, but confirm it happens. |
-| 13.4 | Check the Vowels control in Preferences, save without touching it, and inspect the stored value | Vowels reads **On**; the save doesn't break anything. | **K7:** `tanach` stays stored and quietly means "always". Record the value after the save. |
-| 13.5 | Set `extended_gemara: 'true'`, reload, insert `Berakhot 2a` | Record the result. No UI shows this setting any more. | A behaviour change the user can't see or undo except by Reset. |
-| 13.6 | Bilingual insert with defaults | A two-column table, Hebrew on the right: the original's layout. | A different default layout for returning users. |
+| 13.1 | **C:** open a Doc that used the published add-on; open Extensions | The new menu; no error; no duplicate menu. | The old menu items still listed. |
+| 13.2 | Open Preferences | Defaults: יהוה → יי on, colours Auto, Linking in Candidate mode. | Blank fields. |
+| 13.3 | Insert `Mishnah Berakhot 1:1` | Niqqud appears. The published add-on removed it from every non-Tanakh text; walkthrough 4 warns about this. | — |
+| 13.4 | Turn on **Vowels only in Tanakh**; insert it again | No niqqud, as before. | The switch doing nothing. |
+| 13.5 | Bilingual insert with defaults | A two-column table, Hebrew on the right: the published add-on's layout. | A different default layout. |
 
 ---
 
@@ -332,7 +323,7 @@ For each failure, record:
 
 Anything under **Known suspects** that reproduces should get a row in
 [`docs/regression-log.md`](../regression-log.md) and a pinning test when it's
-fixed. K1 already has a Node reproduction and is a good first test.
+fixed. K1–K5 and K8 already have rows and tests.
 
 | Date | Tester | Account | Commit | Sections run | Failures |
 | --- | --- | --- | --- | --- | --- |

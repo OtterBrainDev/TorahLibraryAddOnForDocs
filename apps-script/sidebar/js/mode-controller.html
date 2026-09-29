@@ -27,14 +27,27 @@ function showSidebarNotice(message, onConfirm) {
   });
 }
 
-function showSidebarToast(message) {
+var sidebarToastTimer = null;
+function showSidebarToast(message, durationMs) {
   var $toast = $('#sidebar-toast');
   if (!$toast.length) return;
+  // Escaped: messages can carry server error text.
   $toast.html(escapeHTML(message || ''));
+  // `.is-visible` carries the opacity; without it the toast was shown fully
+  // transparent, so every toast message went unseen.
   $toast.removeAttr('hidden');
-  setTimeout(function () {
+  if (sidebarToastTimer) clearTimeout(sidebarToastTimer);
+  requestAnimationFrame(function () { $toast.addClass('is-visible'); });
+  sidebarToastTimer = setTimeout(function () {
+    $toast.removeClass('is-visible');
     $toast.attr('hidden', true);
-  }, 3000);
+  }, durationMs || 3000);
+}
+
+// A server insert that went somewhere other than the cursor (below a table)
+// returns a notice; show it long enough to read.
+function showInsertNotice(result) {
+  if (result && result.notice) showSidebarToast(result.notice, 8000);
 }
 
 function openPreferencesWithHint(sectionHint) {

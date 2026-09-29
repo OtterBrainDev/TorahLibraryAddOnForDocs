@@ -102,6 +102,11 @@ An insertion is a title (linked if **🔗 Title** is on), then the Hebrew,
 transliteration and/or translation in your chosen layout, then the translation
 citation if **🔗 Sources** is on.
 
+With the cursor in a table cell, one language or the **Stacked** layout goes
+inside the cell. **Right–Left** and **Left–Right** are tables themselves, so
+they go directly below the table, and the sidebar says so. Headers, footers
+and footnotes can't hold a source.
+
 Fonts, sizes and colours come from **Preferences → Fonts**, and default to
 **Match the document** — the font and size of the text where you insert.
 Titles can be set to Heading 1–6 so they appear in the outline and table of

@@ -58,7 +58,7 @@ function loadInsertion({ resolved }) {
     getEnglishAttributionLines(d) { return ['Translation: ' + d.versionTitle]; },
   };
   vm.createContext(context);
-  for (const file of ['apps-script/server/utils.gs', 'apps-script/server/insertion.gs']) {
+  for (const file of ['apps-script/server/utils.gs', 'apps-script/server/insertion-target.gs', 'apps-script/server/insertion.gs']) {
     vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
   }
   const texts = () => children.map((c) => c._state.text);

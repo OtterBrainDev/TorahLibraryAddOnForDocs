@@ -67,6 +67,8 @@ top and a short credit line underneath naming the translation.
 | What you see | What to do |
 | --- | --- |
 | No Torah Library under Extensions | Reload the document. |
-| "Your selection is inside a table, header, or footer" | Click in the main text of your document, then try again. |
+| "Sources can't be inserted into a header, footer or footnote" | Click in the main text of your document, then try again. |
+| "Inserted below the table" | Your cursor was in a table, and the layout you chose is a table itself. Choose one language or **Stacked** to insert inside the cell. |
+| "Couldn't reach Sefaria" | Check your internet connection and try again. |
 | **Add Source** is greyed out | You picked a whole book or a section heading. Pick a specific passage, like `Genesis 1:1`. |
 | Nothing found | Check the spelling, or try the Hebrew name, or a phrase from the text. |

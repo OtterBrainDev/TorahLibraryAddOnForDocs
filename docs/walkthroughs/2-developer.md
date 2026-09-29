@@ -208,10 +208,17 @@ got inserted.
 
 1. `formatDataForPesukim(data, lineMarkers)` flattens the verse arrays into
    numbered lines (gematria for Hebrew, `gematriya.gs`) or space-joined prose.
-2. **Where to insert:** the cursor or selection is walked up to its
-   body-level ancestor. Tables, headers and footers are refused with a message
-   rather than guessed at. Apps Script proxy objects aren't `===`-comparable,
-   so the walk compares `getType()` to `BODY_SECTION`.
+2. **Where to insert:** `resolveInsertionTarget_` (`server/insertion-target.gs`),
+   shared by every insert path: texts, several translations, sheets, lexicon,
+   the linker. It walks from the cursor or selection up to the body and returns
+   a **container** (the body, or a table cell) and an index in it. Paragraph
+   layouts go inside a cell. A side-by-side layout (itself a table) goes below
+   the table, with a `notice` the sidebar shows as a toast. Headers, footers
+   and footnotes throw a message. The walk compares `getType()` rather than
+   objects, because Apps Script proxies aren't `===`-comparable. Every path
+   used to insert into the body at an index that belonged to the cursor's own
+   parent, which is how a table insert ended up somewhere unrelated
+   (regression log).
 3. **Layout:** Stacked is paragraphs. Right–Left and Left–Right are a 2-column
    table with the Hebrew paragraphs set RTL, which is how the original add-on
    did it.
@@ -274,7 +281,7 @@ most time.
    is sent. The limit is 100,000 characters, with an explicit error above it.
 4. `findRefsInDocumentText`:
    `POST /api/find-refs?with_text=1&max_segments=1`, then it polls
-   `GET /api/async/{task_id}` (12 × 400 ms). `with_text` returns `refData`
+   `GET /api/async/{task_id}` (backing off, about 30 s in total). `with_text` returns `refData`
    (heRef, URL, excerpt) for every candidate in the same response. That's what
    lets the review table show excerpts without a request per row.
 5. `classifyLinkerMatches_` is pure and unit-tested. Each raw match becomes
@@ -285,18 +292,21 @@ most time.
    **skipped** (already hyperlinked, and not counted as a failure). The
    original add-on linked `refs[0]` of ambiguous matches and reported only
    successes.
-6. **Apply:** `applyLinkerDecisions(json)` sorts by `startChar` descending,
-   so earlier offsets stay valid, and calls `setLinkUrl`. Per-row **Insert**
-   calls `insertLinkedSourceAtPosition(ref, startChar)` for each row, also in
-   descending order.
+6. **Apply:** each match carries `occurrence` (which occurrence of its exact
+   text it is). `applyLinkerDecisions(json)` re-finds that occurrence in the
+   document as it is now (`relocateLinkerDecision_`), so an edit made while
+   the dialog was open can't move a link. Citations that are gone are counted
+   as `missing`. It then links end to start. Per-row **Insert** calls
+   `insertLinkedSourceAtPosition(ref, decision)`, which finds the citation's
+   paragraph with `body.findText` and passes it to `insertReference` as an
+   explicit anchor. The user's cursor is never moved.
 7. **Quiet** mode (`runQuietLinkPass_`) skips the dialog: it links the
    unambiguous matches and alerts with every count.
 
 **Be upfront about the limits:** only the body is scanned (not headers,
-footers or footnotes). Offsets come from the scan and aren't re-checked at
-Apply time. And a find-refs task that takes longer than the polling window
-comes back as an empty result. The stress walkthrough (K2–K4) turns these
-into test steps.
+footers or footnotes). Polling lasts about 30 s; past that, the dialog says
+Sefaria was still scanning, rather than reporting no citations. Any network
+failure says Sefaria couldn't be reached (`sefaria-unavailable.test.js`).
 
 **Show:** `test/tests/linker-prefilter.test.js` (what leaves the machine,
 and the offset mapping) and `linker-classify.test.js`.

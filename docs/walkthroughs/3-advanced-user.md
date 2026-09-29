@@ -180,7 +180,10 @@ alone.
 
 ## Things worth knowing
 
-- The cursor must be in the **main body**. Inserting in a table cell, header
-  or footer is refused with a message.
+- **Tables:** one language or Stacked goes inside the cell; Right–Left and
+  Left–Right go directly below the table, with a message saying so. Headers,
+  footers and footnotes can't hold a source.
+- **Vowels only in Tanakh** (Preferences → Insertion) keeps niqqud in Tanakh
+  and drops it everywhere else.
 - The Session Library is kept in your browser, so it doesn't follow you to
   another computer. Preferences do.

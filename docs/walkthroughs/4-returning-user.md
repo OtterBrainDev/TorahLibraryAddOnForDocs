@@ -84,11 +84,9 @@ nobody warns them.
 
 1. **Vowels on texts outside Tanakh.** The original add-on removed niqqud from
    everything except Tanakh, whatever your settings said. Now vowels appear
-   wherever Sefaria has them: Mishnah, the Siddur, some commentaries. To
-   insert a text without them, turn **Vowels** off in **📰 Layout** for that
-   insert, or in **Preferences → Insertion** to make it your default. There is
-   currently no "vowels only in Tanakh" option: Vowels is on or off for
-   everything.
+   wherever Sefaria has them: Mishnah, the Siddur, some commentaries. For the
+   old look, turn on **Preferences → Insertion → Vowels only in Tanakh**. To
+   leave vowels out of a single insert, turn **Vowels** off in **📰 Layout**.
 2. **Divine-name replacement for new users is on.** New users start with
    יהוה → **יי**. If you set a replacement in the old add-on, such as ה' or
    יקוק, it has been kept. Check **Preferences → Insertion → Divine Name
@@ -108,8 +106,10 @@ nobody warns them.
 7. **Insert Source from Selection replaces the selection.** To keep your typed
    citation and put the source below it, turn off **Preferences → Insertion →
    Insert from Selection → replaces the selection**.
-8. **You can't insert into a table cell, header or footer.** You'll get a
-   message asking you to move the cursor into the main text.
+8. **Inserting inside a table.** One language, or the Stacked layout, goes
+   inside the cell. The side-by-side layouts are tables themselves, so they go
+   directly below the table, and the sidebar tells you so. Headers, footers
+   and footnotes can't hold a source; you'll get a message.
 
 ---
 

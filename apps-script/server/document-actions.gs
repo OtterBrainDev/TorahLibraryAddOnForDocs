@@ -257,9 +257,14 @@ function classifyLinkerMatches_(input) {
       continue;
     }
 
+    const documentText = docText.substring(start, endExclusive);
     matches.push({
       key: 'match-' + i + '-' + start,
-      documentText: docText.substring(start, endExclusive),
+      documentText: documentText,
+      // Which occurrence of this exact text the citation is. Apply re-finds it
+      // by this, not by raw offset, so an edit made while the review dialog
+      // is open cannot shift a link onto the wrong words.
+      occurrence: countOccurrencesBefore_(docText, documentText, start),
       snippet: buildLinkerSnippet_(docText, start, endExclusive),
       startChar: start,
       endChar: endExclusive,
@@ -403,39 +408,97 @@ function applyLinkerDecisions(decisionsJson) {
     throw new Error('Could not read the link selections.');
   }
   if (!Array.isArray(decisions) || !decisions.length) {
-    return { linked: 0, skipped: 0 };
+    return { linked: 0, skipped: 0, missing: 0 };
   }
 
   const bodyText = DocumentApp.getActiveDocument().getBody().editAsText();
-  const docLength = bodyText.getText().length;
+  const currentText = bodyText.getText();
 
-  decisions.sort(function (a, b) { return Number(b.startChar) - Number(a.startChar); });
+  // Re-find every citation in the document as it is NOW. The offsets came
+  // from the scan, and the document may have been edited while the review
+  // dialog was open; applying them as-is put links on the wrong words.
+  const placed = [];
+  let skipped = 0;
+  let missing = 0;
+  decisions.forEach(function (decision) {
+    const ref = String((decision && decision.ref) || '').trim();
+    if (!ref) {
+      skipped++;
+      return;
+    }
+    const range = relocateLinkerDecision_(currentText, decision);
+    if (!range) {
+      missing++;
+      return;
+    }
+    placed.push({ ref: ref, start: range.start, end: range.end });
+  });
+
+  placed.sort(function (a, b) { return b.start - a.start; });
 
   let linked = 0;
-  let skipped = 0;
-
-  for (let i = 0; i < decisions.length; i++) {
-    const decision = decisions[i] || {};
-    const start = Number(decision.startChar);
-    const endExclusive = Number(decision.endChar);
-    const ref = String(decision.ref || '').trim();
-
-    if (!ref || !isFinite(start) || !isFinite(endExclusive) || start < 0 || endExclusive <= start || endExclusive > docLength) {
-      skipped++;
-      continue;
-    }
-
+  placed.forEach(function (item) {
     try {
-      const url = 'https://www.sefaria.org/' + encodeURIComponent(ref).replace(/%20/g, '_');
-      bodyText.setLinkUrl(start, endExclusive - 1, url);
+      const url = 'https://www.sefaria.org/' + encodeURIComponent(item.ref).replace(/%20/g, '_');
+      bodyText.setLinkUrl(item.start, item.end - 1, url);
       linked++;
     } catch (error) {
-      Logger.log('Could not link ' + ref + ': ' + error.message);
+      Logger.log('Could not link ' + item.ref + ': ' + error.message);
       skipped++;
     }
-  }
+  });
 
-  return { linked: linked, skipped: skipped };
+  return { linked: linked, skipped: skipped, missing: missing };
+}
+
+/** Non-overlapping occurrences of `needle` that start before `end`. */
+function countOccurrencesBefore_(haystack, needle, end) {
+  if (!needle) return 0;
+  let count = 0;
+  let from = 0;
+  while (true) {
+    const at = haystack.indexOf(needle, from);
+    if (at < 0 || at >= end) return count;
+    count++;
+    from = at + needle.length;
+  }
+}
+
+/** Start of the n-th (0-based) non-overlapping occurrence, or -1. */
+function nthOccurrence_(haystack, needle, n) {
+  if (!needle) return -1;
+  let from = 0;
+  for (let i = 0; ; i++) {
+    const at = haystack.indexOf(needle, from);
+    if (at < 0) return -1;
+    if (i === n) return at;
+    from = at + needle.length;
+  }
+}
+
+/**
+ * Where a linker decision's citation is in `currentText`: {start, end}
+ * (end exclusive), or null when it can no longer be found.
+ *
+ * With `documentText` and `occurrence` (every decision from this version's
+ * dialog), the citation is re-found as the same occurrence of the same text,
+ * which survives edits anywhere else in the document. Without them (an older
+ * caller), the raw offsets are used only if they are in bounds.
+ */
+function relocateLinkerDecision_(currentText, decision) {
+  const text = String(currentText || '');
+  const needle = decision && typeof decision.documentText === 'string' ? decision.documentText : '';
+  const occurrence = Number(decision && decision.occurrence);
+  if (needle && isFinite(occurrence) && occurrence >= 0) {
+    const at = nthOccurrence_(text, needle, occurrence);
+    return at < 0 ? null : { start: at, end: at + needle.length };
+  }
+  const start = Number(decision && decision.startChar);
+  const end = Number(decision && decision.endChar);
+  if (!isFinite(start) || !isFinite(end) || start < 0 || end <= start || end > text.length) {
+    return null;
+  }
+  return { start: start, end: end };
 }
 
 function linkTextsWithSefaria() {
@@ -481,7 +544,13 @@ function runQuietLinkPass_() {
       ambiguousCount++;
       return;
     }
-    decisions.push({ startChar: match.startChar, endChar: match.endChar, ref: match.candidates[0].ref });
+    decisions.push({
+      startChar: match.startChar,
+      endChar: match.endChar,
+      documentText: match.documentText,
+      occurrence: match.occurrence,
+      ref: match.candidates[0].ref
+    });
   });
 
   const result = applyLinkerDecisions(JSON.stringify(decisions));
@@ -492,12 +561,14 @@ function runQuietLinkPass_() {
   // scan reported are still valid here.
   let inserted = 0;
   let insertFailed = 0;
+  const notices = [];
   if (linkerInsertsAfterLinking_(getPreferences())) {
     decisions.sort(function (a, b) { return b.startChar - a.startChar; });
     decisions.forEach(function (decision) {
       try {
-        const outcome = insertLinkedSourceAtPosition(decision.ref, decision.startChar);
+        const outcome = insertLinkedSourceAtPosition(decision.ref, decision);
         if (outcome && outcome.success) inserted++; else insertFailed++;
+        if (outcome && outcome.notice && notices.indexOf(outcome.notice) < 0) notices.push(outcome.notice);
       } catch (error) {
         Logger.log('Could not insert ' + decision.ref + ': ' + error.message);
         insertFailed++;
@@ -512,6 +583,10 @@ function runQuietLinkPass_() {
   if (insertFailed) {
     parts.push(insertFailed + ' source' + (insertFailed === 1 ? '' : 's') + ' could not be inserted.');
   }
+  if (result.missing) {
+    parts.push(result.missing + ' citation' + (result.missing === 1 ? ' was' : 's were') + ' no longer in the document and ' + (result.missing === 1 ? 'was' : 'were') + ' not linked.');
+  }
+  notices.forEach(function (notice) { parts.push('\n' + notice); });
   if (ambiguousCount) {
     parts.push(ambiguousCount + ' citation' + (ambiguousCount === 1 ? ' matched more than one source and was' : 's matched more than one source and were') + ' skipped.');
   }
@@ -528,45 +603,79 @@ function runQuietLinkPass_() {
   ui.alert(parts.join(' '));
 }
 
-function insertLinkedSourceAtPosition(ref, startChar) {
+/**
+ * Insert `ref` below the paragraph holding a linked citation.
+ *
+ * `position` is the linker decision ({startChar, endChar, documentText,
+ * occurrence}); a bare startChar number is still accepted. The citation is
+ * re-found in the current document (see relocateLinkerDecision_), and its
+ * paragraph is passed to insertReference as the anchor, so the user's cursor
+ * and selection are never touched. A citation in a table cell gets the source
+ * inside that cell, or, for a side-by-side layout, below the table with a
+ * notice. Headers, footers and footnotes are never scanned, so never anchors.
+ *
+ * @returns {{success: boolean, ref: string, notice?: string, reason?: string}}
+ */
+function insertLinkedSourceAtPosition(ref, position) {
   const doc = DocumentApp.getActiveDocument();
   const body = doc.getBody();
-  const numChildren = body.getNumChildren();
+  const decision = (position && typeof position === 'object') ? position : { startChar: Number(position) };
 
-  // Walk body children to find the paragraph containing startChar
-  let charCount = 0;
-  let targetChildIndex = numChildren - 1;
-  for (let i = 0; i < numChildren; i++) {
-    const child = body.getChild(i);
-    let childText = '';
-    try { childText = child.getText(); } catch (e) {}
-    const nextCharCount = charCount + childText.length + 1;
-    if (startChar < nextCharCount) {
-      targetChildIndex = i;
-      break;
-    }
-    charCount = nextCharCount;
-  }
-
-  // Set selection to that paragraph so insertReference inserts after it,
-  // mirroring the insertSourceFromSelection path with preserveSelection: true.
-  try {
-    const targetChild = body.getChild(targetChildIndex);
-    const range = doc.newRange().addElement(targetChild).build();
-    doc.setSelection(range);
-  } catch (e) {
-    // Falls back to cursor or end of document
+  const anchor = findLinkerAnchorBlock_(body, decision);
+  if (!anchor) {
+    return { success: false, ref: ref, reason: 'moved' };
   }
 
   const resolved = findReference(ref);
   if (!resolved || !resolved.ref) {
-    return { success: false, ref };
+    return { success: false, ref: ref, reason: 'unresolved' };
   }
 
   const prefs = getPreferences();
   const insertOptions = buildLinkSourcesInsertOptions_(prefs);
-  insertReference(resolved, Object.assign({ preferredTitle: ref, preserveSelection: true }, insertOptions));
-  return { success: true, ref };
+  const outcome = insertReference(resolved, Object.assign({ preferredTitle: ref, insertAfterElement: anchor }, insertOptions));
+  return { success: true, ref: ref, notice: (outcome && outcome.notice) || '' };
+}
+
+/**
+ * The paragraph (or list item) holding a linker citation, found in the
+ * document as it is now. Null when the citation text is gone.
+ */
+function findLinkerAnchorBlock_(body, decision) {
+  const currentText = body.editAsText().getText();
+  const range = relocateLinkerDecision_(currentText, decision);
+  if (!range) return null;
+
+  const needle = currentText.substring(range.start, range.end);
+  const occurrence = countOccurrencesBefore_(currentText, needle, range.start);
+
+  // Body.findText walks the same text, in the same order, as editAsText();
+  // the n-th hit is the element holding the n-th occurrence.
+  const pattern = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let hit = null;
+  for (let i = 0; i <= occurrence; i++) {
+    hit = hit ? body.findText(pattern, hit) : body.findText(pattern);
+    if (!hit) break;
+  }
+  let element = hit ? hit.getElement() : null;
+  while (element && element.getType && element.getType() !== DocumentApp.ElementType.PARAGRAPH &&
+         element.getType() !== DocumentApp.ElementType.LIST_ITEM) {
+    element = element.getParent ? element.getParent() : null;
+  }
+  if (element) return element;
+
+  // Fallback: the body child whose text span holds the offset (the previous
+  // approach; a table here means "below the table").
+  let charCount = 0;
+  const numChildren = body.getNumChildren();
+  for (let i = 0; i < numChildren; i++) {
+    const child = body.getChild(i);
+    let childText = '';
+    try { childText = child.getText(); } catch (e) {}
+    charCount += childText.length + 1;
+    if (range.start < charCount) return child;
+  }
+  return numChildren ? body.getChild(numChildren - 1) : null;
 }
 
 function buildLinkSourcesInsertOptions_(prefs) {
@@ -661,7 +770,8 @@ function insertSourceFromSelection() {
   try {
     resolved = findReference(selectedText);
   } catch (error) {
-    ui.alert(`Could not resolve "${selectedText}" to a Sefaria source: ${error.message}`);
+    // findReference only throws when Sefaria could not be reached; the message says so.
+    ui.alert(error.message);
     return;
   }
   if (!resolved || !resolved.ref) {
@@ -675,9 +785,15 @@ function insertSourceFromSelection() {
   // that same text, so nothing is lost. Preferences -> Insertion -> Insert
   // from Selection can switch this to keep the selection and insert below it.
   const replaceSelection = prefs.insert_from_selection_replace !== 'false' && prefs.insert_from_selection_replace !== false;
+  let outcome;
   try {
-    insertReference(resolved, Object.assign({ preferredTitle: selectedText, preserveSelection: !replaceSelection }, insertOptions));
+    outcome = insertReference(resolved, Object.assign({ preferredTitle: selectedText, preserveSelection: !replaceSelection }, insertOptions));
   } catch (error) {
     ui.alert(`Failed to insert source: ${error.message}`);
+    return;
+  }
+  // The source went somewhere other than the selection (below a table): say so.
+  if (outcome && outcome.notice) {
+    ui.alert(outcome.notice);
   }
 }
