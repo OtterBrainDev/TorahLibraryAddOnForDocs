@@ -15,7 +15,8 @@ function _sidebarCompositionGetState() {
     scheme: scheme,
     linkOn: $('.insert-sefaria-link').is(':checked'),
     linesOn: $('.wants-pesukim').is(':checked'),
-    detailsOn: $('.include-translation-source-info').is(':checked')
+    detailsOn: $('.include-translation-source-info').is(':checked'),
+    emphasisMode: ccNormalizeEmphasisMode($('.source-emphasis-mode').val())
   };
 }
 
@@ -68,6 +69,12 @@ function _sidebarCompositionOnToggle(key) {
     $el.prop('checked', !$el.is(':checked'));
     saveSidebarPreference({
       include_translation_source_info: $el.is(':checked')
+    });
+  } else if (key === 'emphasis') {
+    var nextMode = ccNextEmphasisMode($('.source-emphasis-mode').val());
+    $('.source-emphasis-mode').val(nextMode);
+    saveSidebarPreference({
+      source_emphasis_mode: nextMode
     });
   }
   if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();

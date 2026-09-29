@@ -6,7 +6,7 @@
 // Usage:
 //   initCompositionCard({
 //     containerId: 'composition-card-container',
-//     getState:       function() { return { vowelsOn, cantillationOn, transliterationOn, scheme, linkOn, linesOn, detailsOn }; },
+//     getState:       function() { return { vowelsOn, cantillationOn, transliterationOn, scheme, linkOn, linesOn, detailsOn, emphasisMode }; },
 //     onToggle:       function(key) { /* flip underlying state for key */ },
 //     onSchemeSelect: function(value) { /* set transliteration scheme */ },
 //     afterUpdate:    function(state) { /* optional host-specific post-update hook */ },
@@ -25,6 +25,28 @@ var CC_TRANSLIT_LABELS = {
   ipa_modern: "ha\u02C8sefe\u0281 kol ha\u02C8\u0294am",
   ipa_tiberian: "has\u02C8se\u02D0f\u025Br k\u0254l h\u0254\u02D0\u02C8\u0295\u0254m"
 };
+
+// The source's bold and italics (the `source_emphasis_mode` preference). The
+// B&I pill cycles through them in this order. Mirrors
+// normalizeSourceEmphasisMode_ in server/preferences.gs, including the legacy
+// boolean values of `preserve_source_emphasis`.
+var CC_EMPHASIS_MODES = ['keep', 'discard', 'only'];
+var CC_EMPHASIS_TITLES = {
+  keep: 'Keep the source\u2019s bold and italics',
+  discard: 'Discard the source\u2019s bold and italics',
+  only: 'Keep ONLY the source\u2019s bold and italics'
+};
+
+function ccNormalizeEmphasisMode(value) {
+  var v = String(value == null ? '' : value).trim().toLowerCase();
+  if (CC_EMPHASIS_MODES.indexOf(v) >= 0) return v;
+  return v === 'false' ? 'discard' : 'keep';
+}
+
+function ccNextEmphasisMode(value) {
+  var i = CC_EMPHASIS_MODES.indexOf(ccNormalizeEmphasisMode(value));
+  return CC_EMPHASIS_MODES[(i + 1) % CC_EMPHASIS_MODES.length];
+}
 
 var _ccConfig = null;
 
@@ -88,6 +110,18 @@ function updateCompositionCard() {
     .text(state.detailsOn ? '🔗 Sources: On' : '🔗 Sources: Off')
     .attr('aria-pressed', state.detailsOn ? 'true' : 'false');
 
+  // Source bold and italics: keep (active) → discard (faded) → only (inverted)
+  var emphasisMode = ccNormalizeEmphasisMode(state.emphasisMode);
+  $('#cc-emphasis-toggle')
+    .attr('data-mode', emphasisMode)
+    .attr('title', CC_EMPHASIS_TITLES[emphasisMode])
+    .attr('aria-label', 'Source bold and italics: ' + (emphasisMode === 'only' ? 'keep only' : emphasisMode) + '. Click to change.')
+    .toggleClass('is-off', emphasisMode === 'discard')
+    .toggleClass('is-inverted', emphasisMode === 'only')
+    .find('.cc-emphasis-label').each(function () {
+      $(this).prop('hidden', $(this).attr('data-emphasis-mode') !== emphasisMode);
+    });
+
   // Hebrew text visibility
   $('.cc-hebrew-text--full').prop('hidden', !(state.vowelsOn && state.cantillationOn));
   $('.cc-hebrew-text--no-cantillation').prop('hidden', !(state.vowelsOn && !state.cantillationOn));
@@ -141,6 +175,7 @@ function _bindCompositionCardEvents() {
   $('#cc-translit-pill').off('click.cc').on('click.cc', function () { doToggle('translit'); });
   $('#cc-lines-toggle').off('click.cc').on('click.cc', function () { doToggle('lines'); });
   $('#cc-details-toggle').off('click.cc').on('click.cc', function () { doToggle('details'); });
+  $('#cc-emphasis-toggle').off('click.cc').on('click.cc', function () { doToggle('emphasis'); });
 
   $('#cc-translit-toggle').off('click.cc').on('click.cc', function (event) {
     event.preventDefault();

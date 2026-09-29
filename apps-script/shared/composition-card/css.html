@@ -221,4 +221,31 @@
   gap: 8px;
   margin-top: 8px;
 }
+
+/* Source bold and italics: a three-state pill, so it is styled by mode rather
+   than aria-pressed. Keep = active, Discard = faded, Keep only = inverted.
+   The pill's own weight is reset so only the glyph's <b> is bold. */
+.cc-emphasis-pill {
+  font-weight: 400;
+}
+
+.cc-emphasis-pill b {
+  font-weight: 700;
+}
+
+.cc-emphasis-pill[data-mode='keep'] {
+  color: var(--sefaria-blue);
+  background: #e4edf8;
+  border-color: #b7c8e2;
+}
+
+.cc-emphasis-pill.is-off {
+  opacity: 0.6;
+}
+
+.cc-emphasis-pill.is-inverted {
+  color: #fff;
+  background: var(--sefaria-blue);
+  border-color: var(--sefaria-blue);
+}
 </style>

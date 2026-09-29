@@ -12,7 +12,8 @@
       "#sm-inline-launch",
       "#sm-inline-term",
       "#voices-insert-mode",
-      ".voices-insert-options"
+      ".voices-insert-options",
+      ".source-emphasis-mode"
     ]
   },
   "preferences": {
@@ -23,7 +24,8 @@
       "#transliteration_scheme",
       "#menu_layout",
       "#menu-layout-top",
-      "#menu-layout-quick-actions"
+      "#menu-layout-quick-actions",
+      "#source_emphasis_mode"
     ]
   },
   "surprise_me": {

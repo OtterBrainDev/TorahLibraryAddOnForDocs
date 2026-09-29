@@ -154,18 +154,20 @@ test('v3 migration scrubs stored AI state', () => {
   assert.equal(userProperties.getProperty('apply_sheimot_on_insertion'), 'true');
 });
 
-test('v6 migration turns preserve_source_emphasis on for upgraders', () => {
+test('v6 migration turns source emphasis on for upgraders', () => {
   // Sefaria's markup carries meaning (the Steinsaltz Talmud bolds the Talmud's
   // own words). The insertion path was flattening it, so this is a bug fix
   // reaching existing users — the migration writes "true", not the "false"
   // that a new opt-in feature would get. Same reasoning as the v2 migration.
+  // v14 then carries that "true" into source_emphasis_mode as "keep".
   const { context, userProperties } = loadMigrations({
     prefs_schema_version: '5',
   });
 
   context.runUserPreferenceMigrationsIfNeeded_();
 
-  assert.equal(userProperties.getProperty('preserve_source_emphasis'), 'true');
+  assert.equal(userProperties.getProperty('source_emphasis_mode'), 'keep');
+  assert.equal(userProperties.getProperty('preserve_source_emphasis'), null);
   assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
 });
 
@@ -177,7 +179,38 @@ test('v6 migration does not overwrite an explicit opt-out', () => {
 
   context.runUserPreferenceMigrationsIfNeeded_();
 
-  assert.equal(userProperties.getProperty('preserve_source_emphasis'), 'false');
+  assert.equal(userProperties.getProperty('source_emphasis_mode'), 'discard');
+});
+
+test('v14 migration converts preserve_source_emphasis into source_emphasis_mode', () => {
+  // "Keep only the source's bold and italics" needed a third state. Nobody's
+  // output may change on upgrade: false -> discard, true -> keep, and the
+  // boolean key is removed so no dead preference outlives its last reader.
+  for (const [legacy, mode] of [['true', 'keep'], ['false', 'discard']]) {
+    const { context, userProperties } = loadMigrations({
+      prefs_schema_version: '13',
+      preserve_source_emphasis: legacy,
+    });
+    context.runUserPreferenceMigrationsIfNeeded_();
+    assert.equal(userProperties.getProperty('source_emphasis_mode'), mode, `from ${legacy}`);
+    assert.equal(userProperties.getProperty('preserve_source_emphasis'), null);
+    assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  }
+});
+
+test('v14 migration defaults to keep and never clobbers a stored mode', () => {
+  const unset = loadMigrations({ prefs_schema_version: '13' });
+  unset.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(unset.userProperties.getProperty('source_emphasis_mode'), 'keep');
+
+  const stored = loadMigrations({
+    prefs_schema_version: '13',
+    source_emphasis_mode: 'only',
+    preserve_source_emphasis: 'false',
+  });
+  stored.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(stored.userProperties.getProperty('source_emphasis_mode'), 'only');
+  assert.equal(stored.userProperties.getProperty('preserve_source_emphasis'), null);
 });
 
 test('v10 migration carries a pinned "Insert from Selection" into menu_layout', () => {
