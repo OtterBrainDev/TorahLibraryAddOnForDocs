@@ -7,6 +7,37 @@ The version and the preference-schema number live in
 [`docs/versioning.md`](versioning.md). New work goes under an `## Unreleased`
 heading until the next release consolidates it.
 
+## Unreleased
+
+### Search
+
+#### Fixed
+
+- **Titles no longer have to be punctuated exactly.** Sefaria's title is
+  *The Torah; A Women's Commentary* — with a semicolon — and the reference
+  lookup only matched that exact punctuation, so
+  `The Torah, A Women's Commentary, Deuteronomy 29:9-14`,
+  `The Torah: A Women's Commentary …` or `the torah a womens commentary
+  deuteronomy 29 9-14` found nothing. Titles are now compared by their words
+  alone (case, apostrophes and punctuation ignored), and the lookup rewrites
+  the title to Sefaria's spelling; the chapter and verse are kept as typed. The
+  as-you-type title list matches the same way.
+- **The search box no longer fights you while you type.** Each as-you-type
+  search wrote a tidied copy of the query back into the box, which removed a
+  space you had just typed (`Deuteronomy ` → `Deuteronomy`) and moved the cursor
+  to the end if you were editing in the middle. The query is now tidied only
+  when you press Enter or click a search, history entry or suggestion.
+
+#### Changed
+
+- **Close matches are listed on every search.** Titles that are near-misses for
+  what you typed (a typo, a missing word, a different spelling) now appear
+  under a *Close matches* heading after the exact results, with your chapter
+  and verse carried over. Before, they appeared only when a search returned
+  nothing at all — which almost never happened, because the full-text search
+  nearly always returns something. Close matches are never opened
+  automatically; click the one you meant.
+
 ## v2.1.0 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
 
 Highlights: Link Texts with Sefaria shows its progress, asks about ambiguous

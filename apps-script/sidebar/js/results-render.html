@@ -561,8 +561,9 @@ function sortByRecentSession(items) {
 function sortLibraryItems(items, sortMode) {
   var direct = [];
   var rest = [];
+  var fuzzy = [];
   (items || []).forEach(function(item) {
-    (isDirectReferenceItem(item) ? direct : rest).push(item);
+    (isDirectReferenceItem(item) ? direct : (item && item.isFuzzy ? fuzzy : rest)).push(item);
   });
   if (sortMode === 'alphabetical-asc') {
     rest.sort(function(a, b) { return compareResultsAlphabetically(a, b, 'asc'); });
@@ -573,8 +574,9 @@ function sortLibraryItems(items, sortMode) {
   } else if (sortMode === 'recent') {
     rest = sortByRecentSession(rest);
   }
-  // 'relevance': preserve existing order
-  return direct.concat(rest);
+  // 'relevance': preserve existing order. Close matches stay last in every
+  // sort mode; they are the fallback, not peers of the exact results.
+  return direct.concat(rest, fuzzy);
 }
 
 function sortSearchItems(items, sortMode) {
@@ -624,7 +626,9 @@ function applyClientSideSearchFilters(items, searchParameters) {
 }
 
 function maybeAutoSelectSingleResult() {
-  var allResults = queryState.libraryMatches.concat(queryState.searchResults).filter(function (item) { return item && item.ref; });
+  // Close matches never count: they are guesses, offered for a click. One exact
+  // result beside them still auto-selects, as it did before they were listed.
+  var allResults = queryState.libraryMatches.concat(queryState.searchResults).filter(function (item) { return item && item.ref && !item.isFuzzy; });
   if (allResults.length !== 1) return;
   var only = allResults[0];
   if (!only || !only.key || selectedResultKey === only.key) return;

@@ -89,7 +89,11 @@ function loadSuggester(titles) {
   vm.createContext(context);
 
   // Module-level constants the functions close over.
-  [/var FUZZY_STOPWORDS_ = \{[^}]*\};/, /var HILCHOT_ABBREVIATIONS_CLIENT_ = \[[^\]]*\];/]
+  [
+    /var FUZZY_STOPWORDS_ = \{[^}]*\};/,
+    /var HILCHOT_ABBREVIATIONS_CLIENT_ = \[[^\]]*\];/,
+    /var fuzzyTitleIndexCache_ = [^\n]*;/,
+  ]
     .forEach((pattern) => {
       const match = html.match(pattern);
       assert.ok(match, `expected ${pattern} in search-utils.html`);
@@ -97,7 +101,9 @@ function loadSuggester(titles) {
     });
 
   [
-    'normalizeFuzzyText', 'splitReferenceForFuzzy', 'levenshteinDistance',
+    'normalizeFuzzyText', 'splitReferenceForFuzzy', 'levenshteinDistance', 'levenshteinWithin_',
+    'getFuzzyTitleIndex_', 'buildQueryTokenMatchSets_', 'titleHasTokenIn_',
+    'fuzzyCharHistogram_', 'fuzzyHistogramLowerBound_',
     'isLikelyHebrewScriptInput', 'canonicalizeCitationAbbreviation',
     'fuzzyTokens_', 'fuzzyTokenMatches_', 'getTokenOverlapSuggestions_',
     'getPartialOverlapSuggestions_', 'getFuzzyReferenceSuggestions',
@@ -282,4 +288,174 @@ test('consonant voweling is known to over-fire on English words', () => {
   assert.equal(vowel('Chanukah'), 'Chanukah');
   assert.equal(vowel('Prayer'), 'Prayer');
   assert.equal(vowel('Blessing'), 'Blessing');
+});
+
+// ---------------------------------------------------------------------------
+// Punctuation-blind title matching
+// ---------------------------------------------------------------------------
+//
+// Sefaria's title is "The Torah; A Women's Commentary" — a SEMICOLON. The direct
+// lookup used to match titles case-insensitively but punctuation-exactly, so the
+// only query that reached Deuteronomy 29:9-14 was the one with the semicolon
+// typed exactly; a comma, a colon, or no punctuation at all found nothing.
+
+const WOMENS_COMMENTARY_CATALOGUE = [
+  'Genesis',
+  'Deuteronomy',
+  'The Torah; A Women\'s Commentary',
+  'The Torah; A Women\'s Commentary, Genesis',
+  'The Torah; A Women\'s Commentary, Deuteronomy',
+  'Rashi on Deuteronomy',
+  'Berakhot',
+  'Pirkei Avot',
+];
+
+function loadTitleMatcher(titles) {
+  const html = fs.readFileSync(SEARCH_UTILS, 'utf8');
+  const context = loadSuggester(titles);
+  [
+    /var LOOSE_KEY_DROP_RE_ = [^\n]*;/,
+    /var LOOSE_KEY_WORD_RE_ = [^\n]*;/,
+    /var LOOSE_KEY_DROP_ALL_RE_ = [^\n]*;/,
+    /var LOOSE_KEY_BREAK_ALL_RE_ = [^\n]*;/,
+    /var looseTitleIndexCache_ = [^\n]*;/,
+  ].forEach((pattern) => {
+    const match = html.match(pattern);
+    assert.ok(match, `expected ${pattern} in search-utils.html`);
+    vm.runInContext(match[0], context);
+  });
+  [
+    'expandShevaApostrophe', 'buildLooseTitleKey_', 'looseTitleKey_', 'getLooseTitleIndex_',
+    'getLoosePrefixTitleMatches', 'normalizeLatinLookupTitleCase',
+    'buildFuzzyLibraryMatches', 'mergeLibraryMatchesWithFuzzy',
+  ].forEach((name) => {
+    const match = html.match(new RegExp(`function ${name}\\b[\\s\\S]*?\\n}`));
+    assert.ok(match, `Could not find function ${name}`);
+    vm.runInContext(match[0], context);
+  });
+  return context;
+}
+
+test('the loose key ignores case, apostrophes and punctuation', () => {
+  const { buildLooseTitleKey_ } = loadTitleMatcher(WOMENS_COMMENTARY_CATALOGUE);
+
+  const expected = 'the torah a womens commentary deuteronomy';
+  [
+    "The Torah; A Women's Commentary, Deuteronomy",
+    'The Torah, A Women’s Commentary, Deuteronomy',
+    'the torah: a womens commentary deuteronomy',
+    '  The   Torah -- A Women\'s Commentary; Deuteronomy.  ',
+  ].forEach((input) => assert.equal(buildLooseTitleKey_(input).key, expected, input));
+});
+
+test('the fast title key agrees with the offset-mapping one', () => {
+  const { buildLooseTitleKey_, looseTitleKey_ } = loadTitleMatcher(WOMENS_COMMENTARY_CATALOGUE);
+
+  [
+    "The Torah; A Women's Commentary, Deuteronomy",
+    '  a \' b -- c.d  ',
+    "Rashi's commentary: 1:1-2:3",
+    'Café Élite',
+    'בְּרֵאשִׁית א׳:ב״',
+    'Mishneh Torah, Hilchot Shabbat',
+    '',
+    ' ;; ',
+  ].forEach((input) => assert.equal(looseTitleKey_(input), buildLooseTitleKey_(input).key, JSON.stringify(input)));
+});
+
+test('the direct lookup rewrites any punctuation of the title to the catalogue spelling', () => {
+  const { normalizeLatinLookupTitleCase } = loadTitleMatcher(WOMENS_COMMENTARY_CATALOGUE);
+
+  const canonical = "The Torah; A Women's Commentary, Deuteronomy";
+  [
+    ["The Torah; A Women's Commentary, Deuteronomy 29 9-14", `${canonical} 29 9-14`],
+    ["The Torah, A Women's Commentary, Deuteronomy 29 9-14", `${canonical} 29 9-14`],
+    ["The Torah A Women's Commentary, Deuteronomy 29 9-14", `${canonical} 29 9-14`],
+    ['the torah a womens commentary deuteronomy 29:9-14', `${canonical} 29:9-14`],
+    ['The Torah: A Women’s Commentary, Deuteronomy 29:9', `${canonical} 29:9`],
+  ].forEach(([input, expected]) => assert.equal(normalizeLatinLookupTitleCase(input), expected, input));
+});
+
+test('the direct lookup keeps its existing behavior for plain titles', () => {
+  const { normalizeLatinLookupTitleCase } = loadTitleMatcher(WOMENS_COMMENTARY_CATALOGUE);
+
+  assert.equal(normalizeLatinLookupTitleCase('genesis 1:1'), 'Genesis 1:1');
+  assert.equal(normalizeLatinLookupTitleCase('Genesis'), 'Genesis');
+  assert.equal(normalizeLatinLookupTitleCase('pirkei avot 1:1'), 'Pirkei Avot 1:1');
+  // A title must end on a word boundary: "Genesisx" is not "Genesis" + "x".
+  assert.equal(normalizeLatinLookupTitleCase('Genesisx 1:1'), 'Genesisx 1:1');
+  // Nothing in the catalogue: left exactly as typed.
+  assert.equal(normalizeLatinLookupTitleCase('love your neighbor'), 'love your neighbor');
+  // Hebrew is out of scope for this rewrite.
+  assert.equal(normalizeLatinLookupTitleCase('בראשית א:א'), 'בראשית א:א');
+});
+
+test('as-you-type title matches ignore punctuation', () => {
+  const { getLoosePrefixTitleMatches } = loadTitleMatcher(WOMENS_COMMENTARY_CATALOGUE);
+
+  const matches = Array.from(getLoosePrefixTitleMatches(['The Torah A Womens Comm'], 6));
+  assert.ok(matches.includes("The Torah; A Women's Commentary"), JSON.stringify(matches));
+  assert.ok(matches.includes("The Torah; A Women's Commentary, Deuteronomy"), JSON.stringify(matches));
+  assert.equal(Array.from(getLoosePrefixTitleMatches(['The Torah A Womens Comm'], 2)).length, 2);
+  assert.deepEqual(Array.from(getLoosePrefixTitleMatches(['', '  ;  '], 6)), []);
+});
+
+test('a misspelled title is offered as a close-match row with its section kept', () => {
+  const { buildFuzzyLibraryMatches } = loadTitleMatcher(WOMENS_COMMENTARY_CATALOGUE);
+
+  const rows = Array.from(buildFuzzyLibraryMatches('The Torah A Womans Comentary, Deuteronomy 29:9-14'));
+  assert.ok(rows.length > 0, 'expected a close match');
+  assert.equal(rows[0].ref, "The Torah; A Women's Commentary, Deuteronomy 29:9-14");
+  assert.ok(rows.every((row) => row.isFuzzy && row.clusterLabel === 'Close matches'));
+  assert.deepEqual(Array.from(buildFuzzyLibraryMatches('Ge')), []);
+});
+
+test('close matches stay behind the exact results and never duplicate them', () => {
+  const { mergeLibraryMatchesWithFuzzy } = loadTitleMatcher(WOMENS_COMMENTARY_CATALOGUE);
+
+  const exact = [{ ref: 'Genesis 1:1' }, { ref: 'Genesis' }, { ref: 'Genesis Rabbah' }];
+  const fuzzy = [
+    { ref: 'genesis 1:1', isFuzzy: true },
+    { ref: 'Genesys', isFuzzy: true },
+  ];
+  // A previous merge's close matches are dropped from the input and re-added
+  // at the end, so repeated merges do not accumulate them.
+  const merged = Array.from(mergeLibraryMatchesWithFuzzy(exact.concat(fuzzy), fuzzy, 2));
+  assert.deepEqual(merged.map((item) => item.ref), ['Genesis 1:1', 'Genesis', 'Genesys']);
+});
+
+// ---------------------------------------------------------------------------
+// The field is not rewritten while the reader types
+// ---------------------------------------------------------------------------
+
+test('the as-you-type search does not write the normalized query back into the field', () => {
+  const bindings = fs.readFileSync(path.join(ROOT, 'apps-script/sidebar/js/event-bindings.html'), 'utf8');
+  const controller = fs.readFileSync(path.join(ROOT, 'apps-script/sidebar/js/search-controller.html'), 'utf8');
+
+  // The debounced input handler marks its query as typing-driven...
+  assert.match(bindings, /setTimeout\(function \(\) \{\s*if \(\(value \|\| ''\)\.trim\(\)\.length >= 2\) runUnifiedQuery\(\{ fromTyping: true \}\);/);
+  // ...and every mode's query function skips the write-back for it. An
+  // unconditional $('.input').val(input) trimmed the space the reader had just
+  // typed and moved the caret to the end mid-edit.
+  const writeBacks = controller.match(/^\s*(?:if \([^)]*\) )?\$\('\.input'\)\.val\(input\);/gm) || [];
+  assert.equal(writeBacks.length, 3, JSON.stringify(writeBacks));
+  writeBacks.forEach((line) => assert.match(line, /if \((?:!fromTyping|fromTyping !== true)\)/, line));
+});
+
+test('the bounded edit distance and the histogram bound agree with the full distance', () => {
+  const { levenshteinDistance, levenshteinWithin_, fuzzyCharHistogram_, fuzzyHistogramLowerBound_ } = loadSuggester(CATALOGUE);
+
+  const words = ['', 'a', 'genesis', 'genesys', 'bereshit', 'bereishit', 'the torah a womens commentary', 'the torah a womans comentary', 'kitten', 'sitting'];
+  for (const a of words) {
+    for (const b of words) {
+      const full = levenshteinDistance(a, b);
+      const bound = fuzzyHistogramLowerBound_(fuzzyCharHistogram_(a), fuzzyCharHistogram_(b));
+      assert.ok(bound <= full, `histogram bound ${bound} exceeds distance ${full} for ${a} / ${b}`);
+      for (let max = 0; max <= 8; max++) {
+        const bounded = levenshteinWithin_(a, b, max);
+        if (full <= max) assert.equal(bounded, full, `${a} / ${b} within ${max}`);
+        else assert.ok(bounded > max, `${a} / ${b}: ${bounded} should exceed ${max}`);
+      }
+    }
+  }
 });

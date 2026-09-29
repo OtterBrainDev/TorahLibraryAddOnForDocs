@@ -49,12 +49,19 @@ function setResultsLoading(isLoading) {
 
 // Session library and results rendering extracted to sidebar_session_library and sidebar_results_render.
 
-function runUnifiedQuery() {
-  if (appMode === 'voices') return runVoicesQuery();
-  if (appMode === 'lexicon') return runLexiconQuery();
+function runUnifiedQuery(options) {
+  // Also bound directly as a click handler, so `options` may be a jQuery event.
+  var fromTyping = !!(options && options.fromTyping === true);
+  if (appMode === 'voices') return runVoicesQuery(fromTyping);
+  if (appMode === 'lexicon') return runLexiconQuery(fromTyping);
   updateModeDependentSections();
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  $('.input').val(input);
+  // Write the tidied query back only on an explicit search (Enter, the search
+  // button, a history or suggestion click). Doing it from the as-you-type
+  // debounce fought the reader for the field: a pause after "Deuteronomy "
+  // trimmed the space they had just typed, and any rewrite moved the caret to
+  // the end mid-edit.
+  if (!fromTyping) $('.input').val(input);
   var inputExpanded = expandShevaApostrophe(input);
   // Canonicalize traditional abbreviations before the title lookup: Sefaria's
   // autocompleter indexes "Hilchot Shabbat", never "Hil. Shabbat".
@@ -115,15 +122,8 @@ function runUnifiedQuery() {
     return;
   }
 
-  var prefixTitles = titles
-    .filter(function (title) {
-      if (!title) return false;
-      var expandedTitle = expandShevaApostrophe(title).toUpperCase();
-      var queryA = inputExpanded.toUpperCase();
-      var queryB = inputForNameApi.toUpperCase();
-      return expandedTitle.indexOf(queryA) === 0 || (queryB !== queryA && expandedTitle.indexOf(queryB) === 0);
-    })
-    .slice(0, 6)
+  // Punctuation-blind: "The Torah A Women" lists "The Torah; A Women's ...".
+  var prefixTitles = getLoosePrefixTitleMatches([inputExpanded, inputForNameApi], 6)
     .map(function (title, index) {
       return {
         key: "library-title-" + index + "-" + title,
@@ -136,20 +136,28 @@ function runUnifiedQuery() {
       };
     });
 
+  // Rewrites the title to the catalogue's spelling ("The Torah, A Womens
+  // Commentary, ..." → "The Torah; A Women's Commentary, ..."). The row shows
+  // that canonical form, so the reader sees what will actually be inserted.
   var directLookupInput = normalizeLatinLookupTitleCase(inputExpanded);
   var directRefMatch = {
     key: "library-ref-" + directLookupInput,
     ref: directLookupInput,
-    label: input,
+    label: directLookupInput,
     subtitle: 'Direct reference lookup',
     typeLabel: 'Library',
     hasTranslation: true,
     availableLangs: []
   };
 
+  var fuzzyMatches = buildFuzzyLibraryMatches(inputExpanded);
+  function setLibraryMatches(matches) {
+    queryState.rawLibraryMatches = mergeLibraryMatchesWithFuzzy(matches, fuzzyMatches, 10);
+  }
+
   var isHebrewScript = isLikelyHebrewScriptInput(input);
   resetResultPostProcessState();
-  queryState.rawLibraryMatches = prefixTitles;
+  setLibraryMatches(prefixTitles);
   queryState.rawSearchResults = [];
   reprocessAndRenderResults();
 
@@ -178,7 +186,7 @@ function runUnifiedQuery() {
             : []);
       directRefMatch.availableLangs = resolvedLangs;
       directRefMatch.hasTranslation = resolvedLangs.length > 0;
-      queryState.rawLibraryMatches = [directRefMatch].concat(queryState.rawLibraryMatches).slice(0, 10);
+      setLibraryMatches([directRefMatch].concat(queryState.rawLibraryMatches));
       setResultsHint('');
     } else if (isHebrewScript) {
       setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
@@ -209,7 +217,7 @@ function runUnifiedQuery() {
     });
     var filteredLibraryPathHits = applyClientSideSearchFilters(libraryPathHits, searchParameters).slice(0, 10);
     var filteredContentHits = applyClientSideSearchFilters(contentHits, searchParameters).slice(0, 12);
-    queryState.rawLibraryMatches = queryState.rawLibraryMatches.concat(filteredLibraryPathHits).slice(0, 10);
+    setLibraryMatches(queryState.rawLibraryMatches.concat(filteredLibraryPathHits));
     queryState.rawSearchResults = filteredContentHits;
     if (searchParameters.translationOnly && !queryState.libraryMatches.length && !queryState.searchResults.length) {
       setResultsHint('No results matched the selected translation language filter.');
@@ -264,7 +272,7 @@ function runUnifiedQuery() {
           availableLangs: []
         };
       });
-    queryState.rawLibraryMatches = nameMatches.concat(queryState.rawLibraryMatches).slice(0, 10);
+    setLibraryMatches(nameMatches.concat(queryState.rawLibraryMatches));
     reprocessAndRenderResults();
     finishResultGroup();
   }
@@ -457,9 +465,9 @@ function renderVoicesCard(item) {
   updateVoiceNavButtons();
 }
 
-function runVoicesQuery() {
+function runVoicesQuery(fromTyping) {
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  $('.input').val(input);
+  if (fromTyping !== true) $('.input').val(input);
   clearSelectedResult();
   selectedVoiceItem = null;
   setResultsHint('');
@@ -1027,9 +1035,9 @@ $(document).on('input', '.input', function () {
 
 /* ── Main lexicon query ─────────────────────────────────────────────────────── */
 
-function runLexiconQuery() {
+function runLexiconQuery(fromTyping) {
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  $('.input').val(input);
+  if (fromTyping !== true) $('.input').val(input);
   clearSelectedResult();
   selectedLexiconItem = null;
   setResultsHint('');

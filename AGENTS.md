@@ -113,7 +113,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **188 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **197 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -129,8 +129,9 @@ and fix it before touching the feature you came to change.
   dividers collapse, stored layouts are normalized.
 - `extended-gemara.test.js`, `format-data-for-pesukim.test.js` — the
   regressions named in `docs/regression-log.md`.
-- `search-input-normalization.test.js` — query normalization and the
-  zero-result suggester.
+- `search-input-normalization.test.js` — query normalization, punctuation-blind
+  title matching, the close-match suggester, and that as-you-type search never
+  rewrites the search box.
 - `citation-abbreviations.test.js` — traditional citation forms
   ("Hil. Shabbat 1:1").
 - `linker-prefilter.test.js` — what leaves the machine, and offset
