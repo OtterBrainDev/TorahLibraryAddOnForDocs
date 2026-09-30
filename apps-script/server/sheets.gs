@@ -11,11 +11,14 @@ function insertSheet(sheetPayload, frontendOptions) {
     throw new Error('Open a Google Doc before inserting a sheet.');
   }
 
-  const body = document.getBody();
   const typography = getTypographySettings();
   const normalizedOptions = normalizeSheetInsertOptions(sheetPayload, frontendOptions);
 
-  let index = getInsertionIndex_(document, body);
+  // `body` is the insertion container: the document body, or the table cell
+  // holding the cursor. Sheets insert paragraphs only. See insertion-target.gs.
+  const target = resolveInsertionTarget_({ layout: 'paragraphs', replaceSelection: false });
+  const body = target.container;
+  let index = target.index;
 
   if (normalizedOptions.includeReference) {
     index = insertSheetReferenceBlock_(body, index, sheetPayload, typography, true);
@@ -82,18 +85,6 @@ function normalizeSheetInsertOptions(sheetPayload, frontendOptions) {
 
 function getBooleanOption_(value, fallback) {
   return typeof value === 'boolean' ? value : fallback;
-}
-
-function getInsertionIndex_(document, body) {
-  let index = body.getNumChildren();
-  const cursor = document.getCursor();
-  if (cursor) {
-    const currentElement = cursor.getElement();
-    if (currentElement && currentElement.getParent()) {
-      index = currentElement.getParent().getChildIndex(currentElement) + 1;
-    }
-  }
-  return index;
 }
 
 function fetchSefariaSheetById_(sheetId) {

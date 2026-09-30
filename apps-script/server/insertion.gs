@@ -569,6 +569,9 @@ function buildLinkedTitleText(baseTitle, data, singleLanguage) {
  * @param {boolean} [opts.insertCitationOnly]           Insert just the citation title, no body.
  * @param {string} [opts.sourceEmphasisMode]            "keep" | "discard" | "only"; omitted
  *                                                      means the stored `source_emphasis_mode`.
+ * @param {boolean} [opts.preserveSelection]            Keep a selection and insert after it (default: replace it).
+ * @param {Object}  [opts.insertAfterElement]           Insert after this element instead of at the cursor (server-side callers only).
+ * @returns {{notice: string}} notice is non-empty when the insert went somewhere other than the cursor.
  */
 function insertReference(data, opts) {
   const options = opts || {};
@@ -589,122 +592,20 @@ function insertReference(data, opts) {
   const includeLineMarkers = pasukPreference === true || pasukPreference === 'true';
   data = formatDataForPesukim(data, includeLineMarkers);
 
-  let doc = DocumentApp.getActiveDocument().getBody();
-  let docWrapper = DocumentApp.getActiveDocument();
-  let cursor = docWrapper.getCursor();
-  let selection = docWrapper.getSelection();
-  let index = doc.getNumChildren();
+  // Side-by-side layouts are a table of their own; everything else is
+  // paragraphs, which can also go inside a table cell. See insertion-target.gs.
+  const createsTable = !singleLanguage && bilingualLayout !== "he-top";
+  const target = resolveInsertionTarget_({
+    layout: createsTable ? 'table' : 'paragraphs',
+    // Unchanged from before: a selection is replaced unless the caller asks
+    // to keep it (the linker's per-row insert, Insert from Selection's
+    // keep-selection setting).
+    replaceSelection: options.preserveSelection !== true && !options.insertAfterElement,
+    anchor: options.insertAfterElement || null
+  });
+  let doc = target.container;
+  let index = target.index;
 
-  const resolveSafeSelectionInsertionIndex = (preserveSelection) => {
-    if (!selection) return null;
-
-    let rangeElements = selection.getRangeElements();
-    if (!rangeElements || rangeElements.length === 0) return null;
-
-    let firstElement = rangeElements[0].getElement();
-    let bodyLevelElement = firstElement;
-    let foundBodyLevel = false;
-    // Use getType() instead of reference equality — Apps Script proxy objects for the same
-    // Body returned by getParent() vs getBody() are not === equal, so reference comparison
-    // silently walks past the body and always throws for normal paragraph selections.
-    try {
-      while (bodyLevelElement) {
-        if (!bodyLevelElement.getParent) break;
-        const parent = bodyLevelElement.getParent();
-        if (!parent) break;
-        if (parent.getType() === DocumentApp.ElementType.BODY_SECTION) {
-          foundBodyLevel = true;
-          break;
-        }
-        bodyLevelElement = parent;
-      }
-    } catch (e) {
-      foundBodyLevel = false;
-    }
-
-    if (!foundBodyLevel || bodyLevelElement.getType() === DocumentApp.ElementType.TABLE) {
-      throw new Error("Your selection is inside a table, header, or footer, which isn't supported. Click to place your cursor in the main body of the document, then try again.");
-    }
-
-    // Walk to the last body-level element in the selection so we insert after it.
-    let lastBodyLevelElement = bodyLevelElement;
-    if (!preserveSelection) {
-      // When deleting we only need the first element's index (deletions adjust it inline).
-    } else {
-      const lastEl = rangeElements[rangeElements.length - 1].getElement();
-      let candidate = lastEl;
-      try {
-        while (candidate) {
-          if (!candidate.getParent) break;
-          const parent = candidate.getParent();
-          if (!parent) break;
-          if (parent.getType() === DocumentApp.ElementType.BODY_SECTION) {
-            lastBodyLevelElement = candidate;
-            break;
-          }
-          candidate = parent;
-        }
-      } catch (e) {}
-    }
-
-    let insertionIndex = doc.getChildIndex(preserveSelection ? lastBodyLevelElement : bodyLevelElement) + 1;
-
-    if (!preserveSelection) {
-      for (let i = rangeElements.length - 1; i >= 0; i--) {
-        let re = rangeElements[i];
-        let el = re.getElement();
-        try {
-          if (re.isPartial()) {
-            if (el.getType() === DocumentApp.ElementType.TEXT) {
-              let start = re.getStartOffset();
-              let end = re.getEndOffsetInclusive();
-              if (start >= 0 && end >= start) {
-                el.asText().deleteText(start, end);
-              }
-            }
-          } else {
-            let type = el.getType();
-            if (type === DocumentApp.ElementType.TEXT) {
-              let text = el.asText().getText();
-              if (text.length > 0) {
-                el.asText().deleteText(0, text.length - 1);
-              }
-            } else if (type === DocumentApp.ElementType.PARAGRAPH || type === DocumentApp.ElementType.LIST_ITEM) {
-              const elParent = el.getParent();
-              const elParentIsBody = elParent && elParent.getType() === DocumentApp.ElementType.BODY_SECTION;
-              if (elParentIsBody && doc.getNumChildren() > 1) {
-                let elIndex = doc.getChildIndex(el);
-                el.removeFromParent();
-                if (elIndex < insertionIndex) {
-                  insertionIndex--;
-                }
-              } else {
-                try { el.clear(); } catch (e) {}
-              }
-            }
-          }
-        } catch (e) {
-          // Skip any element that cannot be deleted
-        }
-      }
-    }
-
-    return insertionIndex;
-  };
-
-  if (!cursor && selection) {
-    index = resolveSafeSelectionInsertionIndex(options.preserveSelection === true);
-  }
-
-  if (cursor) {
-    let currentElement = cursor.getElement();
-    if (currentElement) {
-      let paragraphParent = currentElement.getParent();
-      if (paragraphParent) {
-        index = paragraphParent.getChildIndex(currentElement) + 1;
-      }
-    }
-  }
   let headerStyle = {};
         headerStyle[DocumentApp.Attribute.BOLD] = true;
         headerStyle[DocumentApp.Attribute.UNDERLINE] = true;
@@ -943,6 +844,10 @@ function insertReference(data, opts) {
       }
     }
   }
+
+  // Non-empty when the insert went somewhere other than the cursor (below a
+  // table); the caller shows it, so the move is never silent.
+  return { notice: target.notice };
 }
 
 /**
@@ -1075,17 +980,11 @@ function insertReferenceVersions(ref, opts) {
     typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
   }
 
-  let doc = DocumentApp.getActiveDocument().getBody();
-  let docWrapper = DocumentApp.getActiveDocument();
-  let cursor = docWrapper.getCursor();
-  let index = doc.getNumChildren();
-
-  if (cursor) {
-    let currentElement = cursor.getElement();
-    if (currentElement && currentElement.getParent()) {
-      index = currentElement.getParent().getChildIndex(currentElement) + 1;
-    }
-  }
+  // Always paragraphs (translation-only or Hebrew on top), so this can go
+  // inside a table cell. A selection is kept, as it always was on this path.
+  const target = resolveInsertionTarget_({ layout: 'paragraphs', replaceSelection: false });
+  let doc = target.container;
+  let index = target.index;
 
   let headerStyle = {};
   headerStyle[DocumentApp.Attribute.BOLD] = true;
@@ -1158,7 +1057,8 @@ function insertReferenceVersions(ref, opts) {
 
   return {
     inserted: kept.map(function (entry) { return entry.versionTitle; }),
-    skipped: selection.skipped
+    skipped: selection.skipped,
+    notice: target.notice
   };
 }
 

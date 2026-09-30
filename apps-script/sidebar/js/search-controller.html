@@ -193,9 +193,12 @@ function runUnifiedQuery(options) {
     }
     reprocessAndRenderResults();
     finishResultGroup();
-  }).withFailureHandler(function () {
+  }).withFailureHandler(function (error) {
     if (validationRequestId !== latestDirectRefValidationRequestId || requestId !== latestQueryRequestId) return;
-    if (isHebrewScript) setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
+    // findReference throws only when Sefaria can't be reached; say that
+    // rather than implying the reference doesn't exist.
+    if (error && error.message) setResultsHint(error.message);
+    else if (isHebrewScript) setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
     finishResultGroup();
   }).findReference(directLookupInput);
 
@@ -357,7 +360,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     updateActionabilityUI(nodeState);
     // buildNonInsertableMessage escapes the ref (buildPreviewMeta) and the prompt.
     $('.suggestions').html("<br>" + buildNonInsertableMessage(response));
-  }).withFailureHandler(function () {
+  }).withFailureHandler(function (error) {
     if (requestId !== latestResolveRequestId) return;
     hasResolvedReference = false;
     setInsertButtonState(false);
@@ -365,7 +368,9 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     clearVersionSelectors();
     updatePesukimAvailability(null);
     updateActionabilityUI({ isInsertable: false });
-    $('.suggestions').html("<br><b>Enter a valid reference to insert.</b>");
+    // Static markup; the only interpolated value is the server's error
+    // message, escaped with escapeHTML.
+    $('.suggestions').html("<br><b>" + escapeHTML((error && error.message) || 'Enter a valid reference to insert.') + "</b>");
   }).findReference(selectedRef);
 }
 

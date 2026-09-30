@@ -95,41 +95,74 @@ function findRefsInDocumentText(documentText) {
     }
   };
 
+  // with_text gives us `refData`: heRef, url and a short excerpt for every
+  // candidate ref, in the SAME request. That is what makes it possible to show
+  // the reader what a link points to before applying it, without a second
+  // round-trip per candidate. max_segments keeps the payload small.
+  //
+  // Every failure below throws. This used to catch everything and return an
+  // empty result, so a network error, or a long document Sefaria had not
+  // finished within ~5 seconds of polling, was reported as "no citations
+  // found". Both callers (the review dialog and the quiet pass) show the
+  // message.
+  let enqueueResponse;
   try {
-    // with_text gives us `refData`: heRef, url and a short excerpt for every
-    // candidate ref, in the SAME request. That is what makes it possible to show
-    // the reader what a link points to before applying it, without a second
-    // round-trip per candidate. max_segments keeps the payload small.
-    const enqueueResponse = UrlFetchApp.fetch('https://www.sefaria.org/api/find-refs?with_text=1&max_segments=1', {
+    enqueueResponse = UrlFetchApp.fetch('https://www.sefaria.org/api/find-refs?with_text=1&max_segments=1', {
       method: 'post',
       contentType: 'application/json',
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     });
-    const enqueueData = JSON.parse(enqueueResponse.getContentText() || '{}');
-    const taskId = enqueueData.task_id;
-    if (!taskId) {
-      return { results: [], refData: {} };
-    }
-
-    for (let attempt = 0; attempt < 12; attempt++) {
-      Utilities.sleep(400);
-      const statusResponse = UrlFetchApp.fetch(`https://www.sefaria.org/api/async/${encodeURIComponent(taskId)}`, { muteHttpExceptions: true });
-      const statusData = JSON.parse(statusResponse.getContentText() || '{}');
-      if (!statusData.ready) {
-        continue;
-      }
-      const body = (((statusData || {}).result || {}).body || {});
-      return {
-        results: Array.isArray(body.results) ? body.results : [],
-        refData: (body.refData && typeof body.refData === 'object') ? body.refData : {}
-      };
-    }
   } catch (error) {
-    Logger.log(`Failed to fetch find-refs output: ${error.message}`);
+    throw sefariaUnavailableError_();
+  }
+  const enqueueStatus = enqueueResponse.getResponseCode ? enqueueResponse.getResponseCode() : 200;
+  if (enqueueStatus >= 400) {
+    throw sefariaUnavailableError_(enqueueStatus);
+  }
+  const enqueueData = parseJsonOrNull_(enqueueResponse.getContentText());
+  const taskId = enqueueData && enqueueData.task_id;
+  if (!taskId) {
+    throw new Error('Sefaria did not accept the document for scanning. Please try again in a moment.');
   }
 
-  return { results: [], refData: {} };
+  const delays = FIND_REFS_POLL_DELAYS_MS_;
+  for (let attempt = 0; attempt < delays.length; attempt++) {
+    Utilities.sleep(delays[attempt]);
+    let statusResponse;
+    try {
+      statusResponse = UrlFetchApp.fetch(`https://www.sefaria.org/api/async/${encodeURIComponent(taskId)}`, { muteHttpExceptions: true });
+    } catch (error) {
+      continue; // one dropped poll is not a failure; the deadline below is
+    }
+    const statusData = parseJsonOrNull_(statusResponse.getContentText());
+    if (!statusData || !statusData.ready) {
+      continue;
+    }
+    const body = (((statusData || {}).result || {}).body || {});
+    return {
+      results: Array.isArray(body.results) ? body.results : [],
+      refData: (body.refData && typeof body.refData === 'object') ? body.refData : {}
+    };
+  }
+
+  const waitedSeconds = Math.round(delays.reduce(function (sum, d) { return sum + d; }, 0) / 1000);
+  throw new Error(
+    'Sefaria was still scanning this document after ' + waitedSeconds + ' seconds, so nothing was linked. ' +
+    'Try again in a minute, or link a shorter section at a time.'
+  );
+}
+
+// About 30 seconds in total: quick at first, for the common short document,
+// then backing off. Well inside Apps Script's 6-minute execution limit.
+var FIND_REFS_POLL_DELAYS_MS_ = [400, 400, 600, 800, 1000, 1000, 1500, 1500, 2000, 2000, 2500, 2500, 3000, 3000, 3000, 3000];
+
+function parseJsonOrNull_(text) {
+  try {
+    return JSON.parse(text || '');
+  } catch (error) {
+    return null;
+  }
 }
 
 function resolveReferenceWithFallbacks(reference, versions) {
@@ -197,17 +230,31 @@ function findReference(reference, versions=undefined, skipNormalization=false) {
     url = url + nonVersionedAdditions;
   }
 
-  // patch for now; triggered when an invalid sefer name is sent
+  // A reference Sefaria doesn't know is an ordinary outcome ("no match"). Not
+  // reaching Sefaria at all is not, and used to be reported the same way:
+  // Insert Source from Selection said 'No Sefaria source matched "Genesis
+  // 1:1"' when the network was down. That case now throws, so every caller's
+  // failure path shows what actually happened.
+  let response;
   try {
-    let response = UrlFetchApp.fetch(url);
+    response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  } catch (error) {
+    throw sefariaUnavailableError_();
+  }
+  const status = response.getResponseCode ? response.getResponseCode() : 200;
+  if (status === 429 || status >= 500) {
+    throw sefariaUnavailableError_(status);
+  }
+  if (status >= 400) {
+    return;
+  }
+
+  try {
     let data = JSON.parse(response.getContentText());
 
   /*although it might make more sense to put the filters (orthography, seamus) elsewhere, as it is text processing,
   all representations of this data need to have these applied to them such that the preview is נאמן to what the actual
   ref will look like when inserted*/
-
-  // Technical debt: this try/catch currently wraps both fetch + text normalization + parsing.
-  // Narrowing the protected region would make failures easier to reason about.
 
     const userProperties = PropertiesService.getUserProperties();
     data = applyHebrewDisplayPreferences(data, userProperties);
@@ -216,13 +263,26 @@ function findReference(reference, versions=undefined, skipNormalization=false) {
     return data;
 
   } catch (error) {
-    // return nothing
     // Not the URL: the reference can be raw selected document text (Insert
     // Source from Selection), and hard rule 7 keeps that out of the logs.
     Logger.log(`The system has made a macha'ah in findReference: ${error.message}`)
     return;
   }
 
+}
+
+/**
+ * The error for "Sefaria could not be reached or is failing", as opposed to
+ * "Sefaria has no such reference". The message never carries the request URL:
+ * it can hold document text (hard rule 7).
+ */
+function sefariaUnavailableError_(status) {
+  const detail = status ? ' (it responded with error ' + status + ')' : '';
+  const error = new Error(
+    'Couldn\u2019t reach Sefaria' + detail + '. Check your internet connection and try again in a moment.'
+  );
+  error.sefariaUnavailable = true;
+  return error;
 }
 
 /**

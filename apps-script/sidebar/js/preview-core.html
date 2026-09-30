@@ -441,8 +441,9 @@ function updateSuggestion(dataIn, inputTitle) {
       hasResolvedReference = true;
       setInsertButtonState(true);
       $('#open-on-sefaria').prop('disabled', false);
-    }).withFailureHandler(function () {
+    }).withFailureHandler(function (error) {
       if (requestId !== latestResolveRequestId) return;
+      if (error && error.message) showInsertWarning(error.message);
       markTranslationAvailability('', enVersion);
       renderTranslationOptions($('.translation-filter-input').val());
       hasResolvedReference = false;

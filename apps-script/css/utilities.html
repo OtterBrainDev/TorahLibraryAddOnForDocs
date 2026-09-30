@@ -308,8 +308,10 @@
   padding: 10px 14px;
   color: #fff;
   background: rgba(24, 52, 93, 0.94);
-  border-radius: 999px;
+  /* Not a pill: notices wrap to several lines in a 300px sidebar. */
+  border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  line-height: 1.4;
   opacity: 0;
   transform: translateX(-50%);
   transition: opacity 0.18s ease;

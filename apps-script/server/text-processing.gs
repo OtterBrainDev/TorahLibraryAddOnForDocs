@@ -215,22 +215,28 @@ function formatDataForPesukim(data, pesukim) {
   }
 
   if(data.isSpanning) {
+    // Each language numbers from the requested first verse; every later
+    // chapter starts again at 1. The counter is per language: sharing one,
+    // reset by the Hebrew pass, numbered the English of Genesis 1:31-2:3 as
+    // (1), (1), (2), (3). See docs/regression-log.md.
+    let heVerse = fromVerse;
     data.he.forEach(function(perekText, perekNum) {
       if(typeof perekText == "object") {
         perekText.forEach(function(verseText, index) {
-         heTextWrapper = addHebrewVerse(verseText, heTextWrapper, pesukim, fromVerse+index)
+         heTextWrapper = addHebrewVerse(verseText, heTextWrapper, pesukim, heVerse+index)
         });
-        fromVerse = 1;
+        heVerse = 1;
       } else {
         heTextWrapper+=perekText;
       }
     });
+    let enVerse = fromVerse;
     data.text.forEach(function(perekText, perekNum) {
       if(typeof perekText == "object") {
         perekText.forEach(function(verseText, index) {
-         enTextWrapper = addEnglishVerse(verseText, enTextWrapper, pesukim, fromVerse+index)
+         enTextWrapper = addEnglishVerse(verseText, enTextWrapper, pesukim, enVerse+index)
         });
-        fromVerse = 1;
+        enVerse = 1;
       } else {
         enTextWrapper+=perekText;
       }

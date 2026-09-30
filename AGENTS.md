@@ -113,7 +113,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **217 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **248 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -137,7 +137,8 @@ and fix it before touching the feature you came to change.
 - `linker-prefilter.test.js` — what leaves the machine, and offset
   mapping back onto the document.
 - `linker-classify.test.js` — which citation becomes a link, a
-  question, or a counted failure.
+  question, or a counted failure; Apply re-finds each citation by occurrence,
+  so an edit while the dialog is open can't move a link.
 - `sanitize-source-html.test.js` — the Sefaria-HTML allowlist sanitizer.
   linkedom cannot reproduce browser mutation XSS; verify sanitizer
   changes in headless Chromium as well.
@@ -157,6 +158,11 @@ and fix it before touching the feature you came to change.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped; HTML-entity
   decoding (`&thinsp;` and friends).
+- `insertion-target.test.js` — where an insert goes: after the cursor's
+  block, inside a table cell for paragraph layouts, below the table (with a
+  notice) for side-by-side layouts, never into a header, footer or footnote.
+- `sefaria-unavailable.test.js` — "couldn't reach Sefaria" and a find-refs
+  timeout throw, instead of reading as "no match" / "no citations".
 
 and in `test/ui/`:
 
@@ -180,6 +186,8 @@ and in `test/ui/`:
   `<script>` goes through `toEmbeddedJson_`.
 - `csp-coverage.test.js` — every entry page carries the same
   Content-Security-Policy.
+- `vowels-tanakh-only.test.js` — the Preferences "Vowels only in Tanakh"
+  switch, and that turning Vowels back on keeps it.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

@@ -282,3 +282,51 @@ test('preview truncation cuts on a word boundary', () => {
   assert.equal(truncateLinkerPreview_('short', 20), 'short');
   assert.equal(truncateLinkerPreview_(null, 20), '');
 });
+
+// ---- Apply-time relocation -------------------------------------------------
+//
+// The scan's character offsets were applied as-is, so text typed above a
+// citation while the review dialog was open shifted every link onto the wrong
+// words. Each match now records which occurrence of its exact text it is, and
+// Apply re-finds that occurrence in the document as it is then.
+
+test('each match records which occurrence of its text it is', () => {
+  const context = load();
+  const doc = 'Genesis 1:1 first, then Genesis 1:1 again.';
+  const second = doc.lastIndexOf('Genesis 1:1');
+  const result = classify(context, [
+    raw({ startChar: 0, endChar: 11 }),
+    raw({ startChar: second, endChar: second + 11 }),
+  ], { docText: doc });
+  assert.deepEqual(Array.from(result.matches.map((m) => m.occurrence)), [0, 1]);
+});
+
+test('an edit above a citation does not move its link onto other words', () => {
+  const context = load();
+  const decision = { startChar: 4, endChar: 15, documentText: 'Genesis 1:1', occurrence: 0 };
+  const edited = 'A NEW SENTENCE. See Genesis 1:1 here.';
+  const range = context.relocateLinkerDecision_(edited, decision);
+  assert.equal(edited.slice(range.start, range.end), 'Genesis 1:1');
+});
+
+test('the second of two identical citations stays the second', () => {
+  const context = load();
+  const edited = 'Inserted. Genesis 1:1 and Genesis 1:1.';
+  const range = context.relocateLinkerDecision_(edited, { startChar: 16, endChar: 27, documentText: 'Genesis 1:1', occurrence: 1 });
+  assert.equal(range.start, edited.lastIndexOf('Genesis 1:1'));
+});
+
+test('a citation deleted after the scan is reported missing, not linked somewhere else', () => {
+  const context = load();
+  const range = context.relocateLinkerDecision_('No citation left.', { startChar: 4, endChar: 15, documentText: 'Genesis 1:1', occurrence: 0 });
+  assert.equal(range, null);
+});
+
+test('a decision without documentText falls back to in-bounds offsets only', () => {
+  const context = load();
+  assert.deepEqual(
+    Object.assign({}, context.relocateLinkerDecision_('See Genesis 1:1.', { startChar: 4, endChar: 15 })),
+    { start: 4, end: 15 }
+  );
+  assert.equal(context.relocateLinkerDecision_('Short.', { startChar: 4, endChar: 15 }), null);
+});

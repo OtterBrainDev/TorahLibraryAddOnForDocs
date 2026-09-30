@@ -157,9 +157,23 @@
 
 
     // Composition card state helpers — used by the shared composition card adapter below.
+    // "Vowels only in Tanakh" is its own switch; turning Vowels back on must
+    // not silently reset it to "always".
+    function vowelsTanakhOnly_() {
+      var box = byId('vowels_tanakh_only');
+      return !!(box && box.checked);
+    }
+
     function _prefSetCompositionVowels(on) {
       if (byId('nekudot')) byId('nekudot').value = on ? 'true' : 'false';
-      if (byId('nekudot_filter')) byId('nekudot_filter').value = on ? 'always' : 'false';
+      if (byId('nekudot_filter')) byId('nekudot_filter').value = on ? (vowelsTanakhOnly_() ? 'tanakh' : 'always') : 'false';
+    }
+
+    function syncVowelsTanakhOnly_() {
+      var vowelsOn = !byId('nekudot') || byId('nekudot').value !== 'false';
+      if (vowelsOn && byId('nekudot_filter')) {
+        byId('nekudot_filter').value = vowelsTanakhOnly_() ? 'tanakh' : 'always';
+      }
     }
 
     function _prefSetCompositionCantillation(on) {
@@ -483,6 +497,7 @@
       });
 
       document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+        if (!el.name) return; // helper switches that drive a hidden field
         preferenceObject[el.name] = el.checked;
       });
 
@@ -597,6 +612,9 @@
               }
 
               setSegmentedValue('vowels', inferVowelsValue(preferences));
+              if (byId('vowels_tanakh_only')) {
+                byId('vowels_tanakh_only').checked = String(preferences.nekudot_filter || '').toLowerCase() === 'tanakh';
+              }
               setSegmentedValue('cantillation', inferCantillationValue(preferences));
 
               ['hebrew_font','translation_font','transliteration_font','source_title_font','sefaria_link_font','source_title_heading','transliteration_scheme','preferred_translation_language']
@@ -727,6 +745,7 @@
       });
     }
 
+    if (byId('vowels_tanakh_only')) byId('vowels_tanakh_only').addEventListener('change', syncVowelsTanakhOnly_);
     byId('transliteration_font').addEventListener('change', function(){ updateTransliterationPreview(); updateCompositionCard(); });
     byId('transliteration_scheme').addEventListener('change', function(){ syncCustomSelect(byId('transliteration_scheme')); updateTransliterationPreview(); updateCompositionCard(); });
     if (byId('include_transliteration_default')) byId('include_transliteration_default').addEventListener('change', function(){ updateCompositionCard(); });

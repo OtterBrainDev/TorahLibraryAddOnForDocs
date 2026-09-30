@@ -76,3 +76,30 @@ test('non-array `data.he` (single verse) passes through untouched in both modes'
     assert.equal(out.text, 'single-verse-en', `pesukim=${pesukim} single-verse English passthrough`);
   }
 });
+
+// A range across a chapter boundary (Genesis 1:31-2:3) numbers from the first
+// requested verse in BOTH languages, then restarts at 1. The two passes shared
+// one counter that the Hebrew pass reset, so the English read (1), (1), (2), (3).
+test('spanning range: each language numbers from the requested verse, then restarts per chapter', () => {
+  const ctx = loadContext();
+  const out = ctx.formatDataForPesukim({
+    isSpanning: true,
+    sections: [1, 31],
+    he: [['he-1-31'], ['he-2-1', 'he-2-2', 'he-2-3']],
+    text: [['en-1-31'], ['en-2-1', 'en-2-2', 'en-2-3']],
+  }, true);
+  assert.equal(out.text, '(31) en-1-31\n(1) en-2-1\n(2) en-2-2\n(3) en-2-3\n');
+  assert.equal(out.he, '(לא) he-1-31\n(א) he-2-1\n(ב) he-2-2\n(ג) he-2-3\n');
+});
+
+test('spanning range without line markers: prose, with a space at the chapter break', () => {
+  const ctx = loadContext();
+  const out = ctx.formatDataForPesukim({
+    isSpanning: true,
+    sections: [1, 31],
+    he: [['a'], ['b', 'c']],
+    text: [['A.'], ['B.', 'C.']],
+  }, false);
+  assert.equal(out.text, 'A. B. C.');
+  assert.equal(out.he, 'a b c');
+});

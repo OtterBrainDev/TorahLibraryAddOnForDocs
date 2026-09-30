@@ -159,9 +159,11 @@ function insertLexiconEntry(lexiconPayload) {
     throw new Error('Open a Google Doc before inserting a lexicon entry.');
   }
 
-  const body = document.getBody();
   const typography = getTypographySettings();
-  let index = getInsertionIndex_(document, body);
+  // The document body, or the table cell holding the cursor. See insertion-target.gs.
+  const target = resolveInsertionTarget_({ layout: 'paragraphs', replaceSelection: false });
+  const body = target.container;
+  let index = target.index;
 
   const insertMode = String(lexiconPayload.insertMode || 'entry');
   const headWord  = String(lexiconPayload.headWord || '').trim();
