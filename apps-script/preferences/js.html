@@ -204,6 +204,7 @@
           var linkCheck = byId('insert_sefaria_link_default');
           var linesCheck = byId('show_line_markers_default');
           var detailsCheck = byId('include_translation_source_info');
+          var emphasisInput = byId('source_emphasis_mode');
           return {
             vowelsOn: vowelsOn,
             cantillationOn: cantillationOn,
@@ -211,7 +212,8 @@
             scheme: transliterationOn ? (scheme || 'simple_english') : 'none',
             linkOn: linkCheck ? linkCheck.checked : false,
             linesOn: linesCheck ? linesCheck.checked : false,
-            detailsOn: detailsCheck ? detailsCheck.checked : false
+            detailsOn: detailsCheck ? detailsCheck.checked : false,
+            emphasisMode: ccNormalizeEmphasisMode(emphasisInput ? emphasisInput.value : '')
           };
         },
         onToggle: function (key) {
@@ -233,6 +235,9 @@
           } else if (key === 'details') {
             var detailsBox = byId('include_translation_source_info');
             if (detailsBox) detailsBox.checked = !detailsBox.checked;
+          } else if (key === 'emphasis') {
+            var emphasisBox = byId('source_emphasis_mode');
+            setPrefButtonGroup('source_emphasis_mode', ccNextEmphasisMode(emphasisBox ? emphasisBox.value : ''));
           }
         },
         onSchemeSelect: function (value) {
@@ -596,6 +601,7 @@
                 if (groupId === 'bilingual_layout_default' && val === 'stacked') val = 'he-top';
                 setPrefButtonGroup(groupId, val);
               });
+              setPrefButtonGroup('source_emphasis_mode', ccNormalizeEmphasisMode(preferences.source_emphasis_mode));
 
               setPrefTranslitDropdown(preferences.voices_translit_default || 'none');
 
@@ -875,6 +881,8 @@
         selector.querySelectorAll('button[data-value]').forEach(function(btn) {
           btn.addEventListener('click', function() {
             setPrefButtonGroup(groupId, btn.getAttribute('data-value'));
+            // The Texts tab's B&I pill shows the same setting.
+            if (groupId === 'source_emphasis_mode') updateCompositionCard();
           });
         });
       });

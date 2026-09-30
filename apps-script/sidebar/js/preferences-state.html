@@ -127,6 +127,7 @@ function mergePreferenceDefaults(preferences) {
   $('.include-transliteration').prop('checked', String(preferences.include_transliteration_default) === "true");
   $('.insert-sefaria-link').prop('checked', String(preferences.insert_sefaria_link_default) !== "false");
   $('.wants-pesukim').prop('checked', String(preferences.show_line_markers_default) !== "false");
+  $('.source-emphasis-mode').val(ccNormalizeEmphasisMode(preferences.source_emphasis_mode));
   $('.output-mode-selection').val(preferences.output_mode_default || 'both');
   $('.bilingual-layout-selection').val(preferences.bilingual_layout_default || 'he-right');
   $('.translation-only-filter').prop('checked', preferences.last_translation_only_filter === "true");

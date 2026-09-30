@@ -14,7 +14,7 @@ should happen.
 | 4 | [Coming from the original add-on](4-returning-user.md) | People who used the original *Sefaria for Google Docs* | 15 min | What moved, what's new, and what now behaves differently. |
 | 5 | [First five minutes](5-new-user.md) | Someone who has never used it | 5 min | Get one source into a document. |
 
-The version under demo is **2.1.0, preference schema 13** (`docs/VERSION.json`),
+The version under demo is **2.1.0, preference schema 14** (`docs/VERSION.json`),
 plus the unreleased search changes in `docs/CHANGELOG.md`.
 *Help & Support → About* should read **Current line: 2.1**.
 

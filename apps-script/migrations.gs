@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '13';
+var PREFS_SCHEMA_CURRENT_ = '14';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -143,6 +143,14 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // upgraders — the published add-on stored none of these.
   if (from < 13) {
     migrateToV13_(userProperties);
+  }
+  // v13 -> v14: `source_emphasis_mode` ("keep" / "discard" / "only") replaces
+  // the boolean `preserve_source_emphasis`, adding "keep only the source's bold
+  // and italics". Nobody's output changes: "false" becomes "discard" and
+  // everything else "keep", the old default. The old key is removed so no dead
+  // preference outlives its last reader (same as v10).
+  if (from < 14) {
+    migrateToV14_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -344,6 +352,19 @@ function migrateToV13_(userProperties) {
   if (userProperties.getProperty('source_title_heading') == null) {
     userProperties.setProperty('source_title_heading', 'normal');
   }
+  return true;
+}
+
+/**
+ * V14: converts `preserve_source_emphasis` into `source_emphasis_mode`. See the
+ * driver comment. A stored mode is never overwritten.
+ */
+function migrateToV14_(userProperties) {
+  if (userProperties.getProperty('source_emphasis_mode') == null) {
+    var legacy = userProperties.getProperty('preserve_source_emphasis');
+    userProperties.setProperty('source_emphasis_mode', legacy === 'false' ? 'discard' : 'keep');
+  }
+  try { userProperties.deleteProperty('preserve_source_emphasis'); } catch (_e) { /* ignore */ }
   return true;
 }
 

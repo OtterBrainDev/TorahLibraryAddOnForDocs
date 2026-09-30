@@ -51,35 +51,145 @@ function captureEmphasisRuns_(text, length) {
   return runs;
 }
 
-function sourceEmphasisPreservationEnabled_() {
-  // Read at call time, not from a module-scope cache. See the
-  // `extendedGemaraPreference` row in docs/regression-log.md.
-  try {
-    return PropertiesService.getUserProperties().getProperty("preserve_source_emphasis") !== "false";
-  } catch (error) {
-    return true;
+// Line separators inside one inserted paragraph: insertRichTextFromHTML writes
+// "\n" for <br> and formatDataForPesukim for each verse; Docs may report a
+// soft break as \r or \u000b.
+const EMPHASIS_ONLY_LINE_BREAK_ = /[\n\r\u000b]/;
+// The "(3) " / "(ג) " marker formatDataForPesukim puts at the start of a line.
+// It is ours, not the source's, so it is kept on any line that keeps words.
+const EMPHASIS_ONLY_LINE_MARKER_ = /^[ \t]*\([^)\n\r\u000b]*\)[ \t]*/;
+const EMPHASIS_ONLY_WORD_CHAR_ = /[\p{L}\p{N}]/u;
+const EMPHASIS_ONLY_SPACE_ = /[ \t\u00a0]/;
+
+/**
+ * Plan the edits for "keep only the source's bold and italics": delete the
+ * text the source did not emphasize, keep what it did. Pure, so the rules are
+ * tested in Node (test/tests/source-emphasis-mode.test.js); applyTextEdits_
+ * carries the plan out on a Docs Text element.
+ *
+ * Per line of the paragraph:
+ *   - a line with no emphasis at all is removed, with one line break;
+ *     blank lines are left alone;
+ *   - otherwise the line marker is kept, and every run of unemphasized text
+ *     containing a letter or digit is removed. Between two kept runs it
+ *     becomes a single space, so the words don't join; before the first or
+ *     after the last kept run it simply goes. Unemphasized runs of only
+ *     spaces and punctuation (", ", " — ") are kept.
+ * A paragraph with no emphasis anywhere is left whole: there is nothing to
+ * choose by, and removing it (the Hebrew Gemara has no bold) would lose the
+ * text rather than filter it.
+ *
+ * @param {string} fullText
+ * @param {Array<{start: number, end: number}>} runs  Emphasized ranges, end
+ *        inclusive (captureEmphasisRuns_).
+ * @return {Array<{start: number, end: number, insert: string}>} Edits in
+ *         descending order, so applying each leaves earlier offsets valid.
+ *         `end < start` means insert only.
+ */
+function planEmphasisOnlyEdits_(fullText, runs) {
+  const text = String(fullText || '');
+  const n = text.length;
+  if (!n || !Array.isArray(runs) || !runs.length) return [];
+
+  // A bolded bare space is markup noise, not emphasis: it must not make a
+  // line count as emphasized.
+  const keep = new Array(n).fill(false);
+  let kept = 0;
+  runs.forEach(function (run) {
+    const from = Math.max(0, run.start);
+    const to = Math.min(n - 1, run.end);
+    if (!text.slice(from, to + 1).trim()) return;
+    for (let i = from; i <= to; i++) keep[i] = true;
+    kept++;
+  });
+  if (!kept) return [];
+
+  const edits = [];
+  const hasWordChar = function (from, to) {
+    return EMPHASIS_ONLY_WORD_CHAR_.test(text.slice(from, to + 1));
+  };
+
+  // Split into lines; a line with words but no emphasis is removed.
+  const lines = [];
+  let lineStart = 0;
+  while (lineStart <= n) {
+    let lineEnd = lineStart; // exclusive
+    while (lineEnd < n && !EMPHASIS_ONLY_LINE_BREAK_.test(text[lineEnd])) lineEnd++;
+    let emphasized = false;
+    for (let i = lineStart; i < lineEnd; i++) {
+      if (keep[i]) { emphasized = true; break; }
+    }
+    lines.push({
+      start: lineStart,
+      end: lineEnd,
+      emphasized: emphasized,
+      removed: !emphasized && text.slice(lineStart, lineEnd).trim() !== ''
+    });
+    lineStart = lineEnd + 1;
+  }
+
+  // Each run of removed lines goes with one line break: the one after it, or
+  // at the end of the paragraph the one before it.
+  for (let l = 0; l < lines.length; l++) {
+    if (!lines[l].removed) continue;
+    const first = l;
+    while (l + 1 < lines.length && lines[l + 1].removed) l++;
+    if (l + 1 < lines.length) {
+      edits.push({ start: lines[first].start, end: lines[l + 1].start - 1, insert: '' });
+    } else {
+      edits.push({ start: Math.max(0, lines[first].start - 1), end: lines[l].end - 1, insert: '' });
+    }
+  }
+
+  lines.forEach(function (line) {
+    if (!line.emphasized) return;
+    const lineEnd = line.end;
+    const marker = EMPHASIS_ONLY_LINE_MARKER_.exec(text.slice(line.start, lineEnd));
+    const contentStart = line.start + (marker ? marker[0].length : 0);
+    let i = contentStart;
+    while (i < lineEnd) {
+      if (keep[i]) { i++; continue; }
+      const gapStart = i;
+      while (i < lineEnd && !keep[i]) i++;
+      const gapEnd = i - 1;
+      if (!hasWordChar(gapStart, gapEnd)) continue;
+
+      const interior = gapStart > contentStart && gapEnd < lineEnd - 1;
+      const spacedAlready = interior &&
+        (EMPHASIS_ONLY_SPACE_.test(text[gapStart - 1]) || EMPHASIS_ONLY_SPACE_.test(text[gapEnd + 1]));
+      if (!interior || spacedAlready) {
+        edits.push({ start: gapStart, end: gapEnd, insert: '' });
+        continue;
+      }
+      // Keep one of the gap's own spaces rather than inserting one, so the
+      // separator doesn't inherit the emphasis of the run before it.
+      let space = -1;
+      for (let k = gapStart; k <= gapEnd; k++) {
+        if (EMPHASIS_ONLY_SPACE_.test(text[k])) { space = k; break; }
+      }
+      if (space < 0) {
+        edits.push({ start: gapStart, end: gapEnd, insert: ' ' });
+      } else {
+        if (space < gapEnd) edits.push({ start: space + 1, end: gapEnd, insert: '' });
+        if (space > gapStart) edits.push({ start: gapStart, end: space - 1, insert: '' });
+      }
+    }
+  });
+
+  // Ranges never overlap: removed lines and gaps inside kept lines are
+  // disjoint, and the blocks above are maximal.
+  return edits.sort(function (a, b) { return b.start - a.start; });
+}
+
+/** Carry out planEmphasisOnlyEdits_ on a Docs Text element. */
+function applyTextEdits_(text, edits) {
+  for (let i = 0; i < edits.length; i++) {
+    const edit = edits[i];
+    if (edit.end >= edit.start) text.deleteText(edit.start, edit.end);
+    if (edit.insert) text.insertText(edit.start, edit.insert);
   }
 }
 
-/**
- * Apply the user's font family / size / style to a whole paragraph.
- *
- * @param {Paragraph} paragraph
- * @param {string} font
- * @param {number} size
- * @param {string} style               Comma-separated flags, or "normal".
- * @param {Object} [opts]
- * @param {boolean} [opts.preserveSourceEmphasis=false]
- *        Opt in for paragraphs whose text came from Sefaria markup. The style
- *        flags are applied as the BASELINE across the paragraph, then the
- *        bold/italic runs the source specified are re-asserted on top. Without
- *        this, `setBold(0, len - 1, false)` flattened every run that
- *        `insertRichTextFromHTML` had just set — which is why the Steinsaltz
- *        Talmud lost the bolding that distinguishes the Talmud's own words
- *        from Steinsaltz's interpolated explanation. Titles and metadata lines
- *        deliberately do NOT opt in: their emphasis is ours, not the source's,
- *        and the user's style preference must stay authoritative there.
- */
 /**
  * Apply one emphasis mapping to a range. Only ever turns formatting ON, so the
  * baseline style applied across the paragraph still governs everywhere the
@@ -119,13 +229,18 @@ function applyEmphasisMapping_(text, start, end, mapping) {
  *        Opt in for paragraphs whose text came from Sefaria markup. The style
  *        flags are applied as the BASELINE across the paragraph, then the
  *        bold/italic runs the source specified are re-rendered on top via
- *        `opts.emphasisMap`. Without this, `setBold(0, len - 1, false)`
+ *        `opts.emphasisMap` — unless `opts.sourceEmphasisMode` says otherwise. Without this, `setBold(0, len - 1, false)`
  *        flattened every run that `insertRichTextFromHTML` had just set —
  *        which is why the Steinsaltz Talmud lost the bolding that
  *        distinguishes the Talmud's own words from Steinsaltz's interpolated
  *        explanation. Titles and metadata lines deliberately do NOT opt in:
  *        their emphasis is ours, not the source's, and the user's style
  *        preference must stay authoritative there.
+ * @param {string} [opts.sourceEmphasisMode="keep"]  The user's choice for an
+ *        opted-in paragraph (normalizeSourceEmphasisMode_): "keep" as above;
+ *        "discard" applies the baseline only; "only" first removes the text
+ *        the source did not emphasize (planEmphasisOnlyEdits_), then keeps
+ *        the emphasis on what is left.
  * @param {Object} [opts.emphasisMap]  {bold: mapping, italic: mapping}. When
  *        absent, source emphasis is re-asserted as itself.
  */
@@ -135,14 +250,27 @@ function applyTypographyToParagraph(paragraph, font, size, style, opts) {
   }
 
   const text = paragraph.editAsText();
-  const len = text.getText().length;
+  let len = text.getText().length;
   if (len <= 0) {
     return;
   }
 
   const options = opts || {};
-  const preserveEmphasis = !!options.preserveSourceEmphasis && sourceEmphasisPreservationEnabled_();
-  const emphasisRuns = preserveEmphasis ? captureEmphasisRuns_(text, len) : [];
+  // Read from the typography bag at call time, never a module-scope cache —
+  // see the `extendedGemaraPreference` row in docs/regression-log.md.
+  const emphasisMode = options.preserveSourceEmphasis
+    ? normalizeSourceEmphasisMode_(options.sourceEmphasisMode)
+    : "discard";
+  let emphasisRuns = emphasisMode === "discard" ? [] : captureEmphasisRuns_(text, len);
+
+  if (emphasisMode === "only" && emphasisRuns.length) {
+    applyTextEdits_(text, planEmphasisOnlyEdits_(text.getText(), emphasisRuns));
+    len = text.getText().length;
+    if (len <= 0) {
+      return;
+    }
+    emphasisRuns = captureEmphasisRuns_(text, len);
+  }
 
   if (font) {
     text.setFontFamily(0, len - 1, font);
@@ -210,6 +338,7 @@ function applyRoleTypography_(paragraph, typography, roleName, overrides) {
       color: role.color,
       background: role.background,
       preserveSourceEmphasis: extra.preserveSourceEmphasis === true,
+      sourceEmphasisMode: typography ? typography.sourceEmphasisMode : undefined,
       emphasisMap: typography ? typography.emphasisMap : null
     }
   );
@@ -438,6 +567,8 @@ function buildLinkedTitleText(baseTitle, data, singleLanguage) {
  * @param {boolean} [opts.insertSefariaLink]            Hyperlink the title to sefaria.org.
  * @param {boolean} [opts.includeTransliteration]       Include transliteration of the Hebrew.
  * @param {boolean} [opts.insertCitationOnly]           Insert just the citation title, no body.
+ * @param {string} [opts.sourceEmphasisMode]            "keep" | "discard" | "only"; omitted
+ *                                                      means the stored `source_emphasis_mode`.
  * @param {boolean} [opts.preserveSelection]            Keep a selection and insert after it (default: replace it).
  * @param {Object}  [opts.insertAfterElement]           Insert after this element instead of at the cursor (server-side callers only).
  * @returns {{notice: string}} notice is non-empty when the insert went somewhere other than the cursor.
@@ -494,6 +625,10 @@ function insertReference(data, opts) {
     shouldIncludeHebrewAttribution ? getHebrewAttributionLines_(data) : []
   );
   const typography = getTypographySettings();
+  // The sidebar's B&I button can override the stored choice for this insert.
+  if (options.sourceEmphasisMode) {
+    typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
+  }
   const currentPrefs = getPreferences();
   const transliterationScheme = currentPrefs.transliteration_scheme || "traditional";
   const transliterationDageshMode = currentPrefs.transliteration_biblical_dagesh_mode || "none";
@@ -811,6 +946,8 @@ function buildSefariaVersionUrl_(ref, enVersionTitle, heVersionTitle) {
  * @param {string}  [opts.preferredTitle]      Override displayed title (e.g. "Bereishit 1:1").
  * @param {boolean} [opts.includeTranslationSourceInfo] Append attribution.
  * @param {boolean} [opts.insertSefariaLink]   Hyperlink title to sefaria.org.
+ * @param {string}  [opts.sourceEmphasisMode]  "keep" / "discard" / "only";
+ *        omitted means the stored `source_emphasis_mode` preference.
  * @return {{inserted: string[], skipped: string[]}} Version titles inserted, and
  *         those left out because they have no text for this ref.
  */
@@ -839,6 +976,9 @@ function insertReferenceVersions(ref, opts) {
 
   const includeLineMarkers = pasukPreference === true || pasukPreference === 'true';
   const typography = getTypographySettings();
+  if (options.sourceEmphasisMode) {
+    typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
+  }
 
   // Always paragraphs (translation-only or Hebrew on top), so this can go
   // inside a table cell. A selection is kept, as it always was on this path.

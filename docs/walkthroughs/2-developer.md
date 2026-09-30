@@ -234,7 +234,9 @@ got inserted.
    `&thinsp;` bug. Then `captureEmphasisRuns_` → the baseline style →
    re-assert, mapped through the user's emphasis settings
    (`applyEmphasisMapping_`). Without this, the Steinsaltz Talmud loses the
-   bold that marks the Talmud's own words.
+   bold that marks the Talmud's own words. `source_emphasis_mode` (schema 14)
+   picks **keep**, **discard**, or **only**, which first removes the text the
+   source didn't emphasise (`planEmphasisOnlyEdits_`).
 6. **Credit block:** `attribution.gs`, a dual-mode helper that runs both in
    Apps Script and in Node. It credits the translation version and license and
    the Hebrew edition and its `heLicense`, and prints no empty lines.

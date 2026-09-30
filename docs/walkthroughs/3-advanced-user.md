@@ -27,10 +27,12 @@ document.
   source sheet this is the most useful setting in the add-on.
 - **Colour and highlight** default to *Auto / None* (your document decides).
   Set a colour on the translation to set it apart from your own commentary.
-- **✒️ Source Emphasis → Advanced.** Sefaria's own bold and italics are kept
-  by default. In the Steinsaltz Talmud the bold marks the Talmud's own words
-  and the plain text is Steinsaltz's explanation. You can map bold to
-  something else, such as blue text without bold.
+- **✒️ Source Emphasis:** **Keep / Discard / Keep only.** Sefaria's own bold
+  and italics are kept by default. In the Steinsaltz Talmud the bold marks the
+  Talmud's own words and the plain text is Steinsaltz's explanation, so
+  **Keep only** inserts just the Talmud's words. **Advanced** maps bold to
+  something else, such as blue text without bold. The Layout tray's **B&I**
+  button switches between the three for one session.
 - **Translation → preferred language** if you don't work in English.
 
 **Insertion tab**

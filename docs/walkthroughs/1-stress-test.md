@@ -183,7 +183,8 @@ preview, then insert.
 | 5.4 | Set a translation text colour and highlight; insert; reset both to **Auto/None**; insert | Applied, then not applied. | Colour sticking after reset; black text forced. |
 | 5.5 | File → Page setup → a dark page colour; insert with default colours | Text inherits the document; nothing forced black. | Black text on the dark page. |
 | 5.6 | Source Emphasis → Advanced: bold → blue, no bold. Insert `Berakhot 2a` (Steinsaltz) | Talmud words blue, not bold. | Nothing blue; or the title also blue. |
-| 5.7 | Turn **Source Emphasis** off; insert the same | Flat text. | Leftover bold. |
+| 5.7 | Source Emphasis → **Discard**; insert the same | Flat text. | Leftover bold. |
+| 5.7a | Layout tray **B&I** → **Keep only**; insert `Berakhot 2a` in English, then in Aramaic | English: only the bold words (the Talmud's own), line markers kept, lines with no emphasis left out. Aramaic (no emphasis anywhere): inserted whole. | Empty insert; Steinsaltz's explanation left in. |
 | 5.8 | Vowels off, Cantillation on | Cantillation kept, vowels gone, sof pasuq **׃** and paseq **׀** kept. | Punctuation stripped with the vowels. |
 | 5.9 | Preferences → Insertion → turn on **Vowels only in Tanakh**; save. Insert `Mishnah Berakhot 1:1` and `Genesis 1:1`. Then turn Vowels off and on again in Preferences, save, and reopen | Mishnah without niqqud, Genesis with. After the off/on, the switch is still on. | **K8 (fixed):** the switch reset by the Vowels toggle. |
 | 5.10 | **Translit** on; cycle every scheme; insert `Genesis 1:1` each time | Transliteration present and different per scheme; font follows the Transliteration role. | Transliteration in the Hebrew font; an empty line. |
@@ -319,7 +320,7 @@ For each failure, record:
 2. What happened versus **Expect**
 3. Browser console output and the Executions entry (duration, error)
 4. Scan mode and After-linking mode, for anything in section 7
-5. Version: **2.1.0, schema 13**, and the commit you pushed
+5. Version: **2.1.0, schema 14**, and the commit you pushed
 
 Anything under **Known suspects** that reproduces should get a row in
 [`docs/regression-log.md`](../regression-log.md) and a pinning test when it's
