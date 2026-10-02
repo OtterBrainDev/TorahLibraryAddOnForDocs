@@ -811,7 +811,7 @@
               <div class="toggle-row">
                 <div class="toggle-copy">
                   <div class="toggle-title">&ldquo;Insert from Selection&rdquo; replaces the selection</div>
-                  <div class="toggle-help">On: the selected reference is replaced by the inserted source, which is titled with the same reference. Off: the selection stays and the source is inserted below it.</div>
+                  <div class="toggle-help">On: the selected reference is replaced by the inserted source, which is titled with the same reference. Off: the selection stays and the source is inserted below it. Link Texts with Sefaria follows this too, for a citation on a line of its own.</div>
                 </div>
                 <label class="switch" for="insert_from_selection_replace">
                   <input id="insert_from_selection_replace" type="checkbox" name="insert_from_selection_replace">

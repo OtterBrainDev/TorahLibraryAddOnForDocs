@@ -113,7 +113,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **252 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **258 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -139,6 +139,9 @@ and fix it before touching the feature you came to change.
 - `linker-classify.test.js` — which citation becomes a link, a
   question, or a counted failure; Apply re-finds each citation by occurrence,
   so an edit while the dialog is open can't move a link.
+- `linker-insert-replace.test.js` — Link Texts' Insert follows "Insert from
+  Selection replaces the selection": a citation on its own line is replaced
+  by the source (titled with it, link kept); one inside a sentence is kept.
 - `sanitize-source-html.test.js` — the Sefaria-HTML allowlist sanitizer.
   linkedom cannot reproduce browser mutation XSS; verify sanitizer
   changes in headless Chromium as well.

@@ -301,7 +301,11 @@ most time.
    as `missing`. It then links end to start. Per-row **Insert** calls
    `insertLinkedSourceAtPosition(ref, decision)`, which finds the citation's
    paragraph with `body.findText` and passes it to `insertReference` as an
-   explicit anchor. The user's cursor is never moved.
+   explicit anchor. The user's cursor is never moved. With
+   `insert_from_selection_replace` on, a citation that is its paragraph's
+   only text (`linkerCitationFillsBlock_`) is replaced: the source is titled
+   with the citation, keeps its link, and the paragraph is removed after the
+   insert. A citation inside a sentence is always kept.
 7. **Quiet** mode (`runQuietLinkPass_`) skips the dialog: it links the
    unambiguous matches and alerts with every count.
 

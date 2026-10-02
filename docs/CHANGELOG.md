@@ -72,6 +72,14 @@ heading until the next release consolidates it.
 - **A source with no translation inserts just the Hebrew.** Siddur Rashi used
   to get an empty "(Translation)" heading, and its Hebrew title read
   `רש&quot;י` instead of `רש"י`.
+- **Link Texts' Insert no longer repeats the citation.** With Preferences →
+  Insertion → *“Insert from Selection” replaces the selection* on (the
+  default), a citation on a line of its own is now replaced by the inserted
+  source, titled with the citation as you wrote it and still linked to
+  Sefaria, the way Insert from Selection does it. It used to stay in place
+  with the same reference repeated as the source's title on the next line. A
+  citation inside a sentence is left alone, and the source goes below it.
+  Turn the preference off to keep every citation.
 - **Link Texts names a source it could not insert.** The summary said
   *could not be fetched* for every failure, and showed the error without
   saying which source it belonged to.
