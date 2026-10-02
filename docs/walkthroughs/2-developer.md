@@ -45,6 +45,9 @@ migrations.gs          schema-versioned UserProperties migrations
 server/                one file per domain; menu, search, fetch, insertion, linker…
 sidebar.html           the main entry template → sidebar/js/*, shared/ui/*, css/*
 preferences.html       second entry template
+shared/                partials more than one entry includes: ui/* everywhere;
+                       insertion-options/* and composition-card/* (the Layout
+                       controls) in the sidebar, Preferences and Link Texts
 *.html (root)          standalone dialogs, each its own window scope
 attribution.gs, gematriya.gs, transliteration.gs   pure, Node-testable helpers
 ```
@@ -98,7 +101,7 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
 
 1. `textsHTML()` → `openSharedSidebar_('texts')` (`server/menu.gs`).
 2. `HtmlService.createTemplateFromFile('sidebar')` evaluates `sidebar.html`,
-   which `include()`s 35 partials: `shared/ui/head` (CSP, jQuery with
+   which `include()`s 37 partials: `shared/ui/head` (CSP, jQuery with
    SRI), `css/tokens`, `sidebar/js/*`. Server data is embedded as
    `appConfigJson = toEmbeddedJson_(getUiAppConfig_(…))` (`ui_core.gs`). Any
    force-printed template variable must go through `toEmbeddedJson_`, which
@@ -119,6 +122,10 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
      (`saveSidebarSessionAsAccountDefaults`).
    - A third, client-only one: the Session Library and search history live in
      the iframe's `localStorage`. They never reach the server.
+   - Not a layer, but worth knowing: Link Texts' *Customize this insertion*
+     keeps its choices in the dialog's memory and sends them with each insert
+     (section 6). They are never stored unless the user clicks **💾 Save as
+     defaults**, which calls `setPreferences`.
 5. The client checks the bootstrap object against
    `test/ui/contracts/sidebar-bootstrap.schema.json` at load time and logs a
    structured `console.warn` if it doesn't match.
@@ -270,9 +277,11 @@ most time.
    `YES_NO` alert that names the scan mode. The acknowledgement is stored as
    `linker_upload_acknowledged`, which is **not** in `SETTINGS`, so a client
    can't set it through `setPreferences`.
-2. It opens `linker-results.html` straight away. That dialog calls
-   `scanDocumentForReferences()`, so the user sees progress instead of a
-   frozen menu.
+2. It opens `linker-results.html` straight away, as a template
+   (`createTemplateFromFile`) because it `include()`s the shared Layout
+   controls. That dialog calls `scanDocumentForReferences()`, so the user sees
+   progress instead of a frozen menu, and `getPreferences()` to seed its
+   *Customize this insertion* panel.
 3. `buildLinkerScanRequest_`: in **candidates** mode (the default),
    `buildLinkerScanPayload_` (`server/linker-prefilter.gs`) walks the body
    text line by line. It keeps lines that contain a known title, a
