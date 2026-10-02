@@ -48,3 +48,34 @@ test('preferences: "Insert text after linking" lives in the Linking tab, not Exp
     assert.ok(at > linking && (experimental < 0 || at < experimental), `${id} must be inside the Linking tab`);
   }
 });
+
+test('linker dialog: "Customize this insertion" uses the shared insertion options, for this pass only', () => {
+  // Served as a template so it can include() the same Display & Layout pickers
+  // and composition card as the sidebar's Layout tray. A plain file would
+  // print the include tags as text.
+  const server = readAppScriptFile('server/document-actions.gs');
+  assert.match(server, /createTemplateFromFile\('linker-results'\)\s*\.evaluate\(\)/);
+  assert.doesNotMatch(server, /createHtmlOutputFromFile\('linker-results'\)/);
+
+  assert.match(html, /<details class="customize-insertion"/);
+  assert.match(html, /initInsertionOptions\(\{\s*root: '#customize-root'/);
+  assert.match(html, /initCompositionCard\(\{/);
+  // The panel's settings go with every insert of the pass, as overrides; they
+  // are saved only from "Save as defaults".
+  assert.match(html, /\.insertLinkedSourceAtPosition\(item\.ref, item, overrides\)/);
+  assert.match(html, /var overrides = changedInsertPrefs\(\);/);
+  assert.equal((html.match(/\.setPreferences\(/g) || []).length, 1);
+  assert.match(html, /\.setPreferences\(changed\)/);
+  // Still no innerHTML sink in this dialog.
+  assert.doesNotMatch(html, /\.innerHTML\s*=/);
+  assert.doesNotMatch(html, /\.html\(/);
+});
+
+test('every key the dialog can override is one the server accepts', () => {
+  const server = readAppScriptFile('server/document-actions.gs');
+  const block = server.match(/var LINKER_INSERT_OVERRIDE_KEYS_ = \{([\s\S]*?)\n\};/)[1];
+  const serverKeys = [...block.matchAll(/^\s{2}([a-z_]+):/gm)].map((m) => m[1]).sort();
+  const clientBlock = html.match(/var INSERT_PREF_KEYS = \[([\s\S]*?)\];/)[1];
+  const clientKeys = [...clientBlock.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort();
+  assert.deepEqual(clientKeys, serverKeys);
+});

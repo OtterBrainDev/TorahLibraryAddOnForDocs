@@ -37,12 +37,14 @@ document.
 
 **Insertion tab**
 
-- **Default Display & Layout:** what the Layout tray starts on.
+- **Default Display & Layout:** what the Layout tray starts on. Same pickers
+  and names as the tray, shown open.
 - **Divine Name Mappings:** a master switch plus a rule each for יהוה, יה,
   אלוהים and English *God*. The default is יהוה → יי. יה is matched only as a
   whole word, so יהודה is safe.
 - **Insert from Selection → replaces the selection:** on by default. Turn it
   off if you'd rather keep the citation you typed and put the source below it.
+  Link Texts' **Insert** follows it too (step 5).
 
 **Menu Bar tab:** reorder, group or hide menu items. Put the three you use
 most at the top. Reload the document to see the change.
@@ -137,9 +139,17 @@ This works on a document you wrote yourself, full of citations you typed.
    An **ambiguous** citation (e.g. `Avodah Zarah 2a`: the Talmud or a
    commentary?) has a dropdown and is left unticked until you choose.
 4. Each row has **Link** and **Insert**. Tick **Insert** on a couple of rows,
-   and the full text of those sources goes in below their paragraphs. With
-   Title set to Heading 3 in step 1, your outline now lists them.
-5. The report tells you what was linked, what needed a choice and what
+   and the full text of those sources goes in below their paragraphs. A
+   citation on a line of its own is **replaced** by its source, titled with
+   your words and still linked, so it isn't repeated; one inside a sentence
+   stays. With Title set to Heading 3 in step 1, your outline now lists them.
+5. Want these sources different from your usual? Open **📰 Customize this
+   insertion** under the table: the Layout tray's controls (Display, Layout,
+   vowels, transliteration, Lines, Sources, B&I) plus **Replace a citation on
+   its own line**, for this pass only. Try **א** with vowels off for a
+   handout. **💾 Save as defaults** if you want to keep it; otherwise your
+   Preferences are untouched.
+6. The report tells you what was linked, what needed a choice and what
    couldn't be resolved.
 
 **Preferences → Linking** decides how much it asks:

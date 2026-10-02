@@ -1,13 +1,184 @@
 <style>
 /*
- * components/display-layout.css — display-layout section grid, mode cards,
- *                                  layout options, composition card centering
+ * shared/insertion-options/css — the Display & Layout pickers
+ * (shared/insertion-options/markup.html). Used by the sidebar's Layout tray and
+ * the Link Texts dialog's "Customize this insertion" panel; colours come from
+ * css/tokens.html, which each host includes first.
  *
- * BUG FIX: .display-layout-section was using auto-fit which trapped opened
- * dropdowns in a single narrow column. It is now an explicit 2-column grid.
- * An open .display-choice-detail or .display-choice-dropdown spans both
- * columns so its controls fill the available sidebar width.
+ * Moved here from css/components/display-layout.html and the display-choice
+ * part of css/components/accordion.html. Edit it here, not in a host.
+ *
+ * .display-layout-section is an explicit 2-column grid (auto-fit trapped
+ * opened dropdowns in one narrow column). Dropdown panels float absolutely
+ * below the trigger row, full section width.
  */
+
+/* =============================================================
+   DISPLAY CHOICE — details/summary pattern
+   ============================================================= */
+
+.display-choice-detail {
+  min-width: 0;
+  padding: 8px 10px;
+  background: #fbfaf8;
+  border: 1px solid #ebe6dc;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.display-choice-detail:first-child {
+  margin-top: 0;
+  border-top: 0;
+}
+
+.display-choice-detail > summary {
+  margin-bottom: 4px;
+  list-style: none;
+  pointer-events: none;
+}
+
+.display-choice-detail > summary::-webkit-details-marker,
+.display-choice-summary::-webkit-details-marker {
+  display: none;
+}
+
+/*
+ * .display-choice-summary is a single-column grid.
+ * (.display-choice-label is hidden, so only the selected-display cell shows.)
+ */
+.display-choice-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+  margin-bottom: 4px;
+  padding: 0;
+}
+
+.display-choice-detail[open] > .display-choice-summary {
+  margin-bottom: 4px;
+}
+
+.display-choice-summary::after {
+  display: none;
+}
+
+/* Label is hidden; title-only context is provided as a tooltip in the HTML */
+.display-choice-label {
+  display: none;
+}
+
+.display-choice-detail:not([open]) .mode-card-group,
+.display-choice-detail:not([open]) .layout-option-group {
+  display: none;
+}
+
+/* =============================================================
+   DISPLAY CHOICE — dropdown variant (.display-choice-dropdown)
+   ============================================================= */
+
+.display-choice-dropdown {
+  position: relative;
+}
+
+.display-choice-dropdown > summary {
+  cursor: pointer;
+  list-style: none;
+  pointer-events: auto;
+}
+
+.display-choice-dropdown > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Selected-state preview button */
+.display-choice-selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 7px 10px;
+  overflow: hidden;
+  color: var(--sefaria-blue);
+  background: #fff;
+  border: 1px solid #d9d3c7;
+  border-radius: 12px;
+}
+
+.display-choice-dropdown[open] .display-choice-selected {
+  border-color: #b9c8dd;
+  box-shadow: 0 0 0 2px rgba(51, 95, 150, 0.08);
+}
+
+/* Summary text nodes rendered by JS */
+#display-choice-summary-text,
+#layout-choice-summary-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin-left: auto;
+  color: var(--sefaria-blue);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+#display-choice-summary-text::after,
+#layout-choice-summary-text::after {
+  content: "▾";
+  margin-left: 8px;
+  color: #6c7d93;
+  font-size: 11px;
+}
+
+/* Conditional content for mode states */
+#display-choice-summary-text[data-mode="en"] .both,
+#display-choice-summary-text[data-mode="he"] .both {
+  display: none;
+}
+
+#display-choice-summary-text[data-mode="en"]::before {
+  content: "A";
+  font-size: 20px;
+  font-weight: 700;
+}
+
+#display-choice-summary-text[data-mode="he"]::before {
+  content: "א";
+  font-size: 20px;
+  font-weight: 700;
+}
+
+#display-choice-summary-text[data-mode="both"]::before,
+#layout-choice-summary-text[data-layout="he-right"]::before,
+#layout-choice-summary-text[data-layout="he-left"]::before,
+#layout-choice-summary-text[data-layout="he-top"]::before {
+  content: "";
+}
+
+#layout-choice-summary-text .layout-icon {
+  width: 34px;
+}
+
+.display-choice-dropdown:not([open]) .mode-card-group,
+.display-choice-dropdown:not([open]) .layout-option-group {
+  display: none;
+}
+
+.display-choice-dropdown[open] .mode-card-group,
+.display-choice-dropdown[open] .layout-option-group {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 
 /* =============================================================
    DISPLAY LAYOUT SECTION GRID
@@ -31,7 +202,7 @@
 }
 
 /*
- * Reset the position:relative from accordion.html so the containing block for
+ * Reset the .display-choice-dropdown position:relative above so the containing block for
  * the absolutely-positioned options panel is .display-layout-section (full width).
  */
 .display-layout-section .display-choice-dropdown {
@@ -40,7 +211,7 @@
 
 /*
  * Options panel floats below the trigger row as an overlay, full-section width.
- * margin-top:0 overrides the in-flow margin from accordion.html.
+ * margin-top:0 overrides the in-flow margin above.
  */
 .display-layout-section .display-choice-dropdown[open] .mode-card-group,
 .display-layout-section .display-choice-dropdown[open] .layout-option-group {
@@ -55,6 +226,55 @@
   border: 1px solid #ebe6dc;
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* =============================================================
+   EXPANDED VARIANT (.display-layout-section.is-expanded)
+   initInsertionOptions({ expanded: true }): both pickers always open, each
+   labelled, options in the flow instead of a floating panel. Preferences.
+   ============================================================= */
+
+.display-layout-section.is-expanded .display-choice-detail {
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.display-layout-section.is-expanded .display-choice-dropdown > summary {
+  cursor: default;
+}
+
+.display-layout-section.is-expanded .display-choice-label {
+  display: block;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* The ids: #display-choice-summary-text sets display: inline-flex. */
+.display-layout-section.is-expanded .display-choice-selected,
+.display-layout-section.is-expanded #display-choice-summary-text,
+.display-layout-section.is-expanded #layout-choice-summary-text {
+  display: none;
+}
+
+.display-layout-section.is-expanded .display-choice-dropdown[open] .mode-card-group,
+.display-layout-section.is-expanded .display-choice-dropdown[open] .layout-option-group {
+  position: static;
+  margin-top: 2px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.display-layout-section.is-expanded .display-choice-dropdown[open] .layout-option-group {
+  border: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.display-layout-section.is-expanded .display-choice-dropdown[open] .mode-card-group.compact-mode-card-group {
+  border: 1px solid var(--border);
+  border-radius: 18px;
 }
 
 /* =============================================================
@@ -291,29 +511,5 @@
 .layout-option[data-layout="he-left"] .layout-col.en,
 .layout-option[data-layout="he-top"] .layout-row.en {
   background: #1f3f75;
-}
-
-/* =============================================================
-   COMPOSITION CARD CENTERING (#composition-card-container)
-   ============================================================= */
-
-#composition-card-container .cc-hebrew-text {
-  display: block;
-  width: fit-content;
-  max-width: 100%;
-  margin-right: auto;
-  margin-left: auto;
-  text-align: center;
-}
-
-#composition-card-container .cc-hebrew-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-#composition-card-container .cc-hebrew {
-  min-width: 0;
 }
 </style>

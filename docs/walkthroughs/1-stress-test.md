@@ -26,8 +26,8 @@ should say so.
 
 ## Known suspects going in
 
-Found while writing this walkthrough, by reading the code. K1–K5 and K8 are
-fixed on this branch, each with a pinning test; the steps below now check
+Found while writing this walkthrough, by reading the code. K1–K5, K8 and K9
+are fixed on this branch, each with a pinning test; the steps below now check
 the fixed behaviour. K6 and K7 are left as they are: the published add-on
 stores no preferences, so there is nothing to carry over.
 
@@ -41,6 +41,7 @@ stores no preferences, so there is nothing to carry over.
 | K6 | Original-add-on users' stored preferences. | — | **Not applicable**: the published add-on stores no preferences. |
 | K7 | Legacy `nekudot_filter="tanach"`. | — | **Not applicable**, as K6. |
 | K8 | **"Vowels only in Tanakh" had no control**, and toggling Vowels reset it. | A **Vowels only in Tanakh** switch in Preferences → Insertion; turning Vowels on keeps it. | **Fixed.** `vowels-tanakh-only.test.js`. Step 5.9. |
+| K9 | **Link Texts' Insert repeated the citation.** The citation stayed, and the inserted source's title said the same thing on the next line; Insert from Selection replaced it. To insert one batch differently you had to cancel the review or change Preferences for good. | Insert follows *Insert from Selection replaces the selection*: a citation on a line of its own is replaced (title = the citation, link kept); one inside a sentence stays. The review dialog's **📰 Customize this insertion** panel sets the layout for one pass. | **Fixed.** `linker-insert-replace.test.js`, `linker-dialog.test.js`. Steps 7.4–7.4b, 7.18–7.25. |
 
 Also found while fixing K4: every sidebar toast was invisible (CSS opacity).
 Fixed; step 2.6 now depends on it.
@@ -216,7 +217,9 @@ Use a **fresh copy** of the stress document for every row that says so.
 | 7.1 | First run ever on the account | One-time confirmation naming the active scan mode. Decline → nothing sent, nothing changed. | Anything sent before the answer (check Executions). |
 | 7.2 | Run, accept (Candidate passages) | Dialog opens immediately with a scanning state; then a summary: auto-linked, need a choice, could not be resolved, fell across a gap. | A frozen menu for several seconds with no dialog. |
 | 7.3 | Review the table | Paragraphs 2, 3 (both), 6, 7, 10 (both items) found. Avodah Zarah is a dropdown with excerpts, Link unchecked. Fakebook counted as unresolved. Psalms 23 (linked to example.com) **not** offered. | The paragraph 8 split-format citation, the footnote (12) and the header (13) are expected **misses** because the scan reads the body text only. Record whether any appear, and whether the report mentions them. |
-| 7.4 | Tick **Insert** on the table citation (Isaiah 40:1) and on one list item; apply. Repeat with the default layout set to Hebrew only | Right–Left default: the Isaiah source goes below the table and the done message says why. Hebrew only: it goes inside the cell, under the citation. The list item's source goes below the list item. Your cursor doesn't move. | **K4 (fixed):** the source at the end of the document, or no explanation. |
+| 7.4 | Tick **Insert** on the table citation (Isaiah 40:1) and on one list item; apply. Repeat with the default layout set to Hebrew only | Both citations are alone on their line, so each is **replaced** (Preferences → Insertion → *Insert from Selection replaces the selection* is on by default). Right–Left default: the Isaiah source goes below the table, the done message says why, and the cell is left empty. Hebrew only: the source takes the citation's place inside the cell. The list item becomes the source. Your cursor doesn't move. | **K4 (fixed):** the source at the end of the document, or no explanation. A citation left behind with the same words repeated as the title below it (**K9**). |
+| 7.4a | **Fresh copy.** Tick **Insert** (and **Link**) on `Leviticus 19:18`; apply. Click the inserted title | The list item is replaced by the source, titled `Leviticus 19:18` exactly as typed, and the title links to Sefaria even if *🔗 Title* is off in Preferences (the citation was linked). | The citation and a second `Leviticus 19:18` title (**K9**). A replaced citation that loses its link. |
+| 7.4b | **Fresh copy.** Turn off *replaces the selection* in Preferences; repeat 7.4a | The citation stays (linked) and the source goes below it, titled with Sefaria's reference. | The citation deleted anyway. |
 | 7.5 | Tick **Insert** on *both* citations in paragraph 3; apply | Two sources below paragraph 3, Exodus above Deuteronomy. | Wrong order, or one inserted inside the other. |
 | 7.6 | Pick the second Avodah Zarah candidate; apply; click the link | It opens the candidate you picked. | It opens the first candidate. |
 | 7.7 | **Fresh copy.** Run; while the review table is open, type a sentence at the top of the Doc and delete `Exodus 20:1` from paragraph 3; then Apply | Links land on the right words. The done message says one citation changed or disappeared and was left alone. | **K3 (fixed):** links shifted by the length of what you typed; Exodus's link landing on other text. |
@@ -230,6 +233,23 @@ Use a **fresh copy** of the stress document for every row that says so.
 | 7.15 | Close the dialog while **Applying…** is in progress | Whatever was applied stays applied; no half-link on a word. | A link covering part of a word. |
 | 7.16 | Start the linker in two tabs on the same Doc | Both finish; no duplicate links. | Doubled links. |
 | 7.17 | **Unlink Sources** | Every sefaria.org link removed; the example.com link on Psalms 23 kept. | Non-Sefaria links removed. |
+
+### Customize this insertion
+
+The review dialog's **📰 Customize this insertion** panel, under the table. Use
+a **fresh copy** for each row. Before starting, note your Preferences →
+Insertion settings and the sidebar's 📰 Layout tray.
+
+| # | Do | Expect | Watch for |
+| --- | --- | --- | --- |
+| 7.18 | Run; open the panel without changing anything | Collapsed by default. Opened, it shows the same controls as the sidebar's Layout tray, set to your **Preferences** (not the tray's session choices), and says *Your defaults*. Revert and Save are disabled. | Session choices from the sidebar; blank controls; the panel missing entirely (it stays hidden only if Preferences couldn't be read). |
+| 7.19 | Set Display **א**, Layout irrelevant, Vowels off, Lines off, B&I **Discard**; tick **Insert** on paragraph 3's two citations and `Leviticus 19:18`; apply | All three sources: Hebrew only, no vowels, no line numbers, no bold. The panel said *Customized for this pass*. Afterwards Preferences → Insertion and the sidebar's Layout tray are unchanged. | Any source with your defaults instead; Preferences changed without **Save as defaults**. |
+| 7.20 | Display **A** (translation only) | Layout and the panel's Hebrew pills (Vowels, Cantillation, Translit) disappear; the 🔗 Title, Lines, Sources and B&I pills stay. Back to **A + א** brings them back. | Hebrew controls offered for a translation-only insert. |
+| 7.21 | Untick **Replace a citation on its own line**; insert `Leviticus 19:18` | The citation stays and the source goes below it. Preferences' *replaces the selection* is still on. | The citation removed; the preference turned off. |
+| 7.22 | Change two settings, then **↺ Revert to defaults** | Everything back to Preferences; *Your defaults*. | A setting left changed. |
+| 7.23 | Change Vowels; **💾 Save as defaults**; reopen Preferences | Preferences → Insertion shows the change; nothing else changed. The panel says *Your defaults*. | Other preferences overwritten; a silent failure (it should say *Could not save*). |
+| 7.24 | Change a setting, tick **Insert** on several rows, **Apply**, and while it inserts click around the panel | Every source in the pass uses the settings as they were at **Apply**. | Sources in one pass with different layouts. |
+| 7.25 | After linking → **Just link and report a count**, with **Insert text after linking** on | No dialog, so no panel: inserts use Preferences. | — |
 
 ---
 
@@ -272,6 +292,7 @@ Use a **fresh copy** of the stress document for every row that says so.
 | 10.5 | **Reset To Defaults** | Everything back to defaults, including יהוה → יי on. | Anything left over; `linker_upload_acknowledged` reset (it should **not** be reset). |
 | 10.6 | Preferences → Experimental: enable, turn on Surprise Me, run it with every corpus off | "Choose at least one corpus." | Script error. |
 | 10.7 | **🔁 Refresh** in Preferences | Sidebar reopens from saved defaults. | Silent no-op (the historical regression). |
+| 10.8 | Preferences → Insertion → **Display & Layout**: hover each option; choose **A**; save; open the sidebar's 📰 Layout | Both pickers are open and labelled. Option names match the sidebar's (*Translation*, *Original with Translation*, *Original*; *Stacked*, *Right–Left*, *Left–Right*). With **A** chosen, Layout and the Hebrew pills in Insertion Defaults stay visible (they are still defaults for other inserts). The tray starts on **A**. | Different names than the sidebar; Layout hidden in Preferences; the tray not following the saved default. |
 
 ---
 

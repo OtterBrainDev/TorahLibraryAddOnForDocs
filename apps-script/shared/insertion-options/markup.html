@@ -1,0 +1,35 @@
+<!--
+  Display (Translation / Both / Original) and Layout (Stacked / Right–Left /
+  Left–Right): the first half of the insertion options, above the composition
+  card. Shared by the sidebar's Layout tray and the Link Texts dialog's
+  "Customize this insertion" panel. Behaviour: shared/insertion-options/js.html
+  (initInsertionOptions); styles: shared/insertion-options/css.html.
+
+  include() returns a file's raw content, so this partial cannot include the
+  composition card itself: hosts include shared/composition-card/markup next to
+  it, inside the same container they pass to initInsertionOptions as `root`.
+-->
+<div class="display-layout-section">
+  <details class="display-choice-detail display-choice-dropdown">
+    <summary class="display-choice-summary" aria-label="Display selector" title="Display"><span class="display-choice-label" aria-hidden="true">Display</span><span class="display-choice-selected display-choice-selected--display" id="display-choice-summary-text" data-mode="both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></span></summary>
+    <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-label="Display mode">
+      <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
+      <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
+      <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
+    </div>
+  </details>
+  <details class="display-choice-detail bilingual-layout-wrapper display-choice-dropdown">
+    <summary class="display-choice-summary" aria-label="Layout selector" title="Layout"><span class="display-choice-label" aria-hidden="true">Layout</span><span class="display-choice-selected display-choice-selected--layout" id="layout-choice-summary-text" data-layout="he-right"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></span></summary>
+    <div class="layout-option-group" role="radiogroup" aria-label="Bilingual layout">
+      <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
+        <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>
+      </button>
+      <button type="button" class="layout-option" data-layout="he-right" role="radio" aria-checked="false" title="Right–Left">
+        <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>
+      </button>
+      <button type="button" class="layout-option" data-layout="he-left" role="radio" aria-checked="false" title="Left–Right">
+        <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>
+      </button>
+    </div>
+  </details>
+</div>

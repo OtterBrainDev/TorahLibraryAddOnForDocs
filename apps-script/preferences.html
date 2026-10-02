@@ -5,6 +5,8 @@
     <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
     <script>window.APP_CONFIG = JSON.parse(document.getElementById('app-config-json').textContent);</script>
 <? var devFlags = JSON.parse(devFlagsJson); ?>
+    <?!= include('css/tokens'); ?>
+    <?!= include('shared/insertion-options/css'); ?>
     <?!= include('preferences/css'); ?>
     <?!= include('shared/composition-card/css'); ?>
     <?!= include('shared/css/icon-mode-card'); ?>
@@ -562,26 +564,9 @@
           <details class="section-card section-accordion" id="display-defaults" name="display-defaults" open>
             <summary class="section-card-summary"><span>Display &amp; Layout</span></summary>
             <div class="section-card-body">
-              <div class="pref-display-layout-section">
-                <div class="pref-field-group">
-                  <div class="compact-section-label" id="pref-output-mode-label">Display</div>
-                  <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-labelledby="pref-output-mode-label" data-pref-group="output_mode_default">
-                    <button type="button" class="mode-card" data-value="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
-                    <button type="button" class="mode-card is-active" data-value="both" role="radio" aria-checked="true" title="Both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
-                    <button type="button" class="mode-card" data-value="he" role="radio" aria-checked="false" title="Hebrew only"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
-                  </div>
-                  <input type="hidden" id="output_mode_default" name="output_mode_default" value="both">
-                </div>
-                <div class="pref-field-group" id="pref-bilingual-layout-group">
-                  <div class="compact-section-label" id="pref-bilingual-layout-label">Layout</div>
-                  <div class="layout-option-group" role="radiogroup" aria-labelledby="pref-bilingual-layout-label" data-pref-group="bilingual_layout_default">
-                    <button type="button" class="layout-option" data-value="he-top" role="radio" aria-checked="false" title="Stacked"><span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span></button>
-                    <button type="button" class="layout-option is-active" data-value="he-right" role="radio" aria-checked="true" title="Right–Left"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></button>
-                    <button type="button" class="layout-option" data-value="he-left" role="radio" aria-checked="false" title="Left–Right"><span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span></button>
-                  </div>
-                  <input type="hidden" id="bilingual_layout_default" name="bilingual_layout_default" value="he-right">
-                </div>
-              </div>
+              <?!= include('shared/insertion-options/markup') ?>
+              <input type="hidden" id="output_mode_default" name="output_mode_default" value="both">
+              <input type="hidden" id="bilingual_layout_default" name="bilingual_layout_default" value="he-right">
               <div class="mini-help">Which text layers and layout to use when inserting a source.</div>
             </div>
           </details>
@@ -811,7 +796,7 @@
               <div class="toggle-row">
                 <div class="toggle-copy">
                   <div class="toggle-title">&ldquo;Insert from Selection&rdquo; replaces the selection</div>
-                  <div class="toggle-help">On: the selected reference is replaced by the inserted source, which is titled with the same reference. Off: the selection stays and the source is inserted below it.</div>
+                  <div class="toggle-help">On: the selected reference is replaced by the inserted source, which is titled with the same reference. Off: the selection stays and the source is inserted below it. Link Texts with Sefaria follows this too, for a citation on a line of its own.</div>
                 </div>
                 <label class="switch" for="insert_from_selection_replace">
                   <input id="insert_from_selection_replace" type="checkbox" name="insert_from_selection_replace">
@@ -977,6 +962,7 @@
     <?!= include('shared/ui/feedback'); ?>
     <?!= include('shared/ui/state'); ?>
     <?!= include('shared/composition-card/shared'); ?>
+    <?!= include('shared/insertion-options/js'); ?>
     <?!= include('preferences/js'); ?>
   </body>
 </html>

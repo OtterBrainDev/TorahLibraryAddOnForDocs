@@ -15,7 +15,8 @@ should happen.
 | 5 | [First five minutes](5-new-user.md) | Someone who has never used it | 5 min | Get one source into a document. |
 
 The version under demo is **2.1.0, preference schema 14** (`docs/VERSION.json`),
-plus the unreleased search changes in `docs/CHANGELOG.md`.
+plus the unreleased changes in `docs/CHANGELOG.md` (search, Link Texts' Insert
+and *Customize this insertion*, the shared Display & Layout pickers).
 *Help & Support → About* should read **Current line: 2.1**.
 
 ## Before any live session

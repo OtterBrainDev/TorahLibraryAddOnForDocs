@@ -569,6 +569,7 @@ function buildLinkedTitleText(baseTitle, data, singleLanguage) {
  * @param {boolean} [opts.insertCitationOnly]           Insert just the citation title, no body.
  * @param {string} [opts.sourceEmphasisMode]            "keep" | "discard" | "only"; omitted
  *                                                      means the stored `source_emphasis_mode`.
+ * @param {string} [opts.transliterationScheme]         Omitted means the stored `transliteration_scheme`.
  * @param {boolean} [opts.preserveSelection]            Keep a selection and insert after it (default: replace it).
  * @param {Object}  [opts.insertAfterElement]           Insert after this element instead of at the cursor (server-side callers only).
  * @returns {{notice: string}} notice is non-empty when the insert went somewhere other than the cursor.
@@ -643,7 +644,7 @@ function insertReference(data, opts) {
     typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
   }
   const currentPrefs = getPreferences();
-  const transliterationScheme = currentPrefs.transliteration_scheme || "traditional";
+  const transliterationScheme = options.transliterationScheme || currentPrefs.transliteration_scheme || "traditional";
   const transliterationDageshMode = currentPrefs.transliteration_biblical_dagesh_mode || "none";
   const transliterationIsBiblical = currentPrefs.transliteration_is_biblical_hebrew !== "false";
   const isBiblicalHebrewText = transliterationIsBiblical && data.type == "Tanakh";

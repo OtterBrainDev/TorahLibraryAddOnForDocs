@@ -60,7 +60,10 @@ above English) and **Left–Right**.
   citations you've typed into links. It shows what it found, asks when a
   citation could mean more than one text, and tells you what it couldn't link.
   Before sending anything to Sefaria it asks, and by default it sends only the
-  passages that look like citations.
+  passages that look like citations. Tick **Insert** on a row to put the
+  source's text in as well; **📰 Customize this insertion** in the review lets
+  you pick the layout, vowels and so on for that batch without touching your
+  Preferences.
 - **Insert Source from Selection.** Select a reference you typed, e.g.
   `Psalms 92:1`, and run it. The citation becomes the source.
 - **Several translations at once.** In **Versions**, <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click
@@ -103,9 +106,12 @@ nobody warns them.
    font everywhere, set it in **Preferences → Fonts**.
 6. **Nothing is inserted until you click Add Source.** Clicking a search
    result only previews it.
-7. **Insert Source from Selection replaces the selection.** To keep your typed
-   citation and put the source below it, turn off **Preferences → Insertion →
-   Insert from Selection → replaces the selection**.
+7. **Insert Source from Selection replaces the selection** — and so does
+   Link Texts' Insert, for a citation on a line of its own. The source is
+   titled with your words, so nothing is lost. To keep your typed citation and
+   put the source below it, turn off **Preferences → Insertion → Insert from
+   Selection → replaces the selection** (or, in Link Texts, untick *Replace a
+   citation on its own line* for one pass).
 8. **Inserting inside a table.** One language, or the Stacked layout, goes
    inside the cell. The side-by-side layouts are tables themselves, so they go
    directly below the table, and the sidebar tells you so. Headers, footers

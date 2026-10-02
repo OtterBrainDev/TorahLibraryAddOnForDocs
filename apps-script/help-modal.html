@@ -573,9 +573,10 @@
             <p><span class="ui-label">🔁 Preview</span> shows what <span class="ui-label">Add Source</span> will insert right now: the current version, display, layout, vowels, cantillation, transliteration and divine-name replacements. If the Preview looks right, the insertion will too.</p>
           </section>
 
-          <section class="card topic-section" id="layout-settings" data-search-title="Layout Settings (📰 Layout)" data-search-terms="layout settings tray display translation original both hebrew only stacked right left left right bilingual insertion format linked title cantillation taamim trop vowels niqqud nikud nekudot transliteration lines line markers sources citation b&amp;i bold italics emphasis keep discard keep only talmud steinsaltz translated session revert save as defaults override this insertion">
+          <section class="card topic-section" id="layout-settings" data-search-title="Layout Settings (📰 Layout)" data-search-terms="layout settings tray display translation original both hebrew only stacked right left left right bilingual insertion format linked title cantillation taamim trop vowels niqqud nikud nekudot transliteration lines line markers sources citation b&amp;i bold italics emphasis keep discard keep only talmud steinsaltz translated session revert save as defaults override this insertion customize this insertion link texts preferences defaults">
             <h2>Layout Settings (<span class="icon">📰</span> Layout)</h2>
             <p>Click <span class="ui-label">📰 Layout</span> at the bottom of the sidebar. Everything here applies to <strong>this sidebar session only</strong> — your saved Preferences don't change unless you click <span class="ui-label">💾 Save as defaults</span>.</p>
+            <p>The same controls appear in two other places: <span class="ui-label">Preferences → Insertion</span>, where they set your saved defaults, and <a href="#link-texts">Link Texts with Sefaria</a>'s <span class="ui-label">📰 Customize this insertion</span> panel, where they apply to the sources inserted in one pass.</p>
             <h3>Display &amp; Layout</h3>
             <div class="compare-grid">
               <div class="compare-card"><h3>A</h3><p class="muted">Translation only.</p></div>
@@ -659,7 +660,7 @@
             <p>Click <span class="ui-label">🏃</span> at the bottom of the sidebar, or use <span class="ui-label">Extensions → Torah Library → Quick Actions</span>.</p>
             <table class="ref-table">
               <tbody>
-                <tr><td><span class="ui-label">Sel → ס</span><br><span class="small">Insert Source from Selection</span></td><td>Select a reference you've typed in the document — say <code>Genesis 1:1</code> — and run this. By default the selected words are replaced by the source (titled with the same reference). To keep your words and insert the source below them, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>.</td></tr>
+                <tr><td><span class="ui-label">Sel → ס</span><br><span class="small">Insert Source from Selection</span></td><td>Select a reference you've typed in the document — say <code>Genesis 1:1</code> — and run this. By default the selected words are replaced by the source (titled with the same reference). To keep your words and insert the source below them, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>. <a href="#link-texts">Link Texts with Sefaria</a>'s Insert follows the same setting.</td></tr>
                 <tr><td><span class="ui-label">ה → ש</span><br><span class="small">Transform Divine Names</span></td><td>Applies your divine-name replacements to text already in the document. See <a href="#divine-names">Divine names</a>.</td></tr>
                 <tr><td><span class="ui-label">🔗 → ס</span><br><span class="small">Link Texts with Sefaria</span></td><td>Finds citations in your document and links them to Sefaria. See <a href="#link-texts">Link Texts with Sefaria</a>.</td></tr>
                 <tr><td><span class="ui-label">🎲</span><br><span class="small">Surprise Me</span></td><td>Experimental — inserts sources on a word or theme, or at random. Only shown when switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>.</td></tr>
@@ -672,16 +673,27 @@
             </ul>
           </section>
 
-          <section class="card topic-section" id="link-texts" data-search-title="Link Texts with Sefaria" data-search-terms="link texts linker hyperlink citations references existing document scan ambiguous review summary every match count insert after linking could not be placed unresolved whole document candidate passages privacy">
+          <section class="card topic-section" id="link-texts" data-search-title="Link Texts with Sefaria" data-search-terms="link texts linker hyperlink citations references existing document scan ambiguous review summary every match count insert after linking could not be placed unresolved whole document candidate passages privacy customize this insertion layout display vowels transliteration replace citation own line duplicate twice revert save as defaults">
             <h2>Link Texts with Sefaria</h2>
             <p>Turns the citations already in your document — <em>Genesis 1:1</em>, <em>Berakhot 2a</em>, <em>Rambam, Hil. Teshuvah 3:4</em> — into links to Sefaria.</p>
             <ol class="steps">
               <li>Run <span class="ui-label">🔗 → ס</span> from Quick Actions, or <span class="ui-label">Extensions → Torah Library → Quick Actions → Link Texts with Sefaria</span>.</li>
               <li>A dialog shows progress while your document is scanned.</li>
               <li>You get a table of what was found. Each row shows the words in your document and the Sefaria source they'll point to. When a citation could mean more than one source, pick the right one from the dropdown — each option shows a short excerpt to help.</li>
-              <li>Each row has two checkboxes: <strong>Link</strong> (hyperlink the words) and <strong>Insert</strong> (insert that source's text below the paragraph). Tick either, both, or neither. The checkbox in a column header sets the whole column.</li>
+              <li>Each row has two checkboxes: <strong>Link</strong> (hyperlink the words) and <strong>Insert</strong> (insert that source's text — see <em>Where an inserted source goes</em> below). Tick either, both, or neither. The checkbox in a column header sets the whole column.</li>
+              <li>Optional: open <span class="ui-label">📰 Customize this insertion</span> below the table to insert these sources differently from your defaults (see below).</li>
               <li>Apply. The dialog reports how many were linked, and how many couldn't be.</li>
             </ol>
+            <h3>Where an inserted source goes</h3>
+            <p>A citation on a line of its own — <code>Genesis 1:1</code>, or <code>(Genesis 1:1).</code> — is <strong>replaced</strong> by the source, titled with the citation as you wrote it and still linked to Sefaria, the same as <a href="#quick-actions">Insert Source from Selection</a>. A citation inside a sentence stays where it is, and the source goes below its paragraph. To keep every citation, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>, or untick <strong>Replace a citation on its own line</strong> in the panel below for one pass.</p>
+            <h3>Customize this insertion</h3>
+            <p>Click <span class="ui-label">📰 Customize this insertion</span> under the review table. It has the same controls as the sidebar's <a href="#layout-settings">Layout Settings</a> — Display, Layout, Vowels, Cantillation, Translit, 🔗 Title, Lines, 🔗 Sources and B&amp;I — plus <strong>Replace a citation on its own line</strong>. It starts on your saved Preferences; once you change something it says <em>Customized for this pass</em>.</p>
+            <ul>
+              <li>Your choices apply only to the sources ticked <strong>Insert</strong> in this run. Linking isn't affected.</li>
+              <li><span class="ui-label">↺ Revert to defaults</span> puts the panel back to your Preferences.</li>
+              <li><span class="ui-label">💾 Save as defaults</span> makes your choices your new Preferences. Nothing is saved unless you click it.</li>
+            </ul>
+            <p>In <strong>Just link and report a count</strong> mode there's no dialog, so <strong>Insert text after linking</strong> always uses your Preferences.</p>
             <h3>Choosing how much it asks</h3>
             <p>In <span class="ui-label">Preferences → Linking → After linking</span>:</p>
             <ul>
@@ -706,12 +718,12 @@
 
           <section class="card topic-section" id="preferences" data-search-title="Preferences" data-search-terms="preferences settings defaults save save and close reset refresh fonts insertion linking menu bar experimental title heading hebrew transliteration translation language source emphasis transliteration mapping insertion defaults current session difference">
             <h2>Preferences</h2>
-            <p>Open with <span class="ui-label">⚙︎</span> in the sidebar or <span class="ui-label">Extensions → Torah Library → Preferences</span>. Preferences are your <strong>saved defaults</strong>; they follow your Google account into every document. The sidebar's <span class="ui-label">📰 Layout</span> changes only the current session.</p>
+            <p>Open with <span class="ui-label">⚙︎</span> in the sidebar or <span class="ui-label">Extensions → Torah Library → Preferences</span>. Preferences are your <strong>saved defaults</strong>; they follow your Google account into every document. The sidebar's <span class="ui-label">📰 Layout</span> changes only the current session, and Link Texts' <span class="ui-label">📰 Customize this insertion</span> only one linking pass.</p>
             <table class="ref-table">
               <thead><tr><th>Tab</th><th>What's there</th></tr></thead>
               <tbody>
                 <tr><td><span class="ui-label">Fonts</span></td><td><strong>Title</strong> (plain and linked; paragraph style, e.g. Heading 2), <strong>Hebrew</strong>, <strong>Transliteration</strong> (and its scheme), <strong>Translation</strong> (and preferred language). Each has font, size, bold/italic/underline, text colour and highlight, with a preview. <strong>✒️ Source Emphasis</strong> controls Sefaria's own bold and italics: <strong>Keep</strong>, <strong>Discard</strong> or <strong>Keep only</strong> (insert just the emphasized words), and how kept emphasis looks.</td></tr>
-                <tr><td><span class="ui-label">Insertion</span></td><td>Default <strong>Display &amp; Layout</strong>; <strong>Insertion Defaults</strong> for Texts, Voices and Lexicon (the same switches as the sidebar's Insertion Format); <strong>Transliteration Mapping</strong> for adjusting individual letters; <strong>Divine Name Mappings</strong>; and <strong>Insert from Selection</strong>.</td></tr>
+                <tr><td><span class="ui-label">Insertion</span></td><td>Default <strong>Display &amp; Layout</strong>; <strong>Insertion Defaults</strong> for Texts, Voices and Lexicon (the same switches as the sidebar's Insertion Format); <strong>Transliteration Mapping</strong> for adjusting individual letters; <strong>Divine Name Mappings</strong>; and <strong>Insert from Selection</strong> (whether a selected or own-line citation is replaced by the source — used by Insert from Selection and Link Texts).</td></tr>
                 <tr><td><span class="ui-label">Linking</span></td><td>How <a href="#link-texts">Link Texts with Sefaria</a> reviews what it finds, and how much of your document it sends.</td></tr>
                 <tr><td><span class="ui-label">Menu Bar</span></td><td>Rearrange the add-on's menu. See <a href="#menu">The menu</a>.</td></tr>
                 <tr><td><span class="ui-label">🧪 Experimental</span></td><td>Optional features still in progress, such as Surprise Me. Off by default.</td></tr>
@@ -748,7 +760,7 @@
             </table>
           </section>
 
-          <section class="card topic-section faq" id="troubleshooting" data-search-title="Troubleshooting" data-search-terms="problem not working bug help nothing found no results can't insert disabled greyed out preview missing wrong font formatting divine name replaced menu not changed old stale after update refresh reopen link texts missed surprise me missing">
+          <section class="card topic-section faq" id="troubleshooting" data-search-title="Troubleshooting" data-search-terms="problem not working bug help nothing found no results can't insert disabled greyed out preview missing wrong font formatting divine name replaced menu not changed old stale after update refresh reopen link texts missed surprise me missing citation disappeared replaced duplicate twice">
             <h2>Troubleshooting</h2>
             <details>
               <summary>My search finds nothing, or the wrong book</summary>
@@ -777,6 +789,10 @@
             <details>
               <summary>Link Texts with Sefaria missed some citations</summary>
               <p>Read the report at the end. <em>Could not be placed</em> — set <span class="ui-label">Preferences → Linking → Document scanning</span> to <strong>Whole document</strong> and try again. <em>Could not be resolved</em> — Sefaria didn't recognise the citation; writing it in a standard form usually helps. In <strong>Just link and report a count</strong> mode, ambiguous citations are skipped on purpose.</p>
+            </details>
+            <details>
+              <summary>Link Texts replaced my citation with the source</summary>
+              <p>That's the default for a citation on a line of its own: the inserted source is titled with the same words, so nothing is lost and the reference isn't repeated. Use <em>Edit → Undo</em> to reverse it. To keep citations, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>, or untick <strong>Replace a citation on its own line</strong> in <span class="ui-label">📰 Customize this insertion</span> for one pass. A citation inside a sentence is never removed.</p>
             </details>
             <details>
               <summary>My menu changes didn't appear</summary>

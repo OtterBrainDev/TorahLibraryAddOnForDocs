@@ -203,22 +203,8 @@ $('.output-mode-selection').on('change', function () {
   }
 });
 
-$('.mode-card').on('click keydown', function (event) {
-  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-  event.preventDefault();
-  $('.output-mode-selection').val($(this).attr('data-mode')).trigger('change');
-});
-
-$('.layout-option').on('click keydown', function (event) {
-  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-  event.preventDefault();
-  $('.bilingual-layout-selection').val($(this).attr('data-layout'));
-  syncLayoutCards();
-  saveSidebarPreference({ bilingual_layout_default: $('.bilingual-layout-selection').val() });
-  if (hasResolvedReference && data && data.ref) {
-    updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
-  }
-});
+// The Display and Layout pickers' clicks: initInsertionOptions in
+// display-controls.
 
 $('.close').click(function () {
   google.script.host.close();

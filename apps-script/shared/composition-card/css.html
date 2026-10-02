@@ -248,4 +248,27 @@
   background: var(--sefaria-blue);
   border-color: var(--sefaria-blue);
 }
+
+/* Stacked (.cc-card.cc-card--stacked): the title, vowel and cantillation pills
+   and the Hebrew in one centred column, for narrow hosts (the sidebar's Layout
+   tray, the Link Texts dialog). Preferences, which is wider, leaves it off. */
+.cc-card--stacked .cc-hebrew-text {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-right: auto;
+  margin-left: auto;
+  text-align: center;
+}
+
+.cc-card--stacked .cc-hebrew-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.cc-card--stacked .cc-hebrew {
+  min-width: 0;
+}
 </style>

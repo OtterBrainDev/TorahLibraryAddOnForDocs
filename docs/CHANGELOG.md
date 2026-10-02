@@ -72,12 +72,34 @@ heading until the next release consolidates it.
 - **A source with no translation inserts just the Hebrew.** Siddur Rashi used
   to get an empty "(Translation)" heading, and its Hebrew title read
   `רש&quot;י` instead of `רש"י`.
+- **Link Texts' Insert no longer repeats the citation.** With Preferences →
+  Insertion → *“Insert from Selection” replaces the selection* on (the
+  default), a citation on a line of its own is now replaced by the inserted
+  source, titled with the citation as you wrote it and still linked to
+  Sefaria, the way Insert from Selection does it. It used to stay in place
+  with the same reference repeated as the source's title on the next line. A
+  citation inside a sentence is left alone, and the source goes below it.
+  Turn the preference off to keep every citation.
 - **Link Texts names a source it could not insert.** The summary said
   *could not be fetched* for every failure, and showed the error without
   saying which source it belonged to.
 
 #### Added
 
+- **Customize this insertion, in Link Texts' review.** A collapsible panel
+  under the review table has the same controls as the sidebar's 📰 Layout
+  tray: Display, Layout, vowels, cantillation, transliteration, the linked
+  title, Lines, Sources and B&I, plus whether a citation on its own line is
+  replaced. The settings apply only to the sources this pass inserts; your
+  defaults don't change unless you click **Save as defaults**, and **Revert
+  to defaults** puts them back. There's no longer any need to cancel the
+  review, or change Preferences for every future insert, to insert one batch
+  differently.
+- **Preferences → Insertion → Display & Layout uses the sidebar's pickers.**
+  Same options, same names (*Translation*, *Original with Translation*,
+  *Original*; *Stacked*, *Right–Left*, *Left–Right*), laid out open as before.
+  The sidebar's Layout tray, Link Texts' *Customize this insertion* and
+  Preferences now share one set of these controls, so they can't drift apart.
 - **Preferences → Insertion → Vowels only in Tanakh.** Keeps niqqud in Tanakh
   and removes it from everything else, as the original add-on did. Off by
   default; no stored preference changes.

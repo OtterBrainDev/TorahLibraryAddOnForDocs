@@ -5,8 +5,6 @@
       "#run-sefaria",
       ".mode-switch-button",
       ".results-panel",
-      "#display-choice-summary-text",
-      "#layout-choice-summary-text",
       "data-sidebar-mode=\"texts\"",
       "data-sidebar-mode=\"experimental\"",
       "#sm-inline-launch",
@@ -22,6 +20,8 @@
       "#source_title_font",
       "#hebrew_font",
       "#transliteration_scheme",
+      "#output_mode_default",
+      "#bilingual_layout_default",
       "#menu_layout",
       "#menu-layout-top",
       "#menu-layout-quick-actions",
@@ -36,6 +36,29 @@
       "#toggle-all-corpuses",
       "#surprise-submit",
       "#surprise-status"
+    ]
+  },
+  "insertion_options": {
+    "template": "apps-script/shared/insertion-options/markup.html",
+    "requiredSelectors": [
+      "#display-choice-summary-text",
+      "#layout-choice-summary-text",
+      ".bilingual-layout-wrapper",
+      ".mode-card",
+      ".layout-option"
+    ]
+  },
+  "linker_results": {
+    "template": "apps-script/linker-results.html",
+    "requiredSelectors": [
+      "#master-link-cb",
+      "#master-insert-cb",
+      "#customize-insertion",
+      "#customize-root",
+      "#customize-replace",
+      "#customize-revert",
+      "#customize-save",
+      "#composition-card-container"
     ]
   }
 }

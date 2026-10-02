@@ -516,9 +516,12 @@ function linkTextsWithSefaria() {
     return;
   }
 
-  const html = HtmlService.createHtmlOutputFromFile('linker-results')
-    .setWidth(720)
-    .setHeight(560);
+  // A template, not a plain file: it include()s the insertion options it
+  // shares with the sidebar's Layout tray.
+  const html = HtmlService.createTemplateFromFile('linker-results')
+    .evaluate()
+    .setWidth(760)
+    .setHeight(680);
   DocumentApp.getUi().showModalDialog(html, 'Link Texts with Sefaria');
 }
 
@@ -614,34 +617,139 @@ function runQuietLinkPass_() {
  * inside that cell, or, for a side-by-side layout, below the table with a
  * notice. Headers, footers and footnotes are never scanned, so never anchors.
  *
+ * With Preferences -> Insertion -> "Insert from Selection replaces the
+ * selection" on (the default), a citation that is its paragraph's only text is
+ * replaced by the source, titled with that citation, as Insert from Selection
+ * does; otherwise the citation and the new source title said the same thing
+ * one line apart. A citation inside a sentence stays where it is: deleting it
+ * would break the sentence. The title keeps the citation's link.
+ *
+ * `overrides` (optional) is the review dialog's "Customize this insertion"
+ * panel: preference keys from LINKER_INSERT_OVERRIDE_KEYS_ that apply to this
+ * insert only. Nothing is saved.
+ *
  * @returns {{success: boolean, ref: string, notice?: string, reason?: string}}
  */
-function insertLinkedSourceAtPosition(ref, position) {
+function insertLinkedSourceAtPosition(ref, position, overrides) {
   const doc = DocumentApp.getActiveDocument();
   const body = doc.getBody();
   const decision = (position && typeof position === 'object') ? position : { startChar: Number(position) };
 
-  const anchor = findLinkerAnchorBlock_(body, decision);
-  if (!anchor) {
+  const found = findLinkerCitation_(body, decision);
+  if (!found) {
     return { success: false, ref: ref, reason: 'moved' };
   }
+  const anchor = found.block;
 
-  const resolved = findReference(ref);
+  const overrideValues = sanitizeInsertOverrides_(overrides);
+  const resolved = findReferenceWithPreferences_(ref, overrideValues);
   if (!resolved || !resolved.ref) {
     return { success: false, ref: ref, reason: 'unresolved' };
   }
 
-  const prefs = getPreferences();
+  const prefs = Object.assign({}, getPreferences(), overrideValues);
   const insertOptions = buildLinkSourcesInsertOptions_(prefs);
-  const outcome = insertReference(resolved, Object.assign({ preferredTitle: ref, insertAfterElement: anchor }, insertOptions));
+  const replaceCitation = insertReplacesSelection_(prefs) && linkerCitationFillsBlock_(anchor, found.citation);
+  const options = Object.assign({ preferredTitle: ref, insertAfterElement: anchor }, insertOptions);
+  if (replaceCitation) {
+    options.preferredTitle = found.citation;
+    if (found.linked) options.insertSefariaLink = true;
+  }
+  const outcome = insertReference(resolved, options);
+  if (replaceCitation) removeLinkerCitationBlock_(anchor);
   return { success: true, ref: ref, notice: (outcome && outcome.notice) || '' };
 }
 
 /**
- * The paragraph (or list item) holding a linker citation, found in the
- * document as it is now. Null when the citation text is gone.
+ * The preferences the review dialog's "Customize this insertion" panel can
+ * override for one pass, and the values each accepts. The argument comes from
+ * the client, so anything else is dropped.
  */
-function findLinkerAnchorBlock_(body, decision) {
+var LINKER_INSERT_OVERRIDE_KEYS_ = {
+  output_mode_default: ['en', 'he', 'both'],
+  bilingual_layout_default: ['he-top', 'he-right', 'he-left'],
+  source_emphasis_mode: ['keep', 'discard', 'only'],
+  transliteration_scheme: 'scheme',
+  nekudot: 'boolean',
+  teamim: 'boolean',
+  include_transliteration_default: 'boolean',
+  show_line_markers_default: 'boolean',
+  include_translation_source_info: 'boolean',
+  insert_sefaria_link_default: 'boolean',
+  insert_from_selection_replace: 'boolean'
+};
+
+/** Only known keys with allowed values, as the strings UserProperties holds. */
+function sanitizeInsertOverrides_(overrides) {
+  const clean = {};
+  if (!overrides || typeof overrides !== 'object') return clean;
+  Object.keys(LINKER_INSERT_OVERRIDE_KEYS_).forEach(function (key) {
+    if (!Object.prototype.hasOwnProperty.call(overrides, key)) return;
+    const allowed = LINKER_INSERT_OVERRIDE_KEYS_[key];
+    const value = String(overrides[key]);
+    if (allowed === 'boolean') {
+      if (value === 'true' || value === 'false') clean[key] = value;
+    } else if (allowed === 'scheme') {
+      // The transliteration engine's own table (transliteration.gs).
+      if (Object.prototype.hasOwnProperty.call(TRANSLITERATION_SCHEMES, value)) clean[key] = value;
+    } else if (allowed.indexOf(value) >= 0) {
+      clean[key] = value;
+    }
+  });
+  return clean;
+}
+
+/**
+ * Preferences -> Insertion -> "Insert from Selection replaces the selection".
+ * On unless switched off; Link Texts' insert follows it too.
+ */
+function insertReplacesSelection_(prefs) {
+  const value = prefs && prefs.insert_from_selection_replace;
+  return value !== 'false' && value !== false;
+}
+
+/**
+ * Whether `citation` is all the text in `block`, apart from whitespace and the
+ * brackets or punctuation around it ("(Genesis 1:1)", "Genesis 1:1.").
+ */
+function linkerCitationFillsBlock_(block, citation) {
+  if (!block || !citation) return false;
+  const types = DocumentApp.ElementType;
+  const type = block.getType ? block.getType() : null;
+  if (type !== types.PARAGRAPH && type !== types.LIST_ITEM) return false;
+  let blockText = '';
+  try { blockText = block.getText(); } catch (e) { return false; }
+  const trim = function (text) {
+    return String(text || '').replace(/^[\s()\[\]{}.,;:\u2013\u2014-]+|[\s()\[\]{}.,;:\u2013\u2014-]+$/g, '');
+  };
+  const core = trim(citation);
+  return !!core && trim(blockText) === core;
+}
+
+/**
+ * Remove the paragraph the source replaced. It is only cleared when it is the
+ * last child of its body or cell (a side-by-side source went below the table),
+ * which Docs won't let go.
+ */
+function removeLinkerCitationBlock_(block) {
+  try {
+    const parent = block.getParent();
+    if (parent && parent.getNumChildren() > 1 && parent.getChildIndex(block) < parent.getNumChildren() - 1) {
+      block.removeFromParent();
+    } else {
+      block.clear();
+    }
+  } catch (error) {
+    Logger.log('Could not remove a replaced citation: ' + error.message);
+  }
+}
+
+/**
+ * Where a linker citation is now: {block, citation, linked}. `block` is the
+ * paragraph (or list item) holding it, `citation` its text, `linked` whether
+ * that text carries a link. Null when the citation text is gone.
+ */
+function findLinkerCitation_(body, decision) {
   const currentText = body.editAsText().getText();
   const range = relocateLinkerDecision_(currentText, decision);
   if (!range) return null;
@@ -657,12 +765,16 @@ function findLinkerAnchorBlock_(body, decision) {
     hit = hit ? body.findText(pattern, hit) : body.findText(pattern);
     if (!hit) break;
   }
+  let linked = false;
+  if (hit) {
+    try { linked = !!hit.getElement().asText().getLinkUrl(hit.getStartOffset()); } catch (e) {}
+  }
   let element = hit ? hit.getElement() : null;
   while (element && element.getType && element.getType() !== DocumentApp.ElementType.PARAGRAPH &&
          element.getType() !== DocumentApp.ElementType.LIST_ITEM) {
     element = element.getParent ? element.getParent() : null;
   }
-  if (element) return element;
+  if (element) return { block: element, citation: needle, linked: linked };
 
   // Fallback: the body child whose text span holds the offset (the previous
   // approach; a table here means "below the table").
@@ -673,9 +785,9 @@ function findLinkerAnchorBlock_(body, decision) {
     let childText = '';
     try { childText = child.getText(); } catch (e) {}
     charCount += childText.length + 1;
-    if (range.start < charCount) return child;
+    if (range.start < charCount) return { block: child, citation: needle, linked: linked };
   }
-  return numChildren ? body.getChild(numChildren - 1) : null;
+  return numChildren ? { block: body.getChild(numChildren - 1), citation: needle, linked: linked } : null;
 }
 
 function buildLinkSourcesInsertOptions_(prefs) {
@@ -688,6 +800,8 @@ function buildLinkSourcesInsertOptions_(prefs) {
   const includeTransliteration = prefs.include_transliteration_default == 'true' || prefs.include_transliteration_default === true;
   const insertCitationOnly = prefs.insert_citation_default == 'true' || prefs.insert_citation_default === true;
   return {
+    sourceEmphasisMode: prefs.source_emphasis_mode || undefined,
+    transliterationScheme: prefs.transliteration_scheme || undefined,
     singleLanguage: singleLanguage,
     pasukPreference: pasukPreference,
     bilingualLayout: bilingualLayout,
@@ -784,7 +898,7 @@ function insertSourceFromSelection() {
   // Replace the selected citation by default: the inserted source's title is
   // that same text, so nothing is lost. Preferences -> Insertion -> Insert
   // from Selection can switch this to keep the selection and insert below it.
-  const replaceSelection = prefs.insert_from_selection_replace !== 'false' && prefs.insert_from_selection_replace !== false;
+  const replaceSelection = insertReplacesSelection_(prefs);
   let outcome;
   try {
     outcome = insertReference(resolved, Object.assign({ preferredTitle: selectedText, preserveSelection: !replaceSelection }, insertOptions));

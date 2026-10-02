@@ -191,6 +191,27 @@
       }
     }
 
+    // Preferences adapter for the shared Display & Layout pickers
+    // (shared/insertion-options). The values live in the hidden
+    // #output_mode_default / #bilingual_layout_default inputs, saved with the
+    // rest of the form. Expanded, and nothing hidden: on this page each setting
+    // is a default, still used by an insert that picks another display.
+    function _initPreferencesInsertionOptions() {
+      initInsertionOptions({
+        root: '#pref-tab-insertion',
+        expanded: true,
+        hideInapplicable: false,
+        getState: function () {
+          return {
+            outputMode: byId('output_mode_default').value,
+            layout: byId('bilingual_layout_default').value
+          };
+        },
+        onSelectDisplay: function (mode) { setPrefButtonGroup('output_mode_default', mode); },
+        onSelectLayout: function (layout) { setPrefButtonGroup('bilingual_layout_default', layout); }
+      });
+    }
+
     // Preferences adapter for the shared composition card component.
     function _initPreferencesCompositionCard() {
       initCompositionCard({
@@ -641,6 +662,7 @@
               updateStandardPreview('sefaria_link_font', 'sefaria_link_preview', 'sefaria_link_font_style');
               updateTransliterationPreview();
               updateCompositionCard();
+              updateInsertionOptions();
               updateSheimotSummary();
               renderOverrideGrid();
               renderOverrideList();
@@ -863,6 +885,8 @@
     // ── Button-group helpers (Display & Insertion Defaults sections) ────────
 
     function setPrefButtonGroup(groupId, value) {
+      var hidden = byId(groupId);
+      if (hidden) hidden.value = value;
       var container = document.querySelector('[data-pref-group="' + groupId + '"]');
       if (!container) return;
       container.querySelectorAll('button[data-value]').forEach(function(btn) {
@@ -871,8 +895,6 @@
         btn.classList.toggle('selected', match);
         btn.setAttribute('aria-checked', match ? 'true' : 'false');
       });
-      var hidden = byId(groupId);
-      if (hidden) hidden.value = value;
     }
 
     function initPrefButtonGroups() {
@@ -1303,6 +1325,7 @@
     initMenuLayoutEditor();
     bindColorControls();
     _initPreferencesCompositionCard();
+    _initPreferencesInsertionOptions();
     loadPreferencesIntoForm();
   });
 </script>

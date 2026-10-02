@@ -1,21 +1,32 @@
 <script>
-(function(){
-  function closeDisplayChoicePanels() {
-    $('.display-choice-dropdown[open]').removeAttr('open');
+// Sidebar adapter for the shared Display & Layout pickers
+// (shared/insertion-options). The sidebar's state lives in the hidden
+// .output-mode-selection / .bilingual-layout-selection selects; their change
+// handlers (event-bindings) save it.
+initInsertionOptions({
+  root: '#layout-tray',
+  getState: function () {
+    return {
+      outputMode: $('.output-mode-selection').val(),
+      layout: $('.bilingual-layout-selection').val()
+    };
+  },
+  onSelectDisplay: function (mode) {
+    $('.output-mode-selection').val(mode).trigger('change');
+    if (typeof applyMultiSelectMode === 'function') applyMultiSelectMode();
+  },
+  onSelectLayout: function (layout) {
+    $('.bilingual-layout-selection').val(layout);
+    saveSidebarPreference({ bilingual_layout_default: layout });
+    if (hasResolvedReference && data && data.ref) {
+      updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
+    }
+    if (typeof applyMultiSelectMode === 'function') applyMultiSelectMode();
   }
-  $(document).off('click.displayChoiceClose').on('click.displayChoiceClose', function (event) {
-    if ($(event.target).closest('.display-choice-dropdown').length) return;
-    closeDisplayChoicePanels();
-  });
-  $('.display-choice-dropdown > summary').off('click.displayChoiceToggle').on('click.displayChoiceToggle', function () {
-    var $details = $(this).closest('.display-choice-dropdown');
-    $('.display-choice-dropdown').not($details).removeAttr('open');
-  });
-})();
+});
 
 function updateBilingualLayoutVisibility() {
-  var outputMode = $('.output-mode-selection').val();
-  $('.bilingual-layout-wrapper').toggle(outputMode === 'both');
+  updateInsertionOptions();
 }
 
 function updateTranslationDetailsVisibility() {
@@ -27,11 +38,8 @@ function updateHebrewOptionsVisibility() {
   var outputMode = $('.output-mode-selection').val();
   var isTranslationOnly = outputMode === 'en';
   $('.hebrew-options-row').toggle(!isTranslationOnly);
-  // In translation-only mode, hide only the Hebrew-specific parts of the composition
-  // card (cantillation/vowels preview and transliteration) so source and link settings
-  // remain accessible via the secondary pills.
-  $('#composition-card-container .cc-hebrew-stage, #composition-card-container .cc-translit-wrap')
-    .toggle(!isTranslationOnly);
+  // The composition card's Hebrew-only parts: see updateInsertionOptions.
+  updateInsertionOptions();
 }
 
 function updateVersionControlsVisibility() {
@@ -51,104 +59,12 @@ function updateTransliterationVisibility() {
 }
 
 
-function closeCompactChoicePanels() {
-  $('#display-choice-panel, #layout-choice-panel').addClass('hidden');
-  $('#display-choice-button, #layout-choice-button').attr('aria-expanded', 'false');
-}
-
-function toggleCompactChoicePanel(buttonSelector, panelSelector) {
-  var $button = $(buttonSelector);
-  var $panel = $(panelSelector);
-  var willOpen = $panel.hasClass('hidden');
-
-  closeCompactChoicePanels();
-
-  if (willOpen) {
-    $panel.removeClass('hidden');
-    $button.attr('aria-expanded', 'true');
-  }
-}
-
-$('#display-choice-button').on('click', function (event) {
-  event.preventDefault();
-  event.stopPropagation();
-  toggleCompactChoicePanel('#display-choice-button', '#display-choice-panel');
-});
-
-$('#layout-choice-button').on('click', function (event) {
-  event.preventDefault();
-  event.stopPropagation();
-  toggleCompactChoicePanel('#layout-choice-button', '#layout-choice-panel');
-});
-
-$(document).on('click', function (event) {
-  if ($(event.target).closest('.compact-choice-shell').length) return;
-  closeCompactChoicePanels();
-});
-
-function updateDisplayChoiceSummary() {
-  var outputMode = $('.output-mode-selection').val();
-  $('#display-choice-summary-text').attr('data-mode', outputMode || 'both');
-}
-
-function updateLayoutChoiceSummary() {
-  var selectedLayout = $('.bilingual-layout-selection').val();
-  var iconMap = {
-    'he-top': '<span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>',
-    'he-right': '<span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>',
-    'he-left': '<span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>'
-  };
-  $('#layout-choice-summary-text')
-    .attr('data-layout', selectedLayout)
-    .html(iconMap[selectedLayout] || iconMap['he-right']);
-}
-
+// Kept for the bootstrap and preference-sync callers.
 function syncDisplayModeCards() {
-  var outputMode = $('.output-mode-selection').val();
-  $('.mode-card').each(function () {
-    var isSelected = $(this).attr('data-mode') === outputMode;
-    $(this).toggleClass('selected', isSelected);
-    $(this).attr('aria-checked', isSelected ? 'true' : 'false');
-  });
-  // Sync tray display buttons
-  $('.tray-display-btn').each(function () {
-    $(this).attr('aria-checked', $(this).data('mode') === outputMode ? 'true' : 'false');
-  });
-  updateDisplayChoiceSummary();
+  updateInsertionOptions();
 }
 
 function syncLayoutCards() {
-  var selectedLayout = $('.bilingual-layout-selection').val();
-  $('.layout-option').each(function () {
-    var isSelected = $(this).attr('data-layout') === selectedLayout;
-    $(this).toggleClass('selected', isSelected);
-    $(this).attr('aria-checked', isSelected ? 'true' : 'false');
-  });
-  // Sync tray layout buttons
-  $('.tray-layout-btn').each(function () {
-    $(this).attr('aria-checked', $(this).data('layout') === selectedLayout ? 'true' : 'false');
-  });
-  updateLayoutChoiceSummary();
+  updateInsertionOptions();
 }
-
-$('.mode-card').on('click', function () {
-  var mode = $(this).attr('data-mode');
-  $('.output-mode-selection').val(mode).trigger('change');
-  syncDisplayModeCards();
-  updateBilingualLayoutVisibility();
-  updateTranslationDetailsVisibility();
-  updateHebrewOptionsVisibility();
-  updateVersionControlsVisibility();
-  updateTransliterationVisibility();
-  if (typeof applyMultiSelectMode === 'function') applyMultiSelectMode();
-  closeCompactChoicePanels();
-});
-
-$('.layout-option').on('click', function () {
-  var layout = $(this).attr('data-layout');
-  $('.bilingual-layout-selection').val(layout).trigger('change');
-  syncLayoutCards();
-  if (typeof applyMultiSelectMode === 'function') applyMultiSelectMode();
-  closeCompactChoicePanels();
-});
 </script>

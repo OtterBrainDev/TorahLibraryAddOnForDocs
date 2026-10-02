@@ -284,6 +284,22 @@ function getPreferences() {
   return getAccountPreferences();
 }
 
+/**
+ * A read-only stand-in for UserProperties: `overrides` first, the stored
+ * preferences for every other key. For code that reads preferences with
+ * getProperty (the Hebrew display filters) during a one-off insert whose
+ * settings differ from the saved ones. Nothing is written.
+ */
+function preferenceOverlay_(overrides) {
+  const values = overrides || {};
+  return {
+    getProperty: function (key) {
+      if (Object.prototype.hasOwnProperty.call(values, key)) return String(values[key]);
+      return PropertiesService.getUserProperties().getProperty(key);
+    }
+  };
+}
+
 // Apps Script caps a single property value at 9 KB. Anything longer would fail
 // inside setProperty anyway; rejecting it up front keeps the failure explicit.
 const PREFERENCE_VALUE_MAX_CHARS_ = 9000;

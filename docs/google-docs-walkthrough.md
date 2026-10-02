@@ -83,7 +83,9 @@ as *unavailable for this ref* and skipped.
 
 ## Layout Settings (📰 Layout)
 
-Everything here applies to the current sidebar session only.
+Everything here applies to the current sidebar session only. The same controls
+set your saved defaults in **Preferences → Insertion**, and one linking pass in
+Link Texts' **📰 Customize this insertion**.
 
 - **Display** — **A** (translation), **A + א** (Hebrew with translation),
   **א** (Hebrew only).
@@ -150,7 +152,7 @@ browser only.
 
 | Action | What it does |
 | --- | --- |
-| **Sel → ס** Insert Source from Selection | Select a reference typed in the document and run it. By default the selection is replaced by the source; turn off **Preferences → Insertion → Insert from Selection** to keep it and insert below. |
+| **Sel → ס** Insert Source from Selection | Select a reference typed in the document and run it. By default the selection is replaced by the source; turn off **Preferences → Insertion → Insert from Selection** to keep it and insert below. Link Texts' Insert follows the same setting. |
 | **ה → ש** Transform Divine Names | Apply your divine-name replacements to text already in the document. |
 | **🔗 → ס** Link Texts with Sefaria | Find citations in the document and link them to Sefaria. |
 | **🎲** Surprise Me | Experimental; shown only when enabled in **Preferences → 🧪 Experimental**. |
@@ -167,8 +169,14 @@ whole document).
    will point to. Where a citation could mean more than one source, choose
    from the dropdown (each option shows an excerpt).
 3. Each row has a **Link** and an **Insert** checkbox — hyperlink it, insert
-   the source's text below the paragraph, both, or neither.
-4. Apply. The dialog reports what was linked and what couldn't be.
+   the source's text below the paragraph, both, or neither. A citation on a
+   line of its own is **replaced** by its source (titled with the citation,
+   still linked), like Insert from Selection; one inside a sentence stays.
+4. Optional: **📰 Customize this insertion**, under the table, has the Layout
+   Settings controls plus **Replace a citation on its own line**. They apply to
+   this pass's inserts only; **↺ Revert to defaults** undoes your changes and
+   **💾 Save as defaults** makes them your Preferences.
+5. Apply. The dialog reports what was linked and what couldn't be.
 
 **Preferences → Linking → After linking** sets how much it asks: **Show a
 summary, and ask about ambiguous citations** (recommended), **Show every match
@@ -196,7 +204,7 @@ are saved defaults and follow your Google account into every document.
 | Tab | Contents |
 | --- | --- |
 | **Fonts** | Title (plain and linked; paragraph style), Hebrew, Transliteration (scheme), Translation (preferred language) — each with font, size, style, colour, highlight and preview — and ✒️ Source Emphasis. |
-| **Insertion** | Default Display & Layout; Insertion Defaults for Texts, Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection. |
+| **Insertion** | Default Display & Layout (the sidebar's pickers, shown open); Insertion Defaults for Texts, Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). |
 | **Linking** | After linking; Insert text after linking; Document scanning. |
 | **Menu Bar** | Reorder, group, hide and divide menu items. |
 | **🧪 Experimental** | Optional in-progress features such as Surprise Me. |

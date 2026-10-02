@@ -57,10 +57,12 @@ QC check (see `pre_clasp_qc.sh` step 6).
 - **`preferences.html`** — preferences dialog. Composes `preferences/css`
   and `preferences/js`.
 - **`surprise-me.html`** — "surprise me" random-text dialog.
+- **`linker-results.html`** — the Link Texts review dialog. A template
+  (`createTemplateFromFile`, not a plain file) so its "Customize this
+  insertion" panel can include the shared insertion options below.
 - **`help-modal.html`**, **`feedback-modal.html`**,
   **`session-library-modal.html`**, **`gematriya-count.html`**,
-  **`release-notes.html`**, **`linker-results.html`** — standalone modal
-  dialogs, each its own scope.
+  **`release-notes.html`** — standalone modal dialogs, each its own scope.
 
 ## Server files
 
@@ -140,8 +142,30 @@ are relative to the clasp root (`apps-script/`), minus the `.html`
 suffix.
 
 Where paths join: `shared/ui/*` partials are included by every entry
-template (head, api, feedback, state, dom, core-shared). Everything
-else is specific to one entry — `sidebar/js/*` is only reachable from
+template (head, api, feedback, state, dom, core-shared). The insertion
+options are shared by more than one entry, so they live under `shared/`
+too and know nothing about their host:
+
+- `shared/composition-card/*` — vowels, cantillation, transliteration,
+  linked title, Lines, Sources, B&I (`initCompositionCard`). Sidebar,
+  Preferences and the Link Texts dialog.
+- `shared/insertion-options/*` — the Display and Layout pickers
+  (`initInsertionOptions`). The sidebar's Layout tray, the Link Texts
+  dialog's "Customize this insertion" panel, and Preferences. Each host
+  passes its own state (`getState`) and decides what a choice does
+  (`onSelectDisplay`, `onSelectLayout`): the sidebar saves it, the dialog
+  keeps it for one pass, Preferences writes it into the form. Preferences
+  sets `expanded: true` (both pickers open and labelled, no dropdowns) and
+  `hideInapplicable: false` (every default stays editable).
+  `test/ui/insertion-options.test.js` fails if a page grows its own copy of
+  the cards, their CSS, or their wiring.
+- `.cc-card--stacked` (composition card CSS) — the card's single centred
+  column for narrow hosts (sidebar tray, Link Texts dialog).
+
+Because `include()` returns a partial's raw content, a partial cannot include
+another: a host includes `shared/insertion-options/markup` and
+`shared/composition-card/markup` side by side, in the container it passes as
+`root`. Everything else is specific to one entry — `sidebar/js/*` is only reachable from
 `sidebar.html`, `preferences/*` only from `preferences.html`, etc.
 `pre_clasp_qc.sh` step 6 uses this graph to distinguish real
 function-name collisions from false positives (same name in two

@@ -1,0 +1,110 @@
+<script>
+// ================================
+// Shared Insertion Options (Display & Layout)
+// ================================
+//
+// The Display (Translation / Both / Original) and Layout (Stacked / Right–Left
+// / Left–Right) pickers of shared/insertion-options/markup.html. Knows nothing
+// about the host: the sidebar's Layout tray keeps its state in hidden selects
+// and saves it; the Link Texts dialog keeps it in a plain object for one pass;
+// Preferences keeps it in hidden inputs saved with the rest of the form.
+// Pair with the composition card (shared/composition-card/shared.html) for the
+// rest of the insertion options.
+//
+// Usage:
+//   initInsertionOptions({
+//     root: '#layout-tray',   // holds this markup and the composition card
+//     getState:        function () { return { outputMode: 'both', layout: 'he-right' }; },
+//     onSelectDisplay: function (mode) { /* store it */ },
+//     onSelectLayout:  function (layout) { /* store it */ },
+//     expanded: false,         // optional: both pickers always open and
+//                              // labelled, no dropdowns (Preferences)
+//     hideInapplicable: true   // optional: hide Layout unless both languages,
+//                              // and the card's Hebrew-only parts for a
+//                              // translation-only insert
+//   });
+//
+// Then call updateInsertionOptions() any time the host's state changes.
+
+var _ioConfig = null;
+
+function initInsertionOptions(config) {
+  _ioConfig = config;
+  var $root = $(config.root);
+  if (!$root.length) return;
+  var expanded = !!config.expanded;
+  $root.find('.display-layout-section').toggleClass('is-expanded', expanded);
+
+  function chooser(attribute, callbackName) {
+    return function (event) {
+      if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      _ioConfig[callbackName]($(this).attr(attribute));
+      closeInsertionOptionsMenus();
+      updateInsertionOptions();
+    };
+  }
+  $root.find('.mode-card').off('.io').on('click.io keydown.io', chooser('data-mode', 'onSelectDisplay'));
+  $root.find('.layout-option').off('.io').on('click.io keydown.io', chooser('data-layout', 'onSelectLayout'));
+
+  if (expanded) {
+    // Always open: the summary is only a label.
+    $root.find('.display-choice-dropdown').attr('open', '');
+    $root.find('.display-choice-dropdown > summary').off('click.io').on('click.io', function (event) {
+      event.preventDefault();
+    });
+  } else {
+    // One picker open at a time; a click anywhere else closes them.
+    $root.find('.display-choice-dropdown > summary').off('click.io').on('click.io', function () {
+      var $details = $(this).closest('.display-choice-dropdown');
+      $root.find('.display-choice-dropdown').not($details).removeAttr('open');
+    });
+    $(document).off('click.ioClose').on('click.ioClose', function (event) {
+      if ($(event.target).closest('.display-choice-dropdown').length) return;
+      closeInsertionOptionsMenus();
+    });
+  }
+
+  updateInsertionOptions();
+}
+
+function closeInsertionOptionsMenus() {
+  if (!_ioConfig || _ioConfig.expanded) return;
+  $(_ioConfig.root).find('.display-choice-dropdown[open]').removeAttr('open');
+}
+
+function updateInsertionOptions() {
+  if (!_ioConfig) return;
+  var $root = $(_ioConfig.root);
+  var state = _ioConfig.getState() || {};
+  var mode = state.outputMode || 'both';
+  var layout = state.layout || 'he-right';
+
+  $root.find('.mode-card').each(function () {
+    var isSelected = $(this).attr('data-mode') === mode;
+    $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false');
+  });
+  $root.find('#display-choice-summary-text').attr('data-mode', mode);
+
+  var $selectedLayout = $();
+  $root.find('.layout-option').each(function () {
+    var isSelected = $(this).attr('data-layout') === layout;
+    $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false');
+    if (isSelected) $selectedLayout = $(this);
+  });
+  // The closed picker shows the chosen layout's own icon.
+  $root.find('#layout-choice-summary-text')
+    .attr('data-layout', layout)
+    .empty()
+    .append($selectedLayout.find('.layout-icon').first().clone());
+
+  // A layout only means something with both languages, and a translation-only
+  // insert has no Hebrew to vocalise or transliterate. Source and link
+  // settings stay reachable through the composition card's secondary pills.
+  // Preferences keeps everything visible: each is still the default for an
+  // insert that picks another display.
+  var hide = _ioConfig.hideInapplicable !== false;
+  $root.find('.bilingual-layout-wrapper').toggle(!hide || mode === 'both');
+  $root.find('.cc-hebrew-stage, .cc-translit-wrap').toggle(!hide || mode !== 'en');
+}
+</script>
