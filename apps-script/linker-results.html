@@ -693,7 +693,11 @@
               })
               .withFailureHandler(function (error) {
                 failed++;
-                addNotice(error && error.message);
+                // Name the source: a bare error message does not say which
+                // insert failed, or that the others went ahead.
+                addNotice('Could not insert ' + item.ref + ': ' +
+                  ((error && error.message) || 'unknown error') +
+                  '. Anything already inserted for it may be incomplete.');
                 step(index + 1);
               })
               .insertLinkedSourceAtPosition(item.ref, item);
@@ -706,7 +710,7 @@
           var lines = [];
           if (linked || skipped) lines.push('Linked ' + plural(linked, 'reference') + ' to Sefaria.');
           if (inserted) lines.push('Inserted ' + plural(inserted, 'source') + '.');
-          if (failed) lines.push(plural(failed, 'source') + ' could not be fetched.');
+          if (failed) lines.push(plural(failed, 'source') + ' could not be inserted.');
           if (skipped) lines.push(plural(skipped, 'reference') + ' could not be linked.');
           if (report && report.unresolvedCount) {
             lines.push(plural(report.unresolvedCount, 'citation') + ' could not be matched to a Sefaria source.');

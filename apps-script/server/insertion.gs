@@ -575,7 +575,7 @@ function buildLinkedTitleText(baseTitle, data, singleLanguage) {
  */
 function insertReference(data, opts) {
   const options = opts || {};
-  const singleLanguage = options.singleLanguage;
+  let singleLanguage = options.singleLanguage;
   const pasukPreference = options.pasukPreference !== undefined ? options.pasukPreference : true;
   const preferredTitle = options.preferredTitle !== undefined ? options.preferredTitle : null;
   const includeTranslationSourceInfo = options.includeTranslationSourceInfo === true;
@@ -591,6 +591,19 @@ function insertReference(data, opts) {
   let title = (preferredTitle) ? preferredTitle : data.ref;
   const includeLineMarkers = pasukPreference === true || pasukPreference === 'true';
   data = formatDataForPesukim(data, includeLineMarkers);
+  // heRef is inserted as plain text in most layouts, and Sefaria escapes
+  // some titles (סידור רש&quot;י).
+  if (typeof data.heRef === 'string') {
+    data = Object.assign({}, data, { heRef: decodeHTMLEntities(data.heRef) });
+  }
+  // A bilingual insert of a source with only one language (Siddur Rashi has
+  // no translation) inserts that language alone, not an empty titled block.
+  if (!singleLanguage) {
+    const hasHebrew = hasInsertableText_(data.he);
+    const hasTranslation = hasInsertableText_(data.text);
+    if (hasHebrew && !hasTranslation) singleLanguage = 'he';
+    else if (hasTranslation && !hasHebrew) singleLanguage = 'en';
+  }
 
   // Side-by-side layouts are a table of their own; everything else is
   // paragraphs, which can also go inside a table cell. See insertion-target.gs.
@@ -1122,8 +1135,13 @@ function insertRichTextFromHTML(element, htmlString) {
         }
       }
     }
-    else if (word[0] == "<") {
-      let tagName = /<\/?([a-zA-Z]+)([a-zA-Z'"0-9= \-/])*>/.exec(word)[1];
+    else if (i % 2 === 1) {
+      // split() with a capture group puts every tag at an odd index. Only the
+      // tag name matters: matching the whole tag against a narrow attribute
+      // alphabet returned null on Sefaria's commentary anchors (Shulchan
+      // Arukh: hrefs with "." and "_", Hebrew data-label values) and threw,
+      // leaving a half-inserted source.
+      let tagName = /^<\/?([a-zA-Z]+)/.exec(word)[1].toLowerCase();
 
       switch (tagName) {
         case "b":

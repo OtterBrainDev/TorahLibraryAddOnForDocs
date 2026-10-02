@@ -64,6 +64,17 @@ heading until the next release consolidates it.
 - **Sidebar messages are visible.** The short messages at the bottom of the
   sidebar (for example after Insert from Selection fails) were shown fully
   transparent.
+- **Shulchan Arukh (and other texts with commentary markers) insert in
+  full.** Inserting Shulchan Arukh, Orach Chayim 669 stopped after the Hebrew
+  heading with *TypeError: Cannot read properties of null (reading '1')*,
+  leaving no translation and no source credit. Sefaria's links to commentaries
+  in the text are now skipped instead of stopping the insert.
+- **A source with no translation inserts just the Hebrew.** Siddur Rashi used
+  to get an empty "(Translation)" heading, and its Hebrew title read
+  `רש&quot;י` instead of `רש"י`.
+- **Link Texts names a source it could not insert.** The summary said
+  *could not be fetched* for every failure, and showed the error without
+  saying which source it belonged to.
 
 #### Added
 
