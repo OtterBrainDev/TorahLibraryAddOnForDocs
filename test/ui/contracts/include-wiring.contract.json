@@ -4,6 +4,7 @@
     "<?!= include('css/tokens'); ?>",
     "<?!= include('css/base'); ?>",
     "<?!= include('css/layout'); ?>",
+    "<?!= include('shared/insertion-options/css'); ?>",
     "<?!= include('shared/css/icon-mode-card'); ?>",
     "<?!= include('shared/ui/core-shared'); ?>",
     "<?!= include('shared/ui/api'); ?>",
@@ -18,9 +19,12 @@
     "<?!= include('sidebar/js/preview-core'); ?>",
     "<?!= include('sidebar/js/search-controller'); ?>",
     "<?!= include('sidebar/js/mode-controller'); ?>",
+    "<?!= include('shared/insertion-options/js'); ?>",
     "<?!= include('sidebar/js/display-controls'); ?>",
     "<?!= include('sidebar/js/event-bindings'); ?>",
-    "<?!= include('sidebar/js/bootstrap'); ?>"
+    "<?!= include('sidebar/js/bootstrap'); ?>",
+    "<?!= include('shared/insertion-options/markup') ?>",
+    "<?!= include('shared/composition-card/markup') ?>"
   ],
   "preferences.html": [
     "<?!= include('shared/ui/head'); ?>",
@@ -42,5 +46,15 @@
     "<?!= include('shared/ui/feedback'); ?>",
     "<?!= include('shared/ui/state'); ?>",
     "<?!= include('surprise-me/js'); ?>"
+  ],
+  "linker-results.html": [
+    "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('css/tokens'); ?>",
+    "<?!= include('shared/insertion-options/css'); ?>",
+    "<?!= include('shared/composition-card/css'); ?>",
+    "<?!= include('shared/insertion-options/markup') ?>",
+    "<?!= include('shared/composition-card/markup') ?>",
+    "<?!= include('shared/insertion-options/js'); ?>",
+    "<?!= include('shared/composition-card/shared'); ?>"
   ]
 }

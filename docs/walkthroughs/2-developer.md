@@ -305,7 +305,12 @@ most time.
    `insert_from_selection_replace` on, a citation that is its paragraph's
    only text (`linkerCitationFillsBlock_`) is replaced: the source is titled
    with the citation, keeps its link, and the paragraph is removed after the
-   insert. A citation inside a sentence is always kept.
+   insert. A citation inside a sentence is always kept. The dialog's
+   "Customize this insertion" panel (the sidebar's Layout tray controls, from
+   `shared/insertion-options` and `shared/composition-card`) sends the keys
+   that differ from the stored preferences as a third argument; the server
+   filters them (`sanitizeInsertOverrides_`) and applies them to that insert
+   only, including at fetch time for vowels and cantillation.
 7. **Quiet** mode (`runQuietLinkPass_`) skips the dialog: it links the
    unambiguous matches and alerts with every count.
 

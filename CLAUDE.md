@@ -113,7 +113,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **258 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **271 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -142,6 +142,9 @@ and fix it before touching the feature you came to change.
 - `linker-insert-replace.test.js` — Link Texts' Insert follows "Insert from
   Selection replaces the selection": a citation on its own line is replaced
   by the source (titled with it, link kept); one inside a sentence is kept.
+  The review dialog's "Customize this insertion" overrides reach the insert
+  and the fetch (vowels are stripped at fetch time), filtered by key and
+  value, and are never stored.
 - `sanitize-source-html.test.js` — the Sefaria-HTML allowlist sanitizer.
   linkedom cannot reproduce browser mutation XSS; verify sanitizer
   changes in headless Chromium as well.
@@ -179,12 +182,14 @@ and in `test/ui/`:
 - `selector-contracts.test.js` — DOM ids the server RPC depends on
   still exist in the rendered HTML.
 - `template-snapshots.test.js` — byte-for-byte snapshots of the entry
-  templates. Update via `UPDATE_UI_SNAPSHOTS=1 npm test`, and **never**
+  templates (including `linker-results.html`). Update via `UPDATE_UI_SNAPSHOTS=1 npm test`, and **never**
   by hand-editing a `.snap` file.
 - `rpc-surface.test.js` — the server/client contract described in
   §Hard rules above.
 - `linker-dialog.test.js` — the Link Texts dialog shows one state at a
-  time, has separate Link / Insert columns, and the Linking prefs tab.
+  time, has separate Link / Insert columns, and the Linking prefs tab; its
+  "Customize this insertion" panel is the shared insertion options, sends
+  its settings with each insert, and saves only on "Save as defaults".
 - `version-manifest.test.js` — `docs/VERSION.json` against the schema
   version, the migrations that must exist for it, and every surface that
   shows a version string.

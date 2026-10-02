@@ -8,7 +8,7 @@
     <?!= include('css/components/accordion'); ?>
     <?!= include('css/components/footer'); ?>
     <?!= include('css/components/results'); ?>
-    <?!= include('css/components/display-layout'); ?>
+    <?!= include('shared/insertion-options/css'); ?>
     <?!= include('css/components/versions-preview'); ?>
     <?!= include('css/components/lexicon'); ?>
     <?!= include('css/utilities'); ?>
@@ -540,30 +540,7 @@
             <!-- Display & Layout controls (actual sidebar controls, not simplified) -->
             <div class="tray-section tray-display-layout-section text-mode-only">
               <div class="tray-section-label">Display &amp; Layout</div>
-              <div class="display-layout-section">
-                <details class="display-choice-detail display-choice-dropdown" open>
-                  <summary class="display-choice-summary" aria-label="Display selector" title="Display"><span class="display-choice-label" aria-hidden="true">Display</span><span class="display-choice-selected display-choice-selected--display" id="display-choice-summary-text" data-mode="both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></span></summary>
-                  <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-label="Display mode">
-                    <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
-                    <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
-                    <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
-                  </div>
-                </details>
-                <details class="display-choice-detail bilingual-layout-wrapper display-choice-dropdown" open>
-                  <summary class="display-choice-summary" aria-label="Layout selector" title="Layout"><span class="display-choice-label" aria-hidden="true">Layout</span><span class="display-choice-selected display-choice-selected--layout" id="layout-choice-summary-text" data-layout="he-right"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></span></summary>
-                  <div class="layout-option-group" role="radiogroup" aria-label="Bilingual layout">
-                    <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
-                      <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>
-                    </button>
-                    <button type="button" class="layout-option" data-layout="he-right" role="radio" aria-checked="false" title="Right–Left">
-                      <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>
-                    </button>
-                    <button type="button" class="layout-option" data-layout="he-left" role="radio" aria-checked="false" title="Left–Right">
-                      <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>
-                    </button>
-                  </div>
-                </details>
-              </div>
+              <?!= include('shared/insertion-options/markup') ?>
             </div>
 
             <!-- Insertion Format (composition card) -->
@@ -611,6 +588,7 @@
     <?!= include('sidebar/js/preview-core'); ?>
     <?!= include('sidebar/js/search-controller'); ?>
     <?!= include('sidebar/js/mode-controller'); ?>
+    <?!= include('shared/insertion-options/js'); ?>
     <?!= include('sidebar/js/display-controls'); ?>
     <?!= include('sidebar/js/event-bindings'); ?>
     <?!= include('sidebar/js/bootstrap'); ?>

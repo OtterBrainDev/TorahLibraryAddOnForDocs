@@ -165,7 +165,11 @@ function parseJsonOrNull_(text) {
   }
 }
 
-function resolveReferenceWithFallbacks(reference, versions) {
+/**
+ * `properties` (optional) is what the Hebrew display and divine-name filters
+ * read instead of the stored preferences; see preferenceOverlay_.
+ */
+function resolveReferenceWithFallbacks(reference, versions, properties) {
   const candidates = [];
   const normalized = normalizeReferenceInput(reference);
   if (normalized) {
@@ -195,7 +199,7 @@ function resolveReferenceWithFallbacks(reference, versions) {
   }
 
   for (let i = 0; i < candidates.length; i++) {
-    const resolved = findReference(candidates[i], versions, true);
+    const resolved = fetchReference_(candidates[i], versions, properties);
     if (resolved && resolved.ref && !resolved.error) {
       return resolved;
     }
@@ -214,7 +218,28 @@ function findReference(reference, versions=undefined, skipNormalization=false) {
   if (!skipNormalization) {
     return resolveReferenceWithFallbacks(safeReference, versions);
   }
+  return fetchReference_(safeReference, versions);
+}
 
+/**
+ * findReference with some display preferences overridden for this one fetch
+ * (Link Texts' "Customize this insertion"). Vowels and cantillation are
+ * stripped when the text is fetched, so an override has to be applied here,
+ * not after: stripped marks cannot be put back.
+ *
+ * @param {string} reference
+ * @param {Object} overrides  preference keys -> values; nothing is stored.
+ */
+function findReferenceWithPreferences_(reference, overrides) {
+  const safeReference = String(reference || '').trim();
+  if (!safeReference) {
+    return;
+  }
+  return resolveReferenceWithFallbacks(safeReference, undefined, preferenceOverlay_(overrides));
+}
+
+/** Fetch one exact reference; `properties` defaults to the stored preferences. */
+function fetchReference_(safeReference, versions, properties) {
   let url = 'https://www.sefaria.org/api/texts/'
 
   let encodedReference = encodeURIComponent(safeReference);
@@ -256,7 +281,7 @@ function findReference(reference, versions=undefined, skipNormalization=false) {
   all representations of this data need to have these applied to them such that the preview is נאמן to what the actual
   ref will look like when inserted*/
 
-    const userProperties = PropertiesService.getUserProperties();
+    const userProperties = properties || PropertiesService.getUserProperties();
     data = applyHebrewDisplayPreferences(data, userProperties);
     data = applyHebrewDivineNamePreferences(data, userProperties);
     applyEnglishDivineNamePreference(data, userProperties);

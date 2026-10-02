@@ -516,9 +516,12 @@ function linkTextsWithSefaria() {
     return;
   }
 
-  const html = HtmlService.createHtmlOutputFromFile('linker-results')
-    .setWidth(720)
-    .setHeight(560);
+  // A template, not a plain file: it include()s the insertion options it
+  // shares with the sidebar's Layout tray.
+  const html = HtmlService.createTemplateFromFile('linker-results')
+    .evaluate()
+    .setWidth(760)
+    .setHeight(680);
   DocumentApp.getUi().showModalDialog(html, 'Link Texts with Sefaria');
 }
 
@@ -621,9 +624,13 @@ function runQuietLinkPass_() {
  * one line apart. A citation inside a sentence stays where it is: deleting it
  * would break the sentence. The title keeps the citation's link.
  *
+ * `overrides` (optional) is the review dialog's "Customize this insertion"
+ * panel: preference keys from LINKER_INSERT_OVERRIDE_KEYS_ that apply to this
+ * insert only. Nothing is saved.
+ *
  * @returns {{success: boolean, ref: string, notice?: string, reason?: string}}
  */
-function insertLinkedSourceAtPosition(ref, position) {
+function insertLinkedSourceAtPosition(ref, position, overrides) {
   const doc = DocumentApp.getActiveDocument();
   const body = doc.getBody();
   const decision = (position && typeof position === 'object') ? position : { startChar: Number(position) };
@@ -634,12 +641,13 @@ function insertLinkedSourceAtPosition(ref, position) {
   }
   const anchor = found.block;
 
-  const resolved = findReference(ref);
+  const overrideValues = sanitizeInsertOverrides_(overrides);
+  const resolved = findReferenceWithPreferences_(ref, overrideValues);
   if (!resolved || !resolved.ref) {
     return { success: false, ref: ref, reason: 'unresolved' };
   }
 
-  const prefs = getPreferences();
+  const prefs = Object.assign({}, getPreferences(), overrideValues);
   const insertOptions = buildLinkSourcesInsertOptions_(prefs);
   const replaceCitation = insertReplacesSelection_(prefs) && linkerCitationFillsBlock_(anchor, found.citation);
   const options = Object.assign({ preferredTitle: ref, insertAfterElement: anchor }, insertOptions);
@@ -650,6 +658,45 @@ function insertLinkedSourceAtPosition(ref, position) {
   const outcome = insertReference(resolved, options);
   if (replaceCitation) removeLinkerCitationBlock_(anchor);
   return { success: true, ref: ref, notice: (outcome && outcome.notice) || '' };
+}
+
+/**
+ * The preferences the review dialog's "Customize this insertion" panel can
+ * override for one pass, and the values each accepts. The argument comes from
+ * the client, so anything else is dropped.
+ */
+var LINKER_INSERT_OVERRIDE_KEYS_ = {
+  output_mode_default: ['en', 'he', 'both'],
+  bilingual_layout_default: ['he-top', 'he-right', 'he-left'],
+  source_emphasis_mode: ['keep', 'discard', 'only'],
+  transliteration_scheme: 'scheme',
+  nekudot: 'boolean',
+  teamim: 'boolean',
+  include_transliteration_default: 'boolean',
+  show_line_markers_default: 'boolean',
+  include_translation_source_info: 'boolean',
+  insert_sefaria_link_default: 'boolean',
+  insert_from_selection_replace: 'boolean'
+};
+
+/** Only known keys with allowed values, as the strings UserProperties holds. */
+function sanitizeInsertOverrides_(overrides) {
+  const clean = {};
+  if (!overrides || typeof overrides !== 'object') return clean;
+  Object.keys(LINKER_INSERT_OVERRIDE_KEYS_).forEach(function (key) {
+    if (!Object.prototype.hasOwnProperty.call(overrides, key)) return;
+    const allowed = LINKER_INSERT_OVERRIDE_KEYS_[key];
+    const value = String(overrides[key]);
+    if (allowed === 'boolean') {
+      if (value === 'true' || value === 'false') clean[key] = value;
+    } else if (allowed === 'scheme') {
+      // The transliteration engine's own table (transliteration.gs).
+      if (Object.prototype.hasOwnProperty.call(TRANSLITERATION_SCHEMES, value)) clean[key] = value;
+    } else if (allowed.indexOf(value) >= 0) {
+      clean[key] = value;
+    }
+  });
+  return clean;
 }
 
 /**
@@ -753,6 +800,8 @@ function buildLinkSourcesInsertOptions_(prefs) {
   const includeTransliteration = prefs.include_transliteration_default == 'true' || prefs.include_transliteration_default === true;
   const insertCitationOnly = prefs.insert_citation_default == 'true' || prefs.insert_citation_default === true;
   return {
+    sourceEmphasisMode: prefs.source_emphasis_mode || undefined,
+    transliterationScheme: prefs.transliteration_scheme || undefined,
     singleLanguage: singleLanguage,
     pasukPreference: pasukPreference,
     bilingualLayout: bilingualLayout,

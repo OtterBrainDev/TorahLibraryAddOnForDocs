@@ -86,6 +86,15 @@ heading until the next release consolidates it.
 
 #### Added
 
+- **Customize this insertion, in Link Texts' review.** A collapsible panel
+  under the review table has the same controls as the sidebar's 📰 Layout
+  tray: Display, Layout, vowels, cantillation, transliteration, the linked
+  title, Lines, Sources and B&I, plus whether a citation on its own line is
+  replaced. The settings apply only to the sources this pass inserts; your
+  defaults don't change unless you click **Save as defaults**, and **Revert
+  to defaults** puts them back. There's no longer any need to cancel the
+  review, or change Preferences for every future insert, to insert one batch
+  differently.
 - **Preferences → Insertion → Vowels only in Tanakh.** Keeps niqqud in Tanakh
   and removes it from everything else, as the original add-on did. Off by
   default; no stored preference changes.

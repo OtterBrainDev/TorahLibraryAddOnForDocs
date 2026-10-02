@@ -169,7 +169,7 @@
     },
     {
       "name": "insertLinkedSourceAtPosition",
-      "arity": 2,
+      "arity": 3,
       "definedIn": "apps-script/server/document-actions.gs"
     },
     {

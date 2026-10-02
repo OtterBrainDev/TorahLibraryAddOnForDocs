@@ -35,6 +35,16 @@
     "function ccNextEmphasisMode",
     "#cc-emphasis-toggle"
   ],
+  "apps-script/shared/insertion-options/js.html": [
+    "function initInsertionOptions",
+    "function updateInsertionOptions",
+    "function closeInsertionOptionsMenus"
+  ],
+  "apps-script/sidebar/js/display-controls.html": [
+    "initInsertionOptions(",
+    "function syncDisplayModeCards",
+    "function syncLayoutCards"
+  ],
   "apps-script/sidebar/js/bootstrap.html": [
     "function initializeSidebar",
     "google.script.run",
