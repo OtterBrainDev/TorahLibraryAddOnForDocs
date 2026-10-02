@@ -20,6 +20,8 @@
       "#source_title_font",
       "#hebrew_font",
       "#transliteration_scheme",
+      "#output_mode_default",
+      "#bilingual_layout_default",
       "#menu_layout",
       "#menu-layout-top",
       "#menu-layout-quick-actions",

@@ -45,6 +45,11 @@
     "function syncDisplayModeCards",
     "function syncLayoutCards"
   ],
+  "apps-script/preferences/js.html": [
+    "function _initPreferencesInsertionOptions",
+    "initInsertionOptions(",
+    "expanded: true"
+  ],
   "apps-script/sidebar/js/bootstrap.html": [
     "function initializeSidebar",
     "google.script.run",

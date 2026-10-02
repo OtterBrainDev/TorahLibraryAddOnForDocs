@@ -150,10 +150,17 @@ too and know nothing about their host:
   linked title, Lines, Sources, B&I (`initCompositionCard`). Sidebar,
   Preferences and the Link Texts dialog.
 - `shared/insertion-options/*` — the Display and Layout pickers
-  (`initInsertionOptions`). The sidebar's Layout tray and the Link Texts
-  dialog's "Customize this insertion" panel. Each host passes its own state
-  (`getState`) and decides what a choice does (`onSelectDisplay`,
-  `onSelectLayout`): the sidebar saves it, the dialog keeps it for one pass.
+  (`initInsertionOptions`). The sidebar's Layout tray, the Link Texts
+  dialog's "Customize this insertion" panel, and Preferences. Each host
+  passes its own state (`getState`) and decides what a choice does
+  (`onSelectDisplay`, `onSelectLayout`): the sidebar saves it, the dialog
+  keeps it for one pass, Preferences writes it into the form. Preferences
+  sets `expanded: true` (both pickers open and labelled, no dropdowns) and
+  `hideInapplicable: false` (every default stays editable).
+  `test/ui/insertion-options.test.js` fails if a page grows its own copy of
+  the cards, their CSS, or their wiring.
+- `.cc-card--stacked` (composition card CSS) — the card's single centred
+  column for narrow hosts (sidebar tray, Link Texts dialog).
 
 Because `include()` returns a partial's raw content, a partial cannot include
 another: a host includes `shared/insertion-options/markup` and

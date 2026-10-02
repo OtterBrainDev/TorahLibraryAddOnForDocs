@@ -1,8 +1,7 @@
 <style>
 /*
  * shared/insertion-options/css — the Display & Layout pickers
- * (shared/insertion-options/markup.html) and the composition card's centering
- * inside #composition-card-container. Used by the sidebar's Layout tray and
+ * (shared/insertion-options/markup.html). Used by the sidebar's Layout tray and
  * the Link Texts dialog's "Customize this insertion" panel; colours come from
  * css/tokens.html, which each host includes first.
  *
@@ -227,6 +226,55 @@
   border: 1px solid #ebe6dc;
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* =============================================================
+   EXPANDED VARIANT (.display-layout-section.is-expanded)
+   initInsertionOptions({ expanded: true }): both pickers always open, each
+   labelled, options in the flow instead of a floating panel. Preferences.
+   ============================================================= */
+
+.display-layout-section.is-expanded .display-choice-detail {
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.display-layout-section.is-expanded .display-choice-dropdown > summary {
+  cursor: default;
+}
+
+.display-layout-section.is-expanded .display-choice-label {
+  display: block;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* The ids: #display-choice-summary-text sets display: inline-flex. */
+.display-layout-section.is-expanded .display-choice-selected,
+.display-layout-section.is-expanded #display-choice-summary-text,
+.display-layout-section.is-expanded #layout-choice-summary-text {
+  display: none;
+}
+
+.display-layout-section.is-expanded .display-choice-dropdown[open] .mode-card-group,
+.display-layout-section.is-expanded .display-choice-dropdown[open] .layout-option-group {
+  position: static;
+  margin-top: 2px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.display-layout-section.is-expanded .display-choice-dropdown[open] .layout-option-group {
+  border: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.display-layout-section.is-expanded .display-choice-dropdown[open] .mode-card-group.compact-mode-card-group {
+  border: 1px solid var(--border);
+  border-radius: 18px;
 }
 
 /* =============================================================
@@ -463,29 +511,5 @@
 .layout-option[data-layout="he-left"] .layout-col.en,
 .layout-option[data-layout="he-top"] .layout-row.en {
   background: #1f3f75;
-}
-
-/* =============================================================
-   COMPOSITION CARD CENTERING (#composition-card-container)
-   ============================================================= */
-
-#composition-card-container .cc-hebrew-text {
-  display: block;
-  width: fit-content;
-  max-width: 100%;
-  margin-right: auto;
-  margin-left: auto;
-  text-align: center;
-}
-
-#composition-card-container .cc-hebrew-stage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-
-#composition-card-container .cc-hebrew {
-  min-width: 0;
 }
 </style>

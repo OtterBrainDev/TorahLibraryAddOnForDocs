@@ -113,7 +113,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **271 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **276 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -199,6 +199,10 @@ and in `test/ui/`:
   Content-Security-Policy.
 - `vowels-tanakh-only.test.js` — the Preferences "Vowels only in Tanakh"
   switch, and that turning Vowels back on keeps it.
+- `insertion-options.test.js` — the Display & Layout pickers exist once
+  (`shared/insertion-options`): every host (sidebar, Preferences, Link Texts
+  dialog) includes and initialises them, and no page has its own copy of the
+  cards or their CSS.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

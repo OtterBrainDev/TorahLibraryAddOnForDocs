@@ -95,6 +95,11 @@ heading until the next release consolidates it.
   to defaults** puts them back. There's no longer any need to cancel the
   review, or change Preferences for every future insert, to insert one batch
   differently.
+- **Preferences → Insertion → Display & Layout uses the sidebar's pickers.**
+  Same options, same names (*Translation*, *Original with Translation*,
+  *Original*; *Stacked*, *Right–Left*, *Left–Right*), laid out open as before.
+  The sidebar's Layout tray, Link Texts' *Customize this insertion* and
+  Preferences now share one set of these controls, so they can't drift apart.
 - **Preferences → Insertion → Vowels only in Tanakh.** Keeps niqqud in Tanakh
   and removes it from everything else, as the original add-on did. Off by
   default; no stored preference changes.

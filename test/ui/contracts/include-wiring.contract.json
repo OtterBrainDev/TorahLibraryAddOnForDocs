@@ -28,6 +28,8 @@
   ],
   "preferences.html": [
     "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('css/tokens'); ?>",
+    "<?!= include('shared/insertion-options/css'); ?>",
     "<?!= include('preferences/css'); ?>",
     "<?!= include('shared/css/icon-mode-card'); ?>",
     "<?!= include('shared/ui/core-shared'); ?>",
@@ -35,7 +37,9 @@
     "<?!= include('shared/ui/dom'); ?>",
     "<?!= include('shared/ui/feedback'); ?>",
     "<?!= include('shared/ui/state'); ?>",
-    "<?!= include('preferences/js'); ?>"
+    "<?!= include('shared/insertion-options/js'); ?>",
+    "<?!= include('preferences/js'); ?>",
+    "<?!= include('shared/insertion-options/markup') ?>"
   ],
   "surprise-me.html": [
     "<?!= include('shared/ui/head'); ?>",

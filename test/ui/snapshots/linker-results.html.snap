@@ -414,7 +414,7 @@
               </div>
               <div class="customize-section">
                 <div class="customize-section-label">Insertion Format</div>
-                <div class="cc-card" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills" aria-label="Composition for these insertions">
+                <div class="cc-card cc-card--stacked" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills" aria-label="Composition for these insertions">
                   <?!= include('shared/composition-card/markup') ?>
                 </div>
               </div>
