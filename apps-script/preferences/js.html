@@ -666,6 +666,7 @@
               updateSheimotSummary();
               renderOverrideGrid();
               renderOverrideList();
+              loadCorpusOrderFromFields();
               syncExperimentalChildToggles();
               syncLinkerInsertToggle();
               loadMenuLayoutEditor(preferences.menu_layout);
@@ -881,6 +882,186 @@
         setResultsMessage('Could not save preferences.');
       }).setPreferences(preferenceObject);
     });
+
+    // ── Text-search corpus order (Search tab) ───────────────────────────────
+    // Order and exclusions live in two hidden inputs (search_corpus_order,
+    // search_corpus_excluded) so collectPreferenceObject() saves them like
+    // any other field. The catalog and normalizers are in shared/ui/state.
+
+    let corpusOrder = normalizeSearchCorpusOrder('[]');
+    let corpusExcluded = [];
+    let draggedCorpusKey = null;
+
+    function getCorpusCatalogLabel(key) {
+      const entry = SEARCH_CORPUS_CATALOG.find(function(item) { return item.key === key; });
+      return entry ? entry.label : key;
+    }
+
+    function syncCorpusOrderFields() {
+      byId('search_corpus_order').value = JSON.stringify(corpusOrder);
+      byId('search_corpus_excluded').value = JSON.stringify(corpusExcluded);
+    }
+
+    function loadCorpusOrderFromFields() {
+      corpusOrder = normalizeSearchCorpusOrder(byId('search_corpus_order').value);
+      corpusExcluded = normalizeSearchCorpusExcluded(byId('search_corpus_excluded').value);
+      syncCorpusOrderFields();
+      renderCorpusOrderList();
+    }
+
+    function moveCorpusTo(key, targetIndex) {
+      const from = corpusOrder.indexOf(key);
+      if (from < 0) return;
+      targetIndex = Math.max(0, Math.min(corpusOrder.length - 1, targetIndex));
+      if (from === targetIndex) return;
+      corpusOrder.splice(from, 1);
+      corpusOrder.splice(targetIndex, 0, key);
+      syncCorpusOrderFields();
+      renderCorpusOrderList();
+    }
+
+    function toggleCorpusExcluded(key) {
+      const index = corpusExcluded.indexOf(key);
+      if (index >= 0) corpusExcluded.splice(index, 1);
+      else corpusExcluded.push(key);
+      syncCorpusOrderFields();
+      renderCorpusOrderList();
+    }
+
+    function focusCorpusRowControl(key, action) {
+      const button = document.querySelector('#search-corpus-order-list [data-corpus-key="' + key + '"] [data-corpus-action="' + action + '"]');
+      if (button && !button.disabled) button.focus();
+      else {
+        const row = document.querySelector('#search-corpus-order-list [data-corpus-key="' + key + '"]');
+        if (row) row.focus();
+      }
+    }
+
+    function buildCorpusOrderButton(action, text, label, disabled) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'corpus-order-button corpus-order-button--' + action;
+      button.setAttribute('data-corpus-action', action);
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      button.textContent = text;
+      button.disabled = !!disabled;
+      return button;
+    }
+
+    function renderCorpusOrderList() {
+      const list = byId('search-corpus-order-list');
+      if (!list) return;
+      list.replaceChildren();
+      corpusOrder.forEach(function(key, index) {
+        const label = getCorpusCatalogLabel(key);
+        const isHidden = corpusExcluded.indexOf(key) >= 0;
+        const row = document.createElement('li');
+        row.className = 'corpus-order-row' + (isHidden ? ' is-excluded' : '');
+        row.setAttribute('data-corpus-key', key);
+        row.draggable = true;
+        row.tabIndex = -1;
+
+        const handle = document.createElement('span');
+        handle.className = 'corpus-order-handle';
+        handle.setAttribute('aria-hidden', 'true');
+        handle.textContent = '⠿';
+
+        const position = document.createElement('span');
+        position.className = 'corpus-order-position';
+        position.textContent = String(index + 2);
+
+        const text = document.createElement('span');
+        text.className = 'corpus-order-label';
+        text.textContent = label;
+
+        const actions = document.createElement('span');
+        actions.className = 'corpus-order-actions';
+        actions.appendChild(buildCorpusOrderButton('up', '↑', 'Move ' + label + ' up', index === 0));
+        actions.appendChild(buildCorpusOrderButton('down', '↓', 'Move ' + label + ' down', index === corpusOrder.length - 1));
+        const visibility = buildCorpusOrderButton('visibility', isHidden ? 'Hidden' : 'Shown', (isHidden ? 'Show ' : 'Hide ') + label + ' in search results', false);
+        visibility.setAttribute('aria-pressed', isHidden ? 'false' : 'true');
+        actions.appendChild(visibility);
+
+        row.appendChild(handle);
+        row.appendChild(position);
+        row.appendChild(text);
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    }
+
+    function initCorpusOrderList() {
+      const list = byId('search-corpus-order-list');
+      if (!list) return;
+
+      list.addEventListener('click', function(event) {
+        const button = event.target.closest('[data-corpus-action]');
+        if (!button) return;
+        const row = button.closest('[data-corpus-key]');
+        if (!row) return;
+        const key = row.getAttribute('data-corpus-key');
+        const action = button.getAttribute('data-corpus-action');
+        if (action === 'up') moveCorpusTo(key, corpusOrder.indexOf(key) - 1);
+        else if (action === 'down') moveCorpusTo(key, corpusOrder.indexOf(key) + 1);
+        else if (action === 'visibility') toggleCorpusExcluded(key);
+        focusCorpusRowControl(key, action);
+      });
+
+      list.addEventListener('dragstart', function(event) {
+        const row = event.target.closest('[data-corpus-key]');
+        if (!row) return;
+        draggedCorpusKey = row.getAttribute('data-corpus-key');
+        row.classList.add('is-dragging');
+        if (event.dataTransfer) {
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', draggedCorpusKey);
+        }
+      });
+
+      list.addEventListener('dragover', function(event) {
+        if (!draggedCorpusKey) return;
+        const row = event.target.closest('[data-corpus-key]');
+        if (!row) return;
+        event.preventDefault();
+        const rect = row.getBoundingClientRect();
+        const after = event.clientY > rect.top + rect.height / 2;
+        list.querySelectorAll('.drop-before, .drop-after').forEach(function(el) {
+          el.classList.remove('drop-before', 'drop-after');
+        });
+        row.classList.add(after ? 'drop-after' : 'drop-before');
+      });
+
+      list.addEventListener('drop', function(event) {
+        if (!draggedCorpusKey) return;
+        const row = event.target.closest('[data-corpus-key]');
+        event.preventDefault();
+        if (!row) return;
+        const targetKey = row.getAttribute('data-corpus-key');
+        const after = row.classList.contains('drop-after');
+        const key = draggedCorpusKey;
+        if (targetKey === key) return;
+        // Index in the list once the dragged row is taken out.
+        const remaining = corpusOrder.filter(function(k) { return k !== key; });
+        moveCorpusTo(key, remaining.indexOf(targetKey) + (after ? 1 : 0));
+      });
+
+      list.addEventListener('dragend', function() {
+        draggedCorpusKey = null;
+        list.querySelectorAll('.is-dragging, .drop-before, .drop-after').forEach(function(el) {
+          el.classList.remove('is-dragging', 'drop-before', 'drop-after');
+        });
+      });
+
+      byId('search-corpus-order-reset').addEventListener('click', function() {
+        corpusOrder = normalizeSearchCorpusOrder('[]');
+        corpusExcluded = [];
+        syncCorpusOrderFields();
+        renderCorpusOrderList();
+      });
+
+      renderCorpusOrderList();
+    }
 
     // ── Button-group helpers (Display & Insertion Defaults sections) ────────
 
@@ -1324,6 +1505,7 @@
     initWorkflowTabs();
     initMenuLayoutEditor();
     bindColorControls();
+    initCorpusOrderList();
     _initPreferencesCompositionCard();
     _initPreferencesInsertionOptions();
     loadPreferencesIntoForm();

@@ -331,3 +331,27 @@ test('a user already on the current schema is not re-seeded', () => {
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('hebrew_font'), null);
 });
+
+test('v15 migration seeds search corpus order/exclusions with "[]" for upgraders', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '14',
+    apply_sheimot_on_insertion: 'true',
+  });
+  const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(rewrote, true);
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // "[]" = built-in order and nothing hidden: no corpus disappears on upgrade.
+  assert.equal(userProperties.getProperty('search_corpus_order'), '[]');
+  assert.equal(userProperties.getProperty('search_corpus_excluded'), '[]');
+});
+
+test('v15 migration does not clobber an explicit corpus order or exclusion list', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '14',
+    search_corpus_order: '["talmud","close-matches"]',
+    search_corpus_excluded: '["kabbalah"]',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('search_corpus_order'), '["talmud","close-matches"]');
+  assert.equal(userProperties.getProperty('search_corpus_excluded'), '["kabbalah"]');
+});

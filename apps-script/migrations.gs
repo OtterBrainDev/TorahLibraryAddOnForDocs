@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '14';
+var PREFS_SCHEMA_CURRENT_ = '15';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -151,6 +151,13 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // preference outlives its last reader (same as v10).
   if (from < 14) {
     migrateToV14_(userProperties);
+  }
+  // v14 -> v15: introduces `search_corpus_order` and `search_corpus_excluded`
+  // (text-search corpus ordering). Both default to "[]": direct match and
+  // near matches stay on top, corpora follow the built-in library order, and
+  // nothing is hidden — no existing results are gated off.
+  if (from < 15) {
+    migrateToV15_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -365,6 +372,26 @@ function migrateToV14_(userProperties) {
     userProperties.setProperty('source_emphasis_mode', legacy === 'false' ? 'discard' : 'keep');
   }
   try { userProperties.deleteProperty('preserve_source_emphasis'); } catch (_e) { /* ignore */ }
+  return true;
+}
+
+/**
+ * V15: introduces the text-search corpus preferences.
+ *
+ * - `search_corpus_order`: JSON array of corpus keys. "[]" means the
+ *   built-in order (near matches right after the pinned direct match,
+ *   then Sefaria's library order).
+ * - `search_corpus_excluded`: JSON array of corpus keys hidden from text
+ *   search results. "[]" hides nothing, so upgraders see every corpus
+ *   they saw before. A stored value is never overwritten.
+ */
+function migrateToV15_(userProperties) {
+  if (userProperties.getProperty('search_corpus_order') == null) {
+    userProperties.setProperty('search_corpus_order', '[]');
+  }
+  if (userProperties.getProperty('search_corpus_excluded') == null) {
+    userProperties.setProperty('search_corpus_excluded', '[]');
+  }
   return true;
 }
 

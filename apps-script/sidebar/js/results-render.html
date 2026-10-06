@@ -1,6 +1,63 @@
 <script>
 function resetResultPostProcessState() {
-  resultPostProcessState = { availableCorpora: [], removedCorpora: [] };
+  // removedCorpora: hidden this search via a group's ❌ button.
+  // restoredExcluded: hidden by the search_corpus_excluded preference but
+  // brought back for this search via the Restore Corpus menu.
+  resultPostProcessState = { availableCorpora: [], removedCorpora: [], restoredExcluded: [] };
+}
+
+/* ── Corpus order / exclusion preferences (texts mode only) ─────────────── */
+
+function getPreferenceCorpusOrder() {
+  return normalizeSearchCorpusOrder((effectivePreferences || {}).search_corpus_order);
+}
+
+function isPreferenceExcludedCorpus(corpusKey) {
+  if (appMode !== 'texts') return false;
+  return normalizeSearchCorpusExcluded((effectivePreferences || {}).search_corpus_excluded).indexOf(corpusKey) >= 0;
+}
+
+// Corpus keys currently hidden by the preference (i.e. not restored for
+// this search).
+function getActivePreferenceExcludedCorpora() {
+  if (appMode !== 'texts') return [];
+  var restored = resultPostProcessState.restoredExcluded || [];
+  return normalizeSearchCorpusExcluded((effectivePreferences || {}).search_corpus_excluded).filter(function (key) {
+    return restored.indexOf(key) < 0;
+  });
+}
+
+// Every hidden corpus that has results in the current search, most recently
+// hidden first: ❌-removed corpora, then preference-excluded ones.
+function getRestorableCorpora() {
+  var available = resultPostProcessState.availableCorpora || [];
+  var removed = (resultPostProcessState.removedCorpora || []).slice().reverse().map(function (key) {
+    return { key: key, fromPreference: false };
+  });
+  var excluded = getActivePreferenceExcludedCorpora().filter(function (key) {
+    return available.some(function (entry) { return entry.key === key; });
+  }).map(function (key) {
+    return { key: key, fromPreference: true };
+  });
+  return removed.concat(excluded);
+}
+
+// Reorder cluster labels so "Library" stays first and the rest follow
+// the user's corpus order. Corpora missing from the order keep their
+// incoming (relevance) order after every ordered corpus.
+function sortClustersByCorpusPreference(clusterOrder, clusterBuckets, groupName) {
+  var order = getPreferenceCorpusOrder();
+  return clusterOrder.map(function (cluster, index) {
+    var key = getResultCorpusKey(clusterBuckets[cluster][0], groupName);
+    var rank = order.indexOf(key);
+    if (key === DIRECT_MATCH_CORPUS_KEY) rank = -1;
+    else if (rank < 0) rank = order.length + index;
+    return { cluster: cluster, rank: rank };
+  }).sort(function (a, b) {
+    return a.rank - b.rank;
+  }).map(function (entry) {
+    return entry.cluster;
+  });
 }
 
 function getAllProcessedResults() {
@@ -113,7 +170,7 @@ function ensureSelectedResultStillVisible() {
 function applyResultPostProcessing() {
   syncAvailableCorpusFilters();
   var removedLookup = {};
-  resultPostProcessState.removedCorpora.forEach(function (key) {
+  resultPostProcessState.removedCorpora.concat(getActivePreferenceExcludedCorpora()).forEach(function (key) {
     removedLookup[key] = true;
   });
   var searchParameters = getSearchParameters();
@@ -143,9 +200,17 @@ function reprocessAndRenderResults() {
 }
 
 function toggleCorpusVisibility(corpusKey) {
-  var existingIndex = resultPostProcessState.removedCorpora.indexOf(corpusKey);
-  if (existingIndex >= 0) {
-    resultPostProcessState.removedCorpora.splice(existingIndex, 1);
+  var removedIndex = resultPostProcessState.removedCorpora.indexOf(corpusKey);
+  var restoredIndex = resultPostProcessState.restoredExcluded.indexOf(corpusKey);
+  if (removedIndex >= 0) {
+    resultPostProcessState.removedCorpora.splice(removedIndex, 1);
+  } else if (isPreferenceExcludedCorpus(corpusKey)) {
+    // Excluded in Preferences: restore (or re-hide) for this search only.
+    if (restoredIndex >= 0) {
+      resultPostProcessState.restoredExcluded.splice(restoredIndex, 1);
+    } else {
+      resultPostProcessState.restoredExcluded.push(corpusKey);
+    }
   } else {
     resultPostProcessState.removedCorpora.push(corpusKey);
   }
@@ -329,6 +394,10 @@ function renderResultGroup(selector, items, groupName) {
     clusterBuckets[cluster].push(item);
   });
 
+  if (appMode === 'texts') {
+    clusterOrder = sortClustersByCorpusPreference(clusterOrder, clusterBuckets, groupName);
+  }
+
   clusterOrder.forEach(function (cluster) {
     var corpusKey = getResultCorpusKey(clusterBuckets[cluster][0], groupName);
     var accentClass = getCorpusAccentClass(corpusKey);
@@ -396,8 +465,7 @@ function closeRestoreCorpusMenu() {
 }
 
 function openRestoreCorpusMenu() {
-  var removed = (resultPostProcessState && resultPostProcessState.removedCorpora) || [];
-  if (!removed.length) return;
+  if (!getRestorableCorpora().length) return;
   $('#restore-corpus-menu').removeClass('hidden');
   $('#restore-corpus-button').attr('aria-expanded', 'true');
   positionRestoreCorpusMenu()
@@ -405,25 +473,27 @@ function openRestoreCorpusMenu() {
 
 function renderRestoreCorpusMenu() {
   var $items = $('#restore-corpus-menu-items');
-  var removed = (resultPostProcessState && resultPostProcessState.removedCorpora) || [];
+  var restorable = getRestorableCorpora();
 
   if (!$items.length) return;
 
-  if (!removed.length) {
+  if (!restorable.length) {
     $items.empty();
     closeRestoreCorpusMenu();
     return;
   }
 
-  var html = removed.slice().reverse().map(function (key) {
+  var html = restorable.map(function (hidden) {
     var entry = (resultPostProcessState.availableCorpora || []).find(function (item) {
-      return item.key === key;
+      return item.key === hidden.key;
     });
-    var label = entry ? entry.label : key;
+    var label = entry ? entry.label : hidden.key;
+    var title = hidden.fromPreference ? ' title="Hidden in Preferences — show for this search"' : '';
+    var note = hidden.fromPreference ? ' <span class="restore-corpus-menu-note">(Preferences)</span>' : '';
     return (
       '<button type="button" class="restore-corpus-menu-item" role="menuitem" ' +
-      'data-corpus-key="' + escapeHTML(key) + '">' +
-      escapeHTML(label) +
+      'data-corpus-key="' + escapeHTML(hidden.key) + '"' + title + '>' +
+      escapeHTML(label) + note +
       '</button>'
     );
   }).join('');
@@ -433,11 +503,11 @@ function renderRestoreCorpusMenu() {
 
 function syncRestoreCorpusButton() {
   var $button = $('#restore-corpus-button');
-  var removed = (resultPostProcessState && resultPostProcessState.removedCorpora) || [];
+  var restorable = getRestorableCorpora();
 
   if (!$button.length) return;
 
-  var hasRemoved = removed.length > 0;
+  var hasRemoved = restorable.length > 0;
 
   $button.prop('disabled', !hasRemoved);
   $button.attr('aria-disabled', hasRemoved ? 'false' : 'true');
@@ -447,7 +517,7 @@ function syncRestoreCorpusButton() {
     $button.attr('title', 'Restore Corpus').attr('aria-label', 'Restore Corpus');
     closeRestoreCorpusMenu();
   } else {
-    var latestKey = removed[removed.length - 1];
+    var latestKey = restorable[0].key;
     var latestEntry = (resultPostProcessState.availableCorpora || []).find(function (item) {
       return item.key === latestKey;
     });
