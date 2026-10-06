@@ -115,6 +115,9 @@ heading until the next release consolidates it.
   (a CSS cascade layer), so our styles win whatever Google changes.
 - **The Session Library window no longer shows a stray "Search references"
   label** beside its search box. The search box is full width again.
+- **The sidebar's Texts / Voices / Lexicon tabs centre their labels.** The
+  labels sat at the bottom of each tab, pushed down by space reserved for the
+  result-count badge, which is drawn in the corner and never needed it.
 
 #### Changed
 
