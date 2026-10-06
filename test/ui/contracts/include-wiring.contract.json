@@ -1,6 +1,7 @@
 {
   "sidebar.html": [
     "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
     "<?!= include('css/tokens'); ?>",
     "<?!= include('css/base'); ?>",
     "<?!= include('css/layout'); ?>",
@@ -28,6 +29,7 @@
   ],
   "preferences.html": [
     "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
     "<?!= include('css/tokens'); ?>",
     "<?!= include('shared/insertion-options/css'); ?>",
     "<?!= include('preferences/css'); ?>",
@@ -43,6 +45,7 @@
   ],
   "surprise-me.html": [
     "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
     "<?!= include('surprise-me/css'); ?>",
     "<?!= include('shared/ui/core-shared'); ?>",
     "<?!= include('shared/ui/api'); ?>",
@@ -53,6 +56,7 @@
   ],
   "linker-results.html": [
     "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
     "<?!= include('css/tokens'); ?>",
     "<?!= include('shared/insertion-options/css'); ?>",
     "<?!= include('shared/composition-card/css'); ?>",
@@ -60,5 +64,12 @@
     "<?!= include('shared/composition-card/markup') ?>",
     "<?!= include('shared/insertion-options/js'); ?>",
     "<?!= include('shared/composition-card/shared'); ?>"
+  ],
+  "session-library-modal.html": [
+    "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
+    "<?!= include('css/tokens'); ?>",
+    "<?!= include('css/components/results'); ?>",
+    "<?!= include('css/utilities'); ?>"
   ]
 }

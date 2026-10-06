@@ -64,6 +64,22 @@ QC check (see `pre_clasp_qc.sh` step 6).
   **`session-library-modal.html`**, **`gematriya-count.html`**,
   **`release-notes.html`** — standalone modal dialogs, each its own scope.
 
+### Native form controls and Google's stylesheet
+
+`shared/ui/head` loads Google's add-on stylesheet (`add-ons.css`) into the
+cascade layer `google-addons`, and declares the layer order
+`google-addons, native-controls`. `shared/css/native-controls` (included
+right after the head by every templated page) is layer `native-controls`:
+the base look of `select`, `option`, text-like `input`s, `textarea`,
+checkboxes, radios, colour pickers and `button`, from the `--control-*`
+tokens at its top. Component CSS is unlayered, so it beats both layers
+whatever its specificity. A component sets only what it wants to differ.
+`test/ui/native-controls.test.js` pins the layering, the include and a base
+rule for every `<input type>` the add-on uses. `release-notes.html` imports
+the sheet the same way. `help-modal.html`, `feedback-modal.html` and
+`gematriya-count.html` don't load Google's sheet and style their few
+controls inline.
+
 ## Server files
 
 - `apps-script/server/*.gs` — server logic, one file per domain.

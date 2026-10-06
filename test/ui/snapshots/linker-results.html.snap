@@ -4,6 +4,7 @@
     <!-- Served as a template (linkTextsWithSefaria) so it can share the
          insertion options with the sidebar's Layout tray. -->
     <?!= include('shared/ui/head'); ?>
+    <?!= include('shared/css/native-controls'); ?>
     <?!= include('css/tokens'); ?>
     <?!= include('shared/insertion-options/css'); ?>
     <?!= include('shared/composition-card/css'); ?>
