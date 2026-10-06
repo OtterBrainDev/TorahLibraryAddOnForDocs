@@ -41,6 +41,28 @@ function normalizeOptionText(value) {
     .trim();
 }
 
+// The sidebar's busy overlay (aside.busy-overlay in sidebar.html). `kind`
+// picks the label and the small animation under the logo, so the user can
+// tell what the wait is for.
+var BUSY_OVERLAY_LABELS = {
+  insert: 'Inserting into your document…',
+  fetch: 'Fetching the sheet…',
+  selection: 'Looking up your selection…',
+  transform: 'Updating divine names…'
+};
+
+function showBusyOverlay(kind) {
+  var key = Object.prototype.hasOwnProperty.call(BUSY_OVERLAY_LABELS, kind) ? kind : 'insert';
+  var $overlay = $('.busy-overlay');
+  $overlay.attr('data-kind', key);
+  $overlay.find('.busy-label').text(BUSY_OVERLAY_LABELS[key]);
+  $overlay.stop(true, true).fadeIn(150);
+}
+
+function hideBusyOverlay() {
+  $('.busy-overlay').stop(true, true).fadeOut(250);
+}
+
 function showInsertWarning(message) {
   var warningText = String(message || 'Could not insert at the current selection. Place the cursor where you want the source inserted, then try again.').trim();
   $('.insert-warning').remove();

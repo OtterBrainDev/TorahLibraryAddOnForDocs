@@ -19,12 +19,6 @@
   clip: rect(0, 0, 0, 0);
 }
 
-/* Legacy hide pattern used by the add-on host frame */
-[class="hide"] > img {
-  position: absolute;
-  top: 48%;
-  left: 48%;
-}
 
 /* =============================================================
    TYPOGRAPHY HELPERS
@@ -367,8 +361,239 @@
 }
 
 /* =============================================================
+   BUSY OVERLAY (showBusyOverlay / hideBusyOverlay)
+   A card over a dimmed sidebar while the document is being changed.
+   The Sefarrow fills and empties clockwise inside a spinning ring;
+   the glyph under the label says what kind of work it is
+   ([data-kind] = insert | fetch | selection | transform).
+   ============================================================= */
+
+@property --busy-from {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --busy-to {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 360deg;
+}
+
+aside.busy-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  width: auto;
+  height: auto;
+  background: var(--busy-scrim);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.busy-card {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  box-sizing: border-box;
+  width: 220px;
+  max-width: calc(100% - 32px);
+  padding: 22px 16px 18px;
+  text-align: center;
+  background: var(--panel);
+  border-radius: 16px;
+  box-shadow: var(--busy-card-shadow);
+  transform: translate(-50%, -50%);
+  animation: busy-card-in 0.22s ease-out;
+}
+
+.busy-emblem {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto;
+}
+
+.busy-ring {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: 3px solid var(--busy-accent-soft);
+  border-top-color: var(--busy-accent);
+  border-radius: 50%;
+  animation: preview-spin 1.1s linear infinite;
+}
+
+/* Fully opaque between --busy-from and --busy-to, a faint ghost elsewhere. */
+.busy-overlay .busy-logo {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 40px;
+  height: 40px;
+  --busy-from: 0deg;
+  --busy-to: 360deg;
+  -webkit-mask-image: conic-gradient(rgba(0, 0, 0, 0.16) var(--busy-from), #000 var(--busy-from) var(--busy-to), rgba(0, 0, 0, 0.16) var(--busy-to));
+  mask-image: conic-gradient(rgba(0, 0, 0, 0.16) var(--busy-from), #000 var(--busy-from) var(--busy-to), rgba(0, 0, 0, 0.16) var(--busy-to));
+  animation: busy-logo-sweep 2.6s ease-in-out infinite;
+}
+
+.busy-label {
+  margin: 14px 0 12px;
+  color: var(--sefaria-blue);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+/* Glyph: three "lines of text" by default (insert, selection). */
+.busy-glyph {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  width: 76px;
+  height: 22px;
+  margin: 0 auto;
+}
+
+.busy-glyph > span {
+  display: block;
+  width: 100%;
+  height: 4px;
+  background-color: var(--busy-accent-soft);
+  background-image: linear-gradient(var(--busy-accent), var(--busy-accent));
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  border-radius: 2px;
+  animation: busy-line-write 2.1s ease-in-out infinite;
+}
+
+.busy-glyph > span:nth-child(2) { width: 84%; animation-delay: 0.35s; }
+.busy-glyph > span:nth-child(3) { width: 58%; animation-delay: 0.7s; }
+
+/* Selection: the first line is the selected citation, the rest is the source. */
+.busy-overlay[data-kind="selection"] .busy-glyph > span:first-child {
+  background-color: var(--busy-highlight);
+  animation: none;
+}
+
+/* Transform: a highlighter sweeps across text that is already there. */
+.busy-overlay[data-kind="transform"] .busy-glyph > span {
+  background-color: var(--busy-text-line);
+  background-image: linear-gradient(90deg, transparent, var(--busy-highlight), transparent);
+  background-size: 60% 100%;
+  background-position: -100% 0;
+  animation-name: busy-line-sweep;
+  animation-duration: 1.6s;
+}
+
+/* Fetch: three dots dropping in, like a download. */
+.busy-overlay[data-kind="fetch"] .busy-glyph {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.busy-overlay[data-kind="fetch"] .busy-glyph > span {
+  width: 8px;
+  height: 8px;
+  background: var(--busy-accent);
+  border-radius: 50%;
+  animation: busy-dot-drop 1.2s ease-in infinite;
+}
+
+.busy-overlay[data-kind="fetch"] .busy-glyph > span:nth-child(2) { width: 8px; animation-delay: 0.2s; }
+.busy-overlay[data-kind="fetch"] .busy-glyph > span:nth-child(3) { width: 8px; animation-delay: 0.4s; }
+
+/* Search in progress: a magnifying glass scans above the skeleton results. */
+.search-busy-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 2px 2px 0;
+  color: var(--sefaria-blue);
+  font-size: 12px;
+  font-weight: 600;
+  list-style: none;
+}
+
+.search-busy-lens {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 11px;
+  height: 11px;
+  margin-right: 12px;
+  border: 2px solid var(--busy-accent);
+  border-radius: 50%;
+  animation: busy-lens-scan 1.4s ease-in-out infinite alternate;
+}
+
+.search-busy-lens::after {
+  position: absolute;
+  top: 8px;
+  left: 7px;
+  width: 5px;
+  height: 2px;
+  background: var(--busy-accent);
+  border-radius: 1px;
+  transform: rotate(45deg);
+  content: "";
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .busy-card { animation: none; }
+  .busy-ring { animation-duration: 3s; }
+  .busy-overlay .busy-logo { animation-duration: 6s; }
+  .busy-glyph > span,
+  .busy-overlay[data-kind="transform"] .busy-glyph > span,
+  .busy-overlay[data-kind="fetch"] .busy-glyph > span {
+    animation-duration: 5s;
+  }
+  .search-busy-lens { animation: none; }
+}
+
+/* =============================================================
    ANIMATIONS
    ============================================================= */
+
+/* Fill clockwise, hold, then empty clockwise. */
+@keyframes busy-logo-sweep {
+  0%       { --busy-from: 0deg;   --busy-to: 0deg; }
+  45%, 55% { --busy-from: 0deg;   --busy-to: 360deg; }
+  100%     { --busy-from: 360deg; --busy-to: 360deg; }
+}
+
+@keyframes busy-card-in {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes busy-line-write {
+  0%       { background-size: 0% 100%; }
+  45%, 85% { background-size: 100% 100%; }
+  100%     { background-size: 100% 100%; opacity: 0.35; }
+}
+
+@keyframes busy-line-sweep {
+  from { background-position: -100% 0; }
+  to   { background-position: 200% 0; }
+}
+
+@keyframes busy-dot-drop {
+  0%   { opacity: 0; transform: translateY(-10px); }
+  40%  { opacity: 1; transform: translateY(0); }
+  75%  { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+
+@keyframes busy-lens-scan {
+  from { transform: translateX(0); }
+  to   { transform: translateX(10px); }
+}
 
 @keyframes preview-spin {
   from { transform: rotate(0deg); }

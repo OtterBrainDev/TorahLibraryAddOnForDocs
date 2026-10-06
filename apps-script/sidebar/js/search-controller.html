@@ -20,11 +20,9 @@ function updateActionabilityUI(state) {
 function setResultsLoading(isLoading) {
   resultsLoading = !!isLoading;
   $('.results-panel').toggleClass('is-loading', resultsLoading);
-  if (!$('.results-loading-indicator').length) {
-    $('.results-header').append("<div class='results-loading-indicator' aria-live='polite' style='display:none;'><span class='preview-loading-spinner' aria-hidden='true'></span><span>Searching…</span></div>");
-  }
   if (isLoading) {
-    var skeletonHtml = '';
+    var skeletonHtml = "<li class='search-busy-row' role='status' aria-live='polite'>" +
+      "<span class='search-busy-lens' aria-hidden='true'></span><span>Searching Sefaria…</span></li>";
     for (var i = 0; i < 4; i++) {
       skeletonHtml += "<li class='skeleton-result-item' aria-hidden='true'>" +
         "<div class='skeleton-bar skeleton-title'></div>" +
@@ -36,9 +34,8 @@ function setResultsLoading(isLoading) {
     $('.library-results').html(skeletonHtml);
     $('.search-results').empty();
   } else {
-    $('.skeleton-result-item').remove();
+    $('.skeleton-result-item, .search-busy-row').remove();
   }
-  $('.results-loading-indicator').hide();
 }
 
 
