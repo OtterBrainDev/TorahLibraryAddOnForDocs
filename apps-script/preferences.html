@@ -25,6 +25,7 @@
         <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
           <button type="button" id="pref-tab-fonts-btn" class="pref-tab" role="tab" data-pref-tab="fonts" aria-controls="pref-tab-fonts" aria-selected="true">Fonts</button>
           <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="false">Insertion</button>
+          <button type="button" id="pref-tab-search-btn" class="pref-tab" role="tab" data-pref-tab="search" aria-controls="pref-tab-search" aria-selected="false">Search</button>
           <button type="button" id="pref-tab-linking-btn" class="pref-tab" role="tab" data-pref-tab="linking" aria-controls="pref-tab-linking" aria-selected="false">Linking</button>
           <button type="button" id="pref-tab-menu-btn" class="pref-tab" role="tab" data-pref-tab="menu" aria-controls="pref-tab-menu" aria-selected="false">Menu Bar</button>
 <? if (devFlags.SURPRISE_ME) { ?>
@@ -889,6 +890,29 @@
               <button type="button" class="submit menu-layout-reset">Restore default menu</button>
             </div>
           </div>
+        </div>
+
+        <div class="pref-tab-panel" id="pref-tab-search" role="tabpanel" aria-labelledby="pref-tab-search-btn" hidden>
+          <details class="section-card section-accordion" id="search-corpus-order" name="search-corpus-order" open>
+            <summary class="section-card-summary"><span>Text Search Results</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Choose the order corpora appear in text search results, and hide the ones you don't want to see. Library matches (direct references and title matches) always come first. A hidden corpus can still be shown for a single search from the sidebar's Restore Corpus menu.</p>
+              <div class="subsection-card">
+                <div class="corpus-order-pinned" aria-hidden="true">
+                  <span class="corpus-order-handle corpus-order-handle--pinned">📌</span>
+                  <span class="corpus-order-label">Library matches</span>
+                  <span class="corpus-order-pinned-note">Always first</span>
+                </div>
+                <ol class="corpus-order-list" id="search-corpus-order-list" aria-label="Corpus order for text search results"></ol>
+                <div class="corpus-order-footer">
+                  <div class="mini-help">Drag a row, or use its arrows, to reorder. Corpora not listed here appear last, in relevance order.</div>
+                  <button type="button" class="small-button" id="search-corpus-order-reset">Reset order &amp; visibility</button>
+                </div>
+                <input type="hidden" id="search_corpus_order" name="search_corpus_order" value="[]">
+                <input type="hidden" id="search_corpus_excluded" name="search_corpus_excluded" value="[]">
+              </div>
+            </div>
+          </details>
         </div>
 
 <? if (devFlags.SURPRISE_ME) { ?>

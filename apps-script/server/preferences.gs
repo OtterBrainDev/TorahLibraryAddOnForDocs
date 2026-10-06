@@ -48,6 +48,8 @@ const SETTINGS = [
   "last_translation_only_filter",
   "last_search_sort_mode",
   "last_search_relevance_sort",
+  "search_corpus_order",
+  "search_corpus_excluded",
   "meforash_replace",
   "meforash_replacement",
   "nekudot",
@@ -175,6 +177,11 @@ function getDefaultPreferences() {
     last_translation_only_filter: false,
     last_search_sort_mode: "relevance",
     last_search_relevance_sort: true,
+    // Text-search corpus order / exclusions (JSON arrays of corpus keys).
+    // "[]" order means the built-in order (direct match, near matches,
+    // then Sefaria's library order); "[]" exclusions hides nothing.
+    search_corpus_order: "[]",
+    search_corpus_excluded: "[]",
     meforash_replace: true,
     meforash_replacement: "יי",
     nekudot: true,

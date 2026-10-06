@@ -26,4 +26,72 @@
   function hasSessionPreferenceOverrides(sessionPreferences) {
     return Object.keys(sessionPreferences || {}).length > 0;
   }
+
+  // ── Text-search corpus ordering ──────────────────────────────────────────
+  // Shared by the sidebar (applies the order / exclusions to text-search
+  // results) and the preferences dialog (edits them). Keys are the slugged
+  // cluster labels produced by getResultCorpusKey() in results-render.html.
+  // The "Library" group (direct reference lookups, title and name matches)
+  // is not listed: it is always pinned first and can't be reordered or
+  // excluded. "Close matches" (fuzzy title suggestions, built in
+  // buildFuzzyLibraryMatches) is the near-match group: second by default,
+  // reorderable like any corpus. Corpora missing from this catalog still
+  // render, after every listed corpus, in the order the search returned them.
+  var DIRECT_MATCH_CORPUS_KEY = 'library';
+  var NEAR_MATCHES_CORPUS_KEY = 'close-matches';
+  var SEARCH_CORPUS_CATALOG = [
+    { key: NEAR_MATCHES_CORPUS_KEY, label: 'Close matches' },
+    { key: 'tanakh', label: 'Tanakh' },
+    { key: 'mishnah', label: 'Mishnah' },
+    { key: 'talmud', label: 'Talmud' },
+    { key: 'midrash', label: 'Midrash' },
+    { key: 'halakhah', label: 'Halakhah' },
+    { key: 'kabbalah', label: 'Kabbalah' },
+    { key: 'liturgy', label: 'Liturgy' },
+    { key: 'jewish-thought', label: 'Jewish Thought' },
+    { key: 'tosefta', label: 'Tosefta' },
+    { key: 'chasidut', label: 'Chasidut' },
+    { key: 'musar', label: 'Musar' },
+    { key: 'responsa', label: 'Responsa' },
+    { key: 'second-temple', label: 'Second Temple' },
+    { key: 'commentary', label: 'Commentary' },
+    { key: 'targum', label: 'Targum' },
+    { key: 'reference', label: 'Reference' }
+  ];
+
+  function isKnownSearchCorpusKey(key) {
+    return SEARCH_CORPUS_CATALOG.some(function (entry) { return entry.key === key; });
+  }
+
+  // Stored order (JSON array) → full catalog order. Unknown keys are
+  // dropped, duplicates collapsed, and catalog entries the stored value
+  // doesn't mention are appended in catalog order. An empty / missing
+  // value yields the built-in order.
+  function normalizeSearchCorpusOrder(value) {
+    var seen = {};
+    var out = [];
+    parseStoredArrayPreference(value, []).forEach(function (key) {
+      key = String(key || '').trim();
+      if (!isKnownSearchCorpusKey(key) || seen[key]) return;
+      seen[key] = true;
+      out.push(key);
+    });
+    SEARCH_CORPUS_CATALOG.forEach(function (entry) {
+      if (!seen[entry.key]) out.push(entry.key);
+    });
+    return out;
+  }
+
+  // Stored exclusions (JSON array) → list of corpus keys hidden from text
+  // search. The pinned Library group can never be excluded.
+  function normalizeSearchCorpusExcluded(value) {
+    var seen = {};
+    return parseStoredArrayPreference(value, []).map(function (key) {
+      return String(key || '').trim();
+    }).filter(function (key) {
+      if (!key || key === DIRECT_MATCH_CORPUS_KEY || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
 </script>

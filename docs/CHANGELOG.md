@@ -171,6 +171,27 @@ heading until the next release consolidates it.
   nothing at all — which almost never happened, because the full-text search
   nearly always returns something. Close matches are never opened
   automatically; click the one you meant.
+- **Corpus groups follow an order you choose.** Text search results group
+  corpora in a fixed library order (Tanakh, Mishnah, Talmud, Midrash, …)
+  instead of whatever order the search returned them in. The *Library* group
+  (direct references, title and name matches) stays first and *Close matches*
+  second. The sort menu still orders results *within* each group.
+
+#### Added
+
+- **Reorder and hide corpora** (Preferences → *Search*). Drag a row, or use its
+  arrows, to set the order corpora appear in text search results; *Close
+  matches* can be moved like any corpus, and only *Library* is pinned. Each row
+  can be hidden. A hidden corpus can still be shown for one search from the
+  sidebar's *Restore Corpus* menu, where it is marked "(Preferences)".
+  Corpora not in the list appear last, in relevance order.
+
+#### Migration
+
+- **Preference schema v15** adds `search_corpus_order` and
+  `search_corpus_excluded`, both defaulting to `"[]"` — the built-in order with
+  nothing hidden. Upgrading users lose no results, and a stored value is never
+  overwritten.
 
 ## v2.1.0 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
 
