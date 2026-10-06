@@ -33,10 +33,10 @@ $('#insert-source').click(function () {
     var lexiconPayload = Object.assign({}, selectedLexiconItem, { insertMode: lexiconInsertMode });
     var $btn = $('#insert-source');
 
-    $('.hide').add($('.warning')).fadeIn('1000');
+    showBusyOverlay('insert');
     google.script.run
       .withSuccessHandler(function () {
-        $('.hide').add($('.warning')).fadeOut('1000');
+        hideBusyOverlay();
         $('.insert-warning').remove();
         upsertSessionEntry('inserted', buildSessionEntry(
           selectedLexiconItem.ref,
@@ -51,7 +51,7 @@ $('#insert-source').click(function () {
         }, 1800);
       })
       .withFailureHandler(function (error) {
-        $('.hide').add($('.warning')).fadeOut('1000');
+        hideBusyOverlay();
         showInsertWarning(error && error.message);
       })
       .insertLexiconEntry(lexiconPayload);
@@ -85,11 +85,11 @@ $('#insert-source').click(function () {
     };
 
     if (fetchesSheet) { $('.voices-fetch-loading').show(); }
-    $('.hide').add($('.warning')).fadeIn('1000');
+    showBusyOverlay(fetchesSheet ? 'fetch' : 'insert');
     google.script.run
       .withSuccessHandler(function () {
         $('.voices-fetch-loading').hide();
-        $('.hide').add($('.warning')).fadeOut('1000');
+        hideBusyOverlay();
         $('.insert-warning').remove();
         upsertSessionEntry('inserted', buildSessionEntry(
           selectedVoiceItem.ref,
@@ -99,7 +99,7 @@ $('#insert-source').click(function () {
       })
       .withFailureHandler(function (error) {
         $('.voices-fetch-loading').hide();
-        $('.hide').add($('.warning')).fadeOut('1000');
+        hideBusyOverlay();
         showInsertWarning(error && error.message);
       })
       .insertSheet(sheetPayload, { insertMode: insertMode, transliterationScheme: transliterationScheme !== 'none' ? transliterationScheme : null });
@@ -130,9 +130,9 @@ $('#insert-source').click(function () {
   var isMultiInsert = allowMulti && Array.isArray(selectedVersions) && selectedVersions.length > 1;
 
   if (isMultiInsert) {
-    $('.hide').add($('.warning')).fadeIn('1000');
+    showBusyOverlay('insert');
     google.script.run.withSuccessHandler(function (result) {
-      $('.hide').add($('.warning')).fadeOut('1000');
+      hideBusyOverlay();
       $('.insert-warning').remove();
       upsertSessionEntry('inserted', buildSessionEntry(data.ref, selectedResultSummary && selectedResultSummary.label ? selectedResultSummary.label : data.ref, getCurrentCorpusForRef(data.ref)));
       showInsertNotice(result);
@@ -143,7 +143,7 @@ $('#insert-source').click(function () {
           ' with no text for this reference: ' + skipped.join(', '));
       }
     }).withFailureHandler(function (error) {
-      $('.hide').add($('.warning')).fadeOut('1000');
+      hideBusyOverlay();
       showInsertWarning(error && error.message);
     }).insertReferenceVersions(data.ref, {
       versionTitles: selectedVersions,
@@ -159,14 +159,14 @@ $('#insert-source').click(function () {
     return;
   }
 
-  $('.hide').add($('.warning')).fadeIn('1000');
+  showBusyOverlay('insert');
   google.script.run.withSuccessHandler(function (result) {
-    $('.hide').add($('.warning')).fadeOut('1000');
+    hideBusyOverlay();
     $('.insert-warning').remove();
     upsertSessionEntry('inserted', buildSessionEntry(data.ref, selectedResultSummary && selectedResultSummary.label ? selectedResultSummary.label : data.ref, getCurrentCorpusForRef(data.ref)));
     showInsertNotice(result);
     }).withFailureHandler(function (error) {
-    $('.hide').add($('.warning')).fadeOut('1000');
+    hideBusyOverlay();
     showInsertWarning(error && error.message);
   }).insertReference(data, {
     singleLanguage: language,
@@ -205,21 +205,21 @@ $(document).on('click', function (event) {
 
 $('.insert-from-selection-tool').on('click', function () {
   $('#footer-actions-panel').hide();
-  $('.hide').fadeIn('200');
+  showBusyOverlay('selection');
   google.script.run.withSuccessHandler(function () {
-    $('.hide').fadeOut('200');
+    hideBusyOverlay();
   }).withFailureHandler(function (error) {
-    $('.hide').fadeOut('200');
+    hideBusyOverlay();
     if (typeof showSidebarToast === 'function') showSidebarToast((error && error.message) || 'Insert from Selection failed.');
   }).insertSourceFromSelection();
 });
 
 $('.open-divine-names-tool').on('click', function () {
-  $('.hide').fadeIn('200');
+  showBusyOverlay('transform');
   google.script.run.withSuccessHandler(function () {
-    $('.hide').fadeOut('200');
+    hideBusyOverlay();
   }).withFailureHandler(function () {
-    $('.hide').fadeOut('200');
+    hideBusyOverlay();
   }).transformDivineNames();
 });
 

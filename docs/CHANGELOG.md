@@ -104,6 +104,21 @@ heading until the next release consolidates it.
   and removes it from everything else, as the original add-on did. Off by
   default; no stored preference changes.
 
+### Loading indicator
+
+#### Changed
+
+- **The sidebar's "working" screen is easier to see and says what it's
+  doing.** Sefaria's small gray spinner on a blank white panel is gone. The
+  sidebar now dims behind a card with the Sefarrow, which fills and empties
+  clockwise inside a spinning ring, and a label: *Inserting into your
+  document…*, *Fetching the sheet…* (a sheet inserted with its contents),
+  *Looking up your selection…* (Insert from Selection) or *Updating divine
+  names…*. A small shape under the label matches: lines of text writing in,
+  dots dropping in, or a highlighter sweeping across. A search shows a
+  scanning magnifying glass and *Searching Sefaria…* above the placeholder
+  results. With reduced motion turned on, the animations run slowly.
+
 ### Controls and Google's stylesheet
 
 #### Fixed
