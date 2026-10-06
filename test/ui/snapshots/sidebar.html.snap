@@ -2,6 +2,7 @@
 <html>
   <head>
     <?!= include('shared/ui/head'); ?>
+    <?!= include('shared/css/native-controls'); ?>
     <?!= include('css/tokens'); ?>
     <?!= include('css/base'); ?>
     <?!= include('css/layout'); ?>

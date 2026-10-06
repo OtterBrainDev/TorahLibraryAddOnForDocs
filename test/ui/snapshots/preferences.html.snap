@@ -2,6 +2,7 @@
 <html>
   <head>
     <?!= include('shared/ui/head'); ?>
+    <?!= include('shared/css/native-controls'); ?>
     <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
     <script>window.APP_CONFIG = JSON.parse(document.getElementById('app-config-json').textContent);</script>
 <? var devFlags = JSON.parse(devFlagsJson); ?>

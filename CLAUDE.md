@@ -99,6 +99,10 @@ dated list. Short form of the worst offenders:
   (`sidebar.html`, `preferences.html`) duplicate values already in
   `apps-script/css/tokens.html`. The two copies drift. Always edit
   the token file, not the template's inline styles.
+- **Leaning on Google's stylesheet.** `add-ons.css` styles bare form controls
+  with selectors that out-rank one class, and Google can change it at any
+  time. It loads into a low-priority cascade layer. Base control styles live in
+  `apps-script/shared/css/native-controls.html` (tokens at its top).
 - **Client-side selector contracts not pinned.** `#voices-insert-mode`,
   `.voices-insert-options`, and similar DOM ids the server RPC relies
   on must be listed in `test/ui/contracts/selector-contracts.json`.
@@ -113,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **276 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **281 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -203,6 +207,11 @@ and in `test/ui/`:
   (`shared/insertion-options`): every host (sidebar, Preferences, Link Texts
   dialog) includes and initialises them, and no page has its own copy of the
   cards or their CSS.
+- `native-controls.test.js` — Google's `add-ons.css` loads only into the
+  `google-addons` cascade layer, every page with `shared/ui/head` includes
+  `shared/css/native-controls`, and every `<input type>` in use has a base rule
+  there. Style a control in its component file or in that file, never by
+  relying on Google's sheet.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

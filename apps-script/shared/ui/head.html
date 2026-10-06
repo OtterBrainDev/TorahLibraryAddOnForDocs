@@ -23,7 +23,20 @@
 -->
 <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
 <base target="_top">
-<link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+<!--
+  Google's add-on stylesheet, imported into a cascade layer. Layered styles
+  lose to unlayered ones whatever their specificity, so every rule this add-on
+  writes beats Google's, and shared/css/native-controls (layer
+  native-controls, declared after google-addons) sets the base look of each
+  form control. Without the layer, Google's `select:hover`-style selectors
+  out-ranked our single-class rules and its patterned background showed
+  through. Every page that includes this head must also include
+  shared/css/native-controls; test/ui/native-controls.test.js checks it.
+-->
+<style>
+@layer google-addons, native-controls;
+@import url("https://ssl.gstatic.com/docs/script/css/add-ons.css") layer(google-addons);
+</style>
 <!--
   jQuery 3.7.1, pinned with Subresource Integrity.
 

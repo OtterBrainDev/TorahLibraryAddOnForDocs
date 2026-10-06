@@ -104,6 +104,30 @@ heading until the next release consolidates it.
   and removes it from everything else, as the original add-on did. Off by
   default; no stored preference changes.
 
+### Controls and Google's stylesheet
+
+#### Fixed
+
+- **The Session Library's sort dropdown ("By Category") lost its hatched
+  background.** Google's add-on stylesheet styles every bare dropdown, button
+  and text box, and some of its rules out-ranked ours, so its pattern showed
+  through. Google's sheet now loads underneath everything the add-on writes
+  (a CSS cascade layer), so our styles win whatever Google changes.
+- **The Session Library window no longer shows a stray "Search references"
+  label** beside its search box. The search box is full width again.
+- **The sidebar's Texts / Voices / Lexicon tabs centre their labels.** The
+  labels sat at the bottom of each tab, pushed down by space reserved for the
+  result-count badge, which is drawn in the corner and never needed it.
+
+#### Changed
+
+- **Dropdowns, text boxes, checkboxes, colour pickers and buttons now take their
+  look from the add-on, not Google.** `apps-script/shared/css/native-controls.html`
+  sets every control type from one set of tokens. Every dropdown has the same
+  chevron, and checkboxes and radios use the add-on's navy. Buttons that used
+  Google's blue (*Save Defaults*, *Save & Close*, Surprise Me's *Insert*) are
+  navy too.
+
 ### Search
 
 #### Fixed
