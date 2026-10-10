@@ -174,8 +174,16 @@ function runUnifiedQuery(options) {
 
   google.script.run.withSuccessHandler(function (response) {
     if (validationRequestId !== latestDirectRefValidationRequestId || requestId !== latestQueryRequestId) return;
-    var isValidDirectRef = getResolvedNodeState(response).resolved;
-    if (isValidDirectRef) {
+    var directRefState = getResolvedNodeState(response);
+    if (directRefState.isStructural) {
+      // A real ref with no text of its own (a book or section heading). Listing
+      // it would offer a row that can only end in "Choose a more specific ref",
+      // so leave it out — along with any title match for the same ref — and
+      // say what to add instead.
+      markResultRefNonInsertable(directLookupInput);
+      if (response && response.ref) markResultRefNonInsertable(response.ref);
+      setResultsHint(buildNonInsertableHint(directLookupInput, directRefState.prompt));
+    } else if (directRefState.isInsertable) {
       var resolvedLangs = Array.isArray(response && response.availableLangs)
         ? response.availableLangs.map(function(l) { return String(l || '').toLowerCase(); }).filter(Boolean)
         : (Array.isArray(response && response.versions)
@@ -356,7 +364,8 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     updatePesukimAvailability(null);
     updateActionabilityUI(nodeState);
     // buildNonInsertableMessage escapes the ref (buildPreviewMeta) and the prompt.
-    $('.suggestions').html("<br>" + buildNonInsertableMessage(response));
+    $('.suggestions').html("<br>" + buildNonInsertableMessage(response, true));
+    scheduleReturnToResults(requestId, selectedRef, inputLabel, nodeState.prompt);
   }).withFailureHandler(function (error) {
     if (requestId !== latestResolveRequestId) return;
     hasResolvedReference = false;
@@ -369,6 +378,41 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     // message, escaped with escapeHTML.
     $('.suggestions').html("<br><b>" + escapeHTML((error && error.message) || 'Enter a valid reference to insert.') + "</b>");
   }).findReference(selectedRef);
+}
+
+// How long the "not directly insertable" notice stays up before the sidebar
+// goes back to the result list by itself.
+var NON_INSERTABLE_RETURN_DELAY_MS = 2500;
+
+function buildNonInsertableHint(label, prompt) {
+  return '\u201c' + String(label || '').trim() + '\u201d is a whole book or section, so it can\u2019t be inserted on its own. ' +
+    String(prompt || '').trim();
+}
+
+function scheduleReturnToResults(requestId, ref, label, prompt) {
+  setTimeout(function () {
+    // The reader has already moved on (another result, a new search, another
+    // tab): leave their new state alone.
+    if (requestId !== latestResolveRequestId || selectedRefValue !== ref || appMode !== 'texts') return;
+    returnToResultsFromDeadEnd(ref, label, prompt);
+  }, NON_INSERTABLE_RETURN_DELAY_MS);
+}
+
+// Undo the selection of a result that turned out to have no text of its own:
+// drop it from the list, select nothing, reopen the results, and put the
+// cursor back in the search box so the reader can add a chapter or verse.
+function returnToResultsFromDeadEnd(ref, label, prompt) {
+  markResultRefNonInsertable(ref);
+  resetSelectedResultView();
+  reprocessAndRenderResults();
+  setResultsHint(buildNonInsertableHint(label || ref, prompt));
+  var $input = $('.input');
+  $input.trigger('focus');
+  var inputEl = $input.get(0);
+  if (inputEl && typeof inputEl.setSelectionRange === 'function') {
+    var end = String($input.val() || '').length;
+    inputEl.setSelectionRange(end, end);
+  }
 }
 
 function refreshSelectedResult() {

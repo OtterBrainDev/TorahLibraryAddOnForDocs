@@ -147,6 +147,16 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **No more dead end at "Choose a more specific ref".** Typing a whole book or
+  section heading (*Mishneh Torah*, *Shulchan Arukh, Orach Chayim*) listed it as
+  a direct library match, and picking it stopped at "Choose a more specific
+  ref" with nothing to do but start over. A direct match with no text of its own
+  is now left out of the results (along with a title match for the same
+  heading), and a note under the search box says what to add — a chapter, a
+  siman, a verse. If you still reach one (a Sefaria link, a title match the
+  search couldn't check), the sidebar shows the notice for a moment, then goes
+  back to your results with that entry removed, nothing selected, and the cursor
+  in the search box.
 - **Titles no longer have to be punctuated exactly.** Sefaria's title is
   *The Torah; A Women's Commentary* — with a semicolon — and the reference
   lookup only matched that exact punctuation, so

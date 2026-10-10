@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **281 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **296 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -136,6 +136,10 @@ and fix it before touching the feature you came to change.
 - `search-input-normalization.test.js` — query normalization, punctuation-blind
   title matching, the close-match suggester, and that as-you-type search never
   rewrites the search box.
+- `non-insertable-results.test.js` — a book or section heading with no text
+  of its own is never listed as a direct match; picking one anyway returns to
+  the results (entry removed, nothing selected) after a short notice, unless the
+  reader has already moved on.
 - `citation-abbreviations.test.js` — traditional citation forms
   ("Hil. Shabbat 1:1").
 - `linker-prefilter.test.js` — what leaves the machine, and offset
