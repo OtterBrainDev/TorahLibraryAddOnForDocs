@@ -156,8 +156,11 @@ and fix it before touching the feature you came to change.
   discard, or keep only the emphasized words (what "keep only" removes, and
   what it keeps: line markers, punctuation, unemphasized paragraphs).
 - `multi-version-insert.test.js` — multi-translation insert: one title per
-  block, blank-line separation, empty translations skipped; HTML-entity
-  decoding (`&thinsp;` and friends).
+  block, blank-line separation, empty translations skipped, every block
+  formatted like the first; HTML-entity decoding (`&thinsp;` and friends).
+- `translation-language-typography.test.js` — per-language translation
+  formatting: stored entries cleaned, the translation's language read from
+  Sefaria's payload, and only that language's blocks reformatted.
 - `insertion-target.test.js` — where an insert goes: after the cursor's
   block, inside a table cell for paragraph layouts, below the table (with a
   notice) for side-by-side layouts, never into a header, footer or footnote.

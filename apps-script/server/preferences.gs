@@ -62,6 +62,7 @@ const SETTINGS = [
   "translation_font_size",
   "translation_font_style",
   "preferred_translation_language",
+  "translation_language_typography",
   "transliteration_font",
   "transliteration_font_size",
   "transliteration_font_style",
@@ -193,6 +194,11 @@ function getDefaultPreferences() {
     translation_font: "",
     translation_font_size: "",
     translation_font_style: "normal",
+    // Translation formatting for particular languages (Preferences → Fonts →
+    // Translation → Advanced), as JSON: {"fr": {font, size, style}, ...}.
+    // "{}" means every language uses the Translation settings above. An empty
+    // font or size in an entry also falls back to them.
+    translation_language_typography: "{}",
     transliteration_font: "",
     transliteration_font_size: "",
     transliteration_font_style: "italic",
@@ -479,6 +485,9 @@ function getTypographySettings() {
   return {
     roles: roles,
     titleHeading: titleHeading,
+    translationLanguages: normalizeTranslationLanguageTypography_(
+      userProperties.getProperty("translation_language_typography")
+    ),
 
     // Flat aliases kept for the existing call sites. `roles` is the shape new
     // code should read; these mirror it so nothing had to change at once.
@@ -506,3 +515,40 @@ function getTypographySettings() {
   };
 }
 
+
+var TRANSLATION_STYLE_FLAGS_ = ["bold", "italic", "underline"];
+
+/**
+ * The stored `translation_language_typography` JSON, cleaned: language codes
+ * ("fr", "lad") to {font, size, style}. font "" and size null mean "as the
+ * Translation settings"; style is "normal" or comma-separated flags. Anything
+ * malformed is dropped, so a bad value only ever means "no override".
+ */
+function normalizeTranslationLanguageTypography_(raw) {
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw || "{}");
+    } catch (error) {
+      return {};
+    }
+  }
+  const out = {};
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return out;
+  Object.keys(parsed).forEach(function (key) {
+    const lang = String(key).trim().toLowerCase();
+    const entry = parsed[key];
+    if (!/^[a-z]{2,3}$/.test(lang) || lang === "he" || !entry || typeof entry !== "object") return;
+    const size = Number(entry.size);
+    const flags = String(entry.style || "").split(",")
+      .map(function (flag) { return flag.trim().toLowerCase(); })
+      .filter(function (flag, i, all) { return TRANSLATION_STYLE_FLAGS_.indexOf(flag) >= 0 && all.indexOf(flag) === i; })
+      .sort();
+    out[lang] = {
+      font: String(entry.font == null ? "" : entry.font).trim().slice(0, 100),
+      size: entry.size !== "" && entry.size != null && size > 0 && size <= 400 ? size : null,
+      style: flags.length ? flags.join(",") : "normal"
+    };
+  });
+  return out;
+}

@@ -16,8 +16,8 @@ function fakeParagraph(initial) {
     setBold() { return textApi; },
     setItalic() { return textApi; },
     setUnderline() { return textApi; },
-    setFontFamily() { return textApi; },
-    setFontSize() { return textApi; },
+    setFontFamily(s, e, font) { p.attrs.FONT_FAMILY = font; return textApi; },
+    setFontSize(s, e, size) { p.attrs.FONT_SIZE = size; return textApi; },
     setForegroundColor() { return textApi; },
     setBackgroundColor() { return textApi; },
     setLinkUrl(url) { p.link = url; return textApi; },
@@ -36,12 +36,27 @@ function fakeParagraph(initial) {
   return para;
 }
 
-function loadInsertion({ resolved }) {
+// Like Docs, a new paragraph takes its font and size from the paragraph before
+// it: that is what made later blocks of a multi-version insert pick up the
+// previous block's 8pt attribution line.
+const INHERITED_ATTRIBUTES = ['FONT_FAMILY', 'FONT_SIZE'];
+
+function loadInsertion({ resolved, typography }) {
   const children = [];
   const body = {
     getNumChildren() { return children.length; },
     getChild(i) { return children[i]; },
-    insertParagraph(i, text) { const p = fakeParagraph(text); children.splice(i, 0, p); return p; },
+    insertParagraph(i, text) {
+      const p = fakeParagraph(text);
+      const before = children[i - 1];
+      if (before) {
+        INHERITED_ATTRIBUTES.forEach((key) => {
+          if (before._state.attrs[key] !== undefined) p._state.attrs[key] = before._state.attrs[key];
+        });
+      }
+      children.splice(i, 0, p);
+      return p;
+    },
   };
   const context = {
     console,
@@ -53,8 +68,9 @@ function loadInsertion({ resolved }) {
     },
     PropertiesService: { getUserProperties() { return { getProperty() { return null; } }; } },
     findReference(ref, versions) { return resolved[versions.en] || null; },
-    getTypographySettings() { return { roles: {} }; },
+    getTypographySettings() { return typography ? JSON.parse(JSON.stringify(typography)) : { roles: {} }; },
     formatDataForPesukim(d) { return d; },
+    normalizeSourceEmphasisMode_(mode) { return mode || 'keep'; },
     getEnglishAttributionLines(d) { return ['Translation: ' + d.versionTitle]; },
   };
   vm.createContext(context);
@@ -170,4 +186,42 @@ test('inserted Hebrew body carries no literal &thinsp;', () => {
   });
   ctx.insertReferenceVersions('Genesis 1:1', { versionTitles: ['Koren'], bilingualLayout: 'he-top' });
   assert.ok(!texts().some((t) => t.includes('&thinsp;')), texts().join(' | '));
+});
+
+test('every block of a multi-version insert gets the same formatting as the first', () => {
+  // Fonts on "Match the document" with nothing to copy: the add-on sets no
+  // font or size, so each title shows what it inherits. Inserted first to last,
+  // the second title inherited the first block's 8pt attribution line.
+  const { ctx, children } = loadInsertion({ resolved });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], singleLanguage: 'en', includeTranslationSourceInfo: true,
+  });
+  const attrsOf = (text) => children.find((c) => c._state.text === text)._state.attrs;
+  const first = attrsOf('Genesis 1:1 (Koren)');
+  const second = attrsOf('Genesis 1:1 (JPS)');
+  assert.equal(attrsOf('Translation: Koren').FONT_SIZE, 8, 'the attribution line is 8pt');
+  assert.equal(second.FONT_SIZE, first.FONT_SIZE, 'second title inherited a different size');
+  assert.equal(attrsOf('When God began').FONT_SIZE, attrsOf('In the beginning').FONT_SIZE);
+});
+
+test('a translation in a language with its own formatting gets it; the others keep the Translation settings', () => {
+  const role = (font, size, style) => ({ font, size, style, color: null, background: null });
+  const typography = {
+    roles: {
+      translation: role('Georgia', 12, 'normal'),
+      sourceTitle: role('', null, 'normal'),
+      sefariaLink: role('', null, 'underline'),
+    },
+    titleHeading: 'normal',
+    translationLanguages: { fr: { font: 'Garamond', size: null, style: 'italic' } },
+  };
+  const french = Object.assign({}, resolved.JPS, { versionTitle: 'Bible du Rabbinat [fr]', text: 'Au commencement' });
+  const { ctx, children } = loadInsertion({ resolved: { Koren: resolved.Koren, 'Bible du Rabbinat [fr]': french }, typography });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'Bible du Rabbinat [fr]'], singleLanguage: 'en',
+  });
+  const attrsOf = (text) => children.find((c) => c._state.text === text)._state.attrs;
+  assert.equal(attrsOf('In the beginning').FONT_FAMILY, 'Georgia');
+  assert.equal(attrsOf('Au commencement').FONT_FAMILY, 'Garamond');
+  assert.equal(attrsOf('Au commencement').FONT_SIZE, 12, 'an empty size keeps the Translation size');
 });

@@ -38,6 +38,11 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **Several translations at once are all formatted alike.** Inserting more
+  than one translation of a source gave only the first one your formatting.
+  With fonts on *Match the document* (the default), the second and later
+  translations, their titles included, took on the small italic size of the
+  credit line above them. Every translation block now looks like the first.
 - **Inserting from inside a table now works, and says what it did.** With
   the cursor in a table cell, the source used to land somewhere else in the
   document without a word, and the same went for Voices sheets and Lexicon
@@ -86,6 +91,14 @@ heading until the next release consolidates it.
 
 #### Added
 
+- **Formatting for specific translation languages** (Preferences → Fonts →
+  Translation → *Advanced: formatting for specific languages*). Pick a
+  language to add it to the list, then give it its own font, size and style:
+  say, a different font for French translations. Languages you don't add keep
+  the Translation settings, and so does a blank font or size. **Remove** takes
+  a language back to them. It applies wherever a translation is inserted:
+  one translation, several at once, Stacked and side-by-side layouts, and
+  Link Texts.
 - **Customize this insertion, in Link Texts' review.** A collapsible panel
   under the review table has the same controls as the sidebar's 📰 Layout
   tray: Display, Layout, vowels, cantillation, transliteration, the linked
@@ -192,6 +205,13 @@ heading until the next release consolidates it.
   `search_corpus_excluded`, both defaulting to `"[]"` — the built-in order with
   nothing hidden. Upgrading users lose no results, and a stored value is never
   overwritten.
+
+### Preference migration (schema 16)
+
+- **Preference schema v16** adds `translation_language_typography`, a JSON
+  map from a translation language to its own font, size and style. It
+  defaults to `"{}"`: no language has its own formatting, so no translation
+  looks different after upgrading. A stored value is never overwritten.
 
 ## v2.1.0 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
 
