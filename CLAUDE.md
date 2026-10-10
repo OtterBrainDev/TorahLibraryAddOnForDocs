@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **281 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **303 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -173,6 +173,10 @@ and fix it before touching the feature you came to change.
   notice) for side-by-side layouts, never into a header, footer or footnote.
 - `sefaria-unavailable.test.js` — "couldn't reach Sefaria" and a find-refs
   timeout throw, instead of reading as "no match" / "no citations".
+- `translation-availability.test.js` — a translation with no text for the
+  passage is left out of the version list (greyed out with "Show unavailable
+  translations"), languages hidden in Preferences → Search are left out, and a
+  failed availability lookup hides nothing.
 - `rich-text-markup.test.js` — Sefaria markup with any attributes (Shulchan
   Arukh's commentary anchors) inserts without throwing; a source with one
   language inserts that language alone, with its title's entities decoded.

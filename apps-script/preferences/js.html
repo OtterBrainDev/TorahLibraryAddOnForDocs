@@ -667,6 +667,7 @@
               renderOverrideGrid();
               renderOverrideList();
               loadCorpusOrderFromFields();
+              loadTranslationLanguagesFromField();
               syncExperimentalChildToggles();
               syncLinkerInsertToggle();
               loadMenuLayoutEditor(preferences.menu_layout);
@@ -1061,6 +1062,51 @@
       });
 
       renderCorpusOrderList();
+    }
+
+    // ── Translation languages (Search tab) ──────────────────────────────────
+    // The ticked boxes are the shown languages; what is stored is the hidden
+    // list, in the hidden_translation_languages input, so collectPreferenceObject()
+    // saves it. The boxes have no name, so they are not saved themselves.
+
+    function syncTranslationLanguageField() {
+      const hidden = [];
+      document.querySelectorAll('#translation-language-pref-grid input[type="checkbox"]').forEach(function(box) {
+        if (!box.checked) hidden.push(box.value);
+      });
+      byId('hidden_translation_languages').value = JSON.stringify(hidden);
+    }
+
+    function loadTranslationLanguagesFromField() {
+      const hidden = normalizeHiddenTranslationLanguages(byId('hidden_translation_languages').value);
+      document.querySelectorAll('#translation-language-pref-grid input[type="checkbox"]').forEach(function(box) {
+        box.checked = hidden.indexOf(box.value) < 0;
+      });
+      syncTranslationLanguageField();
+    }
+
+    function initTranslationLanguageGrid() {
+      const grid = byId('translation-language-pref-grid');
+      if (!grid) return;
+      TRANSLATION_LANGUAGE_CATALOG.forEach(function(entry) {
+        const label = document.createElement('label');
+        label.className = 'translation-language-pref-row';
+        const box = document.createElement('input');
+        box.type = 'checkbox';
+        box.value = entry.code;
+        box.checked = true;
+        const text = document.createElement('span');
+        text.textContent = entry.label;
+        label.appendChild(box);
+        label.appendChild(text);
+        grid.appendChild(label);
+      });
+      grid.addEventListener('change', syncTranslationLanguageField);
+      byId('translation-language-pref-reset').addEventListener('click', function() {
+        grid.querySelectorAll('input[type="checkbox"]').forEach(function(box) { box.checked = true; });
+        syncTranslationLanguageField();
+      });
+      syncTranslationLanguageField();
     }
 
     // ── Button-group helpers (Display & Insertion Defaults sections) ────────
@@ -1506,6 +1552,7 @@
     initMenuLayoutEditor();
     bindColorControls();
     initCorpusOrderList();
+    initTranslationLanguageGrid();
     _initPreferencesCompositionCard();
     _initPreferencesInsertionOptions();
     loadPreferencesIntoForm();

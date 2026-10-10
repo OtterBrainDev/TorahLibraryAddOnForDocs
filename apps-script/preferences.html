@@ -913,6 +913,39 @@
               </div>
             </div>
           </details>
+
+          <details class="section-card section-accordion" id="search-translation-languages" name="search-translation-languages" open>
+            <summary class="section-card-summary"><span>Translation Languages</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Choose which translation languages the sidebar offers. An unticked language is left out of the search language filter and out of the list of translation versions. All are shown by default.</p>
+              <div class="subsection-card">
+                <div class="translation-language-pref-grid" id="translation-language-pref-grid" role="group" aria-label="Translation languages to show"></div>
+                <div class="corpus-order-footer">
+                  <div class="mini-help">The translation currently in the preview always stays listed.</div>
+                  <button type="button" class="small-button" id="translation-language-pref-reset">Show all languages</button>
+                </div>
+                <input type="hidden" id="hidden_translation_languages" name="hidden_translation_languages" value="[]">
+              </div>
+            </div>
+          </details>
+
+          <details class="section-card section-accordion" id="search-advanced" name="search-advanced">
+            <summary class="section-card-summary"><span>Advanced</span></summary>
+            <div class="section-card-body">
+              <div class="pref-field-group">
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Show unavailable translations</div>
+                    <div class="toggle-help">Sefaria lists every translation of a book, including ones that have no text for the passage you picked. They are left out by default. Turn this on to list them greyed out and marked &ldquo;no text for this passage&rdquo; &mdash; useful for finding gaps in Sefaria&rsquo;s data, its API, or this add-on&rsquo;s filters.</div>
+                  </div>
+                  <label class="switch" for="show_unavailable_translations">
+                    <input id="show_unavailable_translations" type="checkbox" name="show_unavailable_translations">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
 
 <? if (devFlags.SURPRISE_ME) { ?>

@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '15';
+var PREFS_SCHEMA_CURRENT_ = '16';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -158,6 +158,14 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // nothing is hidden — no existing results are gated off.
   if (from < 15) {
     migrateToV15_(userProperties);
+  }
+  // v15 -> v16: introduces `hidden_translation_languages` ("[]": every
+  // language stays listed) and `show_unavailable_translations` (false).
+  // The latter is a deliberate change for upgraders: translations with no
+  // text for the passage used to be listed as if they had some, and are now
+  // left out. Nothing that inserted text before stops inserting it.
+  if (from < 16) {
+    migrateToV16_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -391,6 +399,27 @@ function migrateToV15_(userProperties) {
   }
   if (userProperties.getProperty('search_corpus_excluded') == null) {
     userProperties.setProperty('search_corpus_excluded', '[]');
+  }
+  return true;
+}
+
+/**
+ * V16: translation-list preferences.
+ *
+ * - `hidden_translation_languages`: JSON array of language codes left out of
+ *   the sidebar's search language filter and translation version list. "[]"
+ *   hides nothing, so upgraders see every language they saw before.
+ * - `show_unavailable_translations`: false. A translation listed for the book
+ *   but empty for the passage (Yiddish on Deuteronomy 6:4) was offered as if
+ *   it had text, and picking it inserted nothing. It is now left out; true
+ *   lists it greyed out. A stored value is never overwritten.
+ */
+function migrateToV16_(userProperties) {
+  if (userProperties.getProperty('hidden_translation_languages') == null) {
+    userProperties.setProperty('hidden_translation_languages', '[]');
+  }
+  if (userProperties.getProperty('show_unavailable_translations') == null) {
+    userProperties.setProperty('show_unavailable_translations', 'false');
   }
   return true;
 }

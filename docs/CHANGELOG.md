@@ -193,6 +193,41 @@ heading until the next release consolidates it.
   nothing hidden. Upgrading users lose no results, and a stored value is never
   overwritten.
 
+### Translation versions
+
+#### Fixed
+
+- **Translations with no text for the passage are no longer offered.**
+  Sefaria lists every translation of a *book*, so a translation that covers only
+  part of it — the Yiddish on Deuteronomy 6:4 — appeared in *Translation
+  versions* for every verse, looking like any other, and only turned out to be
+  empty once picked. The sidebar now asks Sefaria which versions have text for
+  the exact passage (once per passage, after the preview loads, so the preview
+  is not slowed) and leaves the empty ones out. The *N available* count counts
+  only what is listed. If that lookup fails, nothing is hidden.
+
+#### Added
+
+- **Show unavailable translations** (Preferences → *Search* → *Advanced*, off by
+  default). Lists the empty translations anyway, greyed out and marked
+  *unavailable for this ref* — for tracking down gaps in Sefaria's data, its
+  API, or this add-on's filters.
+- **Choose which translation languages to show** (Preferences → *Search* →
+  *Translation Languages*, all shown by default). An unticked language is left
+  out of the sidebar's search language filter and out of *Translation
+  versions*. If that would leave a passage with no translations, they are all
+  listed.
+
+#### Migration
+
+- **⚠ Preference schema v16 changes what upgrading users see.** It adds
+  `show_unavailable_translations`, seeded `false`: translations with no text
+  for the passage, which every user saw listed before, are now left out of the
+  version list. Nothing that inserted text stops inserting it — those versions
+  never had any. Turn the new setting on to list them again (greyed out). It
+  also adds `hidden_translation_languages`, seeded `"[]"`, so every language
+  stays listed. A stored value is never overwritten.
+
 ## v2.1.0 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
 
 Highlights: Link Texts with Sefaria shows its progress, asks about ambiguous

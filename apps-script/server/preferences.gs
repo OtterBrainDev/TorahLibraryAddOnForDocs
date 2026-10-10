@@ -50,6 +50,8 @@ const SETTINGS = [
   "last_search_relevance_sort",
   "search_corpus_order",
   "search_corpus_excluded",
+  "hidden_translation_languages",
+  "show_unavailable_translations",
   "meforash_replace",
   "meforash_replacement",
   "nekudot",
@@ -182,6 +184,12 @@ function getDefaultPreferences() {
     // then Sefaria's library order); "[]" exclusions hides nothing.
     search_corpus_order: "[]",
     search_corpus_excluded: "[]",
+    // Translation languages left out of the search language filter and the
+    // translation version list (JSON array of codes). "[]" shows them all.
+    hidden_translation_languages: "[]",
+    // Translations with no text for the passage are left out of the version
+    // list; true lists them greyed out instead (for diagnosing Sefaria data).
+    show_unavailable_translations: false,
     meforash_replace: true,
     meforash_replacement: "יי",
     nekudot: true,
