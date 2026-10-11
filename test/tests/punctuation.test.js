@@ -145,7 +145,7 @@ test('both keys are client-writable, default to on, are seeded on install and mi
   assert.equal(props.store.translation_punctuation, 'true');
 
   const migrations = read('apps-script/migrations.gs');
-  assert.match(migrations, /function migrateToV17_\(/);
+  assert.match(migrations, /function migrateToV18_\(/);
   assert.match(migrations, /getProperty\('hebrew_punctuation'\) == null/);
   assert.match(migrations, /getProperty\('translation_punctuation'\) == null/);
 });

@@ -345,6 +345,26 @@ test('v15 migration seeds search corpus order/exclusions with "[]" for upgraders
   assert.equal(userProperties.getProperty('search_corpus_excluded'), '[]');
 });
 
+test('v17 migration seeds the translation-list preferences for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '16' });
+  assert.equal(context.runUserPreferenceMigrationsIfNeeded_(), true);
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // Every language stays listed; empty translations are left out (CHANGELOG).
+  assert.equal(userProperties.getProperty('hidden_translation_languages'), '[]');
+  assert.equal(userProperties.getProperty('show_unavailable_translations'), 'false');
+});
+
+test('v17 migration does not clobber explicit translation-list values', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '16',
+    hidden_translation_languages: '["yi"]',
+    show_unavailable_translations: 'true',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('hidden_translation_languages'), '["yi"]');
+  assert.equal(userProperties.getProperty('show_unavailable_translations'), 'true');
+});
+
 test('v15 migration does not clobber an explicit corpus order or exclusion list', () => {
   const { context, userProperties } = loadMigrations({
     prefs_schema_version: '14',
@@ -374,8 +394,8 @@ test('v16 migration does not clobber stored per-language translation formatting'
   assert.equal(userProperties.getProperty('translation_language_typography'), stored);
 });
 
-test('v17 migration turns Hebrew and translation punctuation on for upgraders', () => {
-  const { context, userProperties } = loadMigrations({ prefs_schema_version: '16' });
+test('v18 migration turns Hebrew and translation punctuation on for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '17' });
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
   // "true": punctuation shown, as every insert before this setting had it.
@@ -383,9 +403,9 @@ test('v17 migration turns Hebrew and translation punctuation on for upgraders', 
   assert.equal(userProperties.getProperty('translation_punctuation'), 'true');
 });
 
-test('v17 migration never overwrites an explicit "false"', () => {
+test('v18 migration never overwrites an explicit "false"', () => {
   const { context, userProperties } = loadMigrations({
-    prefs_schema_version: '16',
+    prefs_schema_version: '17',
     hebrew_punctuation: 'false',
     translation_punctuation: 'false',
   });
@@ -394,15 +414,15 @@ test('v17 migration never overwrites an explicit "false"', () => {
   assert.equal(userProperties.getProperty('translation_punctuation'), 'false');
 });
 
-test('v18 migration stores "one row per line" off for upgraders, so side-by-side tables look as before', () => {
-  const { context, userProperties } = loadMigrations({ prefs_schema_version: '17' });
+test('v19 migration stores "one row per line" off for upgraders, so side-by-side tables look as before', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '18' });
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
   assert.equal(userProperties.getProperty('bilingual_aligned_rows'), 'false');
 });
 
-test('v18 migration does not clobber a stored "one row per line"', () => {
-  const { context, userProperties } = loadMigrations({ prefs_schema_version: '17', bilingual_aligned_rows: 'true' });
+test('v19 migration does not clobber a stored "one row per line"', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '18', bilingual_aligned_rows: 'true' });
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('bilingual_aligned_rows'), 'true');
 });

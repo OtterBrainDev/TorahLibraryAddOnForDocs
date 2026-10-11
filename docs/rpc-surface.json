@@ -48,6 +48,11 @@
       "definedIn": "apps-script/server/menu.gs"
     },
     {
+      "name": "getTranslationAvailability",
+      "arity": 1,
+      "definedIn": "apps-script/server/sefaria-fetch.gs"
+    },
+    {
       "name": "insertLexiconEntry",
       "arity": 1,
       "definedIn": "apps-script/server/lexicon.gs"

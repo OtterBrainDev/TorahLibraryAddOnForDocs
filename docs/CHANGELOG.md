@@ -9,7 +9,7 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
-> **Preference migration (schema 18).** New preference
+> **Preference migration (schema 19).** New preference
 > `bilingual_aligned_rows`, default `false`. Upgrading users are migrated on
 > first open to `false` (only when unset), which is the one-row side-by-side
 > table every insert has had, so **no existing output changes**. It is a new
@@ -27,7 +27,7 @@ heading until the next release consolidates it.
   each row's own Hebrew. Sources whose text can't be split into lines still
   insert as one row.
 
-> **Preference migration (schema 17).** Two new preferences,
+> **Preference migration (schema 18).** Two new preferences,
 > `hebrew_punctuation` and `translation_punctuation`, both default to `true`
 > (punctuation shown). Upgrading users are migrated on first open: each key is
 > set to `true` only if it has no stored value, so an explicit `false` is never
@@ -78,6 +78,13 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **A range across chapters shows where each chapter starts.** With line
+  numbers on, Genesis 1:31–2:3 read "(31) … (1) … (2) … (3)", with nothing to
+  say the numbers had restarted. Each chapter now gets a heading line in the
+  text's own terms ("Chapter 2" / "פרק ב", "Daf 2b" / "דף ב ע״ב"), in the
+  Hebrew and the translation alike. *Keep only* bold and italics keeps the
+  headings, and a transliteration's verse numbers restart with the chapter
+  too. Inserting several translations of such a range no longer fails.
 - **Several translations at once are all formatted alike.** Inserting more
   than one translation of a source gave only the first one your formatting.
   With fonts on *Match the document* (the default), the second and later
@@ -200,6 +207,16 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **No more dead end at "Choose a more specific ref".** Typing a whole book or
+  section heading (*Mishneh Torah*, *Shulchan Arukh, Orach Chayim*) listed it as
+  a direct library match, and picking it stopped at "Choose a more specific
+  ref" with nothing to do but start over. A direct match with no text of its own
+  is now left out of the results (along with a title match for the same
+  heading), and a note under the search box says what to add — a chapter, a
+  siman, a verse. If you still reach one (a Sefaria link, a title match the
+  search couldn't check), the sidebar shows the notice for a moment, then goes
+  back to your results with that entry removed, nothing selected, and the cursor
+  in the search box.
 - **Titles no longer have to be punctuated exactly.** Sefaria's title is
   *The Torah; A Women's Commentary* — with a semicolon — and the reference
   lookup only matched that exact punctuation, so
@@ -252,6 +269,41 @@ heading until the next release consolidates it.
   map from a translation language to its own font, size and style. It
   defaults to `"{}"`: no language has its own formatting, so no translation
   looks different after upgrading. A stored value is never overwritten.
+
+### Translation versions
+
+#### Fixed
+
+- **Translations with no text for the passage are no longer offered.**
+  Sefaria lists every translation of a *book*, so a translation that covers only
+  part of it — the Yiddish on Deuteronomy 6:4 — appeared in *Translation
+  versions* for every verse, looking like any other, and only turned out to be
+  empty once picked. The sidebar now asks Sefaria which versions have text for
+  the exact passage (once per passage, after the preview loads, so the preview
+  is not slowed) and leaves the empty ones out. The *N available* count counts
+  only what is listed. If that lookup fails, nothing is hidden.
+
+#### Added
+
+- **Show unavailable translations** (Preferences → *Search* → *Advanced*, off by
+  default). Lists the empty translations anyway, greyed out and marked
+  *unavailable for this ref* — for tracking down gaps in Sefaria's data, its
+  API, or this add-on's filters.
+- **Choose which translation languages to show** (Preferences → *Search* →
+  *Translation Languages*, all shown by default). An unticked language is left
+  out of the sidebar's search language filter and out of *Translation
+  versions*. If that would leave a passage with no translations, they are all
+  listed.
+
+#### Migration
+
+- **⚠ Preference schema v17 changes what upgrading users see.** It adds
+  `show_unavailable_translations`, seeded `false`: translations with no text
+  for the passage, which every user saw listed before, are now left out of the
+  version list. Nothing that inserted text stops inserting it — those versions
+  never had any. Turn the new setting on to list them again (greyed out). It
+  also adds `hidden_translation_languages`, seeded `"[]"`, so every language
+  stays listed. A stored value is never overwritten.
 
 ## v2.1.0 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
 

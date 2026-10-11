@@ -29,17 +29,27 @@ test('pairs each verse with its translation, numbered like formatDataForPesukim'
   const ctx = loadPure();
   const pairs = ctx.buildAlignedLinePairs_({ he: ['א1', 'א2'], text: ['e1', 'e2'], sections: [1, 5] }, true);
   assert.deepEqual(plain(pairs), [
-    { he: '(ה) א1', en: '(5) e1', heRaw: 'א1', number: 5 },
-    { he: '(ו) א2', en: '(6) e2', heRaw: 'א2', number: 6 },
+    { he: '(ה) א1', en: '(5) e1', heRaw: 'א1', number: 5, heading: false },
+    { he: '(ו) א2', en: '(6) e2', heRaw: 'א2', number: 6, heading: false },
   ]);
   const unmarked = ctx.buildAlignedLinePairs_({ he: ['א1'], text: ['e1'], sections: [1, 5] }, false);
-  assert.deepEqual(plain(unmarked), [{ he: 'א1', en: 'e1', heRaw: 'א1', number: null }]);
+  assert.deepEqual(plain(unmarked), [{ he: 'א1', en: 'e1', heRaw: 'א1', number: null, heading: false }]);
 });
 
-test('a spanning ref restarts the numbering at each later chapter', () => {
+test('a spanning ref gets a heading row per chapter and restarts the numbering', () => {
   const ctx = loadPure();
-  const pairs = ctx.buildAlignedLinePairs_({ isSpanning: true, sections: [1, 31], he: [['a'], ['b', 'c']], text: [['A'], ['B', 'C']] }, true);
-  assert.deepEqual(plain(pairs).map((p) => p.en), ['(31) A', '(1) B', '(2) C']);
+  const data = { isSpanning: true, sections: [1, 31], he: [['a'], ['b', 'c']], text: [['A'], ['B', 'C']] };
+  const pairs = plain(ctx.buildAlignedLinePairs_(data, true));
+  // The same headings formatDataForPesukim puts in the one-row layout.
+  assert.deepEqual(pairs.map((p) => [p.he, p.en]), [
+    ['פרק א', 'Chapter 1'], ['(לא) a', '(31) A'],
+    ['פרק ב', 'Chapter 2'], ['(א) b', '(1) B'], ['(ב) c', '(2) C'],
+  ]);
+  assert.deepEqual(pairs.map((p) => p.heading), [true, false, true, false, false]);
+  assert.equal(pairs[0].heRaw, '', 'a heading is not transliterated');
+  // Without line markers there are no headings, as in the one-row layout.
+  const unmarked = plain(ctx.buildAlignedLinePairs_(data, false));
+  assert.deepEqual(unmarked.map((p) => p.en), ['A', 'B', 'C']);
 });
 
 test('a language missing a segment leaves its cell blank', () => {

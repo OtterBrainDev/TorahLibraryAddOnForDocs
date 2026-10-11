@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **323 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **346 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -136,6 +136,10 @@ and fix it before touching the feature you came to change.
 - `search-input-normalization.test.js` — query normalization, punctuation-blind
   title matching, the close-match suggester, and that as-you-type search never
   rewrites the search box.
+- `non-insertable-results.test.js` — a book or section heading with no text
+  of its own is never listed as a direct match; picking one anyway returns to
+  the results (entry removed, nothing selected) after a short notice, unless the
+  reader has already moved on.
 - `citation-abbreviations.test.js` — traditional citation forms
   ("Hil. Shabbat 1:1").
 - `linker-prefilter.test.js` — what leaves the machine, and offset
@@ -183,6 +187,10 @@ and fix it before touching the feature you came to change.
 - `aligned-rows.test.js` — the side-by-side "Line by line" setting: each
   verse paired with its translation in its own table row (numbering, spanning
   refs, missing segments, per-row transliteration); off keeps one row.
+- `translation-availability.test.js` — a translation with no text for the
+  passage is left out of the version list (greyed out with "Show unavailable
+  translations"), languages hidden in Preferences → Search are left out, and a
+  failed availability lookup hides nothing.
 - `rich-text-markup.test.js` — Sefaria markup with any attributes (Shulchan
   Arukh's commentary anchors) inserts without throwing; a source with one
   language inserts that language alone, with its title's entities decoded.
