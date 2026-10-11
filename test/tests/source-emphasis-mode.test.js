@@ -114,6 +114,16 @@ test('keep only: the Steinsaltz Talmud keeps the Talmud\'s own words', () => {
   );
 });
 
+// A spanning range's chapter headings are ours, like the line markers.
+test('keep only: a spanning range\'s chapter headings stay whole', () => {
+  const html = 'Daf 2a\n(1) <b>MISHNA:</b> explanation\nDaf 2b\n(1) no bold here\n(2) intro <b>until dawn.</b>\n';
+  const { text, runs } = parse(html);
+  assert.equal(
+    applyEdits(text, ctx.planEmphasisOnlyEdits_(text, runs, ['Daf 2a', 'Daf 2b'])),
+    'Daf 2a\n(1) MISHNA:\nDaf 2b\n(2) until dawn.\n'
+  );
+});
+
 test('keep only: removed text between kept runs becomes exactly one space', () => {
   assert.equal(only('<b>one</b>two<b>three</b>'), 'one three');
   assert.equal(only('<b>one </b>two <b>three</b>'), 'one three');

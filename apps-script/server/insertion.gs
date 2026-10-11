@@ -78,15 +78,18 @@ const EMPHASIS_ONLY_SPACE_ = /[ \t\u00a0]/;
  * A paragraph with no emphasis anywhere is left whole: there is nothing to
  * choose by, and removing it (the Hebrew Gemara has no bold) would lose the
  * text rather than filter it.
+ * A line in `keepLines` (a spanning range's chapter headings, which are ours,
+ * like the line markers) is kept whole.
  *
  * @param {string} fullText
  * @param {Array<{start: number, end: number}>} runs  Emphasized ranges, end
  *        inclusive (captureEmphasisRuns_).
+ * @param {Array<string>} [keepLines]
  * @return {Array<{start: number, end: number, insert: string}>} Edits in
  *         descending order, so applying each leaves earlier offsets valid.
  *         `end < start` means insert only.
  */
-function planEmphasisOnlyEdits_(fullText, runs) {
+function planEmphasisOnlyEdits_(fullText, runs, keepLines) {
   const text = String(fullText || '');
   const n = text.length;
   if (!n || !Array.isArray(runs) || !runs.length) return [];
@@ -119,11 +122,12 @@ function planEmphasisOnlyEdits_(fullText, runs) {
     for (let i = lineStart; i < lineEnd; i++) {
       if (keep[i]) { emphasized = true; break; }
     }
+    const whole = Array.isArray(keepLines) && keepLines.indexOf(text.slice(lineStart, lineEnd).trim()) >= 0;
     lines.push({
       start: lineStart,
       end: lineEnd,
-      emphasized: emphasized,
-      removed: !emphasized && text.slice(lineStart, lineEnd).trim() !== ''
+      emphasized: emphasized && !whole,
+      removed: !emphasized && !whole && text.slice(lineStart, lineEnd).trim() !== ''
     });
     lineStart = lineEnd + 1;
   }
@@ -243,6 +247,8 @@ function applyEmphasisMapping_(text, start, end, mapping) {
  *        the emphasis on what is left.
  * @param {Object} [opts.emphasisMap]  {bold: mapping, italic: mapping}. When
  *        absent, source emphasis is re-asserted as itself.
+ * @param {Array<string>} [opts.keepLines]  Lines "only" keeps whole
+ *        (planEmphasisOnlyEdits_).
  */
 function applyTypographyToParagraph(paragraph, font, size, style, opts) {
   if (!paragraph) {
@@ -264,7 +270,7 @@ function applyTypographyToParagraph(paragraph, font, size, style, opts) {
   let emphasisRuns = emphasisMode === "discard" ? [] : captureEmphasisRuns_(text, len);
 
   if (emphasisMode === "only" && emphasisRuns.length) {
-    applyTextEdits_(text, planEmphasisOnlyEdits_(text.getText(), emphasisRuns));
+    applyTextEdits_(text, planEmphasisOnlyEdits_(text.getText(), emphasisRuns, options.keepLines));
     len = text.getText().length;
     if (len <= 0) {
       return;
@@ -339,7 +345,8 @@ function applyRoleTypography_(paragraph, typography, roleName, overrides) {
       background: role.background,
       preserveSourceEmphasis: extra.preserveSourceEmphasis === true,
       sourceEmphasisMode: typography ? typography.sourceEmphasisMode : undefined,
-      emphasisMap: typography ? typography.emphasisMap : null
+      emphasisMap: typography ? typography.emphasisMap : null,
+      keepLines: typography ? typography.sectionHeadingLines : null
     }
   );
 }
@@ -686,6 +693,7 @@ function insertReference(data, opts) {
   if (options.sourceEmphasisMode) {
     typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
   }
+  typography.sectionHeadingLines = data.sectionHeadingLines || [];
   const currentPrefs = getPreferences();
   const transliterationScheme = options.transliterationScheme || currentPrefs.transliteration_scheme || "traditional";
   const transliterationDageshMode = currentPrefs.transliteration_biblical_dagesh_mode || "none";
@@ -707,7 +715,10 @@ function insertReference(data, opts) {
       })
     : "";
   const transliterationText = (data.lineMarkersApplied && transliterationTextRaw)
-    ? normalizeTransliterationLineMarkersToGematria(transliterationTextRaw, (data.sections && data.sections[1]) ? data.sections[1] : 1)
+    ? normalizeTransliterationLineMarkersToGematria(transliterationTextRaw,
+        (Array.isArray(data.lineMarkerNumbers) && data.lineMarkerNumbers.length)
+          ? data.lineMarkerNumbers
+          : ((data.sections && data.sections[1]) ? data.sections[1] : 1))
     : transliterationTextRaw;
   const sefariaUrl = `https://www.sefaria.org/${encodeURIComponent(data.ref || '').replace(/%20/g, '_')}`;
 
@@ -1063,6 +1074,7 @@ function insertReferenceVersions(ref, opts) {
   if (singleLanguage !== 'en') {
     // Hebrew on top: insert Hebrew once from the first version, then each translation.
     let firstData = formatDataForPesukim(kept[0].data, includeLineMarkers);
+    typography.sectionHeadingLines = firstData.sectionHeadingLines || [];
     let heTitle = insertSefariaLink ? buildLinkedTitleText(firstData.heRef, firstData, 'he') : firstData.heRef;
     doc.insertParagraph(index, heTitle).setAttributes(headerStyle).setLeftToRight(false);
     let heTitlePara = doc.getChild(index).asParagraph();
@@ -1091,6 +1103,7 @@ function insertReferenceVersions(ref, opts) {
     index = blockStart;
 
     let d = formatDataForPesukim(kept[i].data, includeLineMarkers);
+    typography.sectionHeadingLines = d.sectionHeadingLines || [];
     let displayTitle = buildVersionBlockTitle_(preferredTitle || d.ref, kept[i].versionTitle, d, insertSefariaLink, kept.length);
     doc.insertParagraph(index, displayTitle).setAttributes(headerStyle).setLeftToRight(true);
     let titlePara = doc.getChild(index).asParagraph();
