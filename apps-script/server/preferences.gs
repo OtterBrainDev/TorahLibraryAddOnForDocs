@@ -44,6 +44,7 @@ const SETTINGS = [
   "emphasis_italic_font",
   "output_mode_default",
   "bilingual_layout_default",
+  "bilingual_aligned_rows",
   "last_translation_languages",
   "last_translation_only_filter",
   "last_search_sort_mode",
@@ -176,6 +177,10 @@ function getDefaultPreferences() {
     emphasis_italic_font: "",
     output_mode_default: "both",
     bilingual_layout_default: "he-right",
+    // Right–Left / Left–Right: true gives each line (verse) its own table row,
+    // beside its translation; false keeps the whole passage in one row, as
+    // side-by-side inserts always were.
+    bilingual_aligned_rows: false,
     last_translation_languages: JSON.stringify(["en"]),
     last_translation_only_filter: false,
     last_search_sort_mode: "relevance",

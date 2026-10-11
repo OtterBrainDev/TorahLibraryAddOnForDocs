@@ -583,6 +583,7 @@
               <?!= include('shared/insertion-options/markup') ?>
               <input type="hidden" id="output_mode_default" name="output_mode_default" value="both">
               <input type="hidden" id="bilingual_layout_default" name="bilingual_layout_default" value="he-right">
+              <input type="hidden" id="bilingual_aligned_rows" name="bilingual_aligned_rows" value="false">
               <div class="mini-help">Which text layers and layout to use when inserting a source.</div>
             </div>
           </details>

@@ -496,12 +496,12 @@
           'transliteration_scheme', 'nekudot', 'teamim', 'include_transliteration_default',
           'show_line_markers_default', 'include_translation_source_info',
           'insert_sefaria_link_default', 'insert_from_selection_replace',
-          'hebrew_punctuation', 'translation_punctuation'
+          'hebrew_punctuation', 'translation_punctuation', 'bilingual_aligned_rows'
         ];
         var ON_UNLESS_FALSE = ['nekudot', 'teamim', 'insert_from_selection_replace',
           'hebrew_punctuation', 'translation_punctuation'];
         var ON_IF_TRUE = ['include_transliteration_default', 'show_line_markers_default',
-          'include_translation_source_info', 'insert_sefaria_link_default'];
+          'include_translation_source_info', 'insert_sefaria_link_default', 'bilingual_aligned_rows'];
 
         function oneOf(value, allowed) {
           return allowed.indexOf(value) >= 0 ? value : allowed[0];
@@ -552,8 +552,13 @@
           initInsertionOptions({
             root: '#customize-root',
             getState: function () {
-              return { outputMode: custom.output_mode_default, layout: custom.bilingual_layout_default };
+              return {
+                outputMode: custom.output_mode_default,
+                layout: custom.bilingual_layout_default,
+                alignedRows: custom.bilingual_aligned_rows === 'true'
+              };
             },
+            onToggleAlignedRows: function () { flip('bilingual_aligned_rows'); refreshCustomizeState(); },
             onSelectDisplay: function (mode) { custom.output_mode_default = mode; refreshCustomizeState(); },
             onSelectLayout: function (layout) { custom.bilingual_layout_default = layout; refreshCustomizeState(); }
           });

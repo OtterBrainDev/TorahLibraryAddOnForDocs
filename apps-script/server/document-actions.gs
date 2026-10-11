@@ -668,6 +668,7 @@ function insertLinkedSourceAtPosition(ref, position, overrides) {
 var LINKER_INSERT_OVERRIDE_KEYS_ = {
   output_mode_default: ['en', 'he', 'both'],
   bilingual_layout_default: ['he-top', 'he-right', 'he-left'],
+  bilingual_aligned_rows: 'boolean',
   source_emphasis_mode: ['keep', 'discard', 'only'],
   transliteration_scheme: 'scheme',
   nekudot: 'boolean',
@@ -807,6 +808,7 @@ function buildLinkSourcesInsertOptions_(prefs) {
     singleLanguage: singleLanguage,
     pasukPreference: pasukPreference,
     bilingualLayout: bilingualLayout,
+    alignedRows: prefs.bilingual_aligned_rows == 'true' || prefs.bilingual_aligned_rows === true,
     includeTranslationSourceInfo: includeTranslationSourceInfo,
     insertSefariaLink: insertSefariaLink,
     includeTransliteration: includeTransliteration,

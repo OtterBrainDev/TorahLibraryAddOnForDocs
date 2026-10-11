@@ -9,6 +9,24 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+> **Preference migration (schema 18).** New preference
+> `bilingual_aligned_rows`, default `false`. Upgrading users are migrated on
+> first open to `false` (only when unset), which is the one-row side-by-side
+> table every insert has had, so **no existing output changes**. It is a new
+> layout to switch on, not a gate on an old behaviour.
+
+### Side-by-side layouts
+
+#### Added
+
+- **Line by line: one table row per verse.** With Right–Left or Left–Right,
+  the new **Line by line** button under Display & Layout (sidebar Layout tray,
+  Preferences → Insertion, Link Texts' *Customize this insertion*) gives each
+  verse or line its own row, beside its translation, so the two are easy to
+  compare. Line markers number each row as before; transliteration goes under
+  each row's own Hebrew. Sources whose text can't be split into lines still
+  insert as one row.
+
 > **Preference migration (schema 17).** Two new preferences,
 > `hebrew_punctuation` and `translation_punctuation`, both default to `true`
 > (punctuation shown). Upgrading users are migrated on first open: each key is

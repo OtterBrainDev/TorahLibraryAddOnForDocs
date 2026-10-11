@@ -512,4 +512,48 @@
 .layout-option[data-layout="he-top"] .layout-row.en {
   background: #1f3f75;
 }
+/* =============================================================
+   "LINE BY LINE" (#layout-rows-toggle): one table row per line for the
+   side-by-side layouts. Its own row under the pickers, outside
+   .display-layout-section so the dropdown panels still open right under
+   the triggers.
+   ============================================================= */
+
+.layout-rows-row {
+  display: flex;
+  justify-content: center;
+}
+
+.layout-rows-row:has(> .layout-rows-toggle:not([hidden])) {
+  margin-top: 8px;
+}
+
+.layout-rows-toggle {
+  height: 24px;
+  padding: 0 10px;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #d8d2c8;
+  border-radius: 999px;
+  color: #4a586b;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.layout-rows-toggle[hidden] {
+  display: none;
+}
+
+.layout-rows-toggle.is-on {
+  color: var(--sefaria-blue);
+  background: #e4edf8;
+  border-color: #b7c8e2;
+}
+
+.layout-rows-toggle:focus-visible {
+  outline: 2px solid rgba(31, 59, 104, 0.35);
+  outline-offset: 2px;
+}
 </style>

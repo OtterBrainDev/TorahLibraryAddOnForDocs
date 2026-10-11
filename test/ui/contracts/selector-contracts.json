@@ -13,7 +13,8 @@
       ".voices-insert-options",
       ".source-emphasis-mode",
       ".wants-hebrew-punctuation",
-      ".wants-translation-punctuation"
+      ".wants-translation-punctuation",
+      ".wants-aligned-rows"
     ]
   },
   "preferences": {
@@ -29,7 +30,8 @@
       "#menu-layout-quick-actions",
       "#source_emphasis_mode",
       "#hebrew_punctuation",
-      "#translation_punctuation"
+      "#translation_punctuation",
+      "#bilingual_aligned_rows"
     ]
   },
   "surprise_me": {
@@ -45,11 +47,7 @@
   "insertion_options": {
     "template": "apps-script/shared/insertion-options/markup.html",
     "requiredSelectors": [
-      "#display-choice-summary-text",
-      "#layout-choice-summary-text",
-      ".bilingual-layout-wrapper",
-      ".mode-card",
-      ".layout-option"
+      "#layout-rows-toggle"
     ]
   },
   "linker_results": {

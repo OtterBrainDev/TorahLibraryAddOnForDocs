@@ -393,3 +393,16 @@ test('v17 migration never overwrites an explicit "false"', () => {
   assert.equal(userProperties.getProperty('hebrew_punctuation'), 'false');
   assert.equal(userProperties.getProperty('translation_punctuation'), 'false');
 });
+
+test('v18 migration stores "one row per line" off for upgraders, so side-by-side tables look as before', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '17' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('bilingual_aligned_rows'), 'false');
+});
+
+test('v18 migration does not clobber a stored "one row per line"', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '17', bilingual_aligned_rows: 'true' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('bilingual_aligned_rows'), 'true');
+});

@@ -385,3 +385,75 @@ function formatDataForPesukim(data, pesukim) {
 
   return data;
 }
+
+/**
+ * For the side-by-side layouts' "one row per line" setting: pairs each Hebrew
+ * segment with its translation, so each pair can get its own table row. Call
+ * it on the payload as fetched, before formatDataForPesukim joins the
+ * segments into one string. Line markers are numbered as formatDataForPesukim
+ * numbers them (from the first requested verse; each later chapter of a
+ * spanning ref starts at 1).
+ *
+ * Returns null when the payload has no segments to pair (a single string, or
+ * segments nested deeper than chapters), so the caller falls back to one row
+ * for the whole passage. Segments the other language lacks are left blank.
+ *
+ * @return {Array<{he: string, en: string, heRaw: string, number: (number|null)}>|null}
+ *   he/en carry the line marker; heRaw is the Hebrew without it (for
+ *   transliteration); number is the verse number used for the marker.
+ */
+function buildAlignedLinePairs_(data, includeLineMarkers) {
+  if (!data || !Array.isArray(data.he) || !Array.isArray(data.text)) return null;
+  const rawFromVerse = Array.isArray(data.sections) ? data.sections[1] : undefined;
+  const fromVerse = Number(rawFromVerse) || 1;
+
+  // [{text, number}] for one language; null when it can't be split into lines.
+  function segmentsOf(value) {
+    const out = [];
+    if (data.isSpanning) {
+      let verse = fromVerse;
+      for (let c = 0; c < value.length; c++) {
+        const chapter = value[c];
+        if (Array.isArray(chapter)) {
+          for (let i = 0; i < chapter.length; i++) {
+            if (typeof chapter[i] !== 'string') return null;
+            out.push({ text: chapter[i], number: verse + i });
+          }
+          verse = 1;
+        } else if (typeof chapter === 'string') {
+          out.push({ text: chapter, number: null });
+        } else {
+          return null;
+        }
+      }
+      return out;
+    }
+    for (let i = 0; i < value.length; i++) {
+      if (typeof value[i] !== 'string') return null;
+      out.push({ text: value[i], number: fromVerse + i });
+    }
+    return out;
+  }
+
+  const he = segmentsOf(data.he);
+  const en = segmentsOf(data.text);
+  if (!he || !en || (!he.length && !en.length)) return null;
+
+  const markers = !!includeLineMarkers;
+  const pairs = [];
+  for (let i = 0; i < Math.max(he.length, en.length); i++) {
+    const h = he[i];
+    const e = en[i];
+    const number = h ? h.number : (e ? e.number : null);
+    const heRaw = h ? h.text : '';
+    const enRaw = e ? e.text : '';
+    const withMarker = markers && number != null;
+    pairs.push({
+      he: (withMarker && heRaw) ? '(' + gematriya(number, { punctuate: false }) + ') ' + heRaw : heRaw,
+      en: (withMarker && enRaw) ? '(' + number + ') ' + enRaw : enRaw,
+      heRaw: heRaw,
+      number: withMarker ? number : null
+    });
+  }
+  return pairs;
+}

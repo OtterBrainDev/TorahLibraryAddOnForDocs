@@ -204,11 +204,16 @@
         getState: function () {
           return {
             outputMode: byId('output_mode_default').value,
-            layout: byId('bilingual_layout_default').value
+            layout: byId('bilingual_layout_default').value,
+            alignedRows: byId('bilingual_aligned_rows').value === 'true'
           };
         },
         onSelectDisplay: function (mode) { setPrefButtonGroup('output_mode_default', mode); },
-        onSelectLayout: function (layout) { setPrefButtonGroup('bilingual_layout_default', layout); }
+        onSelectLayout: function (layout) { setPrefButtonGroup('bilingual_layout_default', layout); },
+        onToggleAlignedRows: function () {
+          var input = byId('bilingual_aligned_rows');
+          input.value = input.value === 'true' ? 'false' : 'true';
+        }
       });
     }
 
