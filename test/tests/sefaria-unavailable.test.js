@@ -38,6 +38,7 @@ function load(fetchImpl) {
     PropertiesService: { getUserProperties() { return { getProperty() { return null; } }; } },
     // The display and divine-name filters are pinned elsewhere; identity here.
     applyHebrewDisplayPreferences: (d) => d,
+    applyPunctuationPreferences: (d) => d,
     applyHebrewDivineNamePreferences: (d) => d,
     applyEnglishDivineNamePreference: () => {},
     expandCitationAbbreviations_: () => [],

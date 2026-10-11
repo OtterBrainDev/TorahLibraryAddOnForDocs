@@ -11,7 +11,10 @@
       "#sm-inline-term",
       "#voices-insert-mode",
       ".voices-insert-options",
-      ".source-emphasis-mode"
+      ".source-emphasis-mode",
+      ".wants-hebrew-punctuation",
+      ".wants-translation-punctuation",
+      ".wants-aligned-rows"
     ]
   },
   "preferences": {
@@ -25,7 +28,10 @@
       "#menu_layout",
       "#menu-layout-top",
       "#menu-layout-quick-actions",
-      "#source_emphasis_mode"
+      "#source_emphasis_mode",
+      "#hebrew_punctuation",
+      "#translation_punctuation",
+      "#bilingual_aligned_rows"
     ]
   },
   "surprise_me": {
@@ -41,11 +47,7 @@
   "insertion_options": {
     "template": "apps-script/shared/insertion-options/markup.html",
     "requiredSelectors": [
-      "#display-choice-summary-text",
-      "#layout-choice-summary-text",
-      ".bilingual-layout-wrapper",
-      ".mode-card",
-      ".layout-option"
+      "#layout-rows-toggle"
     ]
   },
   "linker_results": {
@@ -59,6 +61,16 @@
       "#customize-revert",
       "#customize-save",
       "#composition-card-container"
+    ]
+  },
+  "composition_card": {
+    "template": "apps-script/shared/composition-card/markup.html",
+    "requiredSelectors": [
+      "#cc-hebrew-punct-toggle",
+      "#cc-translation-punct-toggle",
+      "#cc-translation-preview",
+      ".cc-pill-row",
+      ".cc-translation"
     ]
   }
 }

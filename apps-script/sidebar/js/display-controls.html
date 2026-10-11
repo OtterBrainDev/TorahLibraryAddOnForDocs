@@ -8,7 +8,8 @@ initInsertionOptions({
   getState: function () {
     return {
       outputMode: $('.output-mode-selection').val(),
-      layout: $('.bilingual-layout-selection').val()
+      layout: $('.bilingual-layout-selection').val(),
+      alignedRows: $('.wants-aligned-rows').is(':checked')
     };
   },
   onSelectDisplay: function (mode) {
@@ -22,6 +23,11 @@ initInsertionOptions({
       updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
     }
     if (typeof applyMultiSelectMode === 'function') applyMultiSelectMode();
+  },
+  onToggleAlignedRows: function () {
+    var $el = $('.wants-aligned-rows');
+    $el.prop('checked', !$el.is(':checked'));
+    saveSidebarPreference({ bilingual_aligned_rows: $el.is(':checked') });
   }
 });
 

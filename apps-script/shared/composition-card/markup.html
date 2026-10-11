@@ -18,6 +18,10 @@
     <button type="button" class="cc-pill cc-pill--bottom" id="cc-vowels-toggle" aria-pressed="true" title="Toggle vowels">Vowels: On</button>
   </div>
 
+  <div class="cc-pill-row">
+    <button type="button" class="cc-pill" id="cc-hebrew-punct-toggle" aria-pressed="true" title="Toggle punctuation in the Hebrew">Punctuation: On</button>
+  </div>
+
   <div class="cc-translit-wrap">
     <button type="button" class="cc-pill cc-translit-pill" id="cc-translit-pill" aria-pressed="false" title="Toggle transliteration">Translit: Off</button>
     <button type="button" class="cc-translit-button" id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
@@ -34,7 +38,15 @@
     </div>
   </div>
 
-  <div class="cc-status" id="cc-status" data-cc-feature="status" aria-live="polite">Cantillation on · Vowels on · Transliteration: off</div>
+  <div class="cc-translation">
+    <div class="cc-translation-label">Translation</div>
+    <div class="cc-translation-text" id="cc-translation-preview" lang="en">the scroll, before all the people;</div>
+    <div class="cc-pill-row">
+      <button type="button" class="cc-pill" id="cc-translation-punct-toggle" aria-pressed="true" title="Toggle punctuation in the translation">Punctuation: On</button>
+    </div>
+  </div>
+
+  <div class="cc-status" id="cc-status" data-cc-feature="status" aria-live="polite">Cantillation on · Vowels on · Hebrew punctuation on · Transliteration: off · Translation punctuation on</div>
 </div>
 
 <div class="cc-secondary-pills" data-cc-feature="secondaryPills" aria-label="Secondary options">

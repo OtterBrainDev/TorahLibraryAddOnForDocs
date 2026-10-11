@@ -1,6 +1,6 @@
 <!--
   Display (Translation / Both / Original) and Layout (Stacked / Right–Left /
-  Left–Right): the first half of the insertion options, above the composition
+  Left–Right, and for those two, one table row per line): the first half of the insertion options, above the composition
   card. Shared by the sidebar's Layout tray and the Link Texts dialog's
   "Customize this insertion" panel. Behaviour: shared/insertion-options/js.html
   (initInsertionOptions); styles: shared/insertion-options/css.html.
@@ -32,4 +32,7 @@
       </button>
     </div>
   </details>
+</div>
+<div class="layout-rows-row">
+  <button type="button" class="layout-rows-toggle" id="layout-rows-toggle" aria-pressed="false" title="Right–Left and Left–Right: give each line its own table row, beside its translation" hidden>Line by line: Off</button>
 </div>

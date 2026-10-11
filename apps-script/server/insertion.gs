@@ -614,6 +614,10 @@ function buildLinkedTitleText(baseTitle, data, singleLanguage) {
  * @param {string|null} [opts.preferredTitle]           Override the title shown (e.g. "Bereishit").
  * @param {boolean} [opts.includeTranslationSourceInfo] Append translation attribution.
  * @param {string} [opts.bilingualLayout="he-right"]    Bilingual layout mode.
+ * @param {boolean} [opts.alignedRows]                  Side-by-side layouts: one table row per
+ *                                                      line (verse) instead of one for the whole
+ *                                                      passage; omitted means the stored
+ *                                                      `bilingual_aligned_rows`.
  * @param {boolean} [opts.insertSefariaLink]            Hyperlink the title to sefaria.org.
  * @param {boolean} [opts.includeTransliteration]       Include transliteration of the Hebrew.
  * @param {boolean} [opts.insertCitationOnly]           Insert just the citation title, no body.
@@ -641,6 +645,11 @@ function insertReference(data, opts) {
 
   let title = (preferredTitle) ? preferredTitle : data.ref;
   const includeLineMarkers = pasukPreference === true || pasukPreference === 'true';
+  // The segments as fetched: formatDataForPesukim joins them into one string,
+  // and "one row per line" needs them apart.
+  // A shallow copy keeps the fetched arrays (and the section names the
+  // chapter headings use) after formatDataForPesukim replaces them on `data`.
+  const segmentedData = Object.assign({}, data);
   data = formatDataForPesukim(data, includeLineMarkers);
   // heRef is inserted as plain text in most layouts, and Sefaria escapes
   // some titles (סידור רש&quot;י).
@@ -699,6 +708,8 @@ function insertReference(data, opts) {
   const transliterationDageshMode = currentPrefs.transliteration_biblical_dagesh_mode || "none";
   const transliterationIsBiblical = currentPrefs.transliteration_is_biblical_hebrew !== "false";
   const isBiblicalHebrewText = transliterationIsBiblical && data.type == "Tanakh";
+  const alignedRowsSetting = (options.alignedRows !== undefined) ? options.alignedRows : currentPrefs.bilingual_aligned_rows;
+  const alignedRows = alignedRowsSetting === true || alignedRowsSetting === 'true';
   const transliterationOverrides = (() => {
     try {
       return JSON.parse(currentPrefs.transliteration_overrides || '{}') || {};
@@ -835,10 +846,11 @@ function insertReference(data, opts) {
 
       appendCitationParagraph(heTopNextIndex);
     } else {
-      let cells = [
-        ["", ""],
-        ["", ""]
-      ];
+      // "One row per line": a row for each verse, so each line sits beside its
+      // translation. Falls back to one row for the whole passage when the
+      // source has no segments to pair.
+      const linePairs = alignedRows ? buildAlignedLinePairs_(segmentedData, includeLineMarkers) : null;
+      let cells = [["", ""]].concat(linePairs ? linePairs.map(() => ["", ""]) : [["", ""]]);
       let tableStyle = {};
           tableStyle[DocumentApp.Attribute.BOLD] = false;
       let table = doc.insertTable(index, cells)
@@ -870,23 +882,31 @@ function insertReference(data, opts) {
         hebTitle.editAsText().setLinkUrl(sefariaUrl);
       }
 
-      let engText = table.getCell(1, englishColumn)
-        .setText("")
-        .insertParagraph(0, "")
-        .setLeftToRight(true);
-      engText.setAttributes(nullStyle);
-      insertRichTextFromHTML(engText, data.text);
-      engText.setAttributes(noUnderline);
-      applyRoleTypography_(engText, typographyForTranslation_(typography, data), 'translation', { preserveSourceEmphasis: true });
+      const fillBodyRow = (row, englishHtml, hebrewHtml) => {
+        let engText = table.getCell(row, englishColumn)
+          .setText("")
+          .insertParagraph(0, "")
+          .setLeftToRight(true);
+        engText.setAttributes(nullStyle);
+        insertRichTextFromHTML(engText, englishHtml);
+        engText.setAttributes(noUnderline);
+        applyRoleTypography_(engText, typographyForTranslation_(typography, data), 'translation', { preserveSourceEmphasis: true });
 
-      let hebText = table.getCell(1, hebrewColumn)
-        .setText("")
-        .insertParagraph(0, "");
-      hebText.setLeftToRight(false);
-      hebText.setAttributes(nullStyle);
-      insertRichTextFromHTML(hebText, data.he);
-      hebText.setAttributes(noUnderline);
-      applyRoleTypography_(hebText, typography, 'hebrew', { preserveSourceEmphasis: true });
+        let hebText = table.getCell(row, hebrewColumn)
+          .setText("")
+          .insertParagraph(0, "");
+        hebText.setLeftToRight(false);
+        hebText.setAttributes(nullStyle);
+        insertRichTextFromHTML(hebText, hebrewHtml);
+        hebText.setAttributes(noUnderline);
+        applyRoleTypography_(hebText, typography, 'hebrew', { preserveSourceEmphasis: true });
+      };
+
+      if (linePairs) {
+        linePairs.forEach((pair, i) => fillBodyRow(i + 1, pair.en, pair.he));
+      } else {
+        fillBodyRow(1, data.text, data.he);
+      }
 
       let sideBySideNextIndex = index + 1;
 
@@ -907,7 +927,22 @@ function insertReference(data, opts) {
         }
       }
 
-      if (transliterationText) {
+      if (transliterationText && linePairs) {
+        // Each row's own transliteration, under its Hebrew.
+        linePairs.forEach((pair, i) => {
+          if (!pair.heRaw) return;
+          let rowTransliteration = transliterateHebrewHtmlPreservingBasicBreaks(pair.heRaw, transliterationScheme, {
+            keepNiqqud: true,
+            isBiblicalHebrew: isBiblicalHebrewText,
+            dageshMode: isBiblicalHebrewText ? transliterationDageshMode : "none",
+            overrideMap: transliterationOverrides
+          });
+          if (pair.number != null) {
+            rowTransliteration = "(" + gematriya(pair.number, { punctuate: false }) + ") " + rowTransliteration;
+          }
+          insertTransliterationIntoCell(table.getCell(i + 1, hebrewColumn), rowTransliteration, typography);
+        });
+      } else if (transliterationText) {
         insertTransliterationIntoCell(table.getCell(1, hebrewColumn), transliterationText, typography);
       }
     }

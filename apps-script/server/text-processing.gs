@@ -161,6 +161,128 @@ function applyEnglishDivineNamePreference(data, userProperties) {
   }
 }
 
+// Punctuation kept even with punctuation off: symbols a reader relies on
+// (percent, footnote asterisk, section and paragraph signs, daggers).
+const PUNCTUATION_ALWAYS_KEPT_ = '%#@&*§¶†‡';
+const PUNCTUATION_SPLIT_RE_ = /(<[^>]*>|&[#\w]+;)/;
+const PUNCTUATION_TAG_OR_ENTITY_RE_ = /^(?:<[^>]*>|&[#\w]+;)$/;
+const PUNCTUATION_CHAR_RE_ = /\p{P}/u;
+const PUNCTUATION_LETTER_RE_ = /\p{L}/u;
+const PUNCTUATION_HEBREW_LETTER_RE_ = /[א-ת]/;
+const PUNCTUATION_LATIN_LETTER_RE_ = /[A-Za-zÀ-ɏ]/;
+const PUNCTUATION_WORD_RE_ = /[\p{L}\p{N}\p{M}]/u;
+
+/** The base character before index `i`, skipping combining marks (niqqud). */
+function punctuationBaseBefore_(chars, i) {
+  for (let j = i - 1; j >= 0; j--) {
+    if (!/\p{M}/u.test(chars[j])) return chars[j];
+  }
+  return '';
+}
+
+/** Whether the punctuation mark at `i` carries meaning inside a word or number. */
+function isPunctuationKeptInContext_(chars, i) {
+  const ch = chars[i];
+  const before = punctuationBaseBefore_(chars, i);
+  const after = chars[i + 1] || '';
+  const letterBefore = PUNCTUATION_LETTER_RE_.test(before);
+  const letterAfter = PUNCTUATION_LETTER_RE_.test(after);
+  // ר' (abbreviation) and don't (contraction).
+  if (ch === "'" || ch === '’' || ch === '׳') {
+    return letterBefore && (letterAfter || PUNCTUATION_HEBREW_LETTER_RE_.test(before));
+  }
+  // רש"י
+  if (ch === '"' || ch === '״') {
+    return letterBefore && letterAfter;
+  }
+  // G-d
+  if (ch === '-') {
+    return PUNCTUATION_LATIN_LETTER_RE_.test(before) && PUNCTUATION_LATIN_LETTER_RE_.test(after);
+  }
+  // 3:16, 1,000, 2.5
+  if (ch === '.' || ch === ',' || ch === ':') {
+    return /\d/.test(before) && /\d/.test(after);
+  }
+  return false;
+}
+
+/** Strips punctuation from one run of plain text (no tags, no entities). */
+function stripPunctuationFromTextSegment_(segment) {
+  const chars = Array.from(segment.replace(/\{[פס]\}/g, ''));
+  const removed = chars.map(function(ch, i) {
+    return PUNCTUATION_CHAR_RE_.test(ch) &&
+      PUNCTUATION_ALWAYS_KEPT_.indexOf(ch) < 0 &&
+      !isPunctuationKeptInContext_(chars, i);
+  });
+  let out = '';
+  let i = 0;
+  while (i < chars.length) {
+    if (!removed[i]) {
+      out += chars[i];
+      i++;
+      continue;
+    }
+    // A run of removed marks ("3:16)—all"): if it joined two words, a space
+    // takes its place, so the maqaf in כָל־הָעָם becomes a word break.
+    let end = i;
+    while (end < chars.length && removed[end]) end++;
+    const before = chars[i - 1] || '';
+    const after = chars[end] || '';
+    if (PUNCTUATION_WORD_RE_.test(before) && PUNCTUATION_WORD_RE_.test(after)) {
+      out += ' ';
+    }
+    i = end;
+  }
+  return out;
+}
+
+/**
+ * Removes punctuation from Sefaria text for the "Punctuation: Off" settings.
+ * Tags and entities are left alone (insertRichTextFromHTML relies on the
+ * tags), as are marks that belong to a word or number: ר', רש"י, don't, G-d,
+ * 3:16, 1,000, and the symbols in PUNCTUATION_ALWAYS_KEPT_.
+ */
+function stripPunctuationFromText(value) {
+  if (typeof value !== 'string' || !value) return value;
+  const parts = value.split(PUNCTUATION_SPLIT_RE_);
+  let out = parts.map(function(part) {
+    return PUNCTUATION_TAG_OR_ENTITY_RE_.test(part) ? part : stripPunctuationFromTextSegment_(part);
+  }).join('');
+  out = out
+    .replace(/ {2,}/g, ' ')
+    .replace(/ ((?:<[^>]*>)+) /g, ' $1')
+    .replace(/ +\n/g, '\n');
+  if (!/^ /.test(value)) out = out.replace(/^ +/, '');
+  if (!/ $/.test(value)) out = out.replace(/ +$/, '');
+  return out;
+}
+
+function stripPunctuationDeep_(value) {
+  if (Array.isArray(value)) return value.map(stripPunctuationDeep_);
+  return stripPunctuationFromText(value);
+}
+
+/**
+ * Applies `hebrew_punctuation` (to `he`) and `translation_punctuation` (to
+ * `text`). Only "false" turns punctuation off. References (`ref`, `heRef`)
+ * are never touched. Returns a clone, or `data` itself when nothing applies.
+ */
+function applyPunctuationPreferences(data, userProperties) {
+  if (!data || typeof data !== 'object') return data;
+  const stripHebrew = userProperties.getProperty("hebrew_punctuation") == "false";
+  const stripTranslation = userProperties.getProperty("translation_punctuation") == "false";
+  if (!stripHebrew && !stripTranslation) return data;
+
+  const clone = JSON.parse(JSON.stringify(data));
+  if (stripHebrew && Object.prototype.hasOwnProperty.call(clone, 'he')) {
+    clone.he = stripPunctuationDeep_(clone.he);
+  }
+  if (stripTranslation && Object.prototype.hasOwnProperty.call(clone, 'text')) {
+    clone.text = stripPunctuationDeep_(clone.text);
+  }
+  return clone;
+}
+
 /**
  * Put Hebrew-numeral line markers back on transliterated text (transliterating
  * "(א)" garbles it). `startingVerse` is the first verse number, counted up one
@@ -334,4 +456,85 @@ function formatDataForPesukim(data, pesukim) {
   data.pesukimFormatted = true;
 
   return data;
+}
+
+/**
+ * For the side-by-side layouts' "one row per line" setting: pairs each Hebrew
+ * segment with its translation, so each pair can get its own table row. Call
+ * it on the payload as fetched, before formatDataForPesukim joins the
+ * segments into one string. Line markers are numbered as formatDataForPesukim
+ * numbers them (from the first requested verse; each later chapter of a
+ * spanning ref starts at 1), and with line markers on, a spanning ref gets the
+ * same chapter heading before each chapter, in a row of its own.
+ *
+ * Returns null when the payload has no segments to pair (a single string, or
+ * segments nested deeper than chapters), so the caller falls back to one row
+ * for the whole passage. Segments the other language lacks are left blank.
+ *
+ * @return {Array<{he: string, en: string, heRaw: string, number: (number|null), heading: boolean}>|null}
+ *   he/en carry the line marker; heRaw is the Hebrew without it (for
+ *   transliteration; empty for a heading); number is the verse number used
+ *   for the marker.
+ */
+function buildAlignedLinePairs_(data, includeLineMarkers) {
+  if (!data || !Array.isArray(data.he) || !Array.isArray(data.text)) return null;
+  const rawFromVerse = Array.isArray(data.sections) ? data.sections[1] : undefined;
+  const fromVerse = Number(rawFromVerse) || 1;
+
+  const markers = !!includeLineMarkers;
+
+  // [{text, number, heading}] for one language; null when it can't be split
+  // into lines.
+  function segmentsOf(value, lang) {
+    const out = [];
+    if (data.isSpanning) {
+      let verse = fromVerse;
+      for (let c = 0; c < value.length; c++) {
+        const chapter = value[c];
+        if (Array.isArray(chapter)) {
+          if (markers && chapter.length) {
+            out.push({ text: spanningSectionHeading_(data, c, lang), number: null, heading: true });
+          }
+          for (let i = 0; i < chapter.length; i++) {
+            if (typeof chapter[i] !== 'string') return null;
+            out.push({ text: chapter[i], number: verse + i });
+          }
+          verse = 1;
+        } else if (typeof chapter === 'string') {
+          out.push({ text: chapter, number: null });
+        } else {
+          return null;
+        }
+      }
+      return out;
+    }
+    for (let i = 0; i < value.length; i++) {
+      if (typeof value[i] !== 'string') return null;
+      out.push({ text: value[i], number: fromVerse + i });
+    }
+    return out;
+  }
+
+  const he = segmentsOf(data.he, 'he');
+  const en = segmentsOf(data.text, 'en');
+  if (!he || !en || (!he.length && !en.length)) return null;
+
+  const pairs = [];
+  for (let i = 0; i < Math.max(he.length, en.length); i++) {
+    const h = he[i];
+    const e = en[i];
+    const number = h ? h.number : (e ? e.number : null);
+    const heRaw = h ? h.text : '';
+    const enRaw = e ? e.text : '';
+    const heading = !!((h && h.heading) || (e && e.heading));
+    const withMarker = markers && number != null;
+    pairs.push({
+      he: (withMarker && heRaw) ? '(' + gematriya(number, { punctuate: false }) + ') ' + heRaw : heRaw,
+      en: (withMarker && enRaw) ? '(' + number + ') ' + enRaw : enRaw,
+      heRaw: heading ? '' : heRaw,
+      number: withMarker ? number : null,
+      heading: heading
+    });
+  }
+  return pairs;
 }

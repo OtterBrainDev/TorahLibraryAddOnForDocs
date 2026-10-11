@@ -9,6 +9,46 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+> **Preference migration (schema 19).** New preference
+> `bilingual_aligned_rows`, default `false`. Upgrading users are migrated on
+> first open to `false` (only when unset), which is the one-row side-by-side
+> table every insert has had, so **no existing output changes**. It is a new
+> layout to switch on, not a gate on an old behaviour.
+
+### Side-by-side layouts
+
+#### Added
+
+- **Line by line: one table row per verse.** With Right–Left or Left–Right,
+  the new **Line by line** button under Display & Layout (sidebar Layout tray,
+  Preferences → Insertion, Link Texts' *Customize this insertion*) gives each
+  verse or line its own row, beside its translation, so the two are easy to
+  compare. Line markers number each row as before; transliteration goes under
+  each row's own Hebrew. Sources whose text can't be split into lines still
+  insert as one row.
+
+> **Preference migration (schema 18).** Two new preferences,
+> `hebrew_punctuation` and `translation_punctuation`, both default to `true`
+> (punctuation shown). Upgrading users are migrated on first open: each key is
+> set to `true` only if it has no stored value, so an explicit `false` is never
+> overwritten and **nobody's inserted text changes** until they switch one off.
+
+### Punctuation
+
+#### Added
+
+- **Punctuation: On/Off for the Hebrew and for the translation, separately.**
+  For teaching Torah and Talmud with the Hebrew unpunctuated (and, if you
+  like, the translation too). The composition card in the sidebar's Layout
+  tray, Preferences → Insertion, and Link Texts' *Customize this insertion*
+  has a pill under the Hebrew and a new **Translation** group with its own
+  pill. Off removes sof pasuq, paseq, the {פ}/{ס} parasha markers, commas,
+  periods, quotation marks and the like; the maqaf becomes a space. Kept:
+  abbreviations and contractions (ר', רש"י, don't), G-d, numbers (3:16,
+  1,000), footnote markers, and the source's bold and italics. Divine-name
+  substitutes (ה', G-d) are applied afterwards and never stripped. Citations
+  are never changed.
+
 > **Preference migration (schema 14).** `source_emphasis_mode` (`keep` /
 > `discard` / `only`) replaces the on/off `preserve_source_emphasis`.
 > Upgrading users are migrated on first open: on becomes `keep`, off becomes

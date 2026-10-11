@@ -393,3 +393,36 @@ test('v16 migration does not clobber stored per-language translation formatting'
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('translation_language_typography'), stored);
 });
+
+test('v18 migration turns Hebrew and translation punctuation on for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '17' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // "true": punctuation shown, as every insert before this setting had it.
+  assert.equal(userProperties.getProperty('hebrew_punctuation'), 'true');
+  assert.equal(userProperties.getProperty('translation_punctuation'), 'true');
+});
+
+test('v18 migration never overwrites an explicit "false"', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '17',
+    hebrew_punctuation: 'false',
+    translation_punctuation: 'false',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('hebrew_punctuation'), 'false');
+  assert.equal(userProperties.getProperty('translation_punctuation'), 'false');
+});
+
+test('v19 migration stores "one row per line" off for upgraders, so side-by-side tables look as before', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '18' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('bilingual_aligned_rows'), 'false');
+});
+
+test('v19 migration does not clobber a stored "one row per line"', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '18', bilingual_aligned_rows: 'true' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('bilingual_aligned_rows'), 'true');
+});

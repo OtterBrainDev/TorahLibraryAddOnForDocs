@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '17';
+var PREFS_SCHEMA_CURRENT_ = '19';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -172,6 +172,18 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // left out. Nothing that inserted text before stops inserting it.
   if (from < 17) {
     migrateToV17_(userProperties);
+  }
+  // v17 -> v18: introduces `hebrew_punctuation` and `translation_punctuation`.
+  // Both default to "true" (punctuation shown), what every insert has always
+  // had, so no upgrader's text changes until they switch one off.
+  if (from < 18) {
+    migrateToV18_(userProperties);
+  }
+  // v18 -> v19: introduces `bilingual_aligned_rows` (side-by-side layouts,
+  // one table row per line). "false" keeps the one-row table every
+  // side-by-side insert has had; the new layout is there to switch on.
+  if (from < 19) {
+    migrateToV19_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -439,6 +451,34 @@ function migrateToV17_(userProperties) {
   }
   if (userProperties.getProperty('show_unavailable_translations') == null) {
     userProperties.setProperty('show_unavailable_translations', 'false');
+  }
+  return true;
+}
+
+/**
+ * V18: introduces `hebrew_punctuation` and `translation_punctuation`. "true"
+ * keeps the punctuation every insert has always had. A stored value (an
+ * explicit "false" included) is never overwritten.
+ */
+function migrateToV18_(userProperties) {
+  if (userProperties.getProperty('hebrew_punctuation') == null) {
+    userProperties.setProperty('hebrew_punctuation', 'true');
+  }
+  if (userProperties.getProperty('translation_punctuation') == null) {
+    userProperties.setProperty('translation_punctuation', 'true');
+  }
+  return true;
+}
+
+/**
+ * V19: introduces `bilingual_aligned_rows`. "false" keeps the whole passage in
+ * one table row, as every side-by-side insert so far. Nothing an upgrader had
+ * is turned off: this is a new layout, not a gate on an old one. A stored
+ * value is never overwritten.
+ */
+function migrateToV19_(userProperties) {
+  if (userProperties.getProperty('bilingual_aligned_rows') == null) {
+    userProperties.setProperty('bilingual_aligned_rows', 'false');
   }
   return true;
 }

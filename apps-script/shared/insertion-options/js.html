@@ -17,6 +17,9 @@
 //     getState:        function () { return { outputMode: 'both', layout: 'he-right' }; },
 //     onSelectDisplay: function (mode) { /* store it */ },
 //     onSelectLayout:  function (layout) { /* store it */ },
+//     onToggleAlignedRows: function () { /* optional: flip "one row per line";
+//                              getState().alignedRows reads it. Without it the
+//                              "Line by line" button stays hidden. */ },
 //     expanded: false,         // optional: both pickers always open and
 //                              // labelled, no dropdowns (Preferences)
 //     hideInapplicable: true   // optional: hide Layout unless both languages,
@@ -46,6 +49,11 @@ function initInsertionOptions(config) {
   }
   $root.find('.mode-card').off('.io').on('click.io keydown.io', chooser('data-mode', 'onSelectDisplay'));
   $root.find('.layout-option').off('.io').on('click.io keydown.io', chooser('data-layout', 'onSelectLayout'));
+  $root.find('#layout-rows-toggle').off('.io').on('click.io', function (event) {
+    event.preventDefault();
+    if (_ioConfig.onToggleAlignedRows) _ioConfig.onToggleAlignedRows();
+    updateInsertionOptions();
+  });
 
   if (expanded) {
     // Always open: the summary is only a label.
@@ -105,6 +113,16 @@ function updateInsertionOptions() {
   // insert that picks another display.
   var hide = _ioConfig.hideInapplicable !== false;
   $root.find('.bilingual-layout-wrapper').toggle(!hide || mode === 'both');
+
+  // "Line by line" (one table row per line) only applies to the side-by-side
+  // layouts; Preferences shows it whatever the layout, as a default.
+  var alignedRows = !!state.alignedRows;
+  var sideBySide = layout === 'he-right' || layout === 'he-left';
+  $root.find('#layout-rows-toggle')
+    .prop('hidden', !_ioConfig.onToggleAlignedRows || (hide && !(mode === 'both' && sideBySide)))
+    .text(alignedRows ? 'Line by line: On' : 'Line by line: Off')
+    .toggleClass('is-on', alignedRows)
+    .attr('aria-pressed', alignedRows ? 'true' : 'false');
   $root.find('.cc-hebrew-stage, .cc-translit-wrap').toggle(!hide || mode !== 'en');
 }
 </script>

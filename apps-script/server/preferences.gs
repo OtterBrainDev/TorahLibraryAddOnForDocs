@@ -44,6 +44,7 @@ const SETTINGS = [
   "emphasis_italic_font",
   "output_mode_default",
   "bilingual_layout_default",
+  "bilingual_aligned_rows",
   "last_translation_languages",
   "last_translation_only_filter",
   "last_search_sort_mode",
@@ -60,6 +61,8 @@ const SETTINGS = [
   "surprise_me_enabled",
   "teamim",
   "teamim_filter",
+  "hebrew_punctuation",
+  "translation_punctuation",
   "translation_font",
   "translation_font_size",
   "translation_font_style",
@@ -176,6 +179,10 @@ function getDefaultPreferences() {
     emphasis_italic_font: "",
     output_mode_default: "both",
     bilingual_layout_default: "he-right",
+    // Right–Left / Left–Right: true gives each line (verse) its own table row,
+    // beside its translation; false keeps the whole passage in one row, as
+    // side-by-side inserts always were.
+    bilingual_aligned_rows: false,
     last_translation_languages: JSON.stringify(["en"]),
     last_translation_only_filter: false,
     last_search_sort_mode: "relevance",
@@ -199,6 +206,10 @@ function getDefaultPreferences() {
     surprise_me_enabled: false,
     teamim: true,
     teamim_filter: "available",
+    // Punctuation in the inserted Hebrew and in the translation. On (shown)
+    // unless switched off; text-processing.gs strips it when "false".
+    hebrew_punctuation: true,
+    translation_punctuation: true,
     translation_font: "",
     translation_font_size: "",
     translation_font_style: "normal",
