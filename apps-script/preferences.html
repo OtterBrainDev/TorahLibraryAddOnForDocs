@@ -436,6 +436,20 @@
                 </div>
                 <div class="inline-preview translation" id="translation_font_preview"><span class="label">Preview</span>Therefore place these words of Mine upon your heart…</div>
               </div>
+
+              <details class="subsection-card" id="translation-language-typography">
+                <summary class="subsection-title">Advanced: formatting for specific languages</summary>
+                <p class="subsection-note">Give translations in one language their own font, size and style. Every language you don’t add here uses the Translation settings above, and so does a blank font or size. Remove a language to go back to them.</p>
+                <div class="language-typography-add">
+                  <label for="translation-language-typography-add">Add a language</label>
+                  <!-- No name: picking a language adds an entry to the hidden translation_language_typography field. -->
+                  <select id="translation-language-typography-add">
+                    <option value="">Choose a language…</option>
+                  </select>
+                </div>
+                <div class="language-typography-list" id="translation-language-typography-list"></div>
+                <input type="hidden" id="translation_language_typography" name="translation_language_typography" value="{}">
+              </details>
             </div>
           </details>
 

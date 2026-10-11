@@ -345,8 +345,8 @@ test('v15 migration seeds search corpus order/exclusions with "[]" for upgraders
   assert.equal(userProperties.getProperty('search_corpus_excluded'), '[]');
 });
 
-test('v16 migration seeds the translation-list preferences for upgraders', () => {
-  const { context, userProperties } = loadMigrations({ prefs_schema_version: '15' });
+test('v17 migration seeds the translation-list preferences for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '16' });
   assert.equal(context.runUserPreferenceMigrationsIfNeeded_(), true);
   assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
   // Every language stays listed; empty translations are left out (CHANGELOG).
@@ -354,9 +354,9 @@ test('v16 migration seeds the translation-list preferences for upgraders', () =>
   assert.equal(userProperties.getProperty('show_unavailable_translations'), 'false');
 });
 
-test('v16 migration does not clobber explicit translation-list values', () => {
+test('v17 migration does not clobber explicit translation-list values', () => {
   const { context, userProperties } = loadMigrations({
-    prefs_schema_version: '15',
+    prefs_schema_version: '16',
     hidden_translation_languages: '["yi"]',
     show_unavailable_translations: 'true',
   });
@@ -374,4 +374,22 @@ test('v15 migration does not clobber an explicit corpus order or exclusion list'
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('search_corpus_order'), '["talmud","close-matches"]');
   assert.equal(userProperties.getProperty('search_corpus_excluded'), '["kabbalah"]');
+});
+
+test('v16 migration seeds an empty per-language translation formatting map for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '15' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // "{}": no language has its own formatting, so no translation looks different.
+  assert.equal(userProperties.getProperty('translation_language_typography'), '{}');
+});
+
+test('v16 migration does not clobber stored per-language translation formatting', () => {
+  const stored = JSON.stringify({ fr: { font: 'Garamond', size: 12, style: 'italic' } });
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '15',
+    translation_language_typography: stored,
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('translation_language_typography'), stored);
 });

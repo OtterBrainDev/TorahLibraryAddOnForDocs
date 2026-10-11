@@ -395,11 +395,16 @@ function buildPreviewMeta(primaryRef, fallbackRef) {
   return "<div class='preview-meta'>" + escapeHTML(display) + "</div>";
 }
 
-function buildNonInsertableMessage(response) {
+// returningToResults: the sidebar is about to go back to the result list on
+// its own (see returnToResultsFromDeadEnd), so say so instead of leaving the
+// reader to wonder what to do next.
+function buildNonInsertableMessage(response, returningToResults) {
   var state = getResolvedNodeState(response);
   return buildPreviewMeta(response && (response.ref || response.heRef), response || '') +
     "<div class='noninsertable-warning'><h4 class='preview-state-title'>This is a section, not a directly insertable text.</h4><p class='preview-state-message'>Choose a subsection or more specific reference to preview and insert.</p><p class='preview-state-message'>" +
-    escapeHTML(state.prompt) + "</p></div>";
+    escapeHTML(state.prompt) + "</p>" +
+    (returningToResults ? "<p class='preview-state-message noninsertable-returning' role='status'>Returning to your results…</p>" : '') +
+    "</div>";
 }
 
 function clearVersionSelectors() {

@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '16';
+var PREFS_SCHEMA_CURRENT_ = '17';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -159,13 +159,19 @@ function runUserPreferenceMigrationsIfNeeded_() {
   if (from < 15) {
     migrateToV15_(userProperties);
   }
-  // v15 -> v16: introduces `hidden_translation_languages` ("[]": every
+  // v15 -> v16: introduces `translation_language_typography` (per-language
+  // translation formatting). "{}" means no language has its own formatting,
+  // so every translation keeps the Translation settings it had.
+  if (from < 16) {
+    migrateToV16_(userProperties);
+  }
+  // v16 -> v17: introduces `hidden_translation_languages` ("[]": every
   // language stays listed) and `show_unavailable_translations` (false).
   // The latter is a deliberate change for upgraders: translations with no
   // text for the passage used to be listed as if they had some, and are now
   // left out. Nothing that inserted text before stops inserting it.
-  if (from < 16) {
-    migrateToV16_(userProperties);
+  if (from < 17) {
+    migrateToV17_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -404,7 +410,20 @@ function migrateToV15_(userProperties) {
 }
 
 /**
- * V16: translation-list preferences.
+ * V16: introduces `translation_language_typography`, a JSON map from a
+ * translation language to its own font, size and style. "{}" (no entries)
+ * leaves every translation formatted by the Translation settings, as before.
+ * A stored value is never overwritten.
+ */
+function migrateToV16_(userProperties) {
+  if (userProperties.getProperty('translation_language_typography') == null) {
+    userProperties.setProperty('translation_language_typography', '{}');
+  }
+  return true;
+}
+
+/**
+ * V17: translation-list preferences.
  *
  * - `hidden_translation_languages`: JSON array of language codes left out of
  *   the sidebar's search language filter and translation version list. "[]"
@@ -414,7 +433,7 @@ function migrateToV15_(userProperties) {
  *   it had text, and picking it inserted nothing. It is now left out; true
  *   lists it greyed out. A stored value is never overwritten.
  */
-function migrateToV16_(userProperties) {
+function migrateToV17_(userProperties) {
   if (userProperties.getProperty('hidden_translation_languages') == null) {
     userProperties.setProperty('hidden_translation_languages', '[]');
   }

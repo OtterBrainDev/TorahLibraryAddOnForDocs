@@ -38,6 +38,11 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **Several translations at once are all formatted alike.** Inserting more
+  than one translation of a source gave only the first one your formatting.
+  With fonts on *Match the document* (the default), the second and later
+  translations, their titles included, took on the small italic size of the
+  credit line above them. Every translation block now looks like the first.
 - **Inserting from inside a table now works, and says what it did.** With
   the cursor in a table cell, the source used to land somewhere else in the
   document without a word, and the same went for Voices sheets and Lexicon
@@ -86,6 +91,14 @@ heading until the next release consolidates it.
 
 #### Added
 
+- **Formatting for specific translation languages** (Preferences → Fonts →
+  Translation → *Advanced: formatting for specific languages*). Pick a
+  language to add it to the list, then give it its own font, size and style:
+  say, a different font for French translations. Languages you don't add keep
+  the Translation settings, and so does a blank font or size. **Remove** takes
+  a language back to them. It applies wherever a translation is inserted:
+  one translation, several at once, Stacked and side-by-side layouts, and
+  Link Texts.
 - **Customize this insertion, in Link Texts' review.** A collapsible panel
   under the review table has the same controls as the sidebar's 📰 Layout
   tray: Display, Layout, vowels, cantillation, transliteration, the linked
@@ -147,6 +160,16 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **No more dead end at "Choose a more specific ref".** Typing a whole book or
+  section heading (*Mishneh Torah*, *Shulchan Arukh, Orach Chayim*) listed it as
+  a direct library match, and picking it stopped at "Choose a more specific
+  ref" with nothing to do but start over. A direct match with no text of its own
+  is now left out of the results (along with a title match for the same
+  heading), and a note under the search box says what to add — a chapter, a
+  siman, a verse. If you still reach one (a Sefaria link, a title match the
+  search couldn't check), the sidebar shows the notice for a moment, then goes
+  back to your results with that entry removed, nothing selected, and the cursor
+  in the search box.
 - **Titles no longer have to be punctuated exactly.** Sefaria's title is
   *The Torah; A Women's Commentary* — with a semicolon — and the reference
   lookup only matched that exact punctuation, so
@@ -193,6 +216,13 @@ heading until the next release consolidates it.
   nothing hidden. Upgrading users lose no results, and a stored value is never
   overwritten.
 
+### Preference migration (schema 16)
+
+- **Preference schema v16** adds `translation_language_typography`, a JSON
+  map from a translation language to its own font, size and style. It
+  defaults to `"{}"`: no language has its own formatting, so no translation
+  looks different after upgrading. A stored value is never overwritten.
+
 ### Translation versions
 
 #### Fixed
@@ -220,7 +250,7 @@ heading until the next release consolidates it.
 
 #### Migration
 
-- **⚠ Preference schema v16 changes what upgrading users see.** It adds
+- **⚠ Preference schema v17 changes what upgrading users see.** It adds
   `show_unavailable_translations`, seeded `false`: translations with no text
   for the passage, which every user saw listed before, are now left out of the
   version list. Nothing that inserted text stops inserting it — those versions
