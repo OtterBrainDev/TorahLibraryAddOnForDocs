@@ -59,8 +59,12 @@ function markTranslationsUnavailable(ref, versionTitles) {
   (versionTitles || []).forEach(function (vt) {
     translationAvailabilityByRef[ref + '::' + vt] = false;
     $select.find('option').filter(function () { return $(this).val() === vt; }).each(function () {
+      if (!shouldShowUnavailableTranslations()) {
+        $(this).remove();
+        return;
+      }
       var label = $(this).text() + ' – unavailable for this ref';
-      $(this).prop('selected', false).prop('disabled', true).text(label).attr('title', label);
+      $(this).prop('selected', false).prop('disabled', true).addClass('translation-unavailable').text(label).attr('title', label);
     });
   });
   orderedTranslationVersions = orderedTranslationVersions.filter(function (vt) {
@@ -120,6 +124,69 @@ function getResolvedNodeState(response) {
     isStructural: isStructural,
     prompt: buildDepthPrompt(response)
   };
+}
+
+// A version entry's language as a TRANSLATION_LANGUAGE_CATALOG code ('en',
+// 'yi', ...), or '' when it isn't one the catalog knows. normalizeLanguage
+// keys a non-English translation as 'other:<code>' (or 'other:<family name>'
+// when Sefaria gives no code).
+function translationEntryLanguageCode(entry) {
+  var key = String((entry && entry.languageKey) || '').toLowerCase();
+  if (key === 'en' || key === 'he') return key;
+  var raw = key.indexOf('other:') === 0 ? key.slice(6) : key;
+  var match = TRANSLATION_LANGUAGE_CATALOG.filter(function (lang) {
+    return lang.code === raw || lang.label.toLowerCase() === raw;
+  })[0];
+  return match ? match.code : '';
+}
+
+function shouldShowUnavailableTranslations() {
+  return String((effectivePreferences || {}).show_unavailable_translations) === 'true';
+}
+
+// The translations the version list offers at all, before the filter box: not
+// in a language hidden in Preferences → Search, and — unless "Show unavailable
+// translations" is on — not known to have no text for this ref. If hiding
+// languages would leave nothing, the language setting is set aside rather than
+// offering an empty list. Refreshes each item's availableForRef from
+// translationAvailabilityByRef, which fills in after the list is first built.
+function listTranslationItems(items, ref, preferences) {
+  items.forEach(function (item) {
+    var key = ref + '::' + item.value;
+    if (Object.prototype.hasOwnProperty.call(translationAvailabilityByRef, key)) item.availableForRef = translationAvailabilityByRef[key];
+  });
+  var showUnavailable = String((preferences || {}).show_unavailable_translations) === 'true';
+  var hiddenLanguages = normalizeHiddenTranslationLanguages((preferences || {}).hidden_translation_languages);
+  var byAvailability = items.filter(function (item) {
+    return showUnavailable || item.availableForRef !== false;
+  });
+  var byLanguage = byAvailability.filter(function (item) {
+    return !item.languageCode || hiddenLanguages.indexOf(item.languageCode) < 0;
+  });
+  return byLanguage.length ? byLanguage : byAvailability;
+}
+
+// Ask the server which translations have text for this exact ref; Sefaria's
+// version list is the whole book's. A failed or unusable answer changes
+// nothing: no translation is ever hidden on a lookup that didn't work.
+function requestTranslationAvailability(ref) {
+  if (!ref || translationAvailabilityRequested[ref]) return;
+  translationAvailabilityRequested[ref] = true;
+  google.script.run.withSuccessHandler(function (result) {
+    var versions = result && result.versions;
+    if (!versions || typeof versions !== 'object') return;
+    Object.keys(versions).forEach(function (versionTitle) {
+      var key = ref + '::' + versionTitle;
+      // What a fetch of that version found (text, no text, another version
+      // substituted) is first-hand; keep it over the summary.
+      if (Object.prototype.hasOwnProperty.call(translationAvailabilityByRef, key)) return;
+      translationAvailabilityByRef[key] = versions[versionTitle] === true;
+    });
+    if (activeTranslationOptions && activeTranslationOptions.ref === ref) activeTranslationOptions.refresh();
+  }).withFailureHandler(function () {
+    // Unknown availability: leave the list as it is, and allow a retry later.
+    delete translationAvailabilityRequested[ref];
+  }).getTranslationAvailability(ref);
 }
 
 function buildVersionModel(dataIn) {
@@ -217,6 +284,7 @@ function updateSuggestion(dataIn, inputTitle) {
   // offering: record it before the option list is built so it renders disabled.
   var resolvedTranslationIsEmpty = !!(dataIn && dataIn.versionTitle) && !hasRenderableText(dataIn.text);
   if (resolvedTranslationIsEmpty) translationAvailabilityByRef[resolvedRef + '::' + dataIn.versionTitle] = false;
+  else if (dataIn && dataIn.versionTitle) translationAvailabilityByRef[resolvedRef + '::' + dataIn.versionTitle] = true;
   var versionEntries = buildVersionModel(dataIn);
   var enSelectedVersionTitle = dataIn.versionTitle || "";
   var heSelectedVersionTitle = dataIn.heVersionTitle || "";
@@ -255,6 +323,7 @@ function updateSuggestion(dataIn, inputTitle) {
         value: entry.versionTitle,
         category: cleanGroupLabel,
         searchable: (normalizedLabel + " " + entry.versionTitle + " " + cleanGroupLabel).toLowerCase(),
+        languageCode: translationEntryLanguageCode(entry),
         availableForRef: Object.prototype.hasOwnProperty.call(translationAvailabilityByRef, resolvedRef + "::" + entry.versionTitle)
           ? translationAvailabilityByRef[resolvedRef + "::" + entry.versionTitle]
           : true
@@ -326,20 +395,25 @@ function updateSuggestion(dataIn, inputTitle) {
 
   function renderTranslationOptions(filterTerm) {
     var query = String(filterTerm || '').trim().toLowerCase();
-    var filtered = translationItems.filter(function (item) { return !query || item.searchable.indexOf(query) >= 0; });
+    var listed = listTranslationItems(translationItems, resolvedRef, effectivePreferences);
+    var filtered = listed.filter(function (item) { return !query || item.searchable.indexOf(query) >= 0; });
     var optionsHTML = '';
     var hasSelectableOption = false;
+    $('.translation-version-control .version-count').text(listed.length + ' available');
 
     if (!filtered.length) {
-      optionsHTML = '<option value="" disabled>No matching translations</option>';
+      optionsHTML = listed.length
+        ? '<option value="" disabled>No matching translations</option>'
+        : '<option value="" disabled>No translations with text for this passage</option>';
     } else {
       filtered.forEach(function (item) {
         var isUnavailable = item.availableForRef === false;
         var selected = item.value === currentEnVersion && !isUnavailable ? 'selected' : '';
         var disabled = isUnavailable ? 'disabled' : '';
+        var unavailableClass = isUnavailable ? ' class="translation-unavailable"' : '';
         var label = isUnavailable ? (item.optionLabel + ' – unavailable for this ref') : item.optionLabel;
         if (!isUnavailable) hasSelectableOption = true;
-        optionsHTML += '<option value="' + escapeHTML(item.value) + '" ' + selected + ' ' + disabled + ' title="' + escapeHTML(label) + '">' + escapeHTML(label) + '</option>';
+        optionsHTML += '<option value="' + escapeHTML(item.value) + '"' + unavailableClass + ' ' + selected + ' ' + disabled + ' title="' + escapeHTML(label) + '">' + escapeHTML(label) + '</option>';
       });
     }
 
@@ -371,6 +445,12 @@ function updateSuggestion(dataIn, inputTitle) {
       if (!restoredVals || !restoredVals.length) {
         $ts.find('option:not(:disabled)').first().prop('selected', true);
         orderedTranslationVersions = [];
+      } else if (!query) {
+        // Only an unfiltered list shows every listed version, so only then can
+        // a missing one be dropped: it was hidden or found to have no text.
+        orderedTranslationVersions = orderedTranslationVersions.filter(function (vt) {
+          return restoredVals.indexOf(vt) >= 0;
+        });
       }
     }
 
@@ -456,6 +536,23 @@ function updateSuggestion(dataIn, inputTitle) {
   }
 
   renderTranslationOptions('');
+  var optionsBuiltForRequestId = latestResolveRequestId;
+  activeTranslationOptions = {
+    ref: resolvedRef,
+    refresh: function () {
+      if (!$('.translation-version-select').not('.he-version-selection').length) return;
+      // Another lookup started since this list was built: it owns the preview.
+      if (latestResolveRequestId !== optionsBuiltForRequestId) return;
+      var before = currentEnVersion;
+      renderTranslationOptions($('.translation-filter-input').not('.he-version-filter').val());
+      // The version in the preview is no longer listed: load the one the list
+      // moved to, so a plain Insert doesn't carry text the list doesn't show.
+      if (currentEnVersion && currentEnVersion !== before && orderedTranslationVersions.length <= 1
+          && $('.output-mode-selection').val() !== 'he') {
+        getVersions(currentEnVersion);
+      }
+    }
+  };
   // Seed selection-order tracking with the single version auto-selected on initial render.
   var _initEnVal = $('.translation-version-select').not('.he-version-selection').val();
   orderedTranslationVersions = Array.isArray(_initEnVal) ? _initEnVal.slice() : (_initEnVal ? [_initEnVal] : []);
@@ -521,13 +618,16 @@ function updateSuggestion(dataIn, inputTitle) {
     }
   }
 
-  // The empty translation is now disabled and the list has moved its selection
-  // to the next available one; load that, so the preview and a plain Insert
-  // don't carry the empty text. Terminates: each empty version is marked once.
-  if (!refetchQueued && resolvedTranslationIsEmpty && $('.output-mode-selection').val() !== 'he'
+  // The translation in the preview isn't offered — it has no text for this
+  // ref, or its language is hidden in Preferences — and the list has moved its
+  // selection to the next one; load that, so the preview and a plain Insert
+  // match the list. Terminates: each fetch either resolves the version asked
+  // for or marks it unavailable, and an unavailable version is never chosen.
+  if (!refetchQueued && $('.output-mode-selection').val() !== 'he' && dataIn.versionTitle
       && currentEnVersion && currentEnVersion !== dataIn.versionTitle) {
     getVersions(currentEnVersion);
   }
+  requestTranslationAvailability(resolvedRef);
 
   updateVersionControlsVisibility();
   updateModeDependentSections();

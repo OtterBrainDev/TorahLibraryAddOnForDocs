@@ -15,6 +15,10 @@ var resultPostProcessState = { availableCorpora: [], removedCorpora: [], restore
 var resultsCollapsed = false;
 var pendingPreferredVersions = null;
 var translationAvailabilityByRef = {};
+// Set by updateSuggestion for the version list it built, so an availability
+// answer arriving later (or a preference change) can re-render that list.
+var activeTranslationOptions = null;
+var translationAvailabilityRequested = {};
 var hasResolvedReference = false;
 var searchDebounceHandle = null;
 var keyboardResultIndex = -1;
@@ -60,6 +64,8 @@ function applyEffectivePreferencesToUI() {
   syncExperimentalAvailability();
   updateQuickActionsForMode();
   if (typeof updateCompositionCard === 'function') updateCompositionCard();
+  // Hidden languages / "Show unavailable translations" shape the version list.
+  if (activeTranslationOptions) activeTranslationOptions.refresh();
 }
 
 function saveAccountPreference(payload, onDone) {
@@ -166,6 +172,21 @@ function mergePreferenceDefaults(preferences) {
       $('.translation-language-option[value="' + value.replace(/([\"'])/g, '\$1') + '"]').prop('checked', true);
     });
   }
+  applyHiddenTranslationLanguages(preferences.hidden_translation_languages);
+}
+
+// Leave the languages hidden in Preferences → Search out of the search
+// language filter. A hidden language that was ticked is unticked, so it can't
+// filter results from a row nobody can see; with none left ticked the filter
+// goes back to Any (updateTranslationLanguageVisibility).
+function applyHiddenTranslationLanguages(storedValue) {
+  var hidden = normalizeHiddenTranslationLanguages(storedValue);
+  $('.translation-language-option').each(function () {
+    var isHidden = hidden.indexOf(String($(this).val() || '').toLowerCase()) >= 0;
+    $(this).closest('.translation-language-row').toggleClass('is-pref-hidden', isHidden);
+    if (isHidden) $(this).prop('checked', false);
+  });
+  if (!$('.translation-language-option:checked').length) $('.translation-language-any').prop('checked', true);
 }
 
 function getSidebarTransliterationScheme() {
