@@ -510,6 +510,7 @@
       const preferenceObject = {};
 
       document.querySelectorAll('select').forEach(function(el) {
+        if (!el.name) return; // helper selects that drive a hidden field
         if (customReplacementFields.indexOf(el.name) >= 0) {
           preferenceObject[el.name] = getSelectStoredValue(el.id);
         } else {
@@ -667,6 +668,7 @@
               renderOverrideGrid();
               renderOverrideList();
               loadCorpusOrderFromFields();
+              loadLanguageTypographyFromField();
               syncExperimentalChildToggles();
               syncLinkerInsertToggle();
               loadMenuLayoutEditor(preferences.menu_layout);
@@ -1061,6 +1063,245 @@
       });
 
       renderCorpusOrderList();
+    }
+
+    // ── Per-language translation formatting (Fonts → Translation → Advanced) ─
+    // The entries live in one hidden input (translation_language_typography),
+    // as JSON {code: {font, size, style}}, so collectPreferenceObject() saves
+    // them like any other field. A blank font or size means "as the Translation
+    // settings"; the server (normalizeTranslationLanguageTypography_) cleans it.
+
+    let languageTypography = {};
+
+    function translationLanguageLabels() {
+      const labels = {};
+      const select = byId('preferred_translation_language');
+      if (!select) return labels;
+      Array.prototype.forEach.call(select.options, function(option) {
+        // Hebrew is the original's side; it has its own card above.
+        if (option.value && option.value !== 'he') labels[option.value] = option.textContent;
+      });
+      return labels;
+    }
+
+    function parseLanguageTypography(raw) {
+      let parsed = {};
+      try { parsed = JSON.parse(raw || '{}') || {}; } catch (e) { parsed = {}; }
+      const out = {};
+      if (typeof parsed !== 'object' || Array.isArray(parsed)) return out;
+      Object.keys(parsed).forEach(function(code) {
+        const entry = parsed[code];
+        if (!/^[a-z]{2,3}$/.test(code) || code === 'he' || !entry || typeof entry !== 'object') return;
+        out[code] = {
+          font: String(entry.font || ''),
+          size: entry.size === null || entry.size === undefined ? '' : String(entry.size),
+          style: entry.style ? String(entry.style) : 'normal'
+        };
+      });
+      return out;
+    }
+
+    function syncLanguageTypographyField() {
+      const field = byId('translation_language_typography');
+      if (!field) return;
+      const stored = {};
+      Object.keys(languageTypography).forEach(function(code) {
+        const entry = languageTypography[code];
+        const size = Number(entry.size);
+        stored[code] = {
+          font: entry.font,
+          size: entry.size !== '' && Number.isFinite(size) && size > 0 ? Math.min(400, size) : null,
+          style: entry.style || 'normal'
+        };
+      });
+      field.value = JSON.stringify(stored);
+    }
+
+    function loadLanguageTypographyFromField() {
+      const field = byId('translation_language_typography');
+      languageTypography = parseLanguageTypography(field ? field.value : '{}');
+      syncLanguageTypographyField();
+      renderLanguageTypographyEditor();
+    }
+
+    function buildLanguageFontSelect(code, value) {
+      // The Translation font list, with its "Match the document" first option
+      // standing for "as the Translation font" here.
+      const source = byId('translation_font');
+      const select = document.createElement('select');
+      select.id = 'translation-language-font-' + code;
+      select.setAttribute('data-language-field', 'font');
+      if (source) {
+        Array.prototype.forEach.call(source.children, function(child) {
+          select.appendChild(child.cloneNode(true));
+        });
+      }
+      if (select.options.length && select.options[0].value === '') {
+        select.options[0].textContent = 'As Translation';
+      }
+      select.value = value || '';
+      if (select.value !== (value || '')) {
+        // A font not in the list (typed in an older version): keep it.
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+        select.value = value;
+      }
+      return select;
+    }
+
+    function buildLanguageField(labelText, forId, control, extraClass) {
+      const field = document.createElement('div');
+      field.className = 'compact-field' + (extraClass ? ' ' + extraClass : '');
+      const label = document.createElement('label');
+      label.textContent = labelText;
+      if (forId) label.htmlFor = forId;
+      field.appendChild(label);
+      field.appendChild(control);
+      return field;
+    }
+
+    function renderLanguageTypographyEditor() {
+      const list = byId('translation-language-typography-list');
+      const add = byId('translation-language-typography-add');
+      if (!list || !add) return;
+      const labels = translationLanguageLabels();
+      const codes = Object.keys(languageTypography).sort(function(a, b) {
+        return String(labels[a] || a).localeCompare(String(labels[b] || b));
+      });
+
+      list.replaceChildren();
+      codes.forEach(function(code) {
+        const entry = languageTypography[code];
+        const name = labels[code] || code.toUpperCase();
+        const card = document.createElement('div');
+        card.className = 'language-typography-card';
+        card.setAttribute('data-language', code);
+
+        const header = document.createElement('div');
+        header.className = 'language-typography-header';
+        const title = document.createElement('span');
+        title.className = 'language-typography-name';
+        title.textContent = name;
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'small-button';
+        remove.setAttribute('data-language-action', 'remove');
+        remove.setAttribute('aria-label', 'Remove ' + name + ' formatting');
+        remove.textContent = 'Remove';
+        header.appendChild(title);
+        header.appendChild(remove);
+
+        const row = document.createElement('div');
+        row.className = 'compact-row';
+        row.appendChild(buildLanguageField('Font', 'translation-language-font-' + code, buildLanguageFontSelect(code, entry.font)));
+
+        const size = document.createElement('input');
+        size.type = 'number';
+        size.id = 'translation-language-size-' + code;
+        size.min = '1';
+        size.max = '400';
+        size.step = '0.1';
+        size.placeholder = 'Auto';
+        size.value = entry.size;
+        size.setAttribute('data-language-field', 'size');
+        row.appendChild(buildLanguageField('Size', size.id, size, 'compact-field--size'));
+
+        const styles = document.createElement('div');
+        styles.className = 'style-control';
+        const flags = decodeStyleState(entry.style);
+        [['bold', 'B'], ['italic', 'I'], ['underline', 'U']].forEach(function(pair) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'style-btn ' + pair[0] + (flags.indexOf(pair[0]) >= 0 ? ' active' : '');
+          button.setAttribute('data-style-flag', pair[0]);
+          button.setAttribute('aria-pressed', flags.indexOf(pair[0]) >= 0 ? 'true' : 'false');
+          button.setAttribute('aria-label', name + ' ' + pair[0]);
+          button.textContent = pair[1];
+          styles.appendChild(button);
+        });
+        row.appendChild(buildLanguageField('Style', null, styles, 'compact-field--style'));
+
+        card.appendChild(header);
+        card.appendChild(row);
+        list.appendChild(card);
+      });
+
+      // The picker offers only the languages not already in the list.
+      add.replaceChildren();
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Choose a language…';
+      add.appendChild(placeholder);
+      Object.keys(labels).forEach(function(code) {
+        if (Object.prototype.hasOwnProperty.call(languageTypography, code)) return;
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = labels[code];
+        add.appendChild(option);
+      });
+      add.value = '';
+    }
+
+    function initLanguageTypographyEditor() {
+      const list = byId('translation-language-typography-list');
+      const add = byId('translation-language-typography-add');
+      if (!list || !add) return;
+
+      add.addEventListener('change', function() {
+        const code = add.value;
+        if (!code || Object.prototype.hasOwnProperty.call(languageTypography, code)) return;
+        // Starts as the Translation style, with font and size following it.
+        const translationStyle = byId('translation_font_style');
+        languageTypography[code] = {
+          font: '',
+          size: '',
+          style: (translationStyle && translationStyle.value) || 'normal'
+        };
+        syncLanguageTypographyField();
+        renderLanguageTypographyEditor();
+        const font = byId('translation-language-font-' + code);
+        if (font) font.focus();
+      });
+
+      list.addEventListener('click', function(event) {
+        const card = event.target.closest('[data-language]');
+        if (!card) return;
+        const code = card.getAttribute('data-language');
+        const entry = languageTypography[code];
+        if (!entry) return;
+        if (event.target.closest('[data-language-action="remove"]')) {
+          delete languageTypography[code];
+          syncLanguageTypographyField();
+          renderLanguageTypographyEditor();
+          add.focus();
+          return;
+        }
+        const styleButton = event.target.closest('[data-style-flag]');
+        if (styleButton) {
+          const flags = decodeStyleState(entry.style);
+          const flag = styleButton.getAttribute('data-style-flag');
+          const index = flags.indexOf(flag);
+          if (index >= 0) flags.splice(index, 1); else flags.push(flag);
+          entry.style = encodeStyleState(flags);
+          styleButton.classList.toggle('active', index < 0);
+          styleButton.setAttribute('aria-pressed', index < 0 ? 'true' : 'false');
+          syncLanguageTypographyField();
+        }
+      });
+
+      list.addEventListener('change', function(event) {
+        const field = event.target.getAttribute('data-language-field');
+        const card = event.target.closest('[data-language]');
+        if (!field || !card) return;
+        const entry = languageTypography[card.getAttribute('data-language')];
+        if (!entry) return;
+        entry[field] = event.target.value;
+        syncLanguageTypographyField();
+      });
+
+      loadLanguageTypographyFromField();
     }
 
     // ── Button-group helpers (Display & Insertion Defaults sections) ────────
@@ -1506,6 +1747,7 @@
     initMenuLayoutEditor();
     bindColorControls();
     initCorpusOrderList();
+    initLanguageTypographyEditor();
     _initPreferencesCompositionCard();
     _initPreferencesInsertionOptions();
     loadPreferencesIntoForm();
