@@ -226,9 +226,13 @@
           var linesCheck = byId('show_line_markers_default');
           var detailsCheck = byId('include_translation_source_info');
           var emphasisInput = byId('source_emphasis_mode');
+          var hebrewPunctuation = byId('hebrew_punctuation');
+          var translationPunctuation = byId('translation_punctuation');
           return {
             vowelsOn: vowelsOn,
             cantillationOn: cantillationOn,
+            hebrewPunctuationOn: hebrewPunctuation ? hebrewPunctuation.value !== 'false' : true,
+            translationPunctuationOn: translationPunctuation ? translationPunctuation.value !== 'false' : true,
             transliterationOn: transliterationOn,
             scheme: transliterationOn ? (scheme || 'simple_english') : 'none',
             linkOn: linkCheck ? linkCheck.checked : false,
@@ -244,6 +248,9 @@
           } else if (key === 'cantillation') {
             var on = byId('teamim') ? byId('teamim').value !== 'false' : true;
             _prefSetCompositionCantillation(!on);
+          } else if (key === 'hebrewPunctuation' || key === 'translationPunctuation') {
+            var punctuationInput = byId(key === 'hebrewPunctuation' ? 'hebrew_punctuation' : 'translation_punctuation');
+            if (punctuationInput) punctuationInput.value = punctuationInput.value === 'false' ? 'true' : 'false';
           } else if (key === 'translit') {
             var check = byId('include_transliteration_default');
             if (check) check.checked = !check.checked;

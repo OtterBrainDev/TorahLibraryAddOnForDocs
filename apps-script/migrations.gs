@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '16';
+var PREFS_SCHEMA_CURRENT_ = '17';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -164,6 +164,12 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // so every translation keeps the Translation settings it had.
   if (from < 16) {
     migrateToV16_(userProperties);
+  }
+  // v16 -> v17: introduces `hebrew_punctuation` and `translation_punctuation`.
+  // Both default to "true" (punctuation shown), what every insert has always
+  // had, so no upgrader's text changes until they switch one off.
+  if (from < 17) {
+    migrateToV17_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -410,6 +416,21 @@ function migrateToV15_(userProperties) {
 function migrateToV16_(userProperties) {
   if (userProperties.getProperty('translation_language_typography') == null) {
     userProperties.setProperty('translation_language_typography', '{}');
+  }
+  return true;
+}
+
+/**
+ * V17: introduces `hebrew_punctuation` and `translation_punctuation`. "true"
+ * keeps the punctuation every insert has always had. A stored value (an
+ * explicit "false" included) is never overwritten.
+ */
+function migrateToV17_(userProperties) {
+  if (userProperties.getProperty('hebrew_punctuation') == null) {
+    userProperties.setProperty('hebrew_punctuation', 'true');
+  }
+  if (userProperties.getProperty('translation_punctuation') == null) {
+    userProperties.setProperty('translation_punctuation', 'true');
   }
   return true;
 }

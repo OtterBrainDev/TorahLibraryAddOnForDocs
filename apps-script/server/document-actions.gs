@@ -672,6 +672,8 @@ var LINKER_INSERT_OVERRIDE_KEYS_ = {
   transliteration_scheme: 'scheme',
   nekudot: 'boolean',
   teamim: 'boolean',
+  hebrew_punctuation: 'boolean',
+  translation_punctuation: 'boolean',
   include_transliteration_default: 'boolean',
   show_line_markers_default: 'boolean',
   include_translation_source_info: 'boolean',

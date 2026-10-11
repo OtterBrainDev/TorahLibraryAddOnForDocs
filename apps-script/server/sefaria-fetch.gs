@@ -283,6 +283,9 @@ function fetchReference_(safeReference, versions, properties) {
 
     const userProperties = properties || PropertiesService.getUserProperties();
     data = applyHebrewDisplayPreferences(data, userProperties);
+    // Before the divine-name replacements, so their substitutes (ה', G-d)
+    // are never stripped.
+    data = applyPunctuationPreferences(data, userProperties);
     data = applyHebrewDivineNamePreferences(data, userProperties);
     applyEnglishDivineNamePreference(data, userProperties);
     return data;

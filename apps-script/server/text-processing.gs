@@ -161,6 +161,128 @@ function applyEnglishDivineNamePreference(data, userProperties) {
   }
 }
 
+// Punctuation kept even with punctuation off: symbols a reader relies on
+// (percent, footnote asterisk, section and paragraph signs, daggers).
+const PUNCTUATION_ALWAYS_KEPT_ = '%#@&*§¶†‡';
+const PUNCTUATION_SPLIT_RE_ = /(<[^>]*>|&[#\w]+;)/;
+const PUNCTUATION_TAG_OR_ENTITY_RE_ = /^(?:<[^>]*>|&[#\w]+;)$/;
+const PUNCTUATION_CHAR_RE_ = /\p{P}/u;
+const PUNCTUATION_LETTER_RE_ = /\p{L}/u;
+const PUNCTUATION_HEBREW_LETTER_RE_ = /[א-ת]/;
+const PUNCTUATION_LATIN_LETTER_RE_ = /[A-Za-zÀ-ɏ]/;
+const PUNCTUATION_WORD_RE_ = /[\p{L}\p{N}\p{M}]/u;
+
+/** The base character before index `i`, skipping combining marks (niqqud). */
+function punctuationBaseBefore_(chars, i) {
+  for (let j = i - 1; j >= 0; j--) {
+    if (!/\p{M}/u.test(chars[j])) return chars[j];
+  }
+  return '';
+}
+
+/** Whether the punctuation mark at `i` carries meaning inside a word or number. */
+function isPunctuationKeptInContext_(chars, i) {
+  const ch = chars[i];
+  const before = punctuationBaseBefore_(chars, i);
+  const after = chars[i + 1] || '';
+  const letterBefore = PUNCTUATION_LETTER_RE_.test(before);
+  const letterAfter = PUNCTUATION_LETTER_RE_.test(after);
+  // ר' (abbreviation) and don't (contraction).
+  if (ch === "'" || ch === '’' || ch === '׳') {
+    return letterBefore && (letterAfter || PUNCTUATION_HEBREW_LETTER_RE_.test(before));
+  }
+  // רש"י
+  if (ch === '"' || ch === '״') {
+    return letterBefore && letterAfter;
+  }
+  // G-d
+  if (ch === '-') {
+    return PUNCTUATION_LATIN_LETTER_RE_.test(before) && PUNCTUATION_LATIN_LETTER_RE_.test(after);
+  }
+  // 3:16, 1,000, 2.5
+  if (ch === '.' || ch === ',' || ch === ':') {
+    return /\d/.test(before) && /\d/.test(after);
+  }
+  return false;
+}
+
+/** Strips punctuation from one run of plain text (no tags, no entities). */
+function stripPunctuationFromTextSegment_(segment) {
+  const chars = Array.from(segment.replace(/\{[פס]\}/g, ''));
+  const removed = chars.map(function(ch, i) {
+    return PUNCTUATION_CHAR_RE_.test(ch) &&
+      PUNCTUATION_ALWAYS_KEPT_.indexOf(ch) < 0 &&
+      !isPunctuationKeptInContext_(chars, i);
+  });
+  let out = '';
+  let i = 0;
+  while (i < chars.length) {
+    if (!removed[i]) {
+      out += chars[i];
+      i++;
+      continue;
+    }
+    // A run of removed marks ("3:16)—all"): if it joined two words, a space
+    // takes its place, so the maqaf in כָל־הָעָם becomes a word break.
+    let end = i;
+    while (end < chars.length && removed[end]) end++;
+    const before = chars[i - 1] || '';
+    const after = chars[end] || '';
+    if (PUNCTUATION_WORD_RE_.test(before) && PUNCTUATION_WORD_RE_.test(after)) {
+      out += ' ';
+    }
+    i = end;
+  }
+  return out;
+}
+
+/**
+ * Removes punctuation from Sefaria text for the "Punctuation: Off" settings.
+ * Tags and entities are left alone (insertRichTextFromHTML relies on the
+ * tags), as are marks that belong to a word or number: ר', רש"י, don't, G-d,
+ * 3:16, 1,000, and the symbols in PUNCTUATION_ALWAYS_KEPT_.
+ */
+function stripPunctuationFromText(value) {
+  if (typeof value !== 'string' || !value) return value;
+  const parts = value.split(PUNCTUATION_SPLIT_RE_);
+  let out = parts.map(function(part) {
+    return PUNCTUATION_TAG_OR_ENTITY_RE_.test(part) ? part : stripPunctuationFromTextSegment_(part);
+  }).join('');
+  out = out
+    .replace(/ {2,}/g, ' ')
+    .replace(/ ((?:<[^>]*>)+) /g, ' $1')
+    .replace(/ +\n/g, '\n');
+  if (!/^ /.test(value)) out = out.replace(/^ +/, '');
+  if (!/ $/.test(value)) out = out.replace(/ +$/, '');
+  return out;
+}
+
+function stripPunctuationDeep_(value) {
+  if (Array.isArray(value)) return value.map(stripPunctuationDeep_);
+  return stripPunctuationFromText(value);
+}
+
+/**
+ * Applies `hebrew_punctuation` (to `he`) and `translation_punctuation` (to
+ * `text`). Only "false" turns punctuation off. References (`ref`, `heRef`)
+ * are never touched. Returns a clone, or `data` itself when nothing applies.
+ */
+function applyPunctuationPreferences(data, userProperties) {
+  if (!data || typeof data !== 'object') return data;
+  const stripHebrew = userProperties.getProperty("hebrew_punctuation") == "false";
+  const stripTranslation = userProperties.getProperty("translation_punctuation") == "false";
+  if (!stripHebrew && !stripTranslation) return data;
+
+  const clone = JSON.parse(JSON.stringify(data));
+  if (stripHebrew && Object.prototype.hasOwnProperty.call(clone, 'he')) {
+    clone.he = stripPunctuationDeep_(clone.he);
+  }
+  if (stripTranslation && Object.prototype.hasOwnProperty.call(clone, 'text')) {
+    clone.text = stripPunctuationDeep_(clone.text);
+  }
+  return clone;
+}
+
 function normalizeTransliterationLineMarkersToGematria(text, startingVerse) {
   if (!text) {
     return text;

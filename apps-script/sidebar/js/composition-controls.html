@@ -11,6 +11,8 @@ function _sidebarCompositionGetState() {
   return {
     vowelsOn: vowelsOn,
     cantillationOn: cantOn,
+    hebrewPunctuationOn: $('.wants-hebrew-punctuation').is(':checked'),
+    translationPunctuationOn: $('.wants-translation-punctuation').is(':checked'),
     transliterationOn: transliterationOn,
     scheme: scheme,
     linkOn: $('.insert-sefaria-link').is(':checked'),
@@ -37,6 +39,24 @@ function _sidebarCompositionOnToggle(key) {
     saveSidebarPreference({
       nekudot: $('.wants-vowels').is(':checked'),
       teamim: $el.is(':checked')
+    }, function () {
+      updateCompositionCard();
+      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
+    });
+  } else if (key === 'hebrewPunctuation') {
+    var $el = $('.wants-hebrew-punctuation');
+    $el.prop('checked', !$el.is(':checked'));
+    saveSidebarPreference({
+      hebrew_punctuation: $el.is(':checked')
+    }, function () {
+      updateCompositionCard();
+      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
+    });
+  } else if (key === 'translationPunctuation') {
+    var $el = $('.wants-translation-punctuation');
+    $el.prop('checked', !$el.is(':checked'));
+    saveSidebarPreference({
+      translation_punctuation: $el.is(':checked')
     }, function () {
       updateCompositionCard();
       if (hasResolvedReference && data && data.ref) refreshSelectedResult();

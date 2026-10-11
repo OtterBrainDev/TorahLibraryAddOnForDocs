@@ -124,6 +124,8 @@ function mergePreferenceDefaults(preferences) {
   $('.include-translation-source-info').prop('checked', String(preferences.include_translation_source_info) === "true");
   $('.wants-vowels').prop('checked', String(preferences.nekudot) !== "false");
   $('.wants-cantillation').prop('checked', String(preferences.teamim) !== "false");
+  $('.wants-hebrew-punctuation').prop('checked', String(preferences.hebrew_punctuation) !== "false");
+  $('.wants-translation-punctuation').prop('checked', String(preferences.translation_punctuation) !== "false");
   $('.include-transliteration').prop('checked', String(preferences.include_transliteration_default) === "true");
   $('.insert-sefaria-link').prop('checked', String(preferences.insert_sefaria_link_default) !== "false");
   $('.wants-pesukim').prop('checked', String(preferences.show_line_markers_default) !== "false");

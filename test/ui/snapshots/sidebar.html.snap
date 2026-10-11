@@ -442,6 +442,8 @@
       <input type="checkbox" class="wants-relevance ui-hidden-checkbox" aria-hidden="true" checked>
       <input type="checkbox" class="wants-vowels ui-hidden-checkbox" aria-hidden="true" checked>
       <input type="checkbox" class="wants-cantillation ui-hidden-checkbox" aria-hidden="true" checked>
+      <input type="checkbox" class="wants-hebrew-punctuation ui-hidden-checkbox" aria-hidden="true" checked>
+      <input type="checkbox" class="wants-translation-punctuation ui-hidden-checkbox" aria-hidden="true" checked>
       <input type="checkbox" class="wants-pesukim ui-hidden-checkbox" aria-hidden="true" checked>
       <input type="checkbox" class="include-translation-source-info ui-hidden-checkbox" aria-hidden="true">
       <input type="hidden" class="source-emphasis-mode" value="keep">

@@ -373,3 +373,23 @@ test('v16 migration does not clobber stored per-language translation formatting'
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('translation_language_typography'), stored);
 });
+
+test('v17 migration turns Hebrew and translation punctuation on for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '16' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // "true": punctuation shown, as every insert before this setting had it.
+  assert.equal(userProperties.getProperty('hebrew_punctuation'), 'true');
+  assert.equal(userProperties.getProperty('translation_punctuation'), 'true');
+});
+
+test('v17 migration never overwrites an explicit "false"', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '16',
+    hebrew_punctuation: 'false',
+    translation_punctuation: 'false',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('hebrew_punctuation'), 'false');
+  assert.equal(userProperties.getProperty('translation_punctuation'), 'false');
+});

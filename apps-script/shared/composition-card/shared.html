@@ -6,7 +6,8 @@
 // Usage:
 //   initCompositionCard({
 //     containerId: 'composition-card-container',
-//     getState:       function() { return { vowelsOn, cantillationOn, transliterationOn, scheme, linkOn, linesOn, detailsOn, emphasisMode }; },
+//     getState:       function() { return { vowelsOn, cantillationOn, hebrewPunctuationOn, transliterationOn, scheme, translationPunctuationOn, linkOn, linesOn, detailsOn, emphasisMode }; },
+//                     (hebrewPunctuationOn / translationPunctuationOn: undefined reads as on)
 //     onToggle:       function(key) { /* flip underlying state for key */ },
 //     onSchemeSelect: function(value) { /* set transliteration scheme */ },
 //     afterUpdate:    function(state) { /* optional host-specific post-update hook */ },
@@ -46,6 +47,35 @@ function ccNormalizeEmphasisMode(value) {
 function ccNextEmphasisMode(value) {
   var i = CC_EMPHASIS_MODES.indexOf(ccNormalizeEmphasisMode(value));
   return CC_EMPHASIS_MODES[(i + 1) % CC_EMPHASIS_MODES.length];
+}
+
+// Client-side stand-in for stripPunctuationFromText (server/text-processing.gs),
+// enough for the fixed sample lines: maqaf becomes a space, other punctuation
+// goes, spaces collapse.
+function ccStripPunctuation(text) {
+  return String(text)
+    .replace(/\u05BE/g, ' ')
+    .replace(/\p{P}/gu, '')
+    .replace(/ {2,}/g, ' ')
+    .trim();
+}
+
+// Shows each element's original text (kept in data-cc-source), stripped of
+// punctuation when `on` is false.
+function ccApplyPunctuationPreview($elements, on) {
+  $elements.each(function () {
+    var $el = $(this);
+    if ($el.attr('data-cc-source') == null) $el.attr('data-cc-source', $el.text());
+    var source = $el.attr('data-cc-source');
+    this.textContent = on ? source : ccStripPunctuation(source);
+  });
+}
+
+function ccSetPunctuationPill($pill, on) {
+  $pill
+    .text(on ? 'Punctuation: On' : 'Punctuation: Off')
+    .toggleClass('is-off', !on)
+    .attr('aria-pressed', on ? 'true' : 'false');
 }
 
 var _ccConfig = null;
@@ -94,6 +124,14 @@ function updateCompositionCard() {
     .text(state.cantillationOn ? 'Cantillation: On' : 'Cantillation: Off')
     .toggleClass('is-off', !state.cantillationOn)
     .attr('aria-pressed', state.cantillationOn ? 'true' : 'false');
+
+  // Punctuation (Hebrew and translation, independently). Undefined reads as on.
+  var hebrewPunctuationOn = state.hebrewPunctuationOn !== false;
+  var translationPunctuationOn = state.translationPunctuationOn !== false;
+  ccSetPunctuationPill($('#cc-hebrew-punct-toggle'), hebrewPunctuationOn);
+  ccSetPunctuationPill($('#cc-translation-punct-toggle'), translationPunctuationOn);
+  ccApplyPunctuationPreview($('.cc-hebrew-text'), hebrewPunctuationOn);
+  ccApplyPunctuationPreview($('#cc-translation-preview'), translationPunctuationOn);
 
   // Transliteration pill
   $('#cc-translit-pill')
@@ -153,7 +191,9 @@ function updateCompositionCard() {
     $status.text(
       'Cantillation ' + (state.cantillationOn ? 'on' : 'off') +
       ' \u00B7 Vowels ' + (state.vowelsOn ? 'on' : 'off') +
-      ' \u00B7 Transliteration: ' + (scheme === 'none' ? 'off' : scheme)
+      ' \u00B7 Hebrew punctuation ' + (hebrewPunctuationOn ? 'on' : 'off') +
+      ' \u00B7 Transliteration: ' + (scheme === 'none' ? 'off' : scheme) +
+      ' \u00B7 Translation punctuation ' + (translationPunctuationOn ? 'on' : 'off')
     );
   }
 
@@ -172,6 +212,8 @@ function _bindCompositionCardEvents() {
   $('#cc-title-toggle').off('click.cc').on('click.cc', function () { doToggle('link'); });
   $('#cc-vowels-toggle').off('click.cc').on('click.cc', function () { doToggle('vowels'); });
   $('#cc-cantillation-toggle').off('click.cc').on('click.cc', function () { doToggle('cantillation'); });
+  $('#cc-hebrew-punct-toggle').off('click.cc').on('click.cc', function () { doToggle('hebrewPunctuation'); });
+  $('#cc-translation-punct-toggle').off('click.cc').on('click.cc', function () { doToggle('translationPunctuation'); });
   $('#cc-translit-pill').off('click.cc').on('click.cc', function () { doToggle('translit'); });
   $('#cc-lines-toggle').off('click.cc').on('click.cc', function () { doToggle('lines'); });
   $('#cc-details-toggle').off('click.cc').on('click.cc', function () { doToggle('details'); });

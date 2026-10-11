@@ -599,7 +599,7 @@
 
               <!-- Texts workflow -->
               <div class="pref-workflow-panel" id="pref-workflow-texts" role="tabpanel" aria-labelledby="pref-workflow-tab-texts">
-                <p class="section-note">Set the defaults applied to new text insertions: linked title, source citation, line markers, cantillation, vowels, and transliteration. The sidebar can still override these for a single insertion.</p>
+                <p class="section-note">Set the defaults applied to new text insertions: linked title, source citation, line markers, cantillation, vowels, punctuation (Hebrew and translation, separately), and transliteration. The sidebar can still override these for a single insertion.</p>
                 <div class="subsection-card subsection-card--preview">
                   <div class="cc-card" id="composition-card-container" data-cc-features="header,linkedTitle,secondaryPills" aria-label="Default insertion preview">
                     <?!= include('shared/composition-card/markup') ?>
@@ -610,6 +610,8 @@
                   <input type="hidden" id="nekudot_filter" name="nekudot_filter">
                   <input type="hidden" id="teamim" name="teamim">
                   <input type="hidden" id="teamim_filter" name="teamim_filter">
+                  <input type="hidden" id="hebrew_punctuation" name="hebrew_punctuation" value="true">
+                  <input type="hidden" id="translation_punctuation" name="translation_punctuation" value="true">
                   <input id="include_transliteration_default" type="checkbox" name="include_transliteration_default">
                   <input id="insert_sefaria_link_default" type="checkbox" name="insert_sefaria_link_default">
                   <input id="show_line_markers_default" type="checkbox" name="show_line_markers_default" checked>
