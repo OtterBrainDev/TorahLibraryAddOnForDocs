@@ -3,7 +3,25 @@ function resetResultPostProcessState() {
   // removedCorpora: hidden this search via a group's ❌ button.
   // restoredExcluded: hidden by the search_corpus_excluded preference but
   // brought back for this search via the Restore Corpus menu.
-  resultPostProcessState = { availableCorpora: [], removedCorpora: [], restoredExcluded: [] };
+  // nonInsertableRefs: refs this search found to be a whole book or section
+  // heading (no text of their own). They are dropped from the results so the
+  // reader isn't offered the same dead end twice.
+  resultPostProcessState = { availableCorpora: [], removedCorpora: [], restoredExcluded: [], nonInsertableRefs: [] };
+}
+
+function normalizeResultRefKey(ref) {
+  return String(ref || '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function markResultRefNonInsertable(ref) {
+  var key = normalizeResultRefKey(ref);
+  if (!key) return;
+  var refs = resultPostProcessState.nonInsertableRefs || (resultPostProcessState.nonInsertableRefs = []);
+  if (refs.indexOf(key) < 0) refs.push(key);
+}
+
+function isNonInsertableResultRef(ref) {
+  return (resultPostProcessState.nonInsertableRefs || []).indexOf(normalizeResultRefKey(ref)) >= 0;
 }
 
 /* ── Corpus order / exclusion preferences (texts mode only) ─────────────── */
@@ -176,6 +194,7 @@ function applyResultPostProcessing() {
   var searchParameters = getSearchParameters();
   var filterItems = function (items, fallbackLabel) {
     return applyClientSideSearchFilters(items, searchParameters).filter(function (item) {
+      if (item && isNonInsertableResultRef(item.ref)) return false;
       return !removedLookup[getResultCorpusKey(item, fallbackLabel)];
     });
   };
