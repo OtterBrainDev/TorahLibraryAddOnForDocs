@@ -38,6 +38,13 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **A range across chapters shows where each chapter starts.** With line
+  numbers on, Genesis 1:31–2:3 read "(31) … (1) … (2) … (3)", with nothing to
+  say the numbers had restarted. Each chapter now gets a heading line in the
+  text's own terms ("Chapter 2" / "פרק ב", "Daf 2b" / "דף ב ע״ב"), in the
+  Hebrew and the translation alike. *Keep only* bold and italics keeps the
+  headings, and a transliteration's verse numbers restart with the chapter
+  too. Inserting several translations of such a range no longer fails.
 - **Several translations at once are all formatted alike.** Inserting more
   than one translation of a source gave only the first one your formatting.
   With fonts on *Match the document* (the default), the second and later

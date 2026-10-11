@@ -161,23 +161,71 @@ function applyEnglishDivineNamePreference(data, userProperties) {
   }
 }
 
+/**
+ * Put Hebrew-numeral line markers back on transliterated text (transliterating
+ * "(א)" garbles it). `startingVerse` is the first verse number, counted up one
+ * per marker; or an array of the numbers in order (formatDataForPesukim's
+ * `lineMarkerNumbers`), which follows a spanning range's restart at each
+ * chapter.
+ */
 function normalizeTransliterationLineMarkersToGematria(text, startingVerse) {
   if (!text) {
     return text;
   }
+  const numbers = Array.isArray(startingVerse) ? startingVerse : null;
+  let markerIndex = 0;
   let verseNumber = Number(startingVerse) || 1;
   return String(text).split('\n').map(function(line) {
     if (!line || !line.trim()) return line;
     if (/^\s*\([^)]*\)\s*/.test(line)) {
-      const marker = (typeof gematriya === 'function') ? gematriya(verseNumber, { punctuate: false }) : String(verseNumber);
-      verseNumber += 1;
+      const number = (numbers && markerIndex < numbers.length) ? numbers[markerIndex] : verseNumber;
+      markerIndex += 1;
+      verseNumber = number + 1;
+      const marker = (typeof gematriya === 'function') ? gematriya(number, { punctuate: false }) : String(number);
       return line.replace(/^\s*\([^)]*\)\s*/, "(" + marker + ") ");
     }
     return line;
   }).join('\n');
 }
 
+/**
+ * The heading line for one section of a spanning range ("Chapter 2" /
+ * "פרק ב", "Daf 2b" / "דף ב ע״ב"). `offset` counts sections from the first
+ * one requested. The span is at the level above the last (chapters of a
+ * Chapter:Verse text); Talmud dapim are numbered by amud, 3 = 2a.
+ */
+function spanningSectionHeading_(data, offset, lang) {
+  const sections = (data && Array.isArray(data.sections)) ? data.sections : [];
+  const level = Math.max(0, sections.length - 2);
+  const names = (lang === 'he') ? data.heSectionNames : data.sectionNames;
+  const name = (Array.isArray(names) && names[level]) ? String(names[level]) : (lang === 'he' ? 'פרק' : 'Chapter');
+  const addressType = Array.isArray(data.addressTypes) ? data.addressTypes[level] : '';
+  const start = sections[level];
+
+  let label;
+  const daf = /^(\d+)([ab])$/.exec(String(start));
+  if (addressType === 'Talmud' || daf) {
+    let amud = daf ? (Number(daf[1]) * 2 - (daf[2] === 'a' ? 1 : 0)) : (Number(start) || 1);
+    amud += offset;
+    const dafNumber = Math.ceil(amud / 2);
+    const side = (amud % 2 === 1) ? 'a' : 'b';
+    label = (lang === 'he')
+      ? gematriya(dafNumber, { punctuate: false }) + ' ' + (side === 'a' ? 'ע״א' : 'ע״ב')
+      : dafNumber + side;
+  } else {
+    const number = (Number(start) || 1) + offset;
+    label = (lang === 'he') ? gematriya(number, { punctuate: false }) : String(number);
+  }
+  return name + ' ' + label;
+}
+
 function formatDataForPesukim(data, pesukim) {
+  // insertReferenceVersions formats the first version's payload for the
+  // Hebrew and again for its translation block. A second pass would find
+  // strings where a spanning range has arrays, and throw.
+  if (data && data.pesukimFormatted === true) {
+    return data;
+  }
   const hasLineMarkerableContent = (value) => {
     if (!Array.isArray(value)) {
       return false;
@@ -214,6 +262,19 @@ function formatDataForPesukim(data, pesukim) {
     return wrapper + (wrapper ? " " : "") + text;
   }
 
+  // Verse numbers in the order they appear (Hebrew), for the transliteration.
+  const lineMarkerNumbers = [];
+  // With line markers on, a range across chapters gets a heading line before
+  // each chapter's verses: the numbers restart at 1, and "(31) ... (1) ..."
+  // alone doesn't say where chapter 2 begins. The headings are ours, not the
+  // source's: "keep only bold and italics" must not remove them.
+  const sectionHeadingLines = [];
+  function addSectionHeading(wrapper, perekNum, lang) {
+    const heading = spanningSectionHeading_(data, perekNum, lang);
+    sectionHeadingLines.push(heading);
+    return wrapper + heading + "\n";
+  }
+
   if(data.isSpanning) {
     // Each language numbers from the requested first verse; every later
     // chapter starts again at 1. The counter is per language: sharing one,
@@ -222,8 +283,12 @@ function formatDataForPesukim(data, pesukim) {
     let heVerse = fromVerse;
     data.he.forEach(function(perekText, perekNum) {
       if(typeof perekText == "object") {
+        if (pesukim && perekText.length) {
+          heTextWrapper = addSectionHeading(heTextWrapper, perekNum, 'he');
+        }
         perekText.forEach(function(verseText, index) {
          heTextWrapper = addHebrewVerse(verseText, heTextWrapper, pesukim, heVerse+index)
+         lineMarkerNumbers.push(heVerse+index);
         });
         heVerse = 1;
       } else {
@@ -233,6 +298,9 @@ function formatDataForPesukim(data, pesukim) {
     let enVerse = fromVerse;
     data.text.forEach(function(perekText, perekNum) {
       if(typeof perekText == "object") {
+        if (pesukim && perekText.length) {
+          enTextWrapper = addSectionHeading(enTextWrapper, perekNum, 'en');
+        }
         perekText.forEach(function(verseText, index) {
          enTextWrapper = addEnglishVerse(verseText, enTextWrapper, pesukim, enVerse+index)
         });
@@ -245,6 +313,7 @@ function formatDataForPesukim(data, pesukim) {
     if(typeof data.he == "object") {
       data.he.forEach(function(ele, index) {
         heTextWrapper = addHebrewVerse(ele, heTextWrapper, pesukim, fromVerse+index);
+        lineMarkerNumbers.push(fromVerse+index);
       });
     } else {
       heTextWrapper = data.he;
@@ -260,6 +329,9 @@ function formatDataForPesukim(data, pesukim) {
 
   data.he = heTextWrapper;
   data.text = enTextWrapper;
+  data.lineMarkerNumbers = lineMarkerNumbers;
+  data.sectionHeadingLines = sectionHeadingLines;
+  data.pesukimFormatted = true;
 
   return data;
 }
