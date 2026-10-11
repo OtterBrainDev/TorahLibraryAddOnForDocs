@@ -297,6 +297,79 @@ function fetchReference_(safeReference, versions, properties) {
 }
 
 /**
+ * Which versions actually have text for this exact ref.
+ *
+ * The version list in /api/texts is the whole book's, so a translation that
+ * covers only part of it (Yiddish on Deuteronomy 6:4) is listed for every
+ * verse. The v3 endpoint with version=all returns each version's text for the
+ * ref, which is the only per-ref signal Sefaria offers.
+ *
+ * Returns { ref, versions: { versionTitle: true|false } }, or null when the
+ * answer is unknown (network, unexpected shape) — callers must then treat every
+ * version as available, never hide one on a failed lookup. A version Sefaria
+ * omits from the response is left out of the map, i.e. unknown.
+ *
+ * @param {string} ref  a ref Sefaria already resolved (findReference's `ref`).
+ */
+function getTranslationAvailability(ref) {
+  const safeRef = String(ref || '').trim();
+  if (!safeRef) return null;
+
+  const CACHE_TTL_SECONDS = 21600;
+  const cacheKey = 'version_availability_v1:' + Utilities.base64EncodeWebSafe(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, safeRef, Utilities.Charset.UTF_8));
+  let cache = null;
+  try {
+    cache = CacheService.getUserCache();
+    const cached = cache.get(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch (error) {
+    cache = null;
+  }
+
+  let data;
+  try {
+    const url = 'https://www.sefaria.org/api/v3/texts/' + encodeURIComponent(safeRef) +
+      '?version=all&return_format=text_only';
+    const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    const status = response.getResponseCode ? response.getResponseCode() : 200;
+    if (status >= 400) return null;
+    data = JSON.parse(response.getContentText());
+  } catch (error) {
+    Logger.log('getTranslationAvailability failed: ' + (error && error.message));
+    return null;
+  }
+
+  const result = summarizeVersionAvailability_(data);
+  if (!result) return null;
+  result.ref = safeRef;
+  if (cache) {
+    try { cache.put(cacheKey, JSON.stringify(result), CACHE_TTL_SECONDS); } catch (error) { /* optimization only */ }
+  }
+  return result;
+}
+
+/** v3 texts payload -> { versions: { versionTitle: hasText } }, or null if unusable. */
+function summarizeVersionAvailability_(data) {
+  const list = data && Array.isArray(data.versions) ? data.versions : null;
+  if (!list || !list.length) return null;
+  const versions = {};
+  list.forEach(function (version) {
+    const title = version && String(version.versionTitle || '').trim();
+    if (!title) return;
+    // The same title in two languages: available if either has text.
+    versions[title] = versions[title] === true || versionHasText_(version.text);
+  });
+  return { versions: versions };
+}
+
+function versionHasText_(value) {
+  if (Array.isArray(value)) return value.some(versionHasText_);
+  if (value === null || value === undefined) return false;
+  return String(value).replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, ' ').trim().length > 0;
+}
+
+/**
  * The error for "Sefaria could not be reached or is failing", as opposed to
  * "Sefaria has no such reference". The message never carries the request URL:
  * it can hold document text (hard rule 7).

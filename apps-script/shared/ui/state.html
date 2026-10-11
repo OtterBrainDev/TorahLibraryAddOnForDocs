@@ -94,4 +94,45 @@
       return true;
     });
   }
+
+  // ── Translation languages ────────────────────────────────────────────────
+  // The languages the sidebar's search language filter offers (its static
+  // rows in sidebar.html use these codes). The hidden_translation_languages
+  // preference (JSON array of codes) leaves some out of that filter and out
+  // of the translation version list. Shared by the sidebar and Preferences.
+  var TRANSLATION_LANGUAGE_CATALOG = [
+    { code: 'en', label: 'English' },
+    { code: 'he', label: 'Hebrew' },
+    { code: 'ar', label: 'Arabic' },
+    { code: 'cs', label: 'Czech' },
+    { code: 'eo', label: 'Esperanto' },
+    { code: 'fa', label: 'Farsi (Persian)' },
+    { code: 'fi', label: 'Finnish' },
+    { code: 'fr', label: 'French' },
+    { code: 'de', label: 'German' },
+    { code: 'hu', label: 'Hungarian' },
+    { code: 'it', label: 'Italian' },
+    { code: 'itk', label: 'Judeo-Italian' },
+    { code: 'jrb', label: 'Judeo-Arabic' },
+    { code: 'ko', label: 'Korean' },
+    { code: 'lad', label: 'Ladino (Judeo-Spanish)' },
+    { code: 'pl', label: 'Polish' },
+    { code: 'pt', label: 'Portuguese' },
+    { code: 'ru', label: 'Russian' },
+    { code: 'es', label: 'Spanish' },
+    { code: 'yi', label: 'Yiddish' }
+  ];
+
+  // Stored value → list of hidden language codes (unknown codes dropped).
+  function normalizeHiddenTranslationLanguages(value) {
+    var seen = {};
+    return parseStoredArrayPreference(value, []).map(function (code) {
+      return String(code || '').trim().toLowerCase();
+    }).filter(function (code) {
+      var known = TRANSLATION_LANGUAGE_CATALOG.some(function (entry) { return entry.code === code; });
+      if (!known || seen[code]) return false;
+      seen[code] = true;
+      return true;
+    });
+  }
 </script>
