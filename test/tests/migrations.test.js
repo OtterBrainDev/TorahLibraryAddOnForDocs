@@ -355,3 +355,21 @@ test('v15 migration does not clobber an explicit corpus order or exclusion list'
   assert.equal(userProperties.getProperty('search_corpus_order'), '["talmud","close-matches"]');
   assert.equal(userProperties.getProperty('search_corpus_excluded'), '["kabbalah"]');
 });
+
+test('v16 migration seeds an empty per-language translation formatting map for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '15' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // "{}": no language has its own formatting, so no translation looks different.
+  assert.equal(userProperties.getProperty('translation_language_typography'), '{}');
+});
+
+test('v16 migration does not clobber stored per-language translation formatting', () => {
+  const stored = JSON.stringify({ fr: { font: 'Garamond', size: 12, style: 'italic' } });
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '15',
+    translation_language_typography: stored,
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('translation_language_typography'), stored);
+});

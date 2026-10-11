@@ -346,6 +346,49 @@ function applyRoleTypography_(paragraph, typography, roleName, overrides) {
 
 
 /**
+ * Language code of the translation in a Sefaria text payload. Sefaria files
+ * many translations under "en" and marks the real language with a title
+ * suffix ("... [fr]") or `actualLanguage`; the sidebar's normalizeLanguage
+ * reads them the same way.
+ */
+function translationLanguageOf_(data) {
+  if (!data) return "en";
+  const title = String(data.versionTitle || "").trim();
+  const versions = Array.isArray(data.versions) ? data.versions : [];
+  const version = versions.filter(function (v) {
+    return v && String(v.versionTitle || "").trim() === title && String(v.language || "").toLowerCase() !== "he";
+  })[0] || null;
+  const actual = String((version && version.actualLanguage) || data.actualLanguage || "").trim().toLowerCase();
+  if (/^[a-z]{2,3}$/.test(actual) && actual !== "he") return actual;
+  const suffix = /\[([a-z]{2,3})\]\s*$/i.exec(title);
+  if (suffix && suffix[1].toLowerCase() !== "he") return suffix[1].toLowerCase();
+  const declared = String((version && version.language) || "").trim().toLowerCase();
+  return /^[a-z]{2,3}$/.test(declared) && declared !== "he" ? declared : "en";
+}
+
+/**
+ * The typography bag to format one translation paragraph with: `typography`
+ * itself, unless the translation's language has its own formatting, in which
+ * case a copy whose translation role takes that language's font, size and
+ * style (an empty font or size keeps the Translation one). Colours stay the
+ * Translation role's.
+ */
+function typographyForTranslation_(typography, data) {
+  const overrides = typography && typography.translationLanguages;
+  const base = typography && typography.roles && typography.roles.translation;
+  if (!overrides || !base) return typography;
+  const entry = overrides[translationLanguageOf_(data)];
+  if (!entry) return typography;
+  const role = Object.assign({}, base, {
+    font: entry.font || base.font,
+    size: entry.size != null ? entry.size : base.size,
+    style: entry.style || base.style
+  });
+  const roles = Object.assign({}, typography.roles, { translation: role });
+  return Object.assign({}, typography, { roles: roles });
+}
+
+/**
  * Font family and size of the text where the user is inserting, for the
  * "match the document" typography default. Reads the paragraph holding the
  * cursor (or the start of the selection); if that is a heading or empty, the
@@ -710,7 +753,7 @@ function insertReference(data, opts) {
     mainTextParagraph.setLeftToRight(ltr);
     applyRoleTypography_(
       mainTextParagraph,
-      typography,
+      singleLanguage == "he" ? typography : typographyForTranslation_(typography, data),
       singleLanguage == "he" ? 'hebrew' : 'translation',
       { preserveSourceEmphasis: true }
     );
@@ -769,7 +812,7 @@ function insertReference(data, opts) {
       engTextParagraph.setAttributes(nullStyle);
       insertRichTextFromHTML(engTextParagraph, data.text);
       engTextParagraph.setAttributes(noUnderline);
-      applyRoleTypography_(engTextParagraph, typography, 'translation', { preserveSourceEmphasis: true });
+      applyRoleTypography_(engTextParagraph, typographyForTranslation_(typography, data), 'translation', { preserveSourceEmphasis: true });
 
       let heTopNextIndex = index + (transliterationText ? 5 : 4);
 
@@ -823,7 +866,7 @@ function insertReference(data, opts) {
       engText.setAttributes(nullStyle);
       insertRichTextFromHTML(engText, data.text);
       engText.setAttributes(noUnderline);
-      applyRoleTypography_(engText, typography, 'translation', { preserveSourceEmphasis: true });
+      applyRoleTypography_(engText, typographyForTranslation_(typography, data), 'translation', { preserveSourceEmphasis: true });
 
       let hebText = table.getCell(1, hebrewColumn)
         .setText("")
@@ -1036,8 +1079,16 @@ function insertReferenceVersions(ref, opts) {
     index += 2;
   }
 
-  for (let i = 0; i < kept.length; i++) {
-    if (i > 0) insertSeparator();
+  // Each block is inserted at the same position, last block first. A new Docs
+  // paragraph takes its text formatting from the one before it, so inserting
+  // first-to-last gave block 1's title the formatting of the text at the
+  // cursor and every later title that of the previous block's 8pt attribution
+  // line: with fonts left on "Match the document", only the first translation
+  // looked right. Inserted backwards, every title follows the same paragraph
+  // the first one does. The document order is unchanged.
+  const blockStart = index;
+  for (let i = kept.length - 1; i >= 0; i--) {
+    index = blockStart;
 
     let d = formatDataForPesukim(kept[i].data, includeLineMarkers);
     let displayTitle = buildVersionBlockTitle_(preferredTitle || d.ref, kept[i].versionTitle, d, insertSefariaLink, kept.length);
@@ -1052,7 +1103,7 @@ function insertReferenceVersions(ref, opts) {
     textPara.setLeftToRight(true).setAttributes(nullStyle);
     insertRichTextFromHTML(textPara, d.text);
     textPara.setAttributes(noUnderline);
-    applyRoleTypography_(textPara, typography, 'translation', { preserveSourceEmphasis: true });
+    applyRoleTypography_(textPara, typographyForTranslation_(typography, d), 'translation', { preserveSourceEmphasis: true });
     index += 2;
 
     if (includeTranslationSourceInfo) {
@@ -1063,11 +1114,12 @@ function insertReferenceVersions(ref, opts) {
         index += 1;
       }
     }
-  }
 
-  // Close the run with an empty paragraph too, so whatever follows the insert
-  // point (typically the next source) doesn't butt against the last citation.
-  insertSeparator();
+    // A blank paragraph after every block, the last one included, so whatever
+    // follows the insert point (typically the next source) doesn't butt
+    // against the last citation.
+    insertSeparator();
+  }
 
   return {
     inserted: kept.map(function (entry) { return entry.versionTitle; }),
