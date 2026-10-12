@@ -60,6 +60,9 @@ QC check (see `pre_clasp_qc.sh` step 6).
 - **`linker-results.html`** — the Link Texts review dialog. A template
   (`createTemplateFromFile`, not a plain file) so its "Customize this
   insertion" panel can include the shared insertion options below.
+- **`first-run-setup.html`** — first-run setup, shown once to a new user
+  (`server/first-run.gs`). Composes `first-run-setup/css` and
+  `first-run-setup/js`. See `docs/first-run-setup-design.md`.
 - **`help-modal.html`**, **`feedback-modal.html`**,
   **`session-library-modal.html`**, **`gematriya-count.html`**,
   **`release-notes.html`** — standalone modal dialogs, each its own scope.
@@ -87,6 +90,8 @@ controls inline.
   organizational; `pre_clasp_qc.sh` rejects basename collisions.
   - `menu.gs`, `menu-layout.gs` — the add-on menu (customizable from
     Preferences → Menu Bar), sidebar bootstrap, and dialog launchers.
+  - `first-run.gs` — first-run setup and the Simple / Full interface mode
+    (`ui_mode`), including the Simple menu and switching between modes.
   - `preferences.gs` — the `SETTINGS` list, `getDefaultPreferences()`,
     account preferences (`UserProperties`) and sidebar session state
     (`CacheService`).

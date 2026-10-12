@@ -426,3 +426,46 @@ test('v19 migration does not clobber a stored "one row per line"', () => {
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('bilingual_aligned_rows'), 'true');
 });
+
+// First-run setup and Simple mode (docs/first-run-setup-design.md). The rule
+// that matters is hard rule 2: nobody who already uses the add-on is put into
+// Simple mode or sent through setup by an upgrade.
+test('v20 migration keeps upgraders in Full mode and never shows them first-run setup', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '19' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('ui_mode'), 'full');
+  assert.equal(userProperties.getProperty('first_run_setup'), 'done');
+  assert.equal(userProperties.getProperty('menu_layout_before_simple'), '');
+});
+
+test('v20 migration does not clobber a stored interface mode or setup state', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '19',
+    ui_mode: 'simple',
+    first_run_setup: 'pending',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('ui_mode'), 'simple');
+  assert.equal(userProperties.getProperty('first_run_setup'), 'pending');
+});
+
+test('a user with no schema is seeded before migrating, so first-run setup stays pending in Full mode', () => {
+  // A new user, or a user of the original published add-on (which stored no
+  // preferences): the two cannot be told apart. Both see setup; neither is
+  // switched to Simple without choosing it.
+  const { context, userProperties } = loadMigrations({});
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('first_run_setup'), 'pending');
+  assert.equal(userProperties.getProperty('ui_mode'), 'full');
+});
+
+test('a reinstall over a finished setup does not re-run it', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: CURRENT,
+    first_run_setup: 'done',
+  });
+  context.seedDefaultPreferences_(userProperties);
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('first_run_setup'), 'done');
+});

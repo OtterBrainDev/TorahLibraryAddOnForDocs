@@ -37,6 +37,8 @@ function load(overrides = {}) {
     getDefaultMenuLayout_: () => ['default'],
     planMenuFromLayout_: (layout, availability) => ({ layout, availability }),
     installMenuPlan_: (plan) => calls.push(`defaultMenu:${plan.availability.surpriseMeEnabled}`),
+    // Setup already done: the reinstall case, which keeps the release notes.
+    maybeShowFirstRunSetup_: () => false,
   };
   Object.assign(context, overrides(calls));
   vm.createContext(context);
@@ -95,4 +97,25 @@ test('onOpen still builds the menu when a migration throws', () => {
 
   assert.doesNotThrow(() => context.onOpen({ authMode: AuthMode.FULL }));
   assert.ok(calls.includes('buildMenu'), `no menu after a migration failure: ${calls}`);
+});
+
+test('onInstall shows first-run setup instead of the release notes for a new user, after the menu', () => {
+  const { context, calls } = load((calls) => ({
+    maybeShowFirstRunSetup_: () => { calls.push('setup'); return true; },
+  }));
+
+  context.onInstall({ authMode: AuthMode.FULL });
+
+  assert.ok(calls.indexOf('setup') > calls.indexOf('buildMenu'), `setup must come after the menu: ${calls}`);
+  assert.ok(!calls.includes('releaseNotes'), `release notes shown over setup: ${calls}`);
+});
+
+test('onInstall still shows the release notes if first-run setup fails', () => {
+  const { context, calls } = load(() => ({
+    maybeShowFirstRunSetup_: () => { throw new Error('quota'); },
+  }));
+
+  context.onInstall({ authMode: AuthMode.FULL });
+
+  assert.ok(calls.includes('releaseNotes'), `no dialog at all after a setup failure: ${calls}`);
 });

@@ -57,12 +57,21 @@ function openSharedSidebar_(mode, options) {
   var resolvedMode = setSearchMode_(mode || getSearchMode_());
   var template = HtmlService.createTemplateFromFile('sidebar');
   template.initialMode = resolvedMode;
+  template.uiMode = getUiMode_();
   var extra = (options && typeof options === 'object') ? options : {};
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode, extra));
   var output = template.evaluate()
     .setTitle('Sefaria')
     .setWidth(300);
   DocumentApp.getUi().showSidebar(output);
+
+  // First use after a Marketplace-website or admin install, where onInstall
+  // never ran: setup opens over the sidebar. Never blocks the sidebar itself.
+  try {
+    maybeShowFirstRunSetup_();
+  } catch (error) {
+    Logger.log(`Could not show first-run setup: ${error.message}`);
+  }
 }
 
 function textsHTML() {
@@ -251,6 +260,7 @@ function sefariaSearch() {
 
 function preferencesPopup() {
   const template = HtmlService.createTemplateFromFile('preferences');
+  template.uiMode = getUiMode_();
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences', {
     menuLayoutEditor: getMenuLayoutEditorConfig_(DEV_FLAGS)
   }));

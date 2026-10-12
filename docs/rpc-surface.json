@@ -186,6 +186,26 @@
       "name": "applyLinkerDecisions",
       "arity": 1,
       "definedIn": "apps-script/server/document-actions.gs"
+    },
+    {
+      "name": "completeFirstRunSetup",
+      "arity": 1,
+      "definedIn": "apps-script/server/first-run.gs"
+    },
+    {
+      "name": "openFirstRunSetup",
+      "arity": 0,
+      "definedIn": "apps-script/server/first-run.gs"
+    },
+    {
+      "name": "setUiMode",
+      "arity": 1,
+      "definedIn": "apps-script/server/first-run.gs"
+    },
+    {
+      "name": "releaseNotesPopup",
+      "arity": 0,
+      "definedIn": "apps-script/server/menu.gs"
     }
   ]
 }

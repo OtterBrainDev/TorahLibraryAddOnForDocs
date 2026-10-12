@@ -16,6 +16,7 @@
     <?!= include('shared/composition-card/css'); ?>
     <?!= include('shared/css/icon-mode-card'); ?>
     <?!= include('css/components/redesign'); ?>
+    <?!= include('css/components/simple-mode'); ?>
     <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
     <script>
       window.APP_CONFIG = JSON.parse(document.getElementById('app-config-json').textContent);
@@ -23,7 +24,7 @@
     </script>
   </head>
   <body>
-    <main class="unified-sidebar" data-mode="<?= initialMode ?>">
+    <main class="unified-sidebar" data-mode="<?= initialMode ?>" data-ui-mode="<?= uiMode ?>">
       <aside class="busy-overlay" data-kind="insert" role="status" aria-live="polite">
         <div class="busy-card">
           <div class="busy-emblem" aria-hidden="true">
@@ -518,6 +519,8 @@
         <button class="submit primary-action-button" id="insert-source" disabled title="Add Source (Ctrl+Enter)">Add Source</button>
         <button class="submit secondary-action-button text-mode-only" id="open-layout-settings" title="Layout Settings" aria-label="Layout Settings">&#x1F4F0; Layout</button>
       </section>
+      <!-- Simple mode only (css/components/simple-mode): shows the controls it hides. -->
+      <button type="button" class="more-options-toggle" id="more-options-toggle" aria-expanded="false">More options</button>
       <section class="sidebar-footer-tools footer-tool-row standard-quick-actions" aria-label="Quick actions">
         <button type="button" class="footer-tool-button sl-footer-btn" id="open-session-library" title="Session Library" aria-label="Session Library"><span class="footer-icon" aria-hidden="true">📜</span><span class="sl-footer-count" id="sl-footer-count" hidden></span></button>
 		<button type="button" class="footer-tool-button open-actions-panel" title="Quick Actions" aria-label="Quick Actions"><span class="footer-icon footer-running-icon">🏃‍️</span></button>

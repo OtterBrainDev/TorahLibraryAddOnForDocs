@@ -1,0 +1,242 @@
+<script>
+// First-run setup dialog (first-run-setup.html, server/first-run.gs).
+//
+// The preview applies the vowel, trope and divine-name answers the way
+// server/text-processing.gs applies them to a fetched source (display
+// filters, then the Hebrew names, then "God"). test/tests/first-run-setup.test.js
+// runs these functions and the server's on the same sample and compares.
+
+// Deuteronomy 6:4, with vowels and cantillation. Written as escapes so the
+// exact marks are reviewable.
+var SETUP_SAMPLE_HE = 'שְׁמַ֖ע יִשְׂרָאֵ֑ל ' +
+  'יְהֹוָ֥ה אֱלֹהֵ֖ינוּ ' +
+  'יְהֹוָ֥ה ׀ אֶחָֽד׃';
+var SETUP_SAMPLE_EN = 'Hear, O Israel! The LORD is our God, the LORD alone.';
+
+var SETUP_MARKS_ = '\\u0591-\\u05BD\\u05BF\\u05C1\\u05C2\\u05C4\\u05C5\\u05C7';
+var SETUP_DIVINE_RULES_ = {
+  meforash: { pattern: new RegExp('י[֑-ׇ]*ה[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*', 'g'), requireText: true },
+  yaw: {
+    pattern: new RegExp('(^|[^' + SETUP_MARKS_ + '\\u05D0-\\u05EA])(י[' + SETUP_MARKS_ + ']*ה[' + SETUP_MARKS_ + ']*)(?![' + SETUP_MARKS_ + '\\u05D0-\\u05EA])', 'g'),
+    keepPrefix: true
+  },
+  elodim: { pattern: new RegExp('א[֑-ׇ]*ל[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*י[֑-ׇ]*ם[֑-ׇ]*', 'g') }
+};
+
+function setupStripTeamim_(text) {
+  return text.replace(/[֑-֯]/g, '');
+}
+
+function setupStripNekudot_(text) {
+  return text.replace(/[ְ-ֽ]/g, '').replace(/[ׇֿׁׂׅׄ]/g, '');
+}
+
+/**
+ * The sample as an insert would show it with these answers. The sample is
+ * from Tanakh, so "Only in Tanakh" keeps its vowels.
+ */
+function setupPreviewText_(answers) {
+  var he = SETUP_SAMPLE_HE;
+  var en = SETUP_SAMPLE_EN;
+  if (!answers.teamim) he = setupStripTeamim_(he);
+  if (answers.vowels === 'never') he = setupStripNekudot_(he);
+
+  var divine = answers.divine || {};
+  ['meforash', 'yaw', 'elodim'].forEach(function (id) {
+    var answer = divine[id];
+    var rule = SETUP_DIVINE_RULES_[id];
+    if (!answer || !answer.on) return;
+    var literal = answer.text || '';
+    if (rule.requireText && !literal) return;
+    he = he.replace(rule.pattern, rule.keepPrefix
+      ? function (match, prefix) { return prefix + literal; }
+      : function () { return literal; });
+  });
+  if (divine.god && divine.god.on) {
+    var god = divine.god.text || 'G-d';
+    en = en.replace(/\bGod\b/g, function () { return god; });
+  }
+  return { he: he, en: en };
+}
+
+(function () {
+  var config = window.APP_CONFIG || {};
+  var initial = config.answers || {};
+  var STEPS = ['purpose', 'look', 'mode', 'done'];
+  var step = 0;
+  var purpose = null;
+  var saving = false;
+  // Fields the user changed by hand; a later purpose choice never overrides them.
+  var touched = {};
+
+  function $one(selector) { return document.querySelector(selector); }
+  function $all(selector) { return Array.prototype.slice.call(document.querySelectorAll(selector)); }
+
+  function setRadio(name, value) {
+    $all('input[name="' + name + '"]').forEach(function (input) { input.checked = input.value === value; });
+  }
+  function getRadio(name) {
+    var checked = $one('input[name="' + name + '"]:checked');
+    return checked ? checked.value : null;
+  }
+
+  // A stored replacement the list does not offer (typed under "Other" in
+  // Preferences) is added as an option, so it is preselected rather than lost.
+  function selectValue(select, value) {
+    if (!value) return;
+    var exists = Array.prototype.some.call(select.options, function (o) { return o.value === value; });
+    if (!exists) {
+      var option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      select.appendChild(option);
+    }
+    select.value = value;
+  }
+
+  function applyInitialAnswers() {
+    setRadio('show', initial.show || 'both');
+    setRadio('arrangement', initial.arrangement || 'he-right');
+    setRadio('vowels', initial.vowels || 'always');
+    $one('#setup-teamim').checked = initial.teamim !== false;
+    var divine = initial.divine || {};
+    $all('input[data-divine]').forEach(function (box) {
+      var id = box.getAttribute('data-divine');
+      box.checked = !!(divine[id] && divine[id].on);
+      selectValue($one('select[data-divine-text="' + id + '"]'), divine[id] && divine[id].text);
+    });
+    selectValue($one('#setup-language'), initial.language || 'en');
+    setRadio('uiMode', initial.uiMode || 'full');
+  }
+
+  function collectAnswers() {
+    var divine = {};
+    $all('input[data-divine]').forEach(function (box) {
+      var id = box.getAttribute('data-divine');
+      divine[id] = { on: box.checked, text: $one('select[data-divine-text="' + id + '"]').value };
+    });
+    return {
+      show: getRadio('show'),
+      arrangement: getRadio('arrangement'),
+      vowels: getRadio('vowels'),
+      teamim: $one('#setup-teamim').checked,
+      divine: divine,
+      language: $one('#setup-language').value,
+      uiMode: getRadio('uiMode')
+    };
+  }
+
+  // Screen 1 only changes what screens 2 and 3 start on (design §5).
+  function applyPurpose(value) {
+    if (value === 'quoting' && !touched.arrangement) setRadio('arrangement', 'he-top');
+    if (value !== 'quoting' && !touched.arrangement) setRadio('arrangement', initial.arrangement || 'he-right');
+    if (!touched.uiMode) setRadio('uiMode', value === 'academic' ? 'full' : 'simple');
+  }
+
+  function renderPreview() {
+    var answers = collectAnswers();
+    var text = setupPreviewText_(answers);
+    $one('#setup-preview-he').textContent = text.he;
+    $one('#setup-preview-en').textContent = text.en;
+    $one('#setup-preview-he').hidden = answers.show === 'en';
+    $one('#setup-preview-en').hidden = answers.show === 'he';
+    $one('#setup-preview-body').setAttribute('data-arrangement', answers.show === 'both' ? answers.arrangement : 'he-top');
+    $one('#setup-arrangement').hidden = answers.show !== 'both';
+    $one('#setup-vowels').hidden = answers.show === 'en';
+    $one('#setup-teamim-row').hidden = answers.show === 'en';
+    $one('#setup-language-row').hidden = answers.show === 'he';
+  }
+
+  function render(focus) {
+    var name = STEPS[step];
+    $all('.setup-step').forEach(function (section) {
+      section.hidden = section.getAttribute('data-step') !== name;
+    });
+    $one('#setup-progress').textContent = name === 'done' ? '' : 'Step ' + (step + 1) + ' of 3';
+    $one('#setup-back').hidden = step === 0 || name === 'done';
+    $one('#setup-skip').hidden = name === 'done';
+    var next = $one('#setup-next');
+    next.textContent = name === 'mode' ? 'Finish' : (name === 'done' ? 'Start' : 'Continue');
+    next.disabled = saving || (name === 'purpose' && !purpose);
+    if (name === 'look') renderPreview();
+    if (focus) {
+      var heading = $one('.setup-step[data-step="' + name + '"] .setup-heading');
+      if (heading) heading.focus();
+    }
+  }
+
+  function showError(message) {
+    var box = $one('#setup-error');
+    box.textContent = message;
+    box.hidden = !message;
+  }
+
+  function save(answers) {
+    saving = true;
+    showError('');
+    render(false);
+    google.script.run
+      .withSuccessHandler(function () {
+        saving = false;
+        step = STEPS.indexOf('done');
+        render(true);
+      })
+      .withFailureHandler(function () {
+        saving = false;
+        showError('Your choices could not be saved. Please try again.');
+        render(false);
+      })
+      .completeFirstRunSetup(JSON.stringify(answers));
+  }
+
+  function next() {
+    var name = STEPS[step];
+    if (name === 'purpose' && purpose === 'returning') {
+      // Keep everything: nothing is sent but "setup is done".
+      save({});
+      return;
+    }
+    if (name === 'mode') {
+      save(collectAnswers());
+      return;
+    }
+    if (name === 'done') {
+      // Open (or refresh) the sidebar in the mode just chosen, then close.
+      google.script.run
+        .withSuccessHandler(function () { google.script.host.close(); })
+        .withFailureHandler(function () { google.script.host.close(); })
+        .refreshSidebarAfterPreferences();
+      return;
+    }
+    step += 1;
+    render(true);
+  }
+
+  function back() {
+    if (step > 0) step -= 1;
+    render(true);
+  }
+
+  $all('input[name="purpose"]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      purpose = input.value;
+      applyPurpose(purpose);
+      render(false);
+    });
+  });
+  ['arrangement', 'uiMode'].forEach(function (name) {
+    $all('input[name="' + name + '"]').forEach(function (input) {
+      input.addEventListener('change', function () { touched[name] = true; });
+    });
+  });
+  $all('.setup-step[data-step="look"] input, .setup-step[data-step="look"] select').forEach(function (control) {
+    control.addEventListener('change', renderPreview);
+  });
+  $one('#setup-next').addEventListener('click', next);
+  $one('#setup-back').addEventListener('click', back);
+  $one('#setup-skip').addEventListener('click', function () { google.script.host.close(); });
+
+  applyInitialAnswers();
+  render(true);
+})();
+</script>

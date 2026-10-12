@@ -14,7 +14,8 @@
       ".source-emphasis-mode",
       ".wants-hebrew-punctuation",
       ".wants-translation-punctuation",
-      ".wants-aligned-rows"
+      ".wants-aligned-rows",
+      "#more-options-toggle"
     ]
   },
   "preferences": {
@@ -31,7 +32,9 @@
       "#source_emphasis_mode",
       "#hebrew_punctuation",
       "#translation_punctuation",
-      "#bilingual_aligned_rows"
+      "#bilingual_aligned_rows",
+      "#show_advanced_settings",
+      "#interface-mode-status"
     ]
   },
   "surprise_me": {
@@ -71,6 +74,35 @@
       "#cc-translation-preview",
       ".cc-pill-row",
       ".cc-translation"
+    ]
+  },
+  "first-run-setup": {
+    "template": "apps-script/first-run-setup.html",
+    "requiredSelectors": [
+      "#setup-next",
+      "#setup-back",
+      "#setup-skip",
+      "#setup-error",
+      "#setup-progress",
+      "#setup-preview-he",
+      "#setup-preview-en",
+      "#setup-preview-body",
+      "#setup-arrangement",
+      "#setup-teamim",
+      "#setup-language",
+      "name=\"purpose\"",
+      "name=\"show\"",
+      "name=\"arrangement\"",
+      "name=\"vowels\"",
+      "name=\"uiMode\"",
+      "data-divine=\"meforash\"",
+      "data-divine=\"elodim\"",
+      "data-divine=\"yaw\"",
+      "data-divine=\"god\"",
+      "data-step=\"purpose\"",
+      "data-step=\"look\"",
+      "data-step=\"mode\"",
+      "data-step=\"done\""
     ]
   }
 }

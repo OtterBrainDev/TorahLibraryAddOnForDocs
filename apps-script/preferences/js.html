@@ -1727,6 +1727,73 @@
       loadMenuLayoutEditor('');
     }
 
+    // ── Interface mode (Simple / Everything) ─────────────────────────────
+    // Simple mode hides these tabs (and two "Advanced" sections in Fonts)
+    // until "Show advanced settings" is ticked; preferences/css.html has the
+    // rules. The switch lasts for this dialog only and stores nothing.
+    var PREF_ADVANCED_TABS_ = ['search', 'linking', 'experimental'];
+    var _activatePrefTab = null;
+
+    function prefDialog_() {
+      return document.querySelector('.preferences-dialog');
+    }
+
+    function visiblePrefTabs_(tabs) {
+      return tabs.filter(function (t) { return window.getComputedStyle(t).display !== 'none'; });
+    }
+
+    function setShowAdvanced_(on) {
+      var dialog = prefDialog_();
+      if (dialog) dialog.classList.toggle('show-advanced', !!on);
+      var box = byId('show_advanced_settings');
+      if (box) box.checked = !!on;
+      // Hiding the tab that is open would leave its panel without a tab.
+      var selected = document.querySelector('.pref-tab[aria-selected="true"]');
+      if (!on && selected && _activatePrefTab && window.getComputedStyle(selected).display === 'none') {
+        _activatePrefTab(document.querySelector('.pref-tab'));
+      }
+    }
+
+    function setInterfaceModeUi_(mode) {
+      var dialog = prefDialog_();
+      if (dialog) dialog.setAttribute('data-ui-mode', mode === 'simple' ? 'simple' : 'full');
+      document.querySelectorAll('input[name="interface_mode_choice"]').forEach(function (input) {
+        input.checked = input.value === mode;
+      });
+      setShowAdvanced_(byId('show_advanced_settings') && byId('show_advanced_settings').checked);
+    }
+
+    function initInterfaceMode() {
+      var dialog = prefDialog_();
+      var current = dialog && dialog.getAttribute('data-ui-mode') === 'simple' ? 'simple' : 'full';
+      setInterfaceModeUi_(current);
+      var status = byId('interface-mode-status');
+      document.querySelectorAll('input[name="interface_mode_choice"]').forEach(function (input) {
+        input.addEventListener('change', function () {
+          if (!input.checked) return;
+          var previous = current;
+          if (status) status.textContent = 'Saving…';
+          google.script.run.withSuccessHandler(function (result) {
+            current = (result && result.uiMode) || input.value;
+            setInterfaceModeUi_(current);
+            // setUiMode may have moved the menu; keep the Menu Bar editor (and
+            // what Save sends) in step with it.
+            loadMenuLayoutEditor((result && result.menuLayout) || '');
+            if (status) {
+              status.textContent = (result && result.menuKept)
+                ? 'Saved. Your menu was kept as you arranged it. Refresh the sidebar to see the change.'
+                : 'Saved. Refresh the sidebar to see the change.';
+            }
+          }).withFailureHandler(function () {
+            setInterfaceModeUi_(previous);
+            if (status) status.textContent = 'Could not change the interface.';
+          }).setUiMode(input.value);
+        });
+      });
+      var box = byId('show_advanced_settings');
+      if (box) box.addEventListener('change', function () { setShowAdvanced_(box.checked); });
+    }
+
     function _initPreferencesTabs() {
       const tabs = Array.from(document.querySelectorAll('.pref-tab'));
       if (!tabs.length) return;
@@ -1753,6 +1820,9 @@
       var preferredTab = window.PREF_NAVIGATE_TAB || sessionStorage.getItem('PREF_NAVIGATE_TAB');
       sessionStorage.removeItem('PREF_NAVIGATE_TAB');
 
+      // A hint that lands on a tab Simple mode hides shows the advanced tabs.
+      if (preferredTab && PREF_ADVANCED_TABS_.indexOf(preferredTab) >= 0) setShowAdvanced_(true);
+
       var initial = null;
       if (preferredTab) {
         initial = tabs.find(function (t) {
@@ -1766,27 +1836,32 @@
       }
       activate(initial);
 
+      _activatePrefTab = activate;
+
       tabs.forEach(function (tab, idx) {
         tab.addEventListener('click', function () {
           activate(tab, { focus: true });
         });
         tab.addEventListener('keydown', function (ev) {
+          // Simple mode hides the advanced tabs; arrow keys skip them.
+          var shown = visiblePrefTabs_(tabs);
+          var at = Math.max(0, shown.indexOf(tab));
           switch (ev.key) {
             case 'ArrowRight':
               ev.preventDefault();
-              tabs[(idx + 1) % tabs.length].focus();
+              shown[(at + 1) % shown.length].focus();
               break;
             case 'ArrowLeft':
               ev.preventDefault();
-              tabs[(idx - 1 + tabs.length) % tabs.length].focus();
+              shown[(at - 1 + shown.length) % shown.length].focus();
               break;
             case 'Home':
               ev.preventDefault();
-              tabs[0].focus();
+              shown[0].focus();
               break;
             case 'End':
               ev.preventDefault();
-              tabs[tabs.length - 1].focus();
+              shown[shown.length - 1].focus();
               break;
             case 'Enter':
             case ' ':
@@ -1799,6 +1874,7 @@
     }
 
     _initPreferencesTabs();
+    initInterfaceMode();
     initPrefButtonGroups();
     initPrefTranslitDropdown();
     initWorkflowTabs();

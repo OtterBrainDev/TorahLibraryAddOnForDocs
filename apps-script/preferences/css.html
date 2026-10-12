@@ -1175,6 +1175,35 @@
   /* top is minus the shell's padding-top: sticky offsets are measured from
      the scroll container's padding edge, so top: 0 left a 16px strip above
      the bar where scrolled content showed through.                        */
+  /* Interface mode (Simple / Everything) and, in Simple mode, the switch
+     that shows the advanced tabs and sections hidden below. */
+  .interface-mode-row,
+  .show-advanced-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 14px;
+    margin-top: 10px;
+    font-size: 13px;
+  }
+  .interface-mode-row label,
+  .show-advanced-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .interface-mode-label { font-weight: 600; }
+  .interface-mode-status { color: var(--muted); font-size: 12px; }
+  .preferences-dialog:not([data-ui-mode="simple"]) .show-advanced-row { display: none; }
+
+  .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-search-btn,
+  .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-linking-btn,
+  .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-experimental-btn,
+  .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #translation-language-typography,
+  .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #emphasis-mapping {
+    display: none !important;
+  }
+
   .pref-tab-bar {
     position: sticky;
     top: -16px;

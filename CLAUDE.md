@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **346 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **383 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -194,6 +194,11 @@ and fix it before touching the feature you came to change.
 - `rich-text-markup.test.js` — Sefaria markup with any attributes (Shulchan
   Arukh's commentary anchors) inserts without throwing; a source with one
   language inserts that language alone, with its title's entities decoded.
+- `first-run-setup.test.js` — first-run setup and the Simple / Full interface
+  mode: clicking through with the preselected answers writes nothing, only
+  values the dialog can produce are stored, switching to Simple and back
+  returns the user's own menu, setup is shown once (never to an upgrader), and
+  the dialog's preview transforms its sample exactly as an insert would.
 
 and in `test/ui/`:
 
@@ -230,6 +235,9 @@ and in `test/ui/`:
   `shared/css/native-controls`, and every `<input type>` in use has a base rule
   there. Style a control in its component file or in that file, never by
   relying on Google's sheet.
+- `simple-mode.test.js` — Simple mode hides with CSS only (never removes),
+  every control it hides exists and comes back under "More options" or "Show
+  advanced settings", and the server tells each page its mode.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

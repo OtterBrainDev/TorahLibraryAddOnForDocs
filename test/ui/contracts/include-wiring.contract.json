@@ -71,5 +71,12 @@
     "<?!= include('css/tokens'); ?>",
     "<?!= include('css/components/results'); ?>",
     "<?!= include('css/utilities'); ?>"
+  ],
+  "first-run-setup.html": [
+    "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
+    "<?!= include('css/tokens'); ?>",
+    "<?!= include('first-run-setup/css'); ?>",
+    "<?!= include('first-run-setup/js'); ?>"
   ]
 }
