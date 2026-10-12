@@ -245,7 +245,21 @@ function getDefaultPreferences() {
     // Insert Source from Selection: true replaces the selected citation with
     // the inserted source (whose title is that same citation text); false
     // keeps the selection and inserts the source below it.
-    insert_from_selection_replace: true
+    insert_from_selection_replace: true,
+    // Interface mode: "full" (every tool and setting) or "simple" (search,
+    // preview, insert; the rest one click away). "full" is the default because
+    // a user of the original published add-on has no stored schema and looks
+    // exactly like a new user: nobody is put into Simple without choosing it
+    // (AGENTS.md hard rule 2). Not in SETTINGS: written only by setUiMode and
+    // completeFirstRunSetup, which keep the menu in step. See server/first-run.gs.
+    ui_mode: "full",
+    // "pending" until the user finishes or dismisses first-run setup. Seeded
+    // only for users with no stored schema; migrateToV20_ marks every upgrader
+    // "done". Not in SETTINGS, so "Reset to defaults" never re-runs setup.
+    first_run_setup: "pending",
+    // The menu_layout a user had before switching to Simple, restored when they
+    // switch back ("" = they had none, i.e. the code default).
+    menu_layout_before_simple: ""
   };
 }
 

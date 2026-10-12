@@ -9,6 +9,16 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+> **Preference migration (schema 20). Existing users keep the full interface
+> and never see first-run setup.** New preferences `ui_mode` (default `full`),
+> `first_run_setup` and `menu_layout_before_simple`. Upgrading users are
+> migrated on first open to `ui_mode = full` and `first_run_setup = done`
+> (only when unset), so **nothing they have is hidden and nothing changes**.
+> A user with no stored settings at all (a new install, or a user of the
+> original published add-on, which stored none) is shown the setup once; it
+> keeps Full mode unless they choose Simple. See
+> [`docs/first-run-setup-design.md`](first-run-setup-design.md).
+
 > **Preference migration (schema 19).** New preference
 > `bilingual_aligned_rows`, default `false`. Upgrading users are migrated on
 > first open to `false` (only when unset), which is the one-row side-by-side

@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '19';
+var PREFS_SCHEMA_CURRENT_ = '20';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -184,6 +184,13 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // side-by-side insert has had; the new layout is there to switch on.
   if (from < 19) {
     migrateToV19_(userProperties);
+  }
+  // v19 -> v20: introduces `ui_mode`, `first_run_setup` and
+  // `menu_layout_before_simple`. Everyone with a schema already uses the
+  // add-on: Full mode (what they have now) and setup marked done. A user with
+  // no schema was seeded above with "pending", which this never overwrites.
+  if (from < 20) {
+    migrateToV20_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -479,6 +486,26 @@ function migrateToV18_(userProperties) {
 function migrateToV19_(userProperties) {
   if (userProperties.getProperty('bilingual_aligned_rows') == null) {
     userProperties.setProperty('bilingual_aligned_rows', 'false');
+  }
+  return true;
+}
+
+/**
+ * V20: introduces `ui_mode`, `first_run_setup` and `menu_layout_before_simple`
+ * (first-run setup and Simple mode; see docs/first-run-setup-design.md).
+ * Upgraders keep the full interface they have and are never shown first-run
+ * setup. A stored value is never overwritten, so a no-schema user, seeded with
+ * `first_run_setup = "pending"` before migrations run, still sees setup.
+ */
+function migrateToV20_(userProperties) {
+  if (userProperties.getProperty('ui_mode') == null) {
+    userProperties.setProperty('ui_mode', 'full');
+  }
+  if (userProperties.getProperty('first_run_setup') == null) {
+    userProperties.setProperty('first_run_setup', 'done');
+  }
+  if (userProperties.getProperty('menu_layout_before_simple') == null) {
+    userProperties.setProperty('menu_layout_before_simple', '');
   }
   return true;
 }
