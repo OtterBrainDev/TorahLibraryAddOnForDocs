@@ -223,6 +223,7 @@
         font-size: 12px;
         font-weight: 600;
       }
+      button.meta-pill { font-family: inherit; cursor: pointer; }
       .steps, .checklist, ul {
         margin: 0;
         padding-left: 20px;
@@ -505,6 +506,7 @@
               <li>Optional: open <span class="ui-label">📰 Layout</span> to choose Hebrew, translation or both, and how they sit on the page.</li>
               <li>Click <span class="ui-label">Add Source</span> (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).</li>
             </ol>
+            <p>Want to change the basics (Hebrew or translation, vowels, divine names, Simple or Everything)? <button type="button" class="button-link secondary" id="run-setup-again" onclick="google.script.run.openFirstRunSetup()">Run setup again</button></p>
             <div class="action-grid" style="margin-top:12px;">
               <div class="action-card"><a href="#voices"><h3>Quote a source sheet</h3><p class="muted">Use the Voices tab.</p></a></div>
               <div class="action-card"><a href="#lexicon"><h3>Look up a word</h3><p class="muted">Use the Lexicon tab.</p></a></div>
@@ -859,6 +861,7 @@
             <p>Torah Library brings Sefaria's library into Google Docs: find a source, preview it, and insert it formatted the way you want. It is not an official Sefaria project.</p>
             <div class="meta-row" style="margin-top:10px;">
               <span class="meta-pill">Current line: 2.1</span>
+              <button type="button" class="meta-pill" id="open-release-notes" onclick="google.script.run.releaseNotesPopup()">What's new</button>
               <a class="meta-pill" target="_blank" href="https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" rel="noopener noreferrer">Privacy policy</a>
               <a class="meta-pill" target="_blank" href="https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs" rel="noopener noreferrer">GitHub</a>
               <a class="meta-pill" href="mailto:help@the-merkaz.org">Contact support</a>

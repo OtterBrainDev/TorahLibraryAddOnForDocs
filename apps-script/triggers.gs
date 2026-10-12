@@ -32,6 +32,15 @@ function onInstall(e) {
   // seeding above so the first menu reflects the new user's preferences.
   onOpen(e);
 
+  // A new user gets first-run setup instead of the release notes (which stay
+  // one click away under Help). A reinstall over a finished setup gets the
+  // release notes as before. See server/first-run.gs.
+  try {
+    if (maybeShowFirstRunSetup_()) return;
+  } catch (error) {
+    Logger.log(`Could not show first-run setup on install: ${error.message}`);
+  }
+
   try {
     let html = HtmlService.createHtmlOutputFromFile('release-notes')
         .setWidth(720)
