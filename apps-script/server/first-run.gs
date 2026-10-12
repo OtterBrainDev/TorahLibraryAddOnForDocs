@@ -250,7 +250,7 @@ function showFirstRunSetup_() {
   }));
   var output = template.evaluate()
     .setWidth(640)
-    .setHeight(620);
+    .setHeight(680);
   DocumentApp.getUi().showModalDialog(output, 'Welcome to Torah Library');
 }
 

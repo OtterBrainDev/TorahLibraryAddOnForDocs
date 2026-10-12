@@ -15,11 +15,21 @@
   <body>
     <aside class="hide"><img src="https://www.sefaria.org/static/img/ajax-loader.gif" name="loading"></aside>
 
-    <div class="preferences-dialog">
+    <div class="preferences-dialog" data-ui-mode="<?= uiMode ?>">
       <div class="preferences-shell">
         <section class="preferences-toc section-card" aria-label="Preferences sections">
           <h1>Preferences</h1>
           <p class="section-note">These are your default settings for new insertions. The sidebar is where you pick what to insert right now and override these defaults for a single insertion. Saved changes apply to all Google Docs for your account.</p>
+          <!-- Interface mode (server/first-run.gs setUiMode). Takes effect at
+               once, apart from Save: it also moves the menu. Save collects
+               no radio inputs, and neither control is a preference. -->
+          <div class="interface-mode-row" role="radiogroup" aria-labelledby="interface-mode-label">
+            <span class="interface-mode-label" id="interface-mode-label">Interface</span>
+            <label><input type="radio" name="interface_mode_choice" value="simple"> Simple</label>
+            <label><input type="radio" name="interface_mode_choice" value="full"> Everything</label>
+            <span class="interface-mode-status" id="interface-mode-status" role="status" aria-live="polite"></span>
+          </div>
+          <label class="show-advanced-row" for="show_advanced_settings"><input type="checkbox" id="show_advanced_settings"> Show advanced settings</label>
         </section>
 
         <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">

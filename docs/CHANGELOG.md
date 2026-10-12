@@ -19,6 +19,25 @@ heading until the next release consolidates it.
 > keeps Full mode unless they choose Simple. See
 > [`docs/first-run-setup-design.md`](first-run-setup-design.md).
 
+### First-run setup and Simple mode
+
+- **Setup for new users.** The first time a new user opens the add-on, a short
+  dialog asks what they will use it for, how sources should look (Hebrew and/or
+  translation, arrangement, vowels, cantillation, how to write God's name,
+  translation language, with a live preview of Deuteronomy 6:4) and how much of
+  the add-on they want to see. Every answer starts at their current setting, so
+  clicking through changes nothing. It is shown once; **Help → Run setup again**
+  reopens it.
+- **Simple mode.** Search, preview and insert, with the Texts / Voices / Lexicon
+  tabs, sorting, Layout, Session Library and Quick Actions under **More
+  options** in the sidebar, a shorter menu (Texts, Insert Source from Selection,
+  Transform Divine Names, Link Texts), and the Search, Linking and Experimental
+  tabs of Preferences behind **Show advanced settings**. Nothing is removed.
+  Switch between **Simple** and **Everything** at the top of Preferences;
+  switching back restores the menu you had.
+- **What's new** in Help → About opens the release notes, which until now only
+  appeared on install.
+
 > **Preference migration (schema 19).** New preference
 > `bilingual_aligned_rows`, default `false`. Upgrading users are migrated on
 > first open to `false` (only when unset), which is the one-row side-by-side

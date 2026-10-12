@@ -11,10 +11,11 @@
     line-height: 1.5;
   }
 
+  /* The footer stays in view; a long screen (2) scrolls above it. */
   .setup-shell {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
     box-sizing: border-box;
     padding: 16px 20px;
   }
@@ -25,7 +26,11 @@
     font-size: 12px;
   }
 
-  .setup-step { flex: 1; }
+  .setup-step {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
 
   .setup-heading {
     margin: 0 0 12px;

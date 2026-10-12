@@ -1,7 +1,10 @@
 # First-Run Setup and Simple Mode: Design
 
-> **Status:** Draft for review. No code yet.
+> **Status:** Implemented (steps 1–4 of §13). Release (step 5) pending.
 > **Target release:** 2.2.0 (MINOR: new preference keys, handled by a migration)
+>
+> Where the implementation differs from the first draft, the text below says
+> what was built and why; §14 lists the differences in one place.
 > **Preference schema:** 19 → 20
 
 ---
@@ -85,8 +88,10 @@ existing user had is the regression this project has already paid for.)
 - **Insert Source from Selection** and the other quick actions **never** wait on
   setup. Someone who highlights a citation and runs the menu item gets the
   insert, with today's defaults.
-- **Dismissing** the dialog (close button or Escape) marks setup done, keeps
-  Full mode, and changes nothing else. It never reappears by itself.
+- **Dismissing** the dialog (close button, Escape or "Skip for now") keeps
+  Full mode and changes nothing. It never reappears by itself. Google's dialog
+  close button gives the page no callback, so setup is marked done **as soon as
+  it is shown** (`maybeShowFirstRunSetup_`) rather than when it is dismissed.
 - **Help → "Run setup again"** reopens it at any time, preselected with the
   user's current values.
 
@@ -182,9 +187,9 @@ and can change every one of them before anything is saved.
 | Academic writing | Current defaults | Everything |
 | I've used Torah Library before | (screens skipped) | Full, no changes |
 
-> **Decision needed:** whether the "quoting" preset should move to `he-top`. It
-> is the only place a preset differs from today's defaults. Dropping that
-> difference makes screen 1 affect only the interface mode. See §12.
+The "quoting" preset's move to `he-top` is the only place a preset differs
+from today's defaults. A preset never overrides a field the user already
+changed by hand on screen 2 or 3.
 
 A deliberate omission: the presets do **not** touch `insert_citation_default`,
 `link_texts_default`, `source_title_heading`, fonts, colours or emphasis.
@@ -202,20 +207,13 @@ any time.
 
 ### Menu
 
-Simple mode writes a `menu_layout`:
-
-```json
-{
-  "top": ["texts", "insert_from_selection", "quick_actions"],
-  "quick_actions": ["transform_divine_names", "link_texts"],
-  "hidden": ["voices", "lexicon", "quick_actions_sidebar", "unlink_sources",
-             "gematriya_count", "surprise_me"]
-}
-```
-
-Preferences and Help are appended by the menu builder as always. Because the
-items are `hidden`, not removed, turning them back on in the Menu Bar tab puts
-each one back in its usual place.
+Simple mode writes a `menu_layout`: the default layout with
+`"hidden": ["voices", "lexicon", "quick_actions_sidebar", "unlink_sources",
+"gematriya_count", "surprise_me"]` (`getSimpleMenuLayout_`). What remains is
+Texts, Insert Source from Selection, and Quick Actions ▸ Transform Divine Names
+and Link Texts with Sefaria. Preferences and Help are appended by the menu
+builder as always. Because the items are `hidden`, not removed, turning them
+back on in the Menu Bar tab puts each one back in its usual place.
 
 **Switching modes and a customized menu:**
 
@@ -224,8 +222,11 @@ each one back in its usual place.
 - Switching **back** to Full restores that saved layout. If none was saved,
   `menu_layout` is deleted, which falls back to the code default (an unset
   layout tracks new menu items; see `migrateToV10_`).
-- If the user edits the menu while in Simple mode, their edit wins. Switching to
-  Full then asks: "Keep your current menu, or restore the full menu?"
+- If the user edits the menu while in Simple mode, their edit wins: switching
+  to Full keeps it, and Preferences says so ("Your menu was kept as you arranged
+  it"). **Restore default menu** in the Menu Bar tab is one click from there. A
+  question at switch time was dropped: the switch takes effect at once, and a
+  second dialog for a rare case was not worth its weight.
 
 **Known limitation:** in a document where the add-on has not been used yet,
 `onOpen` runs in `AuthMode.NONE` and cannot read preferences. Apps Script shows
@@ -281,7 +282,7 @@ tabs for this dialog session only; it does not change `ui_mode`.
 
 | Key | Values | Code default | In `SETTINGS` (client-writable)? |
 | --- | --- | --- | --- |
-| `ui_mode` | `simple` / `full` | `full` | Yes. Set from the Interface switch in Preferences |
+| `ui_mode` | `simple` / `full` | `full` | **No.** Written only by `setUiMode` and `completeFirstRunSetup`, which move the menu with it |
 | `first_run_setup` | `pending` / `done` | `pending` | **No.** Written only by the setup RPCs and the migration |
 | `menu_layout_before_simple` | JSON layout or empty | `""` | **No.** Written only when the mode switches |
 
@@ -290,12 +291,13 @@ Why `first_run_setup` defaults to `pending` and still upgrades safely:
 (new users and legacy published-add-on users). Upgraders already have a schema,
 and the v20 migration marks them `done` before they ever see the flag.
 
-Keeping `first_run_setup` out of `SETTINGS` means "Reset to defaults" in
-Preferences cannot send an existing user back through setup, and the
-`setPreferences` filter (pinned by `set-preferences.test.js`) keeps the client
-from writing it. No current test requires every default to appear in
-`SETTINGS`; the new keys add a test asserting that `ui_mode` is in it and the
-other two are not.
+None of the three is in `SETTINGS`. "Reset to defaults" in Preferences
+cannot send an existing user back through setup or flip their interface, and
+the `setPreferences` filter (pinned by `set-preferences.test.js`) keeps the
+client from writing them. `ui_mode` was first planned as a `SETTINGS` key, but a
+write through `setPreferences` would change the mode without moving the menu;
+`setUiMode` is the one way to change it. The sidebar and Preferences read it from
+their template (`template.uiMode`), not from the preferences payload.
 
 ### Migration v20
 
@@ -325,8 +327,8 @@ The ordering matters and must be pinned by a test: for a no-schema user, the
 driver seeds defaults (`first_run_setup = pending`) **before** running
 migrations, so v20's `done` never overwrites it.
 
-`menu_layout_before_simple` is excluded from seeding the same way `menu_layout`
-is: it should only ever hold a layout the user actually had.
+`menu_layout_before_simple` is seeded and migrated as `""` ("no layout of your
+own"), which is what it means until the user first switches to Simple.
 
 ### The one commit that ships the keys
 
@@ -336,9 +338,12 @@ Per `docs/versioning.md` §2, in a single commit:
 - `migrateToV20_` and its call in `runUserPreferenceMigrationsIfNeeded_`;
 - `PREFS_SCHEMA_CURRENT_ = '20'`;
 - `prefsSchemaVersion: 20` in `docs/VERSION.json`;
-- version 2.2.0 everywhere `VERSION.json` lists a surface;
-- a CHANGELOG entry that says, first sentence: existing users keep the full
-  interface, and new users choose Simple or Full during setup.
+- a CHANGELOG entry under **Unreleased** that says, first sentence: existing
+  users keep the full interface and never see setup.
+
+The add-on version itself (2.2.0, and the surfaces `VERSION.json` lists) moves
+at release, as for schemas 17–19: `versioning.md` §5 keeps version bumps out of
+feature commits.
 
 ---
 
@@ -350,12 +355,18 @@ function, so Node tests can load the file on its own, like `menu-layout.gs`.
 | Function | Reachable from `google.script.run`? | Arity | Purpose |
 | --- | --- | --- | --- |
 | `openFirstRunSetup` | Yes (Help → "Run setup again") | 0 | Shows the setup dialog |
-| `getFirstRunSetupData` | Yes | 0 | The user's current values for every key setup can write, to preselect answers |
-| `completeFirstRunSetup` | Yes | 1 | Takes the answers as JSON, writes them, sets `first_run_setup = done`, rebuilds the menu |
-| `dismissFirstRunSetup` | Yes | 0 | Sets `first_run_setup = done`; writes nothing else |
+| `completeFirstRunSetup` | Yes | 1 | Takes the answers as JSON, writes the ones that change something, sets `first_run_setup = done`, rebuilds the menu |
 | `setUiMode` | Yes (Preferences Interface switch) | 1 | Switches mode, handles the menu save and restore in §6, rebuilds the menu |
-| `planFirstRunPreferences_` | No (pure) | 1 | Answers → `{key: value}` to write. Drops unknown keys and invalid values |
-| `isFirstRunSetupPending_` | No | 0 | Read by `onInstall` and `openSharedSidebar_` |
+| `releaseNotesPopup` | Yes (Help → About → "What's new") | 0 | Existed already; newly reachable from the client |
+| `firstRunAnswersFromPreferences_` | No (pure) | 1 | Stored values → the answers setup preselects |
+| `planFirstRunPreferences_` | No (pure) | 2 | Answers + stored values → only the writes that change something. Drops unknown keys and invalid values |
+| `planUiModeSwitch_` | No (pure) | 2 | The writes a mode switch implies, including the menu save and restore |
+| `maybeShowFirstRunSetup_` | No | 0 | Called by `onInstall` and `openSharedSidebar_`: runs migrations, shows setup if pending, marks it done |
+| `getUiMode_` | No | 0 | Read into the sidebar and Preferences templates |
+
+The current answers are embedded in the dialog's template config, so the
+planned `getFirstRunSetupData` round trip is not needed. `dismissFirstRunSetup`
+is not needed either, since setup is marked done when shown (§3).
 
 Every new public function goes into `docs/rpc-surface.json` in the same commit
 (hard rule 8).
@@ -365,9 +376,9 @@ Every new public function goes into `docs/rpc-surface.json` in the same commit
 can produce. Anything else is dropped, never stored. Logging follows hard rule
 7: log `error.message` only, never the answers.
 
-`getSidebarBootstrapData` gains one field, `uiMode`, so the sidebar can set
-`data-ui-mode` before its first paint. The Preferences bootstrap gets the same
-field.
+The sidebar and Preferences get the mode as a template variable
+(`template.uiMode`), printed into a `data-ui-mode` attribute, so it applies
+before the first paint and `getSidebarBootstrapData` keeps its shape.
 
 ---
 
@@ -387,8 +398,8 @@ field.
   the justification comment of hard rule 5.
 - **Accessibility:** each screen is a `fieldset` with a `legend`. Answer cards
   are native radio inputs styled as cards. Focus moves to the screen heading on
-  Continue and Back. Escape dismisses (§3). The preview is `aria-hidden`, since
-  the answers already describe it.
+  Continue and Back. The preview is `aria-hidden`, since the answers already
+  describe it.
 
 ---
 
@@ -401,9 +412,8 @@ New tests in `test/tests/`:
     unknown keys and invalid values.
   - Clicking through with the preselected answers writes no content key whose
     value differs from what is stored.
-  - "I've used Torah Library before" writes only `first_run_setup = done` and
-    `ui_mode = full`.
-  - Dismissing writes only `first_run_setup = done`.
+  - "I've used Torah Library before" writes only `first_run_setup = done`.
+  - Showing setup marks it done; it is never shown to an upgrader.
   - The preview's client-side vowel, trope and divine-name rules give the same
     text as `text-processing.gs` for the Deuteronomy 6:4 sample.
 - `migrations.test.js` additions
@@ -456,22 +466,17 @@ release that ships this, not before.
 
 ---
 
-## 12. Open questions
+## 12. Decisions
 
-1. **The `he-top` preset for the "quoting" answer** (§5). It is the only place a
-   preset differs from today's defaults. Keep it, or let screen 1 affect only
-   the interface mode?
-2. **Default for a new user who dismisses setup.** This design keeps Full,
-   because a legacy user of the original add-on cannot be told apart from a new
-   one. The cost: a new, unsure user who closes the dialog gets the full
-   interface. An alternative is to make dismissing ask once ("Use the simple
-   interface?"). Recommendation: ship with Full and measure through feedback
-   before adding a step.
-3. **Voices and Lexicon in Simple mode.** Hidden here, on the reasoning that
-   they are the least-used for quoting. If source-sheet preparers rely on Voices,
-   that answer could keep its tab visible.
-4. **The graduation tip's counter** (§11): ship in 2.2.0 with a new key, or
-   defer to a later release?
+The draft's open questions, settled as recommended when the design was
+approved:
+
+1. **The `he-top` preset for the "quoting" answer** (§5): kept.
+2. **A new user who dismisses setup** keeps Full: a legacy user of the original
+   add-on cannot be told apart from a new one. Revisit with feedback.
+3. **Voices and Lexicon in Simple mode:** hidden behind "More options" for
+   every Simple user.
+4. **The graduation tip** (§11): deferred to a later release.
 
 ---
 
@@ -480,8 +485,8 @@ release that ships this, not before.
 Each step is a separate commit that leaves `npm test` and `pre_clasp_qc.sh`
 green.
 
-1. **Keys and migration:** the single commit described in §7, with its tests. No UI
-   reads the keys yet, so behaviour is unchanged for everyone.
+1. **Keys and migration:** the single commit described in §7, with its tests.
+   No UI reads the keys yet, so behaviour is unchanged for everyone.
 2. **Server:** `first-run.gs`, the RPC surface entries, and the `onInstall` and
    sidebar triggers, behind `first_run_setup` (only new users are affected).
 3. **Setup dialog:** the entry template, preview and tests.
@@ -490,3 +495,17 @@ green.
 5. **Release:** CHANGELOG, `docs/live-test-checklist-2.2.0.md` (fresh install
    from inside a document, from the Marketplace website, an upgrade from 2.1.0,
    and a no-schema legacy user), listing and screenshots.
+
+---
+
+## 14. Differences from the first draft
+
+- `ui_mode` is not a `SETTINGS` key (§7); `setUiMode` is the only writer.
+- Setup is marked done when shown, not when dismissed (§3), because the dialog
+  cannot see its own close button. `getFirstRunSetupData` and
+  `dismissFirstRunSetup` were dropped (§8).
+- The mode reaches the sidebar and Preferences as a template variable, not a
+  bootstrap field (§8).
+- A menu rearranged in Simple mode is kept on switching back, with a note,
+  instead of a question (§6).
+- The version bump to 2.2.0 waits for the release (§7).

@@ -69,6 +69,9 @@ function initializeSidebar(receivedTitles) {
 function applyQuickOpenConfig_() {
   var cfg = window.APP_CONFIG || {};
   if (cfg.openActionsPanel) {
+    // Opened from the Quick Actions Sidebar menu item: in Simple mode the
+    // panel sits under "More options", so open that too.
+    setMoreOptionsOpen(true);
     $('#footer-actions-panel').show();
   }
   if (cfg.initialQuery) {

@@ -20,6 +20,19 @@ function setFooterButtonStates() {
   $('#open-session-library').toggleClass('is-active', hasHistoryItems);
 }
 
+// Simple mode's "More options": show or hide the controls Simple mode hides
+// (css/components/simple-mode). Not remembered between sessions.
+function setMoreOptionsOpen(open) {
+  $('.unified-sidebar').toggleClass('is-more-open', !!open);
+  $('#more-options-toggle')
+    .attr('aria-expanded', open ? 'true' : 'false')
+    .text(open ? 'Fewer options' : 'More options');
+}
+
+$('#more-options-toggle').on('click', function () {
+  setMoreOptionsOpen(!$('.unified-sidebar').hasClass('is-more-open'));
+});
+
 $('#insert-source').click(function () {
   // --- Lexicon mode: insert a lexicon entry ---
   if (appMode === 'lexicon') {
