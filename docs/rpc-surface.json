@@ -23,6 +23,11 @@
       "definedIn": "apps-script/server/sefaria-fetch.gs"
     },
     {
+      "name": "findReferenceForSidebar",
+      "arity": 3,
+      "definedIn": "apps-script/server/sefaria-fetch.gs"
+    },
+    {
       "name": "findSearchAdvanced",
       "arity": 4,
       "definedIn": "apps-script/server/search.gs"

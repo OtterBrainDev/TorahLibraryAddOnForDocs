@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **383 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **391 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -175,6 +175,9 @@ and fix it before touching the feature you came to change.
 - `translation-language-typography.test.js` — per-language translation
   formatting: stored entries cleaned, the translation's language read from
   Sefaria's payload, and only that language's blocks reformatted.
+- `sidebar-session-fetch.test.js` — the Layout tray's Vowels, Cantillation
+  and Punctuation pills (sidebar session overrides) reach the fetched, and so
+  the inserted, text; every sidebar fetch passes its session.
 - `insertion-target.test.js` — where an insert goes: after the cursor's
   block, inside a table cell for paragraph layouts, below the table (with a
   notice) for side-by-side layouts, never into a header, footer or footnote.

@@ -167,7 +167,8 @@ $('#insert-source').click(function () {
       preferredTitle: input,
       includeTranslationSourceInfo: includeTranslationSourceInfo,
       insertSefariaLink: insertSefariaLink,
-      sourceEmphasisMode: sourceEmphasisMode
+      sourceEmphasisMode: sourceEmphasisMode,
+      sessionId: sidebarSessionId
     });
     return;
   }
@@ -190,6 +191,8 @@ $('#insert-source').click(function () {
     alignedRows: $('.wants-aligned-rows').is(':checked'),
     insertSefariaLink: insertSefariaLink,
     includeTransliteration: $('.include-transliteration').is(':checked'),
+    // The scheme picked in the Layout tray may be a session override only.
+    transliterationScheme: getSidebarTransliterationScheme(),
     insertCitationOnly: false,
     sourceEmphasisMode: sourceEmphasisMode
   });
