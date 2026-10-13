@@ -225,3 +225,14 @@ test('a translation in a language with its own formatting gets it; the others ke
   assert.equal(attrsOf('Au commencement').FONT_FAMILY, 'Garamond');
   assert.equal(attrsOf('Au commencement').FONT_SIZE, 12, 'an empty size keeps the Translation size');
 });
+
+test('the sidebar session reaches each version\'s re-fetch (Layout tray cantillation/vowels)', () => {
+  const { ctx } = loadInsertion({ resolved });
+  const sessions = [];
+  ctx.findReferenceForSidebar = (ref, versions, sessionId) => {
+    sessions.push([versions.en, sessionId]);
+    return resolved[versions.en] || null;
+  };
+  ctx.insertReferenceVersions('Genesis 1:1', { versionTitles: ['Koren', 'JPS'], singleLanguage: 'en', sessionId: 's1' });
+  assert.deepEqual(sessions, [['Koren', 's1'], ['JPS', 's1']]);
+});

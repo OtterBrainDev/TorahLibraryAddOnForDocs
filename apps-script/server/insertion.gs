@@ -1051,6 +1051,8 @@ function buildSefariaVersionUrl_(ref, enVersionTitle, heVersionTitle) {
  * @param {boolean} [opts.insertSefariaLink]   Hyperlink title to sefaria.org.
  * @param {string}  [opts.sourceEmphasisMode]  "keep" / "discard" / "only";
  *        omitted means the stored `source_emphasis_mode` preference.
+ * @param {string}  [opts.sessionId]           The sidebar session whose overrides
+ *        (vowels, cantillation, punctuation) apply to the fetch.
  * @return {{inserted: string[], skipped: string[]}} Version titles inserted, and
  *         those left out because they have no text for this ref.
  */
@@ -1067,8 +1069,12 @@ function insertReferenceVersions(ref, opts) {
   if (!ref) throw new Error('insertReferenceVersions: no reference provided.');
   if (!versionTitles.length) throw new Error('insertReferenceVersions: no version titles provided.');
 
+  // The sidebar's session overrides (Vowels, Cantillation, Punctuation) apply
+  // at fetch time, so they have to reach this re-fetch too.
   const resolved = versionTitles.map(function (vt) {
-    return findReference(ref, { en: vt, he: heVersionTitle });
+    return options.sessionId
+      ? findReferenceForSidebar(ref, { en: vt, he: heVersionTitle }, options.sessionId)
+      : findReference(ref, { en: vt, he: heVersionTitle });
   });
   const selection = selectInsertableVersions_(versionTitles, resolved);
   const kept = selection.kept;

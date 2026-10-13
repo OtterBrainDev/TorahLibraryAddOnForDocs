@@ -205,7 +205,7 @@ function runUnifiedQuery(options) {
     if (error && error.message) setResultsHint(error.message);
     else if (isHebrewScript) setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
     finishResultGroup();
-  }).findReference(directLookupInput);
+  }).findReferenceForSidebar(directLookupInput, null, sidebarSessionId);
 
   var searchParameters = getSearchParameters();
   google.script.run.withSuccessHandler(function (response) {
@@ -377,7 +377,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     // Static markup; the only interpolated value is the server's error
     // message, escaped with escapeHTML.
     $('.suggestions').html("<br><b>" + escapeHTML((error && error.message) || 'Enter a valid reference to insert.') + "</b>");
-  }).findReference(selectedRef);
+  }).findReferenceForSidebar(selectedRef, null, sidebarSessionId);
 }
 
 // How long the "not directly insertable" notice stays up before the sidebar

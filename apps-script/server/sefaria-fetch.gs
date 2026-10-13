@@ -238,6 +238,34 @@ function findReferenceWithPreferences_(reference, overrides) {
   return resolveReferenceWithFallbacks(safeReference, undefined, preferenceOverlay_(overrides));
 }
 
+/**
+ * The sidebar's stored preferences with its Texts-tab session overrides on
+ * top. The Layout tray's Vowels, Cantillation and Punctuation pills save to
+ * the session (setSidebarSessionState), not to UserProperties, and those
+ * marks are stripped when the text is fetched; a fetch that read only the
+ * stored preferences inserted the text as if the pill had never been
+ * toggled. Only SETTINGS keys are read from the session.
+ */
+function sidebarSessionPreferenceOverlay_(sessionId) {
+  const session = sessionId ? getSidebarSessionState(sessionId) : {};
+  const overrides = {};
+  Object.keys(session || {}).forEach(function (key) {
+    const value = session[key];
+    if (SETTINGS.indexOf(key) < 0 || value === null || typeof value === 'object') return;
+    overrides[key] = value;
+  });
+  return preferenceOverlay_(overrides);
+}
+
+/** findReference as the sidebar sees it: see sidebarSessionPreferenceOverlay_. */
+function findReferenceForSidebar(reference, versions, sessionId) {
+  const safeReference = String(reference || '').trim();
+  if (!safeReference) {
+    return;
+  }
+  return resolveReferenceWithFallbacks(safeReference, versions || undefined, sidebarSessionPreferenceOverlay_(sessionId));
+}
+
 /** Fetch one exact reference; `properties` defaults to the stored preferences. */
 function fetchReference_(safeReference, versions, properties) {
   let url = 'https://www.sefaria.org/api/texts/'

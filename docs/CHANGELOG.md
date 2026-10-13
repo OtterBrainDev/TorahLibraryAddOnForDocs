@@ -107,6 +107,13 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **The Layout tray's Cantillation pill reaches the inserted text.** In the
+  Texts tab, turning Cantillation (or Vowels, or either Punctuation pill) off
+  in the Layout tray changed the pill but not the preview or the insert, which
+  kept the marks until the setting was saved as a default. Those pills set an
+  override for this sidebar only, and the text was fetched with the saved
+  preferences alone; it is now fetched with the sidebar's overrides on top. A
+  transliteration scheme picked there now reaches the insert too.
 - **A range across chapters shows where each chapter starts.** With line
   numbers on, Genesis 1:31–2:3 read "(31) … (1) … (2) … (3)", with nothing to
   say the numbers had restarted. Each chapter now gets a heading line in the
