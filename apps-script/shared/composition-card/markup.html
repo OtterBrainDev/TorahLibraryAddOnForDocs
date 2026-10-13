@@ -22,6 +22,11 @@
     <button type="button" class="cc-pill" id="cc-hebrew-punct-toggle" aria-pressed="true" title="Toggle punctuation in the Hebrew">Punctuation: On</button>
   </div>
 
+  <div class="cc-font-row cc-hebrew-font-row" data-cc-feature="fonts">
+    <button type="button" class="cc-font-chip" id="cc-hebrew-font-chip" data-font-role="hebrew" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Hebrew font"><span class="cc-font-chip-glyph" aria-hidden="true">א</span><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
+  </div>
+  <p class="cc-font-note" id="cc-hebrew-font-note" data-cc-feature="fonts" aria-live="polite" hidden><span class="cc-font-note-text"></span> <button type="button" class="cc-font-note-action" id="cc-hebrew-font-note-action" hidden></button></p>
+
   <div class="cc-translit-wrap">
     <button type="button" class="cc-pill cc-translit-pill" id="cc-translit-pill" aria-pressed="false" title="Toggle transliteration">Translit: Off</button>
     <button type="button" class="cc-translit-button" id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
@@ -43,6 +48,26 @@
     <div class="cc-translation-text" id="cc-translation-preview" lang="en">the scroll, before all the people;</div>
     <div class="cc-pill-row">
       <button type="button" class="cc-pill" id="cc-translation-punct-toggle" aria-pressed="true" title="Toggle punctuation in the translation">Punctuation: On</button>
+    </div>
+    <div class="cc-font-row" data-cc-feature="fonts">
+      <button type="button" class="cc-font-chip" id="cc-translation-font-chip" data-font-role="translation" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Translation font"><span class="cc-font-chip-glyph" aria-hidden="true">A</span><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
+    </div>
+  </div>
+
+  <!-- One font panel, opened under whichever font button was clicked. The
+       fields have no name: Preferences collects every named field on save. -->
+  <div class="cc-font-panel" id="cc-font-panel" role="dialog" aria-labelledby="cc-font-panel-title" data-cc-feature="fonts" hidden>
+    <div class="cc-font-panel-title" id="cc-font-panel-title">Hebrew font</div>
+    <div class="cc-font-panel-fields">
+      <label class="cc-font-field cc-font-field--font"><span class="cc-font-field-label">Font</span><select id="cc-font-select"></select></label>
+      <label class="cc-font-field cc-font-field--size"><span class="cc-font-field-label">Size</span><input type="number" id="cc-font-size" min="1" max="400" step="0.5" placeholder="Auto" inputmode="decimal" aria-describedby="cc-font-size-help"></label>
+    </div>
+    <p class="cc-font-panel-help" id="cc-font-size-help">A blank size matches the text where you insert.</p>
+    <p class="cc-font-panel-help" id="cc-font-panel-help"></p>
+    <label class="cc-font-borrow" id="cc-font-borrow-row" hidden><input type="checkbox" id="cc-font-borrow"> <span id="cc-font-borrow-label">Borrow missing marks from Noto</span></label>
+    <div class="cc-font-panel-actions">
+      <button type="button" class="cc-font-more" id="cc-font-more" hidden>Colour, style and more…</button>
+      <button type="button" class="cc-font-done" id="cc-font-done">Done</button>
     </div>
   </div>
 

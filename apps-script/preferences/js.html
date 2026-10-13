@@ -1,23 +1,5 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const fontMeta = {
-      "Ezra SIL": { stack: "'Ezra SIL', 'SBL Hebrew', 'Times New Roman', serif" },
-      "SBL Hebrew": { stack: "'SBL Hebrew', 'Ezra SIL', 'Times New Roman', serif" },
-      "Arial": { stack: "Arial, 'Noto Sans Hebrew', sans-serif" },
-      "David": { stack: "David, 'Times New Roman', serif" },
-      "Frank Ruhl Libre": { stack: "'Frank Ruhl Libre', 'Times New Roman', serif" },
-      "Noto Rashi Hebrew": { stack: "'Noto Rashi Hebrew', 'Noto Serif Hebrew', serif" },
-      "Noto Sans Hebrew": { stack: "'Noto Sans Hebrew', Arial, sans-serif" },
-      "Noto Serif Hebrew": { stack: "'Noto Serif Hebrew', 'Times New Roman', serif" },
-      "Times New Roman": { stack: "'Times New Roman', serif" },
-      "Crimson Text": { stack: "'Crimson Text', Georgia, serif" },
-      "EB Garamond": { stack: "'EB Garamond', Georgia, serif" },
-      "Roboto": { stack: "Roboto, Arial, sans-serif" },
-      "Calibri": { stack: "Calibri, Arial, sans-serif" },
-      "Georgia": { stack: "Georgia, serif" },
-      "Verdana": { stack: "Verdana, Arial, sans-serif" }
-    };
-
     const transliterationExamples = {
       simple_english: "Ve-samtem et devarai eileh al levavchem",
       traditional: "Vəśamtem ʾet-dəvaray ʾēleh ʿal-ləvavḵem",
@@ -91,13 +73,42 @@
       });
     }
 
-    function updateFontPreview(selectId, previewId) {
+    // The font a preview is drawn in: the chosen one, else (Match the
+    // document) the document's, once getInsertionPointFont has answered.
+    function previewFontFor(selectId) {
       const select = byId(selectId);
+      const chosen = select ? select.value : '';
+      return chosen || (typeof _ccDocumentFont === 'string' ? _ccDocumentFont : '') || '';
+    }
+
+    function updateFontPreview(selectId, previewId) {
       const preview = byId(previewId);
-      if (!select || !preview) return;
-      const meta = fontMeta[select.value];
-      // "Match the document" has no font of its own: show the dialog's.
-      preview.style.fontFamily = meta ? meta.stack : '';
+      if (!preview) return;
+      const font = previewFontFor(selectId);
+      ensurePreviewFont(font);
+      preview.style.fontFamily = font ? previewFontStack(font) : '';
+      // The Hebrew sample, with the marks the font lacks drawn as the insert
+      // will draw them (borrowed from Noto, or flagged).
+      const sample = byId(previewId + '_text');
+      if (sample) {
+        if (sample.dataset.sample == null) sample.dataset.sample = sample.textContent;
+        const borrow = byId('hebrew_mark_fallback') ? byId('hebrew_mark_fallback').checked : true;
+        renderHebrewPreviewText(sample, sample.dataset.sample, font, borrow);
+      }
+    }
+
+    // A font <select>'s options come from shared/fonts/js.html. Refilling one
+    // keeps `value` (labelled when it is not on the lists) and rebuilds the
+    // custom dropdown drawn over it.
+    function fillFontSelect(select, value) {
+      if (!select || !select.dataset.fontRole) return;
+      populateFontSelect(select, select.dataset.fontRole, value);
+      if (select.dataset.enhancedCustomSelect === 'true') {
+        const wrapper = document.querySelector('[data-custom-select="' + select.id + '"]');
+        if (wrapper) wrapper.parentNode.removeChild(wrapper);
+        delete select.dataset.enhancedCustomSelect;
+        buildCustomSelectMarkupFromSelect(select);
+      }
     }
 
     function updateStandardPreview(selectId, previewId, styleId) {
@@ -243,8 +254,38 @@
             linkOn: linkCheck ? linkCheck.checked : false,
             linesOn: linesCheck ? linesCheck.checked : false,
             detailsOn: detailsCheck ? detailsCheck.checked : false,
-            emphasisMode: ccNormalizeEmphasisMode(emphasisInput ? emphasisInput.value : '')
+            emphasisMode: ccNormalizeEmphasisMode(emphasisInput ? emphasisInput.value : ''),
+            fonts: {
+              hebrew: { font: (byId('hebrew_font') || {}).value, size: (byId('hebrew_font_size') || {}).value },
+              translation: { font: (byId('translation_font') || {}).value, size: (byId('translation_font_size') || {}).value },
+              borrowMarks: byId('hebrew_mark_fallback') ? byId('hebrew_mark_fallback').checked : true
+            }
           };
+        },
+        // The font buttons edit the Fonts tab's own fields, so the two always
+        // agree and Save stores them like any other change.
+        onFontChange: function (role, field, value) {
+          var el = byId(role + (field === 'size' ? '_font_size' : '_font'));
+          if (!el) return;
+          if (field === 'font') fillFontSelect(el, value);
+          else el.value = value;
+          syncCustomSelect(el);
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        },
+        onBorrowMarksChange: function (on) {
+          var el = byId('hebrew_mark_fallback');
+          if (!el) return;
+          el.checked = on;
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        },
+        onMoreFontSettings: function () {
+          var tab = byId('pref-tab-fonts-btn');
+          if (tab) tab.click();
+          var section = byId('hebrew-text-settings');
+          if (section) {
+            section.open = true;
+            section.scrollIntoView({ block: 'start' });
+          }
         },
         onToggle: function (key) {
           if (key === 'vowels') {
@@ -282,11 +323,15 @@
           return transliterationExamples[scheme] || transliterationExamples.simple_english;
         },
         afterUpdate: function () {
+          // "Match the document" previews follow the document's font once known.
+          updateFontPreview('hebrew_font', 'hebrew_font_preview');
+          updateFontPreview('translation_font', 'translation_font_preview');
           // Apply font styling to transliteration button (preferences-specific)
           var translitBtn = byId('cc-translit-toggle');
           if (!translitBtn) return;
-          var fontMetaEntry = fontMeta[(byId('transliteration_font') || {}).value || ''];
-          translitBtn.style.fontFamily = fontMetaEntry ? fontMetaEntry.stack : '';
+          var translitFont = previewFontFor('transliteration_font');
+          ensurePreviewFont(translitFont);
+          translitBtn.style.fontFamily = translitFont ? previewFontStack(translitFont) : '';
           var sizeInput = byId('transliteration_font_size');
           if (sizeInput && sizeInput.value) translitBtn.style.fontSize = Number(sizeInput.value) + 'px';
           else translitBtn.style.fontSize = '';
@@ -601,6 +646,10 @@
               });
 
               document.querySelectorAll('select').forEach(function(el) {
+                if (el.dataset.fontRole) {
+                  fillFontSelect(el, preferences[el.name] == null ? '' : String(preferences[el.name]));
+                  return;
+                }
                 if (preferences[el.name] !== undefined && preferences[el.name] !== null && customReplacementFields.indexOf(el.name) === -1) {
                   el.value = preferences[el.name];
                 }
@@ -751,6 +800,10 @@
     bindStyleControl('emphasis_bold_style', null);
     bindStyleControl('emphasis_italic_style', null);
 
+    document.querySelectorAll('select[data-font-role]').forEach(function(select) {
+      populateFontSelect(select, select.dataset.fontRole, '');
+    });
+
     enhanceNativeSelect([
       'select#hebrew_font',
       'select#translation_font',
@@ -784,6 +837,7 @@
     }
 
     if (byId('vowels_tanakh_only')) byId('vowels_tanakh_only').addEventListener('change', syncVowelsTanakhOnly_);
+    if (byId('hebrew_mark_fallback')) byId('hebrew_mark_fallback').addEventListener('change', function () { updateCompositionCard(); });
     byId('transliteration_font').addEventListener('change', function(){ updateTransliterationPreview(); updateCompositionCard(); });
     byId('transliteration_scheme').addEventListener('change', function(){ syncCustomSelect(byId('transliteration_scheme')); updateTransliterationPreview(); updateCompositionCard(); });
     if (byId('include_transliteration_default')) byId('include_transliteration_default').addEventListener('change', function(){ updateCompositionCard(); });
@@ -1140,26 +1194,13 @@
     function buildLanguageFontSelect(code, value) {
       // The Translation font list, with its "Match the document" first option
       // standing for "as the Translation font" here.
-      const source = byId('translation_font');
+      // A font not in the list (typed in an older version) is kept.
       const select = document.createElement('select');
       select.id = 'translation-language-font-' + code;
       select.setAttribute('data-language-field', 'font');
-      if (source) {
-        Array.prototype.forEach.call(source.children, function(child) {
-          select.appendChild(child.cloneNode(true));
-        });
-      }
+      populateFontSelect(select, 'latin', value || '');
       if (select.options.length && select.options[0].value === '') {
         select.options[0].textContent = 'As Translation';
-      }
-      select.value = value || '';
-      if (select.value !== (value || '')) {
-        // A font not in the list (typed in an older version): keep it.
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = value;
-        select.appendChild(option);
-        select.value = value;
       }
       return select;
     }

@@ -73,27 +73,9 @@
                 <div class="compact-row">
                   <div class="compact-field">
                     <label for="source_title_font">Font</label>
-                    <select name="source_title_font" id="source_title_font">
+                    <select name="source_title_font" id="source_title_font" data-font-role="latin">
                       <option value="">Match the document</option>
-                      <optgroup label="Sefaria Fonts">
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                      </optgroup>
-                      <optgroup label="System Fonts">
-                        <option value="Arial">Arial</option>
-                        <option value="Calibri">Calibri</option>
-                        <option value="Crimson Text">Crimson Text</option>
-                        <option value="David">David</option>
-                        <option value="EB Garamond">EB Garamond</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Roboto">Roboto</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Verdana">Verdana</option>
-                      </optgroup>
+                      <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
                     </select>
                   </div>
                   <div class="compact-field compact-field--size">
@@ -135,27 +117,9 @@
                 <div class="compact-row">
                   <div class="compact-field">
                     <label for="sefaria_link_font">Font</label>
-                    <select name="sefaria_link_font" id="sefaria_link_font">
+                    <select name="sefaria_link_font" id="sefaria_link_font" data-font-role="latin">
                       <option value="">Match the document</option>
-                      <optgroup label="Sefaria Fonts">
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                      </optgroup>
-                      <optgroup label="System Fonts">
-                        <option value="Arial">Arial</option>
-                        <option value="Calibri">Calibri</option>
-                        <option value="Crimson Text">Crimson Text</option>
-                        <option value="David">David</option>
-                        <option value="EB Garamond">EB Garamond</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Roboto">Roboto</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Verdana">Verdana</option>
-                      </optgroup>
+                      <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
                     </select>
                   </div>
                   <div class="compact-field compact-field--size">
@@ -204,27 +168,9 @@
                 <div class="compact-row">
                   <div class="compact-field">
                     <label for="hebrew_font">Font</label>
-                    <select name="hebrew_font" id="hebrew_font">
+                    <select name="hebrew_font" id="hebrew_font" data-font-role="hebrew">
                       <option value="">Match the document</option>
-                      <optgroup label="Sefaria Fonts">
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                      </optgroup>
-                      <optgroup label="System Fonts">
-                        <option value="Arial">Arial</option>
-                        <option value="Calibri">Calibri</option>
-                        <option value="Crimson Text">Crimson Text</option>
-                        <option value="David">David</option>
-                        <option value="EB Garamond">EB Garamond</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Roboto">Roboto</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Verdana">Verdana</option>
-                      </optgroup>
+                      <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
                     </select>
                   </div>
                   <div class="compact-field compact-field--size">
@@ -257,7 +203,17 @@
                     </div>
                   </div>
                 </div>
-                <div class="inline-preview hebrew" id="hebrew_font_preview"><span class="label">Preview</span>וְשַׂמְתֶּם אֶת־דְּבָרַי אֵלֶּה עַל־לְבַבְכֶם</div>
+                <div class="inline-preview hebrew" id="hebrew_font_preview"><span class="label">Preview</span><span class="inline-preview-text" id="hebrew_font_preview_text">וְשַׂמְתֶּם֙ אֶת־דְּבָרַ֣י אֵ֔לֶּה עַל־לְבַבְכֶ֖ם</span></div>
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Borrow missing marks from Noto</div>
+                    <div class="toggle-help">Many Hebrew fonts (David Libre, Frank Ruhl Libre, Heebo) have the letters and vowels but no cantillation marks, which Docs can show as empty boxes. On: only the marks the font lacks are set in Noto Serif Hebrew (Noto Sans Hebrew for a sans-serif font); the letters, and every mark the font has, stay in your font.</div>
+                  </div>
+                  <label class="switch" for="hebrew_mark_fallback">
+                    <input id="hebrew_mark_fallback" type="checkbox" name="hebrew_mark_fallback" checked>
+                    <span class="slider"></span>
+                  </label>
+                </div>
               </div>
             </div>
           </details>
@@ -291,27 +247,9 @@
                 <div class="compact-row">
                   <div class="compact-field">
                     <label for="transliteration_font">Font</label>
-                    <select name="transliteration_font" id="transliteration_font">
+                    <select name="transliteration_font" id="transliteration_font" data-font-role="latin">
                       <option value="">Match the document</option>
-                      <optgroup label="Sefaria Fonts">
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                      </optgroup>
-                      <optgroup label="System Fonts">
-                        <option value="Arial">Arial</option>
-                        <option value="Calibri">Calibri</option>
-                        <option value="Crimson Text">Crimson Text</option>
-                        <option value="David">David</option>
-                        <option value="EB Garamond">EB Garamond</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Roboto">Roboto</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Verdana">Verdana</option>
-                      </optgroup>
+                      <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
                     </select>
                   </div>
                   <div class="compact-field compact-field--size">
@@ -391,27 +329,9 @@
                 <div class="compact-row">
                   <div class="compact-field">
                     <label for="translation_font">Font</label>
-                    <select name="translation_font" id="translation_font">
+                    <select name="translation_font" id="translation_font" data-font-role="latin">
                       <option value="">Match the document</option>
-                      <optgroup label="Sefaria Fonts">
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                      </optgroup>
-                      <optgroup label="System Fonts">
-                        <option value="Arial">Arial</option>
-                        <option value="Calibri">Calibri</option>
-                        <option value="Crimson Text">Crimson Text</option>
-                        <option value="David">David</option>
-                        <option value="EB Garamond">EB Garamond</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Roboto">Roboto</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Verdana">Verdana</option>
-                      </optgroup>
+                      <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
                     </select>
                   </div>
                   <div class="compact-field compact-field--size">
@@ -517,18 +437,9 @@
                     </div>
                     <div class="compact-field">
                       <label for="emphasis_bold_font">Font override</label>
-                      <select name="emphasis_bold_font" id="emphasis_bold_font">
+                      <select name="emphasis_bold_font" id="emphasis_bold_font" data-font-role="latin">
                         <option value="">Same as the surrounding text</option>
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                        <option value="Taamey Frank CLM">Taamey Frank CLM</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Times New Roman">Times New Roman</option>
+                        <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
                       </select>
                     </div>
                   </div>
@@ -562,18 +473,9 @@
                     </div>
                     <div class="compact-field">
                       <label for="emphasis_italic_font">Font override</label>
-                      <select name="emphasis_italic_font" id="emphasis_italic_font">
+                      <select name="emphasis_italic_font" id="emphasis_italic_font" data-font-role="latin">
                         <option value="">Same as the surrounding text</option>
-                        <option value="Ezra SIL">Ezra SIL</option>
-                        <option value="Frank Ruhl Libre">Frank Ruhl Libre</option>
-                        <option value="Noto Rashi Hebrew">Noto Rashi Hebrew</option>
-                        <option value="Noto Sans Hebrew">Noto Sans Hebrew</option>
-                        <option value="Noto Serif Hebrew">Noto Serif Hebrew</option>
-                        <option value="SBL Hebrew">SBL Hebrew</option>
-                        <option value="Taamey Frank CLM">Taamey Frank CLM</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Georgia">Georgia</option>
-                        <option value="Times New Roman">Times New Roman</option>
+                        <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
                       </select>
                     </div>
                   </div>
@@ -612,7 +514,7 @@
               <div class="pref-workflow-panel" id="pref-workflow-texts" role="tabpanel" aria-labelledby="pref-workflow-tab-texts">
                 <p class="section-note">Set the defaults applied to new text insertions: linked title, source citation, line markers, cantillation, vowels, punctuation (Hebrew and translation, separately), and transliteration. The sidebar can still override these for a single insertion.</p>
                 <div class="subsection-card subsection-card--preview">
-                  <div class="cc-card" id="composition-card-container" data-cc-features="header,linkedTitle,secondaryPills" aria-label="Default insertion preview">
+                  <div class="cc-card" id="composition-card-container" data-cc-features="header,linkedTitle,secondaryPills,fonts" aria-label="Default insertion preview">
                     <?!= include('shared/composition-card/markup') ?>
                   </div>
                 </div>
@@ -1046,6 +948,8 @@
     <?!= include('shared/ui/dom'); ?>
     <?!= include('shared/ui/feedback'); ?>
     <?!= include('shared/ui/state'); ?>
+    <?!= include('shared/fonts/coverage'); ?>
+    <?!= include('shared/fonts/js'); ?>
     <?!= include('shared/composition-card/shared'); ?>
     <?!= include('shared/insertion-options/js'); ?>
     <?!= include('preferences/js'); ?>

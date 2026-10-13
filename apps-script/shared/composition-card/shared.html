@@ -11,7 +11,16 @@
 //     onToggle:       function(key) { /* flip underlying state for key */ },
 //     onSchemeSelect: function(value) { /* set transliteration scheme */ },
 //     afterUpdate:    function(state) { /* optional host-specific post-update hook */ },
-//     getTranslitLabel: function(on, scheme) { /* optional custom label for translit button */ }
+//     getTranslitLabel: function(on, scheme) { /* optional custom label for translit button */ },
+//
+//     // Fonts (the "fonts" feature in data-cc-features). getState() also returns
+//     //   fonts: { hebrew: {font, size}, translation: {font, size}, borrowMarks }
+//     // with font "" / size "" meaning "match the document" and borrowMarks the
+//     // hebrew_mark_fallback preference. The preview is drawn in those fonts,
+//     // with the marks a font lacks borrowed (or flagged) as the insert will.
+//     onFontChange:   function(role, field, value) { /* role 'hebrew'|'translation', field 'font'|'size' */ },
+//     onBorrowMarksChange: function(on) { /* hebrew_mark_fallback */ },
+//     onMoreFontSettings:  function() { /* optional: shows "Colour, style and more…" */ }
 //   });
 //
 // Then call updateCompositionCard() any time external state changes.
@@ -79,6 +88,11 @@ function ccSetPunctuationPill($pill, on) {
 }
 
 var _ccConfig = null;
+var _ccFontsEnabled = false;
+// The font at the insertion point, for "Match the document"
+// (getInsertionPointFont). Null until the server answers, or with no server.
+var _ccDocumentFont = null;
+var _ccFontPanelRole = null;
 
 function initCompositionCard(config) {
   _ccConfig = config;
@@ -94,8 +108,167 @@ function initCompositionCard(config) {
     }
   });
 
+  _ccFontsEnabled = features.indexOf('fonts') >= 0 && typeof planHebrewMarkFallback === 'function';
   _bindCompositionCardEvents();
   updateCompositionCard();
+  if (_ccFontsEnabled) ccRefreshDocumentFont();
+}
+
+/** Asks the server which font "Match the document" means here, then redraws. */
+function ccRefreshDocumentFont() {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  google.script.run
+    .withSuccessHandler(function (result) {
+      _ccDocumentFont = result && result.font ? String(result.font) : null;
+      updateCompositionCard();
+    })
+    .withFailureHandler(function () {})
+    .getInsertionPointFont();
+}
+
+function _ccFontState(state) {
+  var fonts = (state && state.fonts) || {};
+  function role(name) {
+    var r = fonts[name] || {};
+    return { font: String(r.font || ''), size: r.size == null ? '' : String(r.size) };
+  }
+  return { hebrew: role('hebrew'), translation: role('translation'), borrowMarks: fonts.borrowMarks !== false };
+}
+
+/** The font the text will actually be in: the chosen one, else the document's. */
+function _ccEffectiveFont(roleState) {
+  return roleState.font || _ccDocumentFont || '';
+}
+
+function _ccFontChipLabel(roleState) {
+  var name = roleState.font || (_ccDocumentFont ? 'Document: ' + _ccDocumentFont : 'Match the document');
+  return roleState.size ? name + ' \u00B7 ' + roleState.size + ' pt' : name;
+}
+
+/**
+ * The line under the Hebrew font button: says which marks the font cannot
+ * draw and what happens to them, judged from the preview text as shown (so
+ * with Cantillation off, a font that lacks only cantillation says nothing).
+ */
+function _ccFontNote(fontState, plan, previewText) {
+  var font = _ccEffectiveFont(fontState.hebrew);
+  var info = typeof describeHebrewFont === 'function' ? describeHebrewFont(font) : { status: 'unknown' };
+  if (info.status === 'not-in-docs') {
+    return { tone: 'warn', text: font + ' isn\u2019t a Google Docs font: Docs will show the text in another font.' };
+  }
+  if (!plan.length) return null;
+  var cantillation = plan.some(function (range) {
+    for (var i = range.start; i <= range.end; i++) {
+      var cp = previewText.charCodeAt(i);
+      if (cp >= 0x0591 && cp <= 0x05AF) return true;
+    }
+    return false;
+  });
+  var what = cantillation ? (info.lacksVowels ? 'Cantillation and some vowels' : 'Cantillation') : 'A few marks';
+  if (fontState.borrowMarks) {
+    return { tone: 'info', text: what + ' borrowed from ' + plan[0].font + '; ' + font + ' has none.', action: 'Don\u2019t borrow' };
+  }
+  return { tone: 'warn', text: font + ' has no ' + (cantillation ? 'cantillation marks' : 'glyphs for some marks') + ': Docs may show them as empty boxes (the letters in red).', action: 'Borrow from Noto' };
+}
+
+function _ccUpdateFonts(state) {
+  var fontState = _ccFontState(state);
+  var hebrewFont = _ccEffectiveFont(fontState.hebrew);
+  var translationFont = _ccEffectiveFont(fontState.translation);
+
+  if (typeof ensurePreviewFont === 'function') {
+    ensurePreviewFont(hebrewFont);
+    ensurePreviewFont(translationFont);
+  }
+  if (typeof previewFontStack === 'function') {
+    $('#cc-hebrew-preview').css('font-family', previewFontStack(hebrewFont, 'serif'));
+    $('#cc-translation-preview').css('font-family', previewFontStack(translationFont, 'serif'));
+  }
+
+  // Each Hebrew sample, drawn as Docs will: borrowed marks in Noto, or
+  // flagged when borrowing is off.
+  var visiblePlan = [];
+  var visibleText = '';
+  $('.cc-hebrew-text').each(function () {
+    var text = this.textContent;
+    var plan = typeof renderHebrewPreviewText === 'function'
+      ? renderHebrewPreviewText(this, text, hebrewFont, fontState.borrowMarks)
+      : [];
+    if (!this.hidden) { visiblePlan = plan; visibleText = text; }
+  });
+
+  if (!_ccFontsEnabled) return;
+
+  $('#cc-hebrew-font-chip .cc-font-chip-name').text(_ccFontChipLabel(fontState.hebrew));
+  $('#cc-translation-font-chip .cc-font-chip-name').text(_ccFontChipLabel(fontState.translation));
+
+  var note = _ccFontNote(fontState, visiblePlan, visibleText);
+  var $note = $('#cc-hebrew-font-note');
+  $note.prop('hidden', !note)
+    .toggleClass('is-warn', !!note && note.tone === 'warn')
+    .find('.cc-font-note-text').text(note ? note.text : '');
+  $('#cc-hebrew-font-note-action').prop('hidden', !(note && note.action)).text(note && note.action ? note.action : '');
+
+  if (_ccFontPanelRole) _ccSyncFontPanel(fontState);
+}
+
+function _ccSyncFontPanel(fontState) {
+  var role = _ccFontPanelRole;
+  var roleState = fontState[role];
+  var select = document.getElementById('cc-font-select');
+  if (select && typeof populateFontSelect === 'function') {
+    populateFontSelect(select, role === 'hebrew' ? 'hebrew' : 'latin', roleState.font);
+    // "Match the document" names the font it matches, when known.
+    if (_ccDocumentFont && select.options[0]) select.options[0].textContent = 'Match the document (' + _ccDocumentFont + ')';
+  }
+  var $size = $('#cc-font-size');
+  if (document.activeElement !== $size[0]) $size.val(roleState.size);
+
+  var font = _ccEffectiveFont(roleState);
+  var info = typeof describeHebrewFont === 'function' ? describeHebrewFont(font) : { status: 'unknown' };
+  var help = '';
+  if (role === 'hebrew') {
+    if (info.status === 'full') help = font + ' has every vowel and cantillation mark.';
+    else if (info.status === 'borrowed') help = font + ' is missing ' + (info.lacksCantillation ? 'cantillation marks' : 'a few marks') + (info.lacksVowels ? ' and some vowels' : '') + '.';
+    else if (info.status === 'not-in-docs') help = font + ' isn\u2019t a Google Docs font: Docs will show the text in another font.';
+    else if (font) help = 'Which marks ' + font + ' has in Docs isn\u2019t known here: check the inserted text.';
+  } else if (info.status === 'not-in-docs') {
+    help = font + ' isn\u2019t a Google Docs font: Docs will show the text in another font.';
+  }
+  $('#cc-font-panel-help').text(help).prop('hidden', !help);
+  $('#cc-font-borrow-row').prop('hidden', !(role === 'hebrew' && info.status === 'borrowed'));
+  $('#cc-font-borrow').prop('checked', fontState.borrowMarks);
+  $('#cc-font-borrow-label').text('Borrow them from ' + (info.lender || 'Noto') + ' (only the missing marks; letters stay in ' + font + ')');
+}
+
+function ccOpenFontPanel(role, chip) {
+  if (!_ccFontsEnabled || !_ccConfig) return;
+  var $panel = $('#cc-font-panel');
+  var $surface = $panel.closest('.cc-surface');
+  _ccFontPanelRole = role;
+  $('#cc-font-panel-title').text(role === 'hebrew' ? 'Hebrew font' : 'Translation font');
+  $('#cc-font-more').prop('hidden', typeof _ccConfig.onMoreFontSettings !== 'function');
+  $('.cc-font-chip').attr('aria-expanded', 'false');
+  $(chip).attr('aria-expanded', 'true');
+  closeCompositionCardTranslitMenu();
+  _ccSyncFontPanel(_ccFontState(_ccConfig.getState()));
+  // Just under the button that opened it.
+  var surfaceTop = $surface.length ? $surface[0].getBoundingClientRect().top : 0;
+  var chipRect = chip.getBoundingClientRect();
+  $panel.css('top', (chipRect.bottom - surfaceTop + 6) + 'px').prop('hidden', false);
+  // In a scrolling host (the Link Texts dialog's panel), bring it into view.
+  if ($panel[0].scrollIntoView) $panel[0].scrollIntoView({ block: 'nearest' });
+  $('#cc-font-select').trigger('focus');
+  ccRefreshDocumentFont();
+}
+
+function ccCloseFontPanel(returnFocus) {
+  if (!_ccFontPanelRole) return;
+  var role = _ccFontPanelRole;
+  _ccFontPanelRole = null;
+  $('#cc-font-panel').prop('hidden', true);
+  $('.cc-font-chip').attr('aria-expanded', 'false');
+  if (returnFocus) $('#cc-' + role + '-font-chip').trigger('focus');
 }
 
 function closeCompositionCardTranslitMenu() {
@@ -197,6 +370,10 @@ function updateCompositionCard() {
     );
   }
 
+  // Fonts: the preview in the fonts the insert will use (after the Hebrew
+  // samples' text is set above), the font buttons and the note.
+  _ccUpdateFonts(state);
+
   // Host-specific post-update hook
   if (_ccConfig.afterUpdate) _ccConfig.afterUpdate(state);
 }
@@ -234,8 +411,53 @@ function _bindCompositionCardEvents() {
   });
 
   $(document).off('click.ccDismiss').on('click.ccDismiss', function (event) {
-    if ($(event.target).closest('.cc-translit-wrap').length) return;
-    closeCompositionCardTranslitMenu();
+    if (!$(event.target).closest('.cc-translit-wrap').length) closeCompositionCardTranslitMenu();
+    if (!$(event.target).closest('#cc-font-panel, .cc-font-chip').length) ccCloseFontPanel(false);
+  });
+
+  if (!_ccFontsEnabled) return;
+
+  function fontChange(role, field, value) {
+    if (_ccConfig.onFontChange) _ccConfig.onFontChange(role, field, value);
+    updateCompositionCard();
+  }
+
+  $('.cc-font-chip').off('click.cc').on('click.cc', function (event) {
+    event.preventDefault();
+    var role = $(this).attr('data-font-role');
+    if (_ccFontPanelRole === role) ccCloseFontPanel(true);
+    else ccOpenFontPanel(role, this);
+  });
+  $('#cc-font-select').off('change.cc').on('change.cc', function () {
+    if (_ccFontPanelRole) fontChange(_ccFontPanelRole, 'font', this.value);
+  });
+  $('#cc-font-size').off('change.cc').on('change.cc', function () {
+    if (!_ccFontPanelRole) return;
+    var raw = String(this.value || '').trim();
+    var size = Number(raw);
+    var value = raw === '' ? '' : (size > 0 && size <= 400 ? String(size) : null);
+    if (value === null) { this.value = ''; value = ''; }
+    fontChange(_ccFontPanelRole, 'size', value);
+  });
+  function borrowChange(on) {
+    if (_ccConfig.onBorrowMarksChange) _ccConfig.onBorrowMarksChange(on);
+    updateCompositionCard();
+  }
+  $('#cc-font-borrow').off('change.cc').on('change.cc', function () { borrowChange(this.checked); });
+  $('#cc-hebrew-font-note-action').off('click.cc').on('click.cc', function () {
+    borrowChange(!_ccFontState(_ccConfig.getState()).borrowMarks);
+  });
+  $('#cc-font-done').off('click.cc').on('click.cc', function () { ccCloseFontPanel(true); });
+  $('#cc-font-more').off('click.cc').on('click.cc', function () {
+    ccCloseFontPanel(false);
+    if (_ccConfig.onMoreFontSettings) _ccConfig.onMoreFontSettings();
+  });
+  $('#cc-font-panel').off('keydown.cc').on('keydown.cc', function (event) {
+    if (event.key !== 'Escape') return;
+    // Close this panel only, not the tray or dialog around it.
+    event.preventDefault();
+    event.stopPropagation();
+    ccCloseFontPanel(true);
   });
 }
 </script>

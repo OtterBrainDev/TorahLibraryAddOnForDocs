@@ -1,6 +1,6 @@
 # Privacy Policy — Torah Library Add-On for Google Docs
 
-**Last updated: 2026-09-22**
+**Last updated: 2026-10-13**
 
 This add-on inserts texts from [Sefaria](https://www.sefaria.org) into your
 Google Doc. This policy describes exactly what data it touches, what leaves
@@ -9,7 +9,7 @@ your computer, and what is stored.
 Short version: the add-on has no server of its own, no account, and no
 analytics. The only party that receives anything from your document is
 Sefaria, and only the text you ask for (§2). Its windows also load their
-page resources — a script library, a stylesheet, a font, and a few images —
+page resources — a script library, a stylesheet, fonts, and a few images —
 from Google and Sefaria, like any web page does (§2.2). It stores only your
 own preference settings, in Google's per-user storage for this add-on, and
 your sidebar history, in your own browser (§3).
@@ -88,7 +88,7 @@ document, your searches, or your settings.**
 | --- | --- | --- |
 | `ajax.googleapis.com` (Google) | The jQuery script library, pinned to one version and checked with a Subresource Integrity hash | Every sidebar and dialog |
 | `ssl.gstatic.com` (Google) | Google's standard add-on stylesheet | Every sidebar and dialog |
-| `fonts.googleapis.com`, `fonts.gstatic.com` (Google) | A display font (EB Garamond) | Windows that use it |
+| `fonts.googleapis.com`, `fonts.gstatic.com` (Google) | The page's display fonts, and the fonts its previews are drawn in: the font you pick from the add-on's list, or the font your document uses when it is one of the Google Fonts the add-on knows (Hebrew fonts, Crimson Text, EB Garamond, Roboto). The request names the font, and nothing else from your document. | Windows that use them |
 | `www.sefaria.org` | The Sefaria logo in the sidebar footer and a loading animation | Sidebar, Preferences, Surprise Me |
 | `sefaria.formstack.com` | Sefaria's feedback form, embedded in the dialog | Only when you open **Send Feedback**; anything you type into that form goes to Sefaria under their policy |
 

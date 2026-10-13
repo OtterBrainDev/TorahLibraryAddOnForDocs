@@ -415,7 +415,7 @@
               </div>
               <div class="customize-section">
                 <div class="customize-section-label">Insertion Format</div>
-                <div class="cc-card cc-card--stacked" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills" aria-label="Composition for these insertions">
+                <div class="cc-card cc-card--stacked" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills,fonts" aria-label="Composition for these insertions">
                   <?!= include('shared/composition-card/markup') ?>
                 </div>
               </div>
@@ -449,6 +449,8 @@
     </main>
 
     <?!= include('shared/insertion-options/js'); ?>
+    <?!= include('shared/fonts/coverage'); ?>
+    <?!= include('shared/fonts/js'); ?>
     <?!= include('shared/composition-card/shared'); ?>
     <script>
       (function () {
@@ -496,10 +498,14 @@
           'transliteration_scheme', 'nekudot', 'teamim', 'include_transliteration_default',
           'show_line_markers_default', 'include_translation_source_info',
           'insert_sefaria_link_default', 'insert_from_selection_replace',
-          'hebrew_punctuation', 'translation_punctuation', 'bilingual_aligned_rows'
+          'hebrew_punctuation', 'translation_punctuation', 'bilingual_aligned_rows',
+          'hebrew_font', 'hebrew_font_size', 'translation_font', 'translation_font_size',
+          'hebrew_mark_fallback'
         ];
         var ON_UNLESS_FALSE = ['nekudot', 'teamim', 'insert_from_selection_replace',
-          'hebrew_punctuation', 'translation_punctuation'];
+          'hebrew_punctuation', 'translation_punctuation', 'hebrew_mark_fallback'];
+        // Font names and sizes, as stored ("" = match the document).
+        var AS_STORED = ['hebrew_font', 'hebrew_font_size', 'translation_font', 'translation_font_size'];
         var ON_IF_TRUE = ['include_transliteration_default', 'show_line_markers_default',
           'include_translation_source_info', 'insert_sefaria_link_default', 'bilingual_aligned_rows'];
 
@@ -517,6 +523,7 @@
           };
           ON_UNLESS_FALSE.forEach(function (key) { out[key] = text(key) === 'false' ? 'false' : 'true'; });
           ON_IF_TRUE.forEach(function (key) { out[key] = text(key) === 'true' ? 'true' : 'false'; });
+          AS_STORED.forEach(function (key) { out[key] = text(key).trim(); });
           return out;
         }
 
@@ -576,8 +583,19 @@
                 linkOn: custom.insert_sefaria_link_default === 'true',
                 linesOn: custom.show_line_markers_default === 'true',
                 detailsOn: custom.include_translation_source_info === 'true',
-                emphasisMode: custom.source_emphasis_mode
+                emphasisMode: custom.source_emphasis_mode,
+                fonts: {
+                  hebrew: { font: custom.hebrew_font, size: custom.hebrew_font_size },
+                  translation: { font: custom.translation_font, size: custom.translation_font_size },
+                  borrowMarks: custom.hebrew_mark_fallback === 'true'
+                }
               };
+            },
+            onFontChange: function (role, field, value) {
+              custom[role + (field === 'size' ? '_font_size' : '_font')] = String(value);
+            },
+            onBorrowMarksChange: function (on) {
+              custom.hebrew_mark_fallback = on ? 'true' : 'false';
             },
             onToggle: function (key) {
               if (key === 'vowels') flip('nekudot');
