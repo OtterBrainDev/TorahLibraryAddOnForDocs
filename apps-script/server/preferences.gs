@@ -14,6 +14,7 @@ const SETTINGS = [
   "hebrew_font",
   "hebrew_font_size",
   "hebrew_font_style",
+  "hebrew_mark_fallback",
   "include_translation_source_info",
   "include_transliteration_default",
   "insert_citation_default",
@@ -121,6 +122,10 @@ function getDefaultPreferences() {
     hebrew_font: "",
     hebrew_font_size: "",
     hebrew_font_style: "normal",
+    // Hebrew marks (cantillation, mostly) the chosen font has no glyph for are
+    // set in Noto Serif / Sans Hebrew instead of showing as empty boxes. Only
+    // those marks; the letters stay in the chosen font. See hebrew-fonts.gs.
+    hebrew_mark_fallback: true,
     // Credit line (edition and license) under every inserted source. On by
     // default: many Sefaria texts are CC-BY / CC-BY-NC and require attribution.
     include_translation_source_info: true,
@@ -493,8 +498,14 @@ function fillTypographyFromSurroundingText_(roles, surrounding, titleHeading) {
   return roles;
 }
 
-function getTypographySettings() {
-  const userProperties = PropertiesService.getUserProperties();
+/**
+ * @param {Object} [properties]  what to read the settings from, with
+ *        getProperty: the stored preferences unless given (the sidebar's
+ *        session overrides, Link Texts' "Customize this insertion"; see
+ *        typographyPropertiesFor_).
+ */
+function getTypographySettings(properties) {
+  const userProperties = properties || PropertiesService.getUserProperties();
 
   const roles = {
     hebrew:          readTypographyRole_(userProperties, "hebrew", "", null, "normal"),
@@ -539,6 +550,10 @@ function getTypographySettings() {
     sefariaLinkFont: roles.sefariaLink.font,
     sefariaLinkFontSize: roles.sefariaLink.size,
     sefariaLinkFontStyle: roles.sefariaLink.style,
+
+    // Borrow the Hebrew marks a font lacks from Noto (hebrew-fonts.gs). On
+    // unless switched off.
+    hebrewMarkFallback: userProperties.getProperty("hebrew_mark_fallback") !== "false",
 
     sourceEmphasisMode: normalizeSourceEmphasisMode_(userProperties.getProperty("source_emphasis_mode")),
     emphasisMap: {

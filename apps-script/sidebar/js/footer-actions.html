@@ -194,7 +194,9 @@ $('#insert-source').click(function () {
     // The scheme picked in the Layout tray may be a session override only.
     transliterationScheme: getSidebarTransliterationScheme(),
     insertCitationOnly: false,
-    sourceEmphasisMode: sourceEmphasisMode
+    sourceEmphasisMode: sourceEmphasisMode,
+    // The Layout tray's fonts may be session overrides only.
+    sessionId: sidebarSessionId
   });
 });
 

@@ -249,6 +249,10 @@ function applyEmphasisMapping_(text, start, end, mapping) {
  *        absent, source emphasis is re-asserted as itself.
  * @param {Array<string>} [opts.keepLines]  Lines "only" keeps whole
  *        (planEmphasisOnlyEdits_).
+ * @param {boolean} [opts.markFallback]  Set the Hebrew marks the font lacks
+ *        in a Noto Hebrew (planHebrewMarkFallback_).
+ * @param {string} [opts.inheritedFont]  The font the text is in when `font`
+ *        is empty (the document's Normal text font).
  */
 function applyTypographyToParagraph(paragraph, font, size, style, opts) {
   if (!paragraph) {
@@ -311,6 +315,19 @@ function applyTypographyToParagraph(paragraph, font, size, style, opts) {
       applyEmphasisMapping_(text, run.start, run.end, emphasisMap.italic);
     }
   }
+
+  // Last, so it sees the final fonts: the Hebrew marks this font has no glyph
+  // for (cantillation, in most) are set in a Noto Hebrew. See hebrew-fonts.gs.
+  if (options.markFallback) {
+    const baseFont = font || options.inheritedFont || "";
+    const fontRuns = [];
+    for (let i = 0; i < emphasisRuns.length; i++) {
+      const run = emphasisRuns[i];
+      if (run.bold && emphasisMap.bold && emphasisMap.bold.font) fontRuns.push({ start: run.start, end: run.end, font: emphasisMap.bold.font });
+      if (run.italic && emphasisMap.italic && emphasisMap.italic.font) fontRuns.push({ start: run.start, end: run.end, font: emphasisMap.italic.font });
+    }
+    applyHebrewMarkFallback_(text, planHebrewMarkFallback_(text.getText(), baseFont, fontRuns));
+  }
 }
 
 // Identity mapping, used when a caller preserves emphasis without supplying a
@@ -319,6 +336,15 @@ const DEFAULT_EMPHASIS_MAP_ = {
   bold: { style: 'bold', color: null, background: null, font: '' },
   italic: { style: 'italic', color: null, background: null, font: '' }
 };
+
+/**
+ * The document's Normal text font (readDocumentBaseFont_), read once per
+ * typography bag: what a paragraph with no font of its own is drawn in.
+ */
+function documentFontOf_(typography) {
+  if (typography.documentFont === undefined) typography.documentFont = readDocumentBaseFont_();
+  return typography.documentFont;
+}
 
 /**
  * Apply a named typography role (hebrew / translation / transliteration /
@@ -346,7 +372,14 @@ function applyRoleTypography_(paragraph, typography, roleName, overrides) {
       preserveSourceEmphasis: extra.preserveSourceEmphasis === true,
       sourceEmphasisMode: typography ? typography.sourceEmphasisMode : undefined,
       emphasisMap: typography ? typography.emphasisMap : null,
-      keepLines: typography ? typography.sectionHeadingLines : null
+      keepLines: typography ? typography.sectionHeadingLines : null,
+      markFallback: !!(typography && typography.hebrewMarkFallback),
+      // A title with a heading style and no font of its own is in the
+      // heading's font, which is not looked up: its marks are left alone.
+      inheritedFont: (typography && typography.hebrewMarkFallback && !role.font &&
+          !(isTitleRole_(roleName) && typography.titleHeading && typography.titleHeading !== "normal"))
+        ? documentFontOf_(typography)
+        : ""
     }
   );
 }
@@ -628,6 +661,18 @@ function buildLinkedTitleText(baseTitle, data, singleLanguage) {
  * @param {Object}  [opts.insertAfterElement]           Insert after this element instead of at the cursor (server-side callers only).
  * @returns {{notice: string}} notice is non-empty when the insert went somewhere other than the cursor.
  */
+/**
+ * Where an insert reads its fonts from: the sidebar's session overrides
+ * (opts.sessionId: the Layout tray's font pickers save there in the Texts
+ * tab), Link Texts' "Customize this insertion" (opts.preferenceOverrides,
+ * already sanitized), else the stored preferences (undefined).
+ */
+function typographyPropertiesFor_(options) {
+  if (options && options.sessionId) return sidebarSessionPreferenceOverlay_(options.sessionId);
+  if (options && options.preferenceOverrides) return preferenceOverlay_(options.preferenceOverrides);
+  return undefined;
+}
+
 function insertReference(data, opts) {
   const options = opts || {};
   let singleLanguage = options.singleLanguage;
@@ -697,7 +742,7 @@ function insertReference(data, opts) {
     shouldIncludeEnglishAttribution ? getEnglishAttributionLines(data) : [],
     shouldIncludeHebrewAttribution ? getHebrewAttributionLines_(data) : []
   );
-  const typography = getTypographySettings();
+  const typography = getTypographySettings(typographyPropertiesFor_(options));
   // The sidebar's B&I button can override the stored choice for this insert.
   if (options.sourceEmphasisMode) {
     typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
@@ -1084,7 +1129,7 @@ function insertReferenceVersions(ref, opts) {
   }
 
   const includeLineMarkers = pasukPreference === true || pasukPreference === 'true';
-  const typography = getTypographySettings();
+  const typography = getTypographySettings(typographyPropertiesFor_(options));
   if (options.sourceEmphasisMode) {
     typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
   }

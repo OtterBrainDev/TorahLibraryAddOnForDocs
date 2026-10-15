@@ -9,6 +9,50 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+> **Preference migration (schema 21). Existing users get this too.** New
+> preference `hebrew_mark_fallback`, default `true`. Upgrading users are
+> migrated on first open to `true` (only when unset). It changes only the
+> Hebrew marks the chosen font has no glyph for, which until now showed as
+> empty boxes or in whatever font the reader's computer fell back to. Turn it
+> off in Preferences → Fonts → Hebrew, or from the note under the Layout tray's
+> Hebrew font button.
+
+### Hebrew fonts without cantillation
+
+#### Fixed
+
+- **Empty boxes instead of cantillation marks.** Many Hebrew fonts have the
+  letters and vowels but no cantillation at all: David Libre, Frank Ruhl Libre,
+  Heebo, Alef, Rubik and most other Hebrew Google Fonts. Docs drew each mark as
+  an empty box (reported on a Mac with David Libre). Now only the marks the
+  font lacks are set in Noto Serif Hebrew, or Noto Sans Hebrew for a
+  sans-serif font; the letters, and every mark the font has, stay in your
+  font. Applies to "Match the document" too, using the document's font.
+
+#### Added
+
+- **Font buttons in the Layout tray.** Under the Hebrew and translation
+  samples, a button names the font each will be inserted in and opens a small
+  panel to change the font and size. In the Texts tab these are session
+  settings, like the pills; **Save as defaults** keeps them. The same buttons
+  are in Preferences' insertion preview and Link Texts' *Customize this
+  insertion*.
+- **The preview is drawn in the real font.** The samples load the chosen font
+  (or the document's) and draw the marks it lacks the way the insert will:
+  borrowed from Noto, or, with borrowing off, the letters carrying them in red
+  with a note that Docs may show boxes.
+
+#### Changed
+
+- **Honest font lists.** Every font list comes from one place and groups the
+  Hebrew fonts by what they can draw: *Every vowel and cantillation mark*
+  (Noto Serif / Sans / Rashi Hebrew, Cardo, Tinos, Arimo) and *Missing marks
+  borrowed from Noto* (David Libre, Frank Ruhl Libre, Heebo, …). David Libre and
+  other Google Hebrew fonts are new to the lists. Ezra SIL, SBL Hebrew, David
+  and Taamey Frank CLM are no longer offered: they are not Google Docs fonts,
+  so Docs showed the text in another font. A saved choice of one is kept and
+  labelled "(not in Google Docs)".
+
 > **Preference migration (schema 20). Existing users keep the full interface
 > and never see first-run setup.** New preferences `ui_mode` (default `full`),
 > `first_run_setup` and `menu_layout_before_simple`. Upgrading users are
