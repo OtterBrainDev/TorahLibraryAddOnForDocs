@@ -233,6 +233,13 @@ test('the sidebar session reaches each version\'s re-fetch (Layout tray cantilla
     sessions.push([versions.en, sessionId]);
     return resolved[versions.en] || null;
   };
+  const typographySessions = [];
+  ctx.sidebarSessionPreferenceOverlay_ = (sessionId) => {
+    typographySessions.push(sessionId);
+    return { getProperty() { return null; } };
+  };
   ctx.insertReferenceVersions('Genesis 1:1', { versionTitles: ['Koren', 'JPS'], singleLanguage: 'en', sessionId: 's1' });
   assert.deepEqual(sessions, [['Koren', 's1'], ['JPS', 's1']]);
+  // ... and the fonts: the Layout tray's font pickers are session overrides too.
+  assert.deepEqual(typographySessions, ['s1']);
 });

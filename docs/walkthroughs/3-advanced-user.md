@@ -21,7 +21,11 @@ document.
   starts on **Match the document**: the font and size of the text where you
   insert. Leave it there if your documents already have a style. Pick a
   specific font if you want every source to look the same everywhere, e.g.
-  *Frank Ruehl* or *David Libre* for Hebrew.
+  *Noto Serif Hebrew* for Hebrew. The Hebrew font list says which fonts have
+  every vowel and cantillation mark; *David Libre* and *Frank Ruhl Libre*
+  have no cantillation, so the add-on borrows just those marks from Noto
+  Serif Hebrew (see *Borrow missing marks from Noto*). The Layout tray's font
+  buttons change the Hebrew and translation fonts for one session.
 - **Title → paragraph style → Heading 2 or 3.** Every inserted source then
   shows up in the document outline and in a table of contents. For a long
   source sheet this is the most useful setting in the add-on.

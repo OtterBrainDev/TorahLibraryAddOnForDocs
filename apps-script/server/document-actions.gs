@@ -650,7 +650,7 @@ function insertLinkedSourceAtPosition(ref, position, overrides) {
   const prefs = Object.assign({}, getPreferences(), overrideValues);
   const insertOptions = buildLinkSourcesInsertOptions_(prefs);
   const replaceCitation = insertReplacesSelection_(prefs) && linkerCitationFillsBlock_(anchor, found.citation);
-  const options = Object.assign({ preferredTitle: ref, insertAfterElement: anchor }, insertOptions);
+  const options = Object.assign({ preferredTitle: ref, insertAfterElement: anchor, preferenceOverrides: overrideValues }, insertOptions);
   if (replaceCitation) {
     options.preferredTitle = found.citation;
     if (found.linked) options.insertSefariaLink = true;
@@ -679,7 +679,12 @@ var LINKER_INSERT_OVERRIDE_KEYS_ = {
   show_line_markers_default: 'boolean',
   include_translation_source_info: 'boolean',
   insert_sefaria_link_default: 'boolean',
-  insert_from_selection_replace: 'boolean'
+  insert_from_selection_replace: 'boolean',
+  hebrew_font: 'font',
+  hebrew_font_size: 'size',
+  translation_font: 'font',
+  translation_font_size: 'size',
+  hebrew_mark_fallback: 'boolean'
 };
 
 /** Only known keys with allowed values, as the strings UserProperties holds. */
@@ -692,6 +697,13 @@ function sanitizeInsertOverrides_(overrides) {
     const value = String(overrides[key]);
     if (allowed === 'boolean') {
       if (value === 'true' || value === 'false') clean[key] = value;
+    } else if (allowed === 'font') {
+      // A font family name ("" = match the document). Docs ignores a name it
+      // does not know, so only the shape is checked.
+      if (value.length <= 100 && !/[\u0000-\u001f<>]/.test(value)) clean[key] = value.trim();
+    } else if (allowed === 'size') {
+      // Points, or "" for the size of the text where it is inserted.
+      if (value === '' || (Number(value) > 0 && Number(value) <= 400)) clean[key] = value === '' ? '' : String(Number(value));
     } else if (allowed === 'scheme') {
       // The transliteration engine's own table (transliteration.gs).
       if (Object.prototype.hasOwnProperty.call(TRANSLITERATION_SCHEMES, value)) clean[key] = value;

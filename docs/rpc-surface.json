@@ -38,6 +38,11 @@
       "definedIn": "apps-script/server/preferences.gs"
     },
     {
+      "name": "getInsertionPointFont",
+      "arity": 0,
+      "definedIn": "apps-script/server/hebrew-fonts.gs"
+    },
+    {
       "name": "getNameCandidates",
       "arity": 1,
       "definedIn": "apps-script/server/search.gs"

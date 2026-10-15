@@ -18,8 +18,29 @@ function _sidebarCompositionGetState() {
     linkOn: $('.insert-sefaria-link').is(':checked'),
     linesOn: $('.wants-pesukim').is(':checked'),
     detailsOn: $('.include-translation-source-info').is(':checked'),
-    emphasisMode: ccNormalizeEmphasisMode($('.source-emphasis-mode').val())
+    emphasisMode: ccNormalizeEmphasisMode($('.source-emphasis-mode').val()),
+    fonts: {
+      hebrew: { font: effectivePreferences.hebrew_font, size: effectivePreferences.hebrew_font_size },
+      translation: { font: effectivePreferences.translation_font, size: effectivePreferences.translation_font_size },
+      borrowMarks: String(effectivePreferences.hebrew_mark_fallback) !== 'false'
+    }
   };
+}
+
+// The font buttons: like the pills, a session override in the Texts tab
+// (insertReference reads the session's fonts), saved to the account elsewhere.
+function _sidebarCompositionOnFontChange(role, field, value) {
+  var key = role + (field === 'size' ? '_font_size' : '_font');
+  var payload = {};
+  payload[key] = value;
+  // Shown at once; the save's answer confirms it.
+  effectivePreferences[key] = value;
+  saveSidebarPreference(payload, function () { updateCompositionCard(); });
+}
+
+function _sidebarCompositionOnBorrowMarksChange(on) {
+  effectivePreferences.hebrew_mark_fallback = on;
+  saveSidebarPreference({ hebrew_mark_fallback: on }, function () { updateCompositionCard(); });
 }
 
 function _sidebarCompositionOnToggle(key) {
@@ -136,7 +157,10 @@ function bindSidebarCompositionCard() {
     containerId: 'composition-card-container',
     getState: _sidebarCompositionGetState,
     onToggle: _sidebarCompositionOnToggle,
-    onSchemeSelect: _sidebarCompositionOnSchemeSelect
+    onSchemeSelect: _sidebarCompositionOnSchemeSelect,
+    onFontChange: _sidebarCompositionOnFontChange,
+    onBorrowMarksChange: _sidebarCompositionOnBorrowMarksChange,
+    onMoreFontSettings: function () { google.script.run.preferencesPopup(); }
   });
 }
 </script>
