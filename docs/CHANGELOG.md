@@ -107,6 +107,9 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **An inserted source is titled with the text you chose, not your search.**
+  Searching for "shema" and inserting Deuteronomy 6:4 titled the source
+  "shema"; the title is now the chosen text's reference.
 - **The Layout tray's Cantillation pill reaches the inserted text.** In the
   Texts tab, turning Cantillation (or Vowels, or either Punctuation pill) off
   in the Layout tray changed the pill but not the preview or the insert, which

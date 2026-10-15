@@ -129,7 +129,8 @@ $('#insert-source').click(function () {
   var includeTranslationSourceInfo = $('.include-translation-source-info').is(':checked');
   var insertSefariaLink = $('.insert-sefaria-link').is(':checked');
   var sourceEmphasisMode = ccNormalizeEmphasisMode($('.source-emphasis-mode').val());
-  var input = $('.input').val();
+  // No preferredTitle: the title is the chosen text's ref. The search box
+  // holds the query ("shema", "light"), not the name of the text picked.
 
   // Multi-version insertion: only available in translation-only (en) or Hebrew-on-top (he-top) modes.
   var allowMulti = outputMode === 'en' || (outputMode === 'both' && bilingualLayout === 'he-top');
@@ -164,7 +165,6 @@ $('#insert-source').click(function () {
       singleLanguage: language,
       bilingualLayout: bilingualLayout,
       pasukPreference: showPesukim,
-      preferredTitle: input,
       includeTranslationSourceInfo: includeTranslationSourceInfo,
       insertSefariaLink: insertSefariaLink,
       sourceEmphasisMode: sourceEmphasisMode,
@@ -185,7 +185,6 @@ $('#insert-source').click(function () {
   }).insertReference(data, {
     singleLanguage: language,
     pasukPreference: showPesukim,
-    preferredTitle: input,
     includeTranslationSourceInfo: includeTranslationSourceInfo,
     bilingualLayout: bilingualLayout,
     alignedRows: $('.wants-aligned-rows').is(':checked'),
