@@ -181,6 +181,8 @@ and fix it before touching the feature you came to change.
 - `insertion-target.test.js` — where an insert goes: after the cursor's
   block, inside a table cell for paragraph layouts, below the table (with a
   notice) for side-by-side layouts, never into a header, footer or footnote.
+- `insert-title.test.js` — a sidebar insert is titled with the text chosen
+  (its ref), never with what was typed in the search box.
 - `sefaria-unavailable.test.js` — "couldn't reach Sefaria" and a find-refs
   timeout throw, instead of reading as "no match" / "no citations".
 - `punctuation.test.js` — the Hebrew and translation "Punctuation: Off"
