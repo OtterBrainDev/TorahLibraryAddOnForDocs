@@ -17,6 +17,17 @@ heading until the next release consolidates it.
 > off in Preferences → Fonts → Hebrew, or from the note under the Layout tray's
 > Hebrew font button.
 
+### Source bold and italics
+
+#### Fixed
+
+- **"Keep only" deleted most of the Hebrew.** The B&I button's *Keep only*
+  setting is for the translation: from Sefaria's English Talmud it keeps the
+  Talmud's own (bold) words and drops Steinsaltz's explanation. It was also
+  applied to the Hebrew, where the only bold is a word like the Mishnah's
+  opening מֵאֵימָתַי or "גמ׳", so a Berakhot 2a insert kept those words and
+  little else. The Hebrew is now inserted whole, with its own emphasis kept.
+
 ### Hebrew fonts without cantillation
 
 #### Fixed

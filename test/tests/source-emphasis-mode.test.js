@@ -253,3 +253,17 @@ test('applyRoleTypography_ passes the typography bag\'s mode through', () => {
   ctx.applyRoleTypography_(p.paragraph, typography, 'translation', { preserveSourceEmphasis: true });
   assert.equal(p.text(), 'From when one may recite');
 });
+
+test('keep only applies to the translation: the Hebrew keeps all its words and its bold', () => {
+  // Berakhot 2a: the Hebrew bolds only the Mishnah's first word. "Keep only"
+  // on the Hebrew deleted everything else in it.
+  const role = { font: '', size: null, style: 'normal', color: null, background: null };
+  const typography = { roles: { hebrew: role, translation: role }, sourceEmphasisMode: 'only', emphasisMap: null };
+  const he = fakeParagraph('<b>מֵאֵימָתַי</b> קוֹרִין אֶת שְׁמַע בְּעַרְבִין');
+  ctx.applyRoleTypography_(he.paragraph, typography, 'hebrew', { preserveSourceEmphasis: true });
+  assert.equal(he.text(), 'מֵאֵימָתַי קוֹרִין אֶת שְׁמַע בְּעַרְבִין');
+  assert.equal(he.bolded(), 'מֵאֵימָתַי');
+  const en = fakeParagraph(PASSAGE);
+  ctx.applyRoleTypography_(en.paragraph, typography, 'translation', { preserveSourceEmphasis: true });
+  assert.equal(en.text(), 'From when one may recite');
+});
