@@ -14,12 +14,11 @@
 //     getTranslitLabel: function(on, scheme) { /* optional custom label for translit button */ },
 //
 //     // Fonts (the "fonts" feature in data-cc-features). getState() also returns
-//     //   fonts: { hebrew: {font, size}, translation: {font, size}, borrowMarks }
-//     // with font "" / size "" meaning "match the document" and borrowMarks the
-//     // stored hebrew_mark_fallback preference (on unless someone turned it off
-//     // before the switch was removed). The preview is drawn in those fonts,
-//     // with the marks a font lacks borrowed as the insert will. The borrowing
-//     // is a design decision noted in Help, not something the card talks about.
+//     //   fonts: { hebrew: {font, size}, translation: {font, size} }
+//     // with font "" / size "" meaning "match the document". The preview is
+//     // drawn in those fonts, with the marks a font lacks borrowed from Noto as
+//     // the insert always does. The borrowing is a design decision noted in
+//     // Help, not a setting, and not something the card talks about.
 //     onFontChange:   function(role, field, value) { /* role 'hebrew'|'translation', field 'font'|'size' */ },
 //     onMoreFontSettings:  function() { /* optional: shows "Colour, style and more…" */ }
 //   });
@@ -140,7 +139,7 @@ function _ccFontState(state) {
     var r = fonts[name] || {};
     return { font: String(r.font || ''), size: r.size == null ? '' : String(r.size) };
   }
-  return { hebrew: role('hebrew'), translation: role('translation'), borrowMarks: fonts.borrowMarks !== false };
+  return { hebrew: role('hebrew'), translation: role('translation') };
 }
 
 /** The font the text will actually be in: the chosen one, else the document's. */
@@ -184,7 +183,7 @@ function _ccUpdateFonts(state) {
   // Each Hebrew sample, drawn as Docs will (marks the font lacks in Noto).
   $('.cc-hebrew-text').each(function () {
     if (typeof renderHebrewPreviewText === 'function') {
-      renderHebrewPreviewText(this, this.textContent, hebrewFont, fontState.borrowMarks);
+      renderHebrewPreviewText(this, this.textContent, hebrewFont);
     }
   });
 

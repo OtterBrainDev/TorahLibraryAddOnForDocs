@@ -21,8 +21,7 @@ function _sidebarCompositionGetState() {
     emphasisMode: ccNormalizeEmphasisMode($('.source-emphasis-mode').val()),
     fonts: {
       hebrew: { font: effectivePreferences.hebrew_font, size: effectivePreferences.hebrew_font_size },
-      translation: { font: effectivePreferences.translation_font, size: effectivePreferences.translation_font_size },
-      borrowMarks: String(effectivePreferences.hebrew_mark_fallback) !== 'false'
+      translation: { font: effectivePreferences.translation_font, size: effectivePreferences.translation_font_size }
     }
   };
 }

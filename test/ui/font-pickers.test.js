@@ -23,7 +23,7 @@ test('every composition-card host turns on the fonts feature and loads shared/fo
   }
 });
 
-test('every host tells the card how to change a font, and the stored borrowing setting', () => {
+test('every host tells the card how to change a font, and nothing about borrowing', () => {
   const adapters = {
     'sidebar.html': readAppScriptFile('sidebar/js/composition-controls.html'),
     'preferences.html': readAppScriptFile('preferences/js.html'),
@@ -31,8 +31,7 @@ test('every host tells the card how to change a font, and the stored borrowing s
   };
   for (const [host, source] of Object.entries(adapters)) {
     assert.match(source, /onFontChange:/, `${host}: onFontChange`);
-    assert.doesNotMatch(source, /onBorrowMarksChange/, `${host}: no borrowing control`);
-    assert.match(source, /borrowMarks:/, `${host}: getState().fonts.borrowMarks`);
+    assert.doesNotMatch(source, /onBorrowMarksChange|borrowMarks|hebrew_mark_fallback/, `${host}: borrowing is not a setting`);
   }
 });
 

@@ -250,7 +250,8 @@ function applyEmphasisMapping_(text, start, end, mapping) {
  * @param {Array<string>} [opts.keepLines]  Lines "only" keeps whole
  *        (planEmphasisOnlyEdits_).
  * @param {boolean} [opts.markFallback]  Set the Hebrew marks the font lacks
- *        in a Noto Hebrew (planHebrewMarkFallback_).
+ *        in a Noto Hebrew (planHebrewMarkFallback_). Every role paragraph
+ *        does (applyRoleTypography_); it is not a setting.
  * @param {string} [opts.inheritedFont]  The font the text is in when `font`
  *        is empty (the document's Normal text font).
  */
@@ -387,10 +388,12 @@ function applyRoleTypography_(paragraph, typography, roleName, overrides) {
       sourceEmphasisMode: sourceEmphasisModeForRole_(typography, roleName),
       emphasisMap: typography ? typography.emphasisMap : null,
       keepLines: typography ? typography.sectionHeadingLines : null,
-      markFallback: !!(typography && typography.hebrewMarkFallback),
+      // The Hebrew marks the font lacks are always borrowed from Noto
+      // (hebrew-fonts.gs): the alternative is empty boxes.
+      markFallback: true,
       // A title with a heading style and no font of its own is in the
       // heading's font, which is not looked up: its marks are left alone.
-      inheritedFont: (typography && typography.hebrewMarkFallback && !role.font &&
+      inheritedFont: (!role.font &&
           !(isTitleRole_(roleName) && typography.titleHeading && typography.titleHeading !== "normal"))
         ? documentFontOf_(typography)
         : ""

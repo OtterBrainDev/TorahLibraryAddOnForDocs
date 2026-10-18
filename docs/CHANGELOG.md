@@ -9,15 +9,14 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
-> **Preference migration (schema 21). Existing users get this too.** New
-> preference `hebrew_mark_fallback`, default `true`. Upgrading users are
-> migrated on first open to `true` (only when unset). It changes only the
-> Hebrew marks the chosen font has no glyph for, which until now showed as
-> empty boxes or in whatever font the reader's computer fell back to. It has no
-> switch: borrowing the missing marks is how the add-on works, explained in
-> Help → Layout Settings → *Fonts and cantillation marks*. (A stored `false`
-> from a test build is still honoured; Preferences → Reset To Defaults clears
-> it.)
+> **Preference migration (schemas 21 and 22). No new preference.** Borrowing
+> the Hebrew marks a font has no glyph for is always on, for new and existing
+> users alike; there is no setting. It changes only those marks, which until
+> now showed as empty boxes or in whatever font the reader's computer fell
+> back to. Help → Layout Settings → *Fonts and cantillation marks* explains it.
+> Schema 21 added a `hebrew_mark_fallback` switch during development; schema
+> 22 retires it before release and deletes any stored value (test builds
+> only), so a `false` saved there no longer turns the borrowing off.
 
 ### Layout Settings, dialogs and setup
 

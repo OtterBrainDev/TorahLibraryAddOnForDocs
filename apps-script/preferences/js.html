@@ -22,8 +22,6 @@
 
     let transliterationOverrides = {};
     let selectedOverrideChar = "";
-    // The stored hebrew_mark_fallback (see applyPreferencesToForm).
-    let storedBorrowMarks = true;
 
     function byId(id) {
       return document.getElementById(id);
@@ -94,7 +92,7 @@
       const sample = byId(previewId + '_text');
       if (sample) {
         if (sample.dataset.sample == null) sample.dataset.sample = sample.textContent;
-        renderHebrewPreviewText(sample, sample.dataset.sample, font, storedBorrowMarks);
+        renderHebrewPreviewText(sample, sample.dataset.sample, font);
       }
     }
 
@@ -258,8 +256,7 @@
             emphasisMode: ccNormalizeEmphasisMode(emphasisInput ? emphasisInput.value : ''),
             fonts: {
               hebrew: { font: (byId('hebrew_font') || {}).value, size: (byId('hebrew_font_size') || {}).value },
-              translation: { font: (byId('translation_font') || {}).value, size: (byId('translation_font_size') || {}).value },
-              borrowMarks: storedBorrowMarks
+              translation: { font: (byId('translation_font') || {}).value, size: (byId('translation_font_size') || {}).value }
             }
           };
         },
@@ -629,10 +626,6 @@
     }
 
     function applyPreferencesToForm(preferences) {
-      // hebrew_mark_fallback has no control (borrowing missing marks is the
-      // design, noted in Help); a stored "false" still draws the preview as
-      // the insert will. Save leaves it alone: it is not a form field.
-      storedBorrowMarks = String(preferences.hebrew_mark_fallback) !== 'false';
       try {
               document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
                 el.checked = preferences[el.name] == 'true' || preferences[el.name] === true;

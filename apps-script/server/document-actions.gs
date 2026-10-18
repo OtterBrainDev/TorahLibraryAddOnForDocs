@@ -683,8 +683,7 @@ var LINKER_INSERT_OVERRIDE_KEYS_ = {
   hebrew_font: 'font',
   hebrew_font_size: 'size',
   translation_font: 'font',
-  translation_font_size: 'size',
-  hebrew_mark_fallback: 'boolean'
+  translation_font_size: 'size'
 };
 
 /** Only known keys with allowed values, as the strings UserProperties holds. */

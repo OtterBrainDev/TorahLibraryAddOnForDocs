@@ -13,6 +13,9 @@ const vm = require('node:vm');
 const PREFS = 'apps-script/server/preferences.gs';
 const MENU = 'apps-script/server/menu-layout.gs';
 const INSERTION = 'apps-script/server/insertion.gs';
+// Every role paragraph borrows missing Hebrew marks (always on), so the
+// insert path needs the font table and its planner.
+const FONTS = ['apps-script/server/hebrew-font-coverage.gs', 'apps-script/server/hebrew-fonts.gs'];
 const CARD = 'apps-script/shared/composition-card/shared.html';
 
 function load(files, props = {}) {
@@ -65,7 +68,7 @@ function applyEdits(text, edits) {
   return out;
 }
 
-const ctx = load([MENU, PREFS, INSERTION]);
+const ctx = load([MENU, PREFS, ...FONTS, INSERTION]);
 const only = (html) => {
   const { text, runs } = parse(html);
   return applyEdits(text, ctx.planEmphasisOnlyEdits_(text, runs));

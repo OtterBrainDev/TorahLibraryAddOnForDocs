@@ -211,7 +211,8 @@ and fix it before touching the feature you came to change.
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
   cantillation) are set in Noto Serif / Sans Hebrew at insert, and only those:
   letters and the marks it has stay; "Match the document" judges the
-  document's font; the switch (`hebrew_mark_fallback`) turns it off; the
+  document's font; it is always on (`hebrew_mark_fallback` is retired, schema
+  v22 deletes it, and a stale stored `false` changes nothing); the
   preview plans exactly what the insert does, from the same generated table.
 
 and in `test/ui/`:
