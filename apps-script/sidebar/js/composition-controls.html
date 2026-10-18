@@ -21,8 +21,7 @@ function _sidebarCompositionGetState() {
     emphasisMode: ccNormalizeEmphasisMode($('.source-emphasis-mode').val()),
     fonts: {
       hebrew: { font: effectivePreferences.hebrew_font, size: effectivePreferences.hebrew_font_size },
-      translation: { font: effectivePreferences.translation_font, size: effectivePreferences.translation_font_size },
-      borrowMarks: String(effectivePreferences.hebrew_mark_fallback) !== 'false'
+      translation: { font: effectivePreferences.translation_font, size: effectivePreferences.translation_font_size }
     }
   };
 }
@@ -36,11 +35,6 @@ function _sidebarCompositionOnFontChange(role, field, value) {
   // Shown at once; the save's answer confirms it.
   effectivePreferences[key] = value;
   saveSidebarPreference(payload, function () { updateCompositionCard(); });
-}
-
-function _sidebarCompositionOnBorrowMarksChange(on) {
-  effectivePreferences.hebrew_mark_fallback = on;
-  saveSidebarPreference({ hebrew_mark_fallback: on }, function () { updateCompositionCard(); });
 }
 
 function _sidebarCompositionOnToggle(key) {
@@ -159,7 +153,6 @@ function bindSidebarCompositionCard() {
     onToggle: _sidebarCompositionOnToggle,
     onSchemeSelect: _sidebarCompositionOnSchemeSelect,
     onFontChange: _sidebarCompositionOnFontChange,
-    onBorrowMarksChange: _sidebarCompositionOnBorrowMarksChange,
     onMoreFontSettings: function () { google.script.run.preferencesPopup(); }
   });
 }

@@ -127,7 +127,7 @@ function insertionContext(documentFont) {
 test('inserting Hebrew in David Libre sets the font, then lends the cantillation', () => {
   const ctx = insertionContext('Arial');
   const { calls, paragraph } = paragraphStub(BARA);
-  const typography = { roles: { hebrew: { font: 'David Libre', size: null, style: 'normal' } }, hebrewMarkFallback: true };
+  const typography = { roles: { hebrew: { font: 'David Libre', size: null, style: 'normal' } } };
   ctx.applyRoleTypography_(paragraph, typography, 'hebrew');
   assert.deepEqual(calls, [[0, 6, 'David Libre'], [5, 5, 'Noto Serif Hebrew']]);
 });
@@ -135,35 +135,31 @@ test('inserting Hebrew in David Libre sets the font, then lends the cantillation
 test('"Match the document" judges the document\'s Normal text font', () => {
   const ctx = insertionContext('David Libre');
   const { calls, paragraph } = paragraphStub(BARA);
-  const typography = { roles: { hebrew: { font: '', size: null, style: 'normal' } }, hebrewMarkFallback: true };
+  const typography = { roles: { hebrew: { font: '', size: null, style: 'normal' } } };
   ctx.applyRoleTypography_(paragraph, typography, 'hebrew');
   assert.deepEqual(calls, [[5, 5, 'Noto Serif Hebrew']]);
 });
 
-test('with the setting off, no mark is moved', () => {
-  const ctx = insertionContext('Arial');
-  const { calls, paragraph } = paragraphStub(BARA);
-  const typography = { roles: { hebrew: { font: 'David Libre', size: null, style: 'normal' } }, hebrewMarkFallback: false };
-  ctx.applyRoleTypography_(paragraph, typography, 'hebrew');
-  assert.deepEqual(calls, [[0, 6, 'David Libre']]);
-});
-
-test('hebrew_mark_fallback: on by default, a SETTINGS key, read by getTypographySettings', () => {
-  const props = {};
+test('hebrew_mark_fallback is retired: no default, no SETTINGS key, not read', () => {
+  // Borrowing is always on; the switch was removed (schema v22 deletes it).
+  const props = { hebrew_mark_fallback: 'false' };
   const ctx = load(['apps-script/server/menu-layout.gs', PREFS], {
     PropertiesService: { getUserProperties: () => ({ getProperty: (k) => (k in props ? props[k] : null) }) },
     readSurroundingTextStyle_: () => null,
   });
-  assert.equal(ctx.getDefaultPreferences().hebrew_mark_fallback, true);
-  assert.ok(vm.runInContext('SETTINGS', ctx).includes('hebrew_mark_fallback'));
-  assert.equal(ctx.getTypographySettings().hebrewMarkFallback, true);
-  props.hebrew_mark_fallback = 'false';
-  assert.equal(ctx.getTypographySettings().hebrewMarkFallback, false);
-  // An override (a sidebar session, Link Texts' customize panel) wins.
-  const overlay = { getProperty: (k) => ({ hebrew_mark_fallback: 'true', hebrew_font: 'David Libre' }[k] ?? null) };
-  const t = ctx.getTypographySettings(overlay);
-  assert.equal(t.hebrewMarkFallback, true);
-  assert.equal(t.roles.hebrew.font, 'David Libre');
+  assert.equal(ctx.getDefaultPreferences().hebrew_mark_fallback, undefined);
+  assert.ok(!vm.runInContext('SETTINGS', ctx).includes('hebrew_mark_fallback'));
+  assert.equal(ctx.getTypographySettings().hebrewMarkFallback, undefined);
+  // An override (a sidebar session, Link Texts' customize panel) still sets the font.
+  const overlay = { getProperty: (k) => ({ hebrew_font: 'David Libre' }[k] ?? null) };
+  assert.equal(ctx.getTypographySettings(overlay).roles.hebrew.font, 'David Libre');
+});
+
+test('a stale stored "false" does not stop the borrowing', () => {
+  const ctx = insertionContext('Arial');
+  const { calls, paragraph } = paragraphStub(BARA);
+  ctx.applyRoleTypography_(paragraph, { roles: { hebrew: { font: 'David Libre', size: null, style: 'normal' } }, hebrewMarkFallback: false }, 'hebrew');
+  assert.deepEqual(calls, [[0, 6, 'David Libre'], [5, 5, 'Noto Serif Hebrew']]);
 });
 
 test('Link Texts accepts font overrides of the right shape only', () => {
@@ -173,11 +169,9 @@ test('Link Texts accepts font overrides of the right shape only', () => {
     hebrew_mark_fallback: 'false',
   })), {
     hebrew_font: 'David Libre', translation_font: '', hebrew_font_size: '14', translation_font_size: '',
-    hebrew_mark_fallback: 'false',
-  });
+  }, 'the retired hebrew_mark_fallback is dropped');
   assert.deepEqual(plain(ctx.sanitizeInsertOverrides_({
     hebrew_font: '<b>x</b>', translation_font: 'x'.repeat(101), hebrew_font_size: '-3', translation_font_size: 'big',
-    hebrew_mark_fallback: 'maybe',
   })), {});
 });
 

@@ -72,9 +72,12 @@ function loadInsertion({ resolved, typography }) {
     formatDataForPesukim(d) { return d; },
     normalizeSourceEmphasisMode_(mode) { return mode || 'keep'; },
     getEnglishAttributionLines(d) { return ['Translation: ' + d.versionTitle]; },
+    isTitleRole_(role) { return role === 'sourceTitle' || role === 'sefariaLink'; },
   };
   vm.createContext(context);
-  for (const file of ['apps-script/server/utils.gs', 'apps-script/server/insertion-target.gs', 'apps-script/server/insertion.gs']) {
+  // hebrew-font*.gs: every role paragraph borrows missing Hebrew marks.
+  for (const file of ['apps-script/server/utils.gs', 'apps-script/server/insertion-target.gs',
+    'apps-script/server/hebrew-font-coverage.gs', 'apps-script/server/hebrew-fonts.gs', 'apps-script/server/insertion.gs']) {
     vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
   }
   const texts = () => children.map((c) => c._state.text);

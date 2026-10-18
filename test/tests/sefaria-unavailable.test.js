@@ -37,6 +37,7 @@ function load(fetchImpl) {
     UrlFetchApp: { fetch: fetchImpl },
     PropertiesService: { getUserProperties() { return { getProperty() { return null; } }; } },
     // The display and divine-name filters are pinned elsewhere; identity here.
+    attachTransliterationSource_: (d) => d,
     applyHebrewDisplayPreferences: (d) => d,
     applyPunctuationPreferences: (d) => d,
     applyHebrewDivineNamePreferences: (d) => d,

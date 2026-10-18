@@ -1,7 +1,8 @@
 <!--
   Display (Translation / Both / Original) and Layout (Stacked / Right–Left /
-  Left–Right, and for those two, one table row per line): the first half of the insertion options, above the composition
-  card. Shared by the sidebar's Layout tray and the Link Texts dialog's
+  Left–Right, and for those two, one table row per line), then the line
+  numbers and citation: the first half of the insertion options, above the
+  composition card. Shared by the sidebar's Layout tray and the Link Texts dialog's
   "Customize this insertion" panel. Behaviour: shared/insertion-options/js.html
   (initInsertionOptions); styles: shared/insertion-options/css.html.
 
@@ -33,6 +34,11 @@
     </div>
   </details>
 </div>
+<!-- The line options, together: Line by line (here), and the composition
+     card's Line #s and Citation pills, which shared/composition-card/shared.html
+     drives (by id, so they can live outside the card). -->
 <div class="layout-rows-row">
   <button type="button" class="layout-rows-toggle" id="layout-rows-toggle" aria-pressed="false" title="Right–Left and Left–Right: give each line its own table row, beside its translation" hidden>Line by line: Off</button>
+  <button type="button" class="cc-pill cc-line-pill" id="cc-lines-toggle" aria-pressed="true" title="Number each line (verse numbers)">Line #s: On</button>
+  <button type="button" class="cc-pill cc-line-pill" id="cc-details-toggle" aria-pressed="false" aria-label="Toggle source citation" title="Add the source citation (edition and license) under the text">Citation: Off</button>
 </div>

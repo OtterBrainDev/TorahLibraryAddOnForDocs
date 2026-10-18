@@ -153,6 +153,9 @@ function setupPreviewText_(answers) {
       section.hidden = section.getAttribute('data-step') !== name;
     });
     $one('#setup-progress').textContent = name === 'done' ? '' : 'Step ' + (step + 1) + ' of 3';
+    $all('#setup-steps li').forEach(function (dot, i) {
+      dot.className = name === 'done' ? 'is-current' : (i < step ? 'is-done' : (i === step ? 'is-current' : ''));
+    });
     $one('#setup-back').hidden = step === 0 || name === 'done';
     $one('#setup-skip').hidden = name === 'done';
     var next = $one('#setup-next');
@@ -175,14 +178,17 @@ function setupPreviewText_(answers) {
     saving = true;
     showError('');
     render(false);
+    modalBusyShow('Saving your choices…');
     google.script.run
       .withSuccessHandler(function () {
         saving = false;
+        modalBusyHide();
         step = STEPS.indexOf('done');
         render(true);
       })
       .withFailureHandler(function () {
         saving = false;
+        modalBusyHide();
         showError('Your choices could not be saved. Please try again.');
         render(false);
       })
@@ -202,6 +208,7 @@ function setupPreviewText_(answers) {
     }
     if (name === 'done') {
       // Open (or refresh) the sidebar in the mode just chosen, then close.
+      modalBusyShow('Opening Torah Library…');
       google.script.run
         .withSuccessHandler(function () { google.script.host.close(); })
         .withFailureHandler(function () { google.script.host.close(); })

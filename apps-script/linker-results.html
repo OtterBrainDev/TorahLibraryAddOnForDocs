@@ -6,6 +6,7 @@
     <?!= include('shared/ui/head'); ?>
     <?!= include('shared/css/native-controls'); ?>
     <?!= include('css/tokens'); ?>
+    <?!= include('shared/ui/busy-overlay'); ?>
     <?!= include('shared/insertion-options/css'); ?>
     <?!= include('shared/composition-card/css'); ?>
     <style>
@@ -415,7 +416,7 @@
               </div>
               <div class="customize-section">
                 <div class="customize-section-label">Insertion Format</div>
-                <div class="cc-card cc-card--stacked" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills,fonts" aria-label="Composition for these insertions">
+                <div class="cc-card cc-card--stacked" id="composition-card-container" data-cc-features="linkedTitle,fonts" aria-label="Composition for these insertions">
                   <?!= include('shared/composition-card/markup') ?>
                 </div>
               </div>
@@ -499,11 +500,10 @@
           'show_line_markers_default', 'include_translation_source_info',
           'insert_sefaria_link_default', 'insert_from_selection_replace',
           'hebrew_punctuation', 'translation_punctuation', 'bilingual_aligned_rows',
-          'hebrew_font', 'hebrew_font_size', 'translation_font', 'translation_font_size',
-          'hebrew_mark_fallback'
+          'hebrew_font', 'hebrew_font_size', 'translation_font', 'translation_font_size'
         ];
         var ON_UNLESS_FALSE = ['nekudot', 'teamim', 'insert_from_selection_replace',
-          'hebrew_punctuation', 'translation_punctuation', 'hebrew_mark_fallback'];
+          'hebrew_punctuation', 'translation_punctuation'];
         // Font names and sizes, as stored ("" = match the document).
         var AS_STORED = ['hebrew_font', 'hebrew_font_size', 'translation_font', 'translation_font_size'];
         var ON_IF_TRUE = ['include_transliteration_default', 'show_line_markers_default',
@@ -586,16 +586,12 @@
                 emphasisMode: custom.source_emphasis_mode,
                 fonts: {
                   hebrew: { font: custom.hebrew_font, size: custom.hebrew_font_size },
-                  translation: { font: custom.translation_font, size: custom.translation_font_size },
-                  borrowMarks: custom.hebrew_mark_fallback === 'true'
+                  translation: { font: custom.translation_font, size: custom.translation_font_size }
                 }
               };
             },
             onFontChange: function (role, field, value) {
               custom[role + (field === 'size' ? '_font_size' : '_font')] = String(value);
-            },
-            onBorrowMarksChange: function (on) {
-              custom.hebrew_mark_fallback = on ? 'true' : 'false';
             },
             onToggle: function (key) {
               if (key === 'vowels') flip('nekudot');
@@ -633,13 +629,16 @@
             var changed = changedInsertPrefs();
             button.disabled = true;
             button.textContent = 'Saving…';
+            modalBusyShow('Saving your defaults…');
             google.script.run
               .withSuccessHandler(function () {
+                modalBusyHide();
                 defaults = Object.assign({}, custom);
                 button.textContent = label;
                 refreshCustomize();
               })
               .withFailureHandler(function () {
+                modalBusyHide();
                 button.textContent = 'Could not save — try again';
                 button.disabled = false;
               })

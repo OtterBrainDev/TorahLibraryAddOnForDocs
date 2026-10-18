@@ -470,17 +470,20 @@ test('a reinstall over a finished setup does not re-run it', () => {
   assert.equal(userProperties.getProperty('first_run_setup'), 'done');
 });
 
-// Borrowed Hebrew marks (server/hebrew-fonts.gs): on for upgraders too, since
-// what they had in its place was empty boxes.
-test('v21 migration turns on borrowing missing Hebrew marks for upgraders', () => {
+// Borrowed Hebrew marks (server/hebrew-fonts.gs) are always on: v21 added a
+// switch, v22 retired it before release and removes what test builds stored.
+test('v22 migration removes the retired hebrew_mark_fallback', () => {
+  for (const stored of ['true', 'false']) {
+    const { context, userProperties } = loadMigrations({ prefs_schema_version: '21', hebrew_mark_fallback: stored });
+    context.runUserPreferenceMigrationsIfNeeded_();
+    assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+    assert.equal(userProperties.getProperty('hebrew_mark_fallback'), null);
+  }
+});
+
+test('an upgrade from v20 never writes hebrew_mark_fallback', () => {
   const { context, userProperties } = loadMigrations({ prefs_schema_version: '20' });
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
-  assert.equal(userProperties.getProperty('hebrew_mark_fallback'), 'true');
-});
-
-test('v21 migration does not clobber a stored hebrew_mark_fallback', () => {
-  const { context, userProperties } = loadMigrations({ prefs_schema_version: '20', hebrew_mark_fallback: 'false' });
-  context.runUserPreferenceMigrationsIfNeeded_();
-  assert.equal(userProperties.getProperty('hebrew_mark_fallback'), 'false');
+  assert.equal(userProperties.getProperty('hebrew_mark_fallback'), null);
 });

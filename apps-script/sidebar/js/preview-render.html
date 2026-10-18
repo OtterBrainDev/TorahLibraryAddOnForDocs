@@ -12,6 +12,12 @@ function extractTextFromHtml_(html) {
   return String(html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+// A fetched text is a string or (nested) arrays of segments.
+function flattenSegments_(value) {
+  if (Array.isArray(value)) return value.map(flattenSegments_).join(' ');
+  return value == null ? '' : String(value);
+}
+
 function removePreviewTransliteration() {
   $('.preview-transliteration').remove();
 }
@@ -20,7 +26,10 @@ function renderPreviewTransliteration(dataIn) {
   removePreviewTransliteration();
   if (!$('.include-transliteration').is(':checked')) return;
   if (($('.output-mode-selection').val() || 'both') === 'en') return;
-  var plain = extractTextFromHtml_(dataIn && dataIn.he ? dataIn.he : '');
+  // The Hebrew as fetched, vowels and punctuation kept (server
+  // attachTransliterationSource_), not the Hebrew as displayed.
+  var source = dataIn ? (dataIn.heTransliterationSource !== undefined ? dataIn.heTransliterationSource : dataIn.he) : '';
+  var plain = extractTextFromHtml_(flattenSegments_(source));
   if (!plain) return;
   var refAtRequest = String((dataIn && dataIn.ref) || '');
   google.script.run.withSuccessHandler(function (text) {

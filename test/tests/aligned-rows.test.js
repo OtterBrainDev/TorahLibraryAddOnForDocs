@@ -175,3 +175,21 @@ test('the key is client-writable, defaults to off, and is migrated to off for up
   assert.equal(context.getDefaultPreferences().bilingual_aligned_rows, false);
   assert.match(read('apps-script/server/document-actions.gs'), /bilingual_aligned_rows: 'boolean'/);
 });
+
+// The transliteration is read from the Hebrew as fetched (heTransliterationSource,
+// vowels kept), not the Hebrew as inserted. See transliteration-source.test.js.
+const VOWELED = () => Object.assign(GENESIS(), { heTransliterationSource: ['בְּרֵאשִׁית', 'וְהָאָרֶץ'] });
+
+test('one row: the transliteration reads the voweled Hebrew, with the same line markers', () => {
+  const { context } = loadInsert({});
+  const read = [];
+  context.transliterateHebrewHtmlPreservingBasicBreaks = (html) => { read.push(html); return 'tr'; };
+  context.insertReference(VOWELED(), { bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true });
+  assert.deepEqual(read, ['(א) בְּרֵאשִׁית\n(ב) וְהָאָרֶץ\n']);
+});
+
+test('line by line: each row\'s transliteration reads its own voweled Hebrew', () => {
+  const { context, tables } = loadInsert({ bilingual_aligned_rows: 'true' });
+  context.insertReference(VOWELED(), { bilingualLayout: 'he-right', pasukPreference: false, includeTransliteration: true });
+  assert.deepEqual(tables[0].texts().slice(1).map((row) => row[1]), ['בראשית / tr:בְּרֵאשִׁית', 'והארץ / tr:וְהָאָרֶץ']);
+});

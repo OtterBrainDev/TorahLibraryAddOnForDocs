@@ -88,12 +88,11 @@
       ensurePreviewFont(font);
       preview.style.fontFamily = font ? previewFontStack(font) : '';
       // The Hebrew sample, with the marks the font lacks drawn as the insert
-      // will draw them (borrowed from Noto, or flagged).
+      // will draw them (borrowed from Noto).
       const sample = byId(previewId + '_text');
       if (sample) {
         if (sample.dataset.sample == null) sample.dataset.sample = sample.textContent;
-        const borrow = byId('hebrew_mark_fallback') ? byId('hebrew_mark_fallback').checked : true;
-        renderHebrewPreviewText(sample, sample.dataset.sample, font, borrow);
+        renderHebrewPreviewText(sample, sample.dataset.sample, font);
       }
     }
 
@@ -257,8 +256,7 @@
             emphasisMode: ccNormalizeEmphasisMode(emphasisInput ? emphasisInput.value : ''),
             fonts: {
               hebrew: { font: (byId('hebrew_font') || {}).value, size: (byId('hebrew_font_size') || {}).value },
-              translation: { font: (byId('translation_font') || {}).value, size: (byId('translation_font_size') || {}).value },
-              borrowMarks: byId('hebrew_mark_fallback') ? byId('hebrew_mark_fallback').checked : true
+              translation: { font: (byId('translation_font') || {}).value, size: (byId('translation_font_size') || {}).value }
             }
           };
         },
@@ -270,12 +268,6 @@
           if (field === 'font') fillFontSelect(el, value);
           else el.value = value;
           syncCustomSelect(el);
-          el.dispatchEvent(new Event('change', { bubbles: true }));
-        },
-        onBorrowMarksChange: function (on) {
-          var el = byId('hebrew_mark_fallback');
-          if (!el) return;
-          el.checked = on;
           el.dispatchEvent(new Event('change', { bubbles: true }));
         },
         onMoreFontSettings: function () {
@@ -766,10 +758,8 @@
 
     $('#linker_review_mode').on('change', syncLinkerInsertToggle);
 
-    function setResultsMessage(message, isHtml) {
-      // isHtml callers pass only the static loader <img> literal; everything else goes through .text().
-      if (isHtml) $("#results").html(message);
-      else $("#results").text(message);
+    function setResultsMessage(message) {
+      $("#results").text(message);
     }
 
     function loadPreferencesIntoForm() {
@@ -837,7 +827,6 @@
     }
 
     if (byId('vowels_tanakh_only')) byId('vowels_tanakh_only').addEventListener('change', syncVowelsTanakhOnly_);
-    if (byId('hebrew_mark_fallback')) byId('hebrew_mark_fallback').addEventListener('change', function () { updateCompositionCard(); });
     byId('transliteration_font').addEventListener('change', function(){ updateTransliterationPreview(); updateCompositionCard(); });
     byId('transliteration_scheme').addEventListener('change', function(){ syncCustomSelect(byId('transliteration_scheme')); updateTransliterationPreview(); updateCompositionCard(); });
     if (byId('include_transliteration_default')) byId('include_transliteration_default').addEventListener('change', function(){ updateCompositionCard(); });
@@ -898,56 +887,79 @@
       byId('reset_modal').hidden = true;
     });
 
+    // Every save covers the dialog with the busy overlay (shared/ui/busy-overlay)
+    // until the server answers; the result line then says how it went.
     document.querySelector('.reset-confirm-button').addEventListener('click', function() {
       byId('reset_modal').hidden = true;
-      setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
+      setResultsMessage('');
+      modalBusyShow('Resetting to defaults…');
       google.script.run.withSuccessHandler(function(defaults) {
         google.script.run.withSuccessHandler(function() {
+          modalBusyHide();
           applyPreferencesToForm(defaults);
           setResultsMessage('Preferences reset to defaults.');
+        }).withFailureHandler(function(error) {
+          console.error('Preferences reset failed:', error);
+          modalBusyHide();
+          setResultsMessage('Could not reset preferences.');
         }).setPreferences(defaults);
+      }).withFailureHandler(function(error) {
+        console.error('Preferences reset failed:', error);
+        modalBusyHide();
+        setResultsMessage('Could not reset preferences.');
       }).getDefaultPreferences();
     });
 
     $('.refresh-sidebar-button').on('click', function() {
-      setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
+      setResultsMessage('');
+      modalBusyShow('Refreshing the sidebar…');
       google.script.run.withSuccessHandler(function() {
+        modalBusyHide();
         setResultsMessage('Sidebar refreshed. Sidebar-only session items were cleared.');
+      }).withFailureHandler(function(error) {
+        console.error('Sidebar refresh failed:', error);
+        modalBusyHide();
+        setResultsMessage('Could not refresh the sidebar.');
       }).refreshSidebarAfterPreferences();
     });
 
     $(".save-preferences-button").click(function() {
-      setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
+      setResultsMessage('');
+      modalBusyShow('Saving preferences…');
       const preferenceObject = collectPreferenceObject();
       google.script.run.withSuccessHandler(function() {
         google.script.run.withSuccessHandler(function() {
+          modalBusyHide();
           setResultsMessage('Successfully updated preferences. Refresh the sidebar if you want the open sidebar to pick up the new defaults now.');
           updateSheimotSummary();
         }).withFailureHandler(function(error) {
           console.error('Menu refresh failed:', error);
+          modalBusyHide();
           setResultsMessage('Preferences saved, but menu refresh failed. Close and reopen the document to see menu changes.');
         }).buildAndInstallMenu();
       }).withFailureHandler(function(error) {
         console.error('Preferences save failed:', error);
+        modalBusyHide();
         setResultsMessage('Could not save preferences.');
       }).setPreferences(preferenceObject);
     });
 
     $(".save-close-preferences-button").click(function() {
-      setResultsMessage('<img src="https://www.sefaria.org/static/img/ajax-loader.gif">', true);
+      setResultsMessage('');
+      modalBusyShow('Saving preferences…');
       const preferenceObject = collectPreferenceObject();
+      // On success the overlay stays up until the dialog closes.
       google.script.run.withSuccessHandler(function() {
         google.script.run.withSuccessHandler(function() {
-          setResultsMessage('Successfully updated preferences.');
           updateSheimotSummary();
           google.script.host.close();
         }).withFailureHandler(function(error) {
           console.error('Menu refresh failed:', error);
-          setResultsMessage('Preferences saved. Closing dialog.');
           google.script.host.close();
         }).buildAndInstallMenu();
       }).withFailureHandler(function(error) {
         console.error('Preferences save-and-close failed:', error);
+        modalBusyHide();
         setResultsMessage('Could not save preferences.');
       }).setPreferences(preferenceObject);
     });
@@ -1813,8 +1825,10 @@
         input.addEventListener('change', function () {
           if (!input.checked) return;
           var previous = current;
-          if (status) status.textContent = 'Saving…';
+          if (status) status.textContent = '';
+          modalBusyShow('Switching the interface…');
           google.script.run.withSuccessHandler(function (result) {
+            modalBusyHide();
             current = (result && result.uiMode) || input.value;
             setInterfaceModeUi_(current);
             // setUiMode may have moved the menu; keep the Menu Bar editor (and
@@ -1826,6 +1840,7 @@
                 : 'Saved. Refresh the sidebar to see the change.';
             }
           }).withFailureHandler(function () {
+            modalBusyHide();
             setInterfaceModeUi_(previous);
             if (status) status.textContent = 'Could not change the interface.';
           }).setUiMode(input.value);

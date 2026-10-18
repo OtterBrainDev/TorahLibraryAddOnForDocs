@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '21';
+var PREFS_SCHEMA_CURRENT_ = '22';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -192,11 +192,16 @@ function runUserPreferenceMigrationsIfNeeded_() {
   if (from < 20) {
     migrateToV20_(userProperties);
   }
-  // v20 -> v21: introduces `hebrew_mark_fallback`, on for everyone: the Hebrew
-  // marks a font has no glyph for are set in a Noto Hebrew instead of showing
-  // as empty boxes. Upgraders get it too; what they had was the boxes.
+  // v20 -> v21: introduced `hebrew_mark_fallback`, retired in v22 before it
+  // was released. Kept so the numbering stays unbroken; it does nothing.
   if (from < 21) {
     migrateToV21_(userProperties);
+  }
+  // v21 -> v22: retires `hebrew_mark_fallback`. Borrowing the Hebrew marks a
+  // font lacks from Noto is no longer a setting; it always happens. Removes
+  // the stored value test builds wrote.
+  if (from < 22) {
+    migrateToV22_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -517,15 +522,21 @@ function migrateToV20_(userProperties) {
 }
 
 /**
- * V21: introduces `hebrew_mark_fallback` (server/hebrew-fonts.gs). "true" for
- * upgraders as for new users: it changes only marks their font could not
- * draw, which showed as empty boxes or in a fallback font. A stored value is
- * never overwritten.
+ * V21: introduced `hebrew_mark_fallback`, which v22 retired before any
+ * release. A no-op: v22 would only delete what it wrote.
  */
 function migrateToV21_(userProperties) {
-  if (userProperties.getProperty('hebrew_mark_fallback') == null) {
-    userProperties.setProperty('hebrew_mark_fallback', 'true');
-  }
+  return true;
+}
+
+/**
+ * V22: retires `hebrew_mark_fallback`. The Hebrew marks a font has no glyph
+ * for are always set in a Noto Hebrew (server/hebrew-fonts.gs); there is no
+ * switch, so a stored value (from a test build) is removed rather than left
+ * for nothing to read.
+ */
+function migrateToV22_(userProperties) {
+  try { userProperties.deleteProperty('hebrew_mark_fallback'); } catch (_e) { /* ignore */ }
   return true;
 }
 

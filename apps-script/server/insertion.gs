@@ -250,7 +250,8 @@ function applyEmphasisMapping_(text, start, end, mapping) {
  * @param {Array<string>} [opts.keepLines]  Lines "only" keeps whole
  *        (planEmphasisOnlyEdits_).
  * @param {boolean} [opts.markFallback]  Set the Hebrew marks the font lacks
- *        in a Noto Hebrew (planHebrewMarkFallback_).
+ *        in a Noto Hebrew (planHebrewMarkFallback_). Every role paragraph
+ *        does (applyRoleTypography_); it is not a setting.
  * @param {string} [opts.inheritedFont]  The font the text is in when `font`
  *        is empty (the document's Normal text font).
  */
@@ -356,17 +357,17 @@ function documentFontOf_(typography) {
  * @param {Object} [overrides] {size, style, preserveSourceEmphasis}
  */
 /**
- * The source-emphasis mode for one role's paragraph. "Keep only" picks the
- * translation's emphasized words (the Talmud's own words in Steinsaltz); the
- * Hebrew's bold is a different thing (the Mishnah's opening word, the
- * Gemara's "גמ׳"), so on any other role it means "keep": applied there it
- * deleted nearly all of the Hebrew.
+ * The source-emphasis mode for one role's paragraph. The B&I setting is the
+ * translation's: "Keep only" picks its emphasized words (the Talmud's own
+ * words in Steinsaltz) and "Discard" drops its bold and italics. The Hebrew's
+ * bold is a different thing (the Mishnah's opening word, the Gemara's
+ * "גמ׳"), so every other role always keeps its own: "Keep only" applied
+ * there deleted nearly all of the Hebrew.
  */
 function sourceEmphasisModeForRole_(typography, roleName) {
-  const mode = typography ? typography.sourceEmphasisMode : undefined;
   // Already normalized (getTypographySettings, insertReference).
-  if (roleName !== 'translation' && mode === 'only') return 'keep';
-  return mode;
+  if (roleName !== 'translation') return 'keep';
+  return typography ? typography.sourceEmphasisMode : undefined;
 }
 
 function applyRoleTypography_(paragraph, typography, roleName, overrides) {
@@ -387,10 +388,12 @@ function applyRoleTypography_(paragraph, typography, roleName, overrides) {
       sourceEmphasisMode: sourceEmphasisModeForRole_(typography, roleName),
       emphasisMap: typography ? typography.emphasisMap : null,
       keepLines: typography ? typography.sectionHeadingLines : null,
-      markFallback: !!(typography && typography.hebrewMarkFallback),
+      // The Hebrew marks the font lacks are always borrowed from Noto
+      // (hebrew-fonts.gs): the alternative is empty boxes.
+      markFallback: true,
       // A title with a heading style and no font of its own is in the
       // heading's font, which is not looked up: its marks are left alone.
-      inheritedFont: (typography && typography.hebrewMarkFallback && !role.font &&
+      inheritedFont: (!role.font &&
           !(isTitleRole_(roleName) && typography.titleHeading && typography.titleHeading !== "normal"))
         ? documentFontOf_(typography)
         : ""
@@ -776,8 +779,13 @@ function insertReference(data, opts) {
       return {};
     }
   })();
-  const transliterationTextRaw = (includeTransliteration && data.he)
-    ? transliterateHebrewHtmlPreservingBasicBreaks(data.he, transliterationScheme, {
+  // Read from the Hebrew as fetched (vowels and punctuation kept), joined
+  // with the same line markers as the Hebrew.
+  const transliterationHebrew = !includeTransliteration ? ""
+    : (segmentedData.pesukimFormatted === true ? data.he
+      : formatDataForPesukim(Object.assign({}, segmentedData, { he: transliterationSourceOf_(segmentedData) }), includeLineMarkers).he);
+  const transliterationTextRaw = (includeTransliteration && data.he && transliterationHebrew)
+    ? transliterateHebrewHtmlPreservingBasicBreaks(transliterationHebrew, transliterationScheme, {
         keepNiqqud: true,
         isBiblicalHebrew: isBiblicalHebrewText,
         dageshMode: isBiblicalHebrewText ? transliterationDageshMode : "none",

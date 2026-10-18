@@ -30,6 +30,8 @@ function load(files, props = {}, extra = {}) {
 const PREFS = 'apps-script/server/preferences.gs';
 const MENU = 'apps-script/server/menu-layout.gs';
 const INSERTION = 'apps-script/server/insertion.gs';
+// Every role paragraph borrows missing Hebrew marks (always on).
+const FONTS = ['apps-script/server/hebrew-font-coverage.gs', 'apps-script/server/hebrew-fonts.gs'];
 const plain = (v) => JSON.parse(JSON.stringify(v));
 
 test('every role defaults to "match the document"; titles are normal text', () => {
@@ -97,7 +99,7 @@ test('unknown heading values fall back to normal text', () => {
 });
 
 test('applyTitleTypography sets the chosen heading, and only then', () => {
-  const ctx = load([INSERTION]);
+  const ctx = load([PREFS, ...FONTS, INSERTION]);
   const make = () => {
     const calls = [];
     const text = {

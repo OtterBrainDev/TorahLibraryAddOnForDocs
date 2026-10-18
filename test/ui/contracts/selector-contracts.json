@@ -34,8 +34,7 @@
       "#translation_punctuation",
       "#bilingual_aligned_rows",
       "#show_advanced_settings",
-      "#interface-mode-status",
-      "#hebrew_mark_fallback"
+      "#interface-mode-status"
     ]
   },
   "surprise_me": {

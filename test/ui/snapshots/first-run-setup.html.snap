@@ -7,18 +7,26 @@
     <?!= include('shared/ui/head'); ?>
     <?!= include('shared/css/native-controls'); ?>
     <?!= include('css/tokens'); ?>
+    <?!= include('shared/ui/busy-overlay'); ?>
     <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
     <script>window.APP_CONFIG = JSON.parse(document.getElementById('app-config-json').textContent);</script>
     <?!= include('first-run-setup/css'); ?>
   </head>
   <body>
     <main class="setup-shell">
-      <p class="setup-progress" id="setup-progress" aria-live="polite">Step 1 of 3</p>
+      <header class="setup-brand">
+        <span class="setup-mark" aria-hidden="true">א</span>
+        <span class="setup-brand-name">Torah Library</span>
+        <span class="setup-brand-spacer"></span>
+        <ol class="setup-steps" id="setup-steps" aria-hidden="true"><li></li><li></li><li></li></ol>
+        <p class="setup-progress" id="setup-progress" aria-live="polite">Step 1 of 3</p>
+      </header>
 
       <!-- Screen 1: what the add-on is for. Only preselects screens 2 and 3. -->
       <section class="setup-step" data-step="purpose">
         <fieldset class="setup-fieldset">
           <legend><h1 class="setup-heading" tabindex="-1">What will you mostly use Torah Library for?</h1></legend>
+          <p class="setup-lede">Three quick questions set up how sources go into your documents. You can change any of it later.</p>
           <div class="setup-cards">
             <label class="setup-card">
               <input type="radio" name="purpose" value="quoting">
@@ -49,6 +57,7 @@
         <h1 class="setup-heading" tabindex="-1">How should sources look?</h1>
 
         <figure class="setup-preview" aria-hidden="true">
+          <span class="setup-preview-tag">Preview</span>
           <figcaption class="setup-preview-ref">Deuteronomy 6:4</figcaption>
           <div class="setup-preview-body" id="setup-preview-body" data-arrangement="he-right">
             <p class="setup-preview-he" id="setup-preview-he" dir="rtl" lang="he"></p>
@@ -148,6 +157,7 @@
       <section class="setup-step" data-step="mode" hidden>
         <fieldset class="setup-fieldset">
           <legend><h1 class="setup-heading" tabindex="-1">How much do you want to see?</h1></legend>
+          <p class="setup-lede">You can switch at any time in Preferences.</p>
           <div class="setup-cards setup-cards--two">
             <label class="setup-card">
               <input type="radio" name="uiMode" value="simple">
@@ -160,12 +170,12 @@
               <span class="setup-card-note">Every tool and setting, including Link Texts, Voices and Lexicon.</span>
             </label>
           </div>
-          <p class="setup-help">You can switch at any time in Preferences.</p>
         </fieldset>
       </section>
 
       <!-- Done. -->
       <section class="setup-step" data-step="done" hidden>
+        <span class="setup-done-mark" aria-hidden="true">✓</span>
         <h1 class="setup-heading" tabindex="-1">You're set.</h1>
         <ul class="setup-done-list">
           <li>Open the sidebar from <strong>Extensions → Torah Library → Texts</strong>.</li>

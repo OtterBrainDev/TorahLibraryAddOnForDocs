@@ -67,6 +67,25 @@ function applyHebrewDisplayPreferences(data, userProperties) {
 }
 
 /**
+ * Copies the fetched Hebrew to `heTransliterationSource`, before the display
+ * filters (vowels, cantillation, punctuation) strip it, with the Hebrew
+ * divine-name substitutes applied. The transliteration is read from it, so it
+ * follows the vowels Sefaria has whatever the Hebrew shows. Same shape as
+ * `he` (a string, or arrays of segments).
+ */
+function attachTransliterationSource_(data, userProperties) {
+  if (!data || typeof data !== 'object' || data.he === undefined) return data;
+  const named = applyDivineNameReplacements({ he: data.he }, userProperties, { hebrew: true, english: false });
+  return Object.assign({}, data, { heTransliterationSource: named.he });
+}
+
+/** The Hebrew a transliteration is read from: the fetched source, else `he`. */
+function transliterationSourceOf_(data) {
+  if (!data) return undefined;
+  return data.heTransliterationSource !== undefined ? data.heTransliterationSource : data.he;
+}
+
+/**
  * Config-driven union of the Hebrew and English divine-name replacement passes.
  * One gate (`apply_sheimot_on_insertion`) covers both. Each rule names the
  * preference that enables it, the preference (or literal) that holds the
@@ -472,8 +491,9 @@ function formatDataForPesukim(data, pesukim) {
  * for the whole passage. Segments the other language lacks are left blank.
  *
  * @return {Array<{he: string, en: string, heRaw: string, number: (number|null), heading: boolean}>|null}
- *   he/en carry the line marker; heRaw is the Hebrew without it (for
- *   transliteration; empty for a heading); number is the verse number used
+ *   he/en carry the line marker; heRaw is the Hebrew without it, as fetched
+ *   (heTransliterationSource), for transliteration; empty for a heading;
+ *   number is the verse number used
  *   for the marker.
  */
 function buildAlignedLinePairs_(data, includeLineMarkers) {
@@ -518,6 +538,11 @@ function buildAlignedLinePairs_(data, includeLineMarkers) {
   const he = segmentsOf(data.he, 'he');
   const en = segmentsOf(data.text, 'en');
   if (!he || !en || (!he.length && !en.length)) return null;
+  // Each row's transliteration is read from the fetched Hebrew (vowels kept),
+  // when it splits into the same lines.
+  const source = data.heTransliterationSource;
+  const heSource = Array.isArray(source) ? segmentsOf(source, 'he') : null;
+  const sourceAligned = !!(heSource && heSource.length === he.length);
 
   const pairs = [];
   for (let i = 0; i < Math.max(he.length, en.length); i++) {
@@ -531,7 +556,7 @@ function buildAlignedLinePairs_(data, includeLineMarkers) {
     pairs.push({
       he: (withMarker && heRaw) ? '(' + gematriya(number, { punctuate: false }) + ') ' + heRaw : heRaw,
       en: (withMarker && enRaw) ? '(' + number + ') ' + enRaw : enRaw,
-      heRaw: heading ? '' : heRaw,
+      heRaw: heading ? '' : (sourceAligned ? heSource[i].text : heRaw),
       number: withMarker ? number : null,
       heading: heading
     });
