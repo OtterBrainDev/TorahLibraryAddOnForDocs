@@ -1,8 +1,9 @@
 <!--
-  Display (Translation / Both / Original) and Layout (Stacked / Right–Left /
-  Left–Right, and for those two, one table row per line), then the line
-  numbers and citation: the first half of the insertion options, above the
-  composition card. Shared by the sidebar's Layout tray and the Link Texts dialog's
+  The Layout section of the insertion options: Display (Translation / Both /
+  Original) and Arrangement (Stacked / Right–Left / Left–Right), each a
+  labelled segmented control, then the line options (one table row per line,
+  line numbers, citation) as switch rows. Above the composition card. Shared
+  by the sidebar's Layout tray, Preferences and the Link Texts dialog's
   "Customize this insertion" panel. Behaviour: shared/insertion-options/js.html
   (initInsertionOptions); styles: shared/insertion-options/css.html.
 
@@ -11,17 +12,17 @@
   it, inside the same container they pass to initInsertionOptions as `root`.
 -->
 <div class="display-layout-section">
-  <details class="display-choice-detail display-choice-dropdown">
-    <summary class="display-choice-summary" aria-label="Display selector" title="Display"><span class="display-choice-label" aria-hidden="true">Display</span><span class="display-choice-selected display-choice-selected--display" id="display-choice-summary-text" data-mode="both"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></span></summary>
-    <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-label="Display mode">
+  <div class="display-choice-detail">
+    <div class="display-choice-label" id="display-choice-label">Display</div>
+    <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-labelledby="display-choice-label">
       <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
       <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
       <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
     </div>
-  </details>
-  <details class="display-choice-detail bilingual-layout-wrapper display-choice-dropdown">
-    <summary class="display-choice-summary" aria-label="Layout selector" title="Layout"><span class="display-choice-label" aria-hidden="true">Layout</span><span class="display-choice-selected display-choice-selected--layout" id="layout-choice-summary-text" data-layout="he-right"><span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span></span></summary>
-    <div class="layout-option-group" role="radiogroup" aria-label="Bilingual layout">
+  </div>
+  <div class="display-choice-detail bilingual-layout-wrapper">
+    <div class="display-choice-label" id="layout-choice-label">Arrangement</div>
+    <div class="layout-option-group" role="radiogroup" aria-labelledby="layout-choice-label">
       <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
         <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>
       </button>
@@ -32,13 +33,14 @@
         <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>
       </button>
     </div>
-  </details>
+  </div>
 </div>
-<!-- The line options, together: Line by line (here), and the composition
-     card's Line #s and Citation pills, which shared/composition-card/shared.html
+<!-- The line options, together, as switch rows (.cc-row, styled in
+     shared/composition-card/css): Line by line (here), and the composition
+     card's Line numbers and Citation, which shared/composition-card/shared.html
      drives (by id, so they can live outside the card). -->
-<div class="layout-rows-row">
-  <button type="button" class="layout-rows-toggle" id="layout-rows-toggle" aria-pressed="false" title="Right–Left and Left–Right: give each line its own table row, beside its translation" hidden>Line by line: Off</button>
-  <button type="button" class="cc-pill cc-line-pill" id="cc-lines-toggle" aria-pressed="true" title="Number each line (verse numbers)">Line #s: On</button>
-  <button type="button" class="cc-pill cc-line-pill" id="cc-details-toggle" aria-pressed="false" aria-label="Toggle source citation" title="Add the source citation (edition and license) under the text">Citation: Off</button>
+<div class="layout-rows-row cc-rows">
+  <button type="button" class="cc-row cc-toggle layout-rows-toggle" id="layout-rows-toggle" aria-pressed="false" title="Right–Left and Left–Right: give each line its own table row, beside its translation" hidden><span class="cc-row-label">Line by line</span><span class="cc-switch" aria-hidden="true"></span></button>
+  <button type="button" class="cc-row cc-toggle cc-line-pill" id="cc-lines-toggle" aria-pressed="true" title="Number each line (verse numbers)"><span class="cc-row-label">Line numbers</span><span class="cc-switch" aria-hidden="true"></span></button>
+  <button type="button" class="cc-row cc-toggle cc-line-pill" id="cc-details-toggle" aria-pressed="false" aria-label="Toggle source citation" title="Add the source citation (edition and license) under the text"><span class="cc-row-label">Citation</span><span class="cc-switch" aria-hidden="true"></span></button>
 </div>

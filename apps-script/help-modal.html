@@ -575,45 +575,47 @@
             <p><span class="ui-label">🔁 Preview</span> shows what <span class="ui-label">Add Source</span> will insert right now: the current version, display, layout, vowels, cantillation, transliteration and divine-name replacements. If the Preview looks right, the insertion will too.</p>
           </section>
 
-          <section class="card topic-section" id="layout-settings" data-search-title="Layout Settings (📰 Layout)" data-search-terms="layout settings tray display translation original both hebrew only stacked right left left right line by line rows table compare bilingual insertion format linked title cantillation taamim trop vowels niqqud nikud nekudot transliteration lines line numbers line #s line markers sources citation b&amp;i noto font fonts cantillation marks boxes bold italics emphasis keep discard keep only talmud steinsaltz translated session revert save as defaults override this insertion customize this insertion link texts preferences defaults">
+          <section class="card topic-section" id="layout-settings" data-search-title="Layout Settings (📰 Layout)" data-search-terms="layout settings tray display arrangement title font link the title source title translation title translation original both hebrew only stacked right left left right line by line rows table compare bilingual insertion format linked title cantillation taamim trop vowels niqqud nikud nekudot transliteration lines line numbers line #s line markers sources citation b&amp;i noto font fonts cantillation marks boxes bold italics emphasis keep discard keep only talmud steinsaltz translated session revert save as defaults override this insertion customize this insertion link texts preferences defaults">
             <h2>Layout Settings (<span class="icon">📰</span> Layout)</h2>
             <p>Click <span class="ui-label">📰 Layout</span> at the bottom of the sidebar. Everything here applies to <strong>this sidebar session only</strong> — your saved Preferences don't change unless you click <span class="ui-label">💾 Save as defaults</span>.</p>
             <p>The same controls appear in two other places: <span class="ui-label">Preferences → Insertion</span>, where they set your saved defaults, and <a href="#link-texts">Link Texts with Sefaria</a>'s <span class="ui-label">📰 Customize this insertion</span> panel, where they apply to the sources inserted in one pass.</p>
-            <h3>Display &amp; Layout</h3>
+            <h3>Layout</h3>
             <div class="compare-grid">
               <div class="compare-card"><h3>A</h3><p class="muted">Translation only.</p></div>
               <div class="compare-card"><h3>A + א</h3><p class="muted">Hebrew with translation.</p></div>
               <div class="compare-card"><h3>א</h3><p class="muted">Hebrew (original) only.</p></div>
             </div>
-            <p style="margin-top:10px;">With Hebrew and translation, <span class="ui-label">Layout</span> chooses <strong>Stacked</strong> (Hebrew above the translation), <strong>Right–Left</strong> (Hebrew on the right, side by side) or <strong>Left–Right</strong> (Hebrew on the left). For the two side-by-side layouts, <span class="ui-label">Line by line</span> gives each verse or line its own table row, beside its translation, so the two are easy to compare; off, the whole passage sits in one row.</p>
+            <p style="margin-top:10px;">With Hebrew and translation, <span class="ui-label">Arrangement</span> chooses <strong>Stacked</strong> (Hebrew above the translation), <strong>Right–Left</strong> (Hebrew on the right, side by side) or <strong>Left–Right</strong> (Hebrew on the left). For the two side-by-side layouts, <span class="ui-label">Line by line</span> gives each verse or line its own table row, beside its translation, so the two are easy to compare; off, the whole passage sits in one row.</p>
             <p>Beside it, whatever the layout:</p>
             <table class="ref-table">
               <tbody>
-                <tr><td><span class="ui-label">Line #s</span></td><td>Number each verse or line in the inserted text.</td></tr>
+                <tr><td><span class="ui-label">Line numbers</span></td><td>Number each verse or line in the inserted text.</td></tr>
                 <tr><td><span class="ui-label">Citation</span></td><td>Add a short citation of the translation and Hebrew edition used, and their licenses, below the text.</td></tr>
               </tbody>
             </table>
             <h3>Insertion Format</h3>
-            <p>The card has a <strong>Source</strong> section (the Hebrew) and a <strong>Translation</strong> section. Each is folded to one line that says what is set; click it to open the live sample and its switches. Click each switch to turn it on or off (<span class="ui-label">B&amp;I</span> has three settings; each click moves to the next):</p>
+            <p>The card has a <strong>Source</strong> section (the Hebrew) and a <strong>Translation</strong> section. Each is folded to one line that says what is set; click it to open the live sample and its settings, one per row. Click a row to turn its switch on or off:</p>
             <table class="ref-table">
               <tbody>
-                <tr><td><span class="ui-label">🔗 Title</span></td><td>Link the inserted title to the passage on sefaria.org.</td></tr>
+                <tr><td><span class="ui-label">Link the title</span></td><td>One in each section: link the source (Hebrew) title, and the translation title, to the passage on sefaria.org. Each is set on its own.</td></tr>
+                <tr><td><span class="ui-label">Title font</span></td><td>One in each section: the font and size of that title. While the title is linked this sets the linked title's font, otherwise the plain title's. Colour, bold and the rest are in <span class="ui-label">Preferences → Fonts → Title</span>, under <em>Translation title</em> and <em>Source title</em>.</td></tr>
+                <tr><td><span class="ui-label">Text font</span></td><td>The font and size of the Hebrew, and of the translation.</td></tr>
                 <tr><td><span class="ui-label">Cantillation</span></td><td>Keep the cantillation marks (ta'amim).</td></tr>
                 <tr><td><span class="ui-label">Vowels</span></td><td>Keep the vowels (niqqud).</td></tr>
-                <tr><td><span class="ui-label">Translit</span></td><td>Add a transliteration of the Hebrew. The menu beside it picks the scheme — Simple English, Traditional, Modern Israeli, Ashkenazi, Academic, or IPA. It is read from the fully vowelled text Sefaria provides, so it is complete even with <span class="ui-label">Vowels</span> or <span class="ui-label">Punctuation</span> off.</td></tr>
+                <tr><td><span class="ui-label">Transliteration</span></td><td>Add a transliteration of the Hebrew. While it is on, <span class="ui-label">Style</span> under it picks the scheme — Simple English, Traditional, Modern Israeli, Ashkenazi, Academic, or IPA. It is read from the fully vowelled text Sefaria provides, so it is complete even with <span class="ui-label">Vowels</span> or <span class="ui-label">Punctuation</span> off.</td></tr>
                 <tr><td><span class="ui-label">Punctuation</span></td><td>One in each section: keep the punctuation in the Hebrew, and in the translation.</td></tr>
-                <tr><td><span class="ui-label">B&amp;I</span></td><td>In the Translation section: what to do with the translation's own bold and italics. <strong>Keep</strong> (<b>B&amp;I</b>, highlighted) keeps them. <strong>Discard</strong> (<s>B&amp;I</s>, faded) drops them, so your font style applies throughout. <strong>Keep only</strong> (<b><i><u>B&amp;I</u></i></b>, dark) inserts only the words the translation puts in bold or italics and leaves the rest out. It never changes the Hebrew, which is always inserted whole, with its own bold and italics.</td></tr>
+                <tr><td><span class="ui-label">Bold &amp; italics</span></td><td>In the Translation section: what to do with the translation's own bold and italics. <strong>Keep</strong> keeps them. <strong>Drop</strong> discards them, so your font style applies throughout. <strong>Only</strong> inserts only the words the translation puts in bold or italics and leaves the rest out. It never changes the Hebrew, which is always inserted whole, with its own bold and italics.</td></tr>
               </tbody>
             </table>
             <h3>Example: the Talmud without the explanation</h3>
-            <p>Sefaria's English Talmud is the Steinsaltz translation. It prints the Talmud's own words in <strong>bold</strong> and Steinsaltz's explanation in plain text. With <span class="ui-label">B&amp;I</span> set to <strong>Keep only</strong>, only the bold translation is inserted. Here is a passage from Berakhot 2a, for example:</p>
+            <p>Sefaria's English Talmud is the Steinsaltz translation. It prints the Talmud's own words in <strong>bold</strong> and Steinsaltz's explanation in plain text. With <span class="ui-label">Bold &amp; italics</span> set to <strong>Only</strong>, only the bold translation is inserted. Here is a passage from Berakhot 2a, for example:</p>
             <div class="compare-grid">
               <div class="compare-card"><h3>Keep</h3><p><b>From when does one recite <i>Shema</i> in the evening? From the time when the priests enter</b> to immerse and purify themselves in order <b>to partake of their <i>teruma</i>.</b></p></div>
               <div class="compare-card"><h3>Keep only</h3><p><b>From when does one recite <i>Shema</i> in the evening? From the time when the priests enter to partake of their <i>teruma</i>.</b></p></div>
             </div>
             <p style="margin-top:10px;">Line markers are kept. A line with no bold or italics at all is left out, but a passage with none anywhere, like the Aramaic original, is inserted whole. Words that are kept stay bold and italic. To make them plain text, use <span class="ui-label">Preferences → Fonts → ✒️ Source Emphasis → Advanced</span>. The same setting is in <span class="ui-label">Preferences → Fonts → ✒️ Source Emphasis</span>.</p>
             <h3>Fonts and cantillation marks</h3>
-            <p>The font buttons under each sample pick the Hebrew and translation fonts. Many Hebrew fonts in Google Docs (David Libre, Frank Ruhl Libre, Heebo and others) have the letters and vowels but no cantillation marks, which Docs would show as empty boxes. So the add-on sets just the marks a font lacks in <strong>Noto Serif Hebrew</strong> (<strong>Noto Sans Hebrew</strong> for a sans-serif font); the letters, and every mark the font has, stay in the font you chose. The preview shows the text the same way.</p>
+            <p>The <span class="ui-label">Text font</span> and <span class="ui-label">Title font</span> buttons pick the fonts. Many Hebrew fonts in Google Docs (David Libre, Frank Ruhl Libre, Heebo and others) have the letters and vowels but no cantillation marks, which Docs would show as empty boxes. So the add-on sets just the marks a font lacks in <strong>Noto Serif Hebrew</strong> (<strong>Noto Sans Hebrew</strong> for a sans-serif font); the letters, and every mark the font has, stay in the font you chose. The preview shows the text the same way.</p>
             <h3>Session</h3>
             <p><span class="ui-label">↺ Revert to defaults</span> puts everything in this tray back to your saved Preferences. <span class="ui-label">💾 Save as defaults</span> makes the current choices your new Preferences.</p>
           </section>
@@ -622,7 +624,7 @@
             <h2>Inserting a source</h2>
             <p><span class="ui-label">Add Source</span> inserts at your cursor in the document. The insertion is, in order:</p>
             <ol class="steps">
-              <li>a <strong>title</strong> (the reference) — linked to Sefaria if <span class="ui-label">🔗 Title</span> is on;</li>
+              <li>a <strong>title</strong> (the reference) — linked to Sefaria if <span class="ui-label">Link the title</span> is on (the source and translation titles each have their own);</li>
               <li>the <strong>Hebrew</strong>, <strong>transliteration</strong> and/or <strong>translation</strong>, arranged by your Display and Layout;</li>
               <li>a <strong>citation</strong> of the translation and Hebrew edition, if <span class="ui-label">Citation</span> is on.</li>
             </ol>
@@ -697,7 +699,7 @@
             <h3>Where an inserted source goes</h3>
             <p>A citation on a line of its own — <code>Genesis 1:1</code>, or <code>(Genesis 1:1).</code> — is <strong>replaced</strong> by the source, titled with the citation as you wrote it and still linked to Sefaria, the same as <a href="#quick-actions">Insert Source from Selection</a>. A citation inside a sentence stays where it is, and the source goes below its paragraph. To keep every citation, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>, or untick <strong>Replace a citation on its own line</strong> in the panel below for one pass.</p>
             <h3>Customize this insertion</h3>
-            <p>Click <span class="ui-label">📰 Customize this insertion</span> under the review table. It has the same controls as the sidebar's <a href="#layout-settings">Layout Settings</a> — Display, Layout, Line #s, Citation, 🔗 Title, Vowels, Cantillation, Translit and B&amp;I — plus <strong>Replace a citation on its own line</strong>. It starts on your saved Preferences; once you change something it says <em>Customized for this pass</em>.</p>
+            <p>Click <span class="ui-label">📰 Customize this insertion</span> under the review table. It has the same controls as the sidebar's <a href="#layout-settings">Layout Settings</a> — Display, Arrangement, Line numbers, Citation, Link the title (for each title), Vowels, Cantillation, Transliteration and Bold &amp; italics — plus <strong>Replace a citation on its own line</strong>. It starts on your saved Preferences; once you change something it says <em>Customized for this pass</em>.</p>
             <ul>
               <li>Your choices apply only to the sources ticked <strong>Insert</strong> in this run. Linking isn't affected.</li>
               <li><span class="ui-label">↺ Revert to defaults</span> puts the panel back to your Preferences.</li>
@@ -733,7 +735,7 @@
               <thead><tr><th>Tab</th><th>What's there</th></tr></thead>
               <tbody>
                 <tr><td><span class="ui-label">Fonts</span></td><td><strong>Title</strong> (plain and linked; paragraph style, e.g. Heading 2), <strong>Hebrew</strong>, <strong>Transliteration</strong> (and its scheme), <strong>Translation</strong> (and preferred language). Each has font, size, bold/italic/underline, text colour and highlight, with a preview. <strong>✒️ Source Emphasis</strong> controls Sefaria's own bold and italics: <strong>Keep</strong>, <strong>Discard</strong> or <strong>Keep only</strong> (insert just the emphasized words), and how kept emphasis looks.</td></tr>
-                <tr><td><span class="ui-label">Insertion</span></td><td>Default <strong>Display &amp; Layout</strong>; <strong>Insertion Defaults</strong> for Texts, Voices and Lexicon (the same switches as the sidebar's Insertion Format); <strong>Transliteration Mapping</strong> for adjusting individual letters; <strong>Divine Name Mappings</strong>; and <strong>Insert from Selection</strong> (whether a selected or own-line citation is replaced by the source — used by Insert from Selection and Link Texts).</td></tr>
+                <tr><td><span class="ui-label">Insertion</span></td><td>Default <strong>Layout</strong>; <strong>Insertion Defaults</strong> for Texts, Voices and Lexicon (the same switches as the sidebar's Insertion Format); <strong>Transliteration Mapping</strong> for adjusting individual letters; <strong>Divine Name Mappings</strong>; and <strong>Insert from Selection</strong> (whether a selected or own-line citation is replaced by the source — used by Insert from Selection and Link Texts).</td></tr>
                 <tr><td><span class="ui-label">Linking</span></td><td>How <a href="#link-texts">Link Texts with Sefaria</a> reviews what it finds, and how much of your document it sends.</td></tr>
                 <tr><td><span class="ui-label">Menu Bar</span></td><td>Rearrange the add-on's menu. See <a href="#menu">The menu</a>.</td></tr>
                 <tr><td><span class="ui-label">🧪 Experimental</span></td><td>Optional features still in progress, such as Surprise Me. Off by default.</td></tr>

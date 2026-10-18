@@ -243,8 +243,8 @@ The customizable menu already has this limitation; Simple mode inherits it.
 | Texts / Voices / Lexicon tab bar | Hidden; sidebar opens in Texts | Shown |
 | Sort (`#search-sort-mode`), Restore corpus menu | Hidden | Shown |
 | **Layout** button and tray | Under "More options" | Shown |
-| Footer: Session Library, Quick Actions panel | Under "More options" | Shown |
-| Footer: Preferences, Help, Feedback | Shown | Shown |
+| Footer: Session Library, Quick Actions panel, Preferences (the whole icon row) | Under "More options" | Shown |
+| Footer: Help, Feedback | Shown | Shown |
 | Experimental (🧪) | Hidden | As today (off unless enabled) |
 
 "More options" is one disclosure button above the footer. Opening it shows the

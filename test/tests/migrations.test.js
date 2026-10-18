@@ -487,3 +487,45 @@ test('an upgrade from v20 never writes hebrew_mark_fallback', () => {
   assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
   assert.equal(userProperties.getProperty('hebrew_mark_fallback'), null);
 });
+
+// v23 sets the source (Hebrew) title apart from the translation title. Each
+// new key starts as the setting that governed both titles until now.
+test('v23 copies the title link switch and title styles to the source title', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '22',
+    insert_sefaria_link_default: 'false',
+    source_title_font: 'Lora',
+    source_title_font_size: '14',
+    source_title_font_style: 'bold',
+    sefaria_link_font_color: '#336699',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'false');
+  assert.equal(userProperties.getProperty('hebrew_title_font'), 'Lora');
+  assert.equal(userProperties.getProperty('hebrew_title_font_size'), '14');
+  assert.equal(userProperties.getProperty('hebrew_title_font_style'), 'bold');
+  assert.equal(userProperties.getProperty('hebrew_link_font_color'), '#336699');
+  // Nothing stored to copy: the default.
+  assert.equal(userProperties.getProperty('hebrew_link_font_style'), 'underline');
+  assert.equal(userProperties.getProperty('hebrew_title_font'), 'Lora');
+  assert.equal(userProperties.getProperty('hebrew_link_font'), '');
+});
+
+test('v23 never overwrites a stored source title setting', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '22',
+    insert_sefaria_link_default: 'true',
+    insert_hebrew_sefaria_link_default: 'false',
+    hebrew_title_font: 'David Libre',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'false');
+  assert.equal(userProperties.getProperty('hebrew_title_font'), 'David Libre');
+});
+
+test('an upgrader who linked titles keeps both linked', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '22', insert_sefaria_link_default: 'true' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'true');
+});

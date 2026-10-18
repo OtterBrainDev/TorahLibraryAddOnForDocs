@@ -41,7 +41,7 @@ document.
 
 **Insertion tab**
 
-- **Default Display & Layout:** what the Layout tray starts on. Same pickers
+- **Default Layout:** what the Layout tray starts on. Same pickers
   and names as the tray, shown open.
 - **Divine Name Mappings:** a master switch plus a rule each for יהוה, יה,
   אלוהים and English *God*. The default is יהוה → יי. יה is matched only as a

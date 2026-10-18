@@ -79,3 +79,9 @@ test('the Interface and advanced switches are not preferences, so Save never sen
   assert.ok(!/type="radio"/.test(readAppScriptFile('preferences/js.html').match(/function collectPreferenceObject\(\)[\s\S]*?\n    }/)[0]),
     'collectPreferenceObject must not start collecting radio inputs');
 });
+
+test('collapsed Simple mode hides the Preferences gear with its whole row, and "More options" brings it back', () => {
+  assert.match(SIMPLE_CSS, /\[data-ui-mode="simple"\]:not\(\.is-more-open\) \.sidebar-footer \.standard-quick-actions \{\s*display: none !important;/);
+  const row = SIDEBAR.match(/<section class="sidebar-footer-tools footer-tool-row standard-quick-actions"[\s\S]*?<\/section>/);
+  assert.ok(row && row[0].includes('open-preferences-tool'), 'the gear lives in the row Simple mode hides');
+});

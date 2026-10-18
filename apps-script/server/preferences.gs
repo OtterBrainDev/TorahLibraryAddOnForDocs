@@ -88,6 +88,17 @@ const SETTINGS = [
   "sefaria_link_font",
   "sefaria_link_font_size",
   "sefaria_link_font_style",
+  "insert_hebrew_sefaria_link_default",
+  "hebrew_title_font",
+  "hebrew_title_font_size",
+  "hebrew_title_font_style",
+  "hebrew_title_font_color",
+  "hebrew_title_font_background",
+  "hebrew_link_font",
+  "hebrew_link_font_size",
+  "hebrew_link_font_style",
+  "hebrew_link_font_color",
+  "hebrew_link_font_background",
   "search_mode",
   "menu_layout",
   "insert_from_selection_replace"
@@ -237,6 +248,22 @@ function getDefaultPreferences() {
     sefaria_link_font: "",
     sefaria_link_font_size: "",
     sefaria_link_font_style: "underline",
+    // The source (Hebrew) title has its own link switch and its own fonts, so
+    // it can be set apart from the translation title. The keys above
+    // (insert_sefaria_link_default, source_title_*, sefaria_link_*) are the
+    // translation title's; schema v23 copies them here for upgraders, so
+    // nothing changes until the user sets the two apart.
+    insert_hebrew_sefaria_link_default: true,
+    hebrew_title_font: "",
+    hebrew_title_font_size: "",
+    hebrew_title_font_style: "normal",
+    hebrew_title_font_color: "",
+    hebrew_title_font_background: "",
+    hebrew_link_font: "",
+    hebrew_link_font_size: "",
+    hebrew_link_font_style: "underline",
+    hebrew_link_font_color: "",
+    hebrew_link_font_background: "",
     search_mode: "texts",
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
     // server/menu-layout.gs for the shape. Replaced `insert_from_selection_at_top`
@@ -454,8 +481,10 @@ function normalizeTitleHeading_(value) {
   return TITLE_HEADINGS_.indexOf(v) >= 0 ? v : "normal";
 }
 
+var TITLE_ROLES_ = ["sourceTitle", "sefariaLink", "hebrewTitle", "hebrewLink"];
+
 function isTitleRole_(roleName) {
-  return roleName === "sourceTitle" || roleName === "sefariaLink";
+  return TITLE_ROLES_.indexOf(roleName) >= 0;
 }
 
 /**
@@ -507,7 +536,9 @@ function getTypographySettings(properties) {
     translation:     readTypographyRole_(userProperties, "translation", "", null, "normal"),
     transliteration: readTypographyRole_(userProperties, "transliteration", "", null, "italic"),
     sourceTitle:     readTypographyRole_(userProperties, "source_title", "", null, "normal"),
-    sefariaLink:     readTypographyRole_(userProperties, "sefaria_link", "", null, "underline")
+    sefariaLink:     readTypographyRole_(userProperties, "sefaria_link", "", null, "underline"),
+    hebrewTitle:     readTypographyRole_(userProperties, "hebrew_title", "", null, "normal"),
+    hebrewLink:      readTypographyRole_(userProperties, "hebrew_link", "", null, "underline")
   };
   const titleHeading = normalizeTitleHeading_(userProperties.getProperty("source_title_heading"));
 

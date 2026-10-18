@@ -18,6 +18,14 @@
   display: none !important;
 }
 
+/* The Preferences gear too, and with it the whole quick-actions row (Session
+   Library and Quick Actions are already hidden above), so the collapsed
+   footer is just Add Source and "More options". Preferences stays one click
+   away under "More options", and in the menu. */
+.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) .sidebar-footer .standard-quick-actions {
+  display: none !important;
+}
+
 /* The Texts / Voices / Lexicon tabs. Shown when the sidebar was opened in
    Voices or Lexicon (a menu item the user switched back on), so they can get
    back to Texts. */
@@ -25,15 +33,9 @@
   display: none !important;
 }
 
-/* Add Source takes the whole row once Layout is hidden beside it, and the
-   Preferences gear its row once Session Library and Quick Actions are. */
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) .sidebar-footer .primary-actions,
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) .sidebar-footer .standard-quick-actions {
+/* Add Source takes the whole row once Layout is hidden beside it. */
+.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) .sidebar-footer .primary-actions {
   grid-template-columns: minmax(0, 1fr);
-}
-/* Its hidden neighbours still count for the divider rule in footer.css. */
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) .sidebar-footer .open-preferences-tool {
-  border-left: none;
 }
 
 .more-options-toggle {

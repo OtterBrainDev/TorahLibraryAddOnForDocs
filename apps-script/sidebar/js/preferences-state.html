@@ -134,6 +134,9 @@ function mergePreferenceDefaults(preferences) {
   $('.wants-translation-punctuation').prop('checked', String(preferences.translation_punctuation) !== "false");
   $('.include-transliteration').prop('checked', String(preferences.include_transliteration_default) === "true");
   $('.insert-sefaria-link').prop('checked', String(preferences.insert_sefaria_link_default) !== "false");
+  // The source title follows the translation title until it is set apart.
+  var hebrewLink = preferences.insert_hebrew_sefaria_link_default;
+  $('.insert-hebrew-sefaria-link').prop('checked', String(hebrewLink == null ? preferences.insert_sefaria_link_default : hebrewLink) !== "false");
   $('.wants-pesukim').prop('checked', String(preferences.show_line_markers_default) !== "false");
   $('.source-emphasis-mode').val(ccNormalizeEmphasisMode(preferences.source_emphasis_mode));
   $('.output-mode-selection').val(preferences.output_mode_default || 'both');

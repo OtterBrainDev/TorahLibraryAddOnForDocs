@@ -10,7 +10,11 @@
       ipa_tiberian: "wəsamtem ʔet dəvaʁaj ʔele ʕal ləvavχem"
     };
 
-    const FONT_SIZE_FIELDS = ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size'];
+    const FONT_SIZE_FIELDS = ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size','hebrew_title_font_size','hebrew_link_font_size'];
+    // The four title styles (Fonts → Title): the translation title's plain and
+    // linked, and the source (Hebrew) title's. Each has prefix_font, _font_size,
+    // _font_style, _font_color, _font_background and a prefix_preview.
+    const TITLE_FONT_PREFIXES = ['source_title', 'sefaria_link', 'hebrew_title', 'hebrew_link'];
 
     const overrideChars = ["א","ב","ג","ד","ה","ו","ז","ח","ט","י","כ","ך","ל","מ","ם","נ","ן","ס","ע","פ","ף","צ","ץ","ק","ר","ש","ת"];
     const customReplacementFields = [
@@ -120,6 +124,24 @@
       applyPreviewStyles(previewId, styleId);
     }
 
+    function updateTitlePreview(prefix) {
+      updateStandardPreview(prefix + '_font', prefix + '_preview', prefix + '_font_style');
+    }
+
+    // Fonts → Title shows one title's settings at a time: the translation
+    // title's or the source (Hebrew) title's.
+    function showTitleLanguage(language) {
+      document.querySelectorAll('[data-title-language]').forEach(function (tab) {
+        var selected = tab.getAttribute('data-title-language') === language;
+        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+        tab.classList.toggle('is-active', selected);
+        tab.tabIndex = selected ? 0 : -1;
+      });
+      document.querySelectorAll('[data-title-language-panel]').forEach(function (panel) {
+        panel.hidden = panel.getAttribute('data-title-language-panel') !== language;
+      });
+    }
+
     function updateTransliterationPreview() {
       const scheme = byId('transliteration_scheme');
       const preview = byId('transliteration_preview');
@@ -201,15 +223,14 @@
       }
     }
 
-    // Preferences adapter for the shared Display & Layout pickers
+    // Preferences adapter for the shared Layout pickers
     // (shared/insertion-options). The values live in the hidden
     // #output_mode_default / #bilingual_layout_default inputs, saved with the
-    // rest of the form. Expanded, and nothing hidden: on this page each setting
-    // is a default, still used by an insert that picks another display.
+    // rest of the form. Nothing hidden: on this page each setting is a
+    // default, still used by an insert that picks another display.
     function _initPreferencesInsertionOptions() {
       initInsertionOptions({
         root: '#pref-tab-insertion',
-        expanded: true,
         hideInapplicable: false,
         getState: function () {
           return {
@@ -238,6 +259,7 @@
           var transliterationOn = translitCheck ? translitCheck.checked : false;
           var scheme = byId('transliteration_scheme') ? byId('transliteration_scheme').value : 'simple_english';
           var linkCheck = byId('insert_sefaria_link_default');
+          var hebrewLinkCheck = byId('insert_hebrew_sefaria_link_default');
           var linesCheck = byId('show_line_markers_default');
           var detailsCheck = byId('include_translation_source_info');
           var emphasisInput = byId('source_emphasis_mode');
@@ -251,29 +273,30 @@
             transliterationOn: transliterationOn,
             scheme: transliterationOn ? (scheme || 'simple_english') : 'none',
             linkOn: linkCheck ? linkCheck.checked : false,
+            hebrewLinkOn: hebrewLinkCheck ? hebrewLinkCheck.checked : false,
             linesOn: linesCheck ? linesCheck.checked : false,
             detailsOn: detailsCheck ? detailsCheck.checked : false,
             emphasisMode: ccNormalizeEmphasisMode(emphasisInput ? emphasisInput.value : ''),
-            fonts: {
-              hebrew: { font: (byId('hebrew_font') || {}).value, size: (byId('hebrew_font_size') || {}).value },
-              translation: { font: (byId('translation_font') || {}).value, size: (byId('translation_font_size') || {}).value }
-            }
+            fonts: ccFontStateFrom(function (id) { return (byId(id) || {}).value; })
           };
         },
-        // The font buttons edit the Fonts tab's own fields, so the two always
-        // agree and Save stores them like any other change.
-        onFontChange: function (role, field, value) {
-          var el = byId(role + (field === 'size' ? '_font_size' : '_font'));
+        // The font buttons (text and title fonts) edit the Fonts tab's own
+        // fields, so the two always agree and Save stores them like any other
+        // change. `prefix` names the field: hebrew_font, source_title_font…
+        onFontChange: function (prefix, field, value) {
+          var el = byId(prefix + (field === 'size' ? '_font_size' : '_font'));
           if (!el) return;
           if (field === 'font') fillFontSelect(el, value);
           else el.value = value;
           syncCustomSelect(el);
           el.dispatchEvent(new Event('change', { bubbles: true }));
         },
-        onMoreFontSettings: function () {
+        onMoreFontSettings: function (role) {
           var tab = byId('pref-tab-fonts-btn');
           if (tab) tab.click();
-          var section = byId('hebrew-text-settings');
+          var isTitle = role === 'hebrewTitle' || role === 'translationTitle';
+          if (isTitle) showTitleLanguage(role === 'hebrewTitle' ? 'source' : 'translation');
+          var section = byId(isTitle ? 'title-typography' : 'hebrew-text-settings');
           if (section) {
             section.open = true;
             section.scrollIntoView({ block: 'start' });
@@ -292,8 +315,8 @@
           } else if (key === 'translit') {
             var check = byId('include_transliteration_default');
             if (check) check.checked = !check.checked;
-          } else if (key === 'link') {
-            var linkBox = byId('insert_sefaria_link_default');
+          } else if (key === 'link' || key === 'hebrewLink') {
+            var linkBox = byId(key === 'link' ? 'insert_sefaria_link_default' : 'insert_hebrew_sefaria_link_default');
             if (linkBox) linkBox.checked = !linkBox.checked;
           } else if (key === 'lines') {
             var linesBox = byId('show_line_markers_default');
@@ -305,6 +328,9 @@
             var emphasisBox = byId('source_emphasis_mode');
             setPrefButtonGroup('source_emphasis_mode', ccNextEmphasisMode(emphasisBox ? emphasisBox.value : ''));
           }
+        },
+        onEmphasisSelect: function (mode) {
+          setPrefButtonGroup('source_emphasis_mode', ccNormalizeEmphasisMode(mode));
         },
         onSchemeSelect: function (value) {
           _prefSetCompositionTransliteration(value);
@@ -692,7 +718,7 @@
               }
               setSegmentedValue('cantillation', inferCantillationValue(preferences));
 
-              ['hebrew_font','translation_font','transliteration_font','source_title_font','sefaria_link_font','source_title_heading','transliteration_scheme','preferred_translation_language']
+              ['hebrew_font','translation_font','transliteration_font','source_title_font','sefaria_link_font','hebrew_title_font','hebrew_link_font','source_title_heading','transliteration_scheme','preferred_translation_language']
                 .forEach(function(id) {
                   const el = byId(id);
                   if (!el) return;
@@ -704,7 +730,7 @@
 
               FONT_SIZE_FIELDS.forEach(normalizeFontSizeField);
 
-              ['hebrew_font_style','translation_font_style','transliteration_font_style','source_title_font_style','sefaria_link_font_style','emphasis_bold_style','emphasis_italic_style'].forEach(function(id) {
+              ['hebrew_font_style','translation_font_style','transliteration_font_style','source_title_font_style','sefaria_link_font_style','hebrew_title_font_style','hebrew_link_font_style','emphasis_bold_style','emphasis_italic_style'].forEach(function(id) {
                 const input = byId(id);
                 if (input && !input.value) input.value = 'normal';
                 applyStyleControlState(id);
@@ -712,8 +738,7 @@
 
               updateStandardPreview('hebrew_font', 'hebrew_font_preview', 'hebrew_font_style');
               updateStandardPreview('translation_font', 'translation_font_preview', 'translation_font_style');
-              updateStandardPreview('source_title_font', 'source_title_preview', 'source_title_font_style');
-              updateStandardPreview('sefaria_link_font', 'sefaria_link_preview', 'sefaria_link_font_style');
+              TITLE_FONT_PREFIXES.forEach(updateTitlePreview);
               updateTransliterationPreview();
               updateCompositionCard();
               updateInsertionOptions();
@@ -783,8 +808,12 @@
     bindStyleControl('hebrew_font_style', 'hebrew_font_preview');
     bindStyleControl('translation_font_style', 'translation_font_preview');
     bindStyleControl('transliteration_font_style', 'transliteration_preview');
-    bindStyleControl('source_title_font_style', 'source_title_preview');
-    bindStyleControl('sefaria_link_font_style', 'sefaria_link_preview');
+    TITLE_FONT_PREFIXES.forEach(function (prefix) {
+      bindStyleControl(prefix + '_font_style', prefix + '_preview');
+    });
+    document.querySelectorAll('[data-title-language]').forEach(function (tab) {
+      tab.addEventListener('click', function () { showTitleLanguage(tab.getAttribute('data-title-language')); });
+    });
     // Emphasis mapping has no live preview element; bindStyleControl tolerates
     // a missing previewId and just keeps the button state in sync.
     bindStyleControl('emphasis_bold_style', null);
@@ -800,6 +829,8 @@
       'select#transliteration_font',
       'select#source_title_font',
       'select#sefaria_link_font',
+      'select#hebrew_title_font',
+      'select#hebrew_link_font',
       'select#source_title_heading',
       'select#transliteration_scheme',
       'select#preferred_translation_language',
@@ -813,9 +844,10 @@
       var previewMap = {
         hebrew_font: ['hebrew_font_preview', 'hebrew_font_style'],
         translation_font: ['translation_font_preview', 'translation_font_style'],
-        source_title_font: ['source_title_preview', 'source_title_font_style'],
-        sefaria_link_font: ['sefaria_link_preview', 'sefaria_link_font_style']
       };
+      TITLE_FONT_PREFIXES.forEach(function (prefix) {
+        previewMap[prefix + '_font'] = [prefix + '_preview', prefix + '_font_style'];
+      });
       Object.keys(previewMap).forEach(function(id) {
         const el = byId(id);
         if (!el) return;
@@ -831,6 +863,7 @@
     byId('transliteration_scheme').addEventListener('change', function(){ syncCustomSelect(byId('transliteration_scheme')); updateTransliterationPreview(); updateCompositionCard(); });
     if (byId('include_transliteration_default')) byId('include_transliteration_default').addEventListener('change', function(){ updateCompositionCard(); });
     if (byId('insert_sefaria_link_default')) byId('insert_sefaria_link_default').addEventListener('change', function(){ updateCompositionCard(); });
+    if (byId('insert_hebrew_sefaria_link_default')) byId('insert_hebrew_sefaria_link_default').addEventListener('change', function(){ updateCompositionCard(); });
     if (byId('show_line_markers_default')) byId('show_line_markers_default').addEventListener('change', function(){ updateCompositionCard(); });
     if (byId('include_translation_source_info')) byId('include_translation_source_info').addEventListener('change', function(){ updateCompositionCard(); });
     // insert_citation_default removed — citation feature was dropped.
@@ -840,9 +873,9 @@
       if (!el) return;
       function updateForField() {
         normalizeFontSizeField(id);
+        var titlePrefix = TITLE_FONT_PREFIXES.filter(function (prefix) { return id === prefix + '_font_size'; })[0];
         if (id.indexOf('transliteration_') === 0) updateTransliterationPreview();
-        else if (id.indexOf('source_title_') === 0) updateStandardPreview('source_title_font', 'source_title_preview', 'source_title_font_style');
-        else if (id.indexOf('sefaria_link_') === 0) updateStandardPreview('sefaria_link_font', 'sefaria_link_preview', 'sefaria_link_font_style');
+        else if (titlePrefix) updateTitlePreview(titlePrefix);
         else if (id.indexOf('translation_') === 0) updateStandardPreview('translation_font', 'translation_font_preview', 'translation_font_style');
         else updateStandardPreview('hebrew_font', 'hebrew_font_preview', 'hebrew_font_style');
         updateCompositionCard();

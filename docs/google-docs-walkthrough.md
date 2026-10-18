@@ -204,7 +204,7 @@ are saved defaults and follow your Google account into every document.
 | Tab | Contents |
 | --- | --- |
 | **Fonts** | Title (plain and linked; paragraph style), Hebrew, Transliteration (scheme), Translation (preferred language) — each with font, size, style, colour, highlight and preview — and ✒️ Source Emphasis. |
-| **Insertion** | Default Display & Layout (the sidebar's pickers, shown open); Insertion Defaults for Texts, Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). |
+| **Insertion** | Default Layout (the sidebar's pickers); Insertion Defaults for Texts, Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). |
 | **Linking** | After linking; Insert text after linking; Document scanning. |
 | **Menu Bar** | Reorder, group, hide and divide menu items. |
 | **🧪 Experimental** | Optional in-progress features such as Surprise Me. |

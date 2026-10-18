@@ -451,6 +451,7 @@
       <input type="hidden" class="source-emphasis-mode" value="keep">
       <input type="checkbox" class="include-transliteration ui-hidden-checkbox" aria-hidden="true">
       <input type="checkbox" class="insert-sefaria-link ui-hidden-checkbox" aria-hidden="true" checked>
+      <input type="checkbox" class="insert-hebrew-sefaria-link ui-hidden-checkbox" aria-hidden="true" checked>
     
 <div class="modal-backdrop session-library-modal-backdrop" id="session-library-modal" hidden>
         <div class="modal-card session-library-modal-card" role="dialog" aria-modal="true" aria-labelledby="session-library-modal-title">
@@ -551,16 +552,16 @@
           </div>
           <div class="tray-body">
 
-            <!-- Display & Layout controls (actual sidebar controls, not simplified) -->
+            <!-- Layout controls (actual sidebar controls, not simplified) -->
             <div class="tray-section tray-display-layout-section text-mode-only">
-              <div class="tray-section-label">Display &amp; Layout</div>
+              <div class="tray-section-label">Layout</div>
               <?!= include('shared/insertion-options/markup') ?>
             </div>
 
             <!-- Insertion Format (composition card) -->
             <div class="tray-section tray-insertion-format-section text-mode-only">
               <div class="tray-section-label">Insertion Format</div>
-              <div class="cc-card cc-card--stacked" id="composition-card-container" data-cc-features="linkedTitle,fonts" aria-label="Composition for this insertion">
+              <div class="cc-card" id="composition-card-container" data-cc-features="linkedTitle,fonts,titleFonts" aria-label="Composition for this insertion">
                 <?!= include('shared/composition-card/markup') ?>
               </div>
             </div>

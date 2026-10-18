@@ -16,20 +16,19 @@ function _sidebarCompositionGetState() {
     transliterationOn: transliterationOn,
     scheme: scheme,
     linkOn: $('.insert-sefaria-link').is(':checked'),
+    hebrewLinkOn: $('.insert-hebrew-sefaria-link').is(':checked'),
     linesOn: $('.wants-pesukim').is(':checked'),
     detailsOn: $('.include-translation-source-info').is(':checked'),
     emphasisMode: ccNormalizeEmphasisMode($('.source-emphasis-mode').val()),
-    fonts: {
-      hebrew: { font: effectivePreferences.hebrew_font, size: effectivePreferences.hebrew_font_size },
-      translation: { font: effectivePreferences.translation_font, size: effectivePreferences.translation_font_size }
-    }
+    fonts: ccFontStateFrom(function (key) { return effectivePreferences[key]; })
   };
 }
 
-// The font buttons: like the pills, a session override in the Texts tab
-// (insertReference reads the session's fonts), saved to the account elsewhere.
-function _sidebarCompositionOnFontChange(role, field, value) {
-  var key = role + (field === 'size' ? '_font_size' : '_font');
+// The font buttons (text and title fonts): like the switches, a session
+// override in the Texts tab (insertReference reads the session's fonts), saved
+// to the account elsewhere. `prefix` is the preference's (hebrew, source_title…).
+function _sidebarCompositionOnFontChange(prefix, field, value) {
+  var key = prefix + (field === 'size' ? '_font_size' : '_font');
   var payload = {};
   payload[key] = value;
   // Shown at once; the save's answer confirms it.
@@ -93,6 +92,14 @@ function _sidebarCompositionOnToggle(key) {
     }, function () {
       updateCompositionCard();
     });
+  } else if (key === 'hebrewLink') {
+    var $el = $('.insert-hebrew-sefaria-link');
+    $el.prop('checked', !$el.is(':checked'));
+    saveSidebarPreference({
+      insert_hebrew_sefaria_link_default: $el.is(':checked')
+    }, function () {
+      updateCompositionCard();
+    });
   } else if (key === 'lines') {
     var $el = $('.wants-pesukim');
     $el.prop('checked', !$el.is(':checked'));
@@ -106,12 +113,17 @@ function _sidebarCompositionOnToggle(key) {
       include_translation_source_info: $el.is(':checked')
     });
   } else if (key === 'emphasis') {
-    var nextMode = ccNextEmphasisMode($('.source-emphasis-mode').val());
-    $('.source-emphasis-mode').val(nextMode);
-    saveSidebarPreference({
-      source_emphasis_mode: nextMode
-    });
+    _sidebarCompositionOnEmphasisSelect(ccNextEmphasisMode($('.source-emphasis-mode').val()));
+    return;
   }
+  if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
+}
+
+function _sidebarCompositionOnEmphasisSelect(mode) {
+  $('.source-emphasis-mode').val(ccNormalizeEmphasisMode(mode));
+  saveSidebarPreference({
+    source_emphasis_mode: $('.source-emphasis-mode').val()
+  });
   if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
 }
 
@@ -152,6 +164,7 @@ function bindSidebarCompositionCard() {
     getState: _sidebarCompositionGetState,
     onToggle: _sidebarCompositionOnToggle,
     onSchemeSelect: _sidebarCompositionOnSchemeSelect,
+    onEmphasisSelect: _sidebarCompositionOnEmphasisSelect,
     onFontChange: _sidebarCompositionOnFontChange,
     onMoreFontSettings: function () { google.script.run.preferencesPopup(); }
   });

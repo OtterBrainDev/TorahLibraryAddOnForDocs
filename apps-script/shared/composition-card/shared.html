@@ -6,21 +6,31 @@
 // Usage:
 //   initCompositionCard({
 //     containerId: 'composition-card-container',
-//     getState:       function() { return { vowelsOn, cantillationOn, hebrewPunctuationOn, transliterationOn, scheme, translationPunctuationOn, linkOn, linesOn, detailsOn, emphasisMode }; },
-//                     (hebrewPunctuationOn / translationPunctuationOn: undefined reads as on)
-//     onToggle:       function(key) { /* flip underlying state for key */ },
+//     getState:       function() { return { vowelsOn, cantillationOn, hebrewPunctuationOn, transliterationOn, scheme, translationPunctuationOn, linkOn, hebrewLinkOn, linesOn, detailsOn, emphasisMode }; },
+//                     (hebrewPunctuationOn / translationPunctuationOn: undefined reads as on;
+//                      linkOn is the translation title's link, hebrewLinkOn the source title's)
+//     onToggle:       function(key) { /* flip underlying state for key: vowels, cantillation,
+//                     hebrewPunctuation, translationPunctuation, translit, link, hebrewLink,
+//                     lines, details, emphasis (next mode) */ },
+//     onEmphasisSelect: function(mode) { /* optional: set the B&I mode; without it the
+//                     card steps onToggle('emphasis') to the mode */ },
 //     onSchemeSelect: function(value) { /* set transliteration scheme */ },
 //     afterUpdate:    function(state) { /* optional host-specific post-update hook */ },
 //     getTranslitLabel: function(on, scheme) { /* optional custom label for translit button */ },
 //
 //     // Fonts (the "fonts" feature in data-cc-features). getState() also returns
-//     //   fonts: { hebrew: {font, size}, translation: {font, size} }
-//     // with font "" / size "" meaning "match the document". The preview is
+//     //   fonts: ccFontStateFrom(read)  (one {font, size} per preference prefix
+//     //   in CC_FONT_PREFIXES: hebrew, translation and the four title roles)
+//     // with font "" / size "" meaning "match the document". The title font
+//     // buttons ("titleFonts") edit the title as it will be inserted: the
+//     // linked title's fonts while its link is on, else the plain title's. The preview is
 //     // drawn in those fonts, with the marks a font lacks borrowed from Noto as
 //     // the insert always does. The borrowing is a design decision noted in
 //     // Help, not a setting, and not something the card talks about.
-//     onFontChange:   function(role, field, value) { /* role 'hebrew'|'translation', field 'font'|'size' */ },
-//     onMoreFontSettings:  function() { /* optional: shows "Colour, style and more…" */ }
+//     onFontChange:   function(prefix, field, value) { /* prefix: one of CC_FONT_PREFIXES, so the
+//                     preference is prefix + '_font' / prefix + '_font_size'; field 'font'|'size' */ },
+//     onMoreFontSettings:  function(role) { /* optional: shows "Colour, style and more…";
+//                     role 'hebrew'|'translation'|'hebrewTitle'|'translationTitle' */ }
 //   });
 //
 // The Source and Translation sections are <details>, closed so the card stays
@@ -41,15 +51,10 @@ var CC_TRANSLIT_LABELS = {
 
 // The translation's bold and italics (the `source_emphasis_mode` preference;
 // the Hebrew always keeps its own, sourceEmphasisModeForRole_ in
-// server/insertion.gs). The B&I pill cycles through them in this order.
+// server/insertion.gs). "Next" steps through them in this order.
 // Mirrors normalizeSourceEmphasisMode_ in server/preferences.gs, including the
 // legacy boolean values of `preserve_source_emphasis`.
 var CC_EMPHASIS_MODES = ['keep', 'discard', 'only'];
-var CC_EMPHASIS_TITLES = {
-  keep: 'Keep the translation\u2019s bold and italics',
-  discard: 'Discard the translation\u2019s bold and italics',
-  only: 'Keep ONLY the words the translation puts in bold or italics'
-};
 var CC_EMPHASIS_SUMMARY = { keep: 'B&I kept', discard: 'B&I dropped', only: 'B&I words only' };
 
 function ccNormalizeEmphasisMode(value) {
@@ -85,14 +90,49 @@ function ccApplyPunctuationPreview($elements, on) {
   });
 }
 
-function ccSetPunctuationPill($pill, on) {
-  $pill
-    .text(on ? 'Punctuation: On' : 'Punctuation: Off')
-    .toggleClass('is-off', !on)
-    .attr('aria-pressed', on ? 'true' : 'false');
+// A switch row (.cc-toggle): its label never changes; the switch shows the state.
+function ccSetToggle($row, on) {
+  $row.toggleClass('is-off', !on).attr('aria-pressed', on ? 'true' : 'false');
+}
+
+// The font preferences the card's font buttons read and write: the Hebrew
+// and translation text, and each title (source = hebrew_*, translation =
+// source_title / sefaria_link), plain and linked.
+var CC_FONT_PREFIXES = ['hebrew', 'translation', 'source_title', 'sefaria_link', 'hebrew_title', 'hebrew_link'];
+
+/** getState().fonts from a reader of stored values: read('hebrew_font') etc. */
+function ccFontStateFrom(read) {
+  var out = {};
+  CC_FONT_PREFIXES.forEach(function (prefix) {
+    out[prefix] = { font: read(prefix + '_font'), size: read(prefix + '_font_size') };
+  });
+  return out;
+}
+
+/** The preference prefix a font button edits, given the card's state. */
+function ccFontPrefixFor(role, state) {
+  if (role === 'hebrewTitle') return state && state.hebrewLinkOn ? 'hebrew_link' : 'hebrew_title';
+  if (role === 'translationTitle') return state && state.linkOn ? 'sefaria_link' : 'source_title';
+  return role;
+}
+
+var CC_FONT_ROLE_TITLES = {
+  hebrew: 'Hebrew font',
+  translation: 'Translation font',
+  hebrewTitle: 'Source title font',
+  translationTitle: 'Translation title font'
+};
+
+function ccFontPanelTitle(role, state) {
+  var title = CC_FONT_ROLE_TITLES[role] || 'Font';
+  var prefix = ccFontPrefixFor(role, state);
+  if (prefix === 'hebrew_link' || prefix === 'sefaria_link') return title + ' (linked)';
+  if (prefix === 'hebrew_title' || prefix === 'source_title') return title + ' (not linked)';
+  return title;
 }
 
 var _ccConfig = null;
+var _ccFeatures = [];
 var _ccFontsEnabled = false;
 // The font at the insertion point, for "Match the document"
 // (getInsertionPointFont). Null until the server answers, or with no server.
@@ -106,6 +146,7 @@ function initCompositionCard(config) {
 
   // Show/hide features based on data-cc-features attribute on the container
   var features = ($container.attr('data-cc-features') || '').split(',').filter(Boolean);
+  _ccFeatures = features;
   $container.find('[data-cc-feature]').each(function () {
     var feature = $(this).attr('data-cc-feature');
     if (features.indexOf(feature) < 0) {
@@ -135,11 +176,12 @@ function ccRefreshDocumentFont() {
 
 function _ccFontState(state) {
   var fonts = (state && state.fonts) || {};
-  function role(name) {
-    var r = fonts[name] || {};
-    return { font: String(r.font || ''), size: r.size == null ? '' : String(r.size) };
-  }
-  return { hebrew: role('hebrew'), translation: role('translation') };
+  var out = {};
+  CC_FONT_PREFIXES.forEach(function (prefix) {
+    var r = fonts[prefix] || {};
+    out[prefix] = { font: String(r.font || ''), size: r.size == null ? '' : String(r.size) };
+  });
+  return out;
 }
 
 /** The font the text will actually be in: the chosen one, else the document's. */
@@ -189,21 +231,28 @@ function _ccUpdateFonts(state) {
 
   if (!_ccFontsEnabled) return;
 
-  $('#cc-hebrew-font-chip .cc-font-chip-name').text(_ccFontChipLabel(fontState.hebrew));
-  $('#cc-translation-font-chip .cc-font-chip-name').text(_ccFontChipLabel(fontState.translation));
+  $('.cc-font-chip').each(function () {
+    var prefix = ccFontPrefixFor($(this).attr('data-font-role'), state);
+    $(this).find('.cc-font-chip-name').text(_ccFontChipLabel(fontState[prefix] || { font: '', size: '' }));
+  });
 
   var note = _ccFontNote(fontState);
   $('#cc-hebrew-font-note').prop('hidden', !note).text(note);
 
-  if (_ccFontPanelRole) _ccSyncFontPanel(fontState);
+  if (_ccFontPanelRole) _ccSyncFontPanel(fontState, state);
 }
 
-function _ccSyncFontPanel(fontState) {
+function _ccIsHebrewFontRole(role) {
+  return role === 'hebrew' || role === 'hebrewTitle';
+}
+
+function _ccSyncFontPanel(fontState, state) {
   var role = _ccFontPanelRole;
-  var roleState = fontState[role];
+  var roleState = fontState[ccFontPrefixFor(role, state)];
+  $('#cc-font-panel-title').text(ccFontPanelTitle(role, state));
   var select = document.getElementById('cc-font-select');
   if (select && typeof populateFontSelect === 'function') {
-    populateFontSelect(select, role === 'hebrew' ? 'hebrew' : 'latin', roleState.font);
+    populateFontSelect(select, _ccIsHebrewFontRole(role) ? 'hebrew' : 'latin', roleState.font);
     // "Match the document" names the font it matches, when known.
     if (_ccDocumentFont && select.options[0]) select.options[0].textContent = 'Match the document (' + _ccDocumentFont + ')';
   }
@@ -221,12 +270,12 @@ function ccOpenFontPanel(role, chip) {
   var $panel = $('#cc-font-panel');
   var $surface = $panel.closest('.cc-surface');
   _ccFontPanelRole = role;
-  $('#cc-font-panel-title').text(role === 'hebrew' ? 'Hebrew font' : 'Translation font');
   $('#cc-font-more').prop('hidden', typeof _ccConfig.onMoreFontSettings !== 'function');
   $('.cc-font-chip').attr('aria-expanded', 'false');
   $(chip).attr('aria-expanded', 'true');
   closeCompositionCardTranslitMenu();
-  _ccSyncFontPanel(_ccFontState(_ccConfig.getState()));
+  var state = _ccConfig.getState();
+  _ccSyncFontPanel(_ccFontState(state), state);
   // Just under the button that opened it.
   var surfaceTop = $surface.length ? $surface[0].getBoundingClientRect().top : 0;
   var chipRect = chip.getBoundingClientRect();
@@ -243,12 +292,13 @@ function ccCloseFontPanel(returnFocus) {
   _ccFontPanelRole = null;
   $('#cc-font-panel').prop('hidden', true);
   $('.cc-font-chip').attr('aria-expanded', 'false');
-  if (returnFocus) $('#cc-' + role + '-font-chip').trigger('focus');
+  if (returnFocus) $('.cc-font-chip[data-font-role="' + role + '"]').trigger('focus');
 }
 
 // One line each for the closed Source and Translation sections.
 function ccSourceSummary(state, punctuationOn, scheme) {
   var marks = [];
+  if (state.hebrewLinkOn && _ccHasFeature('linkedTitle')) marks.push('Linked');
   if (state.vowelsOn) marks.push('Vowels');
   if (state.cantillationOn) marks.push('Cantillation');
   if (punctuationOn) marks.push('Punctuation');
@@ -257,8 +307,16 @@ function ccSourceSummary(state, punctuationOn, scheme) {
   return parts.join(' \u00B7 ');
 }
 
-function ccTranslationSummary(punctuationOn, emphasisMode) {
-  return (punctuationOn ? 'Punctuation' : 'No punctuation') + ' \u00B7 ' + CC_EMPHASIS_SUMMARY[emphasisMode];
+function ccTranslationSummary(punctuationOn, emphasisMode, linkOn) {
+  var parts = [];
+  if (linkOn && _ccHasFeature('linkedTitle')) parts.push('Linked');
+  parts.push(punctuationOn ? 'Punctuation' : 'No punctuation');
+  parts.push(CC_EMPHASIS_SUMMARY[emphasisMode]);
+  return parts.join(' \u00B7 ');
+}
+
+function _ccHasFeature(name) {
+  return _ccFeatures.indexOf(name) >= 0;
 }
 
 function closeCompositionCardTranslitMenu() {
@@ -270,57 +328,36 @@ function updateCompositionCard() {
   if (!_ccConfig) return;
   var state = _ccConfig.getState();
 
-  // Linked title
-  $('#cc-title-toggle')
-    .text(state.linkOn ? '🔗 Title: On' : '🔗 Title: Off')
-    .toggleClass('is-linked is-active', !!state.linkOn)
-    .attr('aria-pressed', state.linkOn ? 'true' : 'false');
+  // Linked titles: the translation title's and the source title's
+  ccSetToggle($('#cc-title-toggle'), !!state.linkOn);
+  ccSetToggle($('#cc-he-title-toggle'), !!state.hebrewLinkOn);
 
-  // Vowels
-  $('#cc-vowels-toggle')
-    .text(state.vowelsOn ? 'Vowels: On' : 'Vowels: Off')
-    .toggleClass('is-off', !state.vowelsOn)
-    .attr('aria-pressed', state.vowelsOn ? 'true' : 'false');
-
-  // Cantillation
-  $('#cc-cantillation-toggle')
-    .text(state.cantillationOn ? 'Cantillation: On' : 'Cantillation: Off')
-    .toggleClass('is-off', !state.cantillationOn)
-    .attr('aria-pressed', state.cantillationOn ? 'true' : 'false');
+  ccSetToggle($('#cc-vowels-toggle'), !!state.vowelsOn);
+  ccSetToggle($('#cc-cantillation-toggle'), !!state.cantillationOn);
 
   // Punctuation (Hebrew and translation, independently). Undefined reads as on.
   var hebrewPunctuationOn = state.hebrewPunctuationOn !== false;
   var translationPunctuationOn = state.translationPunctuationOn !== false;
-  ccSetPunctuationPill($('#cc-hebrew-punct-toggle'), hebrewPunctuationOn);
-  ccSetPunctuationPill($('#cc-translation-punct-toggle'), translationPunctuationOn);
+  ccSetToggle($('#cc-hebrew-punct-toggle'), hebrewPunctuationOn);
+  ccSetToggle($('#cc-translation-punct-toggle'), translationPunctuationOn);
   ccApplyPunctuationPreview($('.cc-hebrew-text'), hebrewPunctuationOn);
   ccApplyPunctuationPreview($('#cc-translation-preview'), translationPunctuationOn);
 
-  // Transliteration pill
-  $('#cc-translit-pill')
-    .text(state.transliterationOn ? 'Translit: On' : 'Translit: Off')
-    .attr('aria-pressed', state.transliterationOn ? 'true' : 'false');
+  // Transliteration: the switch, and the scheme only while it is on
+  ccSetToggle($('#cc-translit-pill'), !!state.transliterationOn);
+  $('#cc-translit-scheme-row').prop('hidden', !state.transliterationOn);
 
-  // Line numbers (beside "Line by line", in shared/insertion-options)
-  $('#cc-lines-toggle')
-    .text(state.linesOn ? 'Line #s: On' : 'Line #s: Off')
-    .attr('aria-pressed', state.linesOn ? 'true' : 'false');
+  // Line numbers and the source citation (in shared/insertion-options)
+  ccSetToggle($('#cc-lines-toggle'), !!state.linesOn);
+  ccSetToggle($('#cc-details-toggle'), !!state.detailsOn);
 
-  // Source citation (same row)
-  $('#cc-details-toggle')
-    .text(state.detailsOn ? 'Citation: On' : 'Citation: Off')
-    .attr('aria-pressed', state.detailsOn ? 'true' : 'false');
-
-  // Translation bold and italics: keep (active) → discard (faded) → only (inverted)
+  // Translation bold and italics: keep / discard / keep only
   var emphasisMode = ccNormalizeEmphasisMode(state.emphasisMode);
   $('#cc-emphasis-toggle')
     .attr('data-mode', emphasisMode)
-    .attr('title', CC_EMPHASIS_TITLES[emphasisMode])
-    .attr('aria-label', 'Translation bold and italics: ' + (emphasisMode === 'only' ? 'keep only' : emphasisMode) + '. Click to change.')
-    .toggleClass('is-off', emphasisMode === 'discard')
-    .toggleClass('is-inverted', emphasisMode === 'only')
-    .find('.cc-emphasis-label').each(function () {
-      $(this).prop('hidden', $(this).attr('data-emphasis-mode') !== emphasisMode);
+    .find('.cc-seg-option').each(function () {
+      var selected = $(this).attr('data-emphasis-mode') === emphasisMode;
+      $(this).toggleClass('is-selected', selected).attr('aria-checked', selected ? 'true' : 'false');
     });
 
   // Hebrew text visibility
@@ -345,7 +382,7 @@ function updateCompositionCard() {
 
   // The collapsed sections' summary lines
   $('#cc-source-state').text(ccSourceSummary(state, hebrewPunctuationOn, scheme));
-  $('#cc-translation-state').text(ccTranslationSummary(translationPunctuationOn, emphasisMode));
+  $('#cc-translation-state').text(ccTranslationSummary(translationPunctuationOn, emphasisMode, !!state.linkOn));
 
   // Scheme menu selection state
   $('.cc-translit-option').each(function () {
@@ -381,6 +418,7 @@ function _bindCompositionCardEvents() {
   }
 
   $('#cc-title-toggle').off('click.cc').on('click.cc', function () { doToggle('link'); });
+  $('#cc-he-title-toggle').off('click.cc').on('click.cc', function () { doToggle('hebrewLink'); });
   $('#cc-vowels-toggle').off('click.cc').on('click.cc', function () { doToggle('vowels'); });
   $('#cc-cantillation-toggle').off('click.cc').on('click.cc', function () { doToggle('cantillation'); });
   $('#cc-hebrew-punct-toggle').off('click.cc').on('click.cc', function () { doToggle('hebrewPunctuation'); });
@@ -388,7 +426,18 @@ function _bindCompositionCardEvents() {
   $('#cc-translit-pill').off('click.cc').on('click.cc', function () { doToggle('translit'); });
   $('#cc-lines-toggle').off('click.cc').on('click.cc', function () { doToggle('lines'); });
   $('#cc-details-toggle').off('click.cc').on('click.cc', function () { doToggle('details'); });
-  $('#cc-emphasis-toggle').off('click.cc').on('click.cc', function () { doToggle('emphasis'); });
+  $('#cc-emphasis-toggle .cc-seg-option').off('click.cc').on('click.cc', function () {
+    var mode = $(this).attr('data-emphasis-mode');
+    if (_ccConfig.onEmphasisSelect) {
+      _ccConfig.onEmphasisSelect(mode);
+    } else {
+      for (var i = 0; i < CC_EMPHASIS_MODES.length; i++) {
+        if (ccNormalizeEmphasisMode(_ccConfig.getState().emphasisMode) === mode) break;
+        _ccConfig.onToggle('emphasis');
+      }
+    }
+    updateCompositionCard();
+  });
 
   $('#cc-translit-toggle').off('click.cc').on('click.cc', function (event) {
     event.preventDefault();
@@ -423,7 +472,7 @@ function _bindCompositionCardEvents() {
     else ccOpenFontPanel(role, this);
   });
   $('#cc-font-select').off('change.cc').on('change.cc', function () {
-    if (_ccFontPanelRole) fontChange(_ccFontPanelRole, 'font', this.value);
+    if (_ccFontPanelRole) fontChange(ccFontPrefixFor(_ccFontPanelRole, _ccConfig.getState()), 'font', this.value);
   });
   $('#cc-font-size').off('change.cc').on('change.cc', function () {
     if (!_ccFontPanelRole) return;
@@ -431,12 +480,13 @@ function _bindCompositionCardEvents() {
     var size = Number(raw);
     var value = raw === '' ? '' : (size > 0 && size <= 400 ? String(size) : null);
     if (value === null) { this.value = ''; value = ''; }
-    fontChange(_ccFontPanelRole, 'size', value);
+    fontChange(ccFontPrefixFor(_ccFontPanelRole, _ccConfig.getState()), 'size', value);
   });
   $('#cc-font-done').off('click.cc').on('click.cc', function () { ccCloseFontPanel(true); });
   $('#cc-font-more').off('click.cc').on('click.cc', function () {
+    var role = _ccFontPanelRole;
     ccCloseFontPanel(false);
-    if (_ccConfig.onMoreFontSettings) _ccConfig.onMoreFontSettings();
+    if (_ccConfig.onMoreFontSettings) _ccConfig.onMoreFontSettings(role);
   });
   $('#cc-font-panel').off('keydown.cc').on('keydown.cc', function (event) {
     if (event.key !== 'Escape') return;

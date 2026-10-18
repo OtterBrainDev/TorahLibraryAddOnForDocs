@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **424 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **434 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -208,6 +208,10 @@ and fix it before touching the feature you came to change.
   values the dialog can produce are stored, switching to Simple and back
   returns the user's own menu, setup is shown once (never to an upgrader), and
   the dialog's preview transforms its sample exactly as an insert would.
+- `title-link-and-fonts.test.js` — the source (Hebrew) title and the
+  translation title each have their own link switch and title styles (plain
+  and linked); a caller that passes only the old `insertSefariaLink` links both
+  alike, as before; schema v23 copies the old values (`migrations.test.js`).
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
   cantillation) are set in Noto Serif / Sans Hebrew at insert, and only those:
   letters and the marks it has stay; "Match the document" judges the

@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '22';
+var PREFS_SCHEMA_CURRENT_ = '23';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -202,6 +202,13 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // the stored value test builds wrote.
   if (from < 22) {
     migrateToV22_(userProperties);
+  }
+  // v22 -> v23: the source (Hebrew) title gets its own link switch and fonts
+  // (`insert_hebrew_sefaria_link_default`, `hebrew_title_*`, `hebrew_link_*`).
+  // Each starts as a copy of the translation title's setting, which until now
+  // applied to both titles, so no upgrader's inserts change.
+  if (from < 23) {
+    migrateToV23_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -537,6 +544,37 @@ function migrateToV21_(userProperties) {
  */
 function migrateToV22_(userProperties) {
   try { userProperties.deleteProperty('hebrew_mark_fallback'); } catch (_e) { /* ignore */ }
+  return true;
+}
+
+/**
+ * V23: the source (Hebrew) title is set apart from the translation title.
+ * Every new key copies the stored value of the key that used to govern both
+ * titles, or takes its default when there is none. A stored value is never
+ * overwritten (a no-schema user was seeded with the defaults, which equal
+ * the translation title's).
+ */
+var V23_TITLE_KEY_COPIES_ = {
+  insert_hebrew_sefaria_link_default: 'insert_sefaria_link_default',
+  hebrew_title_font: 'source_title_font',
+  hebrew_title_font_size: 'source_title_font_size',
+  hebrew_title_font_style: 'source_title_font_style',
+  hebrew_title_font_color: 'source_title_font_color',
+  hebrew_title_font_background: 'source_title_font_background',
+  hebrew_link_font: 'sefaria_link_font',
+  hebrew_link_font_size: 'sefaria_link_font_size',
+  hebrew_link_font_style: 'sefaria_link_font_style',
+  hebrew_link_font_color: 'sefaria_link_font_color',
+  hebrew_link_font_background: 'sefaria_link_font_background'
+};
+
+function migrateToV23_(userProperties) {
+  var defaults = getDefaultPreferences();
+  Object.keys(V23_TITLE_KEY_COPIES_).forEach(function(key) {
+    if (userProperties.getProperty(key) != null) return;
+    var from = userProperties.getProperty(V23_TITLE_KEY_COPIES_[key]);
+    userProperties.setProperty(key, from != null ? from : String(defaults[key]));
+  });
   return true;
 }
 

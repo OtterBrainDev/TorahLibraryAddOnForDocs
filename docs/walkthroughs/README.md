@@ -16,7 +16,7 @@ should happen.
 
 The version under demo is **2.1.0, preference schema 14** (`docs/VERSION.json`),
 plus the unreleased changes in `docs/CHANGELOG.md` (search, Link Texts' Insert
-and *Customize this insertion*, the shared Display & Layout pickers).
+and *Customize this insertion*, the shared Layout pickers).
 *Help & Support → About* should read **Current line: 2.1**.
 
 ## Before any live session

@@ -33,12 +33,14 @@
     "function updateCompositionCard",
     "function ccNormalizeEmphasisMode",
     "function ccNextEmphasisMode",
-    "#cc-emphasis-toggle"
+    "function ccFontStateFrom",
+    "function ccFontPrefixFor",
+    "#cc-emphasis-toggle",
+    "#cc-he-title-toggle"
   ],
   "apps-script/shared/insertion-options/js.html": [
     "function initInsertionOptions",
-    "function updateInsertionOptions",
-    "function closeInsertionOptionsMenus"
+    "function updateInsertionOptions"
   ],
   "apps-script/sidebar/js/display-controls.html": [
     "initInsertionOptions(",
@@ -48,7 +50,7 @@
   "apps-script/preferences/js.html": [
     "function _initPreferencesInsertionOptions",
     "initInsertionOptions(",
-    "expanded: true"
+    "hideInapplicable: false"
   ],
   "apps-script/sidebar/js/bootstrap.html": [
     "function initializeSidebar",

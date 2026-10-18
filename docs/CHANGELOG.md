@@ -18,6 +18,63 @@ heading until the next release consolidates it.
 > 22 retires it before release and deletes any stored value (test builds
 > only), so a `false` saved there no longer turns the borrowing off.
 
+> **Preference migration (schema 23). Eleven new preferences, none of which
+> changes an existing user's inserts.** The source (Hebrew) title now has its
+> own link switch (`insert_hebrew_sefaria_link_default`) and its own title
+> styles (`hebrew_title_*` for the plain title, `hebrew_link_*` for the linked
+> one). Schema 23 starts each one as a copy of the setting that, until now,
+> governed both titles (`insert_sefaria_link_default`, `source_title_*`,
+> `sefaria_link_*`), which from here on are the translation title's alone. A
+> setting the user never stored takes the default, which equals the
+> translation title's.
+
+### Titles: link and font each one separately
+
+#### Added
+
+- **Link the source title and the translation title separately.** The single
+  *🔗 Title* switch is now a *Link the title* switch in each section of the
+  composition card (the Layout tray, Preferences → Insertion, Link Texts'
+  *Customize this insertion*): one for the source (Hebrew) title, one for the
+  translation title. Insert from Selection and Link Texts follow the saved
+  switches; a citation that was already a link still links both titles.
+- **Title font in the sidebar.** The Layout tray's Source and Translation
+  sections each have a *Title font* button beside *Text font*, as Preferences
+  now does too. It sets the font and size of that title as it will be
+  inserted: the linked title's while *Link the title* is on, the plain title's
+  otherwise. Like the other tray settings it is for this session until saved.
+- **Separate source and translation title styles in Preferences.** Fonts →
+  Title has a *Translation title* / *Source title* switch; each shows its own
+  *Plain title* and *Linked title* font, size, style, colour and highlight.
+  The source title's font lists are the Hebrew fonts. The paragraph style
+  (Normal text / Heading 1–6) stays shared.
+
+### A cleaner Layout tray, card and footer
+
+#### Changed
+
+- **"Display & Layout" is now "Layout"** in the Layout tray, Preferences →
+  Insertion and Link Texts. Its second picker is called *Arrangement*.
+- **One row per setting.** The composition card and the line options are a
+  settings list: each setting's name on the left, its control on the right —
+  a switch for on/off (*Vowels*, *Cantillation*, *Punctuation*,
+  *Transliteration*, *Link the title*, *Line by line*, *Line numbers*,
+  *Citation*), a button for a font, a segmented control for a choice. The
+  centred pills that wrapped into uneven clusters (*Vowels: On*, *Line #s:
+  On*…) are gone, as is the card-inside-a-card framing.
+- **Display and Arrangement are segmented controls**, always visible and
+  labelled, instead of two dropdowns.
+- **Bold & italics is a three-way control** (*Keep* / *Drop* / *Only*)
+  instead of a button that cycled through three looks of "B&I".
+- **Transliteration's scheme** shows under the switch, as *Style*, only while
+  transliteration is on.
+- **Simple mode's collapsed footer is just Add Source and "More options".**
+  The Preferences gear is hidden with Session Library and Quick Actions, and
+  the empty row with it; "More options" (or the menu) brings it back.
+- **Quieter Preferences controls.** The Texts / Voices / Lexicon tabs and the
+  new title tabs are light segmented controls, and a colour left on *Auto* /
+  *None* is marked in pale blue instead of a solid navy block.
+
 ### Layout Settings, dialogs and setup
 
 #### Changed

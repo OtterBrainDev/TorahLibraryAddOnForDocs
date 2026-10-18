@@ -128,6 +128,7 @@ $('#insert-source').click(function () {
   var showPesukim = Boolean($('.wants-pesukim').prop('checked'));
   var includeTranslationSourceInfo = $('.include-translation-source-info').is(':checked');
   var insertSefariaLink = $('.insert-sefaria-link').is(':checked');
+  var insertHebrewSefariaLink = $('.insert-hebrew-sefaria-link').is(':checked');
   var sourceEmphasisMode = ccNormalizeEmphasisMode($('.source-emphasis-mode').val());
   // No preferredTitle: the title is the chosen text's ref. The search box
   // holds the query ("shema", "light"), not the name of the text picked.
@@ -167,6 +168,7 @@ $('#insert-source').click(function () {
       pasukPreference: showPesukim,
       includeTranslationSourceInfo: includeTranslationSourceInfo,
       insertSefariaLink: insertSefariaLink,
+      insertHebrewSefariaLink: insertHebrewSefariaLink,
       sourceEmphasisMode: sourceEmphasisMode,
       sessionId: sidebarSessionId
     });
@@ -189,6 +191,7 @@ $('#insert-source').click(function () {
     bilingualLayout: bilingualLayout,
     alignedRows: $('.wants-aligned-rows').is(':checked'),
     insertSefariaLink: insertSefariaLink,
+    insertHebrewSefariaLink: insertHebrewSefariaLink,
     includeTransliteration: $('.include-transliteration').is(':checked'),
     // The scheme picked in the Layout tray may be a session override only.
     transliterationScheme: getSidebarTransliterationScheme(),
