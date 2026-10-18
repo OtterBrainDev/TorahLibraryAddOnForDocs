@@ -86,7 +86,7 @@ Open **Texts** and press <kbd>/</kbd> to jump to the search box. Try:
 
 ## 3. Insert exactly what you want (8 min)
 
-Select `Genesis 1:1-5`. Open **📰 Layout**.
+Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
 
 1. **Display:** **A** (translation), **A + א** (both), **א** (Hebrew).
 2. **Layout** (for both languages): **Stacked**, **Right–Left** (a

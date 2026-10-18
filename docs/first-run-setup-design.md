@@ -200,10 +200,9 @@ That keeps the preset table short enough to reason about and test.
 
 ## 6. What Simple mode changes
 
-Simple mode **collapses**; it never removes. Every hidden control can be reached
-in at most two clicks, through a "More options" disclosure or "Show advanced
-settings". The **Interface** switch in Preferences (§7) turns Simple mode off at
-any time.
+Simple mode **hides**; it never removes. In Preferences, "Show advanced
+settings" shows what it hides; in the sidebar, the **Interface** switch in
+Preferences (§7) does, and turns Simple mode off at any time.
 
 ### Menu
 
@@ -240,17 +239,18 @@ The customizable menu already has this limitation; Simple mode inherits it.
 | Search box, Hebrew keyboard, recent sources, results, source card | Shown | Shown |
 | **Insert** button | Shown | Shown |
 | Translation language filter (`#translation-language-dropdown`) | Shown | Shown |
-| Texts / Voices / Lexicon tab bar | Hidden; sidebar opens in Texts | Shown |
+| Texts / Voices / Lexicon tabs (under the search box) | Hidden; sidebar opens in Texts | Shown |
 | Sort (`#search-sort-mode`), Restore corpus menu | Hidden | Shown |
-| **Layout** button and tray | Under "More options" | Shown |
-| Footer: Session Library, Quick Actions panel, Preferences (the whole icon row) | Under "More options" | Shown |
+| **Insertion Options** button (under Add Source) and its panel | Shown | Shown |
+| Footer: Session Library, Quick Actions panel, Preferences | Shown | Shown |
 | Footer: Help, Feedback | Shown | Shown |
 | Experimental (🧪) | Hidden | As today (off unless enabled) |
 
-"More options" is one disclosure button above the footer. Opening it shows the
-hidden controls in their usual form; it does not remember its state between
-sessions. If a search is run from Voices or Lexicon through a menu item a Simple
-user re-enabled, the sidebar opens in that mode and shows the tab bar.
+There is no "More options" disclosure (removed in 2026-10 at the owner's
+request): what Simple mode hides (the result sort, Restore Corpus, and the
+tabs while in Texts) comes back with Preferences → Interface → Everything. If
+a search is run from Voices or Lexicon through a menu item a Simple user
+re-enabled, the sidebar opens in that mode and shows the tabs.
 
 Implementation: a `data-ui-mode="simple"` attribute on the sidebar root, with CSS
 in the sidebar's own stylesheet. **Hidden by CSS only**, never removed from the
@@ -474,7 +474,7 @@ approved:
 1. **The `he-top` preset for the "quoting" answer** (§5): kept.
 2. **A new user who dismisses setup** keeps Full: a legacy user of the original
    add-on cannot be told apart from a new one. Revisit with feedback.
-3. **Voices and Lexicon in Simple mode:** hidden behind "More options" for
+3. **Voices and Lexicon in Simple mode:** the tabs are hidden in Texts for
    every Simple user.
 4. **The graduation tip** (§11): deferred to a later release.
 

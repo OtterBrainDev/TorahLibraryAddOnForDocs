@@ -1,8 +1,8 @@
 <!--
   The Layout section of the insertion options: Display (Translation / Both /
   Original) and Arrangement (Stacked / Right–Left / Left–Right), each a
-  labelled segmented control, then the line options (one table row per line,
-  line numbers, citation) as switch rows. Above the composition card. Shared
+  labelled segmented control, then the citation and the line options (line
+  numbers, one table row per line) as switch rows. Above the composition card. Shared
   by the sidebar's Layout tray, Preferences and the Link Texts dialog's
   "Customize this insertion" panel. Behaviour: shared/insertion-options/js.html
   (initInsertionOptions); styles: shared/insertion-options/css.html.
@@ -35,12 +35,12 @@
     </div>
   </div>
 </div>
-<!-- The line options, together, as switch rows (.cc-row, styled in
-     shared/composition-card/css): Line by line (here), and the composition
-     card's Line numbers and Citation, which shared/composition-card/shared.html
-     drives (by id, so they can live outside the card). -->
+<!-- Citation, then the line options, as switch rows (.cc-row, styled in
+     shared/composition-card/css): the composition card's Citation and Line
+     numbers, which shared/composition-card/shared.html drives (by id, so they
+     can live outside the card), and Line by line (here). -->
 <div class="layout-rows-row cc-rows">
+  <button type="button" class="cc-row cc-toggle cc-line-pill" id="cc-details-toggle" aria-pressed="false" aria-label="Toggle source citation" title="Add the source citation (edition and license) under the text"><span class="cc-row-label">Citation</span><span class="cc-switch" aria-hidden="true"></span></button>
   <button type="button" class="cc-row cc-toggle layout-rows-toggle" id="layout-rows-toggle" aria-pressed="false" title="Right–Left and Left–Right: give each line its own table row, beside its translation" hidden><span class="cc-row-label">Line by line</span><span class="cc-switch" aria-hidden="true"></span></button>
   <button type="button" class="cc-row cc-toggle cc-line-pill" id="cc-lines-toggle" aria-pressed="true" title="Number each line (verse numbers)"><span class="cc-row-label">Line numbers</span><span class="cc-switch" aria-hidden="true"></span></button>
-  <button type="button" class="cc-row cc-toggle cc-line-pill" id="cc-details-toggle" aria-pressed="false" aria-label="Toggle source citation" title="Add the source citation (edition and license) under the text"><span class="cc-row-label">Citation</span><span class="cc-switch" aria-hidden="true"></span></button>
 </div>

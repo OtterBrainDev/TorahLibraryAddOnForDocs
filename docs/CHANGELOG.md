@@ -28,52 +28,88 @@ heading until the next release consolidates it.
 > setting the user never stored takes the default, which equals the
 > translation title's.
 
+> **Preference migration (schema 24). Two new preferences, and one stored
+> value rewritten; no existing user's inserts change.** Each title now keeps
+> its own font whether or not it is linked; `sefaria_link_format_override`
+> and `hebrew_link_format_override` ("Hyperlink formatting override") give a
+> linked title its linked style instead. Schema 24 turns both **on** for
+> everyone, which is how linked titles have always looked. Cantillation gains
+> a real *Torah only* choice (`teamim_filter = "torah"`); a `"torah"` stored
+> by an earlier version always meant *Tanakh only*, so schema 24 rewrites it
+> to `"tanakh"`.
+
 ### Titles: link and font each one separately
 
 #### Added
 
 - **Link the source title and the translation title separately.** The single
-  *🔗 Title* switch is now a *Link the title* switch in each section of the
-  composition card (the Layout tray, Preferences → Insertion, Link Texts'
-  *Customize this insertion*): one for the source (Hebrew) title, one for the
-  translation title. Insert from Selection and Link Texts follow the saved
-  switches; a citation that was already a link still links both titles.
-- **Title font in the sidebar.** The Layout tray's Source and Translation
+  *🔗 Title* switch is now a *Link title to Sefaria* switch in each section of
+  the composition card (Insertion Options, Preferences → Insertion, Link
+  Texts' *Customize this insertion*): one for the source (Hebrew) title, one
+  for the translation title. Insert from Selection and Link Texts follow the
+  saved switches; a citation that was already a link still links both titles.
+- **Title font in the sidebar.** Insertion Options' Source and Translation
   sections each have a *Title font* button beside *Text font*, as Preferences
-  now does too. It sets the font and size of that title as it will be
-  inserted: the linked title's while *Link the title* is on, the plain title's
-  otherwise. Like the other tray settings it is for this session until saved.
+  now does too. It is that title's font whether or not it is linked. Like the
+  other settings there it is for this session until saved.
 - **Separate source and translation title styles in Preferences.** Fonts →
-  Title has a *Translation title* / *Source title* switch; each shows its own
-  *Plain title* and *Linked title* font, size, style, colour and highlight.
+  Title has a *Translation title* / *Source title* switch; each shows that
+  title's font, size, style, colour and highlight, and a **Hyperlink
+  formatting override** switch. With the override on (the default), a linked
+  title is formatted as set under it instead; off, it keeps the title font.
   The source title's font lists are the Hebrew fonts. The paragraph style
   (Normal text / Heading 1–6) stays shared.
 
-### A cleaner Layout tray, card and footer
+### Vowels and Cantillation: three choices each
 
 #### Changed
 
-- **"Display & Layout" is now "Layout"** in the Layout tray, Preferences →
-  Insertion and Link Texts. Its second picker is called *Arrangement*.
+- **Vowels: Off / Tanakh / On.** A three-way control in the composition card
+  (Insertion Options, Preferences, Link Texts) replaces the Vowels switch and
+  Preferences' separate *Vowels only in Tanakh* section. *Tanakh* keeps the
+  vowels in Tanakh and removes them everywhere else, as the original add-on
+  did.
+- **Cantillation: Off / Tanakh / Torah.** *Tanakh* keeps the marks in Tanakh
+  only; *Torah* keeps them in the Five Books only. An existing "on" shows as
+  *Tanakh* and inserts exactly as before until another choice is clicked.
+
+### A cleaner sidebar, Insertion Options and Preferences
+
+#### Changed
+
+- **Layout becomes Insertion Options.** The *📰 Layout* button beside Add
+  Source is now **📰 Insertion Options**, a full-width button under Add
+  Source, and the panel it opens is titled the same. Inside, "Display &
+  Layout" is now **Layout**, and its second picker is called *Arrangement*
+  (also in Preferences → Insertion and Link Texts).
+- **Revert and Save as defaults are at the top** of Insertion Options, under
+  its title, instead of at the bottom.
+- **Texts / Voices / Lexicon sit under the search box**, with the results
+  they choose between, as a segmented control. Switching runs the same search
+  in the other tab, so there is nothing to retype.
+- **Citation first.** In Layout, *Citation* comes before the line options
+  (*Line by line*, *Line numbers*).
 - **One row per setting.** The composition card and the line options are a
   settings list: each setting's name on the left, its control on the right —
-  a switch for on/off (*Vowels*, *Cantillation*, *Punctuation*,
-  *Transliteration*, *Link the title*, *Line by line*, *Line numbers*,
-  *Citation*), a button for a font, a segmented control for a choice. The
-  centred pills that wrapped into uneven clusters (*Vowels: On*, *Line #s:
-  On*…) are gone, as is the card-inside-a-card framing.
+  a switch for on/off (*Punctuation*, *Transliteration*, *Link title to
+  Sefaria*, *Citation*, *Line by line*, *Line numbers*), a button for a font, a
+  segmented control for a choice (*Vowels*, *Cantillation*, *Bold &
+  italics*). The centred pills that wrapped into uneven clusters (*Vowels:
+  On*, *Line #s: On*…) are gone, as is the card-inside-a-card framing.
 - **Display and Arrangement are segmented controls**, always visible and
   labelled, instead of two dropdowns.
 - **Bold & italics is a three-way control** (*Keep* / *Drop* / *Only*)
   instead of a button that cycled through three looks of "B&I".
 - **Transliteration's scheme** shows under the switch, as *Style*, only while
   transliteration is on.
-- **Simple mode's collapsed footer is just Add Source and "More options".**
-  The Preferences gear is hidden with Session Library and Quick Actions, and
-  the empty row with it; "More options" (or the menu) brings it back.
-- **Quieter Preferences controls.** The Texts / Voices / Lexicon tabs and the
-  new title tabs are light segmented controls, and a colour left on *Auto* /
-  *None* is marked in pale blue instead of a solid navy block.
+- **Simple mode has no "More options".** Add Source, Insertion Options and
+  the footer's Session Library, Quick Actions and Preferences buttons show in
+  both modes. Simple mode still hides the result sort and Restore Corpus, and
+  the Texts / Voices / Lexicon tabs while in Texts; Preferences → Interface →
+  Everything shows them.
+- **Quieter Preferences controls.** The Texts / Voices / Lexicon defaults tabs
+  and the title tabs are light segmented controls, and a colour left on
+  *Auto* / *None* is marked in pale blue instead of a solid navy block.
 
 ### Layout Settings, dialogs and setup
 

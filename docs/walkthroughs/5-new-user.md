@@ -35,7 +35,7 @@ just a few words from a verse.*
 
 The **Preview** shows exactly what will go into your document.
 
-Want only English, or only Hebrew? Click **📰 Layout** at the bottom and
+Want only English, or only Hebrew? Click **📰 Insertion Options** under Add Source and
 choose:
 
 - **A** — translation only

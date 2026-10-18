@@ -529,3 +529,27 @@ test('an upgrader who linked titles keeps both linked', () => {
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'true');
 });
+
+// v24: the "Hyperlink formatting override" switches start on (linked titles
+// keep their linked style), and a legacy "torah" cantillation filter, which
+// always read as "tanakh", keeps meaning that now that "torah" means the
+// Five Books only.
+test('v24 turns the hyperlink formatting overrides on and rewrites a legacy "torah" filter', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '23', teamim_filter: 'torah' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('sefaria_link_format_override'), 'true');
+  assert.equal(userProperties.getProperty('hebrew_link_format_override'), 'true');
+  assert.equal(userProperties.getProperty('teamim_filter'), 'tanakh');
+});
+
+test('v24 never overwrites a stored override or another cantillation filter', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '23',
+    sefaria_link_format_override: 'false',
+    teamim_filter: 'available',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('sefaria_link_format_override'), 'false');
+  assert.equal(userProperties.getProperty('teamim_filter'), 'available');
+});

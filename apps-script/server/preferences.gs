@@ -99,6 +99,8 @@ const SETTINGS = [
   "hebrew_link_font_style",
   "hebrew_link_font_color",
   "hebrew_link_font_background",
+  "sefaria_link_format_override",
+  "hebrew_link_format_override",
   "search_mode",
   "menu_layout",
   "insert_from_selection_replace"
@@ -264,6 +266,12 @@ function getDefaultPreferences() {
     hebrew_link_font_style: "underline",
     hebrew_link_font_color: "",
     hebrew_link_font_background: "",
+    // Each title has its own font whether or not it is linked. "Hyperlink
+    // formatting override" (true) formats a linked title with its linked
+    // style (sefaria_link_* / hebrew_link_*) instead; false keeps the title's
+    // own. True is how linked titles have always looked.
+    sefaria_link_format_override: true,
+    hebrew_link_format_override: true,
     search_mode: "texts",
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
     // server/menu-layout.gs for the shape. Replaced `insert_from_selection_at_top`
@@ -541,6 +549,12 @@ function getTypographySettings(properties) {
     hebrewLink:      readTypographyRole_(userProperties, "hebrew_link", "", null, "underline")
   };
   const titleHeading = normalizeTitleHeading_(userProperties.getProperty("source_title_heading"));
+  // A linked title takes its linked style only with the override on (an
+  // unset value is on: the linked style is what linked titles always had).
+  const linkFormatOverride = {
+    en: userProperties.getProperty("sefaria_link_format_override") !== "false",
+    he: userProperties.getProperty("hebrew_link_format_override") !== "false"
+  };
 
   if (typographyNeedsSurroundingText_(roles, titleHeading)) {
     let surrounding = null;
@@ -555,6 +569,7 @@ function getTypographySettings(properties) {
   return {
     roles: roles,
     titleHeading: titleHeading,
+    linkFormatOverride: linkFormatOverride,
     translationLanguages: normalizeTranslationLanguageTypography_(
       userProperties.getProperty("translation_language_typography")
     ),

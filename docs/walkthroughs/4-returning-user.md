@@ -22,8 +22,8 @@ Open **Extensions → Torah Library** and compare with the old menu.
 | **Search Texts** sidebar | Same **Texts** tab. References and phrase search share one box. |
 | Search's **in: Tanach / Talmud / …** filter | Results are grouped by corpus. **❌** hides a group, and **⤦ Restore Corpus** brings it back. |
 | Search's relevance / PageRank option | **Rel. ▾**: relevance, A–Z, Z–A, category, recent |
-| **Insert source in Hebrew / English only** checkbox | **📰 Layout → Display**: **A** (translation), **A + א** (both), **א** (Hebrew) |
-| **Pesukim/line markers** checkbox | **📰 Layout → Lines** |
+| **Insert source in Hebrew / English only** checkbox | **📰 Insertion Options → Display**: **A** (translation), **A + א** (both), **א** (Hebrew) |
+| **Pesukim/line markers** checkbox | **📰 Insertion Options → Line numbers** |
 | Version dropdowns under the source | **Versions**: Translation Versions and Original Versions |
 | **Preferences** dialog | **⚙︎ Preferences**, now with tabs. Your old choices are kept. |
 | Nekudot / Ta'amei HaMiqra | **Preferences → Insertion** defaults, and **Vowels** / **Cantillation** in the Layout tray for one session |
@@ -49,7 +49,7 @@ English.
 4. **Add Source** (or <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd>).
 
 With both languages the default layout is the one you know: a two-column
-table, Hebrew on the right. **📰 Layout** also offers **Stacked** (Hebrew
+table, Hebrew on the right. **📰 Insertion Options** also offers **Stacked** (Hebrew
 above English) and **Left–Right**.
 
 ---
@@ -89,7 +89,7 @@ nobody warns them.
    everything except Tanakh, whatever your settings said. Now vowels appear
    wherever Sefaria has them: Mishnah, the Siddur, some commentaries. For the
    old look, turn on **Preferences → Insertion → Vowels only in Tanakh**. To
-   leave vowels out of a single insert, turn **Vowels** off in **📰 Layout**.
+   leave vowels out of a single insert, set **Vowels** to **Off** in **📰 Insertion Options**.
 2. **Divine-name replacement for new users is on.** New users start with
    יהוה → **יי**. If you set a replacement in the old add-on, such as ה' or
    יקוק, it has been kept. Check **Preferences → Insertion → Divine Name

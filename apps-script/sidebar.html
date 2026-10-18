@@ -36,13 +36,6 @@
         </div>
       </aside>
 
-      <nav class="mode-switch-section" role="tablist" aria-label="Search mode selector">
-        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="texts" aria-selected="true">Texts<span class="tab-result-badge" id="texts-tab-badge" hidden aria-hidden="true"></span></button>
-        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="voices" aria-selected="false">Voices<span class="tab-result-badge" id="voices-tab-badge" hidden aria-hidden="true"></span></button>
-        <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="lexicon" id="tab-lexicon-btn" aria-selected="false">Lexicon<span class="lexicon-tab-badge" id="lexicon-tab-badge" hidden aria-hidden="true"></span></button>
-        <button type="button" role="tab" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental" style="display:none;" aria-label="Experimental Features" aria-selected="false">🧪</button>
-      </nav>
-
       <div class="sidebar-search-region">
         <section class="reference-row unified-search-row">
           <div class="search-field-wrapper">
@@ -53,6 +46,16 @@
             </button>
           </div>
         </section>
+
+        <!-- Result type: one search, three kinds of results. Switching runs the
+             same query again in the other mode (mode-controller). Under the
+             search box rather than above it, with the results it filters. -->
+        <nav class="mode-switch-section" role="tablist" aria-label="Result type">
+          <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="texts" aria-selected="true">Texts<span class="tab-result-badge" id="texts-tab-badge" hidden aria-hidden="true"></span></button>
+          <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="voices" aria-selected="false">Voices<span class="tab-result-badge" id="voices-tab-badge" hidden aria-hidden="true"></span></button>
+          <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="lexicon" id="tab-lexicon-btn" aria-selected="false">Lexicon<span class="lexicon-tab-badge" id="lexicon-tab-badge" hidden aria-hidden="true"></span></button>
+          <button type="button" role="tab" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental" style="display:none;" aria-label="Experimental Features" aria-selected="false">🧪</button>
+        </nav>
 
         <div id="search-history-dropdown" class="search-history-dropdown" role="listbox" aria-label="Recent searches" hidden></div>
 
@@ -518,10 +521,8 @@
       <footer class="sidebar-footer">
       <section class="primary-actions" aria-label="Primary actions">
         <button class="submit primary-action-button" id="insert-source" disabled title="Add Source (Ctrl+Enter)">Add Source</button>
-        <button class="submit secondary-action-button text-mode-only" id="open-layout-settings" title="Layout Settings" aria-label="Layout Settings">&#x1F4F0; Layout</button>
+        <button class="submit secondary-action-button text-mode-only" id="open-layout-settings" title="Insertion Options" aria-label="Insertion Options">&#x1F4F0; Insertion Options</button>
       </section>
-      <!-- Simple mode only (css/components/simple-mode): shows the controls it hides. -->
-      <button type="button" class="more-options-toggle" id="more-options-toggle" aria-expanded="false">More options</button>
       <section class="sidebar-footer-tools footer-tool-row standard-quick-actions" aria-label="Quick actions">
         <button type="button" class="footer-tool-button sl-footer-btn" id="open-session-library" title="Session Library" aria-label="Session Library"><span class="footer-icon" aria-hidden="true">📜</span><span class="sl-footer-count" id="sl-footer-count" hidden></span></button>
 		<button type="button" class="footer-tool-button open-actions-panel" title="Quick Actions" aria-label="Quick Actions"><span class="footer-icon footer-running-icon">🏃‍️</span></button>
@@ -541,14 +542,24 @@
       </div>
       </footer>
 
-      <!-- Layout Settings tray -->
-      <div class="layout-tray" id="layout-tray" role="dialog" aria-modal="true" aria-label="Layout Settings">
+      <!-- Insertion Options tray (#layout-tray) -->
+      <div class="layout-tray" id="layout-tray" role="dialog" aria-modal="true" aria-label="Insertion Options">
         <div class="tray-backdrop" id="layout-tray-backdrop"></div>
         <div class="tray-sheet">
           <div class="tray-handle" aria-hidden="true"></div>
           <div class="tray-header">
-            <span class="tray-title">Layout Settings</span>
-            <button type="button" class="tray-close" id="layout-tray-close" aria-label="Close Layout Settings">&times;</button>
+            <span class="tray-title">Insertion Options</span>
+            <button type="button" class="tray-close" id="layout-tray-close" aria-label="Close Insertion Options">&times;</button>
+          </div>
+          <!-- Session override actions: at the top, under the title, so they
+               are in view whatever the tray is scrolled to. Shown only while
+               this session overrides a saved default (syncSessionOverrideButtons). -->
+          <div class="tray-session-bar tray-session-section session-override-actions" style="display:none;">
+            <div class="tray-section-label">Session</div>
+            <div class="tray-pills tray-action-pills">
+              <button type="button" class="tray-action-pill reset-session-overrides-button" aria-label="Revert to saved defaults" title="Revert to saved defaults" disabled>&#x21BA; Revert</button>
+              <button type="button" class="tray-action-pill save-session-defaults-button" aria-label="Save as defaults" title="Save as defaults" disabled>&#x1F4BE; Save as defaults</button>
+            </div>
           </div>
           <div class="tray-body">
 
@@ -566,14 +577,6 @@
               </div>
             </div>
 
-            <!-- Session override actions -->
-            <div class="tray-section tray-session-section session-override-actions" style="display:none;">
-              <div class="tray-section-label">Session</div>
-              <div class="tray-pills tray-action-pills">
-                <button type="button" class="tray-action-pill reset-session-overrides-button" aria-label="Revert to saved defaults" disabled>&#x21BA; Revert to defaults</button>
-                <button type="button" class="tray-action-pill save-session-defaults-button" aria-label="Save as defaults" disabled>&#x1F4BE; Save as defaults</button>
-              </div>
-            </div>
           </div>
         </div>
       </div>

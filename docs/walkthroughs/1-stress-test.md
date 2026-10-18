@@ -238,7 +238,7 @@ Use a **fresh copy** of the stress document for every row that says so.
 
 The review dialog's **📰 Customize this insertion** panel, under the table. Use
 a **fresh copy** for each row. Before starting, note your Preferences →
-Insertion settings and the sidebar's 📰 Layout tray.
+Insertion settings and the sidebar's 📰 Insertion Options panel.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
@@ -292,7 +292,7 @@ Insertion settings and the sidebar's 📰 Layout tray.
 | 10.5 | **Reset To Defaults** | Everything back to defaults, including יהוה → יי on. | Anything left over; `linker_upload_acknowledged` reset (it should **not** be reset). |
 | 10.6 | Preferences → Experimental: enable, turn on Surprise Me, run it with every corpus off | "Choose at least one corpus." | Script error. |
 | 10.7 | **🔁 Refresh** in Preferences | Sidebar reopens from saved defaults. | Silent no-op (the historical regression). |
-| 10.8 | Preferences → Insertion → **Layout**: hover each option; choose **A**; save; open the sidebar's 📰 Layout | Both pickers (Display, Arrangement) are labelled segmented controls. Option names match the sidebar's (*Translation*, *Original with Translation*, *Original*; *Stacked*, *Right–Left*, *Left–Right*). With **A** chosen, Layout and the Hebrew pills in Insertion Defaults stay visible (they are still defaults for other inserts). The tray starts on **A**. | Different names than the sidebar; Layout hidden in Preferences; the tray not following the saved default. |
+| 10.8 | Preferences → Insertion → **Layout**: hover each option; choose **A**; save; open the sidebar's 📰 Insertion Options | Both pickers (Display, Arrangement) are labelled segmented controls. Option names match the sidebar's (*Translation*, *Original with Translation*, *Original*; *Stacked*, *Right–Left*, *Left–Right*). With **A** chosen, Layout and the Hebrew pills in Insertion Defaults stay visible (they are still defaults for other inserts). The tray starts on **A**. | Different names than the sidebar; Layout hidden in Preferences; the tray not following the saved default. |
 
 ---
 

@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '23';
+var PREFS_SCHEMA_CURRENT_ = '24';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -209,6 +209,14 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // applied to both titles, so no upgrader's inserts change.
   if (from < 23) {
     migrateToV23_(userProperties);
+  }
+  // v23 -> v24: introduces `sefaria_link_format_override` and
+  // `hebrew_link_format_override` ("true": a linked title keeps its linked
+  // style, as it always has), and gives cantillation a real Torah-only
+  // filter, so a legacy stored `teamim_filter = "torah"`, which always read
+  // as "tanakh", is rewritten to "tanakh".
+  if (from < 24) {
+    migrateToV24_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -575,6 +583,22 @@ function migrateToV23_(userProperties) {
     var from = userProperties.getProperty(V23_TITLE_KEY_COPIES_[key]);
     userProperties.setProperty(key, from != null ? from : String(defaults[key]));
   });
+  return true;
+}
+
+/**
+ * V24: the two "Hyperlink formatting override" switches start on, which is
+ * what linked titles have always looked like, and a legacy "torah"
+ * cantillation filter keeps meaning what it meant ("tanakh") now that
+ * "torah" means the Five Books only. A stored switch is never overwritten.
+ */
+function migrateToV24_(userProperties) {
+  ['sefaria_link_format_override', 'hebrew_link_format_override'].forEach(function(key) {
+    if (userProperties.getProperty(key) == null) userProperties.setProperty(key, 'true');
+  });
+  if (String(userProperties.getProperty('teamim_filter') || '').toLowerCase() === 'torah') {
+    userProperties.setProperty('teamim_filter', 'tanakh');
+  }
   return true;
 }
 

@@ -35,23 +35,20 @@ test('the sidebar is told its mode by the server and includes the Simple-mode st
   assert.match(MENU, /createTemplateFromFile\('preferences'\);\s*\n\s*template\.uiMode = getUiMode_\(\);/);
 });
 
-test('every sidebar control Simple mode hides exists, and is hidden only while "More options" is closed', () => {
+// Simple mode hides only the search tools (sort, restore corpus); Preferences
+// → Interface → Everything shows them. There is no "More options" toggle: the
+// footer's buttons and Insertion Options show in both modes.
+test('Simple mode hides only the search tools, and every one it hides exists', () => {
   const ids = hiddenIds(SIMPLE_CSS, /data-ui-mode="simple"/);
-  assert.ok(ids.length >= 5, `expected the hidden controls, found ${ids}`);
+  assert.deepEqual(ids.sort(), ['restore-corpus-menu-wrap', 'search-sort-mode']);
   ids.forEach((id) => assert.ok(SIDEBAR.includes(`id="${id}"`), `simple-mode.css hides #${id}, which sidebar.html does not have`));
-
-  SIMPLE_CSS.split('}').forEach((block) => {
-    if (!/display:\s*none\s*!important/.test(block)) return;
-    block.split('{')[0].split(',').filter((s) => s.trim()).forEach((selector) => {
-      assert.match(selector, /:not\(\.is-more-open\)/, `"${selector.trim()}" stays hidden even with More options open`);
-    });
-  });
-  assert.ok(SIDEBAR.includes('id="more-options-toggle"'));
+  assert.ok(!SIDEBAR.includes('more-options-toggle'), 'no "More options" toggle');
+  assert.ok(!/is-more-open/.test(SIMPLE_CSS + readAppScriptFile('sidebar/js/footer-actions.html') + readAppScriptFile('sidebar/js/bootstrap.html')));
 });
 
 test('the Texts tab bar is hidden only in Texts mode, so Voices and Lexicon can always get back', () => {
-  assert.match(SIMPLE_CSS, /\[data-ui-mode="simple"\]\[data-mode="texts"\]:not\(\.is-more-open\) \.mode-switch-section/);
-  assert.ok(!/\[data-ui-mode="simple"\]:not\(\.is-more-open\) \.mode-switch-section/.test(SIMPLE_CSS));
+  assert.match(SIMPLE_CSS, /\[data-ui-mode="simple"\]\[data-mode="texts"\] \.mode-switch-section/);
+  assert.ok(!/\[data-ui-mode="simple"\] \.mode-switch-section/.test(SIMPLE_CSS));
 });
 
 test('Preferences hides only advanced tabs and sections, and "Show advanced settings" brings them back', () => {
@@ -80,8 +77,11 @@ test('the Interface and advanced switches are not preferences, so Save never sen
     'collectPreferenceObject must not start collecting radio inputs');
 });
 
-test('collapsed Simple mode hides the Preferences gear with its whole row, and "More options" brings it back', () => {
-  assert.match(SIMPLE_CSS, /\[data-ui-mode="simple"\]:not\(\.is-more-open\) \.sidebar-footer \.standard-quick-actions \{\s*display: none !important;/);
-  const row = SIDEBAR.match(/<section class="sidebar-footer-tools footer-tool-row standard-quick-actions"[\s\S]*?<\/section>/);
-  assert.ok(row && row[0].includes('open-preferences-tool'), 'the gear lives in the row Simple mode hides');
+test('the footer: Add Source, Insertion Options under it, then Session Library, Quick Actions and Preferences, in both modes', () => {
+  const primary = SIDEBAR.match(/<section class="primary-actions"[\s\S]*?<\/section>/)[0];
+  assert.ok(primary.indexOf('id="insert-source"') < primary.indexOf('id="open-layout-settings"'));
+  assert.match(primary, /id="open-layout-settings"[^>]*>&#x1F4F0; Insertion Options</);
+  const row = SIDEBAR.match(/<section class="sidebar-footer-tools footer-tool-row standard-quick-actions"[\s\S]*?<\/section>/)[0];
+  for (const control of ['open-session-library', 'open-actions-panel', 'open-preferences-tool']) assert.ok(row.includes(control), control);
+  assert.doesNotMatch(SIMPLE_CSS, /standard-quick-actions|open-preferences-tool|open-layout-settings|open-session-library|open-actions-panel|footer-actions-panel/);
 });

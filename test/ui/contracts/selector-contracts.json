@@ -15,7 +15,10 @@
       ".wants-hebrew-punctuation",
       ".wants-translation-punctuation",
       ".wants-aligned-rows",
-      "#more-options-toggle"
+      ".insert-hebrew-sefaria-link",
+      "#open-layout-settings",
+      "#open-session-library",
+      ".open-preferences-tool"
     ]
   },
   "preferences": {

@@ -63,7 +63,7 @@ The sidebar groups results into:
 
 ### Display and layout controls
 
-The sidebar's **📰 Layout** tray supports three display modes:
+The sidebar's **📰 Insertion Options** panel supports three display modes:
 
 - **A** — translation only
 - **A + א** — Hebrew with translation

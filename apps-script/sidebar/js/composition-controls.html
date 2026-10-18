@@ -4,13 +4,11 @@
 // to the generic composition card controller.
 
 function _sidebarCompositionGetState() {
-  var vowelsOn = $('.wants-vowels').is(':checked');
-  var cantOn = $('.wants-cantillation').is(':checked');
   var transliterationOn = $('.include-transliteration').is(':checked');
   var scheme = transliterationOn ? getSidebarTransliterationScheme() : 'none';
   return {
-    vowelsOn: vowelsOn,
-    cantillationOn: cantOn,
+    vowelsMode: ccVowelsMode($('.wants-vowels').is(':checked'), effectivePreferences.nekudot_filter),
+    cantillationMode: ccCantillationMode($('.wants-cantillation').is(':checked'), effectivePreferences.teamim_filter),
     hebrewPunctuationOn: $('.wants-hebrew-punctuation').is(':checked'),
     translationPunctuationOn: $('.wants-translation-punctuation').is(':checked'),
     transliterationOn: transliterationOn,
@@ -37,27 +35,7 @@ function _sidebarCompositionOnFontChange(prefix, field, value) {
 }
 
 function _sidebarCompositionOnToggle(key) {
-  if (key === 'vowels') {
-    var $el = $('.wants-vowels');
-    $el.prop('checked', !$el.is(':checked'));
-    saveSidebarPreference({
-      nekudot: $el.is(':checked'),
-      teamim: $('.wants-cantillation').is(':checked')
-    }, function () {
-      updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
-    });
-  } else if (key === 'cantillation') {
-    var $el = $('.wants-cantillation');
-    $el.prop('checked', !$el.is(':checked'));
-    saveSidebarPreference({
-      nekudot: $('.wants-vowels').is(':checked'),
-      teamim: $el.is(':checked')
-    }, function () {
-      updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
-    });
-  } else if (key === 'hebrewPunctuation') {
+  if (key === 'hebrewPunctuation') {
     var $el = $('.wants-hebrew-punctuation');
     $el.prop('checked', !$el.is(':checked'));
     saveSidebarPreference({
@@ -112,17 +90,33 @@ function _sidebarCompositionOnToggle(key) {
     saveSidebarPreference({
       include_translation_source_info: $el.is(':checked')
     });
-  } else if (key === 'emphasis') {
-    _sidebarCompositionOnEmphasisSelect(ccNextEmphasisMode($('.source-emphasis-mode').val()));
-    return;
   }
   if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
 }
 
-function _sidebarCompositionOnEmphasisSelect(mode) {
-  $('.source-emphasis-mode').val(ccNormalizeEmphasisMode(mode));
-  saveSidebarPreference({
-    source_emphasis_mode: $('.source-emphasis-mode').val()
+// The three-way choices. Vowels and Cantillation are fetch-time filters, so
+// the selected text is fetched again; B&I is applied at insert.
+function _sidebarCompositionOnChoice(key, value) {
+  var payload;
+  if (key === 'vowels') {
+    payload = ccVowelsPrefs(value);
+    $('.wants-vowels').prop('checked', payload.nekudot === 'true');
+  } else if (key === 'cantillation') {
+    payload = ccCantillationPrefs(value);
+    $('.wants-cantillation').prop('checked', payload.teamim === 'true');
+  } else if (key === 'emphasis') {
+    $('.source-emphasis-mode').val(ccNormalizeEmphasisMode(value));
+    saveSidebarPreference({ source_emphasis_mode: $('.source-emphasis-mode').val() });
+    if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
+    return;
+  } else {
+    return;
+  }
+  // Shown at once; the save's answer confirms it.
+  Object.keys(payload).forEach(function (k) { effectivePreferences[k] = payload[k]; });
+  saveSidebarPreference(payload, function () {
+    updateCompositionCard();
+    if (hasResolvedReference && data && data.ref) refreshSelectedResult();
   });
   if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
 }
@@ -164,7 +158,7 @@ function bindSidebarCompositionCard() {
     getState: _sidebarCompositionGetState,
     onToggle: _sidebarCompositionOnToggle,
     onSchemeSelect: _sidebarCompositionOnSchemeSelect,
-    onEmphasisSelect: _sidebarCompositionOnEmphasisSelect,
+    onChoice: _sidebarCompositionOnChoice,
     onFontChange: _sidebarCompositionOnFontChange,
     onMoreFontSettings: function () { google.script.run.preferencesPopup(); }
   });

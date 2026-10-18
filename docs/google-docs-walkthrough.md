@@ -13,7 +13,7 @@ the add-on under **Extensions → Torah Library → Help & Support**, or the
 3. Type a reference — `Genesis 1:1`, `Berakhot 2a`, `בראשית א:א`. Results
    appear as you type.
 4. Click a result. The **Preview** shows exactly what will be inserted.
-5. Optional: open **📰 Layout** to choose Hebrew, translation or both, and how
+5. Optional: open **📰 Insertion Options** to choose Hebrew, translation or both, and how
    they are arranged.
 6. Click **Add Source** (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).
 
@@ -35,7 +35,7 @@ the add-on under **Extensions → Torah Library → Help & Support**, or the
 | Control | What it does |
 | --- | --- |
 | **Add Source** | Insert the selected source at the cursor. |
-| **📰 Layout** | Layout Settings: display, layout and formatting for this session. |
+| **📰 Insertion Options** | Display, layout and formatting for this session. |
 | **📜** | The Session Library — sources you've inserted or pinned. |
 | **🏃** | Quick Actions: Insert from Selection, Transform Divine Names, Link Texts with Sefaria. |
 | **⚙︎** | Preferences — your saved defaults. |
@@ -81,7 +81,7 @@ as *unavailable for this ref* and skipped.
 
 **🔁 Preview** shows what **Add Source** will insert right now.
 
-## Layout Settings (📰 Layout)
+## Layout Settings (📰 Insertion Options)
 
 Everything here applies to the current sidebar session only. The same controls
 set your saved defaults in **Preferences → Insertion**, and one linking pass in

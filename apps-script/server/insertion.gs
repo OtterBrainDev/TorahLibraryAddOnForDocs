@@ -516,12 +516,16 @@ function titleParagraphHeading_(titleHeading) {
 
 /**
  * The typography role of a title (getTypographySettings): the source
- * (Hebrew) title and the translation title each have a plain and a linked
- * style.
+ * (Hebrew) title and the translation title each have their own style, and a
+ * linked style used instead when the title is linked and its "Hyperlink
+ * formatting override" is on (typography.linkFormatOverride; unset is on).
  */
-function titleRoleName_(linked, language) {
-  if (language === "he") return linked ? "hebrewLink" : "hebrewTitle";
-  return linked ? "sefariaLink" : "sourceTitle";
+function titleRoleName_(linked, language, typography) {
+  const he = language === "he";
+  const overrides = typography && typography.linkFormatOverride;
+  const override = !overrides || overrides[he ? "he" : "en"] !== false;
+  if (linked && override) return he ? "hebrewLink" : "sefariaLink";
+  return he ? "hebrewTitle" : "sourceTitle";
 }
 
 /**
@@ -539,7 +543,7 @@ function applyTitleTypography(paragraph, typography, linked, language) {
   // Titles deliberately do NOT preserve source emphasis: the bold/underline on
   // a title is applied by this add-on, so the user's title style stays
   // authoritative there.
-  applyRoleTypography_(paragraph, typography, titleRoleName_(linked, language));
+  applyRoleTypography_(paragraph, typography, titleRoleName_(linked, language, typography));
 }
 
 function insertTransliterationParagraphAfter(doc, index, transliterationText, typography, ltr) {

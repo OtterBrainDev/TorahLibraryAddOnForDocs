@@ -156,3 +156,30 @@ test('Link Texts and Insert from Selection pass the source title switch, followi
   assert.equal(opts({ insert_sefaria_link_default: 'false' }).insertHebrewSefariaLink, false);
   assert.ok(Object.prototype.hasOwnProperty.call(context.LINKER_INSERT_OVERRIDE_KEYS_, 'insert_hebrew_sefaria_link_default'));
 });
+
+// Each title has its own font, linked or not; the linked style replaces it
+// only while that title's "Hyperlink formatting override" is on.
+test('a linked title keeps its own font unless its hyperlink formatting override is on', () => {
+  const { ctx } = loadInsertion();
+  const role = (linked, language, overrides) => ctx.titleRoleName_(linked, language, { linkFormatOverride: overrides });
+  assert.equal(role(true, 'en', { en: true, he: true }), 'sefariaLink');
+  assert.equal(role(true, 'en', { en: false, he: true }), 'sourceTitle');
+  assert.equal(role(true, 'he', { en: true, he: false }), 'hebrewTitle');
+  assert.equal(role(true, 'he', { en: false, he: true }), 'hebrewLink');
+  assert.equal(role(false, 'he', { en: true, he: true }), 'hebrewTitle', 'an unlinked title never takes the linked style');
+  // A caller with no override settings (the Voices sheets path) gets the
+  // linked style, as linked titles always had.
+  assert.equal(ctx.titleRoleName_(true, 'en'), 'sefariaLink');
+});
+
+test('getTypographySettings reads each override, unset meaning on', () => {
+  assert.deepEqual({ ...loadPreferences({}).ctx.getTypographySettings().linkFormatOverride }, { en: true, he: true });
+  const { ctx, props } = loadPreferences({ sefaria_link_format_override: 'false', hebrew_link_format_override: 'true' });
+  assert.deepEqual({ ...ctx.getTypographySettings(props).linkFormatOverride }, { en: false, he: true });
+  const defaults = ctx.getDefaultPreferences();
+  assert.equal(defaults.sefaria_link_format_override, true);
+  assert.equal(defaults.hebrew_link_format_override, true);
+  for (const key of ['sefaria_link_format_override', 'hebrew_link_format_override']) {
+    assert.ok(vm.runInContext('SETTINGS', ctx).includes(key), key);
+  }
+});

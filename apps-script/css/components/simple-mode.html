@@ -3,59 +3,22 @@
  * components/simple-mode.css — the sidebar in Simple mode
  * (docs/first-run-setup-design.md §6).
  *
- * Simple mode hides secondary controls with CSS only; nothing leaves the DOM,
+ * Simple mode hides the search tools with CSS only; nothing leaves the DOM,
  * so selector contracts, RPC wiring and event bindings are identical in both
- * modes. "More options" (.is-more-open on .unified-sidebar) shows them again
- * in their usual form: the rules below only ever apply while it is closed.
+ * modes. Add Source, Insertion Options and the footer's Session Library,
+ * Quick Actions and Preferences buttons show in both modes. Preferences →
+ * Interface → Everything shows what Simple mode hides.
  */
 
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) #search-sort-mode,
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) #restore-corpus-menu-wrap,
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) #open-layout-settings,
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) #open-session-library,
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) .open-actions-panel,
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) #footer-actions-panel {
-  display: none !important;
-}
-
-/* The Preferences gear too, and with it the whole quick-actions row (Session
-   Library and Quick Actions are already hidden above), so the collapsed
-   footer is just Add Source and "More options". Preferences stays one click
-   away under "More options", and in the menu. */
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) .sidebar-footer .standard-quick-actions {
+.unified-sidebar[data-ui-mode="simple"] #search-sort-mode,
+.unified-sidebar[data-ui-mode="simple"] #restore-corpus-menu-wrap {
   display: none !important;
 }
 
 /* The Texts / Voices / Lexicon tabs. Shown when the sidebar was opened in
    Voices or Lexicon (a menu item the user switched back on), so they can get
    back to Texts. */
-.unified-sidebar[data-ui-mode="simple"][data-mode="texts"]:not(.is-more-open) .mode-switch-section {
+.unified-sidebar[data-ui-mode="simple"][data-mode="texts"] .mode-switch-section {
   display: none !important;
 }
-
-/* Add Source takes the whole row once Layout is hidden beside it. */
-.unified-sidebar[data-ui-mode="simple"]:not(.is-more-open) .sidebar-footer .primary-actions {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.more-options-toggle {
-  display: none;
-  appearance: none;
-  -webkit-appearance: none;
-  width: 100%;
-  margin: 6px 0 0;
-  padding: 4px 0;
-  border: none;
-  background: none;
-  color: var(--selected);
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: center;
-}
-.more-options-toggle:hover,
-.more-options-toggle:focus-visible { text-decoration: underline; }
-
-.unified-sidebar[data-ui-mode="simple"] .more-options-toggle { display: block; }
 </style>

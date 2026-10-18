@@ -96,12 +96,25 @@ test('mode normalization: the three modes, the legacy booleans, and junk', () =>
   }
 });
 
-test('the B&I pill cycles keep -> discard -> only -> keep', () => {
+// The card's three-way Vowels and Cantillation choices read and write the
+// same stored pairs the server reads (normalizeHebrewDisplayFilters_).
+test('Vowels and Cantillation choices round-trip through their stored pairs', () => {
   const card = loadCardScript();
-  assert.equal(card.ccNextEmphasisMode('keep'), 'discard');
-  assert.equal(card.ccNextEmphasisMode('discard'), 'only');
-  assert.equal(card.ccNextEmphasisMode('only'), 'keep');
-  assert.equal(card.ccNextEmphasisMode(''), 'discard');
+  for (const mode of ['never', 'tanakh', 'always']) {
+    const p = card.ccVowelsPrefs(mode);
+    assert.equal(card.ccVowelsMode(p.nekudot, p.nekudot_filter), mode, `vowels ${mode}`);
+  }
+  for (const mode of ['never', 'tanakh', 'torah']) {
+    const p = card.ccCantillationPrefs(mode);
+    assert.equal(card.ccCantillationMode(p.teamim, p.teamim_filter), mode, `cantillation ${mode}`);
+  }
+  // What earlier versions stored.
+  assert.equal(card.ccVowelsMode('true', 'always'), 'always');
+  assert.equal(card.ccVowelsMode(true, undefined), 'always');
+  assert.equal(card.ccVowelsMode('false', 'tanakh'), 'never');
+  assert.equal(card.ccCantillationMode('true', 'available'), 'tanakh');
+  assert.equal(card.ccCantillationMode(undefined, undefined), 'tanakh');
+  assert.equal(card.ccCantillationMode('false', 'torah'), 'never');
 });
 
 test('getTypographySettings carries the stored mode, legacy values included', () => {

@@ -124,6 +124,15 @@
       applyPreviewStyles(previewId, styleId);
     }
 
+    // A title's linked formatting shows only while its "Hyperlink formatting
+    // override" is on; off, a linked title keeps the title font.
+    function syncLinkOverrideFields() {
+      document.querySelectorAll('[data-link-override]').forEach(function (fields) {
+        var box = byId(fields.getAttribute('data-link-override'));
+        fields.hidden = !(box && box.checked);
+      });
+    }
+
     function updateTitlePreview(prefix) {
       updateStandardPreview(prefix + '_font', prefix + '_preview', prefix + '_font_style');
     }
@@ -189,28 +198,12 @@
 
 
     // Composition card state helpers — used by the shared composition card adapter below.
-    // "Vowels only in Tanakh" is its own switch; turning Vowels back on must
-    // not silently reset it to "always".
-    function vowelsTanakhOnly_() {
-      var box = byId('vowels_tanakh_only');
-      return !!(box && box.checked);
-    }
-
-    function _prefSetCompositionVowels(on) {
-      if (byId('nekudot')) byId('nekudot').value = on ? 'true' : 'false';
-      if (byId('nekudot_filter')) byId('nekudot_filter').value = on ? (vowelsTanakhOnly_() ? 'tanakh' : 'always') : 'false';
-    }
-
-    function syncVowelsTanakhOnly_() {
-      var vowelsOn = !byId('nekudot') || byId('nekudot').value !== 'false';
-      if (vowelsOn && byId('nekudot_filter')) {
-        byId('nekudot_filter').value = vowelsTanakhOnly_() ? 'tanakh' : 'always';
-      }
-    }
-
-    function _prefSetCompositionCantillation(on) {
-      if (byId('teamim')) byId('teamim').value = on ? 'true' : 'false';
-      if (byId('teamim_filter')) byId('teamim_filter').value = on ? 'available' : 'false';
+    // Vowels and Cantillation are three-way choices, each stored as a pair
+    // (ccVowelsPrefs / ccCantillationPrefs in shared/composition-card).
+    function _prefSetCompositionPair(pair) {
+      Object.keys(pair).forEach(function (id) {
+        if (byId(id)) byId(id).value = pair[id];
+      });
     }
 
     function _prefSetCompositionTransliteration(value) {
@@ -253,8 +246,6 @@
       initCompositionCard({
         containerId: 'composition-card-container',
         getState: function () {
-          var vowelsOn = byId('nekudot') ? byId('nekudot').value !== 'false' : true;
-          var cantillationOn = byId('teamim') ? byId('teamim').value !== 'false' : true;
           var translitCheck = byId('include_transliteration_default');
           var transliterationOn = translitCheck ? translitCheck.checked : false;
           var scheme = byId('transliteration_scheme') ? byId('transliteration_scheme').value : 'simple_english';
@@ -266,8 +257,8 @@
           var hebrewPunctuation = byId('hebrew_punctuation');
           var translationPunctuation = byId('translation_punctuation');
           return {
-            vowelsOn: vowelsOn,
-            cantillationOn: cantillationOn,
+            vowelsMode: ccVowelsMode((byId('nekudot') || {}).value, (byId('nekudot_filter') || {}).value),
+            cantillationMode: ccCantillationMode((byId('teamim') || {}).value, (byId('teamim_filter') || {}).value),
             hebrewPunctuationOn: hebrewPunctuation ? hebrewPunctuation.value !== 'false' : true,
             translationPunctuationOn: translationPunctuation ? translationPunctuation.value !== 'false' : true,
             transliterationOn: transliterationOn,
@@ -303,13 +294,7 @@
           }
         },
         onToggle: function (key) {
-          if (key === 'vowels') {
-            var on = byId('nekudot') ? byId('nekudot').value !== 'false' : true;
-            _prefSetCompositionVowels(!on);
-          } else if (key === 'cantillation') {
-            var on = byId('teamim') ? byId('teamim').value !== 'false' : true;
-            _prefSetCompositionCantillation(!on);
-          } else if (key === 'hebrewPunctuation' || key === 'translationPunctuation') {
+          if (key === 'hebrewPunctuation' || key === 'translationPunctuation') {
             var punctuationInput = byId(key === 'hebrewPunctuation' ? 'hebrew_punctuation' : 'translation_punctuation');
             if (punctuationInput) punctuationInput.value = punctuationInput.value === 'false' ? 'true' : 'false';
           } else if (key === 'translit') {
@@ -324,13 +309,12 @@
           } else if (key === 'details') {
             var detailsBox = byId('include_translation_source_info');
             if (detailsBox) detailsBox.checked = !detailsBox.checked;
-          } else if (key === 'emphasis') {
-            var emphasisBox = byId('source_emphasis_mode');
-            setPrefButtonGroup('source_emphasis_mode', ccNextEmphasisMode(emphasisBox ? emphasisBox.value : ''));
           }
         },
-        onEmphasisSelect: function (mode) {
-          setPrefButtonGroup('source_emphasis_mode', ccNormalizeEmphasisMode(mode));
+        onChoice: function (key, value) {
+          if (key === 'vowels') _prefSetCompositionPair(ccVowelsPrefs(value));
+          else if (key === 'cantillation') _prefSetCompositionPair(ccCantillationPrefs(value));
+          else if (key === 'emphasis') setPrefButtonGroup('source_emphasis_mode', ccNormalizeEmphasisMode(value));
         },
         onSchemeSelect: function (value) {
           _prefSetCompositionTransliteration(value);
@@ -713,9 +697,6 @@
               }
 
               setSegmentedValue('vowels', inferVowelsValue(preferences));
-              if (byId('vowels_tanakh_only')) {
-                byId('vowels_tanakh_only').checked = String(preferences.nekudot_filter || '').toLowerCase() === 'tanakh';
-              }
               setSegmentedValue('cantillation', inferCantillationValue(preferences));
 
               ['hebrew_font','translation_font','transliteration_font','source_title_font','sefaria_link_font','hebrew_title_font','hebrew_link_font','source_title_heading','transliteration_scheme','preferred_translation_language']
@@ -739,6 +720,7 @@
               updateStandardPreview('hebrew_font', 'hebrew_font_preview', 'hebrew_font_style');
               updateStandardPreview('translation_font', 'translation_font_preview', 'translation_font_style');
               TITLE_FONT_PREFIXES.forEach(updateTitlePreview);
+              syncLinkOverrideFields();
               updateTransliterationPreview();
               updateCompositionCard();
               updateInsertionOptions();
@@ -811,6 +793,10 @@
     TITLE_FONT_PREFIXES.forEach(function (prefix) {
       bindStyleControl(prefix + '_font_style', prefix + '_preview');
     });
+    document.querySelectorAll('[data-link-override]').forEach(function (fields) {
+      var box = byId(fields.getAttribute('data-link-override'));
+      if (box) box.addEventListener('change', syncLinkOverrideFields);
+    });
     document.querySelectorAll('[data-title-language]').forEach(function (tab) {
       tab.addEventListener('click', function () { showTitleLanguage(tab.getAttribute('data-title-language')); });
     });
@@ -858,7 +844,6 @@
       });
     }
 
-    if (byId('vowels_tanakh_only')) byId('vowels_tanakh_only').addEventListener('change', syncVowelsTanakhOnly_);
     byId('transliteration_font').addEventListener('change', function(){ updateTransliterationPreview(); updateCompositionCard(); });
     byId('transliteration_scheme').addEventListener('change', function(){ syncCustomSelect(byId('transliteration_scheme')); updateTransliterationPreview(); updateCompositionCard(); });
     if (byId('include_transliteration_default')) byId('include_transliteration_default').addEventListener('change', function(){ updateCompositionCard(); });
