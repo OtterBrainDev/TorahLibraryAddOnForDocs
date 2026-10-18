@@ -355,6 +355,20 @@ function documentFontOf_(typography) {
  *
  * @param {Object} [overrides] {size, style, preserveSourceEmphasis}
  */
+/**
+ * The source-emphasis mode for one role's paragraph. "Keep only" picks the
+ * translation's emphasized words (the Talmud's own words in Steinsaltz); the
+ * Hebrew's bold is a different thing (the Mishnah's opening word, the
+ * Gemara's "גמ׳"), so on any other role it means "keep": applied there it
+ * deleted nearly all of the Hebrew.
+ */
+function sourceEmphasisModeForRole_(typography, roleName) {
+  const mode = typography ? typography.sourceEmphasisMode : undefined;
+  // Already normalized (getTypographySettings, insertReference).
+  if (roleName !== 'translation' && mode === 'only') return 'keep';
+  return mode;
+}
+
 function applyRoleTypography_(paragraph, typography, roleName, overrides) {
   const role = (typography && typography.roles && typography.roles[roleName]) || null;
   if (!role) {
@@ -370,7 +384,7 @@ function applyRoleTypography_(paragraph, typography, roleName, overrides) {
       color: role.color,
       background: role.background,
       preserveSourceEmphasis: extra.preserveSourceEmphasis === true,
-      sourceEmphasisMode: typography ? typography.sourceEmphasisMode : undefined,
+      sourceEmphasisMode: sourceEmphasisModeForRole_(typography, roleName),
       emphasisMap: typography ? typography.emphasisMap : null,
       keepLines: typography ? typography.sectionHeadingLines : null,
       markFallback: !!(typography && typography.hebrewMarkFallback),

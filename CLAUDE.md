@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **412 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **416 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -168,7 +168,8 @@ and fix it before touching the feature you came to change.
   heading style, and reading the style at the insertion point.
 - `source-emphasis-mode.test.js` — the source's bold and italics: keep,
   discard, or keep only the emphasized words (what "keep only" removes, and
-  what it keeps: line markers, punctuation, unemphasized paragraphs).
+  what it keeps: line markers, punctuation, unemphasized paragraphs, and the
+  whole Hebrew — it applies to the translation only).
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped, every block
   formatted like the first; HTML-entity decoding (`&thinsp;` and friends).
