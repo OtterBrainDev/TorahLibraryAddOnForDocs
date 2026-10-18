@@ -356,17 +356,17 @@ function documentFontOf_(typography) {
  * @param {Object} [overrides] {size, style, preserveSourceEmphasis}
  */
 /**
- * The source-emphasis mode for one role's paragraph. "Keep only" picks the
- * translation's emphasized words (the Talmud's own words in Steinsaltz); the
- * Hebrew's bold is a different thing (the Mishnah's opening word, the
- * Gemara's "גמ׳"), so on any other role it means "keep": applied there it
- * deleted nearly all of the Hebrew.
+ * The source-emphasis mode for one role's paragraph. The B&I setting is the
+ * translation's: "Keep only" picks its emphasized words (the Talmud's own
+ * words in Steinsaltz) and "Discard" drops its bold and italics. The Hebrew's
+ * bold is a different thing (the Mishnah's opening word, the Gemara's
+ * "גמ׳"), so every other role always keeps its own: "Keep only" applied
+ * there deleted nearly all of the Hebrew.
  */
 function sourceEmphasisModeForRole_(typography, roleName) {
-  const mode = typography ? typography.sourceEmphasisMode : undefined;
   // Already normalized (getTypographySettings, insertReference).
-  if (roleName !== 'translation' && mode === 'only') return 'keep';
-  return mode;
+  if (roleName !== 'translation') return 'keep';
+  return typography ? typography.sourceEmphasisMode : undefined;
 }
 
 function applyRoleTypography_(paragraph, typography, roleName, overrides) {
@@ -776,8 +776,13 @@ function insertReference(data, opts) {
       return {};
     }
   })();
-  const transliterationTextRaw = (includeTransliteration && data.he)
-    ? transliterateHebrewHtmlPreservingBasicBreaks(data.he, transliterationScheme, {
+  // Read from the Hebrew as fetched (vowels and punctuation kept), joined
+  // with the same line markers as the Hebrew.
+  const transliterationHebrew = !includeTransliteration ? ""
+    : (segmentedData.pesukimFormatted === true ? data.he
+      : formatDataForPesukim(Object.assign({}, segmentedData, { he: transliterationSourceOf_(segmentedData) }), includeLineMarkers).he);
+  const transliterationTextRaw = (includeTransliteration && data.he && transliterationHebrew)
+    ? transliterateHebrewHtmlPreservingBasicBreaks(transliterationHebrew, transliterationScheme, {
         keepNiqqud: true,
         isBiblicalHebrew: isBiblicalHebrewText,
         dageshMode: isBiblicalHebrewText ? transliterationDageshMode : "none",

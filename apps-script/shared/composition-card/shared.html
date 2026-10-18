@@ -16,12 +16,16 @@
 //     // Fonts (the "fonts" feature in data-cc-features). getState() also returns
 //     //   fonts: { hebrew: {font, size}, translation: {font, size}, borrowMarks }
 //     // with font "" / size "" meaning "match the document" and borrowMarks the
-//     // hebrew_mark_fallback preference. The preview is drawn in those fonts,
-//     // with the marks a font lacks borrowed (or flagged) as the insert will.
+//     // stored hebrew_mark_fallback preference (on unless someone turned it off
+//     // before the switch was removed). The preview is drawn in those fonts,
+//     // with the marks a font lacks borrowed as the insert will. The borrowing
+//     // is a design decision noted in Help, not something the card talks about.
 //     onFontChange:   function(role, field, value) { /* role 'hebrew'|'translation', field 'font'|'size' */ },
-//     onBorrowMarksChange: function(on) { /* hebrew_mark_fallback */ },
 //     onMoreFontSettings:  function() { /* optional: shows "Colour, style and more…" */ }
 //   });
+//
+// The Source and Translation sections are <details>, closed so the card stays
+// short; "openSections" in data-cc-features opens them (Preferences).
 //
 // Then call updateCompositionCard() any time external state changes.
 
@@ -36,16 +40,18 @@ var CC_TRANSLIT_LABELS = {
   ipa_tiberian: "has\u02C8se\u02D0f\u025Br k\u0254l h\u0254\u02D0\u02C8\u0295\u0254m"
 };
 
-// The source's bold and italics (the `source_emphasis_mode` preference). The
-// B&I pill cycles through them in this order. Mirrors
-// normalizeSourceEmphasisMode_ in server/preferences.gs, including the legacy
-// boolean values of `preserve_source_emphasis`.
+// The translation's bold and italics (the `source_emphasis_mode` preference;
+// the Hebrew always keeps its own, sourceEmphasisModeForRole_ in
+// server/insertion.gs). The B&I pill cycles through them in this order.
+// Mirrors normalizeSourceEmphasisMode_ in server/preferences.gs, including the
+// legacy boolean values of `preserve_source_emphasis`.
 var CC_EMPHASIS_MODES = ['keep', 'discard', 'only'];
 var CC_EMPHASIS_TITLES = {
-  keep: 'Keep the source\u2019s bold and italics',
-  discard: 'Discard the source\u2019s bold and italics',
-  only: 'Keep ONLY the translation\u2019s bold and italics'
+  keep: 'Keep the translation\u2019s bold and italics',
+  discard: 'Discard the translation\u2019s bold and italics',
+  only: 'Keep ONLY the words the translation puts in bold or italics'
 };
+var CC_EMPHASIS_SUMMARY = { keep: 'B&I kept', discard: 'B&I dropped', only: 'B&I words only' };
 
 function ccNormalizeEmphasisMode(value) {
   var v = String(value == null ? '' : value).trim().toLowerCase();
@@ -108,6 +114,8 @@ function initCompositionCard(config) {
     }
   });
 
+  if (features.indexOf('openSections') >= 0) $container.find('.cc-section').prop('open', true);
+
   _ccFontsEnabled = features.indexOf('fonts') >= 0 && typeof planHebrewMarkFallback === 'function';
   _bindCompositionCardEvents();
   updateCompositionCard();
@@ -146,29 +154,17 @@ function _ccFontChipLabel(roleState) {
 }
 
 /**
- * The line under the Hebrew font button: says which marks the font cannot
- * draw and what happens to them, judged from the preview text as shown (so
- * with Cantillation off, a font that lacks only cantillation says nothing).
+ * The line under the Hebrew font button: only when the font is not one Docs
+ * has, so the text will be drawn in another font. Which marks a font lacks,
+ * and the Noto marks borrowed for them, are not shown (Help explains it).
  */
-function _ccFontNote(fontState, plan, previewText) {
+function _ccFontNote(fontState) {
   var font = _ccEffectiveFont(fontState.hebrew);
   var info = typeof describeHebrewFont === 'function' ? describeHebrewFont(font) : { status: 'unknown' };
   if (info.status === 'not-in-docs') {
-    return { tone: 'warn', text: font + ' isn\u2019t a Google Docs font: Docs will show the text in another font.' };
+    return font + ' isn\u2019t a Google Docs font: Docs will show the text in another font.';
   }
-  if (!plan.length) return null;
-  var cantillation = plan.some(function (range) {
-    for (var i = range.start; i <= range.end; i++) {
-      var cp = previewText.charCodeAt(i);
-      if (cp >= 0x0591 && cp <= 0x05AF) return true;
-    }
-    return false;
-  });
-  var what = cantillation ? (info.lacksVowels ? 'Cantillation and some vowels' : 'Cantillation') : 'A few marks';
-  if (fontState.borrowMarks) {
-    return { tone: 'info', text: what + ' borrowed from ' + plan[0].font + '; ' + font + ' has none.', action: 'Don\u2019t borrow' };
-  }
-  return { tone: 'warn', text: font + ' has no ' + (cantillation ? 'cantillation marks' : 'glyphs for some marks') + ': Docs may show them as empty boxes (the letters in red).', action: 'Borrow from Noto' };
+  return '';
 }
 
 function _ccUpdateFonts(state) {
@@ -185,16 +181,11 @@ function _ccUpdateFonts(state) {
     $('#cc-translation-preview').css('font-family', previewFontStack(translationFont, 'serif'));
   }
 
-  // Each Hebrew sample, drawn as Docs will: borrowed marks in Noto, or
-  // flagged when borrowing is off.
-  var visiblePlan = [];
-  var visibleText = '';
+  // Each Hebrew sample, drawn as Docs will (marks the font lacks in Noto).
   $('.cc-hebrew-text').each(function () {
-    var text = this.textContent;
-    var plan = typeof renderHebrewPreviewText === 'function'
-      ? renderHebrewPreviewText(this, text, hebrewFont, fontState.borrowMarks)
-      : [];
-    if (!this.hidden) { visiblePlan = plan; visibleText = text; }
+    if (typeof renderHebrewPreviewText === 'function') {
+      renderHebrewPreviewText(this, this.textContent, hebrewFont, fontState.borrowMarks);
+    }
   });
 
   if (!_ccFontsEnabled) return;
@@ -202,12 +193,8 @@ function _ccUpdateFonts(state) {
   $('#cc-hebrew-font-chip .cc-font-chip-name').text(_ccFontChipLabel(fontState.hebrew));
   $('#cc-translation-font-chip .cc-font-chip-name').text(_ccFontChipLabel(fontState.translation));
 
-  var note = _ccFontNote(fontState, visiblePlan, visibleText);
-  var $note = $('#cc-hebrew-font-note');
-  $note.prop('hidden', !note)
-    .toggleClass('is-warn', !!note && note.tone === 'warn')
-    .find('.cc-font-note-text').text(note ? note.text : '');
-  $('#cc-hebrew-font-note-action').prop('hidden', !(note && note.action)).text(note && note.action ? note.action : '');
+  var note = _ccFontNote(fontState);
+  $('#cc-hebrew-font-note').prop('hidden', !note).text(note);
 
   if (_ccFontPanelRole) _ccSyncFontPanel(fontState);
 }
@@ -226,19 +213,8 @@ function _ccSyncFontPanel(fontState) {
 
   var font = _ccEffectiveFont(roleState);
   var info = typeof describeHebrewFont === 'function' ? describeHebrewFont(font) : { status: 'unknown' };
-  var help = '';
-  if (role === 'hebrew') {
-    if (info.status === 'full') help = font + ' has every vowel and cantillation mark.';
-    else if (info.status === 'borrowed') help = font + ' is missing ' + (info.lacksCantillation ? 'cantillation marks' : 'a few marks') + (info.lacksVowels ? ' and some vowels' : '') + '.';
-    else if (info.status === 'not-in-docs') help = font + ' isn\u2019t a Google Docs font: Docs will show the text in another font.';
-    else if (font) help = 'Which marks ' + font + ' has in Docs isn\u2019t known here: check the inserted text.';
-  } else if (info.status === 'not-in-docs') {
-    help = font + ' isn\u2019t a Google Docs font: Docs will show the text in another font.';
-  }
+  var help = info.status === 'not-in-docs' ? font + ' isn\u2019t a Google Docs font: Docs will show the text in another font.' : '';
   $('#cc-font-panel-help').text(help).prop('hidden', !help);
-  $('#cc-font-borrow-row').prop('hidden', !(role === 'hebrew' && info.status === 'borrowed'));
-  $('#cc-font-borrow').prop('checked', fontState.borrowMarks);
-  $('#cc-font-borrow-label').text('Borrow them from ' + (info.lender || 'Noto') + ' (only the missing marks; letters stay in ' + font + ')');
 }
 
 function ccOpenFontPanel(role, chip) {
@@ -269,6 +245,21 @@ function ccCloseFontPanel(returnFocus) {
   $('#cc-font-panel').prop('hidden', true);
   $('.cc-font-chip').attr('aria-expanded', 'false');
   if (returnFocus) $('#cc-' + role + '-font-chip').trigger('focus');
+}
+
+// One line each for the closed Source and Translation sections.
+function ccSourceSummary(state, punctuationOn, scheme) {
+  var marks = [];
+  if (state.vowelsOn) marks.push('Vowels');
+  if (state.cantillationOn) marks.push('Cantillation');
+  if (punctuationOn) marks.push('Punctuation');
+  var parts = [marks.length ? marks.join(', ') : 'Letters only'];
+  if (scheme && scheme !== 'none') parts.push('Translit');
+  return parts.join(' \u00B7 ');
+}
+
+function ccTranslationSummary(punctuationOn, emphasisMode) {
+  return (punctuationOn ? 'Punctuation' : 'No punctuation') + ' \u00B7 ' + CC_EMPHASIS_SUMMARY[emphasisMode];
 }
 
 function closeCompositionCardTranslitMenu() {
@@ -311,22 +302,22 @@ function updateCompositionCard() {
     .text(state.transliterationOn ? 'Translit: On' : 'Translit: Off')
     .attr('aria-pressed', state.transliterationOn ? 'true' : 'false');
 
-  // Lines
+  // Line numbers (beside "Line by line", in shared/insertion-options)
   $('#cc-lines-toggle')
-    .text(state.linesOn ? 'Lines: On' : 'Lines: Off')
+    .text(state.linesOn ? 'Line #s: On' : 'Line #s: Off')
     .attr('aria-pressed', state.linesOn ? 'true' : 'false');
 
-  // Source citation
+  // Source citation (same row)
   $('#cc-details-toggle')
-    .text(state.detailsOn ? '🔗 Sources: On' : '🔗 Sources: Off')
+    .text(state.detailsOn ? 'Citation: On' : 'Citation: Off')
     .attr('aria-pressed', state.detailsOn ? 'true' : 'false');
 
-  // Source bold and italics: keep (active) → discard (faded) → only (inverted)
+  // Translation bold and italics: keep (active) → discard (faded) → only (inverted)
   var emphasisMode = ccNormalizeEmphasisMode(state.emphasisMode);
   $('#cc-emphasis-toggle')
     .attr('data-mode', emphasisMode)
     .attr('title', CC_EMPHASIS_TITLES[emphasisMode])
-    .attr('aria-label', 'Source bold and italics: ' + (emphasisMode === 'only' ? 'keep only' : emphasisMode) + '. Click to change.')
+    .attr('aria-label', 'Translation bold and italics: ' + (emphasisMode === 'only' ? 'keep only' : emphasisMode) + '. Click to change.')
     .toggleClass('is-off', emphasisMode === 'discard')
     .toggleClass('is-inverted', emphasisMode === 'only')
     .find('.cc-emphasis-label').each(function () {
@@ -352,6 +343,10 @@ function updateCompositionCard() {
     .text(translitLabel)
     .toggleClass('is-none', !state.transliterationOn)
     .attr('data-value', scheme);
+
+  // The collapsed sections' summary lines
+  $('#cc-source-state').text(ccSourceSummary(state, hebrewPunctuationOn, scheme));
+  $('#cc-translation-state').text(ccTranslationSummary(translationPunctuationOn, emphasisMode));
 
   // Scheme menu selection state
   $('.cc-translit-option').each(function () {
@@ -438,14 +433,6 @@ function _bindCompositionCardEvents() {
     var value = raw === '' ? '' : (size > 0 && size <= 400 ? String(size) : null);
     if (value === null) { this.value = ''; value = ''; }
     fontChange(_ccFontPanelRole, 'size', value);
-  });
-  function borrowChange(on) {
-    if (_ccConfig.onBorrowMarksChange) _ccConfig.onBorrowMarksChange(on);
-    updateCompositionCard();
-  }
-  $('#cc-font-borrow').off('change.cc').on('change.cc', function () { borrowChange(this.checked); });
-  $('#cc-hebrew-font-note-action').off('click.cc').on('click.cc', function () {
-    borrowChange(!_ccFontState(_ccConfig.getState()).borrowMarks);
   });
   $('#cc-font-done').off('click.cc').on('click.cc', function () { ccCloseFontPanel(true); });
   $('#cc-font-more').off('click.cc').on('click.cc', function () {

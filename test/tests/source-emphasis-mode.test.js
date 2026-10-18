@@ -267,3 +267,14 @@ test('keep only applies to the translation: the Hebrew keeps all its words and i
   ctx.applyRoleTypography_(en.paragraph, typography, 'translation', { preserveSourceEmphasis: true });
   assert.equal(en.text(), 'From when one may recite');
 });
+
+test('discard applies to the translation only: the Hebrew keeps its own bold', () => {
+  const role = { font: '', size: null, style: 'normal', color: null, background: null };
+  const typography = { roles: { hebrew: role, translation: role }, sourceEmphasisMode: 'discard', emphasisMap: null };
+  const he = fakeParagraph('<b>מֵאֵימָתַי</b> קוֹרִין אֶת שְׁמַע בְּעַרְבִין');
+  ctx.applyRoleTypography_(he.paragraph, typography, 'hebrew', { preserveSourceEmphasis: true });
+  assert.equal(he.bolded(), 'מֵאֵימָתַי');
+  const en = fakeParagraph(PASSAGE);
+  ctx.applyRoleTypography_(en.paragraph, typography, 'translation', { preserveSourceEmphasis: true });
+  assert.equal(en.bolded(), '');
+});

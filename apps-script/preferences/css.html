@@ -96,12 +96,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.55);
+    background: var(--busy-scrim);
   }
 
-  .hide > img {
-    display: block;
-  }
+  /* The loading card is the busy overlay's (shared/ui/busy-overlay). */
 
   /* The intro scrolls away; only the tab bar stays pinned. (Both used to be
      sticky at top: 0, so the intro showed through below the tabs.)        */

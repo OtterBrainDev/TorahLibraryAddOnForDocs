@@ -513,19 +513,25 @@
   background: #1f3f75;
 }
 /* =============================================================
-   "LINE BY LINE" (#layout-rows-toggle): one table row per line for the
-   side-by-side layouts. Its own row under the pickers, outside
+   The line options: "LINE BY LINE" (#layout-rows-toggle, one table row per
+   line for the side-by-side layouts), then the composition card's Line #s
+   and Citation pills. Their own row under the pickers, outside
    .display-layout-section so the dropdown panels still open right under
    the triggers.
    ============================================================= */
 
 .layout-rows-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
 }
 
-.layout-rows-row:has(> .layout-rows-toggle:not([hidden])) {
-  margin-top: 8px;
+.layout-rows-row .cc-line-pill {
+  height: 24px;
+  padding: 0 10px;
+  line-height: 22px;
 }
 
 .layout-rows-toggle {

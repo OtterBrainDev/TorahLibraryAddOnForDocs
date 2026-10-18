@@ -38,11 +38,6 @@ function _sidebarCompositionOnFontChange(role, field, value) {
   saveSidebarPreference(payload, function () { updateCompositionCard(); });
 }
 
-function _sidebarCompositionOnBorrowMarksChange(on) {
-  effectivePreferences.hebrew_mark_fallback = on;
-  saveSidebarPreference({ hebrew_mark_fallback: on }, function () { updateCompositionCard(); });
-}
-
 function _sidebarCompositionOnToggle(key) {
   if (key === 'vowels') {
     var $el = $('.wants-vowels');
@@ -159,7 +154,6 @@ function bindSidebarCompositionCard() {
     onToggle: _sidebarCompositionOnToggle,
     onSchemeSelect: _sidebarCompositionOnSchemeSelect,
     onFontChange: _sidebarCompositionOnFontChange,
-    onBorrowMarksChange: _sidebarCompositionOnBorrowMarksChange,
     onMoreFontSettings: function () { google.script.run.preferencesPopup(); }
   });
 }

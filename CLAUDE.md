@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **416 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **424 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -190,6 +190,9 @@ and fix it before touching the feature you came to change.
   settings: what is stripped (sof pasuq, paseq, {פ}, maqaf → space) and kept
   (ר', רש"י, G-d, 3:16, tags, entities), the two toggles independent, refs
   untouched, and stripping before the divine-name substitutes.
+- `transliteration-source.test.js` — the transliteration is read from the
+  Hebrew as fetched (vowels and punctuation kept, divine names applied),
+  never the stripped Hebrew; `aligned-rows.test.js` pins the insert side.
 - `aligned-rows.test.js` — the side-by-side "Line by line" setting: each
   verse paired with its translation in its own table row (numbering, spanning
   refs, missing segments, per-row transliteration); off keeps one row.
@@ -251,7 +254,8 @@ and in `test/ui/`:
   advanced settings", and the server tells each page its mode.
 - `font-pickers.test.js` — every composition-card host has the font buttons
   and loads `shared/fonts` first; Preferences' font lists come from that one
-  list; fonts Docs does not have (SBL Hebrew, Ezra SIL) are never offered.
+  list; fonts Docs does not have (SBL Hebrew, Ezra SIL) are never offered;
+  no font UI mentions borrowed marks (Help does).
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

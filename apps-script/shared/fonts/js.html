@@ -130,8 +130,8 @@ function describeHebrewFont(font) {
 // ---- options for a <select> ----------------------------------------------
 
 /**
- * Fills a font <select> from the lists above. `role` 'hebrew' groups the
- * Hebrew fonts by what they can draw; any other role lists them together.
+ * Fills a font <select> from the lists above. `role` 'hebrew' lists the
+ * Hebrew fonts first; any other role lists them as "Hebrew and Latin".
  * The first option is "Match the document" (value ""). A current value not in
  * the lists (an old choice, a font Docs does not have) is kept, labelled.
  * Builds with createElement; nothing is parsed as HTML.
@@ -160,8 +160,9 @@ function populateFontSelect(select, role, currentValue) {
 
   option(select, '', firstLabel);
   if (role === 'hebrew') {
-    group('Every vowel and cantillation mark', FONT_PICKER_HEBREW.filter(function (f) { return describeHebrewFont(f).status === 'full'; }));
-    group('Missing marks borrowed from Noto', FONT_PICKER_HEBREW.filter(function (f) { return describeHebrewFont(f).status === 'borrowed'; }));
+    // One list: which marks a font lacks (and borrows from Noto) is not the
+    // picker's business; Help explains it.
+    group('Hebrew fonts', FONT_PICKER_HEBREW);
   } else {
     group('Hebrew and Latin', FONT_PICKER_HEBREW);
   }

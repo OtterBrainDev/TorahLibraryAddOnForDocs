@@ -214,19 +214,76 @@
   margin-top: 4px;
 }
 
-/* Translation-only options, set apart from the Hebrew above */
-.cc-translation {
-  margin-top: 10px;
-  padding-top: 8px;
+/* The Source and Translation sections: <details>, closed to one line that
+   says what is set, opened to the sample and its pills. */
+.cc-section {
+  margin-top: 8px;
   border-top: 1px solid #ece7df;
 }
 
-.cc-translation-label {
+.cc-section-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 2px 5px;
+  cursor: pointer;
+  list-style: none;
+  text-align: left;
+}
+
+.cc-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A chevron that turns when the section opens. */
+.cc-section-summary::before {
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid #8b8b8b;
+  content: "";
+  transition: transform 0.15s ease;
+}
+
+.cc-section[open] > .cc-section-summary::before {
+  transform: rotate(90deg);
+}
+
+.cc-section-summary:hover .cc-section-label {
+  color: var(--sefaria-blue);
+}
+
+.cc-section-summary:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid rgba(31, 59, 104, 0.35);
+  outline-offset: 2px;
+}
+
+.cc-section-label {
+  flex: 0 0 auto;
   color: #6b7280;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+}
+
+.cc-section-state {
+  min-width: 0;
+  color: #8b8b8b;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* Open, each setting shows on its own pill. */
+.cc-section[open] .cc-section-state {
+  display: none;
+}
+
+.cc-section-body {
+  padding-bottom: 4px;
 }
 
 .cc-translation-text {
@@ -245,15 +302,7 @@
   line-height: 1.35;
 }
 
-/* Secondary pills row */
-.cc-secondary-pills {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-/* Source bold and italics: a three-state pill, so it is styled by mode rather
+/* Translation bold and italics: a three-state pill, so it is styled by mode rather
    than aria-pressed. Keep = active, Discard = faded, Keep only = inverted.
    The pill's own weight is reset so only the glyph's <b> is bold. */
 .cc-emphasis-pill {
@@ -304,7 +353,7 @@
 }
 
 /* Fonts: a quiet button under each sample naming the font it is drawn in,
-   one panel for both, and a line when the font cannot draw some marks. */
+   one panel for both, and a line when the font is not one Docs has. */
 .cc-font-row {
   display: flex;
   justify-content: center;
@@ -335,7 +384,6 @@
 }
 
 .cc-font-chip:focus-visible,
-.cc-font-note-action:focus-visible,
 .cc-font-more:focus-visible,
 .cc-font-done:focus-visible {
   outline: 2px solid rgba(31, 59, 104, 0.35);
@@ -363,7 +411,11 @@
 .cc-font-note {
   margin: 6px auto 0;
   max-width: 34em;
-  color: #4b5563;
+  padding: 4px 8px;
+  background: #fdf3e1;
+  border: 1px solid #f0d9a8;
+  border-radius: 6px;
+  color: #6b4a00;
   font-size: 11px;
   line-height: 1.4;
 }
@@ -372,32 +424,10 @@
   display: none;
 }
 
-.cc-font-note.is-warn {
-  padding: 4px 8px;
-  background: #fdf3e1;
-  border: 1px solid #f0d9a8;
-  border-radius: 6px;
-  color: #6b4a00;
-}
-
-.cc-font-note-action {
-  padding: 0;
-  cursor: pointer;
-  background: none;
-  border: 0;
-  color: var(--sefaria-blue);
-  font-size: inherit;
-  font-weight: 700;
-  text-decoration: underline;
-}
-
-.cc-font-note-action[hidden] {
-  display: none;
-}
-
-/* In the samples, with borrowing off: a letter carrying a mark the font
-   cannot draw. Docs may show the mark as an empty box; the preview colours
-   the letter instead of guessing what the reader's computer will draw. */
+/* A letter carrying a mark the font cannot draw, when borrowing is off (a
+   setting from before the switch was removed). Docs may show the mark as an
+   empty box; the preview colours the letter instead of guessing what the
+   reader's computer will draw. */
 .font-missing-mark {
   color: #c5221f;
 }
@@ -470,24 +500,8 @@
 }
 
 .cc-font-panel-help[hidden],
-.cc-font-borrow[hidden],
 .cc-font-more[hidden] {
   display: none;
-}
-
-.cc-font-borrow {
-  display: flex;
-  gap: 6px;
-  align-items: flex-start;
-  margin-top: 6px;
-  color: #333;
-  font-size: 12px;
-  line-height: 1.35;
-}
-
-.cc-font-borrow input {
-  flex: 0 0 auto;
-  margin-top: 2px;
 }
 
 .cc-font-panel-actions {

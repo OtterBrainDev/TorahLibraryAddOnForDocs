@@ -107,8 +107,8 @@ function updateInsertionOptions() {
     .append($selectedLayout.find('.layout-icon').first().clone());
 
   // A layout only means something with both languages, and a translation-only
-  // insert has no Hebrew to vocalise or transliterate. Source and link
-  // settings stay reachable through the composition card's secondary pills.
+  // insert has no Hebrew to vocalise or transliterate. Line numbers and the
+  // citation stay reachable in the row under the pickers.
   // Preferences keeps everything visible: each is still the default for an
   // insert that picks another display.
   var hide = _ioConfig.hideInapplicable !== false;
@@ -123,6 +123,10 @@ function updateInsertionOptions() {
     .text(alignedRows ? 'Line by line: On' : 'Line by line: Off')
     .toggleClass('is-on', alignedRows)
     .attr('aria-pressed', alignedRows ? 'true' : 'false');
-  $root.find('.cc-hebrew-stage, .cc-translit-wrap').toggle(!hide || mode !== 'en');
+  // The card's Source section (Hebrew marks, font, transliteration) means
+  // nothing to a translation-only insert, nor its Translation section to a
+  // Hebrew-only one.
+  $root.find('.cc-section--source').toggle(!hide || mode !== 'en');
+  $root.find('.cc-section--translation').toggle(!hide || mode !== 'he');
 }
 </script>

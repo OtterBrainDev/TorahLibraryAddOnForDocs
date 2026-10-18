@@ -6,6 +6,7 @@
     <?!= include('shared/ui/head'); ?>
     <?!= include('shared/css/native-controls'); ?>
     <?!= include('css/tokens'); ?>
+    <?!= include('shared/ui/busy-overlay'); ?>
     <?!= include('shared/insertion-options/css'); ?>
     <?!= include('shared/composition-card/css'); ?>
     <style>
@@ -415,7 +416,7 @@
               </div>
               <div class="customize-section">
                 <div class="customize-section-label">Insertion Format</div>
-                <div class="cc-card cc-card--stacked" id="composition-card-container" data-cc-features="linkedTitle,secondaryPills,fonts" aria-label="Composition for these insertions">
+                <div class="cc-card cc-card--stacked" id="composition-card-container" data-cc-features="linkedTitle,fonts" aria-label="Composition for these insertions">
                   <?!= include('shared/composition-card/markup') ?>
                 </div>
               </div>
@@ -594,9 +595,6 @@
             onFontChange: function (role, field, value) {
               custom[role + (field === 'size' ? '_font_size' : '_font')] = String(value);
             },
-            onBorrowMarksChange: function (on) {
-              custom.hebrew_mark_fallback = on ? 'true' : 'false';
-            },
             onToggle: function (key) {
               if (key === 'vowels') flip('nekudot');
               else if (key === 'cantillation') flip('teamim');
@@ -633,13 +631,16 @@
             var changed = changedInsertPrefs();
             button.disabled = true;
             button.textContent = 'Saving…';
+            modalBusyShow('Saving your defaults…');
             google.script.run
               .withSuccessHandler(function () {
+                modalBusyHide();
                 defaults = Object.assign({}, custom);
                 button.textContent = label;
                 refreshCustomize();
               })
               .withFailureHandler(function () {
+                modalBusyHide();
                 button.textContent = 'Could not save — try again';
                 button.disabled = false;
               })

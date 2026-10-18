@@ -13,9 +13,59 @@ heading until the next release consolidates it.
 > preference `hebrew_mark_fallback`, default `true`. Upgrading users are
 > migrated on first open to `true` (only when unset). It changes only the
 > Hebrew marks the chosen font has no glyph for, which until now showed as
-> empty boxes or in whatever font the reader's computer fell back to. Turn it
-> off in Preferences → Fonts → Hebrew, or from the note under the Layout tray's
-> Hebrew font button.
+> empty boxes or in whatever font the reader's computer fell back to. It has no
+> switch: borrowing the missing marks is how the add-on works, explained in
+> Help → Layout Settings → *Fonts and cantillation marks*. (A stored `false`
+> from a test build is still honoured; Preferences → Reset To Defaults clears
+> it.)
+
+### Layout Settings, dialogs and setup
+
+#### Changed
+
+- **Source and Translation fold away.** In the composition card (the Layout
+  tray, Preferences' insertion preview, Link Texts' *Customize this
+  insertion*), the Hebrew settings and the translation settings are each a
+  section that folds to one line saying what is set (*Vowels, Cantillation,
+  Punctuation · Translit*; *Punctuation · B&I kept*). Click it to open the
+  sample and its switches. They start folded in the Layout tray and Link
+  Texts, open in Preferences. With Display set to the translation alone the
+  Source section is hidden, and with the Hebrew alone the Translation section.
+- **Line #s and Citation, beside Line by line.** The *Lines* and *🔗 Sources*
+  buttons are renamed **Line #s** (number each verse or line) and **Citation**
+  (the edition and license credit under the text), and moved from the bottom
+  of the card to the row under the Display and Layout pickers, next to *Line by
+  line*.
+- **B&I sits with the translation.** The bold-and-italics button moved next to
+  the translation's *Punctuation* button, and its tooltips now say what it
+  does: it acts on the translation's bold and italics.
+- **Fonts say less.** The font buttons, the font panel, the font lists and
+  Preferences → Fonts no longer explain which marks a font lacks or offer to
+  stop borrowing them; the font lists are one *Hebrew fonts* group. Help
+  explains the borrowing once, under Layout Settings. A warning stays for a
+  saved font that Google Docs does not have.
+- **The welcome dialog looks finished.** First-run setup has a header with the
+  name and a three-step progress bar, a one-line introduction, choices as
+  pills that highlight when picked, a preview framed like a page, and proper
+  Continue / Back buttons.
+
+#### Fixed
+
+- **Saving looked like a hang.** Saving in Preferences (Save Defaults, Save &
+  Close, Reset To Defaults, Refresh, switching Simple / Everything), Link
+  Texts' *Save as defaults*, and finishing first-run setup now cover the dialog
+  with a spinner and what is happening (*Saving preferences…*) until the
+  server answers. Before, the only sign was a small spinner in the footer, or
+  none at all.
+- **B&I *Discard* also removed the Hebrew's bold.** The B&I setting applies to
+  the translation only. *Discard* was still applied to the Hebrew, dropping
+  the bold Sefaria puts on a word like the Mishnah's opening מֵאֵימָתַי. The
+  Hebrew now always keeps its own bold and italics.
+- **Transliteration read the stripped Hebrew.** With Vowels (or Punctuation)
+  off, the transliteration was made from the Hebrew as inserted, so it spelled
+  out bare consonants. It is now always read from the fully vowelled text
+  Sefaria sends, whatever the Hebrew shows; the divine-name substitutes still
+  apply. Same in the sidebar preview and in *Line by line* rows.
 
 ### Source bold and italics
 
@@ -50,16 +100,13 @@ heading until the next release consolidates it.
   insertion*.
 - **The preview is drawn in the real font.** The samples load the chosen font
   (or the document's) and draw the marks it lacks the way the insert will:
-  borrowed from Noto, or, with borrowing off, the letters carrying them in red
-  with a note that Docs may show boxes.
+  borrowed from Noto.
 
 #### Changed
 
-- **Honest font lists.** Every font list comes from one place and groups the
-  Hebrew fonts by what they can draw: *Every vowel and cantillation mark*
-  (Noto Serif / Sans / Rashi Hebrew, Cardo, Tinos, Arimo) and *Missing marks
-  borrowed from Noto* (David Libre, Frank Ruhl Libre, Heebo, …). David Libre and
-  other Google Hebrew fonts are new to the lists. Ezra SIL, SBL Hebrew, David
+- **Honest font lists.** Every font list comes from one place, with the
+  Hebrew fonts first. David Libre and other Google Hebrew fonts are new to the
+  lists. Ezra SIL, SBL Hebrew, David
   and Taamey Frank CLM are no longer offered: they are not Google Docs fonts,
   so Docs showed the text in another font. A saved choice of one is kept and
   labelled "(not in Google Docs)".

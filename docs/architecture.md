@@ -167,10 +167,15 @@ template (head, api, feedback, state, dom, core-shared). The insertion
 options are shared by more than one entry, so they live under `shared/`
 too and know nothing about their host:
 
-- `shared/composition-card/*` — vowels, cantillation, transliteration,
-  linked title, Lines, Sources, B&I (`initCompositionCard`). Sidebar,
-  Preferences and the Link Texts dialog.
-- `shared/insertion-options/*` — the Display and Layout pickers
+- `shared/composition-card/*` — linked title, then a Source section
+  (vowels, cantillation, Hebrew punctuation, font, transliteration) and a
+  Translation section (punctuation, B&I, font), each a `<details>` that folds
+  to a summary line; `openSections` in `data-cc-features` opens them
+  (Preferences). `initCompositionCard` also drives the Line #s and Citation
+  pills, which sit in the insertion options' row by id. Sidebar, Preferences
+  and the Link Texts dialog.
+- `shared/insertion-options/*` — the Display and Layout pickers, and the row
+  under them with Line by line, Line #s and Citation
   (`initInsertionOptions`). The sidebar's Layout tray, the Link Texts
   dialog's "Customize this insertion" panel, and Preferences. Each host
   passes its own state (`getState`) and decides what a choice does
@@ -180,6 +185,9 @@ too and know nothing about their host:
   `hideInapplicable: false` (every default stays editable).
   `test/ui/insertion-options.test.js` fails if a page grows its own copy of
   the cards, their CSS, or their wiring.
+- `shared/ui/busy-overlay` — `modalBusyShow` / `modalBusyHide`: the dialogs'
+  spinner overlay while a save runs (Preferences, Link Texts, first-run
+  setup), in the sidebar busy overlay's colours.
 - `.cc-card--stacked` (composition card CSS) — the card's single centred
   column for narrow hosts (sidebar tray, Link Texts dialog).
 - `shared/fonts/*` — every font list (`populateFontSelect`) and the
