@@ -43,13 +43,23 @@
 var CC_TRANSLIT_LABELS = {
   none: 'None',
   simple_english: "ha-sefer kol-ha'am",
-  traditional: "ha-\u0113fer kol-h\u0101-\u02BFam",
+  traditional: "ha-s\u0113fer kol-h\u0101-\u02BFam",
   modern_israeli: "ha-sefer kol-ha'am",
   ashkenazi: "ha-seifer kol-ho'om",
   academic_full: "ha-s\u0113fer kol-h\u0101-\u02BF\u0101m",
   ipa_modern: "ha\u02C8sefe\u0281 kol ha\u02C8\u0294am",
   ipa_tiberian: "has\u02C8se\u02D0f\u025Br k\u0254l h\u0254\u02D0\u02C8\u0295\u0254m"
 };
+
+// The samples' maqaf, transliterated: "kol-" (כָל־הָעָם) here, "et-" / "ʾet-"
+// (אֶת־דְּבָרַי) and "ʿal-" (עַל־לְבַבְכֶם) in Preferences' own samples. With the Hebrew's punctuation
+// off the maqaf is a word break (stripPunctuationFromText on the server), in
+// the transliteration as in the Hebrew. The article's "ha-" is not a maqaf.
+var CC_TRANSLIT_MAQAF_RE = /(^|\s)(kol|\u02BEet|et|es|\u02BFal)-/gi;
+
+function ccTranslitSample(text, hebrewPunctuationOn) {
+  return hebrewPunctuationOn ? text : String(text).replace(CC_TRANSLIT_MAQAF_RE, '$1$2 ');
+}
 
 // The translation's bold and italics (the `source_emphasis_mode` preference;
 // the Hebrew always keeps its own, sourceEmphasisModeForRole_ in
@@ -408,6 +418,7 @@ function updateCompositionCard() {
       ? (CC_TRANSLIT_LABELS[scheme] || CC_TRANSLIT_LABELS.simple_english)
       : 'A\u05D0 Translit';
   }
+  if (state.transliterationOn) translitLabel = ccTranslitSample(translitLabel, hebrewPunctuationOn);
   $('#cc-translit-toggle')
     .text(translitLabel)
     .toggleClass('is-none', !state.transliterationOn)

@@ -67,6 +67,26 @@ heading until the next release consolidates it.
   and more…") now shows *Opening Preferences…* over the sidebar until the
   dialog is on its way, and further clicks do nothing meanwhile, so it can't
   be opened twice.
+- **Hebrew "Punctuation: Off" now applies to the transliteration.** The
+  transliteration was read from the Hebrew as fetched, punctuation included,
+  so with the Hebrew's punctuation off it still carried the sof pasuq and
+  joined maqaf words with a hyphen (*kol-ha'am*). It follows the Hebrew
+  setting now (*kol ha'am*), in the insert, the sidebar preview and the
+  Insertion Options sample; vowels are still read as fetched, as before.
+- **The transliteration Style, and the end of Insertion Options, could not be
+  reached.** The tray never scrolled: whatever did not fit was cut off. With
+  Display set to Translation or Both, the tray is taller, so the Source
+  section's transliteration *Style* (and the Translation section below it) was
+  out of reach; only Original was short enough to show it. The tray scrolls
+  now.
+- **The preview kept showing the old text after a change.** A change the
+  fetch applies (Vowels, Cantillation, Punctuation, Transliteration) takes a
+  few seconds to save and re-fetch, and meanwhile the preview showed the text
+  as it was. It now says *Updating preview…* at once. Preferences saved in the
+  Preferences dialog now reach an open sidebar too (its switches, Insertion
+  Options and the preview), instead of only the next insert; a setting changed
+  for the session in Insertion Options keeps its session value.
+- The Traditional transliteration sample read *ha-ēfer*; it is *ha-sēfer*.
 
 ### Citation style
 

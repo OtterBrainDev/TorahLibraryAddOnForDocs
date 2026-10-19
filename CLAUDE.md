@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **451 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **459 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -191,8 +191,9 @@ and fix it before touching the feature you came to change.
   (ר', רש"י, G-d, 3:16, tags, entities), the two toggles independent, refs
   untouched, and stripping before the divine-name substitutes.
 - `transliteration-source.test.js` — the transliteration is read from the
-  Hebrew as fetched (vowels and punctuation kept, divine names applied),
-  never the stripped Hebrew; `aligned-rows.test.js` pins the insert side.
+  Hebrew as fetched (vowels kept, the Hebrew "Punctuation: Off" setting and
+  divine names applied), never the vowel-stripped Hebrew;
+  `aligned-rows.test.js` pins the insert side.
 - `aligned-rows.test.js` — the side-by-side "Line by line" setting: each
   verse paired with its translation in its own table row (numbering, spanning
   refs, missing segments, per-row transliteration); off keeps one row.
@@ -274,6 +275,11 @@ and in `test/ui/`:
   and loads `shared/fonts` first; Preferences' font lists come from that one
   list; fonts Docs does not have (SBL Hebrew, Ezra SIL) are never offered;
   no font UI mentions borrowed marks (Help does).
+- `insertion-options-refresh.test.js` — the Insertion Options tray scrolls
+  (its end, the transliteration Style, was cut off in Translation and Both),
+  a fetch-time change shows "Updating preview…" at once, every Preferences save
+  reaches an open sidebar, and the card's transliteration sample drops the
+  maqaf with Hebrew punctuation off.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

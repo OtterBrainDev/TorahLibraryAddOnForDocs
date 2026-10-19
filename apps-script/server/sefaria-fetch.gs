@@ -310,9 +310,10 @@ function fetchReference_(safeReference, versions, properties) {
   ref will look like when inserted*/
 
     const userProperties = properties || PropertiesService.getUserProperties();
-    // The transliteration reads the Hebrew as fetched, vowels and punctuation
-    // included: with Vowels off it read the bare consonants (שמע -> "shm'").
-    // The divine-name substitutes still apply, as they do to the Hebrew.
+    // The transliteration reads the Hebrew as fetched, vowels included: with
+    // Vowels off it read the bare consonants (שמע -> "shm'"). The Hebrew
+    // punctuation setting and the divine-name substitutes still apply, as they
+    // do to the Hebrew.
     data = attachTransliterationSource_(data, userProperties);
     data = applyHebrewDisplayPreferences(data, userProperties);
     // Before the divine-name replacements, so their substitutes (ה', G-d)

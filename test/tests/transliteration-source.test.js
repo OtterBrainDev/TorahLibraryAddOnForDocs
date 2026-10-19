@@ -1,8 +1,9 @@
 // Pins where the transliteration's Hebrew comes from: the text as Sefaria sent
-// it, vowels and punctuation kept, not the Hebrew as displayed. With Vowels
-// off, transliterating the displayed Hebrew read bare consonants. The fetch
-// keeps a copy (heTransliterationSource, server/text-processing.gs) before the
-// display filters run; the divine-name substitutes still apply to it.
+// it, vowels kept, not the Hebrew as displayed. With Vowels off,
+// transliterating the displayed Hebrew read bare consonants. The fetch keeps a
+// copy (heTransliterationSource, server/text-processing.gs) before the vowel
+// and cantillation filters run; the Hebrew "Punctuation: Off" setting and the
+// divine-name substitutes still apply to it.
 // aligned-rows.test.js pins that the insert reads it.
 //
 // Loaded with vm.runInContext; .gs is not a Node module format.
@@ -37,10 +38,26 @@ function load(stored) {
   return context;
 }
 
-test('vowels, cantillation and punctuation off: the Hebrew is stripped, the transliteration source is not', () => {
+test('vowels and cantillation off: the Hebrew is stripped, the transliteration source is not', () => {
+  const data = load({ nekudot: 'false', teamim: 'false' }).findReference('Genesis 1:1');
+  assert.equal(data.he[0], 'בראשית ברא׃');
+  assert.deepEqual(plain(data.heTransliterationSource), [FETCHED, 'יְהוָה']);
+});
+
+test('Hebrew punctuation off strips the transliteration source too, vowels kept', () => {
   const data = load({ nekudot: 'false', teamim: 'false', hebrew_punctuation: 'false' }).findReference('Genesis 1:1');
   assert.equal(data.he[0], 'בראשית ברא');
+  assert.deepEqual(plain(data.heTransliterationSource), ['בְּרֵאשִׁ֖ית בָּרָא', 'יְהוָה']);
+});
+
+test('translation punctuation off leaves the transliteration source alone', () => {
+  const data = load({ translation_punctuation: 'false' }).findReference('Genesis 1:1');
   assert.deepEqual(plain(data.heTransliterationSource), [FETCHED, 'יְהוָה']);
+});
+
+test('a divine-name substitute survives Hebrew punctuation off in the transliteration source', () => {
+  const data = load({ hebrew_punctuation: 'false', apply_sheimot_on_insertion: 'true', meforash_replace: 'true', meforash_replacement: "ה'" }).findReference('Genesis 1:1');
+  assert.equal(data.heTransliterationSource[1], "ה'");
 });
 
 test('the divine-name substitutes apply to the transliteration source too', () => {
