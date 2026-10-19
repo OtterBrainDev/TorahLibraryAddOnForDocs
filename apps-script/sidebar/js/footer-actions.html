@@ -198,7 +198,7 @@ $('#open-on-sefaria').on('click', function () {
 
 $('.open-divine-name-preferences, .open-preferences-tool').on('click', function (event) {
   if (event) event.preventDefault();
-  google.script.run.preferencesPopup();
+  openPreferencesDialog();
 });
 
 $('.open-actions-panel').on('click', function (event) {

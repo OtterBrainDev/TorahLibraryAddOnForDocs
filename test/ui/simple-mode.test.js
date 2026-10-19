@@ -85,3 +85,16 @@ test('the footer: Add Source, Insertion Options under it, then Session Library, 
   for (const control of ['open-session-library', 'open-actions-panel', 'open-preferences-tool']) assert.ok(row.includes(control), control);
   assert.doesNotMatch(SIMPLE_CSS, /standard-quick-actions|open-preferences-tool|open-layout-settings|open-session-library|open-actions-panel|footer-actions-panel/);
 });
+
+// Opening Preferences takes a few seconds; the sidebar says so and ignores
+// further clicks until the server answers.
+test('every way the sidebar opens Preferences goes through openPreferencesDialog', () => {
+  const js = ['sidebar/js/footer-actions.html', 'sidebar/js/mode-controller.html', 'sidebar/js/composition-controls.html']
+    .map((file) => readAppScriptFile(file)).join('\n');
+  const direct = js.match(/google\.script\.run[\s\S]{0,200}?\.preferencesPopup\(\)/g) || [];
+  assert.equal(direct.length, 1, 'only openPreferencesDialog calls preferencesPopup');
+  const opener = readAppScriptFile('sidebar/js/mode-controller.html').match(/function openPreferencesDialog\(\) \{[\s\S]*?\n\}/)[0];
+  assert.match(opener, /if \(preferencesOpening\) return;/);
+  assert.match(opener, /showBusyOverlay\('preferences'\)/);
+  assert.match(readAppScriptFile('sidebar/js/search-utils.html'), /preferences: 'Opening Preferences…'/);
+});

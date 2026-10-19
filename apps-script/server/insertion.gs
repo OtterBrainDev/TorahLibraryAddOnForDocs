@@ -573,7 +573,12 @@ function getAttributionParagraphText(attributionLines) {
   return attributionLines.join("\n");
 }
 
-function insertAttributionParagraph(paragraph, attributionLines) {
+/**
+ * The citation under a source (edition and license). 8 pt italic, as it has
+ * always been, then the citation style (Preferences → Fonts → Citation) on
+ * top, when the caller has the typography; its defaults are that same look.
+ */
+function insertAttributionParagraph(paragraph, attributionLines, typography) {
   const attributionText = getAttributionParagraphText(attributionLines);
   if (!attributionText) {
     return;
@@ -587,6 +592,7 @@ function insertAttributionParagraph(paragraph, attributionLines) {
       attributionStyle[DocumentApp.Attribute.UNDERLINE] = false;
   paragraph.setAttributes(attributionStyle);
   paragraph.setLeftToRight(true);
+  if (typography) applyRoleTypography_(paragraph, typography, 'citation');
 }
 
 /**
@@ -632,10 +638,10 @@ function buildCitationLines(data, preferredTitle, includeTranslationSourceInfo) 
   return lines.filter(Boolean);
 }
 
-function insertCitationParagraph(doc, insertAtIndex, citationLines) {
+function insertCitationParagraph(doc, insertAtIndex, citationLines, typography) {
   if (!citationLines || !citationLines.length) return;
   const paragraph = doc.insertParagraph(insertAtIndex, citationLines.join(''));
-  insertAttributionParagraph(paragraph, citationLines);
+  insertAttributionParagraph(paragraph, citationLines, typography);
 }
 
 function buildLinkedTitleText(baseTitle, data, singleLanguage) {
@@ -832,7 +838,7 @@ function insertReference(data, opts) {
 
   const appendCitationParagraph = (insertAtIndex) => {
     if (!shouldAppendCitation) return;
-    insertCitationParagraph(doc, insertAtIndex, citationLines);
+    insertCitationParagraph(doc, insertAtIndex, citationLines, typography);
   };
 
   let resolvedBilingualLayout = (singleLanguage) ? null : (bilingualLayout || "he-right");
@@ -887,7 +893,7 @@ function insertReference(data, opts) {
 
     if (attributionLines.length > 0) {
       let attributionParagraph = doc.insertParagraph(singleLanguageNextIndex, "");
-      insertAttributionParagraph(attributionParagraph, attributionLines);
+      insertAttributionParagraph(attributionParagraph, attributionLines, typography);
       singleLanguageNextIndex += 1;
     }
 
@@ -935,7 +941,7 @@ function insertReference(data, opts) {
 
       if (attributionLines.length > 0) {
         let attributionParagraph = doc.insertParagraph(heTopNextIndex, "");
-        insertAttributionParagraph(attributionParagraph, attributionLines);
+        insertAttributionParagraph(attributionParagraph, attributionLines, typography);
         heTopNextIndex += 1;
       }
 
@@ -1007,7 +1013,7 @@ function insertReference(data, opts) {
 
       if (attributionLines.length > 0) {
         let attributionParagraph = doc.insertParagraph(index + 1, "");
-        insertAttributionParagraph(attributionParagraph, attributionLines);
+        insertAttributionParagraph(attributionParagraph, attributionLines, typography);
         sideBySideNextIndex += 1;
       }
 
@@ -1261,7 +1267,7 @@ function insertReferenceVersions(ref, opts) {
       let attrLines = getEnglishAttributionLines(d);
       if (attrLines.length) {
         let attrPara = doc.insertParagraph(index, '');
-        insertAttributionParagraph(attrPara, attrLines);
+        insertAttributionParagraph(attrPara, attrLines, typography);
         index += 1;
       }
     }

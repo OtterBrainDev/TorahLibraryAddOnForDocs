@@ -79,17 +79,57 @@ function saveAccountPreference(payload, onDone) {
   }).setAccountPreferences(payload || {});
 }
 
+// Session saves go to the server one at a time. setSidebarSessionState reads,
+// merges and writes the whole session, so two saves in flight at once (two
+// quick clicks in Insertion Options) could each read the old session and the
+// later write would drop the earlier change: a Vowels choice followed by any
+// other click was lost. And each answer re-applied its own snapshot to the
+// switches, flipping the second click back on screen until its answer came.
+// Now a change shows at once, changes made while a save is in flight wait and
+// go together in the next one, and the switches are re-read from the server's
+// answer only when nothing is left to send.
+var sessionSaveQueue = { pending: null, callbacks: [], inFlight: false };
+
 function saveSessionPreference(payload, onDone) {
   if (!sidebarSessionId) {
     if (typeof onDone === 'function') onDone(sessionPreferences);
     return;
   }
-  google.script.run.withSuccessHandler(function (updated) {
-    sessionPreferences = clonePlainObject(updated || sessionPreferences);
-    effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
-    applyEffectivePreferencesToUI();   // <-- add this
-    if (typeof onDone === 'function') onDone(updated);
-  }).setSidebarSessionState(sidebarSessionId, payload || {});
+  var change = payload || {};
+  sessionPreferences = Object.assign({}, sessionPreferences, change);
+  effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
+  sessionSaveQueue.pending = Object.assign(sessionSaveQueue.pending || {}, change);
+  if (typeof onDone === 'function') sessionSaveQueue.callbacks.push(onDone);
+  flushSessionSaves_();
+}
+
+function flushSessionSaves_() {
+  var queue = sessionSaveQueue;
+  if (queue.inFlight || !queue.pending) return;
+  var batch = queue.pending;
+  var callbacks = queue.callbacks;
+  queue.pending = null;
+  queue.callbacks = [];
+  queue.inFlight = true;
+
+  function finish(updated) {
+    queue.inFlight = false;
+    if (!queue.pending) {
+      sessionPreferences = clonePlainObject(updated || sessionPreferences);
+      effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
+      applyEffectivePreferencesToUI();
+    }
+    callbacks.forEach(function (callback) { callback(updated); });
+    flushSessionSaves_();
+  }
+
+  google.script.run
+    .withSuccessHandler(finish)
+    .withFailureHandler(function () {
+      showSidebarToast('A setting could not be saved for this session. Try again.');
+      finish(null);
+    })
+    .setSidebarSessionState(sidebarSessionId, batch);
 }
 
 function saveSidebarPreference(payload, onDone, forceAccountSave) {

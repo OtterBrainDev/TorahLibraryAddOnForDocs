@@ -50,11 +50,40 @@ function showInsertNotice(result) {
   if (result && result.notice) showSidebarToast(result.notice, 8000);
 }
 
+// Preferences takes a few seconds to open. Until the server answers (the
+// dialog is then on its way), the busy overlay says so and covers the sidebar,
+// so a second click can't open a second dialog. The timer is a backstop for an
+// answer that never comes.
+var PREFERENCES_OPEN_TIMEOUT_MS = 20000;
+var preferencesOpening = false;
+
+function openPreferencesDialog() {
+  if (preferencesOpening) return;
+  preferencesOpening = true;
+  $('.open-preferences-tool').prop('disabled', true).attr('aria-busy', 'true');
+  showBusyOverlay('preferences');
+  var backstop = setTimeout(done, PREFERENCES_OPEN_TIMEOUT_MS);
+  function done() {
+    clearTimeout(backstop);
+    if (!preferencesOpening) return;
+    preferencesOpening = false;
+    $('.open-preferences-tool').prop('disabled', false).removeAttr('aria-busy');
+    hideBusyOverlay();
+  }
+  google.script.run
+    .withSuccessHandler(done)
+    .withFailureHandler(function () {
+      done();
+      showSidebarToast('Preferences could not be opened. Try again.');
+    })
+    .preferencesPopup();
+}
+
 function openPreferencesWithHint(sectionHint) {
   if (sectionHint === 'experimental-features') {
     sessionStorage.setItem('PREF_NAVIGATE_TAB', 'experimental');
   }
-  google.script.run.preferencesPopup();
+  openPreferencesDialog();
 }
 
 var appMode = window.INITIAL_SIDEBAR_MODE || 'texts';

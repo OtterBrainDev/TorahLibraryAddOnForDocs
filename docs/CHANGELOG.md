@@ -38,6 +38,45 @@ heading until the next release consolidates it.
 > by an earlier version always meant *Tanakh only*, so schema 24 rewrites it
 > to `"tanakh"`.
 
+> **Preference migration (schema 25). Five new preferences; no existing
+> user's inserts change.** The citation under an inserted source has its own
+> style (`citation_font`, `citation_font_size`, `citation_font_style`,
+> `citation_font_color`, `citation_font_background`). Schema 25 sets each to
+> the citation's fixed look until now: 8 pt italic, in the font of the text
+> above it.
+
+### Sidebar fixes
+
+#### Fixed
+
+- **A Vowels choice in the sidebar could be lost.** The sidebar saved each
+  change to the session with its own server call, and each call read, merged
+  and wrote the whole session, so with two in flight (a Vowels click and then
+  any other click) the later write dropped the earlier change. The preview
+  could look right while the insert used the old vowels. Saves now go one at a
+  time, with changes made meanwhile sent together in the next one.
+- **Switches flipped back, or missed a click.** Each save's answer re-drew
+  every switch from that answer, so a quick second click was shown undone
+  until its own answer came, and clicked again. The switches now change at
+  once and are only re-drawn when nothing is left to save. A change to what
+  is fetched (Vowels, Cantillation, Punctuation, Transliteration) disables
+  Add Source and re-fetches the selected text once, after the clicks stop and
+  the saves land; before, a second change made while the first re-fetch ran
+  was not fetched at all.
+- **No sign that Preferences was opening.** Clicking ⚙︎ (or "Colour, style
+  and more…") now shows *Opening Preferences…* over the sidebar until the
+  dialog is on its way, and further clicks do nothing meanwhile, so it can't
+  be opened twice.
+
+### Citation style
+
+#### Added
+
+- **Preferences → Fonts → Citation.** Font, size, bold / italic / underline,
+  colour and highlight for the citation under each inserted source (the
+  editions and their licenses), with a preview. *Same as the text above* and
+  a blank size keep the font and size of the passage the citation follows.
+
 ### Titles: link and font each one separately
 
 #### Added

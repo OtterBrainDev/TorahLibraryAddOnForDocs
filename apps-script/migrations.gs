@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '24';
+var PREFS_SCHEMA_CURRENT_ = '25';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -217,6 +217,13 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // as "tanakh", is rewritten to "tanakh".
   if (from < 24) {
     migrateToV24_(userProperties);
+  }
+  // v24 -> v25: introduces the citation style (`citation_font`,
+  // `citation_font_size`, `citation_font_style`, `citation_font_color`,
+  // `citation_font_background`), each set to the citation's fixed look until
+  // now (8 pt italic, the font of the text above).
+  if (from < 25) {
+    migrateToV25_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -599,6 +606,18 @@ function migrateToV24_(userProperties) {
   if (String(userProperties.getProperty('teamim_filter') || '').toLowerCase() === 'torah') {
     userProperties.setProperty('teamim_filter', 'tanakh');
   }
+  return true;
+}
+
+/**
+ * V25: the citation style, set to the look the citation always had. A stored
+ * value is never overwritten.
+ */
+function migrateToV25_(userProperties) {
+  var defaults = getDefaultPreferences();
+  ['citation_font', 'citation_font_size', 'citation_font_style', 'citation_font_color', 'citation_font_background'].forEach(function(key) {
+    if (userProperties.getProperty(key) == null) userProperties.setProperty(key, String(defaults[key]));
+  });
   return true;
 }
 

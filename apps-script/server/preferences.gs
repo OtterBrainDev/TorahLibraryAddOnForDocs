@@ -101,6 +101,11 @@ const SETTINGS = [
   "hebrew_link_font_background",
   "sefaria_link_format_override",
   "hebrew_link_format_override",
+  "citation_font",
+  "citation_font_size",
+  "citation_font_style",
+  "citation_font_color",
+  "citation_font_background",
   "search_mode",
   "menu_layout",
   "insert_from_selection_replace"
@@ -272,6 +277,15 @@ function getDefaultPreferences() {
     // own. True is how linked titles have always looked.
     sefaria_link_format_override: true,
     hebrew_link_format_override: true,
+    // The citation under an inserted source (edition and license). The
+    // defaults are its look from before it could be set: 8 pt italic, in the
+    // font of the text above it (an empty font or size keeps that text's,
+    // rather than matching the text at the cursor).
+    citation_font: "",
+    citation_font_size: "8",
+    citation_font_style: "italic",
+    citation_font_color: "",
+    citation_font_background: "",
     search_mode: "texts",
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
     // server/menu-layout.gs for the shape. Replaced `insert_from_selection_at_top`
@@ -503,6 +517,9 @@ function isTitleRole_(roleName) {
 function rolesMatchingDocument_(roles, titleHeading) {
   return Object.keys(roles).filter(function (name) {
     const role = roles[name];
+    // The citation's empty font or size keeps the text above it (the
+    // paragraph inherits it), as it always has.
+    if (name === "citation") return false;
     if (!role || (role.font !== "" && role.size != null)) return false;
     return !(isTitleRole_(name) && titleHeading !== "normal");
   });
@@ -546,7 +563,8 @@ function getTypographySettings(properties) {
     sourceTitle:     readTypographyRole_(userProperties, "source_title", "", null, "normal"),
     sefariaLink:     readTypographyRole_(userProperties, "sefaria_link", "", null, "underline"),
     hebrewTitle:     readTypographyRole_(userProperties, "hebrew_title", "", null, "normal"),
-    hebrewLink:      readTypographyRole_(userProperties, "hebrew_link", "", null, "underline")
+    hebrewLink:      readTypographyRole_(userProperties, "hebrew_link", "", null, "underline"),
+    citation:        readTypographyRole_(userProperties, "citation", "", 8, "italic")
   };
   const titleHeading = normalizeTitleHeading_(userProperties.getProperty("source_title_heading"));
   // A linked title takes its linked style only with the override on (an

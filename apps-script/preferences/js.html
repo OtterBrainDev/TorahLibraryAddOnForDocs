@@ -10,11 +10,14 @@
       ipa_tiberian: "wəsamtem ʔet dəvaʁaj ʔele ʕal ləvavχem"
     };
 
-    const FONT_SIZE_FIELDS = ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size','hebrew_title_font_size','hebrew_link_font_size'];
+    const FONT_SIZE_FIELDS = ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size','hebrew_title_font_size','hebrew_link_font_size','citation_font_size'];
     // The four title styles (Fonts → Title): the translation title's plain and
     // linked, and the source (Hebrew) title's. Each has prefix_font, _font_size,
     // _font_style, _font_color, _font_background and a prefix_preview.
     const TITLE_FONT_PREFIXES = ['source_title', 'sefaria_link', 'hebrew_title', 'hebrew_link'];
+    // Roles laid out like the titles (prefix_font … prefix_preview): the
+    // titles and the citation under each source (Fonts → Citation).
+    const STYLED_FONT_PREFIXES = TITLE_FONT_PREFIXES.concat(['citation']);
 
     const overrideChars = ["א","ב","ג","ד","ה","ו","ז","ח","ט","י","כ","ך","ל","מ","ם","נ","ן","ס","ע","פ","ף","צ","ץ","ק","ר","ש","ת"];
     const customReplacementFields = [
@@ -699,7 +702,7 @@
               setSegmentedValue('vowels', inferVowelsValue(preferences));
               setSegmentedValue('cantillation', inferCantillationValue(preferences));
 
-              ['hebrew_font','translation_font','transliteration_font','source_title_font','sefaria_link_font','hebrew_title_font','hebrew_link_font','source_title_heading','transliteration_scheme','preferred_translation_language']
+              ['hebrew_font','translation_font','transliteration_font','source_title_font','sefaria_link_font','hebrew_title_font','hebrew_link_font','citation_font','source_title_heading','transliteration_scheme','preferred_translation_language']
                 .forEach(function(id) {
                   const el = byId(id);
                   if (!el) return;
@@ -711,7 +714,7 @@
 
               FONT_SIZE_FIELDS.forEach(normalizeFontSizeField);
 
-              ['hebrew_font_style','translation_font_style','transliteration_font_style','source_title_font_style','sefaria_link_font_style','hebrew_title_font_style','hebrew_link_font_style','emphasis_bold_style','emphasis_italic_style'].forEach(function(id) {
+              ['hebrew_font_style','translation_font_style','transliteration_font_style','source_title_font_style','sefaria_link_font_style','hebrew_title_font_style','hebrew_link_font_style','citation_font_style','emphasis_bold_style','emphasis_italic_style'].forEach(function(id) {
                 const input = byId(id);
                 if (input && !input.value) input.value = 'normal';
                 applyStyleControlState(id);
@@ -719,7 +722,7 @@
 
               updateStandardPreview('hebrew_font', 'hebrew_font_preview', 'hebrew_font_style');
               updateStandardPreview('translation_font', 'translation_font_preview', 'translation_font_style');
-              TITLE_FONT_PREFIXES.forEach(updateTitlePreview);
+              STYLED_FONT_PREFIXES.forEach(updateTitlePreview);
               syncLinkOverrideFields();
               updateTransliterationPreview();
               updateCompositionCard();
@@ -790,7 +793,7 @@
     bindStyleControl('hebrew_font_style', 'hebrew_font_preview');
     bindStyleControl('translation_font_style', 'translation_font_preview');
     bindStyleControl('transliteration_font_style', 'transliteration_preview');
-    TITLE_FONT_PREFIXES.forEach(function (prefix) {
+    STYLED_FONT_PREFIXES.forEach(function (prefix) {
       bindStyleControl(prefix + '_font_style', prefix + '_preview');
     });
     document.querySelectorAll('[data-link-override]').forEach(function (fields) {
@@ -817,6 +820,7 @@
       'select#sefaria_link_font',
       'select#hebrew_title_font',
       'select#hebrew_link_font',
+      'select#citation_font',
       'select#source_title_heading',
       'select#transliteration_scheme',
       'select#preferred_translation_language',
@@ -831,7 +835,7 @@
         hebrew_font: ['hebrew_font_preview', 'hebrew_font_style'],
         translation_font: ['translation_font_preview', 'translation_font_style'],
       };
-      TITLE_FONT_PREFIXES.forEach(function (prefix) {
+      STYLED_FONT_PREFIXES.forEach(function (prefix) {
         previewMap[prefix + '_font'] = [prefix + '_preview', prefix + '_font_style'];
       });
       Object.keys(previewMap).forEach(function(id) {
@@ -858,7 +862,7 @@
       if (!el) return;
       function updateForField() {
         normalizeFontSizeField(id);
-        var titlePrefix = TITLE_FONT_PREFIXES.filter(function (prefix) { return id === prefix + '_font_size'; })[0];
+        var titlePrefix = STYLED_FONT_PREFIXES.filter(function (prefix) { return id === prefix + '_font_size'; })[0];
         if (id.indexOf('transliteration_') === 0) updateTransliterationPreview();
         else if (titlePrefix) updateTitlePreview(titlePrefix);
         else if (id.indexOf('translation_') === 0) updateStandardPreview('translation_font', 'translation_font_preview', 'translation_font_style');

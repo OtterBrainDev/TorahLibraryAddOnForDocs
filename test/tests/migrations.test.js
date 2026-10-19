@@ -553,3 +553,14 @@ test('v24 never overwrites a stored override or another cantillation filter', ()
   assert.equal(userProperties.getProperty('sefaria_link_format_override'), 'false');
   assert.equal(userProperties.getProperty('teamim_filter'), 'available');
 });
+
+// v25: the citation style starts as the citation's old fixed look.
+test('v25 sets the citation style to its old look, never overwriting a stored value', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '24', citation_font_size: '10' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('citation_font'), '');
+  assert.equal(userProperties.getProperty('citation_font_size'), '10');
+  assert.equal(userProperties.getProperty('citation_font_style'), 'italic');
+  assert.equal(userProperties.getProperty('citation_font_color'), '');
+});

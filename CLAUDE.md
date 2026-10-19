@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **439 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **451 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -214,6 +214,13 @@ and fix it before touching the feature you came to change.
   override" on (schema v24 turns both on); a caller that passes only the old
   `insertSefariaLink` links both alike, as before; schema v23 copies the old
   values (`migrations.test.js`).
+- `sidebar-session-saves.test.js` — the sidebar's session saves go one at a
+  time (a quick second click once overwrote the first: the lost Vowels
+  choice), switches re-draw only when nothing is left to save, and a change
+  the fetch applies re-fetches once, with Add Source disabled meanwhile.
+- `citation-style.test.js` — the citation under a source has its own style
+  (Preferences → Fonts → Citation); its defaults and schema v25 keep the old
+  8 pt italic in the font of the text above.
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
   cantillation) are set in Noto Serif / Sans Hebrew at insert, and only those:
   letters and the marks it has stay; "Match the document" judges the
@@ -261,7 +268,8 @@ and in `test/ui/`:
   hides only the search tools in the sidebar (no "More options"), the footer
   is Add Source, Insertion Options, then Session Library / Quick Actions /
   Preferences in both modes, Preferences' "Show advanced settings" brings back
-  what it hides, and the server tells each page its mode.
+  what it hides, and the server tells each page its mode. Opening Preferences
+  from the sidebar shows "Opening Preferences…" and ignores repeat clicks.
 - `font-pickers.test.js` — every composition-card host has the font buttons
   and loads `shared/fonts` first; Preferences' font lists come from that one
   list; fonts Docs does not have (SBL Hebrew, Ezra SIL) are never offered;

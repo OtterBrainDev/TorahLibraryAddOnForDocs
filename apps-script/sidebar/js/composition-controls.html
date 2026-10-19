@@ -42,8 +42,8 @@ function _sidebarCompositionOnToggle(key) {
       hebrew_punctuation: $el.is(':checked')
     }, function () {
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   } else if (key === 'translationPunctuation') {
     var $el = $('.wants-translation-punctuation');
     $el.prop('checked', !$el.is(':checked'));
@@ -51,8 +51,8 @@ function _sidebarCompositionOnToggle(key) {
       translation_punctuation: $el.is(':checked')
     }, function () {
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   } else if (key === 'translit') {
     var $el = $('.include-transliteration');
     $el.prop('checked', !$el.is(':checked'));
@@ -60,8 +60,8 @@ function _sidebarCompositionOnToggle(key) {
       include_transliteration_default: $el.is(':checked')
     }, function () {
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   } else if (key === 'link') {
     var $el = $('.insert-sefaria-link');
     $el.prop('checked', !$el.is(':checked'));
@@ -116,8 +116,8 @@ function _sidebarCompositionOnChoice(key, value) {
   Object.keys(payload).forEach(function (k) { effectivePreferences[k] = payload[k]; });
   saveSidebarPreference(payload, function () {
     updateCompositionCard();
-    if (hasResolvedReference && data && data.ref) refreshSelectedResult();
   });
+  scheduleSelectedResultRefresh();
   if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
 }
 
@@ -128,18 +128,43 @@ function _sidebarCompositionOnSchemeSelect(value) {
     saveSidebarPreference({ include_transliteration_default: false }, function () {
       effectivePreferences.transliteration_scheme = getSidebarTransliterationScheme();
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   } else {
     $('.include-transliteration').prop('checked', true);
     effectivePreferences.transliteration_scheme = value;
     saveSidebarPreference({ include_transliteration_default: true, transliteration_scheme: value }, function () {
       effectivePreferences.transliteration_scheme = value;
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   }
   if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
+}
+
+// A change the fetch applies (vowels, cantillation, punctuation,
+// transliteration) needs the selected text fetched again. Add Source waits
+// for that at once, so the text inserted is never the one fetched before the
+// change; the fetch itself waits until the clicks stop and every session save
+// has landed, so a run of quick changes is one fetch that has them all. (Each
+// save's own callback used to fetch, and skipped it while an earlier fetch was
+// still running: the second change of two quick ones could be missing.)
+var SELECTED_RESULT_REFRESH_DELAY_MS = 400;
+var selectedResultRefreshTimer = null;
+
+function scheduleSelectedResultRefresh() {
+  if (appMode !== 'texts' || !selectedRefValue) return;
+  hasResolvedReference = false;
+  setInsertButtonState(false);
+  clearTimeout(selectedResultRefreshTimer);
+  selectedResultRefreshTimer = setTimeout(function () {
+    selectedResultRefreshTimer = null;
+    if (sessionSaveQueue.inFlight || sessionSaveQueue.pending) {
+      scheduleSelectedResultRefresh();
+      return;
+    }
+    refreshSelectedResult();
+  }, SELECTED_RESULT_REFRESH_DELAY_MS);
 }
 
 // Thin wrappers so sidebar_bootstrap.html and other callers don't need to change.
@@ -160,7 +185,7 @@ function bindSidebarCompositionCard() {
     onSchemeSelect: _sidebarCompositionOnSchemeSelect,
     onChoice: _sidebarCompositionOnChoice,
     onFontChange: _sidebarCompositionOnFontChange,
-    onMoreFontSettings: function () { google.script.run.preferencesPopup(); }
+    onMoreFontSettings: function () { openPreferencesDialog(); }
   });
 }
 </script>
