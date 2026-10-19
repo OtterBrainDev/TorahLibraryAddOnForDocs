@@ -812,8 +812,8 @@ function insertReference(data, opts) {
       return {};
     }
   })();
-  // Read from the Hebrew as fetched (vowels and punctuation kept), joined
-  // with the same line markers as the Hebrew.
+  // Read from the Hebrew as fetched (vowels kept, the Hebrew punctuation
+  // setting applied), joined with the same line markers as the Hebrew.
   const transliterationHebrew = !includeTransliteration ? ""
     : (segmentedData.pesukimFormatted === true ? data.he
       : formatDataForPesukim(Object.assign({}, segmentedData, { he: transliterationSourceOf_(segmentedData) }), includeLineMarkers).he);

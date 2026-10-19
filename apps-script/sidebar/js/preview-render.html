@@ -26,8 +26,8 @@ function renderPreviewTransliteration(dataIn) {
   removePreviewTransliteration();
   if (!$('.include-transliteration').is(':checked')) return;
   if (($('.output-mode-selection').val() || 'both') === 'en') return;
-  // The Hebrew as fetched, vowels and punctuation kept (server
-  // attachTransliterationSource_), not the Hebrew as displayed.
+  // The Hebrew as fetched, vowels kept and the Hebrew punctuation setting
+  // applied (server attachTransliterationSource_), not the Hebrew as displayed.
   var source = dataIn ? (dataIn.heTransliterationSource !== undefined ? dataIn.heTransliterationSource : dataIn.he) : '';
   var plain = extractTextFromHtml_(flattenSegments_(source));
   if (!plain) return;

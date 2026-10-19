@@ -91,7 +91,7 @@ test('the footer: Add Source, Insertion Options under it, then Session Library, 
 test('every way the sidebar opens Preferences goes through openPreferencesDialog', () => {
   const js = ['sidebar/js/footer-actions.html', 'sidebar/js/mode-controller.html', 'sidebar/js/composition-controls.html']
     .map((file) => readAppScriptFile(file)).join('\n');
-  const direct = js.match(/google\.script\.run[\s\S]{0,200}?\.preferencesPopup\(\)/g) || [];
+  const direct = js.match(/google\.script\.run[\s\S]{0,400}?\.preferencesPopup\(\)/g) || [];
   assert.equal(direct.length, 1, 'only openPreferencesDialog calls preferencesPopup');
   const opener = readAppScriptFile('sidebar/js/mode-controller.html').match(/function openPreferencesDialog\(\) \{[\s\S]*?\n\}/)[0];
   assert.match(opener, /if \(preferencesOpening\) return;/);

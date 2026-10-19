@@ -91,15 +91,19 @@ function applyHebrewDisplayPreferences(data, userProperties) {
 }
 
 /**
- * Copies the fetched Hebrew to `heTransliterationSource`, before the display
- * filters (vowels, cantillation, punctuation) strip it, with the Hebrew
- * divine-name substitutes applied. The transliteration is read from it, so it
- * follows the vowels Sefaria has whatever the Hebrew shows. Same shape as
- * `he` (a string, or arrays of segments).
+ * Copies the fetched Hebrew to `heTransliterationSource`, before the vowel and
+ * cantillation filters strip it, with the Hebrew punctuation setting and the
+ * Hebrew divine-name substitutes applied. The transliteration is read from it,
+ * so it follows the vowels Sefaria has whatever the Hebrew shows, and drops
+ * the punctuation the Hebrew drops. Same shape as `he` (a string, or arrays
+ * of segments).
  */
 function attachTransliterationSource_(data, userProperties) {
   if (!data || typeof data !== 'object' || data.he === undefined) return data;
-  const named = applyDivineNameReplacements({ he: data.he }, userProperties, { hebrew: true, english: false });
+  // Punctuation before the divine names, as for the Hebrew, so a substitute
+  // (ה') is never stripped.
+  const punctuated = applyPunctuationPreferences({ he: data.he }, userProperties);
+  const named = applyDivineNameReplacements({ he: punctuated.he }, userProperties, { hebrew: true, english: false });
   return Object.assign({}, data, { heTransliterationSource: named.he });
 }
 

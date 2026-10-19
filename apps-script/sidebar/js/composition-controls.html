@@ -156,6 +156,10 @@ function scheduleSelectedResultRefresh() {
   if (appMode !== 'texts' || !selectedRefValue) return;
   hasResolvedReference = false;
   setInsertButtonState(false);
+  // The preview says at once that it is out of date: the save and the fetch
+  // take a few seconds, and the old text sat there meanwhile as if the change
+  // had done nothing. buildPreviewLoadingHTML escapes its message.
+  $('.suggestions').html(buildPreviewLoadingHTML('Updating preview…'));
   clearTimeout(selectedResultRefreshTimer);
   selectedResultRefreshTimer = setTimeout(function () {
     selectedResultRefreshTimer = null;

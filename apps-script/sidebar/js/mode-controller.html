@@ -71,13 +71,52 @@ function openPreferencesDialog() {
     hideBusyOverlay();
   }
   google.script.run
-    .withSuccessHandler(done)
+    .withSuccessHandler(function () {
+      done();
+      // The dialog is modal: the sidebar's next use comes after it closes.
+      preferencesMayHaveChanged = true;
+    })
     .withFailureHandler(function () {
       done();
       showSidebarToast('Preferences could not be opened. Try again.');
     })
     .preferencesPopup();
 }
+
+// Preferences saved in the Preferences dialog reach an open sidebar. The
+// dialog marks each save in localStorage (PREFERENCES_SAVED_STORAGE_KEY;
+// every page of the add-on shares one origin), which fires a storage event
+// here; after the sidebar itself opened Preferences, the first pointer or
+// keyboard use of the sidebar re-reads them too, in case the event never
+// came. Without this the switches, the Insertion Options card and the preview
+// kept the old settings while an insert used the new ones. A setting this
+// session overrides in Insertion Options keeps the session's value.
+var PREFERENCES_SAVED_STORAGE_KEY = 'sefariaPreferencesSavedAt';
+var preferencesMayHaveChanged = false;
+
+function reloadAccountPreferences() {
+  preferencesMayHaveChanged = false;
+  google.script.run.withSuccessHandler(function (stored) {
+    var updated = clonePlainObject(stored || {});
+    if (JSON.stringify(updated) === JSON.stringify(accountPreferences)) return;
+    accountPreferences = updated;
+    effectivePreferences = isAdvancedSessionMode()
+      ? mergePreferenceLayers(accountPreferences, sessionPreferences)
+      : mergePreferenceLayers(accountPreferences, {});
+    applyEffectivePreferencesToUI();
+    if (appMode === 'texts' && selectedRefValue) scheduleSelectedResultRefresh();
+  }).getPreferences();
+}
+
+window.addEventListener('storage', function (event) {
+  if (event.key === PREFERENCES_SAVED_STORAGE_KEY) reloadAccountPreferences();
+});
+
+function reloadAccountPreferencesIfStale_() {
+  if (preferencesMayHaveChanged) reloadAccountPreferences();
+}
+document.documentElement.addEventListener('mouseenter', reloadAccountPreferencesIfStale_);
+$(document).on('pointerdown focusin keydown', reloadAccountPreferencesIfStale_);
 
 function openPreferencesWithHint(sectionHint) {
   if (sectionHint === 'experimental-features') {

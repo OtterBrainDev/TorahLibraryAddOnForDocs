@@ -909,6 +909,14 @@
       byId('reset_modal').hidden = true;
     });
 
+    // Tells an open sidebar the stored preferences changed: it re-reads them
+    // on the storage event (reloadAccountPreferences in sidebar/js/
+    // preferences-state). Storage can be unavailable; the sidebar then
+    // re-reads them on its next use after opening this dialog.
+    function markPreferencesSaved() {
+      try { localStorage.setItem('sefariaPreferencesSavedAt', String(Date.now())); } catch (e) {}
+    }
+
     // Every save covers the dialog with the busy overlay (shared/ui/busy-overlay)
     // until the server answers; the result line then says how it went.
     document.querySelector('.reset-confirm-button').addEventListener('click', function() {
@@ -917,6 +925,7 @@
       modalBusyShow('Resetting to defaults…');
       google.script.run.withSuccessHandler(function(defaults) {
         google.script.run.withSuccessHandler(function() {
+          markPreferencesSaved();
           modalBusyHide();
           applyPreferencesToForm(defaults);
           setResultsMessage('Preferences reset to defaults.');
@@ -950,9 +959,10 @@
       modalBusyShow('Saving preferences…');
       const preferenceObject = collectPreferenceObject();
       google.script.run.withSuccessHandler(function() {
+        markPreferencesSaved();
         google.script.run.withSuccessHandler(function() {
           modalBusyHide();
-          setResultsMessage('Successfully updated preferences. Refresh the sidebar if you want the open sidebar to pick up the new defaults now.');
+          setResultsMessage('Successfully updated preferences.');
           updateSheimotSummary();
         }).withFailureHandler(function(error) {
           console.error('Menu refresh failed:', error);
@@ -972,6 +982,7 @@
       const preferenceObject = collectPreferenceObject();
       // On success the overlay stays up until the dialog closes.
       google.script.run.withSuccessHandler(function() {
+        markPreferencesSaved();
         google.script.run.withSuccessHandler(function() {
           updateSheimotSummary();
           google.script.host.close();
