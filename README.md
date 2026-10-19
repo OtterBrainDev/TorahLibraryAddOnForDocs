@@ -48,7 +48,7 @@ See [docs/CHANGELOG.md](./docs/CHANGELOG.md) for a fuller summary of changes and
 
 ### Unified Find & Insert workflow
 
-The add-on centers on a unified sidebar (**Texts**, **Voices** and **Lexicon** tabs) that combines direct lookup and search into a single workflow:
+The add-on centers on a unified sidebar that combines direct lookup and search into a single workflow; a **Texts** / **Voices** / **Lexicon** control under the search box re-runs the same search for texts, source sheets or dictionary entries:
 
 1. find a source by reference, title, nested path, phrase, or Sefaria URL,
 2. select a result,
@@ -63,24 +63,37 @@ The sidebar groups results into:
 
 ### Display and layout controls
 
-The sidebar's **📰 Insertion Options** panel supports three display modes:
+The sidebar's **📰 Insertion Options** panel (the full-width button under
+**Add Source**) sets this session's insertion; **Preferences → Insertion** sets
+the defaults, and Link Texts' **📰 Customize this insertion** one linking pass.
+Its **Display** control has three modes:
 
 - **A** — translation only
 - **A + א** — Hebrew with translation
 - **א** — Hebrew only
 
-For bilingual insertion, layout options are:
+For bilingual insertion, **Arrangement** offers:
 
 - **Stacked** (Hebrew above the translation)
 - **Right–Left** (Hebrew on the right)
 - **Left–Right** (Hebrew on the left)
 
-### Hebrew formatting controls
+with switches for **Citation**, **Line by line** (one table row per verse, for
+the side-by-side arrangements) and **Line numbers**.
 
-The **Insertion Format** card in the Layout tray includes Hebrew formatting controls for:
+### Hebrew and translation formatting controls
 
-- **Vowels**
-- **Cantillation**
+The panel's **Insertion Format** card has a **Source** (Hebrew) section and a
+**Translation** section, each folding to a one-line summary. They hold:
+
+- **Link title to Sefaria**, **Title font** and **Text font** (each section its own),
+- **Vowels** (Off / Tanakh / On) and **Cantillation** (Off / Tanakh / Torah),
+- **Punctuation** (each section its own),
+- **Transliteration**, with its **Style**,
+- **Bold & italics** (Keep / Drop / Only) for the translation.
+
+Hebrew marks a chosen font lacks (often the cantillation) are set in Noto
+Serif / Sans Hebrew, so they never show as empty boxes.
 
 Advanced source-edition/version controls remain available for cases where a specific source edition is needed.
 
@@ -101,6 +114,13 @@ The add-on supports:
 - **Insert Sefaria link** for inserted content,
 - **Open on Sefaria** for the currently selected result,
 - **Link Texts with Sefaria** as a document-level action for turning recognizable references in the current Doc into Sefaria hyperlinks.
+
+### Simple or Everything
+
+New users get a short first-run setup and can pick **Simple** (search, preview,
+insert, with fewer tools in view and a shorter menu) or **Everything**.
+Existing users keep Everything. Switch at the top of Preferences; Simple hides
+with CSS only, so nothing is lost.
 
 ### Preferences
 

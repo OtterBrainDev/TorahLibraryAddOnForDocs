@@ -14,15 +14,18 @@ should happen.
 | 4 | [Coming from the original add-on](4-returning-user.md) | People who used the original *Sefaria for Google Docs* | 15 min | What moved, what's new, and what now behaves differently. |
 | 5 | [First five minutes](5-new-user.md) | Someone who has never used it | 5 min | Get one source into a document. |
 
-The version under demo is **2.1.0, preference schema 14** (`docs/VERSION.json`),
-plus the unreleased changes in `docs/CHANGELOG.md` (search, Link Texts' Insert
-and *Customize this insertion*, the shared Layout pickers).
+The version under demo is **2.1.0, preference schema 25** (`docs/VERSION.json`),
+plus the unreleased changes in `docs/CHANGELOG.md` (first-run setup and Simple
+mode, the 📰 Insertion Options panel and its settings rows, separate source and
+translation titles, citation style, three-way Vowels and Cantillation, Link
+Texts' Insert and *Customize this insertion*).
 *Help & Support → About* should read **Current line: 2.1**.
 
 ## Before any live session
 
 1. **Use test accounts, not your own.** At least one account that has never
-   installed the add-on (walkthroughs 3–5 look best on a clean install). The
+   installed the add-on (walkthroughs 3–5 look best on a clean install; a
+   clean install opens first-run setup, which walkthrough 5 starts with). The
    stress test needs three; see its setup section.
 2. **Make a fresh copy of the demo document for each run.** Several steps
    rewrite the document (Link Texts, Insert from Selection, Transform Divine

@@ -45,9 +45,12 @@ migrations.gs          schema-versioned UserProperties migrations
 server/                one file per domain; menu, search, fetch, insertion, linker…
 sidebar.html           the main entry template → sidebar/js/*, shared/ui/*, css/*
 preferences.html       second entry template
-shared/                partials more than one entry includes: ui/* everywhere;
-                       insertion-options/* and composition-card/* (the Layout
-                       controls) in the sidebar, Preferences and Link Texts
+first-run-setup.html   the one-time setup dialog (first-run-setup/*)
+shared/                partials more than one entry includes: ui/* everywhere
+                       (ui/busy-overlay is the dialogs' spinner);
+                       insertion-options/*, composition-card/* and fonts/*
+                       (the Insertion Options controls) in the sidebar,
+                       Preferences and Link Texts
 *.html (root)          standalone dialogs, each its own window scope
 attribution.gs, gematriya.gs, transliteration.gs   pure, Node-testable helpers
 ```
@@ -66,8 +69,10 @@ attribution.gs, gematriya.gs, transliteration.gs   pure, Node-testable helpers
    never overwrites one. `menu_layout` is deliberately left unset, so the user
    keeps tracking the code's default menu.
 2. `runUserPreferenceMigrationsIfNeeded_()` reads `prefs_schema_version` and
-   runs every `migrateToV<N>_` with `from < N`, then stamps `13`. Each
-   migration only fills keys that are absent.
+   runs every `migrateToV<N>_` with `from < N`, then stamps `25`
+   (`PREFS_SCHEMA_CURRENT_`). Each migration only fills keys that are absent,
+   or rewrites a value whose meaning changed (v24's old `teamim_filter =
+   "torah"`, which meant Tanakh only, becomes `"tanakh"`).
 3. `onInstall` then calls `onOpen(e)` itself, because `onOpen` doesn't fire
    for the document you install from. Before this fix, the menu only appeared
    after a reload.
@@ -75,7 +80,15 @@ attribution.gs, gematriya.gs, transliteration.gs   pure, Node-testable helpers
    authorised, reading `PropertiesService` isn't allowed, so it builds the
    default menu with `installDefaultMenu_()`. If a migration or a preference
    read throws, it logs the error and still builds a menu.
-5. `buildAndInstallMenu()` (`server/menu.gs`) takes the stored `menu_layout`
+5. Back in `onInstall`, `maybeShowFirstRunSetup_()` (`server/first-run.gs`)
+   opens `first-run-setup.html` if `first_run_setup` is `"pending"`, and
+   otherwise the release notes. Seeding writes `pending` only for a user with
+   no stored value; `migrateToV20_` writes `done` (and `ui_mode = full`) for
+   everyone who already had settings, so an upgrader never sees setup. The
+   dialog's answers go through the pure `planFirstRunPreferences_()`, which
+   stores only values that differ from the current ones: clicking straight
+   through writes nothing but `first_run_setup = done`.
+6. `buildAndInstallMenu()` (`server/menu.gs`) takes the stored `menu_layout`
    (or the default), plans it with the pure `planMenuFromLayout_()`
    (`server/menu-layout.gs`: each item at most once, Preferences and Help
    always last), and adds it with `installMenuPlan_()`.
@@ -87,7 +100,8 @@ Now every new key comes with a default, a migration, a schema bump, a
 `VERSION.json` bump and a changelog entry, all in the same commit
 (`docs/versioning.md`). `test/ui/version-manifest.test.js` enforces this.
 
-**Show:** `test/tests/migrations.test.js` and `test/tests/triggers.test.js`.
+**Show:** `test/tests/migrations.test.js`, `test/tests/triggers.test.js` and
+`test/tests/first-run-setup.test.js`.
 Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
 `DocumentApp` objects.
 
@@ -101,8 +115,9 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
 
 1. `textsHTML()` → `openSharedSidebar_('texts')` (`server/menu.gs`).
 2. `HtmlService.createTemplateFromFile('sidebar')` evaluates `sidebar.html`,
-   which `include()`s 37 partials: `shared/ui/head` (CSP, jQuery with
-   SRI), `css/tokens`, `sidebar/js/*`. Server data is embedded as
+   which `include()`s 41 partials: `shared/ui/head` (CSP, jQuery with
+   SRI), `css/tokens`, `sidebar/js/*`. `template.uiMode = getUiMode_()` lands
+   on `<main data-ui-mode="simple|full">`. Server data is embedded as
    `appConfigJson = toEmbeddedJson_(getUiAppConfig_(…))` (`ui_core.gs`). Any
    force-printed template variable must go through `toEmbeddedJson_`, which
    escapes `</script>` and the like. `test/ui/embedded-json.test.js` enforces
@@ -117,19 +132,41 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
    - **Account preferences:** `UserProperties`, persistent, and they follow the
      Google account into every Doc.
    - **Sidebar session overrides:** `CacheService.getUserCache()`, keyed by
-     `sessionId`, with a 6-hour TTL (`setSidebarSessionState`). The Layout
-     tray writes here. **💾 Save as defaults** copies session into account
+     `sessionId`, with a 6-hour TTL (`setSidebarSessionState`). The
+     Insertion Options tray (`#layout-tray`, opened by `#open-layout-settings`)
+     writes here. **💾 Save as defaults** copies session into account
      (`saveSidebarSessionAsAccountDefaults`).
+   - Session saves go **one at a time** (`saveSessionPreference` →
+     `flushSessionSaves_`, `sidebar/js/preferences-state.html`).
+     `setSidebarSessionState` reads, merges and writes the whole session, so
+     two in flight once lost the first: a Vowels click followed by any other
+     click. Changes made while a save is out wait in `sessionSaveQueue.pending`
+     and go together in the next one; the switches are re-drawn from the
+     server's answer only when nothing is left to send
+     (`test/tests/sidebar-session-saves.test.js`).
+   - A save in the Preferences dialog sets a `localStorage` key; the
+     sidebar's `storage` listener (`sidebar/js/mode-controller.html`) calls
+     `reloadAccountPreferences()`, which re-reads `getPreferences()` and
+     refreshes the switches and the preview.
    - A third, client-only one: the Session Library and search history live in
      the iframe's `localStorage`. They never reach the server.
    - Not a layer, but worth knowing: Link Texts' *Customize this insertion*
      keeps its choices in the dialog's memory and sends them with each insert
      (section 6). They are never stored unless the user clicks **💾 Save as
      defaults**, which calls `setPreferences`.
-5. The client checks the bootstrap object against
+5. **Simple mode is CSS only.** `css/components/simple-mode.html` hides the
+   result sort, Restore Corpus and (in Texts) the Texts / Voices / Lexicon
+   switch under `[data-ui-mode="simple"]`; nothing leaves the DOM, so selector
+   contracts and event bindings are the same in both modes. The menu side is
+   `getSimpleMenuLayout_()` (the default layout with `SIMPLE_MENU_HIDDEN_`
+   hidden); `planUiModeSwitch_()` keeps the user's own layout in
+   `menu_layout_before_simple` and puts it back on the way to Everything.
+   Preferences' **Interface** switch calls `setUiMode(mode)`
+   (`test/ui/simple-mode.test.js`).
+6. The client checks the bootstrap object against
    `test/ui/contracts/sidebar-bootstrap.schema.json` at load time and logs a
    structured `console.warn` if it doesn't match.
-6. `returnTitles()` fetches `/api/index/titles` for autocomplete and the
+7. `returnTitles()` fetches `/api/index/titles` for autocomplete and the
    linker pre-filter, cached by `getSefariaTitlesCached_()` in chunks under
    CacheService's 100 KB value limit.
 
@@ -187,11 +224,25 @@ extra candidate, never swapped in for what the user typed.**
 
 **Do:** click a result.
 
-**What runs:** `findReference(ref, versions)` again, with the chosen versions.
-The **server** applies, in order, `applyHebrewDisplayPreferences` (niqqud and
-teamim filters), `applyHebrewDivineNamePreferences` and
+**What runs:** `findReferenceForSidebar(ref, versions, sessionId)`
+(`server/sefaria-fetch.gs`), with the chosen versions. It lays the sidebar's
+session overrides over the stored preferences
+(`sidebarSessionPreferenceOverlay_`, `SETTINGS` keys only), because vowels,
+cantillation and punctuation are stripped at fetch time and can't be put back
+later. The **server** then applies, in order, `attachTransliterationSource_`
+(the transliteration reads the Hebrew as fetched, vowels kept),
+`applyHebrewDisplayPreferences` (`nekudot` / `nekudot_filter` for Vowels
+Off / Tanakh / On, `teamim` / `teamim_filter` for Cantillation Off / Tanakh /
+Torah), `applyPunctuationPreferences`, `applyHebrewDivineNamePreferences` and
 `applyEnglishDivineNamePreference` (`server/text-processing.gs`) before
-returning. So the preview is exactly what will be inserted. The original
+returning. So the preview is exactly what will be inserted.
+
+A change in the tray that the fetch applies (Vowels, Cantillation, either
+Punctuation, Transliteration) calls `scheduleSelectedResultRefresh()`
+(`sidebar/js/composition-controls.html`): Add Source is disabled and the
+preview says *Updating preview…* at once, and the one re-fetch waits until
+the clicks stop and the session saves have landed
+(`test/tests/sidebar-session-fetch.test.js`). The original
 add-on made the same choice, and the comment in `findReference` still says why.
 
 Divine-name rules are a config table (`allRules` in `text-processing.gs`).
@@ -204,14 +255,18 @@ still match with a prefix. See `test/tests/divine-name-rules.test.js`.
 
 ## 5. Insert (10 min)
 
-**Do:** Hebrew + English, **Right–Left**, Lines on, **🔗 Title** on. Click
-**Add Source**. Then select three translations with Stacked layout and insert
-again.
+**Do:** in **📰 Insertion Options**, Display **A + א**, Arrangement
+**Right–Left**, **Line numbers** on, and both **Link title to Sefaria**
+switches on (Source section: `insert_hebrew_sefaria_link_default`;
+Translation section: `insert_sefaria_link_default`). Click **Add Source**.
+Then select three translations with the Stacked arrangement and insert again.
 
 **Single insert:** `google.script.run.insertReference(data, opts)`
 (`server/insertion.gs`). The arity is 2, pinned by the RPC contract. It used
 to be nine positional booleans, and swapping two of them silently changed what
-got inserted.
+got inserted. While it runs the sidebar shows its busy overlay
+(`showBusyOverlay('insert')`, `aside.busy-overlay`); the dialogs use
+`modalBusyShow()` from `shared/ui/busy-overlay.html` the same way.
 
 1. `formatDataForPesukim(data, lineMarkers)` flattens the verse arrays into
    numbered lines (gematria for Hebrew, `gematriya.gs`) or space-joined prose.
@@ -228,23 +283,39 @@ got inserted.
    (regression log).
 3. **Layout:** Stacked is paragraphs. Right–Left and Left–Right are a 2-column
    table with the Hebrew paragraphs set RTL, which is how the original add-on
-   did it.
-4. **Typography:** `getTypographySettings()` resolves each role (title,
-   linked title, Hebrew, transliteration, translation). An empty font or size
-   means **match the document**: `readSurroundingTextStyle_()` reads the
-   paragraph at the insertion point, or the nearest body-text paragraph above
-   it. All styling goes through `applyRoleTypography_(paragraph, typography,
-   role, overrides)`.
+   did it. **Line by line** (`bilingual_aligned_rows`) gives each verse its
+   own row instead (`aligned-rows.test.js`).
+4. **Typography:** `getTypographySettings()` (`server/preferences.gs`)
+   resolves each role: `sourceTitle` and `sefariaLink` (the translation
+   title, plain and linked), `hebrewTitle` and `hebrewLink` (the source
+   title), `hebrew`, `transliteration`, `translation`, and `citation`
+   (`citation_font*`, schema 25, defaulting to 8 pt italic). A linked title
+   takes its linked style only while `sefaria_link_format_override` /
+   `hebrew_link_format_override` is on (schema 24 turned both on). An empty
+   font or size means **match the document**: `readSurroundingTextStyle_()`
+   reads the paragraph at the insertion point, or the nearest body-text
+   paragraph above it. All styling goes through `applyRoleTypography_(paragraph,
+   typography, role, overrides)`.
 5. **Rich text and emphasis:** `insertRichTextFromHTML` turns Sefaria's `<b>`,
    `<i>`, `<sup>` and entities into Docs runs. `decodeHTMLEntities`
    (`server/utils.gs`) is a single-pass table decoder, which fixed the literal
    `&thinsp;` bug. Then `captureEmphasisRuns_` → the baseline style →
    re-assert, mapped through the user's emphasis settings
    (`applyEmphasisMapping_`). Without this, the Steinsaltz Talmud loses the
-   bold that marks the Talmud's own words. `source_emphasis_mode` (schema 14)
-   picks **keep**, **discard**, or **only**, which first removes the text the
-   source didn't emphasise (`planEmphasisOnlyEdits_`).
-6. **Credit block:** `attribution.gs`, a dual-mode helper that runs both in
+   bold that marks the Talmud's own words. `source_emphasis_mode` (schema 14;
+   the card's **Bold & italics** Keep / Drop / Only) picks **keep**,
+   **discard**, or **only**, which first removes the text the source didn't
+   emphasise (`planEmphasisOnlyEdits_`). It applies to the translation only:
+   `sourceEmphasisModeForRole_` returns `keep` for every other role, so the
+   Hebrew is always inserted whole.
+6. **Hebrew marks the font lacks:** last of all, `applyRoleTypography_` asks
+   `planHebrewMarkFallback_` (`server/hebrew-fonts.gs`) which marks the
+   font (or, on *Match the document*, the document's font) has no glyph for,
+   and `applyHebrewMarkFallback_` sets just those in Noto Serif / Sans Hebrew.
+   David Libre's cantillation used to show as empty boxes. It is always on;
+   the coverage table is generated (`tools/hebrew-font-coverage/`), never
+   hand-edited (`hebrew-fonts.test.js`).
+7. **Credit block:** `attribution.gs`, a dual-mode helper that runs both in
    Apps Script and in Node. It credits the translation version and license and
    the Hebrew edition and its `heLicense`, and prints no empty lines.
 
@@ -308,15 +379,16 @@ most time.
    document as it is now (`relocateLinkerDecision_`), so an edit made while
    the dialog was open can't move a link. Citations that are gone are counted
    as `missing`. It then links end to start. Per-row **Insert** calls
-   `insertLinkedSourceAtPosition(ref, decision)`, which finds the citation's
+   `insertLinkedSourceAtPosition(ref, position, overrides)`, which finds the citation's
    paragraph with `body.findText` and passes it to `insertReference` as an
    explicit anchor. The user's cursor is never moved. With
    `insert_from_selection_replace` on, a citation that is its paragraph's
    only text (`linkerCitationFillsBlock_`) is replaced: the source is titled
    with the citation, keeps its link, and the paragraph is removed after the
    insert. A citation inside a sentence is always kept. The dialog's
-   "Customize this insertion" panel (the sidebar's Layout tray controls, from
-   `shared/insertion-options` and `shared/composition-card`) sends the keys
+   "Customize this insertion" panel (the sidebar's Insertion Options
+   controls, from `shared/insertion-options` and `shared/composition-card`)
+   sends the keys
    that differ from the stored preferences as a third argument; the server
    filters them (`sanitizeInsertOverrides_`) and applies them to that insert
    only, including at fetch time for vowels and cantillation.
@@ -343,6 +415,10 @@ and the offset mapping) and `linker-classify.test.js`.
 - `getPreferences()` / `getAccountPreferences()` read the same list back.
 - Menu changes (the Menu Bar tab) take effect on the next `onOpen`, so the
   user has to reload the Doc.
+- Every save covers the dialog with `modalBusyShow('Saving preferences…')`
+  until the server answers, so a slow round trip no longer looks like a hang.
+  Opening Preferences from the sidebar shows *Opening Preferences…*
+  (`showBusyOverlay('preferences')`) and ignores repeat clicks.
 
 ---
 
@@ -359,7 +435,7 @@ and the offset mapping) and `linker-classify.test.js`.
 ## 9. Guardrails and shipping (5 min)
 
 ```bash
-npm ci && npm test                 # 197 passing, 0 skipped (skipped > 0 = linkedom missing = red)
+npm ci && npm test                 # 459 passing, 0 skipped (skipped > 0 = linkedom missing = red)
 bash pre_clasp_qc.sh apps-script   # must exit 0
 npx --prefix tools/clasp clasp push  # HEAD only: test deployments, not users
 ```

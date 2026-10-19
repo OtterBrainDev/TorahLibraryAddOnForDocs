@@ -11,38 +11,53 @@ want → link the whole document → tidy up.**
 
 ## 1. Set your defaults once (5 min)
 
-Open **⚙︎** (bottom of the sidebar) or **Extensions → Torah Library →
-Preferences**. These are saved to your Google account and apply in every
-document.
+Open **⚙︎** (bottom of the sidebar; it says *Opening Preferences…* while it
+loads) or **Extensions → Torah Library → Preferences**. These are saved to
+your Google account and apply in every document.
+
+At the top, **Interface** should be **Everything**. **Simple** hides the result
+sort, Restore Corpus and the Texts / Voices / Lexicon tabs, plus the Search,
+Linking and Experimental tabs here (**Show advanced settings** brings those
+back). This tour uses Everything.
 
 **Fonts tab**
 
-- Every role (Title, Linked title, Hebrew, Transliteration, Translation)
+- Every role (Title, Hebrew, Transliteration, Translation, Citation)
   starts on **Match the document**: the font and size of the text where you
   insert. Leave it there if your documents already have a style. Pick a
   specific font if you want every source to look the same everywhere, e.g.
-  *Noto Serif Hebrew* for Hebrew. The Hebrew font list says which fonts have
-  every vowel and cantillation mark; *David Libre* and *Frank Ruhl Libre*
-  have no cantillation, so the add-on borrows just those marks from Noto
-  Serif Hebrew (see *Borrow missing marks from Noto*). The Layout tray's font
-  buttons change the Hebrew and translation fonts for one session.
+  *Noto Serif Hebrew* for Hebrew. Any Hebrew font works: *David Libre* and
+  *Frank Ruhl Libre* have no cantillation, so the add-on always sets just the
+  marks a font lacks in Noto Serif Hebrew (Noto Sans Hebrew for a sans-serif
+  font). There's no setting; Help → Insertion Options → *Fonts and
+  cantillation marks* explains it.
 - **Title → paragraph style → Heading 2 or 3.** Every inserted source then
   shows up in the document outline and in a table of contents. For a long
-  source sheet this is the most useful setting in the add-on.
+  source sheet this is the most useful setting in the add-on. The paragraph
+  style is shared; the font is not. Switch between **Translation title** and
+  **Source title** to give each its own font, size, colour and highlight.
+  **Hyperlink formatting override** (on by default) gives a title a separate
+  look while it's linked; off, a linked title keeps its title font.
+- **Citation:** the editions-and-licenses line under each source has its own
+  style, 8 pt italic in the font of the text above unless you change it.
+  *Same as the text above* and a blank size follow the passage.
 - **Colour and highlight** default to *Auto / None* (your document decides).
   Set a colour on the translation to set it apart from your own commentary.
 - **✒️ Source Emphasis:** **Keep / Discard / Keep only.** Sefaria's own bold
   and italics are kept by default. In the Steinsaltz Talmud the bold marks the
   Talmud's own words and the plain text is Steinsaltz's explanation, so
   **Keep only** inserts just the Talmud's words. **Advanced** maps bold to
-  something else, such as blue text without bold. The Layout tray's **B&I**
-  button switches between the three for one session.
+  something else, such as blue text without bold. **Bold & italics** in
+  Insertion Options (**Keep / Drop / Only**) switches between the three for
+  one session. It applies to the translation only; the Hebrew always keeps
+  its own bold and italics.
 - **Translation → preferred language** if you don't work in English.
 
 **Insertion tab**
 
-- **Default Layout:** what the Layout tray starts on. Same pickers
-  and names as the tray, shown open.
+- **Layout** and **Insertion Defaults → Texts:** what Insertion Options
+  starts on. The same controls as the sidebar, with the Source and
+  Translation sections shown open.
 - **Divine Name Mappings:** a master switch plus a rule each for יהוה, יה,
   אלוהים and English *God*. The default is יהוה → יי. יה is matched only as a
   whole word, so יהודה is safe.
@@ -89,15 +104,35 @@ Open **Texts** and press <kbd>/</kbd> to jump to the search box. Try:
 Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
 
 1. **Display:** **A** (translation), **A + א** (both), **א** (Hebrew).
-2. **Layout** (for both languages): **Stacked**, **Right–Left** (a
-   two-column table, Hebrew on the right) or **Left–Right**.
-3. **Insertion Format:** watch the live sample change as you toggle
-   **Cantillation**, **Vowels**, **Translit** (choose a scheme: Traditional,
-   Academic, Modern Israeli, IPA…), **Lines** (verse numbers) and **🔗 Title**
-   / **🔗 Sources**.
-4. **Session:** these choices last for this sidebar only. **💾 Save as
-   defaults** makes them your Preferences; **↺ Revert to defaults** undoes
-   the session.
+2. **Arrangement** (for both languages): **Stacked**, **Right–Left** (a
+   two-column table, Hebrew on the right) or **Left–Right**. With a
+   side-by-side arrangement, **Line by line** gives each verse its own table
+   row beside its translation.
+3. **Citation** (the edition and license credit) and **Line numbers** are
+   switches under the pickers.
+4. **Insertion Format:** the **Source** and **Translation** sections are
+   folded to one line saying what's set (*Vowels, Cantillation, Punctuation ·
+   Translit*). Open **Source** to see the live sample change as you set:
+   - **Vowels: Off / Tanakh / On.** *Tanakh* keeps niqqud in Tanakh and
+     drops it from the Mishnah, Talmud and everything else.
+   - **Cantillation: Off / Tanakh / Torah.** *Torah* keeps the marks in the
+     Five Books only; a Haftarah on the same sheet comes in without them.
+   - **Punctuation** off strips sof pasuq, paseq and the like, and the
+     transliteration follows it (*kol ha'am*, not *kol-ha'am*).
+   - **Transliteration**, with **Style** (Traditional, Academic, Modern
+     Israeli, IPA…) under it while it's on. It's read from the fully
+     vowelled text, so it's complete even with Vowels off.
+
+   Open **Translation** for its own **Punctuation** and **Bold & italics**.
+   Each section has its own **Link title to Sefaria** switch, so you can link
+   the Hebrew title and leave the translation title plain, and its own
+   **Title font** and **Text font** buttons (font and size; *Colour, style
+   and more…* opens Preferences).
+5. **Session:** these choices last for this sidebar only. **💾 Save as
+   defaults** (at the top of the panel) makes them your Preferences;
+   **↺ Revert** goes back to them. After a change to what's fetched (Vowels,
+   Cantillation, Punctuation, Transliteration) the preview says *Updating
+   preview…* and **Add Source** waits until it's done.
 
 **Several translations side by side.** Open **Versions**, choose Display **A**
 or Stacked layout, and <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click three translations.
@@ -109,13 +144,17 @@ ref* and skipped. You're told when that happens.
 **A specific Hebrew edition:** **Versions → Original Versions**. The credit
 block under the source names the edition you chose and its license.
 
-**The credit block** is on by default. Many Sefaria texts are CC-BY or
-CC-BY-NC, so it's what lets you share the document properly. Turn it off in
-Preferences → Insertion if you handle attribution yourself.
+**The credit block** (**Citation**) is on by default. Many Sefaria texts are
+CC-BY or CC-BY-NC, so it's what lets you share the document properly. Switch
+it off in Insertion Options for one session, or in Preferences → Insertion →
+Layout, if you handle attribution yourself.
 
 ---
 
 ## 4. Other tabs (4 min)
+
+**Texts / Voices / Lexicon** sit under the search box. Switching runs the same
+search in the other tab, so there's nothing to retype.
 
 - **Voices:** search Sefaria's public source sheets, pick one, and under
   **What to insert** choose **Citation**, **Text** or **Both**. It's a quick
@@ -136,9 +175,9 @@ Preferences → Insertion if you handle attribution yourself.
 This works on a document you wrote yourself, full of citations you typed.
 
 1. **🏃 Quick Actions → 🔗 → ס Link Texts with Sefaria** (or the menu).
-2. The first time, it asks before sending anything. By default only passages
-   that **look like citations** are sent; the rest of your writing stays in
-   the document.
+2. A dialog shows progress while it scans. By default only passages that
+   **look like citations** are sent; the rest of your writing stays in the
+   document.
 3. The review table lists each citation, where it will link, and an excerpt.
    An **ambiguous** citation (e.g. `Avodah Zarah 2a`: the Talmud or a
    commentary?) has a dropdown and is left unticked until you choose.
@@ -148,11 +187,13 @@ This works on a document you wrote yourself, full of citations you typed.
    your words and still linked, so it isn't repeated; one inside a sentence
    stays. With Title set to Heading 3 in step 1, your outline now lists them.
 5. Want these sources different from your usual? Open **📰 Customize this
-   insertion** under the table: the Layout tray's controls (Display, Layout,
-   vowels, transliteration, Lines, Sources, B&I) plus **Replace a citation on
-   its own line**, for this pass only. Try **א** with vowels off for a
-   handout. **💾 Save as defaults** if you want to keep it; otherwise your
-   Preferences are untouched.
+   insertion** under the table: the same controls as Insertion Options
+   (Display, Arrangement, Citation, Line numbers, both Link title switches,
+   Vowels, Cantillation, Punctuation, Transliteration, Bold & italics) plus
+   **Replace a citation on its own line**, for this pass only. It says *Your
+   defaults* until you change something, then *Customized for this pass*. Try
+   **א** with Vowels **Off** for a handout. **💾 Save as defaults** if you want
+   to keep it; otherwise your Preferences are untouched.
 6. The report tells you what was linked, what needed a choice and what
    couldn't be resolved.
 
@@ -192,14 +233,18 @@ alone.
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | Add Source |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click | Select several translations |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> | Session Library |
-| <kbd>Esc</kbd> | Close the Layout tray, Session Library or keyboard |
+| <kbd>Esc</kbd> | Close Insertion Options, the Session Library or the keyboard |
 
 ## Things worth knowing
 
 - **Tables:** one language or Stacked goes inside the cell; Right–Left and
   Left–Right go directly below the table, with a message saying so. Headers,
   footers and footnotes can't hold a source.
-- **Vowels only in Tanakh** (Preferences → Insertion) keeps niqqud in Tanakh
-  and drops it everywhere else.
+- **Vowels: Tanakh** (Insertion Options, or Preferences → Insertion for
+  good) keeps niqqud in Tanakh and drops it everywhere else, as the original
+  add-on did.
+- Saving in Preferences shows *Saving preferences…* over the dialog until it's
+  done, and the change reaches an open sidebar. A setting you changed for the
+  session in Insertion Options keeps its session value until **↺ Revert**.
 - The Session Library is kept in your browser, so it doesn't follow you to
   another computer. Preferences do.

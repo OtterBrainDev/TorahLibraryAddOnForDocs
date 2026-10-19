@@ -33,14 +33,14 @@ stores no preferences, so there is nothing to carry over.
 
 | # | Was | Fix | Status |
 | --- | --- | --- | --- |
-| K1 | **English verse numbers reset across a chapter boundary.** `Genesis 1:31-2:3` with Lines on read (1), (1), (2), (3) in English; the Hebrew was right. | `formatDataForPesukim` keeps a separate verse counter per language. | **Fixed.** `format-data-for-pesukim.test.js`. Step 3.2. |
+| K1 | **English verse numbers reset across a chapter boundary.** `Genesis 1:31-2:3` with line numbers on read (1), (1), (2), (3) in English; the Hebrew was right. | `formatDataForPesukim` keeps a separate verse counter per language, and each chapter gets a heading line (*Chapter 2* / *פרק ב*). | **Fixed.** `format-data-for-pesukim.test.js`. Step 3.2. |
 | K2 | **A slow linker scan read as "nothing found".** Polling gave up after about 5 s and returned an empty result; so did a network error. | Polls for about 30 s, then says Sefaria was still scanning; network errors say Sefaria couldn't be reached. | **Fixed.** `sefaria-unavailable.test.js`. Step 7.9. |
 | K3 | **Linker offsets went stale if the document changed before Apply.** | Each match records which occurrence of its text it is; Apply re-finds it, and reports citations that are gone. | **Fixed.** `linker-classify.test.js`. Step 7.7. |
 | K4 | **Insert from a table** (linker per-row Insert, and the cursor in general). The cursor path in fact put the source at an unrelated place in the body, silently, for texts, sheets and lexicon alike. | One resolver for every insert path (`server/insertion-target.gs`): paragraph layouts go inside the cell; Right–Left / Left–Right go below the table with a notice; headers, footers and footnotes are refused with a message. | **Fixed.** `insertion-target.test.js`. Steps 2.5–2.8, 7.4, 8.4. |
 | K5 | **Network failure read as "no match".** | `findReference` throws "Couldn't reach Sefaria…" for no response, 5xx and 429; an unknown reference is still "no match". | **Fixed.** `sefaria-unavailable.test.js`. Step 11.1. |
 | K6 | Original-add-on users' stored preferences. | — | **Not applicable**: the published add-on stores no preferences. |
 | K7 | Legacy `nekudot_filter="tanach"`. | — | **Not applicable**, as K6. |
-| K8 | **"Vowels only in Tanakh" had no control**, and toggling Vowels reset it. | A **Vowels only in Tanakh** switch in Preferences → Insertion; turning Vowels on keeps it. | **Fixed.** `vowels-tanakh-only.test.js`. Step 5.9. |
+| K8 | **"Vowels only in Tanakh" had no control**, and toggling Vowels reset it. | **Vowels** is a three-way control, **Off / Tanakh / On**, in the composition card (Insertion Options, Preferences → Insertion, Link Texts); *Tanakh* is its own choice, so nothing resets it. Cantillation likewise: **Off / Tanakh / Torah**. | **Fixed.** `vowels-tanakh-only.test.js`. Steps 5.9, 5.9a. |
 | K9 | **Link Texts' Insert repeated the citation.** The citation stayed, and the inserted source's title said the same thing on the next line; Insert from Selection replaced it. To insert one batch differently you had to cancel the review or change Preferences for good. | Insert follows *Insert from Selection replaces the selection*: a citation on a line of its own is replaced (title = the citation, link kept); one inside a sentence stays. The review dialog's **📰 Customize this insertion** panel sets the layout for one pass. | **Fixed.** `linker-insert-replace.test.js`, `linker-dialog.test.js`. Steps 7.4–7.4b, 7.18–7.25. |
 
 Also found while fixing K4: every sidebar toast was invisible (CSS opacity).
@@ -96,11 +96,12 @@ Keep a pristine copy and make a fresh copy for every run of section 7.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
-| 1.1 | **B:** install from a Doc; open **Extensions** without reloading. | Menu present; Release Notes dialog opened. | No menu until reload (the regression pinned in `triggers.test.js`). |
+| 1.1 | **B:** install from a Doc; open **Extensions** without reloading. | Menu present; first-run setup opened (*Step 1 of 3*), not the release notes. | No menu until reload (the regression pinned in `triggers.test.js`). |
+| 1.1a | **B:** click **Continue** through setup without changing anything; then **Help → Run setup again** and **Skip for now** | Nothing stored but "setup done"; the sidebar opens in the mode shown. Setup is never shown again on its own. Saving shows a spinner. | Preferences changed by clicking through; setup shown to account **A** (an upgrader never sees it). |
 | 1.2 | **B:** open a second Doc in a new tab *before* doing anything in the first. | Menu builds in the second Doc too. | Menu missing or partial. In `AuthMode.NONE` the menu is built from the default layout without reading preferences. That is expected; a missing menu is not. |
 | 1.3 | **B:** open Preferences straight away. | Every field shows a value. Colours read **Auto / None**. Divine Name Mappings: יהוה → יי on, others off. | Blank fields, black swatches, or `undefined` anywhere (seeding missed a key). |
 | 1.4 | **A:** open a Doc. Open Preferences. | Everything you set before the upgrade is unchanged. | Anything reset to a default. Compare against a screenshot taken before the upgrade. |
-| 1.5 | Open the sidebar in two Docs at once, same account. Change Layout in one. | The other sidebar is unaffected (session state is per sidebar). | Settings bleeding between sidebars. |
+| 1.5 | Open the sidebar in two Docs at once, same account. Change Display or Arrangement in 📰 Insertion Options in one. | The other sidebar is unaffected (session state is per sidebar). | Settings bleeding between sidebars. |
 
 ---
 
@@ -135,11 +136,11 @@ preview, then insert.
 
 | # | Query | Expect | Watch for |
 | --- | --- | --- | --- |
-| 3.1 | `Genesis 1:1-5`, Lines on, both languages | Verses numbered 1–5 and א–ה. | Numbers off by one. |
-| 3.2 | `Genesis 1:31-2:3`, Lines on, both languages | English (31), (1), (2), (3); Hebrew לא, א, ב, ג. | **K1 (fixed):** English reading (1), (1), (2), (3). There is still no chapter marker at the break; decide if that's acceptable. |
-| 3.3 | `Genesis 1:31-2:3`, Lines **off** | Verses joined as prose with single spaces; nothing lost at the chapter break. | Words run together at the boundary (`...good.The heaven...`). |
+| 3.1 | `Genesis 1:1-5`, **Line numbers** on, both languages | Verses numbered 1–5 and א–ה. | Numbers off by one. |
+| 3.2 | `Genesis 1:31-2:3`, **Line numbers** on, both languages | English (31), (1), (2), (3); Hebrew לא, א, ב, ג. A heading line at the break in each language (*Chapter 2* / *פרק ב*). | **K1 (fixed):** English reading (1), (1), (2), (3). Numbers restarting with nothing to say a new chapter began. |
+| 3.3 | `Genesis 1:31-2:3`, **Line numbers** off | Verses joined as prose with single spaces; nothing lost at the chapter break. | Words run together at the boundary (`...good.The heaven...`). |
 | 3.4 | `Berakhot 2a:5-2b:2` | Spans the amud break; readable. | Missing segments or a doubled segment at the break. |
-| 3.5 | `Psalms 119` (176 verses), both, Lines on | Inserts in well under 30 s. | Timeout, or a sidebar stuck on the spinner. Time it. |
+| 3.5 | `Psalms 119` (176 verses), both, **Line numbers** on | Inserts in well under 30 s. | Timeout, or a sidebar stuck on the spinner. Time it. |
 | 3.6 | `Genesis` (whole book) | Not insertable; the sidebar says to pick a passage and **Add Source** is disabled. | A 50-chapter insert, or a timeout. |
 | 3.7 | `Mishneh Torah, Shabbat 1:1` and `Hil. Shabbat 1:1` | Both resolve to the same passage. | The abbreviated form resolving to something else. |
 | 3.8 | `Hil. Avodah Zarah 12:11` | Mishneh Torah suggested **first**; the Talmud tractate lower. | The tractate first (an abbreviation silently retargeted). |
@@ -165,9 +166,10 @@ preview, then insert.
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
 | 4.1 | `Genesis 1:1`, **Translation** only; <kbd>Ctrl</kbd>-select three translations; insert. | Three blocks, in the order clicked, a blank line between each, one title each naming its version **once**. | A version named twice; blocks run together. |
-| 4.2 | Same, with **🔗 Title** on | Each title opens *that* translation on sefaria.org. | Every link opening the default translation. |
+| 4.2 | Same, with the Translation section's **Link title to Sefaria** on | Each title opens *that* translation on sefaria.org. | Every link opening the default translation. |
+| 4.2a | Both languages, Stacked. Source section's **Link title to Sefaria** on, Translation's off; insert. Then the reverse | Only the Hebrew title linked, then only the translation title. Each title keeps its own **Title font** whether linked or not; a linked title takes Preferences → Fonts → Title's linked style only while that title's **Hyperlink formatting override** is on (the default). | One switch linking both titles; a linked title losing its font with the override off. |
 | 4.3 | Add a translation that doesn't cover the verse (a partial translation) to the multi-select | Skipped, reported, and greyed out *unavailable for this ref*. | An empty block, or a duplicate of the default translation. |
-| 4.4 | Multi-select, then switch Layout to **Right–Left** | Blocked, or reduced to one translation with a message. | Several translations crammed into one table cell, or silently dropped. |
+| 4.4 | Multi-select, then switch Arrangement to **Right–Left** | Blocked, or reduced to one translation with a message. | Several translations crammed into one table cell, or silently dropped. |
 | 4.5 | Preferences → Fonts → Translation → preferred language **French**; search `Genesis 1:1` | A French translation if one exists; otherwise a fallback that is clearly labelled. | English inserted with no indication. |
 | 4.6 | Pick a non-default **Original Versions** Hebrew edition; insert Hebrew only | The credit block names *that* edition and its license. | The credit naming the default edition. |
 | 4.7 | Insert a text whose translation license is CC-BY-NC | License shown in the credit block. | No license, or "undefined". |
@@ -185,12 +187,19 @@ preview, then insert.
 | 5.5 | File → Page setup → a dark page colour; insert with default colours | Text inherits the document; nothing forced black. | Black text on the dark page. |
 | 5.6 | Source Emphasis → Advanced: bold → blue, no bold. Insert `Berakhot 2a` (Steinsaltz) | Talmud words blue, not bold. | Nothing blue; or the title also blue. |
 | 5.7 | Source Emphasis → **Discard**; insert the same | Flat text. | Leftover bold. |
-| 5.7a | Layout tray **B&I** → **Keep only**; insert `Berakhot 2a` in English, then in Aramaic | English: only the bold words (the Talmud's own), line markers kept, lines with no emphasis left out. Aramaic (no emphasis anywhere): inserted whole. | Empty insert; Steinsaltz's explanation left in. |
-| 5.8 | Vowels off, Cantillation on | Cantillation kept, vowels gone, sof pasuq **׃** and paseq **׀** kept. | Punctuation stripped with the vowels. |
-| 5.9 | Preferences → Insertion → turn on **Vowels only in Tanakh**; save. Insert `Mishnah Berakhot 1:1` and `Genesis 1:1`. Then turn Vowels off and on again in Preferences, save, and reopen | Mishnah without niqqud, Genesis with. After the off/on, the switch is still on. | **K8 (fixed):** the switch reset by the Vowels toggle. |
-| 5.10 | **Translit** on; cycle every scheme; insert `Genesis 1:1` each time | Transliteration present and different per scheme; font follows the Transliteration role. | Transliteration in the Hebrew font; an empty line. |
+| 5.7a | 📰 Insertion Options → Translation section → **Bold & italics** → **Only**; insert `Berakhot 2a` both languages, then translation only | Translation: only the bold words (the Talmud's own), line markers kept, lines with no emphasis left out. The Hebrew/Aramaic is inserted whole, with its own bold (מֵאֵימָתַי) kept. | Empty insert; Steinsaltz's explanation left in; Hebrew cut down to its bold words. |
+| 5.7b | **Bold & italics** → **Drop**; insert `Mishnah Berakhot 1:1`, both languages | Translation flat; the Hebrew's opening מֵאֵימָתַי still bold. | The Hebrew's bold dropped too (the setting is the translation's only). |
+| 5.8 | Vowels **Off**, Cantillation **Tanakh**; insert `Genesis 1:1` | Cantillation kept, vowels gone, sof pasuq **׃** and paseq **׀** kept. | Punctuation stripped with the vowels. |
+| 5.9 | Preferences → Insertion → **Vowels: Tanakh**; save. Insert `Mishnah Berakhot 1:1` and `Genesis 1:1`. Then click **Off** and **Tanakh** again, save, and reopen | Mishnah without niqqud, Genesis with. After reopening, **Tanakh** is still selected. | **K8 (fixed):** *Tanakh* lost when Vowels changed. |
+| 5.9a | Cantillation **Torah**; insert `Genesis 1:1` and `Isaiah 40:1`. Then **Tanakh** | *Torah*: marks on Genesis only. *Tanakh*: on both. An account that had an old stored `"torah"` shows **Tanakh** (schema 24 rewrote it). | Torah-only applied to Isaiah; an upgrader's setting changing meaning. |
+| 5.9b | In 📰 Insertion Options click **Vowels: Off**, then at once a switch (Punctuation), then **Add Source** as soon as it enables | Preview says *Updating preview…* at once; Add Source stays disabled until the save and re-fetch land; the insert has no vowels. | The preview right but the insert with vowels (the lost-Vowels bug); Add Source enabled mid-save. |
+| 5.9c | Click one switch three times quickly | It ends where the clicks left it, with no flicker back to an earlier state. | A switch flipping back, or ignoring a click. |
+| 5.10 | Source section → **Transliteration** on; pick each **Style**; insert `Genesis 1:1` each time | *Style* shows only while the switch is on. Transliteration present and different per scheme; font follows the Transliteration role. With Display **Both** or **Translation** the tray scrolls down to *Style* and the Translation section. | Transliteration in the Hebrew font; an empty line; *Style* cut off at the bottom of the tray. |
+| 5.10a | Source section → **Punctuation** off, Vowels **Off**, Transliteration on; insert `Genesis 1:1` | Transliteration fully vowelled (read from Sefaria's text, not the stripped Hebrew), no sof pasuq, maqaf as a space (*kol ha'am*). Same in the preview and the card's sample. | Bare consonants; *kol-ha'am*; a stray ׃. |
 | 5.11 | Insert a text with `&thinsp;` in the Hebrew (Talmud or Mishnah with thin spaces) | No literal `&thinsp;`, `&nbsp;` or `&…;`. | Any literal entity. |
-| 5.12 | **💾 Save as defaults** in the Layout tray while Preferences is open in a dialog; then **Save Defaults** in the dialog | The last save wins. Decide whether that's acceptable, and whether the dialog should warn. | Silent revert of the sidebar save. |
+| 5.12 | **💾 Save as defaults** at the top of 📰 Insertion Options while Preferences is open in a dialog; then **Save Defaults** in the dialog | The last save wins. Decide whether that's acceptable, and whether the dialog should warn. | Silent revert of the sidebar save. |
+| 5.13 | Preferences → Fonts → **Citation**: a font, 10 pt, bold, a colour; save. Insert with **Citation** on. Then *Same as the text above* and a blank size | The credit line in that style; then the font and size of the passage above it, italic 8 pt as before for an untouched account. | The citation ignoring its style; an upgrader's citation looking different before they touch it. |
+| 5.14 | Font buttons: Source **Text font** → David Libre; Cantillation **Tanakh**; insert `Genesis 1:1` | Letters and vowels in David Libre; only the cantillation marks in Noto Serif Hebrew. The sample in the card looks the same. No font UI mentions borrowing. | Empty boxes; the whole verse in Noto. |
 
 ---
 
@@ -218,7 +227,7 @@ Use a **fresh copy** of the stress document for every row that says so.
 | 7.2 | Run, accept (Candidate passages) | Dialog opens immediately with a scanning state; then a summary: auto-linked, need a choice, could not be resolved, fell across a gap. | A frozen menu for several seconds with no dialog. |
 | 7.3 | Review the table | Paragraphs 2, 3 (both), 6, 7, 10 (both items) found. Avodah Zarah is a dropdown with excerpts, Link unchecked. Fakebook counted as unresolved. Psalms 23 (linked to example.com) **not** offered. | The paragraph 8 split-format citation, the footnote (12) and the header (13) are expected **misses** because the scan reads the body text only. Record whether any appear, and whether the report mentions them. |
 | 7.4 | Tick **Insert** on the table citation (Isaiah 40:1) and on one list item; apply. Repeat with the default layout set to Hebrew only | Both citations are alone on their line, so each is **replaced** (Preferences → Insertion → *Insert from Selection replaces the selection* is on by default). Right–Left default: the Isaiah source goes below the table, the done message says why, and the cell is left empty. Hebrew only: the source takes the citation's place inside the cell. The list item becomes the source. Your cursor doesn't move. | **K4 (fixed):** the source at the end of the document, or no explanation. A citation left behind with the same words repeated as the title below it (**K9**). |
-| 7.4a | **Fresh copy.** Tick **Insert** (and **Link**) on `Leviticus 19:18`; apply. Click the inserted title | The list item is replaced by the source, titled `Leviticus 19:18` exactly as typed, and the title links to Sefaria even if *🔗 Title* is off in Preferences (the citation was linked). | The citation and a second `Leviticus 19:18` title (**K9**). A replaced citation that loses its link. |
+| 7.4a | **Fresh copy.** Tick **Insert** (and **Link**) on `Leviticus 19:18`; apply. Click the inserted title | The list item is replaced by the source, titled `Leviticus 19:18` exactly as typed, and the titles link to Sefaria even if both *Link title to Sefaria* switches are off in Preferences (the citation was linked). | The citation and a second `Leviticus 19:18` title (**K9**). A replaced citation that loses its link. |
 | 7.4b | **Fresh copy.** Turn off *replaces the selection* in Preferences; repeat 7.4a | The citation stays (linked) and the source goes below it, titled with Sefaria's reference. | The citation deleted anyway. |
 | 7.5 | Tick **Insert** on *both* citations in paragraph 3; apply | Two sources below paragraph 3, Exodus above Deuteronomy. | Wrong order, or one inserted inside the other. |
 | 7.6 | Pick the second Avodah Zarah candidate; apply; click the link | It opens the candidate you picked. | It opens the first candidate. |
@@ -242,12 +251,12 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
-| 7.18 | Run; open the panel without changing anything | Collapsed by default. Opened, it shows the same controls as the sidebar's Layout tray, set to your **Preferences** (not the tray's session choices), and says *Your defaults*. Revert and Save are disabled. | Session choices from the sidebar; blank controls; the panel missing entirely (it stays hidden only if Preferences couldn't be read). |
-| 7.19 | Set Display **א**, Layout irrelevant, Vowels off, Lines off, B&I **Discard**; tick **Insert** on paragraph 3's two citations and `Leviticus 19:18`; apply | All three sources: Hebrew only, no vowels, no line numbers, no bold. The panel said *Customized for this pass*. Afterwards Preferences → Insertion and the sidebar's Layout tray are unchanged. | Any source with your defaults instead; Preferences changed without **Save as defaults**. |
-| 7.20 | Display **A** (translation only) | Layout and the panel's Hebrew pills (Vowels, Cantillation, Translit) disappear; the 🔗 Title, Lines, Sources and B&I pills stay. Back to **A + א** brings them back. | Hebrew controls offered for a translation-only insert. |
+| 7.18 | Run; open the panel without changing anything | Collapsed by default. Opened, it shows the same controls as the sidebar's 📰 Insertion Options (Layout, then Insertion Format with folded Source and Translation sections), set to your **Preferences** (not the sidebar's session choices), and says *Your defaults*. Revert and Save are disabled. | Session choices from the sidebar; blank controls; the panel missing entirely (it stays hidden only if Preferences couldn't be read). |
+| 7.19 | Set Display **A + א**, Arrangement **Stacked**, Vowels **Off**, **Line numbers** off, Bold & italics **Drop**; tick **Insert** on paragraph 3's two citations and `Leviticus 19:18`; apply | All three sources: no vowels, no line numbers, the translation without bold (the Hebrew keeps its own). The panel said *Customized for this pass*. Afterwards Preferences → Insertion and the sidebar's 📰 Insertion Options are unchanged. | Any source with your defaults instead; Preferences changed without **Save as defaults**. |
+| 7.20 | Display **A** (translation only), then **א** | **A**: Arrangement and the Source section (Vowels, Cantillation, Transliteration…) are hidden; Citation, Line numbers and the Translation section stay. **א**: the Translation section is hidden. Back to **A + א** shows both. | Hebrew controls offered for a translation-only insert. |
 | 7.21 | Untick **Replace a citation on its own line**; insert `Leviticus 19:18` | The citation stays and the source goes below it. Preferences' *replaces the selection* is still on. | The citation removed; the preference turned off. |
 | 7.22 | Change two settings, then **↺ Revert to defaults** | Everything back to Preferences; *Your defaults*. | A setting left changed. |
-| 7.23 | Change Vowels; **💾 Save as defaults**; reopen Preferences | Preferences → Insertion shows the change; nothing else changed. The panel says *Your defaults*. | Other preferences overwritten; a silent failure (it should say *Could not save*). |
+| 7.23 | Change Vowels; **💾 Save as defaults**; reopen Preferences | A spinner covers the dialog (*Saving…*) until the server answers. Preferences → Insertion shows the change; nothing else changed. The panel says *Your defaults*. | Other preferences overwritten; a silent failure (it should say *Could not save*). |
 | 7.24 | Change a setting, tick **Insert** on several rows, **Apply**, and while it inserts click around the panel | Every source in the pass uses the settings as they were at **Apply**. | Sources in one pass with different layouts. |
 | 7.25 | After linking → **Just link and report a count**, with **Insert text after linking** on | No dialog, so no panel: inserts use Preferences. | — |
 
@@ -285,14 +294,17 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
-| 10.1 | Leave the sidebar open over 6 hours (the session cache TTL); then change Layout and insert | Works, perhaps with defaults restored. | A script error, or a silent insert with the wrong layout. |
+| 10.1 | Leave the sidebar open over 6 hours (the session cache TTL); then change Display or Arrangement and insert | Works, perhaps with defaults restored. | A script error, or a silent insert with the wrong layout. |
 | 10.2 | Incognito window (browser storage blocked or empty) | Sidebar works; Session Library and search history empty but not broken. | Console errors from `localStorage`. |
 | 10.3 | Preferences → Menu Bar: hide every item you're allowed to; reload | Preferences and Help & Support still present, last. | An empty menu with no way back. |
 | 10.4 | Menu Bar: nest items three levels; reload | Flattened or rejected clearly (Docs supports one submenu level). | A broken menu. |
 | 10.5 | **Reset To Defaults** | Everything back to defaults, including יהוה → יי on. | Anything left over; `linker_upload_acknowledged` reset (it should **not** be reset). |
 | 10.6 | Preferences → Experimental: enable, turn on Surprise Me, run it with every corpus off | "Choose at least one corpus." | Script error. |
-| 10.7 | **🔁 Refresh** in Preferences | Sidebar reopens from saved defaults. | Silent no-op (the historical regression). |
-| 10.8 | Preferences → Insertion → **Layout**: hover each option; choose **A**; save; open the sidebar's 📰 Insertion Options | Both pickers (Display, Arrangement) are labelled segmented controls. Option names match the sidebar's (*Translation*, *Original with Translation*, *Original*; *Stacked*, *Right–Left*, *Left–Right*). With **A** chosen, Layout and the Hebrew pills in Insertion Defaults stay visible (they are still defaults for other inserts). The tray starts on **A**. | Different names than the sidebar; Layout hidden in Preferences; the tray not following the saved default. |
+| 10.7 | **🔁 Refresh** in Preferences | A spinner (*Refreshing the sidebar…*); the sidebar reopens from saved defaults, session choices cleared. | Silent no-op (the historical regression). |
+| 10.7a | With the sidebar open on a selected source, change a font and Vowels in Preferences; **Save Defaults** | The open sidebar's Insertion Options and preview follow at once; a setting already changed for the session in Insertion Options keeps its session value. Saving shows *Saving preferences…* over the dialog. | Only the next insert picking up the change; a session choice overwritten. |
+| 10.7b | Click ⚙︎ in the sidebar footer three times quickly (or *Colour, style and more…* in a font panel) | *Opening Preferences…* over the sidebar; one Preferences dialog. | Two dialogs; no feedback for several seconds. |
+| 10.8 | Preferences → Insertion → **Layout**: hover each option; choose **A**; save; open the sidebar's 📰 Insertion Options | Both pickers (Display, Arrangement) are labelled segmented controls. Option names match the sidebar's (*Translation*, *Original with Translation*, *Original*; *Stacked*, *Right–Left*, *Left–Right*). In Preferences the Source and Translation sections start open. Insertion Options starts on **A**. | Different names than the sidebar; Layout hidden in Preferences; Insertion Options not following the saved default. |
+| 10.9 | Preferences → **Interface: Simple**; reopen the sidebar; then **Everything** | Simple: no result sort or Restore Corpus, no Texts / Voices / Lexicon tabs while in Texts, no "More options"; Add Source, 📰 Insertion Options and the 📜 🏃 ⚙︎ footer buttons still there. Menu: Texts, Insert Source from Selection, Transform Divine Names, Link Texts, then Preferences and Help. Preferences hides Search, Linking and Experimental until **Show advanced settings**. Everything brings back your own menu. | Anything removed rather than hidden; your custom menu lost on the way back. |
 
 ---
 
@@ -310,7 +322,7 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
-| 12.1 | Use only the keyboard: <kbd>/</kbd>, type, <kbd>↓</kbd>, <kbd>Enter</kbd>, <kbd>Ctrl</kbd>+<kbd>Enter</kbd>, <kbd>Esc</kbd> | A full search-and-insert without the mouse. | A focus trap in the Layout tray or the Hebrew keyboard. |
+| 12.1 | Use only the keyboard: <kbd>/</kbd>, type, <kbd>↓</kbd>, <kbd>Enter</kbd>, <kbd>Ctrl</kbd>+<kbd>Enter</kbd>, <kbd>Esc</kbd> | A full search-and-insert without the mouse. | A focus trap in 📰 Insertion Options, a font panel or the Hebrew keyboard. |
 | 12.2 | Browser zoom 200 % | Sidebar usable; nothing cut off horizontally. | Buttons off-screen. |
 | 12.3 | OS dark mode | Sidebar and dialogs readable. | Dark text on a dark background. |
 | 12.4 | Screen reader on the result list and the linker table | Rows and controls announced meaningfully. | "Button" with no label on icon buttons (🔍, 📜, 🏃, ⚙︎). |
@@ -328,7 +340,7 @@ run once.
 | 13.1 | **C:** open a Doc that used the published add-on; open Extensions | The new menu; no error; no duplicate menu. | The old menu items still listed. |
 | 13.2 | Open Preferences | Defaults: יהוה → יי on, colours Auto, Linking in Candidate mode. | Blank fields. |
 | 13.3 | Insert `Mishnah Berakhot 1:1` | Niqqud appears. The published add-on removed it from every non-Tanakh text; walkthrough 4 warns about this. | — |
-| 13.4 | Turn on **Vowels only in Tanakh**; insert it again | No niqqud, as before. | The switch doing nothing. |
+| 13.4 | Set **Vowels: Tanakh**; insert it again | No niqqud, as before. | The choice doing nothing. |
 | 13.5 | Bilingual insert with defaults | A two-column table, Hebrew on the right: the published add-on's layout. | A different default layout. |
 
 ---
@@ -341,7 +353,7 @@ For each failure, record:
 2. What happened versus **Expect**
 3. Browser console output and the Executions entry (duration, error)
 4. Scan mode and After-linking mode, for anything in section 7
-5. Version: **2.1.0, schema 14**, and the commit you pushed
+5. Version: **2.1.0, schema 25** (plus the Unreleased changes in `docs/CHANGELOG.md`), and the commit you pushed
 
 Anything under **Known suspects** that reproduces should get a row in
 [`docs/regression-log.md`](../regression-log.md) and a pinning test when it's

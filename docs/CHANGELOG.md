@@ -45,6 +45,31 @@ heading until the next release consolidates it.
 > the citation's fixed look until now: 8 pt italic, in the font of the text
 > above it.
 
+### Help and walkthroughs
+
+#### Changed
+
+- **Help describes the new interface.** *The sidebar at a glance* puts Texts /
+  Voices / Lexicon under the search box and Insertion Options under Add
+  Source; a new **Simple or Everything** section says what Simple hides in the
+  sidebar, the menu and Preferences, and how to get it back; Insertion Options
+  covers Display, the Citation / Line by line / Line numbers switches, the
+  folding Source and Translation sections row by row, the font panel and
+  *Updating preview…*; Preferences lists the Interface switch, the Search tab,
+  Fonts → Citation and the save spinner. Troubleshooting adds a missing tab
+  (Simple mode), a preview that hasn't caught up, and borrowed cantillation
+  marks.
+- **First-run setup and Preferences no longer name controls that are gone.**
+  Setup's Simple choice said the other tools were "under More options", which
+  Simple mode no longer has, and Everything said it added Link Texts, which
+  Simple has too. Preferences → Fonts → ✒️ Source Emphasis pointed to "the B&I
+  button in the sidebar's Layout tray"; it is *Bold & italics* in Insertion
+  Options.
+- The Google Docs walkthrough, the README and the five walkthroughs in
+  `docs/walkthroughs/` use the current names and places throughout, and cover
+  first-run setup, Simple mode, separate source and translation titles, the
+  citation style and the three-way Vowels and Cantillation.
+
 ### Sidebar fixes
 
 #### Fixed
