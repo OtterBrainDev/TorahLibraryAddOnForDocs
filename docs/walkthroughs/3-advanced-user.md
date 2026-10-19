@@ -41,7 +41,7 @@ document.
 
 **Insertion tab**
 
-- **Default Display & Layout:** what the Layout tray starts on. Same pickers
+- **Default Layout:** what the Layout tray starts on. Same pickers
   and names as the tray, shown open.
 - **Divine Name Mappings:** a master switch plus a rule each for יהוה, יה,
   אלוהים and English *God*. The default is יהוה → יי. יה is matched only as a
@@ -86,7 +86,7 @@ Open **Texts** and press <kbd>/</kbd> to jump to the search box. Try:
 
 ## 3. Insert exactly what you want (8 min)
 
-Select `Genesis 1:1-5`. Open **📰 Layout**.
+Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
 
 1. **Display:** **A** (translation), **A + א** (both), **א** (Hebrew).
 2. **Layout** (for both languages): **Stacked**, **Right–Left** (a

@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **424 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **451 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -208,6 +208,19 @@ and fix it before touching the feature you came to change.
   values the dialog can produce are stored, switching to Simple and back
   returns the user's own menu, setup is shown once (never to an upgrader), and
   the dialog's preview transforms its sample exactly as an insert would.
+- `title-link-and-fonts.test.js` — the source (Hebrew) title and the
+  translation title each have their own link switch and font, linked or not;
+  the linked style applies only with that title's "Hyperlink formatting
+  override" on (schema v24 turns both on); a caller that passes only the old
+  `insertSefariaLink` links both alike, as before; schema v23 copies the old
+  values (`migrations.test.js`).
+- `sidebar-session-saves.test.js` — the sidebar's session saves go one at a
+  time (a quick second click once overwrote the first: the lost Vowels
+  choice), switches re-draw only when nothing is left to save, and a change
+  the fetch applies re-fetches once, with Add Source disabled meanwhile.
+- `citation-style.test.js` — the citation under a source has its own style
+  (Preferences → Fonts → Citation); its defaults and schema v25 keep the old
+  8 pt italic in the font of the text above.
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
   cantillation) are set in Noto Serif / Sans Hebrew at insert, and only those:
   letters and the marks it has stay; "Match the document" judges the
@@ -239,9 +252,10 @@ and in `test/ui/`:
   `<script>` goes through `toEmbeddedJson_`.
 - `csp-coverage.test.js` — every entry page carries the same
   Content-Security-Policy.
-- `vowels-tanakh-only.test.js` — the Preferences "Vowels only in Tanakh"
-  switch, and that turning Vowels back on keeps it.
-- `insertion-options.test.js` — the Display & Layout pickers exist once
+- `vowels-tanakh-only.test.js` — the composition card's three-way Vowels
+  (Off / Tanakh / On) and Cantillation (Off / Tanakh / Torah) controls write
+  the stored pairs the server reads, in every host.
+- `insertion-options.test.js` — the Layout pickers exist once
   (`shared/insertion-options`): every host (sidebar, Preferences, Link Texts
   dialog) includes and initialises them, and no page has its own copy of the
   cards or their CSS.
@@ -251,8 +265,11 @@ and in `test/ui/`:
   there. Style a control in its component file or in that file, never by
   relying on Google's sheet.
 - `simple-mode.test.js` — Simple mode hides with CSS only (never removes),
-  every control it hides exists and comes back under "More options" or "Show
-  advanced settings", and the server tells each page its mode.
+  hides only the search tools in the sidebar (no "More options"), the footer
+  is Add Source, Insertion Options, then Session Library / Quick Actions /
+  Preferences in both modes, Preferences' "Show advanced settings" brings back
+  what it hides, and the server tells each page its mode. Opening Preferences
+  from the sidebar shows "Opening Preferences…" and ignores repeat clicks.
 - `font-pickers.test.js` — every composition-card host has the font buttons
   and loads `shared/fonts` first; Preferences' font lists come from that one
   list; fonts Docs does not have (SBL Hebrew, Ezra SIL) are never offered;

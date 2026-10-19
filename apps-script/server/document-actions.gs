@@ -653,7 +653,10 @@ function insertLinkedSourceAtPosition(ref, position, overrides) {
   const options = Object.assign({ preferredTitle: ref, insertAfterElement: anchor, preferenceOverrides: overrideValues }, insertOptions);
   if (replaceCitation) {
     options.preferredTitle = found.citation;
-    if (found.linked) options.insertSefariaLink = true;
+    if (found.linked) {
+      options.insertSefariaLink = true;
+      options.insertHebrewSefariaLink = true;
+    }
   }
   const outcome = insertReference(resolved, options);
   if (replaceCitation) removeLinkerCitationBlock_(anchor);
@@ -672,13 +675,16 @@ var LINKER_INSERT_OVERRIDE_KEYS_ = {
   source_emphasis_mode: ['keep', 'discard', 'only'],
   transliteration_scheme: 'scheme',
   nekudot: 'boolean',
+  nekudot_filter: ['always', 'tanakh', 'false'],
   teamim: 'boolean',
+  teamim_filter: ['available', 'tanakh', 'torah', 'false'],
   hebrew_punctuation: 'boolean',
   translation_punctuation: 'boolean',
   include_transliteration_default: 'boolean',
   show_line_markers_default: 'boolean',
   include_translation_source_info: 'boolean',
   insert_sefaria_link_default: 'boolean',
+  insert_hebrew_sefaria_link_default: 'boolean',
   insert_from_selection_replace: 'boolean',
   hebrew_font: 'font',
   hebrew_font_size: 'size',
@@ -811,6 +817,11 @@ function buildLinkSourcesInsertOptions_(prefs) {
   const pasukPreference = prefs.show_line_markers_default == 'true' || prefs.show_line_markers_default === true;
   const includeTranslationSourceInfo = prefs.include_translation_source_info == 'true' || prefs.include_translation_source_info === true;
   const insertSefariaLink = prefs.insert_sefaria_link_default == 'true' || prefs.insert_sefaria_link_default === true;
+  // Unset (a caller's partial prefs) follows the translation title, as before.
+  const hebrewLinkPref = prefs.insert_hebrew_sefaria_link_default;
+  const insertHebrewSefariaLink = (hebrewLinkPref == null || hebrewLinkPref === '')
+    ? insertSefariaLink
+    : (hebrewLinkPref == 'true' || hebrewLinkPref === true);
   const includeTransliteration = prefs.include_transliteration_default == 'true' || prefs.include_transliteration_default === true;
   const insertCitationOnly = prefs.insert_citation_default == 'true' || prefs.insert_citation_default === true;
   return {
@@ -822,6 +833,7 @@ function buildLinkSourcesInsertOptions_(prefs) {
     alignedRows: prefs.bilingual_aligned_rows == 'true' || prefs.bilingual_aligned_rows === true,
     includeTranslationSourceInfo: includeTranslationSourceInfo,
     insertSefariaLink: insertSefariaLink,
+    insertHebrewSefariaLink: insertHebrewSefariaLink,
     includeTransliteration: includeTransliteration,
     insertCitationOnly: insertCitationOnly
   };

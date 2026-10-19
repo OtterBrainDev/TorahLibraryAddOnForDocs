@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '22';
+var PREFS_SCHEMA_CURRENT_ = '25';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -202,6 +202,28 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // the stored value test builds wrote.
   if (from < 22) {
     migrateToV22_(userProperties);
+  }
+  // v22 -> v23: the source (Hebrew) title gets its own link switch and fonts
+  // (`insert_hebrew_sefaria_link_default`, `hebrew_title_*`, `hebrew_link_*`).
+  // Each starts as a copy of the translation title's setting, which until now
+  // applied to both titles, so no upgrader's inserts change.
+  if (from < 23) {
+    migrateToV23_(userProperties);
+  }
+  // v23 -> v24: introduces `sefaria_link_format_override` and
+  // `hebrew_link_format_override` ("true": a linked title keeps its linked
+  // style, as it always has), and gives cantillation a real Torah-only
+  // filter, so a legacy stored `teamim_filter = "torah"`, which always read
+  // as "tanakh", is rewritten to "tanakh".
+  if (from < 24) {
+    migrateToV24_(userProperties);
+  }
+  // v24 -> v25: introduces the citation style (`citation_font`,
+  // `citation_font_size`, `citation_font_style`, `citation_font_color`,
+  // `citation_font_background`), each set to the citation's fixed look until
+  // now (8 pt italic, the font of the text above).
+  if (from < 25) {
+    migrateToV25_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -537,6 +559,65 @@ function migrateToV21_(userProperties) {
  */
 function migrateToV22_(userProperties) {
   try { userProperties.deleteProperty('hebrew_mark_fallback'); } catch (_e) { /* ignore */ }
+  return true;
+}
+
+/**
+ * V23: the source (Hebrew) title is set apart from the translation title.
+ * Every new key copies the stored value of the key that used to govern both
+ * titles, or takes its default when there is none. A stored value is never
+ * overwritten (a no-schema user was seeded with the defaults, which equal
+ * the translation title's).
+ */
+var V23_TITLE_KEY_COPIES_ = {
+  insert_hebrew_sefaria_link_default: 'insert_sefaria_link_default',
+  hebrew_title_font: 'source_title_font',
+  hebrew_title_font_size: 'source_title_font_size',
+  hebrew_title_font_style: 'source_title_font_style',
+  hebrew_title_font_color: 'source_title_font_color',
+  hebrew_title_font_background: 'source_title_font_background',
+  hebrew_link_font: 'sefaria_link_font',
+  hebrew_link_font_size: 'sefaria_link_font_size',
+  hebrew_link_font_style: 'sefaria_link_font_style',
+  hebrew_link_font_color: 'sefaria_link_font_color',
+  hebrew_link_font_background: 'sefaria_link_font_background'
+};
+
+function migrateToV23_(userProperties) {
+  var defaults = getDefaultPreferences();
+  Object.keys(V23_TITLE_KEY_COPIES_).forEach(function(key) {
+    if (userProperties.getProperty(key) != null) return;
+    var from = userProperties.getProperty(V23_TITLE_KEY_COPIES_[key]);
+    userProperties.setProperty(key, from != null ? from : String(defaults[key]));
+  });
+  return true;
+}
+
+/**
+ * V24: the two "Hyperlink formatting override" switches start on, which is
+ * what linked titles have always looked like, and a legacy "torah"
+ * cantillation filter keeps meaning what it meant ("tanakh") now that
+ * "torah" means the Five Books only. A stored switch is never overwritten.
+ */
+function migrateToV24_(userProperties) {
+  ['sefaria_link_format_override', 'hebrew_link_format_override'].forEach(function(key) {
+    if (userProperties.getProperty(key) == null) userProperties.setProperty(key, 'true');
+  });
+  if (String(userProperties.getProperty('teamim_filter') || '').toLowerCase() === 'torah') {
+    userProperties.setProperty('teamim_filter', 'tanakh');
+  }
+  return true;
+}
+
+/**
+ * V25: the citation style, set to the look the citation always had. A stored
+ * value is never overwritten.
+ */
+function migrateToV25_(userProperties) {
+  var defaults = getDefaultPreferences();
+  ['citation_font', 'citation_font_size', 'citation_font_style', 'citation_font_color', 'citation_font_background'].forEach(function(key) {
+    if (userProperties.getProperty(key) == null) userProperties.setProperty(key, String(defaults[key]));
+  });
   return true;
 }
 

@@ -465,9 +465,11 @@
     opacity: 0.28;
   }
 
+  /* "Auto" / "None" chosen: marked, not shouting (a solid navy block read as
+     the most important thing on the page). */
   .color-control.is-unset .color-clear-btn {
-    background: #1f3b68;
-    color: #fff;
+    background: var(--selected-soft);
+    color: var(--sefaria-blue);
   }
 
   .compact-field--color {
@@ -1093,10 +1095,6 @@
     border-radius: 12px;
   }
 
-  .subsection-card--preview {
-    background: #fffdf8;
-  }
-
   .subsection-title {
     margin: 0 0 8px;
     color: #253858;
@@ -1133,6 +1131,13 @@
     font-weight: 700;
   }
 
+  /* The source title's previews are right-to-left; their label is not. */
+  .inline-preview[dir="rtl"] .label {
+    direction: ltr;
+    text-align: left;
+    text-decoration: none;
+  }
+
   .cc-card {
     padding: 0;
     background: transparent;
@@ -1142,7 +1147,7 @@
   .cc-surface {
     max-width: 100%;
     overflow: visible;
-    padding: 14px;
+    padding: 4px 14px 8px;
     background: #fff;
     border: 1px solid #ddd7cd;
     border-radius: 12px;
@@ -1271,17 +1276,21 @@
 
   /* ── Insertion Defaults: workflow sub-tabs ──────────────────────────── */
 
-  .pref-workflow-tabs {
+  /* Segmented tabs: the Texts / Voices / Lexicon defaults, and Fonts →
+     Title's translation / source title. One light track, the chosen tab
+     raised on it, as the shared Layout pickers (shared/insertion-options). */
+  .pref-workflow-tabs,
+  .title-language-tabs {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     margin: 0 0 14px;
-    padding: 4px;
-    background: #1f3b68;
-    border: 1px solid #d2d0ca;
-    border-radius: 12px;
+    padding: 2px;
+    background: var(--seg-track);
+    border-radius: 9px;
   }
 
-  .pref-workflow-tab {
+  .pref-workflow-tab,
+  .title-language-tab {
     flex: 1;
     min-width: 0;
     min-height: 30px;
@@ -1289,30 +1298,42 @@
     cursor: pointer;
     background: transparent;
     border: 0;
-    border-radius: 8px;
-    color: rgba(255,255,255,0.75);
+    border-radius: 7px;
+    color: var(--row-sublabel);
     font: inherit;
     font-size: 13px;
-    font-weight: 500;
-    text-align: center;
-    transition: background 0.12s, color 0.12s;
+    font-weight: 600;
   }
 
-  .pref-workflow-tab:hover:not(.is-active):not([aria-selected="true"]) {
-    background: rgba(255,255,255,0.15);
-    color: #fff;
+  .pref-workflow-tab:hover:not(.is-active):not([aria-selected="true"]),
+  .title-language-tab:hover:not([aria-selected="true"]) {
+    color: var(--sefaria-blue);
   }
 
   .pref-workflow-tab.is-active,
-  .pref-workflow-tab[aria-selected="true"] {
-    background: #fff;
-    font-weight: bold;
-    color: #1f3b68;
+  .pref-workflow-tab[aria-selected="true"],
+  .title-language-tab[aria-selected="true"] {
+    background: var(--seg-selected-bg);
+    box-shadow: var(--seg-shadow);
+    color: var(--seg-selected-text);
   }
 
-  .pref-workflow-tab:focus-visible {
-    outline: 2px solid #fff;
-    outline-offset: 2px;
+  .pref-workflow-tab:focus-visible,
+  .title-language-tab:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+
+  .title-language-panel[hidden] {
+    display: none;
+  }
+
+  .link-override-fields {
+    margin-top: 10px;
+  }
+
+  .link-override-fields[hidden] {
+    display: none;
   }
 
   .pref-workflow-panel[hidden] {
@@ -1337,7 +1358,7 @@
     font-weight: 600;
   }
 
-  /* Display & Layout: shared/insertion-options/css.html (expanded variant). */
+  /* Layout: shared/insertion-options/css.html. */
 
   /* ── Menu Bar tab: add-on menu layout editor ─────────────────────────── */
 

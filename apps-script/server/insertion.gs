@@ -514,7 +514,26 @@ function titleParagraphHeading_(titleHeading) {
   return match ? DocumentApp.ParagraphHeading['HEADING' + match[1]] : null;
 }
 
-function applyTitleTypography(paragraph, typography, insertSefariaLink) {
+/**
+ * The typography role of a title (getTypographySettings): the source
+ * (Hebrew) title and the translation title each have their own style, and a
+ * linked style used instead when the title is linked and its "Hyperlink
+ * formatting override" is on (typography.linkFormatOverride; unset is on).
+ */
+function titleRoleName_(linked, language, typography) {
+  const he = language === "he";
+  const overrides = typography && typography.linkFormatOverride;
+  const override = !overrides || overrides[he ? "he" : "en"] !== false;
+  if (linked && override) return he ? "hebrewLink" : "sefariaLink";
+  return he ? "hebrewTitle" : "sourceTitle";
+}
+
+/**
+ * @param {boolean} linked    the title is linked to Sefaria
+ * @param {string} [language] "he" for the source (Hebrew) title, which has
+ *        fonts of its own; anything else is the translation title.
+ */
+function applyTitleTypography(paragraph, typography, linked, language) {
   // The heading goes on first, so any font/size the user set explicitly still
   // overrides the heading's look, and an empty one leaves it showing.
   const heading = titleParagraphHeading_(typography && typography.titleHeading);
@@ -524,11 +543,7 @@ function applyTitleTypography(paragraph, typography, insertSefariaLink) {
   // Titles deliberately do NOT preserve source emphasis: the bold/underline on
   // a title is applied by this add-on, so the user's title style stays
   // authoritative there.
-  applyRoleTypography_(
-    paragraph,
-    typography,
-    insertSefariaLink ? 'sefariaLink' : 'sourceTitle'
-  );
+  applyRoleTypography_(paragraph, typography, titleRoleName_(linked, language, typography));
 }
 
 function insertTransliterationParagraphAfter(doc, index, transliterationText, typography, ltr) {
@@ -558,7 +573,12 @@ function getAttributionParagraphText(attributionLines) {
   return attributionLines.join("\n");
 }
 
-function insertAttributionParagraph(paragraph, attributionLines) {
+/**
+ * The citation under a source (edition and license). 8 pt italic, as it has
+ * always been, then the citation style (Preferences → Fonts → Citation) on
+ * top, when the caller has the typography; its defaults are that same look.
+ */
+function insertAttributionParagraph(paragraph, attributionLines, typography) {
   const attributionText = getAttributionParagraphText(attributionLines);
   if (!attributionText) {
     return;
@@ -572,6 +592,7 @@ function insertAttributionParagraph(paragraph, attributionLines) {
       attributionStyle[DocumentApp.Attribute.UNDERLINE] = false;
   paragraph.setAttributes(attributionStyle);
   paragraph.setLeftToRight(true);
+  if (typography) applyRoleTypography_(paragraph, typography, 'citation');
 }
 
 /**
@@ -617,10 +638,10 @@ function buildCitationLines(data, preferredTitle, includeTranslationSourceInfo) 
   return lines.filter(Boolean);
 }
 
-function insertCitationParagraph(doc, insertAtIndex, citationLines) {
+function insertCitationParagraph(doc, insertAtIndex, citationLines, typography) {
   if (!citationLines || !citationLines.length) return;
   const paragraph = doc.insertParagraph(insertAtIndex, citationLines.join(''));
-  insertAttributionParagraph(paragraph, citationLines);
+  insertAttributionParagraph(paragraph, citationLines, typography);
 }
 
 function buildLinkedTitleText(baseTitle, data, singleLanguage) {
@@ -668,7 +689,8 @@ function buildLinkedTitleText(baseTitle, data, singleLanguage) {
  *                                                      line (verse) instead of one for the whole
  *                                                      passage; omitted means the stored
  *                                                      `bilingual_aligned_rows`.
- * @param {boolean} [opts.insertSefariaLink]            Hyperlink the title to sefaria.org.
+ * @param {boolean} [opts.insertSefariaLink]            Hyperlink the (translation) title to sefaria.org.
+ * @param {boolean} [opts.insertHebrewSefariaLink]      Hyperlink the source (Hebrew) title; defaults to insertSefariaLink.
  * @param {boolean} [opts.includeTransliteration]       Include transliteration of the Hebrew.
  * @param {boolean} [opts.insertCitationOnly]           Insert just the citation title, no body.
  * @param {string} [opts.sourceEmphasisMode]            "keep" | "discard" | "only"; omitted
@@ -690,6 +712,16 @@ function typographyPropertiesFor_(options) {
   return undefined;
 }
 
+/**
+ * Whether the source (Hebrew) title is linked: `insertHebrewSefariaLink`
+ * when the caller sets it, else the same as the translation title, as both
+ * titles were before they could be set apart.
+ */
+function hebrewTitleLinked_(options) {
+  if (options && options.insertHebrewSefariaLink !== undefined) return options.insertHebrewSefariaLink === true;
+  return !!(options && options.insertSefariaLink === true);
+}
+
 function insertReference(data, opts) {
   const options = opts || {};
   let singleLanguage = options.singleLanguage;
@@ -698,6 +730,7 @@ function insertReference(data, opts) {
   const includeTranslationSourceInfo = options.includeTranslationSourceInfo === true;
   const bilingualLayout = options.bilingualLayout || "he-right";
   const insertSefariaLink = options.insertSefariaLink === true;
+  const insertHebrewSefariaLink = hebrewTitleLinked_(options);
   const includeTransliteration = options.includeTransliteration === true;
   const insertCitationOnly = options.insertCitationOnly === true;
 
@@ -805,7 +838,7 @@ function insertReference(data, opts) {
 
   const appendCitationParagraph = (insertAtIndex) => {
     if (!shouldAppendCitation) return;
-    insertCitationParagraph(doc, insertAtIndex, citationLines);
+    insertCitationParagraph(doc, insertAtIndex, citationLines, typography);
   };
 
   let resolvedBilingualLayout = (singleLanguage) ? null : (bilingualLayout || "he-right");
@@ -816,7 +849,8 @@ function insertReference(data, opts) {
   if (singleLanguage) {
     let ltr = (singleLanguage == "he") ? false : true;
     let titleText = (singleLanguage == "he") ? data.heRef : title;
-    if (insertSefariaLink) {
+    const titleLinked = (singleLanguage == "he") ? insertHebrewSefariaLink : insertSefariaLink;
+    if (titleLinked) {
       titleText = buildLinkedTitleText(titleText, data, singleLanguage);
     }
     let mainText = (singleLanguage == "he") ? data.he : data.text;
@@ -825,8 +859,8 @@ function insertReference(data, opts) {
       .setAttributes(headerStyle)
       .setLeftToRight(ltr);
     let insertedTitle = doc.getChild(index).asParagraph();
-    applyTitleTypography(insertedTitle, typography, insertSefariaLink);
-    if (insertSefariaLink) {
+    applyTitleTypography(insertedTitle, typography, titleLinked, singleLanguage);
+    if (titleLinked) {
       insertedTitle.editAsText().setLinkUrl(sefariaUrl);
     }
 
@@ -859,7 +893,7 @@ function insertReference(data, opts) {
 
     if (attributionLines.length > 0) {
       let attributionParagraph = doc.insertParagraph(singleLanguageNextIndex, "");
-      insertAttributionParagraph(attributionParagraph, attributionLines);
+      insertAttributionParagraph(attributionParagraph, attributionLines, typography);
       singleLanguageNextIndex += 1;
     }
 
@@ -867,12 +901,12 @@ function insertReference(data, opts) {
   }
   else {
     if (resolvedBilingualLayout == "he-top") {
-      doc.insertParagraph(index, insertSefariaLink ? buildLinkedTitleText(data.heRef, data, 'he') : data.heRef)
+      doc.insertParagraph(index, insertHebrewSefariaLink ? buildLinkedTitleText(data.heRef, data, 'he') : data.heRef)
         .setAttributes(headerStyle)
         .setLeftToRight(false);
       let hebTitleParagraph = doc.getChild(index).asParagraph();
-      applyTitleTypography(hebTitleParagraph, typography, insertSefariaLink);
-      if (insertSefariaLink) {
+      applyTitleTypography(hebTitleParagraph, typography, insertHebrewSefariaLink, 'he');
+      if (insertHebrewSefariaLink) {
         hebTitleParagraph.editAsText().setLinkUrl(sefariaUrl);
       }
 
@@ -891,7 +925,7 @@ function insertReference(data, opts) {
         .setAttributes(headerStyle)
         .setLeftToRight(true);
       let enTitleParagraph = doc.getChild(index + (transliterationText ? 3 : 2)).asParagraph();
-      applyTitleTypography(enTitleParagraph, typography, insertSefariaLink);
+      applyTitleTypography(enTitleParagraph, typography, insertSefariaLink, 'en');
       if (insertSefariaLink) {
         enTitleParagraph.editAsText().setLinkUrl(sefariaUrl);
       }
@@ -907,7 +941,7 @@ function insertReference(data, opts) {
 
       if (attributionLines.length > 0) {
         let attributionParagraph = doc.insertParagraph(heTopNextIndex, "");
-        insertAttributionParagraph(attributionParagraph, attributionLines);
+        insertAttributionParagraph(attributionParagraph, attributionLines, typography);
         heTopNextIndex += 1;
       }
 
@@ -933,7 +967,7 @@ function insertReference(data, opts) {
       engTitle.setLeftToRight(true);
       insertRichTextFromHTML(engTitle, insertSefariaLink ? buildLinkedTitleText(title, data, 'en') : title);
       engTitle.setAttributes(headerStyle);
-      applyTitleTypography(engTitle, typography, insertSefariaLink);
+      applyTitleTypography(engTitle, typography, insertSefariaLink, 'en');
       if (insertSefariaLink) {
         engTitle.editAsText().setLinkUrl(sefariaUrl);
       }
@@ -942,10 +976,10 @@ function insertReference(data, opts) {
         .setText("")
         .insertParagraph(0, "");
       hebTitle.setLeftToRight(false);
-      insertRichTextFromHTML(hebTitle, insertSefariaLink ? buildLinkedTitleText(data.heRef, data, 'he') : data.heRef);
+      insertRichTextFromHTML(hebTitle, insertHebrewSefariaLink ? buildLinkedTitleText(data.heRef, data, 'he') : data.heRef);
       hebTitle.setAttributes(headerStyle);
-      applyTitleTypography(hebTitle, typography, insertSefariaLink);
-      if (insertSefariaLink) {
+      applyTitleTypography(hebTitle, typography, insertHebrewSefariaLink, 'he');
+      if (insertHebrewSefariaLink) {
         hebTitle.editAsText().setLinkUrl(sefariaUrl);
       }
 
@@ -979,7 +1013,7 @@ function insertReference(data, opts) {
 
       if (attributionLines.length > 0) {
         let attributionParagraph = doc.insertParagraph(index + 1, "");
-        insertAttributionParagraph(attributionParagraph, attributionLines);
+        insertAttributionParagraph(attributionParagraph, attributionLines, typography);
         sideBySideNextIndex += 1;
       }
 
@@ -1115,7 +1149,8 @@ function buildSefariaVersionUrl_(ref, enVersionTitle, heVersionTitle) {
  * @param {boolean} [opts.pasukPreference]     Include line markers.
  * @param {string}  [opts.preferredTitle]      Override displayed title (e.g. "Bereishit 1:1").
  * @param {boolean} [opts.includeTranslationSourceInfo] Append attribution.
- * @param {boolean} [opts.insertSefariaLink]   Hyperlink title to sefaria.org.
+ * @param {boolean} [opts.insertSefariaLink]   Hyperlink the translation titles to sefaria.org.
+ * @param {boolean} [opts.insertHebrewSefariaLink] Hyperlink the Hebrew title; defaults to insertSefariaLink.
  * @param {string}  [opts.sourceEmphasisMode]  "keep" / "discard" / "only";
  *        omitted means the stored `source_emphasis_mode` preference.
  * @param {string}  [opts.sessionId]           The sidebar session whose overrides
@@ -1132,6 +1167,7 @@ function insertReferenceVersions(ref, opts) {
   const preferredTitle = options.preferredTitle || null;
   const includeTranslationSourceInfo = options.includeTranslationSourceInfo === true;
   const insertSefariaLink = options.insertSefariaLink === true;
+  const insertHebrewSefariaLink = hebrewTitleLinked_(options);
 
   if (!ref) throw new Error('insertReferenceVersions: no reference provided.');
   if (!versionTitles.length) throw new Error('insertReferenceVersions: no version titles provided.');
@@ -1183,11 +1219,11 @@ function insertReferenceVersions(ref, opts) {
     // Hebrew on top: insert Hebrew once from the first version, then each translation.
     let firstData = formatDataForPesukim(kept[0].data, includeLineMarkers);
     typography.sectionHeadingLines = firstData.sectionHeadingLines || [];
-    let heTitle = insertSefariaLink ? buildLinkedTitleText(firstData.heRef, firstData, 'he') : firstData.heRef;
+    let heTitle = insertHebrewSefariaLink ? buildLinkedTitleText(firstData.heRef, firstData, 'he') : firstData.heRef;
     doc.insertParagraph(index, heTitle).setAttributes(headerStyle).setLeftToRight(false);
     let heTitlePara = doc.getChild(index).asParagraph();
-    applyTitleTypography(heTitlePara, typography, insertSefariaLink);
-    if (insertSefariaLink) {
+    applyTitleTypography(heTitlePara, typography, insertHebrewSefariaLink, 'he');
+    if (insertHebrewSefariaLink) {
       heTitlePara.editAsText().setLinkUrl(buildSefariaVersionUrl_(ref, '', firstData.heVersionTitle || heVersionTitle));
     }
 
@@ -1215,7 +1251,7 @@ function insertReferenceVersions(ref, opts) {
     let displayTitle = buildVersionBlockTitle_(preferredTitle || d.ref, kept[i].versionTitle, d, insertSefariaLink, kept.length);
     doc.insertParagraph(index, displayTitle).setAttributes(headerStyle).setLeftToRight(true);
     let titlePara = doc.getChild(index).asParagraph();
-    applyTitleTypography(titlePara, typography, insertSefariaLink);
+    applyTitleTypography(titlePara, typography, insertSefariaLink, 'en');
     if (insertSefariaLink) {
       titlePara.editAsText().setLinkUrl(buildSefariaVersionUrl_(ref, kept[i].versionTitle, ''));
     }
@@ -1231,7 +1267,7 @@ function insertReferenceVersions(ref, opts) {
       let attrLines = getEnglishAttributionLines(d);
       if (attrLines.length) {
         let attrPara = doc.insertParagraph(index, '');
-        insertAttributionParagraph(attrPara, attrLines);
+        insertAttributionParagraph(attrPara, attrLines, typography);
         index += 1;
       }
     }

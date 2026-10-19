@@ -1,318 +1,49 @@
 <style>
 /*
- * shared/insertion-options/css — the Display & Layout pickers
- * (shared/insertion-options/markup.html). Used by the sidebar's Layout tray and
- * the Link Texts dialog's "Customize this insertion" panel; colours come from
- * css/tokens.html, which each host includes first.
+ * shared/insertion-options/css — the Layout pickers
+ * (shared/insertion-options/markup.html). Used by the sidebar's Layout tray,
+ * Preferences and the Link Texts dialog's "Customize this insertion" panel;
+ * colours come from css/tokens.html, which each host includes first.
+ * Edit it here, not in a host.
  *
- * Moved here from css/components/display-layout.html and the display-choice
- * part of css/components/accordion.html. Edit it here, not in a host.
- *
- * .display-layout-section is an explicit 2-column grid (auto-fit trapped
- * opened dropdowns in one narrow column). Dropdown panels float absolutely
- * below the trigger row, full section width.
+ * Each picker is a label over a segmented control (one track, the chosen
+ * option raised on it), the pattern Google Docs and most settings panels use
+ * for a choice of two to four. The pickers stack in a narrow host (the
+ * sidebar) and sit side by side where there is room (Preferences). The line
+ * options under them are switch rows: .cc-row in shared/composition-card/css.
  */
 
-/* =============================================================
-   DISPLAY CHOICE — details/summary pattern
-   ============================================================= */
-
-.display-choice-detail {
-  min-width: 0;
-  padding: 8px 10px;
-  background: #fbfaf8;
-  border: 1px solid #ebe6dc;
-  border-radius: 12px;
-  box-sizing: border-box;
-}
-
-.display-choice-detail:first-child {
-  margin-top: 0;
-  border-top: 0;
-}
-
-.display-choice-detail > summary {
-  margin-bottom: 4px;
-  list-style: none;
-  pointer-events: none;
-}
-
-.display-choice-detail > summary::-webkit-details-marker,
-.display-choice-summary::-webkit-details-marker {
-  display: none;
-}
-
-/*
- * .display-choice-summary is a single-column grid.
- * (.display-choice-label is hidden, so only the selected-display cell shows.)
- */
-.display-choice-summary {
-  display: grid;
-  grid-template-columns: 1fr;
-  align-items: center;
-  gap: 8px;
-  min-height: 24px;
-  margin-bottom: 4px;
-  padding: 0;
-}
-
-.display-choice-detail[open] > .display-choice-summary {
-  margin-bottom: 4px;
-}
-
-.display-choice-summary::after {
-  display: none;
-}
-
-/* Label is hidden; title-only context is provided as a tooltip in the HTML */
-.display-choice-label {
-  display: none;
-}
-
-.display-choice-detail:not([open]) .mode-card-group,
-.display-choice-detail:not([open]) .layout-option-group {
-  display: none;
-}
-
-/* =============================================================
-   DISPLAY CHOICE — dropdown variant (.display-choice-dropdown)
-   ============================================================= */
-
-.display-choice-dropdown {
-  position: relative;
-}
-
-.display-choice-dropdown > summary {
-  cursor: pointer;
-  list-style: none;
-  pointer-events: auto;
-}
-
-.display-choice-dropdown > summary::-webkit-details-marker {
-  display: none;
-}
-
-/* Selected-state preview button */
-.display-choice-selected {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: 40px;
-  padding: 7px 10px;
-  overflow: hidden;
-  color: var(--sefaria-blue);
-  background: #fff;
-  border: 1px solid #d9d3c7;
-  border-radius: 12px;
-}
-
-.display-choice-dropdown[open] .display-choice-selected {
-  border-color: #b9c8dd;
-  box-shadow: 0 0 0 2px rgba(51, 95, 150, 0.08);
-}
-
-/* Summary text nodes rendered by JS */
-#display-choice-summary-text,
-#layout-choice-summary-text {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-  margin-left: auto;
-  color: var(--sefaria-blue);
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-#display-choice-summary-text::after,
-#layout-choice-summary-text::after {
-  content: "▾";
-  margin-left: 8px;
-  color: #6c7d93;
-  font-size: 11px;
-}
-
-/* Conditional content for mode states */
-#display-choice-summary-text[data-mode="en"] .both,
-#display-choice-summary-text[data-mode="he"] .both {
-  display: none;
-}
-
-#display-choice-summary-text[data-mode="en"]::before {
-  content: "A";
-  font-size: 20px;
-  font-weight: 700;
-}
-
-#display-choice-summary-text[data-mode="he"]::before {
-  content: "א";
-  font-size: 20px;
-  font-weight: 700;
-}
-
-#display-choice-summary-text[data-mode="both"]::before,
-#layout-choice-summary-text[data-layout="he-right"]::before,
-#layout-choice-summary-text[data-layout="he-left"]::before,
-#layout-choice-summary-text[data-layout="he-top"]::before {
-  content: "";
-}
-
-#layout-choice-summary-text .layout-icon {
-  width: 34px;
-}
-
-.display-choice-dropdown:not([open]) .mode-card-group,
-.display-choice-dropdown:not([open]) .layout-option-group {
-  display: none;
-}
-
-.display-choice-dropdown[open] .mode-card-group,
-.display-choice-dropdown[open] .layout-option-group {
-  display: grid;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-
-/* =============================================================
-   DISPLAY LAYOUT SECTION GRID
-   ============================================================= */
-
-/*
- * Two closed selector controls sit side-by-side.
- * Dropdowns float their options panel absolutely so neither trigger shifts position.
- * Only non-dropdown details elements span both columns when open.
- */
 .display-layout-section {
-  position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px 16px;
   align-items: start;
 }
 
-.display-layout-section .display-choice-detail[open]:not(.display-choice-dropdown) {
-  grid-column: 1 / -1;
+.display-choice-detail {
+  min-width: 0;
 }
 
-/*
- * Reset the .display-choice-dropdown position:relative above so the containing block for
- * the absolutely-positioned options panel is .display-layout-section (full width).
- */
-.display-layout-section .display-choice-dropdown {
-  position: static;
-}
-
-/*
- * Options panel floats below the trigger row as an overlay, full-section width.
- * margin-top:0 overrides the in-flow margin above.
- */
-.display-layout-section .display-choice-dropdown[open] .mode-card-group,
-.display-layout-section .display-choice-dropdown[open] .layout-option-group {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 20;
-  margin-top: 0;
-  padding: 8px 10px;
-  background: #fbfaf8;
-  border: 1px solid #ebe6dc;
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-}
-
-/* =============================================================
-   EXPANDED VARIANT (.display-layout-section.is-expanded)
-   initInsertionOptions({ expanded: true }): both pickers always open, each
-   labelled, options in the flow instead of a floating panel. Preferences.
-   ============================================================= */
-
-.display-layout-section.is-expanded .display-choice-detail {
-  padding: 0;
-  background: transparent;
-  border: 0;
-}
-
-.display-layout-section.is-expanded .display-choice-dropdown > summary {
-  cursor: default;
-}
-
-.display-layout-section.is-expanded .display-choice-label {
-  display: block;
-  color: #555;
-  font-size: 14px;
+.display-choice-label {
+  margin: 0 0 5px;
+  color: var(--row-sublabel);
+  font-size: 12px;
   font-weight: 600;
 }
 
-/* The ids: #display-choice-summary-text sets display: inline-flex. */
-.display-layout-section.is-expanded .display-choice-selected,
-.display-layout-section.is-expanded #display-choice-summary-text,
-.display-layout-section.is-expanded #layout-choice-summary-text {
-  display: none;
-}
-
-.display-layout-section.is-expanded .display-choice-dropdown[open] .mode-card-group,
-.display-layout-section.is-expanded .display-choice-dropdown[open] .layout-option-group {
-  position: static;
-  margin-top: 2px;
-  padding: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.display-layout-section.is-expanded .display-choice-dropdown[open] .layout-option-group {
-  border: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.display-layout-section.is-expanded .display-choice-dropdown[open] .mode-card-group.compact-mode-card-group {
-  border: 1px solid var(--border);
-  border-radius: 18px;
-}
-
 /* =============================================================
-   MODE CARD GROUP
+   SEGMENTED CONTROLS (Display and Arrangement)
    ============================================================= */
 
-.compact-mode-card-group,
 .mode-card-group,
 .layout-option-group {
   display: grid;
-  gap: 6px;
-}
-
-.mode-card-group.compact-mode-card-group {
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-}
-
-/* Default 3-column layout inside dropdown */
-.display-choice-dropdown[open] .mode-card-group {
-  grid-template-columns: repeat(3, minmax(30px, 1fr));
-}
-
-/* Layout options: auto-fill so narrow cells wrap rather than clip icons */
-.display-choice-dropdown[open] .layout-option-group {
-  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
-}
-
-/* Standalone (non-dropdown) 3-column groups */
-.mode-card-group,
-.layout-option-group {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  background: var(--seg-track);
+  border-radius: 9px;
 }
-
-/* =============================================================
-   MODE CARDS
-   ============================================================= */
 
 .mode-card,
 .layout-option {
@@ -322,69 +53,39 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  min-width: 34px;
-  height: 62px;
-  min-height: 62px;
-  padding: 0 8px;
-  color: var(--text);
-  cursor: pointer;
+  height: 36px;
+  padding: 0 6px;
   overflow: hidden;
-  text-align: center;
-  vertical-align: middle;
-}
-
-.mode-card {
-  background: #fff;
-  border: 0;
-  border-radius: 0;
-}
-
-.mode-card:hover {
-  background: #f8fbff;
-}
-
-.mode-card.selected {
-  background: #eef2f8;
-  border-color: #6e8ab2;
-  box-shadow: inset 0 0 0 1px rgba(24, 52, 93, 0.08);
-}
-
-.mode-card:focus-visible {
-  outline: 2px solid var(--selected);
-  outline-offset: 2px;
-}
-
-/* =============================================================
-   LAYOUT OPTIONS
-   ============================================================= */
-
-.layout-option {
-  min-width: 44px;
+  cursor: pointer;
   background: transparent;
   border: 0;
-  border-radius: 10px;
+  border-radius: 7px;
+  color: var(--row-sublabel);
+  text-align: center;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
 }
 
+.mode-card:hover,
 .layout-option:hover {
-  background: #f8fbff;
-  border-color: #9fb3cc;
+  color: var(--sefaria-blue);
+  background: rgba(255, 255, 255, 0.55);
 }
 
-.layout-option.selected,
-.layout-option.is-active,
-.layout-option[aria-checked="true"] {
-  background: #eef2f8;
-  border-color: #6e8ab2;
-  box-shadow: inset 0 0 0 1px rgba(24, 52, 93, 0.08);
+.mode-card.selected,
+.layout-option.selected {
+  color: var(--seg-selected-text);
+  background: var(--seg-selected-bg);
+  box-shadow: var(--seg-shadow);
 }
 
+.mode-card:focus-visible,
 .layout-option:focus-visible {
-  outline: 2px solid var(--selected);
-  outline-offset: 2px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 
 /* =============================================================
-   MODE CARD CONTENT & LABELS
+   DISPLAY OPTION CONTENT (A, A+א, א)
    ============================================================= */
 
 .mode-card-content,
@@ -392,84 +93,48 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-height: 20px;
+  gap: 3px;
   line-height: 1;
-  text-decoration: none;
   white-space: nowrap;
 }
 
-.mode-card-indicator {
-  display: none;
-}
-
-.mode-card-label {
-  color: inherit;
-  font-size: 11px;
-  font-weight: 600;
-}
-
 .mode-card-plus {
-  margin-top: 1px;
   color: currentColor;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1;
 }
 
 .mode-card-symbol {
   display: inline-block;
-  flex: 0 0 auto;
   color: currentColor;
-  font-family: "SBL Hebrew", "Ezra SIL", "Frank Ruhl Libre", serif;
-  font-size: 23px;
+  font-family: "Frank Ruhl Libre", "Noto Serif Hebrew", serif;
+  font-size: 19px;
+  font-weight: 700;
   line-height: 1;
-  text-decoration: none;
-  transform: translateY(-1px);
 }
 
 .mode-card-symbol.latin {
-  font-family: "Crimson Text", "EB Garamond", Georgia, serif;
-  font-size: 21px;
-  font-weight: 700;
-}
-
-/* Layout label text is hidden; icon communicates layout type */
-.layout-label {
-  display: none !important;
-  font-size: 11px;
-  font-weight: 700;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 18px;
 }
 
 /* =============================================================
-   LAYOUT ICON (visual schematic inside layout-option)
+   ARRANGEMENT ICONS (a schematic page per layout)
    ============================================================= */
 
 .layout-icon {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  width: 38px;
-  min-width: 38px;
-  height: 24px;
-  margin: 0 auto;
-  background: #f7f7f5;
-  border: 1px solid #bcb8b1;
-  border-radius: 4px;
-}
-
-/* In the selected-display preview, the icon can be a bit wider */
-.display-choice-selected .layout-icon {
-  width: 38px;
-  min-width: 38px;
-  height: 24px;
-}
-
-.layout-icon.side-by-side,
-.layout-icon.side-by-side.reverse {
-  flex-direction: row;
+  gap: 3px;
+  width: 30px;
+  height: 20px;
+  box-sizing: border-box;
+  padding: 2px;
+  background: #fff;
+  border: 1px solid #c9c4bb;
+  border-radius: 3px;
 }
 
 .layout-icon.stacked {
@@ -479,87 +144,47 @@
 .layout-col,
 .layout-row {
   display: block;
-  background: #bdb8b0;
-  border-radius: 2px;
+  border-radius: 1px;
 }
 
 .layout-col {
-  width: 10px;
-  height: 24px;
+  width: 9px;
+  height: 100%;
 }
 
 .layout-row {
-  width: 30px;
-  height: 7px;
+  width: 100%;
+  height: 5px;
 }
 
-/* Hebrew column/row accent colors */
+/* The Hebrew dark, the translation light, whichever side each is on. */
 .layout-col.he,
-.layout-row.he,
-.layout-option.is-active .layout-col.he,
-.layout-option.is-active .layout-row.he {
-  background: #24406f;
-}
-
-.layout-option[data-layout="he-right"] .layout-col.en,
-.layout-option[data-layout="he-left"] .layout-col.he,
-.layout-option[data-layout="he-top"] .layout-row.he {
-  background: #6f89b8;
-}
-
-.layout-option[data-layout="he-right"] .layout-col.he,
-.layout-option[data-layout="he-left"] .layout-col.en,
-.layout-option[data-layout="he-top"] .layout-row.en {
+.layout-row.he {
   background: #1f3f75;
 }
+
+.layout-col.en,
+.layout-row.en {
+  background: #a9b8d1;
+}
+
+.layout-option:not(.selected) .layout-col.he,
+.layout-option:not(.selected) .layout-row.he {
+  background: #7c8595;
+}
+
+.layout-option:not(.selected) .layout-col.en,
+.layout-option:not(.selected) .layout-row.en {
+  background: #cfd3da;
+}
+
 /* =============================================================
-   The line options: "LINE BY LINE" (#layout-rows-toggle, one table row per
-   line for the side-by-side layouts), then the composition card's Line #s
-   and Citation pills. Their own row under the pickers, outside
-   .display-layout-section so the dropdown panels still open right under
-   the triggers.
+   The line options: "Line by line" (#layout-rows-toggle, one table row per
+   line for the side-by-side layouts), Line numbers and Citation. Switch rows
+   (.cc-row / .cc-toggle in shared/composition-card/css) under the pickers.
    ============================================================= */
 
 .layout-rows-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
   margin-top: 8px;
-}
-
-.layout-rows-row .cc-line-pill {
-  height: 24px;
-  padding: 0 10px;
-  line-height: 22px;
-}
-
-.layout-rows-toggle {
-  height: 24px;
-  padding: 0 10px;
-  cursor: pointer;
-  background: #fff;
-  border: 1px solid #d8d2c8;
-  border-radius: 999px;
-  color: #4a586b;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 22px;
-  white-space: nowrap;
-}
-
-.layout-rows-toggle[hidden] {
-  display: none;
-}
-
-.layout-rows-toggle.is-on {
-  color: var(--sefaria-blue);
-  background: #e4edf8;
-  border-color: #b7c8e2;
-}
-
-.layout-rows-toggle:focus-visible {
-  outline: 2px solid rgba(31, 59, 104, 0.35);
-  outline-offset: 2px;
 }
 </style>

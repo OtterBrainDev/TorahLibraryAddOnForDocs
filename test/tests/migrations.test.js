@@ -487,3 +487,80 @@ test('an upgrade from v20 never writes hebrew_mark_fallback', () => {
   assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
   assert.equal(userProperties.getProperty('hebrew_mark_fallback'), null);
 });
+
+// v23 sets the source (Hebrew) title apart from the translation title. Each
+// new key starts as the setting that governed both titles until now.
+test('v23 copies the title link switch and title styles to the source title', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '22',
+    insert_sefaria_link_default: 'false',
+    source_title_font: 'Lora',
+    source_title_font_size: '14',
+    source_title_font_style: 'bold',
+    sefaria_link_font_color: '#336699',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'false');
+  assert.equal(userProperties.getProperty('hebrew_title_font'), 'Lora');
+  assert.equal(userProperties.getProperty('hebrew_title_font_size'), '14');
+  assert.equal(userProperties.getProperty('hebrew_title_font_style'), 'bold');
+  assert.equal(userProperties.getProperty('hebrew_link_font_color'), '#336699');
+  // Nothing stored to copy: the default.
+  assert.equal(userProperties.getProperty('hebrew_link_font_style'), 'underline');
+  assert.equal(userProperties.getProperty('hebrew_title_font'), 'Lora');
+  assert.equal(userProperties.getProperty('hebrew_link_font'), '');
+});
+
+test('v23 never overwrites a stored source title setting', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '22',
+    insert_sefaria_link_default: 'true',
+    insert_hebrew_sefaria_link_default: 'false',
+    hebrew_title_font: 'David Libre',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'false');
+  assert.equal(userProperties.getProperty('hebrew_title_font'), 'David Libre');
+});
+
+test('an upgrader who linked titles keeps both linked', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '22', insert_sefaria_link_default: 'true' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'true');
+});
+
+// v24: the "Hyperlink formatting override" switches start on (linked titles
+// keep their linked style), and a legacy "torah" cantillation filter, which
+// always read as "tanakh", keeps meaning that now that "torah" means the
+// Five Books only.
+test('v24 turns the hyperlink formatting overrides on and rewrites a legacy "torah" filter', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '23', teamim_filter: 'torah' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('sefaria_link_format_override'), 'true');
+  assert.equal(userProperties.getProperty('hebrew_link_format_override'), 'true');
+  assert.equal(userProperties.getProperty('teamim_filter'), 'tanakh');
+});
+
+test('v24 never overwrites a stored override or another cantillation filter', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '23',
+    sefaria_link_format_override: 'false',
+    teamim_filter: 'available',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('sefaria_link_format_override'), 'false');
+  assert.equal(userProperties.getProperty('teamim_filter'), 'available');
+});
+
+// v25: the citation style starts as the citation's old fixed look.
+test('v25 sets the citation style to its old look, never overwriting a stored value', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '24', citation_font_size: '10' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('citation_font'), '');
+  assert.equal(userProperties.getProperty('citation_font_size'), '10');
+  assert.equal(userProperties.getProperty('citation_font_style'), 'italic');
+  assert.equal(userProperties.getProperty('citation_font_color'), '');
+});

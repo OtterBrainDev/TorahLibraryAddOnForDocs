@@ -4,32 +4,29 @@
 // to the generic composition card controller.
 
 function _sidebarCompositionGetState() {
-  var vowelsOn = $('.wants-vowels').is(':checked');
-  var cantOn = $('.wants-cantillation').is(':checked');
   var transliterationOn = $('.include-transliteration').is(':checked');
   var scheme = transliterationOn ? getSidebarTransliterationScheme() : 'none';
   return {
-    vowelsOn: vowelsOn,
-    cantillationOn: cantOn,
+    vowelsMode: ccVowelsMode($('.wants-vowels').is(':checked'), effectivePreferences.nekudot_filter),
+    cantillationMode: ccCantillationMode($('.wants-cantillation').is(':checked'), effectivePreferences.teamim_filter),
     hebrewPunctuationOn: $('.wants-hebrew-punctuation').is(':checked'),
     translationPunctuationOn: $('.wants-translation-punctuation').is(':checked'),
     transliterationOn: transliterationOn,
     scheme: scheme,
     linkOn: $('.insert-sefaria-link').is(':checked'),
+    hebrewLinkOn: $('.insert-hebrew-sefaria-link').is(':checked'),
     linesOn: $('.wants-pesukim').is(':checked'),
     detailsOn: $('.include-translation-source-info').is(':checked'),
     emphasisMode: ccNormalizeEmphasisMode($('.source-emphasis-mode').val()),
-    fonts: {
-      hebrew: { font: effectivePreferences.hebrew_font, size: effectivePreferences.hebrew_font_size },
-      translation: { font: effectivePreferences.translation_font, size: effectivePreferences.translation_font_size }
-    }
+    fonts: ccFontStateFrom(function (key) { return effectivePreferences[key]; })
   };
 }
 
-// The font buttons: like the pills, a session override in the Texts tab
-// (insertReference reads the session's fonts), saved to the account elsewhere.
-function _sidebarCompositionOnFontChange(role, field, value) {
-  var key = role + (field === 'size' ? '_font_size' : '_font');
+// The font buttons (text and title fonts): like the switches, a session
+// override in the Texts tab (insertReference reads the session's fonts), saved
+// to the account elsewhere. `prefix` is the preference's (hebrew, source_title…).
+function _sidebarCompositionOnFontChange(prefix, field, value) {
+  var key = prefix + (field === 'size' ? '_font_size' : '_font');
   var payload = {};
   payload[key] = value;
   // Shown at once; the save's answer confirms it.
@@ -38,35 +35,15 @@ function _sidebarCompositionOnFontChange(role, field, value) {
 }
 
 function _sidebarCompositionOnToggle(key) {
-  if (key === 'vowels') {
-    var $el = $('.wants-vowels');
-    $el.prop('checked', !$el.is(':checked'));
-    saveSidebarPreference({
-      nekudot: $el.is(':checked'),
-      teamim: $('.wants-cantillation').is(':checked')
-    }, function () {
-      updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
-    });
-  } else if (key === 'cantillation') {
-    var $el = $('.wants-cantillation');
-    $el.prop('checked', !$el.is(':checked'));
-    saveSidebarPreference({
-      nekudot: $('.wants-vowels').is(':checked'),
-      teamim: $el.is(':checked')
-    }, function () {
-      updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
-    });
-  } else if (key === 'hebrewPunctuation') {
+  if (key === 'hebrewPunctuation') {
     var $el = $('.wants-hebrew-punctuation');
     $el.prop('checked', !$el.is(':checked'));
     saveSidebarPreference({
       hebrew_punctuation: $el.is(':checked')
     }, function () {
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   } else if (key === 'translationPunctuation') {
     var $el = $('.wants-translation-punctuation');
     $el.prop('checked', !$el.is(':checked'));
@@ -74,8 +51,8 @@ function _sidebarCompositionOnToggle(key) {
       translation_punctuation: $el.is(':checked')
     }, function () {
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   } else if (key === 'translit') {
     var $el = $('.include-transliteration');
     $el.prop('checked', !$el.is(':checked'));
@@ -83,13 +60,21 @@ function _sidebarCompositionOnToggle(key) {
       include_transliteration_default: $el.is(':checked')
     }, function () {
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   } else if (key === 'link') {
     var $el = $('.insert-sefaria-link');
     $el.prop('checked', !$el.is(':checked'));
     saveSidebarPreference({
       insert_sefaria_link_default: $el.is(':checked')
+    }, function () {
+      updateCompositionCard();
+    });
+  } else if (key === 'hebrewLink') {
+    var $el = $('.insert-hebrew-sefaria-link');
+    $el.prop('checked', !$el.is(':checked'));
+    saveSidebarPreference({
+      insert_hebrew_sefaria_link_default: $el.is(':checked')
     }, function () {
       updateCompositionCard();
     });
@@ -105,13 +90,34 @@ function _sidebarCompositionOnToggle(key) {
     saveSidebarPreference({
       include_translation_source_info: $el.is(':checked')
     });
-  } else if (key === 'emphasis') {
-    var nextMode = ccNextEmphasisMode($('.source-emphasis-mode').val());
-    $('.source-emphasis-mode').val(nextMode);
-    saveSidebarPreference({
-      source_emphasis_mode: nextMode
-    });
   }
+  if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
+}
+
+// The three-way choices. Vowels and Cantillation are fetch-time filters, so
+// the selected text is fetched again; B&I is applied at insert.
+function _sidebarCompositionOnChoice(key, value) {
+  var payload;
+  if (key === 'vowels') {
+    payload = ccVowelsPrefs(value);
+    $('.wants-vowels').prop('checked', payload.nekudot === 'true');
+  } else if (key === 'cantillation') {
+    payload = ccCantillationPrefs(value);
+    $('.wants-cantillation').prop('checked', payload.teamim === 'true');
+  } else if (key === 'emphasis') {
+    $('.source-emphasis-mode').val(ccNormalizeEmphasisMode(value));
+    saveSidebarPreference({ source_emphasis_mode: $('.source-emphasis-mode').val() });
+    if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
+    return;
+  } else {
+    return;
+  }
+  // Shown at once; the save's answer confirms it.
+  Object.keys(payload).forEach(function (k) { effectivePreferences[k] = payload[k]; });
+  saveSidebarPreference(payload, function () {
+    updateCompositionCard();
+  });
+  scheduleSelectedResultRefresh();
   if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
 }
 
@@ -122,18 +128,43 @@ function _sidebarCompositionOnSchemeSelect(value) {
     saveSidebarPreference({ include_transliteration_default: false }, function () {
       effectivePreferences.transliteration_scheme = getSidebarTransliterationScheme();
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   } else {
     $('.include-transliteration').prop('checked', true);
     effectivePreferences.transliteration_scheme = value;
     saveSidebarPreference({ include_transliteration_default: true, transliteration_scheme: value }, function () {
       effectivePreferences.transliteration_scheme = value;
       updateCompositionCard();
-      if (hasResolvedReference && data && data.ref) refreshSelectedResult();
     });
+    scheduleSelectedResultRefresh();
   }
   if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
+}
+
+// A change the fetch applies (vowels, cantillation, punctuation,
+// transliteration) needs the selected text fetched again. Add Source waits
+// for that at once, so the text inserted is never the one fetched before the
+// change; the fetch itself waits until the clicks stop and every session save
+// has landed, so a run of quick changes is one fetch that has them all. (Each
+// save's own callback used to fetch, and skipped it while an earlier fetch was
+// still running: the second change of two quick ones could be missing.)
+var SELECTED_RESULT_REFRESH_DELAY_MS = 400;
+var selectedResultRefreshTimer = null;
+
+function scheduleSelectedResultRefresh() {
+  if (appMode !== 'texts' || !selectedRefValue) return;
+  hasResolvedReference = false;
+  setInsertButtonState(false);
+  clearTimeout(selectedResultRefreshTimer);
+  selectedResultRefreshTimer = setTimeout(function () {
+    selectedResultRefreshTimer = null;
+    if (sessionSaveQueue.inFlight || sessionSaveQueue.pending) {
+      scheduleSelectedResultRefresh();
+      return;
+    }
+    refreshSelectedResult();
+  }, SELECTED_RESULT_REFRESH_DELAY_MS);
 }
 
 // Thin wrappers so sidebar_bootstrap.html and other callers don't need to change.
@@ -152,8 +183,9 @@ function bindSidebarCompositionCard() {
     getState: _sidebarCompositionGetState,
     onToggle: _sidebarCompositionOnToggle,
     onSchemeSelect: _sidebarCompositionOnSchemeSelect,
+    onChoice: _sidebarCompositionOnChoice,
     onFontChange: _sidebarCompositionOnFontChange,
-    onMoreFontSettings: function () { google.script.run.preferencesPopup(); }
+    onMoreFontSettings: function () { openPreferencesDialog(); }
   });
 }
 </script>

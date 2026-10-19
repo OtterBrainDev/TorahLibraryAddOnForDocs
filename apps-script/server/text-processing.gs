@@ -8,9 +8,12 @@ function normalizeHebrewDisplayFilters_(userProperties) {
   const rawNekudotFilter = String(userProperties.getProperty("nekudot_filter") || "always").toLowerCase();
   const nekudotFilter = (rawNekudotFilter === "tanakh" || rawNekudotFilter === "never") ? rawNekudotFilter : "always";
 
+  // Cantillation: "available" (wherever Sefaria has it), "tanakh" (Tanakh
+  // only) or "torah" (the Five Books only). A "torah" stored before it meant
+  // anything of its own read as "tanakh"; schema v24 rewrote it to that.
   const teamimEnabled = userProperties.getProperty("teamim") != "false";
   const rawTeamimFilter = String(userProperties.getProperty("teamim_filter") || "available").toLowerCase();
-  const teamimFilter = (rawTeamimFilter === "tanakh" || rawTeamimFilter === "torah") ? "tanakh" : (rawTeamimFilter === "never" ? "never" : "available");
+  const teamimFilter = (rawTeamimFilter === "tanakh" || rawTeamimFilter === "torah") ? rawTeamimFilter : (rawTeamimFilter === "never" ? "never" : "available");
 
   return {
     nekudotEnabled,
@@ -20,6 +23,24 @@ function normalizeHebrewDisplayFilters_(userProperties) {
   };
 }
 
+var TORAH_BOOKS_ = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy'];
+
+/**
+ * True for a text from the Five Books: Sefaria files them under
+ * categories ["Tanakh", "Torah"]; the book name is the fallback.
+ */
+function isTorahText_(data) {
+  if (!data) return false;
+  const categories = Array.isArray(data.categories) ? data.categories : [];
+  if (categories[0] === 'Tanakh' && categories[1] === 'Torah') return true;
+  return TORAH_BOOKS_.indexOf(String(data.book || data.indexTitle || '')) >= 0;
+}
+
+/**
+ * @param {string} context  the text's category (data.type), e.g. "Tanakh"
+ * @param {Object} filters  normalizeHebrewDisplayFilters_; filters.isTorah
+ *        says whether the text is one of the Five Books (isTorahText_)
+ */
 function applyHebrewTextDisplayPreferences(value, context, filters) {
   if (Array.isArray(value)) {
     return value.map(function(item) {
@@ -32,7 +53,9 @@ function applyHebrewTextDisplayPreferences(value, context, filters) {
 
   let output = value;
   const shouldStripNekudot = !filters.nekudotEnabled || (filters.nekudotFilter === 'tanakh' && context !== 'Tanakh');
-  const shouldStripTeamim = !filters.teamimEnabled || (filters.teamimFilter === 'tanakh' && context !== 'Tanakh');
+  const shouldStripTeamim = !filters.teamimEnabled ||
+    (filters.teamimFilter === 'tanakh' && context !== 'Tanakh') ||
+    (filters.teamimFilter === 'torah' && !filters.isTorah);
 
   if (shouldStripTeamim) {
     output = output.replace(/[֑-֯]/g, '');
@@ -54,6 +77,7 @@ function applyHebrewDisplayPreferences(data, userProperties) {
   }
 
   const filters = normalizeHebrewDisplayFilters_(userProperties);
+  filters.isTorah = isTorahText_(data);
   const context = data.type || '';
   const clone = JSON.parse(JSON.stringify(data));
 

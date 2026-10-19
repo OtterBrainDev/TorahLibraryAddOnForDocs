@@ -51,7 +51,9 @@ test('applies niqqud and taamim filters only to Hebrew display fields', () => {
   assert.equal(input.he, 'בְּרֵאשִׁ֖ית');
 });
 
-test('normalizes legacy teamim filter values and keeps Tanakh text intact when allowed', () => {
+// "torah" was once read as "tanakh"; it is now the Torah-only cantillation
+// filter (schema v24 rewrote a stored legacy "torah" to "tanakh").
+test('the Torah-only cantillation filter keeps the marks in the Five Books only', () => {
   const props = {
     nekudot: 'true',
     nekudot_filter: 'always',
@@ -60,11 +62,22 @@ test('normalizes legacy teamim filter values and keeps Tanakh text intact when a
   };
   const ctx = loadAppsScriptFiles(['apps-script/server/text-processing.gs'], props);
   const filters = ctx.normalizeHebrewDisplayFilters_(ctx.PropertiesService.getUserProperties());
-  assert.equal(filters.teamimFilter, 'tanakh');
+  assert.equal(filters.teamimFilter, 'torah');
 
-  const input = { type: 'Tanakh', he: 'בְּרֵאשִׁ֖ית' };
-  const output = ctx.applyHebrewDisplayPreferences(input, ctx.PropertiesService.getUserProperties());
-  assert.equal(output.he, 'בְּרֵאשִׁ֖ית');
+  const userProperties = ctx.PropertiesService.getUserProperties();
+  const genesis = { type: 'Tanakh', categories: ['Tanakh', 'Torah'], book: 'Genesis', he: 'בְּרֵאשִׁ֖ית' };
+  assert.equal(ctx.applyHebrewDisplayPreferences(genesis, userProperties).he, 'בְּרֵאשִׁ֖ית');
+  // No categories in the payload: the book name decides.
+  assert.equal(ctx.applyHebrewDisplayPreferences({ type: 'Tanakh', book: 'Deuteronomy', he: 'שְׁמַ֖ע' }, userProperties).he, 'שְׁמַ֖ע');
+  const isaiah = { type: 'Tanakh', categories: ['Tanakh', 'Prophets'], book: 'Isaiah', he: 'חֲז֖וֹן' };
+  assert.equal(ctx.applyHebrewDisplayPreferences(isaiah, userProperties).he, 'חֲזוֹן', 'vowels kept, cantillation removed');
+});
+
+test('the Tanakh-only cantillation filter keeps the marks in all of Tanakh', () => {
+  const ctx = loadAppsScriptFiles(['apps-script/server/text-processing.gs'], { teamim: 'true', teamim_filter: 'tanakh' });
+  const userProperties = ctx.PropertiesService.getUserProperties();
+  assert.equal(ctx.applyHebrewDisplayPreferences({ type: 'Tanakh', categories: ['Tanakh', 'Prophets'], he: 'חֲז֖וֹן' }, userProperties).he, 'חֲז֖וֹן');
+  assert.equal(ctx.applyHebrewDisplayPreferences({ type: 'Liturgy', he: 'חֲז֖וֹן' }, userProperties).he, 'חֲזוֹן');
 });
 
 test('applies Hebrew divine-name replacements after display normalization', () => {

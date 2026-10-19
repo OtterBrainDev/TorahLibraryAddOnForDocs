@@ -35,23 +35,20 @@ test('the sidebar is told its mode by the server and includes the Simple-mode st
   assert.match(MENU, /createTemplateFromFile\('preferences'\);\s*\n\s*template\.uiMode = getUiMode_\(\);/);
 });
 
-test('every sidebar control Simple mode hides exists, and is hidden only while "More options" is closed', () => {
+// Simple mode hides only the search tools (sort, restore corpus); Preferences
+// → Interface → Everything shows them. There is no "More options" toggle: the
+// footer's buttons and Insertion Options show in both modes.
+test('Simple mode hides only the search tools, and every one it hides exists', () => {
   const ids = hiddenIds(SIMPLE_CSS, /data-ui-mode="simple"/);
-  assert.ok(ids.length >= 5, `expected the hidden controls, found ${ids}`);
+  assert.deepEqual(ids.sort(), ['restore-corpus-menu-wrap', 'search-sort-mode']);
   ids.forEach((id) => assert.ok(SIDEBAR.includes(`id="${id}"`), `simple-mode.css hides #${id}, which sidebar.html does not have`));
-
-  SIMPLE_CSS.split('}').forEach((block) => {
-    if (!/display:\s*none\s*!important/.test(block)) return;
-    block.split('{')[0].split(',').filter((s) => s.trim()).forEach((selector) => {
-      assert.match(selector, /:not\(\.is-more-open\)/, `"${selector.trim()}" stays hidden even with More options open`);
-    });
-  });
-  assert.ok(SIDEBAR.includes('id="more-options-toggle"'));
+  assert.ok(!SIDEBAR.includes('more-options-toggle'), 'no "More options" toggle');
+  assert.ok(!/is-more-open/.test(SIMPLE_CSS + readAppScriptFile('sidebar/js/footer-actions.html') + readAppScriptFile('sidebar/js/bootstrap.html')));
 });
 
 test('the Texts tab bar is hidden only in Texts mode, so Voices and Lexicon can always get back', () => {
-  assert.match(SIMPLE_CSS, /\[data-ui-mode="simple"\]\[data-mode="texts"\]:not\(\.is-more-open\) \.mode-switch-section/);
-  assert.ok(!/\[data-ui-mode="simple"\]:not\(\.is-more-open\) \.mode-switch-section/.test(SIMPLE_CSS));
+  assert.match(SIMPLE_CSS, /\[data-ui-mode="simple"\]\[data-mode="texts"\] \.mode-switch-section/);
+  assert.ok(!/\[data-ui-mode="simple"\] \.mode-switch-section/.test(SIMPLE_CSS));
 });
 
 test('Preferences hides only advanced tabs and sections, and "Show advanced settings" brings them back', () => {
@@ -78,4 +75,26 @@ test('the Interface and advanced switches are not preferences, so Save never sen
   assert.ok(/name="interface_mode_choice"/.test(PREFS));
   assert.ok(!/type="radio"/.test(readAppScriptFile('preferences/js.html').match(/function collectPreferenceObject\(\)[\s\S]*?\n    }/)[0]),
     'collectPreferenceObject must not start collecting radio inputs');
+});
+
+test('the footer: Add Source, Insertion Options under it, then Session Library, Quick Actions and Preferences, in both modes', () => {
+  const primary = SIDEBAR.match(/<section class="primary-actions"[\s\S]*?<\/section>/)[0];
+  assert.ok(primary.indexOf('id="insert-source"') < primary.indexOf('id="open-layout-settings"'));
+  assert.match(primary, /id="open-layout-settings"[^>]*>&#x1F4F0; Insertion Options</);
+  const row = SIDEBAR.match(/<section class="sidebar-footer-tools footer-tool-row standard-quick-actions"[\s\S]*?<\/section>/)[0];
+  for (const control of ['open-session-library', 'open-actions-panel', 'open-preferences-tool']) assert.ok(row.includes(control), control);
+  assert.doesNotMatch(SIMPLE_CSS, /standard-quick-actions|open-preferences-tool|open-layout-settings|open-session-library|open-actions-panel|footer-actions-panel/);
+});
+
+// Opening Preferences takes a few seconds; the sidebar says so and ignores
+// further clicks until the server answers.
+test('every way the sidebar opens Preferences goes through openPreferencesDialog', () => {
+  const js = ['sidebar/js/footer-actions.html', 'sidebar/js/mode-controller.html', 'sidebar/js/composition-controls.html']
+    .map((file) => readAppScriptFile(file)).join('\n');
+  const direct = js.match(/google\.script\.run[\s\S]{0,200}?\.preferencesPopup\(\)/g) || [];
+  assert.equal(direct.length, 1, 'only openPreferencesDialog calls preferencesPopup');
+  const opener = readAppScriptFile('sidebar/js/mode-controller.html').match(/function openPreferencesDialog\(\) \{[\s\S]*?\n\}/)[0];
+  assert.match(opener, /if \(preferencesOpening\) return;/);
+  assert.match(opener, /showBusyOverlay\('preferences'\)/);
+  assert.match(readAppScriptFile('sidebar/js/search-utils.html'), /preferences: 'Opening Preferences…'/);
 });

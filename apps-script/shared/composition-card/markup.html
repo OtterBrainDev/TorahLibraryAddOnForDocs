@@ -4,48 +4,69 @@
 </div>
 
 <div class="cc-surface">
-  <button type="button" class="cc-title-pill" id="cc-title-toggle" data-cc-feature="linkedTitle" aria-pressed="false" aria-label="Toggle linked title" title="Toggle linked title">🔗 Title: Off</button>
-
   <!-- The source (Hebrew) and translation settings, each collapsible. The
        summary line says what is set; initCompositionCard opens both when the
-       host's data-cc-features has "openSections" (Preferences). -->
+       host's data-cc-features has "openSections" (Preferences). Each setting
+       is one row: its name on the left, its control on the right (a switch,
+       a font button, or a segmented choice). Each title has its own link
+       switch and font ("linkedTitle", "titleFonts" in data-cc-features); the
+       font is the title's whether or not it is linked. -->
   <details class="cc-section cc-section--source">
     <summary class="cc-section-summary"><span class="cc-section-label">Source</span><span class="cc-section-state" id="cc-source-state"></span></summary>
     <div class="cc-section-body">
       <div class="cc-hebrew-stage">
-        <button type="button" class="cc-pill cc-pill--top" id="cc-cantillation-toggle" aria-pressed="true" title="Toggle cantillation">Cantillation: On</button>
-
         <div class="cc-hebrew" id="cc-hebrew-preview" dir="rtl" lang="he" aria-label="Hebrew preview">
           <span class="cc-hebrew-text cc-hebrew-text--full">הַסֵּ֙פֶר֙ כָל־הָעָ֔ם</span>
           <span class="cc-hebrew-text cc-hebrew-text--no-cantillation" hidden>הַסֵּפֶר כָל־הָעָם</span>
           <span class="cc-hebrew-text cc-hebrew-text--consonants" hidden>הספר כל־העם</span>
         </div>
-
-        <button type="button" class="cc-pill cc-pill--bottom" id="cc-vowels-toggle" aria-pressed="true" title="Toggle vowels">Vowels: On</button>
       </div>
 
-      <div class="cc-pill-row">
-        <button type="button" class="cc-pill" id="cc-hebrew-punct-toggle" aria-pressed="true" title="Toggle punctuation in the Hebrew">Punctuation: On</button>
-      </div>
+      <div class="cc-rows cc-pill-row">
+        <button type="button" class="cc-row cc-toggle" id="cc-he-title-toggle" data-cc-feature="linkedTitle" aria-pressed="true" title="Link the source title to the passage on sefaria.org"><span class="cc-row-label">Link title to Sefaria</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <div class="cc-row cc-font-row" data-cc-feature="titleFonts">
+          <span class="cc-row-label">Title font</span>
+          <button type="button" class="cc-font-chip" id="cc-hebrew-title-font-chip" data-font-role="hebrewTitle" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Source title font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
+        </div>
+        <div class="cc-row cc-font-row cc-hebrew-font-row" data-cc-feature="fonts">
+          <span class="cc-row-label">Text font</span>
+          <button type="button" class="cc-font-chip" id="cc-hebrew-font-chip" data-font-role="hebrew" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Hebrew font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
+        </div>
+        <p class="cc-font-note" id="cc-hebrew-font-note" data-cc-feature="fonts" aria-live="polite" hidden></p>
+        <div class="cc-row">
+          <span class="cc-row-label" id="cc-vowels-label">Vowels</span>
+          <div class="cc-seg" id="cc-vowels-toggle" role="radiogroup" aria-labelledby="cc-vowels-label" data-cc-choice="vowels">
+            <button type="button" class="cc-seg-option" role="radio" data-value="never" aria-checked="false" title="No vowels (niqqud)">Off</button>
+            <button type="button" class="cc-seg-option" role="radio" data-value="tanakh" aria-checked="false" title="Vowels in Tanakh only; removed from every other text">Tanakh</button>
+            <button type="button" class="cc-seg-option" role="radio" data-value="always" aria-checked="true" title="Vowels wherever Sefaria has them">On</button>
+          </div>
+        </div>
+        <div class="cc-row">
+          <span class="cc-row-label" id="cc-cantillation-label">Cantillation</span>
+          <div class="cc-seg" id="cc-cantillation-toggle" role="radiogroup" aria-labelledby="cc-cantillation-label" data-cc-choice="cantillation">
+            <button type="button" class="cc-seg-option" role="radio" data-value="never" aria-checked="false" title="No cantillation (ta’amim)">Off</button>
+            <button type="button" class="cc-seg-option" role="radio" data-value="tanakh" aria-checked="true" title="Cantillation in Tanakh only">Tanakh</button>
+            <button type="button" class="cc-seg-option" role="radio" data-value="torah" aria-checked="false" title="Cantillation in the Torah (the Five Books) only">Torah</button>
+          </div>
+        </div>
+        <button type="button" class="cc-row cc-toggle" id="cc-hebrew-punct-toggle" aria-pressed="true" title="Toggle punctuation in the Hebrew"><span class="cc-row-label">Punctuation</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <div class="cc-translit-wrap">
+          <button type="button" class="cc-row cc-toggle cc-translit-pill" id="cc-translit-pill" aria-pressed="false" title="Toggle transliteration"><span class="cc-row-label">Transliteration</span><span class="cc-switch" aria-hidden="true"></span></button>
+          <div class="cc-row cc-translit-scheme-row" id="cc-translit-scheme-row">
+            <span class="cc-row-label cc-row-label--sub">Style</span>
+            <button type="button" class="cc-translit-button" id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
+          </div>
 
-      <div class="cc-font-row cc-hebrew-font-row" data-cc-feature="fonts">
-        <button type="button" class="cc-font-chip" id="cc-hebrew-font-chip" data-font-role="hebrew" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Hebrew font"><span class="cc-font-chip-glyph" aria-hidden="true">א</span><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
-      </div>
-      <p class="cc-font-note" id="cc-hebrew-font-note" data-cc-feature="fonts" aria-live="polite" hidden></p>
-
-      <div class="cc-translit-wrap">
-        <button type="button" class="cc-pill cc-translit-pill" id="cc-translit-pill" aria-pressed="false" title="Toggle transliteration">Translit: Off</button>
-        <button type="button" class="cc-translit-button" id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
-
-        <div class="cc-translit-menu hidden" id="cc-translit-menu" role="listbox">
-          <button type="button" class="cc-translit-option" data-value="none">None</button>
-          <button type="button" class="cc-translit-option" data-value="simple_english">Simple English</button>
-          <button type="button" class="cc-translit-option" data-value="traditional">Traditional</button>
-          <button type="button" class="cc-translit-option" data-value="modern_israeli">Modern Israeli</button>
-          <button type="button" class="cc-translit-option" data-value="ashkenazi">Ashkenazi</button>
-          <button type="button" class="cc-translit-option" data-value="academic_full">Academic (Full)</button>
-          <button type="button" class="cc-translit-option" data-value="ipa_modern">IPA (Modern Israeli)</button>
-          <button type="button" class="cc-translit-option" data-value="ipa_tiberian">IPA (Tiberian-ish)</button>
+          <div class="cc-translit-menu hidden" id="cc-translit-menu" role="listbox">
+            <button type="button" class="cc-translit-option" data-value="none">None</button>
+            <button type="button" class="cc-translit-option" data-value="simple_english">Simple English</button>
+            <button type="button" class="cc-translit-option" data-value="traditional">Traditional</button>
+            <button type="button" class="cc-translit-option" data-value="modern_israeli">Modern Israeli</button>
+            <button type="button" class="cc-translit-option" data-value="ashkenazi">Ashkenazi</button>
+            <button type="button" class="cc-translit-option" data-value="academic_full">Academic (Full)</button>
+            <button type="button" class="cc-translit-option" data-value="ipa_modern">IPA (Modern Israeli)</button>
+            <button type="button" class="cc-translit-option" data-value="ipa_tiberian">IPA (Tiberian-ish)</button>
+          </div>
         </div>
       </div>
     </div>
@@ -54,17 +75,28 @@
   <details class="cc-section cc-section--translation cc-translation">
     <summary class="cc-section-summary"><span class="cc-section-label cc-translation-label">Translation</span><span class="cc-section-state" id="cc-translation-state"></span></summary>
     <div class="cc-section-body">
-      <div class="cc-translation-text" id="cc-translation-preview" lang="en">the scroll, before all the people;</div>
-      <div class="cc-pill-row">
-        <button type="button" class="cc-pill" id="cc-translation-punct-toggle" aria-pressed="true" title="Toggle punctuation in the translation">Punctuation: On</button>
-        <button type="button" class="cc-pill cc-emphasis-pill" id="cc-emphasis-toggle" data-mode="keep" aria-label="Translation bold and italics: keep. Click to change." title="Keep the translation’s bold and italics">
-          <span class="cc-emphasis-label" data-emphasis-mode="keep"><b>B&amp;I</b></span>
-          <span class="cc-emphasis-label" data-emphasis-mode="discard" hidden><s>B&amp;I</s></span>
-          <span class="cc-emphasis-label" data-emphasis-mode="only" hidden><b><i><u>B&amp;I</u></i></b></span>
-        </button>
+      <div class="cc-translation-stage">
+        <div class="cc-translation-text" id="cc-translation-preview" lang="en">the scroll, before all the people;</div>
       </div>
-      <div class="cc-font-row" data-cc-feature="fonts">
-        <button type="button" class="cc-font-chip" id="cc-translation-font-chip" data-font-role="translation" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Translation font"><span class="cc-font-chip-glyph" aria-hidden="true">A</span><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
+      <div class="cc-rows cc-pill-row">
+        <button type="button" class="cc-row cc-toggle" id="cc-title-toggle" data-cc-feature="linkedTitle" aria-pressed="false" title="Link the translation title to the passage on sefaria.org"><span class="cc-row-label">Link title to Sefaria</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <div class="cc-row cc-font-row" data-cc-feature="titleFonts">
+          <span class="cc-row-label">Title font</span>
+          <button type="button" class="cc-font-chip" id="cc-translation-title-font-chip" data-font-role="translationTitle" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Translation title font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
+        </div>
+        <div class="cc-row cc-font-row" data-cc-feature="fonts">
+          <span class="cc-row-label">Text font</span>
+          <button type="button" class="cc-font-chip" id="cc-translation-font-chip" data-font-role="translation" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Translation font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
+        </div>
+        <button type="button" class="cc-row cc-toggle" id="cc-translation-punct-toggle" aria-pressed="true" title="Toggle punctuation in the translation"><span class="cc-row-label">Punctuation</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <div class="cc-row">
+          <span class="cc-row-label" id="cc-emphasis-label">Bold &amp; italics</span>
+          <div class="cc-seg cc-emphasis-seg" id="cc-emphasis-toggle" role="radiogroup" aria-labelledby="cc-emphasis-label" data-cc-choice="emphasis">
+            <button type="button" class="cc-seg-option" role="radio" data-value="keep" aria-checked="true" title="Keep the translation’s bold and italics">Keep</button>
+            <button type="button" class="cc-seg-option" role="radio" data-value="discard" aria-checked="false" title="Discard the translation’s bold and italics">Drop</button>
+            <button type="button" class="cc-seg-option" role="radio" data-value="only" aria-checked="false" title="Keep ONLY the words the translation puts in bold or italics">Only</button>
+          </div>
+        </div>
       </div>
     </div>
   </details>

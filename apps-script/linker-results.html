@@ -407,7 +407,7 @@
             <p class="helper">Applies to the sources you tick Insert for, this time only. Your defaults in Preferences don’t change unless you save them.</p>
             <div class="customize-grid" id="customize-root">
               <div class="customize-section">
-                <div class="customize-section-label">Display &amp; Layout</div>
+                <div class="customize-section-label">Layout</div>
                 <?!= include('shared/insertion-options/markup') ?>
                 <label class="customize-check">
                   <input type="checkbox" id="customize-replace">
@@ -416,7 +416,7 @@
               </div>
               <div class="customize-section">
                 <div class="customize-section-label">Insertion Format</div>
-                <div class="cc-card cc-card--stacked" id="composition-card-container" data-cc-features="linkedTitle,fonts" aria-label="Composition for these insertions">
+                <div class="cc-card" id="composition-card-container" data-cc-features="linkedTitle,fonts" aria-label="Composition for these insertions">
                   <?!= include('shared/composition-card/markup') ?>
                 </div>
               </div>
@@ -496,18 +496,20 @@
         var custom = null;
         var INSERT_PREF_KEYS = [
           'output_mode_default', 'bilingual_layout_default', 'source_emphasis_mode',
-          'transliteration_scheme', 'nekudot', 'teamim', 'include_transliteration_default',
+          'transliteration_scheme', 'nekudot', 'nekudot_filter', 'teamim', 'teamim_filter', 'include_transliteration_default',
           'show_line_markers_default', 'include_translation_source_info',
-          'insert_sefaria_link_default', 'insert_from_selection_replace',
+          'insert_sefaria_link_default', 'insert_hebrew_sefaria_link_default', 'insert_from_selection_replace',
           'hebrew_punctuation', 'translation_punctuation', 'bilingual_aligned_rows',
           'hebrew_font', 'hebrew_font_size', 'translation_font', 'translation_font_size'
         ];
-        var ON_UNLESS_FALSE = ['nekudot', 'teamim', 'insert_from_selection_replace',
+        // Vowels and Cantillation are pairs (normalizeInsertPrefs).
+        var ON_UNLESS_FALSE = ['insert_from_selection_replace',
           'hebrew_punctuation', 'translation_punctuation'];
         // Font names and sizes, as stored ("" = match the document).
         var AS_STORED = ['hebrew_font', 'hebrew_font_size', 'translation_font', 'translation_font_size'];
         var ON_IF_TRUE = ['include_transliteration_default', 'show_line_markers_default',
-          'include_translation_source_info', 'insert_sefaria_link_default', 'bilingual_aligned_rows'];
+          'include_translation_source_info', 'insert_sefaria_link_default', 'insert_hebrew_sefaria_link_default',
+          'bilingual_aligned_rows'];
 
         function oneOf(value, allowed) {
           return allowed.indexOf(value) >= 0 ? value : allowed[0];
@@ -521,6 +523,9 @@
             source_emphasis_mode: ccNormalizeEmphasisMode(text('source_emphasis_mode')),
             transliteration_scheme: text('transliteration_scheme') || 'traditional'
           };
+          // The three-way Vowels and Cantillation choices, as the pairs they store.
+          Object.assign(out, ccVowelsPrefs(ccVowelsMode(text('nekudot'), text('nekudot_filter'))));
+          Object.assign(out, ccCantillationPrefs(ccCantillationMode(text('teamim'), text('teamim_filter'))));
           ON_UNLESS_FALSE.forEach(function (key) { out[key] = text(key) === 'false' ? 'false' : 'true'; });
           ON_IF_TRUE.forEach(function (key) { out[key] = text(key) === 'true' ? 'true' : 'false'; });
           AS_STORED.forEach(function (key) { out[key] = text(key).trim(); });
@@ -574,35 +579,36 @@
             containerId: 'composition-card-container',
             getState: function () {
               return {
-                vowelsOn: custom.nekudot === 'true',
-                cantillationOn: custom.teamim === 'true',
+                vowelsMode: ccVowelsMode(custom.nekudot, custom.nekudot_filter),
+                cantillationMode: ccCantillationMode(custom.teamim, custom.teamim_filter),
                 hebrewPunctuationOn: custom.hebrew_punctuation === 'true',
                 translationPunctuationOn: custom.translation_punctuation === 'true',
                 transliterationOn: custom.include_transliteration_default === 'true',
                 scheme: custom.transliteration_scheme,
                 linkOn: custom.insert_sefaria_link_default === 'true',
+                hebrewLinkOn: custom.insert_hebrew_sefaria_link_default === 'true',
                 linesOn: custom.show_line_markers_default === 'true',
                 detailsOn: custom.include_translation_source_info === 'true',
                 emphasisMode: custom.source_emphasis_mode,
-                fonts: {
-                  hebrew: { font: custom.hebrew_font, size: custom.hebrew_font_size },
-                  translation: { font: custom.translation_font, size: custom.translation_font_size }
-                }
+                fonts: ccFontStateFrom(function (key) { return custom[key]; })
               };
             },
             onFontChange: function (role, field, value) {
               custom[role + (field === 'size' ? '_font_size' : '_font')] = String(value);
             },
             onToggle: function (key) {
-              if (key === 'vowels') flip('nekudot');
-              else if (key === 'cantillation') flip('teamim');
-              else if (key === 'hebrewPunctuation') flip('hebrew_punctuation');
+              if (key === 'hebrewPunctuation') flip('hebrew_punctuation');
               else if (key === 'translationPunctuation') flip('translation_punctuation');
               else if (key === 'translit') flip('include_transliteration_default');
               else if (key === 'link') flip('insert_sefaria_link_default');
+              else if (key === 'hebrewLink') flip('insert_hebrew_sefaria_link_default');
               else if (key === 'lines') flip('show_line_markers_default');
               else if (key === 'details') flip('include_translation_source_info');
-              else if (key === 'emphasis') custom.source_emphasis_mode = ccNextEmphasisMode(custom.source_emphasis_mode);
+            },
+            onChoice: function (key, value) {
+              if (key === 'vowels') Object.assign(custom, ccVowelsPrefs(value));
+              else if (key === 'cantillation') Object.assign(custom, ccCantillationPrefs(value));
+              else if (key === 'emphasis') custom.source_emphasis_mode = ccNormalizeEmphasisMode(value);
             },
             onSchemeSelect: function (value) {
               if (value === 'none') {

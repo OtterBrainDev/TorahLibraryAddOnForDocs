@@ -1,10 +1,11 @@
 <script>
 // ================================
-// Shared Insertion Options (Display & Layout)
+// Shared Insertion Options (the Layout section)
 // ================================
 //
-// The Display (Translation / Both / Original) and Layout (Stacked / Right–Left
-// / Left–Right) pickers of shared/insertion-options/markup.html. Knows nothing
+// The Display (Translation / Both / Original) and Arrangement (Stacked /
+// Right–Left / Left–Right) pickers of shared/insertion-options/markup.html,
+// always open as segmented controls, and the line options. Knows nothing
 // about the host: the sidebar's Layout tray keeps its state in hidden selects
 // and saves it; the Link Texts dialog keeps it in a plain object for one pass;
 // Preferences keeps it in hidden inputs saved with the rest of the form.
@@ -20,8 +21,6 @@
 //     onToggleAlignedRows: function () { /* optional: flip "one row per line";
 //                              getState().alignedRows reads it. Without it the
 //                              "Line by line" button stays hidden. */ },
-//     expanded: false,         // optional: both pickers always open and
-//                              // labelled, no dropdowns (Preferences)
 //     hideInapplicable: true   // optional: hide Layout unless both languages,
 //                              // and the card's Hebrew-only parts for a
 //                              // translation-only insert
@@ -35,15 +34,12 @@ function initInsertionOptions(config) {
   _ioConfig = config;
   var $root = $(config.root);
   if (!$root.length) return;
-  var expanded = !!config.expanded;
-  $root.find('.display-layout-section').toggleClass('is-expanded', expanded);
 
   function chooser(attribute, callbackName) {
     return function (event) {
       if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       _ioConfig[callbackName]($(this).attr(attribute));
-      closeInsertionOptionsMenus();
       updateInsertionOptions();
     };
   }
@@ -55,30 +51,7 @@ function initInsertionOptions(config) {
     updateInsertionOptions();
   });
 
-  if (expanded) {
-    // Always open: the summary is only a label.
-    $root.find('.display-choice-dropdown').attr('open', '');
-    $root.find('.display-choice-dropdown > summary').off('click.io').on('click.io', function (event) {
-      event.preventDefault();
-    });
-  } else {
-    // One picker open at a time; a click anywhere else closes them.
-    $root.find('.display-choice-dropdown > summary').off('click.io').on('click.io', function () {
-      var $details = $(this).closest('.display-choice-dropdown');
-      $root.find('.display-choice-dropdown').not($details).removeAttr('open');
-    });
-    $(document).off('click.ioClose').on('click.ioClose', function (event) {
-      if ($(event.target).closest('.display-choice-dropdown').length) return;
-      closeInsertionOptionsMenus();
-    });
-  }
-
   updateInsertionOptions();
-}
-
-function closeInsertionOptionsMenus() {
-  if (!_ioConfig || _ioConfig.expanded) return;
-  $(_ioConfig.root).find('.display-choice-dropdown[open]').removeAttr('open');
 }
 
 function updateInsertionOptions() {
@@ -92,19 +65,11 @@ function updateInsertionOptions() {
     var isSelected = $(this).attr('data-mode') === mode;
     $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false');
   });
-  $root.find('#display-choice-summary-text').attr('data-mode', mode);
 
-  var $selectedLayout = $();
   $root.find('.layout-option').each(function () {
     var isSelected = $(this).attr('data-layout') === layout;
     $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false');
-    if (isSelected) $selectedLayout = $(this);
   });
-  // The closed picker shows the chosen layout's own icon.
-  $root.find('#layout-choice-summary-text')
-    .attr('data-layout', layout)
-    .empty()
-    .append($selectedLayout.find('.layout-icon').first().clone());
 
   // A layout only means something with both languages, and a translation-only
   // insert has no Hebrew to vocalise or transliterate. Line numbers and the
@@ -120,8 +85,7 @@ function updateInsertionOptions() {
   var sideBySide = layout === 'he-right' || layout === 'he-left';
   $root.find('#layout-rows-toggle')
     .prop('hidden', !_ioConfig.onToggleAlignedRows || (hide && !(mode === 'both' && sideBySide)))
-    .text(alignedRows ? 'Line by line: On' : 'Line by line: Off')
-    .toggleClass('is-on', alignedRows)
+    .toggleClass('is-off', !alignedRows)
     .attr('aria-pressed', alignedRows ? 'true' : 'false');
   // The card's Source section (Hebrew marks, font, transliteration) means
   // nothing to a translation-only insert, nor its Translation section to a

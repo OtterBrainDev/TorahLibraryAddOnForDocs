@@ -1001,53 +1001,6 @@
 }
 
 /* =============================================================
-   MODE SWITCH SECTION
-   ============================================================= */
-
-.mode-switch-section {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 6px;
-  margin: 0 0 8px;
-  padding: 5px;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: 0 1px 0 rgba(24, 52, 93, 0.04);
-}
-
-.mode-switch-button {
-  min-height: 32px;
-  padding: 6px 10px;
-  color: #506077;
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  /* Text tabs share available width equally */
-  flex: 1 1 0;
-  min-width: 0;
-}
-
-/* Compact emoji button — only needs its natural width */
-.mode-switch-button.experimental-menu-button {
-  flex: 0 0 auto;
-  min-width: 36px;
-  padding: 6px 8px;
-  letter-spacing: 0;
-}
-
-.mode-switch-button.is-active {
-  color: #fff;
-  background: var(--selected);
-  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.15);
-}
-
-/* =============================================================
    INSERT MODE SELECTOR (voices panel — segmented button group)
    ============================================================= */
 
@@ -1733,65 +1686,68 @@
 }
 
 /* =============================================================
-   MODE SWITCH — redesigned as compact underline tabs
+   RESULT TYPE (Texts / Voices / Lexicon) — under the search box
+   One search, three kinds of results: a segmented control like the
+   Insertion Options' pickers (light track, chosen tab raised). Switching
+   re-runs the query (mode-controller). Count badges: components/lexicon.
    ============================================================= */
 
-/* Override the old pill-container styling */
 .mode-switch-section {
   position: relative;
-  align-items: flex-end;
-  gap: 0;
-  padding: 0 12px;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border);
-  border-radius: 0;
-  box-shadow: none;
-  margin: 0;
+  display: flex;
+  flex-wrap: nowrap;
   flex-shrink: 0;
+  align-items: stretch;
+  gap: 2px;
   box-sizing: border-box;
   width: 100%;
+  margin: 8px 0 0;
+  padding: 2px;
+  background: var(--seg-track);
+  border: 0;
+  border-radius: 9px;
+  box-shadow: none;
 }
 
-/* Override each tab button to underline style */
 .mode-switch-button {
   position: relative;
   z-index: 1;
   flex: 1 1 0;
-  min-height: 36px;
-  padding: 10px 8px 8px; /* 2px less below for the 2px active underline, so the label sits centred. The badge is absolutely positioned in the top-right corner and needs no reserved space. */
-  border: 0;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: #777;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
+  min-width: 0;
+  min-height: 28px;
+  margin: 0;
+  padding: 4px 8px;
   cursor: pointer;
-  margin-bottom: -1px; /* overlap section's border-bottom with active indicator */
-  transition: color 0.1s;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  color: var(--row-sublabel);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  transition: color 0.1s, background 0.1s;
 }
 
 .mode-switch-button:hover {
-  color: #333;
+  color: var(--sefaria-blue);
 }
 
-/* Override the old filled-pill active state */
 .mode-switch-button.is-active {
-  color: var(--sefaria-blue);
-  background: transparent;
-  border-bottom: 2px solid var(--sefaria-blue);
-  box-shadow: none;
-  font-weight: 600;
+  color: var(--seg-selected-text);
+  background: var(--seg-selected-bg);
+  box-shadow: var(--seg-shadow);
+}
+
+.mode-switch-button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 
 /* Experimental emoji button — shrink to content width */
 .mode-switch-button.experimental-menu-button {
   flex: 0 0 auto;
   min-width: 30px;
-  padding: 10px 6px 8px;
-  letter-spacing: 0;
+  padding: 4px 6px;
 }
 
 /* =============================================================

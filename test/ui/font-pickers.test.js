@@ -45,7 +45,7 @@ test('the card\'s font fields have no name: Preferences saves every named field'
 
 test('Preferences font selects are filled from the one list, and there is no borrowing switch', () => {
   const html = readAppScriptFile('preferences.html');
-  for (const id of ['source_title_font', 'sefaria_link_font', 'hebrew_font', 'transliteration_font', 'translation_font', 'emphasis_bold_font', 'emphasis_italic_font']) {
+  for (const id of ['source_title_font', 'sefaria_link_font', 'hebrew_title_font', 'hebrew_link_font', 'citation_font', 'hebrew_font', 'transliteration_font', 'translation_font', 'emphasis_bold_font', 'emphasis_italic_font']) {
     const select = html.match(new RegExp(`<select name="${id}" id="${id}" data-font-role="(hebrew|latin)">([\\s\\S]*?)</select>`));
     assert.ok(select, `${id}: data-font-role`);
     // Only the empty "match" option is written out; the rest comes from shared/fonts.

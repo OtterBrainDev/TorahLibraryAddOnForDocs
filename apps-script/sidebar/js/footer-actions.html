@@ -15,23 +15,11 @@ function setFooterButtonStates() {
   $('#insert-source').prop('disabled', !canInsert).toggleClass('is-active', canInsert);
   // Hidden legacy button (kept for JS references)
   $('#open-on-sefaria').toggleClass('is-active', canOpen).prop('disabled', !canOpen);
-  // Layout Settings button always enabled; source card Sefaria btn reflects canOpen
+  // Insertion Options button always enabled; source card Sefaria btn reflects canOpen
   if (typeof updateSourceCardSefariaState === 'function') updateSourceCardSefariaState();
   $('#open-session-library').toggleClass('is-active', hasHistoryItems);
 }
 
-// Simple mode's "More options": show or hide the controls Simple mode hides
-// (css/components/simple-mode). Not remembered between sessions.
-function setMoreOptionsOpen(open) {
-  $('.unified-sidebar').toggleClass('is-more-open', !!open);
-  $('#more-options-toggle')
-    .attr('aria-expanded', open ? 'true' : 'false')
-    .text(open ? 'Fewer options' : 'More options');
-}
-
-$('#more-options-toggle').on('click', function () {
-  setMoreOptionsOpen(!$('.unified-sidebar').hasClass('is-more-open'));
-});
 
 $('#insert-source').click(function () {
   // --- Lexicon mode: insert a lexicon entry ---
@@ -128,6 +116,7 @@ $('#insert-source').click(function () {
   var showPesukim = Boolean($('.wants-pesukim').prop('checked'));
   var includeTranslationSourceInfo = $('.include-translation-source-info').is(':checked');
   var insertSefariaLink = $('.insert-sefaria-link').is(':checked');
+  var insertHebrewSefariaLink = $('.insert-hebrew-sefaria-link').is(':checked');
   var sourceEmphasisMode = ccNormalizeEmphasisMode($('.source-emphasis-mode').val());
   // No preferredTitle: the title is the chosen text's ref. The search box
   // holds the query ("shema", "light"), not the name of the text picked.
@@ -167,6 +156,7 @@ $('#insert-source').click(function () {
       pasukPreference: showPesukim,
       includeTranslationSourceInfo: includeTranslationSourceInfo,
       insertSefariaLink: insertSefariaLink,
+      insertHebrewSefariaLink: insertHebrewSefariaLink,
       sourceEmphasisMode: sourceEmphasisMode,
       sessionId: sidebarSessionId
     });
@@ -189,6 +179,7 @@ $('#insert-source').click(function () {
     bilingualLayout: bilingualLayout,
     alignedRows: $('.wants-aligned-rows').is(':checked'),
     insertSefariaLink: insertSefariaLink,
+    insertHebrewSefariaLink: insertHebrewSefariaLink,
     includeTransliteration: $('.include-transliteration').is(':checked'),
     // The scheme picked in the Layout tray may be a session override only.
     transliterationScheme: getSidebarTransliterationScheme(),
@@ -207,7 +198,7 @@ $('#open-on-sefaria').on('click', function () {
 
 $('.open-divine-name-preferences, .open-preferences-tool').on('click', function (event) {
   if (event) event.preventDefault();
-  google.script.run.preferencesPopup();
+  openPreferencesDialog();
 });
 
 $('.open-actions-panel').on('click', function (event) {
