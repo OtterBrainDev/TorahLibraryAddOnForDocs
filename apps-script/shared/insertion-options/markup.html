@@ -1,0 +1,46 @@
+<!--
+  The Layout section of the insertion options: Display (Translation / Both /
+  Original) and Arrangement (Stacked / Right–Left / Left–Right), each a
+  labelled segmented control, then the citation and the line options (line
+  numbers, one table row per line) as switch rows. Above the composition card. Shared
+  by the sidebar's Layout tray, Preferences and the Link Texts dialog's
+  "Customize this insertion" panel. Behaviour: shared/insertion-options/js.html
+  (initInsertionOptions); styles: shared/insertion-options/css.html.
+
+  include() returns a file's raw content, so this partial cannot include the
+  composition card itself: hosts include shared/composition-card/markup next to
+  it, inside the same container they pass to initInsertionOptions as `root`.
+-->
+<div class="display-layout-section">
+  <div class="display-choice-detail">
+    <div class="display-choice-label" id="display-choice-label">Display</div>
+    <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-labelledby="display-choice-label">
+      <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
+      <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
+      <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
+    </div>
+  </div>
+  <div class="display-choice-detail bilingual-layout-wrapper">
+    <div class="display-choice-label" id="layout-choice-label">Arrangement</div>
+    <div class="layout-option-group" role="radiogroup" aria-labelledby="layout-choice-label">
+      <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
+        <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>
+      </button>
+      <button type="button" class="layout-option" data-layout="he-right" role="radio" aria-checked="false" title="Right–Left">
+        <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>
+      </button>
+      <button type="button" class="layout-option" data-layout="he-left" role="radio" aria-checked="false" title="Left–Right">
+        <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>
+      </button>
+    </div>
+  </div>
+</div>
+<!-- Citation, then the line options, as switch rows (.cc-row, styled in
+     shared/composition-card/css): the composition card's Citation and Line
+     numbers, which shared/composition-card/shared.html drives (by id, so they
+     can live outside the card), and Line by line (here). -->
+<div class="layout-rows-row cc-rows">
+  <button type="button" class="cc-row cc-toggle cc-line-pill" id="cc-details-toggle" aria-pressed="false" aria-label="Toggle source citation" title="Add the source citation (edition and license) under the text"><span class="cc-row-label">Citation</span><span class="cc-switch" aria-hidden="true"></span></button>
+  <button type="button" class="cc-row cc-toggle layout-rows-toggle" id="layout-rows-toggle" aria-pressed="false" title="Right–Left and Left–Right: give each line its own table row, beside its translation" hidden><span class="cc-row-label">Line by line</span><span class="cc-switch" aria-hidden="true"></span></button>
+  <button type="button" class="cc-row cc-toggle cc-line-pill" id="cc-lines-toggle" aria-pressed="true" title="Number each line (verse numbers)"><span class="cc-row-label">Line numbers</span><span class="cc-switch" aria-hidden="true"></span></button>
+</div>

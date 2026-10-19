@@ -1,0 +1,248 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+
+// Pins the multi-translation insert (`insertReferenceVersions`): one title per
+// block, a blank paragraph between blocks and after the last one, and no block
+// for a translation that has no text on the ref. See docs/regression-log.md.
+
+function fakeParagraph(initial) {
+  const p = { text: initial || '', link: null, attrs: {} };
+  const textApi = {
+    editAsText() { return textApi; },
+    getText() { return p.text; },
+    insertText(offset, t) { p.text = p.text.slice(0, offset) + t + p.text.slice(offset); return textApi; },
+    setBold() { return textApi; },
+    setItalic() { return textApi; },
+    setUnderline() { return textApi; },
+    setFontFamily(s, e, font) { p.attrs.FONT_FAMILY = font; return textApi; },
+    setFontSize(s, e, size) { p.attrs.FONT_SIZE = size; return textApi; },
+    setForegroundColor() { return textApi; },
+    setBackgroundColor() { return textApi; },
+    setLinkUrl(url) { p.link = url; return textApi; },
+    getTextAttributeIndices() { return [0]; },
+    isBold() { return false; },
+    isItalic() { return false; },
+  };
+  const para = {
+    editAsText() { return textApi; },
+    asParagraph() { return para; },
+    setText(t) { p.text = t; return para; },
+    setAttributes(a) { Object.assign(p.attrs, a); return para; },
+    setLeftToRight() { return para; },
+    _state: p,
+  };
+  return para;
+}
+
+// Like Docs, a new paragraph takes its font and size from the paragraph before
+// it: that is what made later blocks of a multi-version insert pick up the
+// previous block's 8pt attribution line.
+const INHERITED_ATTRIBUTES = ['FONT_FAMILY', 'FONT_SIZE'];
+
+function loadInsertion({ resolved, typography }) {
+  const children = [];
+  const body = {
+    getNumChildren() { return children.length; },
+    getChild(i) { return children[i]; },
+    insertParagraph(i, text) {
+      const p = fakeParagraph(text);
+      const before = children[i - 1];
+      if (before) {
+        INHERITED_ATTRIBUTES.forEach((key) => {
+          if (before._state.attrs[key] !== undefined) p._state.attrs[key] = before._state.attrs[key];
+        });
+      }
+      children.splice(i, 0, p);
+      return p;
+    },
+  };
+  const context = {
+    console,
+    Logger: { log() {} },
+    HtmlService: {},
+    DocumentApp: {
+      Attribute: new Proxy({}, { get: (_, k) => String(k) }),
+      getActiveDocument() { return { getBody: () => body, getCursor: () => null }; },
+    },
+    PropertiesService: { getUserProperties() { return { getProperty() { return null; } }; } },
+    findReference(ref, versions) { return resolved[versions.en] || null; },
+    getTypographySettings() { return typography ? JSON.parse(JSON.stringify(typography)) : { roles: {} }; },
+    formatDataForPesukim(d) { return d; },
+    normalizeSourceEmphasisMode_(mode) { return mode || 'keep'; },
+    getEnglishAttributionLines(d) { return ['Translation: ' + d.versionTitle]; },
+    isTitleRole_(role) { return role === 'sourceTitle' || role === 'sefariaLink'; },
+  };
+  vm.createContext(context);
+  // hebrew-font*.gs: every role paragraph borrows missing Hebrew marks.
+  for (const file of ['apps-script/server/utils.gs', 'apps-script/server/insertion-target.gs',
+    'apps-script/server/hebrew-font-coverage.gs', 'apps-script/server/hebrew-fonts.gs', 'apps-script/server/insertion.gs']) {
+    vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
+  }
+  const texts = () => children.map((c) => c._state.text);
+  return { ctx: context, children, texts };
+}
+
+const resolved = {
+  'Koren': { ref: 'Genesis 1:1', heRef: 'בראשית א:א', versionTitle: 'Koren', text: 'In the beginning', he: 'בְּרֵאשִׁית' },
+  'JPS': { ref: 'Genesis 1:1', heRef: 'בראשית א:א', versionTitle: 'JPS', text: 'When God began', he: 'בְּרֵאשִׁית' },
+  // Resolves, but the translation has nothing for this ref.
+  'Empty': { ref: 'Genesis 1:1', heRef: 'בראשית א:א', versionTitle: 'Empty', text: ['', '&nbsp;'], he: 'בְּרֵאשִׁית' },
+  // Sefaria substituted its default version for the one requested.
+  'Missing': { ref: 'Genesis 1:1', heRef: 'בראשית א:א', versionTitle: 'Koren', text: 'In the beginning', he: 'בְּרֵאשִׁית' },
+};
+
+test('linked multi-version titles name the version once', () => {
+  const { ctx, texts } = loadInsertion({ resolved });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], singleLanguage: 'en', insertSefariaLink: true,
+  });
+  const titles = texts().filter((t) => t.startsWith('Genesis'));
+  assert.deepEqual(titles, [
+    'Genesis 1:1 (Translation • Koren)',
+    'Genesis 1:1 (Translation • JPS)',
+  ]);
+});
+
+test('each linked title opens its own translation on sefaria.org', () => {
+  const { ctx, children } = loadInsertion({ resolved });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], singleLanguage: 'en', insertSefariaLink: true,
+  });
+  const links = children.map((c) => c._state.link).filter(Boolean);
+  assert.deepEqual(links, [
+    'https://www.sefaria.org/Genesis_1%3A1?ven=Koren',
+    'https://www.sefaria.org/Genesis_1%3A1?ven=JPS',
+  ]);
+});
+
+test('unlinked multi-version titles still carry the version suffix', () => {
+  const { ctx, texts } = loadInsertion({ resolved });
+  ctx.insertReferenceVersions('Genesis 1:1', { versionTitles: ['Koren', 'JPS'], singleLanguage: 'en' });
+  assert.deepEqual(texts().filter((t) => t.startsWith('Genesis')), ['Genesis 1:1 (Koren)', 'Genesis 1:1 (JPS)']);
+});
+
+test('blocks are separated by a blank paragraph, including after the last citation', () => {
+  const { ctx, texts } = loadInsertion({ resolved });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], singleLanguage: 'en', includeTranslationSourceInfo: true,
+  });
+  assert.deepEqual(texts(), [
+    'Genesis 1:1 (Koren)', 'In the beginning', 'Translation: Koren',
+    '',
+    'Genesis 1:1 (JPS)', 'When God began', 'Translation: JPS',
+    '',
+  ]);
+});
+
+test('he-top inserts the Hebrew once, then separated translation blocks', () => {
+  const { ctx, texts } = loadInsertion({ resolved });
+  ctx.insertReferenceVersions('Genesis 1:1', { versionTitles: ['Koren', 'JPS'], bilingualLayout: 'he-top' });
+  assert.deepEqual(texts(), [
+    'בראשית א:א', 'בְּרֵאשִׁית',
+    'Genesis 1:1 (Koren)', 'In the beginning',
+    '',
+    'Genesis 1:1 (JPS)', 'When God began',
+    '',
+  ]);
+});
+
+test('empty and substituted translations are skipped and reported, not inserted', () => {
+  const { ctx, texts } = loadInsertion({ resolved });
+  const result = ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'Empty', 'Missing', 'JPS', 'Koren'], singleLanguage: 'en',
+  });
+  assert.deepEqual([...result.inserted], ['Koren', 'JPS']);
+  assert.deepEqual([...result.skipped], ['Empty', 'Missing']);
+  assert.equal(texts().filter((t) => t === 'In the beginning').length, 1, 'Koren must appear exactly once');
+});
+
+test('a request where every translation is empty fails instead of inserting nothing', () => {
+  const { ctx, children } = loadInsertion({ resolved });
+  assert.throws(
+    () => ctx.insertReferenceVersions('Genesis 1:1', { versionTitles: ['Empty', 'Missing'], singleLanguage: 'en' }),
+    /no.*text|None of the selected/i
+  );
+  assert.equal(children.length, 0);
+});
+
+test('decodeHTMLEntities handles the typographic spaces Sefaria puts in Hebrew', () => {
+  const { ctx } = loadInsertion({ resolved });
+  assert.equal(ctx.decodeHTMLEntities('אָמַר&thinsp;רַבִּי'), 'אָמַר רַבִּי');
+  assert.equal(ctx.decodeHTMLEntities('a&amp;thinsp;b'), 'a b');
+  assert.equal(ctx.decodeHTMLEntities('a&ensp;b&emsp;c&hairsp;d'), 'a b c d');
+  assert.equal(ctx.decodeHTMLEntities('x&nbsp;y&#160;z'), 'x y z');
+  assert.equal(ctx.decodeHTMLEntities('&rlm;&lrm;&zwj;'), '‏‎‍');
+});
+
+test('decodeHTMLEntities decodes each entity exactly once', () => {
+  const { ctx } = loadInsertion({ resolved });
+  assert.equal(ctx.decodeHTMLEntities('a &amp;lt; b'), 'a &lt; b');
+  assert.equal(ctx.decodeHTMLEntities('&#x5D0;&#1489;'), 'אב');
+  assert.equal(ctx.decodeHTMLEntities('&unknownentity; stays'), '&unknownentity; stays');
+});
+
+test('inserted Hebrew body carries no literal &thinsp;', () => {
+  const { ctx, texts } = loadInsertion({
+    resolved: { 'Koren': Object.assign({}, resolved.Koren, { he: '<b>אָמַר</b>&thinsp;רַבִּי' }) },
+  });
+  ctx.insertReferenceVersions('Genesis 1:1', { versionTitles: ['Koren'], bilingualLayout: 'he-top' });
+  assert.ok(!texts().some((t) => t.includes('&thinsp;')), texts().join(' | '));
+});
+
+test('every block of a multi-version insert gets the same formatting as the first', () => {
+  // Fonts on "Match the document" with nothing to copy: the add-on sets no
+  // font or size, so each title shows what it inherits. Inserted first to last,
+  // the second title inherited the first block's 8pt attribution line.
+  const { ctx, children } = loadInsertion({ resolved });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], singleLanguage: 'en', includeTranslationSourceInfo: true,
+  });
+  const attrsOf = (text) => children.find((c) => c._state.text === text)._state.attrs;
+  const first = attrsOf('Genesis 1:1 (Koren)');
+  const second = attrsOf('Genesis 1:1 (JPS)');
+  assert.equal(attrsOf('Translation: Koren').FONT_SIZE, 8, 'the attribution line is 8pt');
+  assert.equal(second.FONT_SIZE, first.FONT_SIZE, 'second title inherited a different size');
+  assert.equal(attrsOf('When God began').FONT_SIZE, attrsOf('In the beginning').FONT_SIZE);
+});
+
+test('a translation in a language with its own formatting gets it; the others keep the Translation settings', () => {
+  const role = (font, size, style) => ({ font, size, style, color: null, background: null });
+  const typography = {
+    roles: {
+      translation: role('Georgia', 12, 'normal'),
+      sourceTitle: role('', null, 'normal'),
+      sefariaLink: role('', null, 'underline'),
+    },
+    titleHeading: 'normal',
+    translationLanguages: { fr: { font: 'Garamond', size: null, style: 'italic' } },
+  };
+  const french = Object.assign({}, resolved.JPS, { versionTitle: 'Bible du Rabbinat [fr]', text: 'Au commencement' });
+  const { ctx, children } = loadInsertion({ resolved: { Koren: resolved.Koren, 'Bible du Rabbinat [fr]': french }, typography });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'Bible du Rabbinat [fr]'], singleLanguage: 'en',
+  });
+  const attrsOf = (text) => children.find((c) => c._state.text === text)._state.attrs;
+  assert.equal(attrsOf('In the beginning').FONT_FAMILY, 'Georgia');
+  assert.equal(attrsOf('Au commencement').FONT_FAMILY, 'Garamond');
+  assert.equal(attrsOf('Au commencement').FONT_SIZE, 12, 'an empty size keeps the Translation size');
+});
+
+test('the sidebar session reaches each version\'s re-fetch (Layout tray cantillation/vowels)', () => {
+  const { ctx } = loadInsertion({ resolved });
+  const sessions = [];
+  ctx.findReferenceForSidebar = (ref, versions, sessionId) => {
+    sessions.push([versions.en, sessionId]);
+    return resolved[versions.en] || null;
+  };
+  const typographySessions = [];
+  ctx.sidebarSessionPreferenceOverlay_ = (sessionId) => {
+    typographySessions.push(sessionId);
+    return { getProperty() { return null; } };
+  };
+  ctx.insertReferenceVersions('Genesis 1:1', { versionTitles: ['Koren', 'JPS'], singleLanguage: 'en', sessionId: 's1' });
+  assert.deepEqual(sessions, [['Koren', 's1'], ['JPS', 's1']]);
+  // ... and the fonts: the Layout tray's font pickers are session overrides too.
+  assert.deepEqual(typographySessions, ['s1']);
+});

@@ -16,7 +16,7 @@ function focusResultByIndex(index) {
 function showSidebarNotice(message, onConfirm) {
   var $notice = $('#sidebar-notice');
   if (!$notice.length) return;
-  $('#sidebar-notice-message').html(escapeHTML(message || ''));
+  $('#sidebar-notice-message').text(String(message || ''));
   $notice.removeAttr('hidden');
   $('#sidebar-notice-ok').off('click.sidebarNotice').on('click.sidebarNotice', function () {
     $notice.attr('hidden', true);
@@ -27,21 +27,102 @@ function showSidebarNotice(message, onConfirm) {
   });
 }
 
-function showSidebarToast(message) {
+var sidebarToastTimer = null;
+function showSidebarToast(message, durationMs) {
   var $toast = $('#sidebar-toast');
   if (!$toast.length) return;
+  // Escaped: messages can carry server error text.
   $toast.html(escapeHTML(message || ''));
+  // `.is-visible` carries the opacity; without it the toast was shown fully
+  // transparent, so every toast message went unseen.
   $toast.removeAttr('hidden');
-  setTimeout(function () {
+  if (sidebarToastTimer) clearTimeout(sidebarToastTimer);
+  requestAnimationFrame(function () { $toast.addClass('is-visible'); });
+  sidebarToastTimer = setTimeout(function () {
+    $toast.removeClass('is-visible');
     $toast.attr('hidden', true);
-  }, 3000);
+  }, durationMs || 3000);
 }
+
+// A server insert that went somewhere other than the cursor (below a table)
+// returns a notice; show it long enough to read.
+function showInsertNotice(result) {
+  if (result && result.notice) showSidebarToast(result.notice, 8000);
+}
+
+// Preferences takes a few seconds to open. Until the server answers (the
+// dialog is then on its way), the busy overlay says so and covers the sidebar,
+// so a second click can't open a second dialog. The timer is a backstop for an
+// answer that never comes.
+var PREFERENCES_OPEN_TIMEOUT_MS = 20000;
+var preferencesOpening = false;
+
+function openPreferencesDialog() {
+  if (preferencesOpening) return;
+  preferencesOpening = true;
+  $('.open-preferences-tool').prop('disabled', true).attr('aria-busy', 'true');
+  showBusyOverlay('preferences');
+  var backstop = setTimeout(done, PREFERENCES_OPEN_TIMEOUT_MS);
+  function done() {
+    clearTimeout(backstop);
+    if (!preferencesOpening) return;
+    preferencesOpening = false;
+    $('.open-preferences-tool').prop('disabled', false).removeAttr('aria-busy');
+    hideBusyOverlay();
+  }
+  google.script.run
+    .withSuccessHandler(function () {
+      done();
+      // The dialog is modal: the sidebar's next use comes after it closes.
+      preferencesMayHaveChanged = true;
+    })
+    .withFailureHandler(function () {
+      done();
+      showSidebarToast('Preferences could not be opened. Try again.');
+    })
+    .preferencesPopup();
+}
+
+// Preferences saved in the Preferences dialog reach an open sidebar. The
+// dialog marks each save in localStorage (PREFERENCES_SAVED_STORAGE_KEY;
+// every page of the add-on shares one origin), which fires a storage event
+// here; after the sidebar itself opened Preferences, the first pointer or
+// keyboard use of the sidebar re-reads them too, in case the event never
+// came. Without this the switches, the Insertion Options card and the preview
+// kept the old settings while an insert used the new ones. A setting this
+// session overrides in Insertion Options keeps the session's value.
+var PREFERENCES_SAVED_STORAGE_KEY = 'sefariaPreferencesSavedAt';
+var preferencesMayHaveChanged = false;
+
+function reloadAccountPreferences() {
+  preferencesMayHaveChanged = false;
+  google.script.run.withSuccessHandler(function (stored) {
+    var updated = clonePlainObject(stored || {});
+    if (JSON.stringify(updated) === JSON.stringify(accountPreferences)) return;
+    accountPreferences = updated;
+    effectivePreferences = isAdvancedSessionMode()
+      ? mergePreferenceLayers(accountPreferences, sessionPreferences)
+      : mergePreferenceLayers(accountPreferences, {});
+    applyEffectivePreferencesToUI();
+    if (appMode === 'texts' && selectedRefValue) scheduleSelectedResultRefresh();
+  }).getPreferences();
+}
+
+window.addEventListener('storage', function (event) {
+  if (event.key === PREFERENCES_SAVED_STORAGE_KEY) reloadAccountPreferences();
+});
+
+function reloadAccountPreferencesIfStale_() {
+  if (preferencesMayHaveChanged) reloadAccountPreferences();
+}
+document.documentElement.addEventListener('mouseenter', reloadAccountPreferencesIfStale_);
+$(document).on('pointerdown focusin keydown', reloadAccountPreferencesIfStale_);
 
 function openPreferencesWithHint(sectionHint) {
   if (sectionHint === 'experimental-features') {
     sessionStorage.setItem('PREF_NAVIGATE_TAB', 'experimental');
   }
-  google.script.run.preferencesPopup();
+  openPreferencesDialog();
 }
 
 var appMode = window.INITIAL_SIDEBAR_MODE || 'texts';
@@ -58,15 +139,8 @@ function hasExperimentalFeaturesEnabled() {
       prefs.experimental_features_enabled !== true) {
     return false;
   }
-  return String(prefs.experimental_ai_source_sheet_enabled) === 'true' ||
-    prefs.experimental_ai_source_sheet_enabled === true ||
-    String(prefs.surprise_me_enabled) === 'true' ||
+  return String(prefs.surprise_me_enabled) === 'true' ||
     prefs.surprise_me_enabled === true;
-}
-
-function isExperimentalAiEnabled() {
-  return String((effectivePreferences || {}).experimental_ai_source_sheet_enabled) === 'true' ||
-    (effectivePreferences || {}).experimental_ai_source_sheet_enabled === true;
 }
 
 function isSurpriseEnabled() {
@@ -76,12 +150,9 @@ function isSurpriseEnabled() {
 
 function syncExperimentalAvailability() {
   var hasExperimental = hasExperimentalFeaturesEnabled();
-  var aiEnabled = isExperimentalAiEnabled();
   var surpriseEnabled = isSurpriseEnabled();
   $('.experimental-menu-button').toggle(hasExperimental);
-  $('#ai-inline-generate').closest('.exp-card').toggle(aiEnabled);
   $('#sm-inline-launch').closest('.exp-card').toggle(surpriseEnabled);
-  $('#footer-actions-panel .open-ai-lesson-tool').toggle(aiEnabled);
   $('#footer-actions-panel .open-surprise-tool').toggle(surpriseEnabled);
   if (!hasExperimental && appMode === 'experimental') {
     appMode = 'texts';
@@ -224,14 +295,6 @@ $('.open-surprise-tool').off('click').on('click', function (event) {
     .withSuccessHandler(function () { showSidebarToast('Launching Surprise Me…'); })
     .withFailureHandler(function () { showSidebarNotice('Surprise Me is enabled, but its workflow is not yet wired in this build.'); })
     .surpriseMeHTML();
-});
-
-// AI Shiur was detached from the shipped add-on — see docs/ai-lesson/DESIGN.md.
-// The button that used to trigger it stays hidden (preferences-state.html
-// disables it) but this inert handler guards against a direct click on a
-// stale DOM.
-$('.open-ai-lesson-tool').off('click').on('click', function (event) {
-  if (event) event.preventDefault();
 });
 
 $('#open-preferences-experimental').off('click').on('click', function (event) {

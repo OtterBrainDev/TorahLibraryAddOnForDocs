@@ -133,6 +133,11 @@
   background: var(--bg, #fbfbfa);
   border-radius: 16px 16px 0 0;
   box-shadow: 0 -4px 28px rgba(0,0,0,0.18);
+  /* A flex column, so .tray-body takes what max-height leaves and scrolls.
+     As a block the body grew to its content and the sheet clipped it: the
+     end of a tall tray (the Source section's Style, the Translation section)
+     could not be reached. */
+  display: flex;
   flex-direction: column;
   max-height: 88vh;
   transform: translateY(100%);
@@ -182,10 +187,40 @@
 }
 .tray-close:hover { background: var(--card, #f3f1ed); color: #000; }
 
+/* Revert / Save as defaults: under the title, outside the scrolling body. */
+.tray-session-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--card, #f3f1ed);
+  border-bottom: 1px solid var(--border, #d9d8d3);
+}
+
+.tray-session-bar .tray-section-label {
+  flex: 0 0 auto;
+}
+
+.tray-session-bar .tray-action-pills {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.tray-session-bar .tray-action-pill {
+  flex: 0 1 auto;
+  padding: 5px 8px;
+  white-space: nowrap;
+}
+
 .tray-body {
   overflow-y: auto;
   padding: 10px 14px 16px;
-  flex: 1 1 0;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -305,7 +340,16 @@
 .tray-open-sefaria-btn .open-sefaria-icon { width: 15px; height: 15px; }
 
 /* ── Footer Layout Settings button ──────────────────────────────── */
-#open-layout-settings { font-size: 11px; white-space: nowrap; }
+/* Insertion Options, under Add Source: a quieter, shorter button. */
+.sidebar-footer #open-layout-settings {
+  height: 34px;
+  min-height: 34px;
+  max-height: 34px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
 
 /* ── Restore old accordion version selector ── */
 /* .versions-area removed from DOM; .versions-section accordion is shown by JS toggle */

@@ -18,12 +18,21 @@ fixed more than once.
   is not a Node module format.
 - **Not** a web app, not a Node.js project, not a generic JavaScript
   library. Web-app assumptions (NPM deps, `require('./file.gs')`,
-  ES modules, bundlers) do not apply.
+  ES modules, bundlers) do not apply **to the add-on**: Apps Script has
+  no module loader, and nothing under `apps-script/` may depend on a
+  package.
+- The one exception is the **test harness**. `linkedom` is a
+  devDependency supplying the `DOMParser` that Node lacks, which the
+  HTML-sanitizer tests need. It is test-only, never shipped (`clasp`
+  pushes `rootDir: apps-script` and `node_modules/` is git-ignored), and
+  the tests skip rather than fail when it is absent. Run `npm ci` before
+  `npm test` on a fresh checkout. Adding a *second* dependency deserves
+  the same scrutiny as the first.
 
 ## Hard rules (violating these has broken production)
 
 1. **Never add a new top-level preference key without adding a default
-   to the `SETTINGS` defaults block in `Code.gs` _and_ a migration
+   to the `getDefaultPreferences()` block in `apps-script/server/preferences.gs` _and_ a migration
    entry in `apps-script/migrations.gs`.** Existing users upgrade in
    place; a new opt-in flag defaulting to `false` silently disables
    behavior they had before. This was the root cause of the divine-name
@@ -40,14 +49,17 @@ fixed more than once.
    `loadAppsScriptFiles` pattern in `test/tests/hebrew-preferences.test.js`.
 4. **Never store a credential in `PropertiesService`.** If ephemeral
    is sufficient, use `CacheService.getUserCache()` — the existing
-   session-state helpers at `Code.gs:getSidebarSessionState` show the
+   session-state helpers at
+   `apps-script/server/preferences.gs:getSidebarSessionState` show the
    pattern. If persistent storage is genuinely required, it belongs
    server-side (i.e. not in the add-on), bound to a real account.
    See `docs/ai-lesson/DESIGN.md` for the longer argument.
 5. **Never write `.innerHTML` without a one-line comment explaining
    why `textContent` won't do.** Every current `.innerHTML` assignment
    in `apps-script/**/*.html` has a justification comment on the line
-   above; `pre_clasp_qc.sh` check 9 flags any new unannotated write.
+   above; `pre_clasp_qc.sh` check 9 flags any new unannotated write,
+   and check 9b does the same for jQuery `.html(...)`, which is the
+   same sink.
    If you're adding one, either (a) refactor to `textContent` +
    `document.createElement`, or (b) add the justification comment
    next to the assignment explaining the static/escaped provenance
@@ -61,7 +73,7 @@ fixed more than once.
    user already entered — keep it that way. If you need to diagnose
    a bug, add a structured payload with known-safe fields, not a
    blanket dump.
-7. **Never break an entry in `docs/rpc-surface.json`.** Every
+8. **Never break an entry in `docs/rpc-surface.json`.** Every
    server-side function reachable from `google.script.run` is listed
    there with its arity. Renaming, removing, or changing arity without
    updating the snapshot is caught by `test/ui/rpc-surface.test.js`.
@@ -97,32 +109,110 @@ dated list. Short form of the worst offenders:
 ## How to run tests locally
 
 ```bash
+npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: 30 passing, 0 failing. If anything is red, stop and fix it
-before touching the feature you came to change. `npm test` runs:
+Expected: **248 passing, 0 failing, 0 skipped**. A *skipped* count above
+zero usually means `npm ci` has not been run and the sanitizer tests are
+sitting out — treat that as red, not as a pass. If anything is red, stop
+and fix it before touching the feature you came to change.
 
-- `test/tests/attribution.test.js` — attribution-line formatting.
-- `test/tests/hebrew-preferences.test.js` — Hebrew display filters,
-  divine-name replacements, transliteration, search payload shape.
-- `test/ui/include-wiring.test.js` — every entry template pulls in
-  the expected partials.
-- `test/ui/js-contracts.test.js` — each JS partial defines the
-  functions it claims to own.
-- `test/ui/selector-contracts.test.js` — DOM ids the server RPC
-  depends on still exist in the rendered HTML.
-- `test/ui/template-snapshots.test.js` — byte-for-byte snapshots of
-  the four entry templates. Update via `UPDATE_UI_SNAPSHOTS=1 npm test`.
-- `test/ui/rpc-surface.test.js` — the server/client contract
-  described in §Hard rules above.
+`npm test` runs, in `test/tests/`:
+
+- `attribution.test.js` — attribution-line formatting.
+- `hebrew-preferences.test.js` — Hebrew display filters, divine-name
+  replacements, transliteration, search payload shape.
+- `migrations.test.js` — the UserProperties schema migrations.
+- `menu-layout.test.js` — the customizable add-on menu: default layout
+  matches the pre-customization menu, Preferences and Help are always last,
+  dividers collapse, stored layouts are normalized.
+- `extended-gemara.test.js`, `format-data-for-pesukim.test.js` — the
+  regressions named in `docs/regression-log.md`.
+- `search-input-normalization.test.js` — query normalization, punctuation-blind
+  title matching, the close-match suggester, and that as-you-type search never
+  rewrites the search box.
+- `citation-abbreviations.test.js` — traditional citation forms
+  ("Hil. Shabbat 1:1").
+- `linker-prefilter.test.js` — what leaves the machine, and offset
+  mapping back onto the document.
+- `linker-classify.test.js` — which citation becomes a link, a
+  question, or a counted failure; Apply re-finds each citation by occurrence,
+  so an edit while the dialog is open can't move a link.
+- `sanitize-source-html.test.js` — the Sefaria-HTML allowlist sanitizer.
+  linkedom cannot reproduce browser mutation XSS; verify sanitizer
+  changes in headless Chromium as well.
+- `set-preferences.test.js` — only `SETTINGS` keys can be written
+  through the client-reachable preference setters.
+- `triggers.test.js` — `onInstall` seeds preferences and then builds the
+  menu; `onOpen` falls back to the default menu instead of ending with none.
+- `source-attribution.test.js` — source credit on by default; the Hebrew
+  edition and its license are credited.
+- `divine-name-rules.test.js` — יה only as a whole word, replacement text
+  used literally, punctuation kept when niqqud is stripped.
+- `typography-defaults.test.js` — "Match the document" fonts, the title
+  heading style, and reading the style at the insertion point.
+- `source-emphasis-mode.test.js` — the source's bold and italics: keep,
+  discard, or keep only the emphasized words (what "keep only" removes, and
+  what it keeps: line markers, punctuation, unemphasized paragraphs).
+- `multi-version-insert.test.js` — multi-translation insert: one title per
+  block, blank-line separation, empty translations skipped, every block
+  formatted like the first; HTML-entity decoding (`&thinsp;` and friends).
+- `translation-language-typography.test.js` — per-language translation
+  formatting: stored entries cleaned, the translation's language read from
+  Sefaria's payload, and only that language's blocks reformatted.
+- `insertion-target.test.js` — where an insert goes: after the cursor's
+  block, inside a table cell for paragraph layouts, below the table (with a
+  notice) for side-by-side layouts, never into a header, footer or footnote.
+- `sefaria-unavailable.test.js` — "couldn't reach Sefaria" and a find-refs
+  timeout throw, instead of reading as "no match" / "no citations".
+
+and in `test/ui/`:
+
+- `include-wiring.test.js` — every entry template pulls in the expected
+  partials.
+- `js-contracts.test.js` — each JS partial defines the functions it
+  claims to own.
+- `selector-contracts.test.js` — DOM ids the server RPC depends on
+  still exist in the rendered HTML.
+- `template-snapshots.test.js` — byte-for-byte snapshots of the entry
+  templates. Update via `UPDATE_UI_SNAPSHOTS=1 npm test`, and **never**
+  by hand-editing a `.snap` file.
+- `rpc-surface.test.js` — the server/client contract described in
+  §Hard rules above.
+- `linker-dialog.test.js` — the Link Texts dialog shows one state at a
+  time, has separate Link / Insert columns, and the Linking prefs tab.
+- `version-manifest.test.js` — `docs/VERSION.json` against the schema
+  version, the migrations that must exist for it, and every surface that
+  shows a version string.
+- `embedded-json.test.js` — server data force-printed into an inline
+  `<script>` goes through `toEmbeddedJson_`.
+- `csp-coverage.test.js` — every entry page carries the same
+  Content-Security-Policy.
+- `vowels-tanakh-only.test.js` — the Preferences "Vowels only in Tanakh"
+  switch, and that turning Vowels back on keeps it.
+- `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy
 
 ```bash
 bash pre_clasp_qc.sh apps-script
-clasp push   # from the repo root; .clasp.json pins rootDir=apps-script
+npm ci --prefix tools/clasp --ignore-scripts   # once; pinned clasp, see tools/clasp/README.md
+npx --prefix tools/clasp clasp push   # from the repo root; .clasp.json pins rootDir=apps-script
 ```
+
+`clasp push` (and the deploy workflow on `master`) only replaces the script
+project's HEAD, which you test through Apps Script → Deploy → Test
+deployments. **It does not reach Marketplace users.** They run the numbered
+version set in Marketplace SDK → App Configuration. To release: run the live
+test checklist against HEAD, `clasp version "v<version>"`, then set that
+version number in the SDK and save; users get it on their next document open.
+
+The deploy workflow pushes to the project named by the repository variable
+`CLASP_SCRIPT_ID` (with the `CLASP_TOKEN` secret), not to the `scriptId` in
+`.clasp.json`, and is skipped in any repository that has not set it. Don't
+hard-code a repository or script ID into the workflow — the same code is
+deployed from more than one repository.
 
 The QC script must exit 0 before you push. It walks the nested tree
 under `apps-script/` and checks basename collisions among `.gs` files
@@ -173,8 +263,18 @@ different repo.
 
 - `README.md` — user-facing project overview.
 - `docs/CHANGELOG.md` — user-facing changes by release.
+- `docs/PRIVACY.md`, `docs/TERMS.md` — the policies the Marketplace listing
+  links to. `PRIVACY.md` §2.2 lists every host the add-on's pages load from.
+- `docs/marketplace-listing.md` — the store console package: every console
+  field, the listing copy, and the release procedure.
 - `docs/architecture.md` — the server/client boundary, the include
   graph, the storage layers, the RPC surface.
+- `docs/VERSION.json` — the single source of truth for the version and
+  the preference-schema number. Enforced by
+  `test/ui/version-manifest.test.js`.
+- `docs/versioning.md` — what bumps what, and the one coupling that
+  matters: a new preference key needs a default, a migration, a schema
+  bump, a manifest bump and a version bump, all in one commit.
 - `docs/regression-log.md` — every bug that has regressed more than
   once, with the pinning test that now holds it down.
 - `docs/rpc-surface.json` — frozen server-function surface.

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- First-run setup (server/first-run.gs, docs/first-run-setup-design.md).
+         Every answer starts at the user's current value, so Continue through
+         every screen without touching anything changes nothing. -->
+    <?!= include('shared/ui/head'); ?>
+    <?!= include('shared/css/native-controls'); ?>
+    <?!= include('css/tokens'); ?>
+    <?!= include('shared/ui/busy-overlay'); ?>
+    <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
+    <script>window.APP_CONFIG = JSON.parse(document.getElementById('app-config-json').textContent);</script>
+    <?!= include('first-run-setup/css'); ?>
+  </head>
+  <body>
+    <main class="setup-shell">
+      <header class="setup-brand">
+        <span class="setup-mark" aria-hidden="true">א</span>
+        <span class="setup-brand-name">Torah Library</span>
+        <span class="setup-brand-spacer"></span>
+        <ol class="setup-steps" id="setup-steps" aria-hidden="true"><li></li><li></li><li></li></ol>
+        <p class="setup-progress" id="setup-progress" aria-live="polite">Step 1 of 3</p>
+      </header>
+
+      <!-- Screen 1: what the add-on is for. Only preselects screens 2 and 3. -->
+      <section class="setup-step" data-step="purpose">
+        <fieldset class="setup-fieldset">
+          <legend><h1 class="setup-heading" tabindex="-1">What will you mostly use Torah Library for?</h1></legend>
+          <p class="setup-lede">Three quick questions set up how sources go into your documents. You can change any of it later.</p>
+          <div class="setup-cards">
+            <label class="setup-card">
+              <input type="radio" name="purpose" value="quoting">
+              <span class="setup-card-title">Quoting sources in my writing</span>
+              <span class="setup-card-note">Divrei Torah, sermons, newsletters, emails</span>
+            </label>
+            <label class="setup-card">
+              <input type="radio" name="purpose" value="sheets">
+              <span class="setup-card-title">Preparing source sheets</span>
+              <span class="setup-card-note">Classes, shiurim, study partners</span>
+            </label>
+            <label class="setup-card">
+              <input type="radio" name="purpose" value="academic">
+              <span class="setup-card-title">Academic writing</span>
+              <span class="setup-card-note">Papers, articles, books with citations</span>
+            </label>
+            <label class="setup-card">
+              <input type="radio" name="purpose" value="returning">
+              <span class="setup-card-title">I've used Torah Library before</span>
+              <span class="setup-card-note">Keep my settings as they are</span>
+            </label>
+          </div>
+        </fieldset>
+      </section>
+
+      <!-- Screen 2: how an inserted source looks. -->
+      <section class="setup-step" data-step="look" hidden>
+        <h1 class="setup-heading" tabindex="-1">How should sources look?</h1>
+
+        <figure class="setup-preview" aria-hidden="true">
+          <span class="setup-preview-tag">Preview</span>
+          <figcaption class="setup-preview-ref">Deuteronomy 6:4</figcaption>
+          <div class="setup-preview-body" id="setup-preview-body" data-arrangement="he-right">
+            <p class="setup-preview-he" id="setup-preview-he" dir="rtl" lang="he"></p>
+            <p class="setup-preview-en" id="setup-preview-en"></p>
+          </div>
+        </figure>
+
+        <fieldset class="setup-fieldset setup-row">
+          <legend>Show</legend>
+          <label><input type="radio" name="show" value="both"> Hebrew and translation</label>
+          <label><input type="radio" name="show" value="he"> Hebrew only</label>
+          <label><input type="radio" name="show" value="en"> Translation only</label>
+        </fieldset>
+
+        <fieldset class="setup-fieldset setup-row" id="setup-arrangement">
+          <legend>Arrangement</legend>
+          <label><input type="radio" name="arrangement" value="he-right"> Side by side, Hebrew on the right</label>
+          <label><input type="radio" name="arrangement" value="he-left"> Side by side, Hebrew on the left</label>
+          <label><input type="radio" name="arrangement" value="he-top"> Hebrew above the translation</label>
+        </fieldset>
+
+        <fieldset class="setup-fieldset setup-row" id="setup-vowels">
+          <legend>Vowels</legend>
+          <label><input type="radio" name="vowels" value="always"> Always</label>
+          <label><input type="radio" name="vowels" value="tanakh"> Only in Tanakh</label>
+          <label><input type="radio" name="vowels" value="never"> Never</label>
+          <p class="setup-help">“Only in Tanakh” keeps the vowels in Tanakh and leaves them out of the Talmud, commentaries and later texts.</p>
+        </fieldset>
+
+        <div class="setup-fieldset setup-row" id="setup-teamim-row">
+          <label><input type="checkbox" id="setup-teamim"> Show cantillation marks (trope)</label>
+        </div>
+
+        <fieldset class="setup-fieldset" id="setup-divine">
+          <legend>God's name</legend>
+          <p class="setup-help">Many communities avoid writing God's name in full on paper that may be thrown away. Choose what your community does.</p>
+          <div class="setup-divine-row">
+            <label><input type="checkbox" data-divine="meforash"> Write <span lang="he">יהוה</span> as</label>
+            <select data-divine-text="meforash" aria-label="Replacement for יהוה">
+              <option value="יי">יי</option>
+              <option value="ה'">ה'</option>
+              <option value="יקוק">יקוק</option>
+              <option value="השם">השם</option>
+            </select>
+          </div>
+          <div class="setup-divine-row">
+            <label><input type="checkbox" data-divine="elodim"> Write <span lang="he">אלוהים</span> as</label>
+            <select data-divine-text="elodim" aria-label="Replacement for אלוהים">
+              <option value="אלוקים">אלוקים</option>
+              <option value="אלודים">אלודים</option>
+            </select>
+          </div>
+          <div class="setup-divine-row">
+            <label><input type="checkbox" data-divine="yaw"> Write <span lang="he">יה</span> as</label>
+            <select data-divine-text="yaw" aria-label="Replacement for יה">
+              <option value="קה">קה</option>
+              <option value="השם">השם</option>
+            </select>
+          </div>
+          <div class="setup-divine-row">
+            <label><input type="checkbox" data-divine="god"> Write “God” in translations as</label>
+            <select data-divine-text="god" aria-label="Replacement for God">
+              <option value="G-d">G-d</option>
+              <option value="HaShem">HaShem</option>
+              <option value="Adonai">Adonai</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <div class="setup-fieldset setup-row" id="setup-language-row">
+          <label for="setup-language">Translation language</label>
+          <select id="setup-language">
+            <option value="en">English</option>
+            <option value="ar">Arabic</option>
+            <option value="cs">Czech</option>
+            <option value="eo">Esperanto</option>
+            <option value="fa">Farsi (Persian)</option>
+            <option value="fi">Finnish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="hu">Hungarian</option>
+            <option value="it">Italian</option>
+            <option value="itk">Judeo-Italian</option>
+            <option value="jrb">Judeo-Arabic</option>
+            <option value="lad">Ladino (Judeo-Spanish)</option>
+            <option value="ko">Korean</option>
+            <option value="pl">Polish</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="es">Spanish</option>
+            <option value="yi">Yiddish</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Screen 3: interface mode. -->
+      <section class="setup-step" data-step="mode" hidden>
+        <fieldset class="setup-fieldset">
+          <legend><h1 class="setup-heading" tabindex="-1">How much do you want to see?</h1></legend>
+          <p class="setup-lede">You can switch at any time in Preferences.</p>
+          <div class="setup-cards setup-cards--two">
+            <label class="setup-card">
+              <input type="radio" name="uiMode" value="simple">
+              <span class="setup-card-title">Simple</span>
+              <span class="setup-card-note">Search, preview, insert, with fewer tools in view. Nothing is removed: switch to Everything in Preferences at any time.</span>
+            </label>
+            <label class="setup-card">
+              <input type="radio" name="uiMode" value="full">
+              <span class="setup-card-title">Everything</span>
+              <span class="setup-card-note">Every tool and setting, including Voices, Lexicon, result sorting and every Preferences tab.</span>
+            </label>
+          </div>
+        </fieldset>
+      </section>
+
+      <!-- Done. -->
+      <section class="setup-step" data-step="done" hidden>
+        <span class="setup-done-mark" aria-hidden="true">✓</span>
+        <h1 class="setup-heading" tabindex="-1">You're set.</h1>
+        <ul class="setup-done-list">
+          <li>Open the sidebar from <strong>Extensions → Torah Library → Texts</strong>.</li>
+          <li>Highlight a reference like <em>Genesis 1:1</em> and choose <strong>Insert Source from Selection</strong>.</li>
+          <li>Change any of this in <strong>Preferences</strong>. Run setup again from <strong>Help</strong>.</li>
+        </ul>
+      </section>
+
+      <p class="setup-error" id="setup-error" role="alert" hidden></p>
+
+      <footer class="setup-footer">
+        <button type="button" class="setup-link" id="setup-skip">Skip for now</button>
+        <span class="setup-footer-spacer"></span>
+        <button type="button" id="setup-back" hidden>Back</button>
+        <button type="button" class="action" id="setup-next" disabled>Continue</button>
+      </footer>
+    </main>
+
+    <?!= include('first-run-setup/js'); ?>
+  </body>
+</html>

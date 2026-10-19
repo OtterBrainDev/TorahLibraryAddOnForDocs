@@ -1,11 +1,21 @@
 <script>
 function extractTextFromHtml_(html) {
-  // innerHTML on an unattached div is a standard pattern for "decode this HTML
-  // to plain text"; scripts inside never execute because the element is not
-  // inserted into the document. We read textContent and discard the div.
-  var div = document.createElement('div');
-  div.innerHTML = String(html || '');
-  return (div.textContent || div.innerText || '').replace(/\s+/g, ' ').trim();
+  // Parse into an inert document rather than assigning to a detached div's
+  // innerHTML. Scripts do not run either way, but a detached div DOES still
+  // cause the browser to fetch any <img src> in the markup — so the old
+  // "harmless scratch element" made a network request to whatever host the
+  // text named, just to read its plain text.
+  var doc = parseInertHtml(html);
+  if (doc && doc.body) {
+    return (doc.body.textContent || '').replace(/\s+/g, ' ').trim();
+  }
+  return String(html || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// A fetched text is a string or (nested) arrays of segments.
+function flattenSegments_(value) {
+  if (Array.isArray(value)) return value.map(flattenSegments_).join(' ');
+  return value == null ? '' : String(value);
 }
 
 function removePreviewTransliteration() {
@@ -16,7 +26,10 @@ function renderPreviewTransliteration(dataIn) {
   removePreviewTransliteration();
   if (!$('.include-transliteration').is(':checked')) return;
   if (($('.output-mode-selection').val() || 'both') === 'en') return;
-  var plain = extractTextFromHtml_(dataIn && dataIn.he ? dataIn.he : '');
+  // The Hebrew as fetched, vowels kept and the Hebrew punctuation setting
+  // applied (server attachTransliterationSource_), not the Hebrew as displayed.
+  var source = dataIn ? (dataIn.heTransliterationSource !== undefined ? dataIn.heTransliterationSource : dataIn.he) : '';
+  var plain = extractTextFromHtml_(flattenSegments_(source));
   if (!plain) return;
   var refAtRequest = String((dataIn && dataIn.ref) || '');
   google.script.run.withSuccessHandler(function (text) {

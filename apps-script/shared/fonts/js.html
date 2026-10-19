@@ -1,0 +1,235 @@
+<script>
+// ================================
+// Shared fonts: the font lists, which Hebrew marks each font lacks, and an
+// honest preview
+// ================================
+//
+// One list of fonts for every font picker (Preferences' Fonts tab, the font
+// buttons in the composition card), grouped by what the font can actually
+// draw. HEBREW_FONT_COVERAGE (shared/fonts/coverage.html, generated from the
+// font files) says which Hebrew marks a font has no glyph for; the insert sets
+// those marks in a Noto Hebrew (server/hebrew-fonts.gs), and
+// planHebrewMarkFallback below plans the preview the same way, so the preview
+// shows what the document will. test/tests/hebrew-fonts.test.js holds the two
+// planners together.
+//
+// Include after shared/fonts/coverage.html.
+
+var HEBREW_MARK_LENDERS = { serif: 'Noto Serif Hebrew', sans: 'Noto Sans Hebrew' };
+
+// Hebrew fonts offered in the pickers: Google Fonts with Hebrew, suited to
+// running text (the display variants are left out). Every one is in Docs.
+var FONT_PICKER_HEBREW = [
+  'Alef', 'Arimo', 'Assistant', 'Bellefair', 'Bona Nova', 'Cardo', 'David Libre',
+  'Frank Ruhl Libre', 'Heebo', 'IBM Plex Sans Hebrew', 'Miriam Libre',
+  'Noto Rashi Hebrew', 'Noto Sans Hebrew', 'Noto Serif Hebrew', 'Open Sans',
+  'Rubik', 'Secular One', 'Suez One', 'Tinos', 'Varela Round'
+];
+
+// Other fonts Docs has. Arial and Times New Roman have Hebrew, but which marks
+// Docs' copies draw is not something we have measured: no claim is made.
+var FONT_PICKER_OTHER = [
+  'Arial', 'Calibri', 'Crimson Text', 'EB Garamond', 'Georgia', 'Roboto',
+  'Times New Roman', 'Verdana'
+];
+// Of those, the ones served by Google Fonts (loadable for the preview).
+var FONT_PICKER_OTHER_GOOGLE = ['Crimson Text', 'EB Garamond', 'Roboto'];
+
+// Once offered here, but not fonts Google Docs has: Docs keeps the name and
+// draws the text in another font. Listed only for someone who already chose
+// one, so the picker can show it, and says so.
+var FONTS_NOT_IN_DOCS = ['Ezra SIL', 'SBL Hebrew', 'David', 'Taamey Frank CLM'];
+
+function fontNameKey_(font) {
+  return String(font || '').trim().toLowerCase();
+}
+
+function hebrewCoverageEntry(font) {
+  var key = fontNameKey_(font);
+  if (!key || typeof HEBREW_FONT_COVERAGE === 'undefined') return null;
+  var names = Object.keys(HEBREW_FONT_COVERAGE);
+  for (var i = 0; i < names.length; i++) {
+    if (names[i].toLowerCase() === key) return HEBREW_FONT_COVERAGE[names[i]];
+  }
+  return null;
+}
+
+function isFontNotInDocs(font) {
+  var key = fontNameKey_(font);
+  return FONTS_NOT_IN_DOCS.some(function (name) { return name.toLowerCase() === key; });
+}
+
+function parseCodepointRanges(spec) {
+  return String(spec || '').split(',').filter(Boolean).map(function (part) {
+    var ends = part.split('-');
+    var start = parseInt(ends[0], 16);
+    return [start, ends.length > 1 ? parseInt(ends[1], 16) : start];
+  });
+}
+
+function hebrewFontMarkGaps(font) {
+  var entry = hebrewCoverageEntry(font);
+  if (!entry || !entry.missing) return null;
+  return { lender: HEBREW_MARK_LENDERS[entry.style] || HEBREW_MARK_LENDERS.serif, ranges: parseCodepointRanges(entry.missing) };
+}
+
+function fontLacksCodepoint(gaps, codepoint) {
+  for (var i = 0; i < gaps.ranges.length; i++) {
+    if (codepoint >= gaps.ranges[i][0] && codepoint <= gaps.ranges[i][1]) return true;
+  }
+  return false;
+}
+
+// Mirror of planHebrewMarkFallback_ (server/hebrew-fonts.gs).
+function planHebrewMarkFallback(text, baseFont, fontRuns) {
+  var source = String(text || '');
+  var runs = Array.isArray(fontRuns) ? fontRuns.filter(function (run) { return run && run.font; }) : [];
+  var plan = [];
+  if (!/[\u0591-\u05C7\u05F3\u05F4]/.test(source)) return plan;
+  for (var i = 0; i < source.length; i++) {
+    var codepoint = source.charCodeAt(i);
+    if (!((codepoint >= 0x0591 && codepoint <= 0x05C7) || codepoint === 0x05F3 || codepoint === 0x05F4)) continue;
+    var font = baseFont;
+    for (var r = runs.length - 1; r >= 0; r--) {
+      if (i >= runs[r].start && i <= runs[r].end) { font = runs[r].font; break; }
+    }
+    var gaps = hebrewFontMarkGaps(font);
+    if (!gaps || !fontLacksCodepoint(gaps, codepoint)) continue;
+    var last = plan[plan.length - 1];
+    if (last && last.end === i - 1 && last.font === gaps.lender) {
+      last.end = i;
+    } else {
+      plan.push({ start: i, end: i, font: gaps.lender });
+    }
+  }
+  return plan;
+}
+
+/**
+ * What a font can draw of Hebrew, for labels and notes.
+ *   status: 'full' (every mark), 'borrowed' (some marks lent by Noto),
+ *           'unknown' (not measured: Arial, Times New Roman, …),
+ *           'not-in-docs' (Docs draws another font)
+ *   lacksCantillation / lacksVowels: which kinds of mark are missing
+ */
+function describeHebrewFont(font) {
+  if (isFontNotInDocs(font)) return { status: 'not-in-docs' };
+  var entry = hebrewCoverageEntry(font);
+  if (!entry) return { status: 'unknown' };
+  if (!entry.missing) return { status: 'full' };
+  var gaps = hebrewFontMarkGaps(font);
+  var lacksCantillation = false;
+  var lacksVowels = false;
+  for (var cp = 0x0591; cp <= 0x05AF; cp++) if (fontLacksCodepoint(gaps, cp)) { lacksCantillation = true; break; }
+  // The vowel points proper (sheva to qubuts, dagesh, shin/sin dots, qamats qatan).
+  [0x05B0, 0x05B1, 0x05B2, 0x05B3, 0x05B4, 0x05B5, 0x05B6, 0x05B7, 0x05B8, 0x05B9, 0x05BA, 0x05BB, 0x05BC, 0x05C1, 0x05C2, 0x05C7]
+    .forEach(function (cp) { if (fontLacksCodepoint(gaps, cp)) lacksVowels = true; });
+  return { status: 'borrowed', lender: gaps.lender, lacksCantillation: lacksCantillation, lacksVowels: lacksVowels };
+}
+
+// ---- options for a <select> ----------------------------------------------
+
+/**
+ * Fills a font <select> from the lists above. `role` 'hebrew' lists the
+ * Hebrew fonts first; any other role lists them as "Hebrew and Latin".
+ * The first option is "Match the document" (value ""). A current value not in
+ * the lists (an old choice, a font Docs does not have) is kept, labelled.
+ * Builds with createElement; nothing is parsed as HTML.
+ */
+function populateFontSelect(select, role, currentValue) {
+  if (!select) return;
+  var current = currentValue != null ? String(currentValue) : select.value;
+  // The empty option's label is the host's ("Same as the surrounding text").
+  var firstLabel = (select.options[0] && select.options[0].value === '') ? select.options[0].textContent : 'Match the document';
+  while (select.firstChild) select.removeChild(select.firstChild);
+
+  function option(parent, value, label) {
+    var opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = label || value;
+    parent.appendChild(opt);
+    return opt;
+  }
+  function group(label, fonts) {
+    if (!fonts.length) return;
+    var optgroup = document.createElement('optgroup');
+    optgroup.label = label;
+    fonts.forEach(function (font) { option(optgroup, font); });
+    select.appendChild(optgroup);
+  }
+
+  option(select, '', firstLabel);
+  if (role === 'hebrew') {
+    // One list: which marks a font lacks (and borrows from Noto) is not the
+    // picker's business; Help explains it.
+    group('Hebrew fonts', FONT_PICKER_HEBREW);
+  } else {
+    group('Hebrew and Latin', FONT_PICKER_HEBREW);
+  }
+  group('Other fonts', FONT_PICKER_OTHER);
+
+  var known = [''].concat(FONT_PICKER_HEBREW, FONT_PICKER_OTHER).map(fontNameKey_);
+  if (current && known.indexOf(fontNameKey_(current)) < 0) {
+    var kept = document.createElement('optgroup');
+    kept.label = 'Your current choice';
+    option(kept, current, isFontNotInDocs(current) ? current + ' (not in Google Docs)' : current);
+    select.appendChild(kept);
+  }
+  select.value = current;
+  if (select.value !== current) select.value = '';
+}
+
+// ---- preview ----------------------------------------------------------------
+
+var _loadedPreviewFonts = {};
+
+/**
+ * Loads a font from Google Fonts for the preview, once. Only fonts on the
+ * lists above that Google Fonts serves; anything else is left to the browser.
+ * The request names the font and nothing else (docs/PRIVACY.md §2.2).
+ */
+function ensurePreviewFont(font) {
+  var name = String(font || '').trim();
+  if (!name || _loadedPreviewFonts[name]) return;
+  var served = !!hebrewCoverageEntry(name) || FONT_PICKER_OTHER_GOOGLE.indexOf(name) >= 0;
+  if (!served || !document.head) return;
+  _loadedPreviewFonts[name] = true;
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(name).replace(/%20/g, '+') + '&display=swap';
+  document.head.appendChild(link);
+}
+
+/** A CSS font-family value for `font`, ending in a generic family. */
+function previewFontStack(font, fallback) {
+  var name = String(font || '').trim();
+  var entry = hebrewCoverageEntry(name);
+  var generic = entry ? (entry.style === 'sans' ? 'sans-serif' : 'serif') : (fallback || 'serif');
+  if (!name || isFontNotInDocs(name)) return generic;
+  return '"' + name.replace(/["\\]/g, '') + '", ' + generic;
+}
+
+/**
+ * Writes `text` into `element` set in `font`, the way Docs will draw it: the
+ * marks the font lacks in the lending Noto. Returns the plan.
+ */
+function renderHebrewPreviewText(element, text, font) {
+  if (!element) return [];
+  var source = String(text || '');
+  var plan = planHebrewMarkFallback(source, font);
+  while (element.firstChild) element.removeChild(element.firstChild);
+  var at = 0;
+  plan.forEach(function (range) {
+    if (range.start > at) element.appendChild(document.createTextNode(source.slice(at, range.start)));
+    var span = document.createElement('span');
+    span.textContent = source.slice(range.start, range.end + 1);
+    span.className = 'font-borrowed-mark';
+    span.style.fontFamily = previewFontStack(range.font);
+    ensurePreviewFont(range.font);
+    element.appendChild(span);
+    at = range.end + 1;
+  });
+  if (at < source.length) element.appendChild(document.createTextNode(source.slice(at)));
+  return plan;
+}
+</script>

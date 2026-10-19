@@ -1,0 +1,342 @@
+<style>
+  /* First-run setup dialog. Colours come from css/tokens; no copies here. */
+  [hidden] { display: none !important; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* The footer stays in view; a long screen (2) scrolls above it. */
+  .setup-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    box-sizing: border-box;
+    padding: 0 24px 16px;
+  }
+
+  /* Brand line: a monogram, the name, and the three steps. */
+  .setup-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 0 14px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .setup-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--sefaria-blue);
+    color: #fff;
+    font-family: "Times New Roman", serif;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .setup-brand-name {
+    color: var(--sefaria-blue);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 17px;
+    letter-spacing: 0.01em;
+  }
+
+  .setup-brand-spacer { flex: 1; }
+
+  .setup-steps {
+    display: flex;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .setup-steps li {
+    width: 22px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: background 0.2s ease;
+  }
+  .setup-steps li.is-current,
+  .setup-steps li.is-done { background: var(--selected); }
+  .setup-steps li.is-done { opacity: 0.45; }
+
+  .setup-progress {
+    min-width: 72px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    text-align: right;
+  }
+
+  .setup-step {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+
+  .setup-heading {
+    margin: 0 0 6px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--sefaria-blue);
+  }
+  .setup-heading:focus { outline: none; }
+
+  .setup-lede {
+    margin: 0 0 16px;
+    color: var(--muted);
+  }
+
+  .setup-fieldset {
+    border: 0;
+    margin: 0 0 16px;
+    padding: 0;
+  }
+  .setup-fieldset > legend {
+    padding: 0;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  /* The screen headings sit in a legend too; they keep their own look. */
+  .setup-fieldset > legend:has(.setup-heading) {
+    margin-bottom: 0;
+    color: inherit;
+    font-size: inherit;
+    letter-spacing: normal;
+    text-transform: none;
+  }
+
+  /* A row of choices: each answer a pill, highlighted when chosen. */
+  .setup-row > label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 6px 6px 0;
+    padding: 4px 12px 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--panel);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .setup-row > label:hover { border-color: var(--selected); }
+  .setup-row > label:has(input:checked) {
+    border-color: var(--selected);
+    background: var(--selected-soft);
+  }
+  .setup-row > label input { margin: 0; }
+  /* The single language picker is a label and a select, not a choice. */
+  #setup-language-row > label {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: default;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  #setup-language { min-width: 200px; }
+
+  .setup-help {
+    margin: 2px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .setup-cards {
+    display: grid;
+    gap: 10px;
+  }
+  .setup-cards--two { grid-template-columns: 1fr 1fr; }
+
+  .setup-card {
+    position: relative;
+    display: block;
+    padding: 14px 16px 14px 44px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--panel);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .setup-card:hover {
+    border-color: var(--selected);
+    box-shadow: 0 2px 8px rgba(24, 52, 93, 0.08);
+  }
+  .setup-card input {
+    position: absolute;
+    left: 16px;
+    top: 17px;
+    margin: 0;
+  }
+  .setup-card:has(input:checked) {
+    border-color: var(--selected);
+    background: var(--selected-soft);
+  }
+  .setup-card:has(input:focus-visible) {
+    outline: 2px solid var(--selected);
+    outline-offset: 2px;
+  }
+  .setup-card-title {
+    display: block;
+    font-weight: 600;
+  }
+  .setup-card-note {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* The preview reads like a page of the document. */
+  .setup-preview {
+    position: relative;
+    margin: 6px 0 18px;
+    padding: 14px 18px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  .setup-preview-tag {
+    position: absolute;
+    top: -9px;
+    left: 14px;
+    padding: 0 6px;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .setup-preview-ref {
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .setup-preview-body {
+    display: grid;
+    gap: 6px 20px;
+    align-items: start;
+  }
+  .setup-preview-body[data-arrangement="he-right"] { grid-template-columns: 1fr 1fr; }
+  .setup-preview-body[data-arrangement="he-right"] .setup-preview-he { order: 2; }
+  .setup-preview-body[data-arrangement="he-left"] { grid-template-columns: 1fr 1fr; }
+  .setup-preview-he,
+  .setup-preview-en { margin: 0; }
+  .setup-preview-he {
+    font-family: "Times New Roman", "SBL Hebrew", serif;
+    font-size: 20px;
+  }
+  .setup-preview-en {
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  .setup-divine-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 0;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-bottom-width: 0;
+    background: var(--panel);
+  }
+  .setup-divine-row:first-of-type { border-radius: 10px 10px 0 0; margin-top: 8px; }
+  .setup-divine-row:last-of-type { border-bottom-width: 1px; border-radius: 0 0 10px 10px; }
+  .setup-divine-row select { min-width: 110px; }
+
+  .setup-done-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin: 8px 0 10px;
+    border-radius: 50%;
+    background: var(--selected-soft);
+    color: var(--selected);
+    font-size: 20px;
+    font-weight: 700;
+  }
+  .setup-done-list {
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .setup-done-list li {
+    margin: 0 0 8px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+  }
+
+  .setup-error {
+    margin: 8px 0 0;
+    color: var(--halakhah-red);
+  }
+
+  .setup-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .setup-footer-spacer { flex: 1; }
+  .setup-footer button:not(.setup-link) {
+    min-width: 96px;
+    height: 34px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .setup-footer button.action {
+    border-color: var(--selected);
+    background: var(--selected);
+    color: #fff;
+  }
+  .setup-footer button.action:hover:not(:disabled) { background: var(--selected-hover); }
+  .setup-footer button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .setup-footer button:focus-visible {
+    outline: 2px solid var(--selected);
+    outline-offset: 2px;
+  }
+  .setup-link {
+    border: 0;
+    background: none;
+    padding: 0;
+    color: var(--muted);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+</style>

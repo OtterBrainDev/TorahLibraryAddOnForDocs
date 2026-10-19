@@ -8,9 +8,12 @@ function normalizeHebrewDisplayFilters_(userProperties) {
   const rawNekudotFilter = String(userProperties.getProperty("nekudot_filter") || "always").toLowerCase();
   const nekudotFilter = (rawNekudotFilter === "tanakh" || rawNekudotFilter === "never") ? rawNekudotFilter : "always";
 
+  // Cantillation: "available" (wherever Sefaria has it), "tanakh" (Tanakh
+  // only) or "torah" (the Five Books only). A "torah" stored before it meant
+  // anything of its own read as "tanakh"; schema v24 rewrote it to that.
   const teamimEnabled = userProperties.getProperty("teamim") != "false";
   const rawTeamimFilter = String(userProperties.getProperty("teamim_filter") || "available").toLowerCase();
-  const teamimFilter = (rawTeamimFilter === "tanakh" || rawTeamimFilter === "torah") ? "tanakh" : (rawTeamimFilter === "never" ? "never" : "available");
+  const teamimFilter = (rawTeamimFilter === "tanakh" || rawTeamimFilter === "torah") ? rawTeamimFilter : (rawTeamimFilter === "never" ? "never" : "available");
 
   return {
     nekudotEnabled,
@@ -20,6 +23,24 @@ function normalizeHebrewDisplayFilters_(userProperties) {
   };
 }
 
+var TORAH_BOOKS_ = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy'];
+
+/**
+ * True for a text from the Five Books: Sefaria files them under
+ * categories ["Tanakh", "Torah"]; the book name is the fallback.
+ */
+function isTorahText_(data) {
+  if (!data) return false;
+  const categories = Array.isArray(data.categories) ? data.categories : [];
+  if (categories[0] === 'Tanakh' && categories[1] === 'Torah') return true;
+  return TORAH_BOOKS_.indexOf(String(data.book || data.indexTitle || '')) >= 0;
+}
+
+/**
+ * @param {string} context  the text's category (data.type), e.g. "Tanakh"
+ * @param {Object} filters  normalizeHebrewDisplayFilters_; filters.isTorah
+ *        says whether the text is one of the Five Books (isTorahText_)
+ */
 function applyHebrewTextDisplayPreferences(value, context, filters) {
   if (Array.isArray(value)) {
     return value.map(function(item) {
@@ -32,14 +53,19 @@ function applyHebrewTextDisplayPreferences(value, context, filters) {
 
   let output = value;
   const shouldStripNekudot = !filters.nekudotEnabled || (filters.nekudotFilter === 'tanakh' && context !== 'Tanakh');
-  const shouldStripTeamim = !filters.teamimEnabled || (filters.teamimFilter === 'tanakh' && context !== 'Tanakh');
+  const shouldStripTeamim = !filters.teamimEnabled ||
+    (filters.teamimFilter === 'tanakh' && context !== 'Tanakh') ||
+    (filters.teamimFilter === 'torah' && !filters.isTorah);
 
   if (shouldStripTeamim) {
     output = output.replace(/[֑-֯]/g, '');
   }
   if (shouldStripNekudot) {
     output = output.replace(/[ְ-ֽ]/g, '');
-    output = output.replace(/[ֿ-ׇ]/g, '');
+    // Rafe, shin/sin dots, upper/lower dots and qamats qatan. Not the whole
+    // U+05BF-U+05C7 range: paseq (U+05C0), sof pasuq (U+05C3) and nun hafukha
+    // (U+05C6) sit inside it but are punctuation, not vowels.
+    output = output.replace(/[\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/g, '');
   }
 
   return output;
@@ -51,6 +77,7 @@ function applyHebrewDisplayPreferences(data, userProperties) {
   }
 
   const filters = normalizeHebrewDisplayFilters_(userProperties);
+  filters.isTorah = isTorahText_(data);
   const context = data.type || '';
   const clone = JSON.parse(JSON.stringify(data));
 
@@ -61,6 +88,29 @@ function applyHebrewDisplayPreferences(data, userProperties) {
   });
 
   return clone;
+}
+
+/**
+ * Copies the fetched Hebrew to `heTransliterationSource`, before the vowel and
+ * cantillation filters strip it, with the Hebrew punctuation setting and the
+ * Hebrew divine-name substitutes applied. The transliteration is read from it,
+ * so it follows the vowels Sefaria has whatever the Hebrew shows, and drops
+ * the punctuation the Hebrew drops. Same shape as `he` (a string, or arrays
+ * of segments).
+ */
+function attachTransliterationSource_(data, userProperties) {
+  if (!data || typeof data !== 'object' || data.he === undefined) return data;
+  // Punctuation before the divine names, as for the Hebrew, so a substitute
+  // (ה') is never stripped.
+  const punctuated = applyPunctuationPreferences({ he: data.he }, userProperties);
+  const named = applyDivineNameReplacements({ he: punctuated.he }, userProperties, { hebrew: true, english: false });
+  return Object.assign({}, data, { heTransliterationSource: named.he });
+}
+
+/** The Hebrew a transliteration is read from: the fetched source, else `he`. */
+function transliterationSourceOf_(data) {
+  if (!data) return undefined;
+  return data.heTransliterationSource !== undefined ? data.heTransliterationSource : data.he;
 }
 
 /**
@@ -82,7 +132,13 @@ function applyDivineNameReplacements(data, userProperties, options) {
   const allRules = [];
   if (includeHebrew) {
     allRules.push({ enabledBy: "meforash_replace", pattern: /י[֑-ׇ]*ה[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*/g, replacementKey: "meforash_replacement", requireReplacement: true, fields: ["he", "heRef"] });
-    allRules.push({ enabledBy: "yaw_replace",      pattern: /י[֑-ׇ]*ה[֑-ׇ]*/g,                    replacementKey: "yaw_replacement",      requireReplacement: false, fields: ["he", "heRef"] });
+    // יה only as a whole word. Without the boundaries it matched the start of
+    // יהודה, יהושע and friends (יהודה -> קהודה). A word here is Hebrew letters
+    // plus their vowel and cantillation marks; maqaf, paseq and sof pasuq end
+    // one, so הללו־יה still matches. The 4-letter names above and below stay
+    // unbounded on purpose: their prefixed forms (לַיהוָה, וֵאלֹהִים) are
+    // common and should be replaced too.
+    allRules.push({ enabledBy: "yaw_replace",      pattern: /(^|[^\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA])(י[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]*ה[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]*)(?![\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA])/g, keepPrefixGroup: true, replacementKey: "yaw_replacement", requireReplacement: false, fields: ["he", "heRef"] });
     allRules.push({ enabledBy: "elodim_replace",   pattern: /א[֑-ׇ]*ל[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*י[֑-ׇ]*ם[֑-ׇ]*/g, replacementKey: "elodim_replacement",   requireReplacement: false, fields: ["he", "heRef"] });
   }
   if (includeEnglish) {
@@ -94,9 +150,14 @@ function applyDivineNameReplacements(data, userProperties, options) {
     if (userProperties.getProperty(rule.enabledBy) != "true") continue;
     const replacement = userProperties.getProperty(rule.replacementKey);
     if (rule.requireReplacement && !replacement) continue;
+    // A function, not a string: String.replace expands `$&`, `$1` and friends
+    // in a replacement string, and this one is user-entered text.
+    const literal = replacement || rule.defaultReplacement || "";
     activeRules.push({
       pattern: rule.pattern,
-      replacement: replacement || rule.defaultReplacement || "",
+      replacement: rule.keepPrefixGroup
+        ? function (match, prefix) { return prefix + literal; }
+        : function () { return literal; },
       fields: rule.fields,
     });
   }
@@ -147,23 +208,193 @@ function applyEnglishDivineNamePreference(data, userProperties) {
   }
 }
 
+// Punctuation kept even with punctuation off: symbols a reader relies on
+// (percent, footnote asterisk, section and paragraph signs, daggers).
+const PUNCTUATION_ALWAYS_KEPT_ = '%#@&*§¶†‡';
+const PUNCTUATION_SPLIT_RE_ = /(<[^>]*>|&[#\w]+;)/;
+const PUNCTUATION_TAG_OR_ENTITY_RE_ = /^(?:<[^>]*>|&[#\w]+;)$/;
+const PUNCTUATION_CHAR_RE_ = /\p{P}/u;
+const PUNCTUATION_LETTER_RE_ = /\p{L}/u;
+const PUNCTUATION_HEBREW_LETTER_RE_ = /[א-ת]/;
+const PUNCTUATION_LATIN_LETTER_RE_ = /[A-Za-zÀ-ɏ]/;
+const PUNCTUATION_WORD_RE_ = /[\p{L}\p{N}\p{M}]/u;
+
+/** The base character before index `i`, skipping combining marks (niqqud). */
+function punctuationBaseBefore_(chars, i) {
+  for (let j = i - 1; j >= 0; j--) {
+    if (!/\p{M}/u.test(chars[j])) return chars[j];
+  }
+  return '';
+}
+
+/** Whether the punctuation mark at `i` carries meaning inside a word or number. */
+function isPunctuationKeptInContext_(chars, i) {
+  const ch = chars[i];
+  const before = punctuationBaseBefore_(chars, i);
+  const after = chars[i + 1] || '';
+  const letterBefore = PUNCTUATION_LETTER_RE_.test(before);
+  const letterAfter = PUNCTUATION_LETTER_RE_.test(after);
+  // ר' (abbreviation) and don't (contraction).
+  if (ch === "'" || ch === '’' || ch === '׳') {
+    return letterBefore && (letterAfter || PUNCTUATION_HEBREW_LETTER_RE_.test(before));
+  }
+  // רש"י
+  if (ch === '"' || ch === '״') {
+    return letterBefore && letterAfter;
+  }
+  // G-d
+  if (ch === '-') {
+    return PUNCTUATION_LATIN_LETTER_RE_.test(before) && PUNCTUATION_LATIN_LETTER_RE_.test(after);
+  }
+  // 3:16, 1,000, 2.5
+  if (ch === '.' || ch === ',' || ch === ':') {
+    return /\d/.test(before) && /\d/.test(after);
+  }
+  return false;
+}
+
+/** Strips punctuation from one run of plain text (no tags, no entities). */
+function stripPunctuationFromTextSegment_(segment) {
+  const chars = Array.from(segment.replace(/\{[פס]\}/g, ''));
+  const removed = chars.map(function(ch, i) {
+    return PUNCTUATION_CHAR_RE_.test(ch) &&
+      PUNCTUATION_ALWAYS_KEPT_.indexOf(ch) < 0 &&
+      !isPunctuationKeptInContext_(chars, i);
+  });
+  let out = '';
+  let i = 0;
+  while (i < chars.length) {
+    if (!removed[i]) {
+      out += chars[i];
+      i++;
+      continue;
+    }
+    // A run of removed marks ("3:16)—all"): if it joined two words, a space
+    // takes its place, so the maqaf in כָל־הָעָם becomes a word break.
+    let end = i;
+    while (end < chars.length && removed[end]) end++;
+    const before = chars[i - 1] || '';
+    const after = chars[end] || '';
+    if (PUNCTUATION_WORD_RE_.test(before) && PUNCTUATION_WORD_RE_.test(after)) {
+      out += ' ';
+    }
+    i = end;
+  }
+  return out;
+}
+
+/**
+ * Removes punctuation from Sefaria text for the "Punctuation: Off" settings.
+ * Tags and entities are left alone (insertRichTextFromHTML relies on the
+ * tags), as are marks that belong to a word or number: ר', רש"י, don't, G-d,
+ * 3:16, 1,000, and the symbols in PUNCTUATION_ALWAYS_KEPT_.
+ */
+function stripPunctuationFromText(value) {
+  if (typeof value !== 'string' || !value) return value;
+  const parts = value.split(PUNCTUATION_SPLIT_RE_);
+  let out = parts.map(function(part) {
+    return PUNCTUATION_TAG_OR_ENTITY_RE_.test(part) ? part : stripPunctuationFromTextSegment_(part);
+  }).join('');
+  out = out
+    .replace(/ {2,}/g, ' ')
+    .replace(/ ((?:<[^>]*>)+) /g, ' $1')
+    .replace(/ +\n/g, '\n');
+  if (!/^ /.test(value)) out = out.replace(/^ +/, '');
+  if (!/ $/.test(value)) out = out.replace(/ +$/, '');
+  return out;
+}
+
+function stripPunctuationDeep_(value) {
+  if (Array.isArray(value)) return value.map(stripPunctuationDeep_);
+  return stripPunctuationFromText(value);
+}
+
+/**
+ * Applies `hebrew_punctuation` (to `he`) and `translation_punctuation` (to
+ * `text`). Only "false" turns punctuation off. References (`ref`, `heRef`)
+ * are never touched. Returns a clone, or `data` itself when nothing applies.
+ */
+function applyPunctuationPreferences(data, userProperties) {
+  if (!data || typeof data !== 'object') return data;
+  const stripHebrew = userProperties.getProperty("hebrew_punctuation") == "false";
+  const stripTranslation = userProperties.getProperty("translation_punctuation") == "false";
+  if (!stripHebrew && !stripTranslation) return data;
+
+  const clone = JSON.parse(JSON.stringify(data));
+  if (stripHebrew && Object.prototype.hasOwnProperty.call(clone, 'he')) {
+    clone.he = stripPunctuationDeep_(clone.he);
+  }
+  if (stripTranslation && Object.prototype.hasOwnProperty.call(clone, 'text')) {
+    clone.text = stripPunctuationDeep_(clone.text);
+  }
+  return clone;
+}
+
+/**
+ * Put Hebrew-numeral line markers back on transliterated text (transliterating
+ * "(א)" garbles it). `startingVerse` is the first verse number, counted up one
+ * per marker; or an array of the numbers in order (formatDataForPesukim's
+ * `lineMarkerNumbers`), which follows a spanning range's restart at each
+ * chapter.
+ */
 function normalizeTransliterationLineMarkersToGematria(text, startingVerse) {
   if (!text) {
     return text;
   }
+  const numbers = Array.isArray(startingVerse) ? startingVerse : null;
+  let markerIndex = 0;
   let verseNumber = Number(startingVerse) || 1;
   return String(text).split('\n').map(function(line) {
     if (!line || !line.trim()) return line;
     if (/^\s*\([^)]*\)\s*/.test(line)) {
-      const marker = (typeof gematriya === 'function') ? gematriya(verseNumber, { punctuate: false }) : String(verseNumber);
-      verseNumber += 1;
+      const number = (numbers && markerIndex < numbers.length) ? numbers[markerIndex] : verseNumber;
+      markerIndex += 1;
+      verseNumber = number + 1;
+      const marker = (typeof gematriya === 'function') ? gematriya(number, { punctuate: false }) : String(number);
       return line.replace(/^\s*\([^)]*\)\s*/, "(" + marker + ") ");
     }
     return line;
   }).join('\n');
 }
 
+/**
+ * The heading line for one section of a spanning range ("Chapter 2" /
+ * "פרק ב", "Daf 2b" / "דף ב ע״ב"). `offset` counts sections from the first
+ * one requested. The span is at the level above the last (chapters of a
+ * Chapter:Verse text); Talmud dapim are numbered by amud, 3 = 2a.
+ */
+function spanningSectionHeading_(data, offset, lang) {
+  const sections = (data && Array.isArray(data.sections)) ? data.sections : [];
+  const level = Math.max(0, sections.length - 2);
+  const names = (lang === 'he') ? data.heSectionNames : data.sectionNames;
+  const name = (Array.isArray(names) && names[level]) ? String(names[level]) : (lang === 'he' ? 'פרק' : 'Chapter');
+  const addressType = Array.isArray(data.addressTypes) ? data.addressTypes[level] : '';
+  const start = sections[level];
+
+  let label;
+  const daf = /^(\d+)([ab])$/.exec(String(start));
+  if (addressType === 'Talmud' || daf) {
+    let amud = daf ? (Number(daf[1]) * 2 - (daf[2] === 'a' ? 1 : 0)) : (Number(start) || 1);
+    amud += offset;
+    const dafNumber = Math.ceil(amud / 2);
+    const side = (amud % 2 === 1) ? 'a' : 'b';
+    label = (lang === 'he')
+      ? gematriya(dafNumber, { punctuate: false }) + ' ' + (side === 'a' ? 'ע״א' : 'ע״ב')
+      : dafNumber + side;
+  } else {
+    const number = (Number(start) || 1) + offset;
+    label = (lang === 'he') ? gematriya(number, { punctuate: false }) : String(number);
+  }
+  return name + ' ' + label;
+}
+
 function formatDataForPesukim(data, pesukim) {
+  // insertReferenceVersions formats the first version's payload for the
+  // Hebrew and again for its translation block. A second pass would find
+  // strings where a spanning range has arrays, and throw.
+  if (data && data.pesukimFormatted === true) {
+    return data;
+  }
   const hasLineMarkerableContent = (value) => {
     if (!Array.isArray(value)) {
       return false;
@@ -175,7 +406,12 @@ function formatDataForPesukim(data, pesukim) {
   data.lineMarkersAvailable = lineMarkersAvailable;
   data.lineMarkersApplied = !!(lineMarkersAvailable && pesukim);
 
-  let heTextWrapper = "", enTextWrapper = "", fromVerse = (data["sections"][1]) ? data["sections"][1] : 1;
+  // `sections` is absent on some resolved payloads (dictionary entries, complex
+  // book-level refs). insertion.gs already guards this read; do the same here so
+  // a missing `sections` can't throw on the insertion path. Number() also keeps
+  // the `fromVerse + index` arithmetic below numeric.
+  const rawFromVerse = (data && Array.isArray(data.sections)) ? data.sections[1] : undefined;
+  let heTextWrapper = "", enTextWrapper = "", fromVerse = Number(rawFromVerse) || 1;
 
   function addHebrewVerse(text, wrapper, pesukim, number) {
     // When line markers are on, each verse gets a numbered header and its own
@@ -195,23 +431,49 @@ function formatDataForPesukim(data, pesukim) {
     return wrapper + (wrapper ? " " : "") + text;
   }
 
+  // Verse numbers in the order they appear (Hebrew), for the transliteration.
+  const lineMarkerNumbers = [];
+  // With line markers on, a range across chapters gets a heading line before
+  // each chapter's verses: the numbers restart at 1, and "(31) ... (1) ..."
+  // alone doesn't say where chapter 2 begins. The headings are ours, not the
+  // source's: "keep only bold and italics" must not remove them.
+  const sectionHeadingLines = [];
+  function addSectionHeading(wrapper, perekNum, lang) {
+    const heading = spanningSectionHeading_(data, perekNum, lang);
+    sectionHeadingLines.push(heading);
+    return wrapper + heading + "\n";
+  }
+
   if(data.isSpanning) {
+    // Each language numbers from the requested first verse; every later
+    // chapter starts again at 1. The counter is per language: sharing one,
+    // reset by the Hebrew pass, numbered the English of Genesis 1:31-2:3 as
+    // (1), (1), (2), (3). See docs/regression-log.md.
+    let heVerse = fromVerse;
     data.he.forEach(function(perekText, perekNum) {
       if(typeof perekText == "object") {
+        if (pesukim && perekText.length) {
+          heTextWrapper = addSectionHeading(heTextWrapper, perekNum, 'he');
+        }
         perekText.forEach(function(verseText, index) {
-         heTextWrapper = addHebrewVerse(verseText, heTextWrapper, pesukim, fromVerse+index)
+         heTextWrapper = addHebrewVerse(verseText, heTextWrapper, pesukim, heVerse+index)
+         lineMarkerNumbers.push(heVerse+index);
         });
-        fromVerse = 1;
+        heVerse = 1;
       } else {
         heTextWrapper+=perekText;
       }
     });
+    let enVerse = fromVerse;
     data.text.forEach(function(perekText, perekNum) {
       if(typeof perekText == "object") {
+        if (pesukim && perekText.length) {
+          enTextWrapper = addSectionHeading(enTextWrapper, perekNum, 'en');
+        }
         perekText.forEach(function(verseText, index) {
-         enTextWrapper = addEnglishVerse(verseText, enTextWrapper, pesukim, fromVerse+index)
+         enTextWrapper = addEnglishVerse(verseText, enTextWrapper, pesukim, enVerse+index)
         });
-        fromVerse = 1;
+        enVerse = 1;
       } else {
         enTextWrapper+=perekText;
       }
@@ -220,6 +482,7 @@ function formatDataForPesukim(data, pesukim) {
     if(typeof data.he == "object") {
       data.he.forEach(function(ele, index) {
         heTextWrapper = addHebrewVerse(ele, heTextWrapper, pesukim, fromVerse+index);
+        lineMarkerNumbers.push(fromVerse+index);
       });
     } else {
       heTextWrapper = data.he;
@@ -235,6 +498,96 @@ function formatDataForPesukim(data, pesukim) {
 
   data.he = heTextWrapper;
   data.text = enTextWrapper;
+  data.lineMarkerNumbers = lineMarkerNumbers;
+  data.sectionHeadingLines = sectionHeadingLines;
+  data.pesukimFormatted = true;
 
   return data;
+}
+
+/**
+ * For the side-by-side layouts' "one row per line" setting: pairs each Hebrew
+ * segment with its translation, so each pair can get its own table row. Call
+ * it on the payload as fetched, before formatDataForPesukim joins the
+ * segments into one string. Line markers are numbered as formatDataForPesukim
+ * numbers them (from the first requested verse; each later chapter of a
+ * spanning ref starts at 1), and with line markers on, a spanning ref gets the
+ * same chapter heading before each chapter, in a row of its own.
+ *
+ * Returns null when the payload has no segments to pair (a single string, or
+ * segments nested deeper than chapters), so the caller falls back to one row
+ * for the whole passage. Segments the other language lacks are left blank.
+ *
+ * @return {Array<{he: string, en: string, heRaw: string, number: (number|null), heading: boolean}>|null}
+ *   he/en carry the line marker; heRaw is the Hebrew without it, as fetched
+ *   (heTransliterationSource), for transliteration; empty for a heading;
+ *   number is the verse number used
+ *   for the marker.
+ */
+function buildAlignedLinePairs_(data, includeLineMarkers) {
+  if (!data || !Array.isArray(data.he) || !Array.isArray(data.text)) return null;
+  const rawFromVerse = Array.isArray(data.sections) ? data.sections[1] : undefined;
+  const fromVerse = Number(rawFromVerse) || 1;
+
+  const markers = !!includeLineMarkers;
+
+  // [{text, number, heading}] for one language; null when it can't be split
+  // into lines.
+  function segmentsOf(value, lang) {
+    const out = [];
+    if (data.isSpanning) {
+      let verse = fromVerse;
+      for (let c = 0; c < value.length; c++) {
+        const chapter = value[c];
+        if (Array.isArray(chapter)) {
+          if (markers && chapter.length) {
+            out.push({ text: spanningSectionHeading_(data, c, lang), number: null, heading: true });
+          }
+          for (let i = 0; i < chapter.length; i++) {
+            if (typeof chapter[i] !== 'string') return null;
+            out.push({ text: chapter[i], number: verse + i });
+          }
+          verse = 1;
+        } else if (typeof chapter === 'string') {
+          out.push({ text: chapter, number: null });
+        } else {
+          return null;
+        }
+      }
+      return out;
+    }
+    for (let i = 0; i < value.length; i++) {
+      if (typeof value[i] !== 'string') return null;
+      out.push({ text: value[i], number: fromVerse + i });
+    }
+    return out;
+  }
+
+  const he = segmentsOf(data.he, 'he');
+  const en = segmentsOf(data.text, 'en');
+  if (!he || !en || (!he.length && !en.length)) return null;
+  // Each row's transliteration is read from the fetched Hebrew (vowels kept),
+  // when it splits into the same lines.
+  const source = data.heTransliterationSource;
+  const heSource = Array.isArray(source) ? segmentsOf(source, 'he') : null;
+  const sourceAligned = !!(heSource && heSource.length === he.length);
+
+  const pairs = [];
+  for (let i = 0; i < Math.max(he.length, en.length); i++) {
+    const h = he[i];
+    const e = en[i];
+    const number = h ? h.number : (e ? e.number : null);
+    const heRaw = h ? h.text : '';
+    const enRaw = e ? e.text : '';
+    const heading = !!((h && h.heading) || (e && e.heading));
+    const withMarker = markers && number != null;
+    pairs.push({
+      he: (withMarker && heRaw) ? '(' + gematriya(number, { punctuate: false }) + ') ' + heRaw : heRaw,
+      en: (withMarker && enRaw) ? '(' + number + ') ' + enRaw : enRaw,
+      heRaw: heading ? '' : (sourceAligned ? heSource[i].text : heRaw),
+      number: withMarker ? number : null,
+      heading: heading
+    });
+  }
+  return pairs;
 }

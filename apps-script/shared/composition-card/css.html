@@ -1,20 +1,24 @@
 <style>
 /* ================================
    Shared Composition Card Component
-   ================================ */
+   ================================
+   A settings list: each setting is one row with its name on the left and its
+   control on the right — a switch for on/off, a font button, or a segmented
+   choice — the pattern of Google Docs' own panels and of most settings
+   screens. Rows line up in one column, so nothing wraps into a ragged cluster
+   of pills however narrow the host. The Source and Translation sections each
+   open on a preview of the sample text. Colours: css/tokens.html.
+
+   .cc-row / .cc-toggle / .cc-switch are also the line options' rows in
+   shared/insertion-options/markup.html; every host includes both files. */
 
 .cc-card {
-  margin: 4px 0 10px;
-  padding: 12px 10px 10px;
-  background: #fcfcfb;
-  border: 1px solid #ece7df;
-  border-radius: 12px;
-  text-align: center;
+  margin: 0;
+  text-align: left;
 }
 
 .cc-header {
   margin-bottom: 10px;
-  text-align: left;
 }
 
 .cc-header-label {
@@ -32,156 +36,474 @@
 
 .cc-surface {
   position: relative;
-  padding: 14px 10px 10px;
-  background: rgba(255,255,255,0.72);
-  border: 1px solid #e7e1d7;
-  border-radius: 10px;
+}
+
+/* =============================================================
+   ROWS
+   ============================================================= */
+
+.cc-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.cc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--row-min-height);
+  margin: 0;
+  padding: 5px 4px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--row-divider);
+  border-radius: 0;
+  color: var(--row-label);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.cc-rows > .cc-row:first-child,
+.cc-rows > :first-child > .cc-row:first-child {
+  border-top: 0;
+}
+
+.cc-row[hidden] {
+  display: none;
+}
+
+.cc-row-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cc-row-label--sub {
+  padding-left: 12px;
+  color: var(--row-sublabel);
+}
+
+/* A whole row is the switch's hit area. */
+.cc-toggle {
+  cursor: pointer;
+}
+
+.cc-toggle:hover {
+  background: var(--row-hover);
+}
+
+.cc-toggle:focus-visible,
+.cc-font-chip:focus-visible,
+.cc-translit-button:focus-visible,
+.cc-translit-option:focus-visible,
+.cc-seg-option:focus-visible,
+.cc-font-more:focus-visible,
+.cc-font-done:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.cc-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 18px;
+  background: var(--switch-off);
+  border-radius: 9px;
+  transition: background 0.15s ease;
+}
+
+.cc-switch::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  content: "";
+  transition: transform 0.15s ease;
+}
+
+.cc-toggle[aria-pressed='true'] .cc-switch {
+  background: var(--switch-on);
+}
+
+.cc-toggle[aria-pressed='true'] .cc-switch::after {
+  transform: translateX(12px);
+}
+
+/* =============================================================
+   SECTIONS (Source, Translation)
+   ============================================================= */
+
+.cc-section {
+  border-top: 1px solid var(--row-divider);
+}
+
+.cc-section:first-child {
+  border-top: 0;
+}
+
+.cc-section-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 4px 7px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cc-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A chevron that turns when the section opens. */
+.cc-section-summary::before {
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid #8b8b8b;
+  content: "";
+  transform: translateY(-1px);
+  transition: transform 0.15s ease;
+}
+
+.cc-section[open] > .cc-section-summary::before {
+  transform: translateY(-1px) rotate(90deg);
+}
+
+.cc-section-summary:hover .cc-section-label {
+  color: var(--sefaria-blue);
+}
+
+.cc-section-summary:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.cc-section-label {
+  flex: 0 0 auto;
+  color: var(--row-label);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cc-section-state {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--row-sublabel);
+  font-size: 11px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Open, each setting shows on its own row. */
+.cc-section[open] .cc-section-state {
+  display: none;
+}
+
+.cc-section-body {
+  padding: 0 0 6px;
+}
+
+/* The sample text each section opens on. */
+.cc-hebrew-stage,
+.cc-translation-stage {
+  margin: 0 0 4px;
+  padding: 10px 12px;
+  background: var(--preview-well-bg);
+  border: 1px solid var(--preview-well-border);
+  border-radius: 8px;
   text-align: center;
 }
 
-.cc-title-pill {
-  display: inline-block;
-  margin: 0 0 10px;
-  padding: 2px 6px;
-  cursor: pointer;
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-  color: var(--sefaria-blue);
-  font-family: "EB Garamond", Georgia, serif;
-  font-size: 18px;
-  line-height: 1.2;
-}
-
-.cc-title-pill.is-linked {
-  text-decoration: underline;
-}
-
-.cc-title-pill[aria-pressed='false'] {
-  color: #4a586b;
-}
-
-.cc-hebrew-stage {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 84px;
-  padding: 14px 8px;
-}
-
 .cc-hebrew {
-  min-width: 250px;
-  min-height: 48px;
   color: #222;
   font-family: "Frank Ruhl Libre", "Noto Sans Hebrew", serif;
-  font-size: 28px;
-  line-height: 1.55;
+  font-size: 26px;
+  line-height: 1.5;
   user-select: none;
 }
 
 .cc-hebrew-text {
   display: block;
-  white-space: nowrap;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .cc-hebrew-text[hidden] {
   display: none !important;
 }
 
-/* Pill base — static by default, positioned inside hebrew-stage */
-.cc-pill {
-  display: inline-block;
-  height: 22px;
-  padding: 0 9px;
-  cursor: pointer;
-  background: #fff;
-  border: 1px solid #d8d2c8;
-  border-radius: 999px;
-  color: var(--footer-button-text);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 20px;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+.cc-translation-text {
+  color: #222;
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 16px;
+  line-height: 1.4;
 }
 
-/* Stage-positioned pills (cantillation + vowels) */
-.cc-hebrew-stage .cc-pill {
+/* =============================================================
+   FONT BUTTONS AND PANEL
+   ============================================================= */
+
+.cc-font-chip {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 6px;
+  max-width: 62%;
+  min-height: 26px;
+  padding: 0 8px;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #3d4654;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.cc-font-chip:hover,
+.cc-font-chip[aria-expanded='true'] {
+  border-color: #9fb3cc;
+  color: var(--sefaria-blue);
+}
+
+.cc-font-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-font-chip-caret {
+  flex: 0 0 auto;
+  color: #8b8b8b;
+  font-size: 10px;
+}
+
+.cc-font-note {
+  margin: 2px 0 6px;
+  padding: 4px 8px;
+  background: #fdf3e1;
+  border: 1px solid #f0d9a8;
+  border-radius: 6px;
+  color: #6b4a00;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.cc-font-note[hidden] {
+  display: none;
+}
+
+.cc-font-panel {
   position: absolute;
   left: 50%;
+  z-index: 60;
+  box-sizing: border-box;
+  width: min(300px, calc(100% - 8px));
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #d8d2c8;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  text-align: left;
   transform: translateX(-50%);
 }
 
-.cc-pill--top { top: 0; }
-.cc-pill--bottom { bottom: 0; }
-
-.cc-pill.is-off {
-  color: #8b8b8b;
-  background: #f3f3f3;
+.cc-font-panel[hidden] {
+  display: none;
 }
 
-.cc-pill[aria-pressed='true'] {
+.cc-font-panel-title {
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cc-font-panel-fields {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.cc-font-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cc-font-field--font {
+  flex: 1 1 auto;
+}
+
+.cc-font-field--font select {
+  width: 100%;
+}
+
+.cc-font-field--size {
+  flex: 0 0 76px;
+}
+
+.cc-font-field--size input {
+  width: 100%;
+}
+
+.cc-font-field-label {
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cc-font-panel-help {
+  margin: 8px 0 0;
+  color: #4b5563;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.cc-font-panel-help[hidden],
+.cc-font-more[hidden] {
+  display: none;
+}
+
+.cc-font-panel-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.cc-font-more {
+  margin-right: auto;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: 0;
   color: var(--sefaria-blue);
-  background: #e4edf8;
-  border-color: #b7c8e2;
+  font-size: 12px;
+  text-decoration: underline;
 }
 
-.cc-pill[aria-pressed='false'] {
-  color: #4a586b;
+.cc-font-done {
+  padding: 4px 12px;
+  cursor: pointer;
+  background: var(--sefaria-blue);
+  border: 1px solid var(--sefaria-blue);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.cc-pill:focus-visible,
-.cc-translit-button:focus-visible,
-.cc-translit-option:focus-visible {
-  outline: 2px solid rgba(31, 59, 104, 0.35);
-  outline-offset: 2px;
+/* =============================================================
+   SEGMENTED CHOICE (the translation's bold and italics)
+   ============================================================= */
+
+.cc-seg {
+  display: inline-grid;
+  flex: 0 0 auto;
+  grid-auto-flow: column;
+  gap: 2px;
+  padding: 2px;
+  background: var(--seg-track);
+  border-radius: 7px;
 }
 
-/* Transliteration controls */
+.cc-seg-option {
+  min-width: 40px;
+  height: 22px;
+  padding: 0 7px;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: var(--row-sublabel);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cc-seg-option:hover {
+  color: var(--sefaria-blue);
+}
+
+.cc-seg-option.is-selected {
+  color: var(--seg-selected-text);
+  background: var(--seg-selected-bg);
+  box-shadow: var(--seg-shadow);
+}
+
+/* =============================================================
+   TRANSLITERATION SCHEME (also the Voices tab's picker)
+   ============================================================= */
+
 .cc-translit-wrap {
   position: relative;
-  margin-top: 8px;
 }
 
 .cc-translit-button {
   display: inline-flex;
+  flex: 0 1 auto;
   align-items: center;
-  justify-content: center;
+  max-width: 62%;
   min-height: 26px;
   padding: 0 8px;
+  overflow: hidden;
   cursor: pointer;
-  background: transparent;
-  border: 1px dashed transparent;
-  border-radius: 8px;
-  color: #4b5563;
-  font-size: 13px;
-  line-height: 1.35;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: #3d4654;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cc-translit-button:hover {
-  background: #f8f8f7;
-  border-color: #d8d2c8;
+  border-color: #9fb3cc;
+  color: var(--sefaria-blue);
 }
 
 .cc-translit-button.is-none {
-  color: #999;
-  font-style: italic;
+  color: #8b8b8b;
 }
 
 .cc-translit-menu {
   position: absolute;
-  top: calc(100% + 6px);
-  left: 50%;
+  top: calc(100% + 4px);
+  left: 0;
   z-index: 50;
   display: grid;
-  min-width: 210px;
+  min-width: 200px;
   padding: 6px;
   background: #fff;
   border: 1px solid #d8d2c8;
   border-radius: 10px;
   box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-  transform: translateX(-50%);
+}
+
+/* In the card, under the scheme button on the right. */
+.cc-surface .cc-translit-menu {
+  right: 0;
+  left: auto;
 }
 
 .cc-translit-menu.hidden {
@@ -189,12 +511,13 @@
 }
 
 .cc-translit-option {
-  padding: 8px 10px;
+  padding: 7px 10px;
   cursor: pointer;
   background: transparent;
   border: 0;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #243b67;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   text-align: left;
@@ -212,13 +535,5 @@
   color: #6b7280;
   font-size: 11px;
   line-height: 1.35;
-}
-
-/* Secondary pills row */
-.cc-secondary-pills {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 8px;
 }
 </style>

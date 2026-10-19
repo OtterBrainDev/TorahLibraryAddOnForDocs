@@ -1,0 +1,262 @@
+<style>
+/*
+ * native-controls — the add-on's own look for every native form control.
+ *
+ * Why this exists. Every page that includes shared/ui/head also loads Google's
+ * add-on stylesheet (ssl.gstatic.com/docs/script/css/add-ons.css). That sheet
+ * styles bare `select`, `button`, `input` and `textarea`, with selectors such
+ * as `select:hover` or `input[type="text"]` that out-rank a single class. So a
+ * rule like `.sl-sort-select { background: … }` could lose to Google's
+ * background, and the Session Library's sort dropdown showed Google's tiled
+ * shading instead of ours. Google can also change that sheet at any time.
+ *
+ * How it works. shared/ui/head imports Google's sheet into the cascade layer
+ * `google-addons` and declares the order `google-addons, native-controls`.
+ *   - This file is layer `native-controls`, so it beats Google's sheet on every
+ *     property, whatever the selector specificity.
+ *   - Every component rule (unlayered) beats both layers, also whatever the
+ *     specificity. A component only has to set what it wants to differ.
+ * The few `!important` declarations are the dropdown chevron: a component's
+ * `background:` shorthand would otherwise erase it.
+ *
+ * To change how a control looks everywhere, edit the tokens below. To change
+ * one control, write a rule in its component file. Do not restyle controls by
+ * leaning on Google's sheet: test/ui/native-controls.test.js checks that each
+ * control type has a rule here.
+ */
+
+:root {
+  --control-font-size:      13px;
+  --control-line-height:    1.3;
+  --control-text:           #222;
+  --control-placeholder:    #8a877f;
+  --control-bg:             #fff;
+  --control-bg-subtle:      #f8f6f2;
+  --control-bg-hover:       #f3f1ed;
+  --control-border:         #d9d8d3;
+  --control-border-hover:   #b9b6ae;
+  --control-border-focus:   #18345d;
+  --control-focus-ring:     0 0 0 2px rgba(24, 52, 93, 0.18);
+  --control-radius:         6px;
+  --control-height:         30px;     /* colour pickers only; other controls size from padding */
+  --control-padding-y:      5px;
+  --control-padding-x:      10px;
+  --control-disabled-opacity: 0.55;
+
+  --control-accent:         #18345d;   /* checkbox / radio / range fill */
+
+  --control-primary-bg:       #18345d;
+  --control-primary-bg-hover: #22426f;
+  --control-primary-text:     #fff;
+
+  --select-chevron-space:   24px;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23555' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+  --option-bg:              #fff;
+  --option-text:            #222;
+}
+
+@layer native-controls {
+
+  /* ---- Dropdowns (single-line select) ---- */
+  select {
+    box-sizing: border-box;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: var(--control-padding-y) var(--control-padding-x);
+    color: var(--control-text);
+    background-color: var(--control-bg);
+    border: 1px solid var(--control-border);
+    border-radius: var(--control-radius);
+    box-shadow: none;
+    font-family: inherit;
+    font-size: var(--control-font-size);
+    line-height: var(--control-line-height);
+    cursor: pointer;
+  }
+
+  select:not([multiple]):not([size]),
+  select[size="1"]:not([multiple]) {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    padding-right: var(--select-chevron-space) !important;
+    background-image: var(--select-chevron) !important;
+    background-repeat: no-repeat !important;
+    background-position: right 8px center !important;
+    background-size: 10px 6px !important;
+  }
+
+  /* List boxes (size > 1 or multiple) never get a chevron or a pattern. */
+  select[multiple],
+  select[size]:not([size="1"]) {
+    background-image: none !important;
+    cursor: default;
+  }
+
+  select:hover:not(:disabled) {
+    border-color: var(--control-border-hover);
+  }
+
+  select option,
+  select optgroup {
+    color: var(--option-text);
+    background-color: var(--option-bg);
+    background-image: none;
+    font-family: inherit;
+  }
+
+  /* ---- Text-like inputs and textareas ---- */
+  input:not([type]),
+  input[type="text"],
+  input[type="search"],
+  input[type="number"],
+  input[type="email"],
+  input[type="url"],
+  input[type="password"],
+  input[type="tel"],
+  textarea {
+    box-sizing: border-box;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: var(--control-padding-y) var(--control-padding-x);
+    color: var(--control-text);
+    background-color: var(--control-bg);
+    background-image: none;
+    border: 1px solid var(--control-border);
+    border-radius: var(--control-radius);
+    box-shadow: none;
+    font-family: inherit;
+    font-size: var(--control-font-size);
+    line-height: var(--control-line-height);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--control-placeholder);
+    opacity: 1;
+  }
+
+  /* ---- Checkboxes, radios, range ---- */
+  input[type="checkbox"],
+  input[type="radio"] {
+    appearance: auto;
+    -webkit-appearance: auto;
+    width: 14px;
+    height: 14px;
+    min-height: 0;
+    margin: 0 4px 0 0;
+    padding: 0;
+    background-image: none;
+    border: 0;
+    box-shadow: none;
+    accent-color: var(--control-accent);
+    cursor: pointer;
+    vertical-align: middle;
+  }
+
+  input[type="range"] {
+    accent-color: var(--control-accent);
+  }
+
+  /* ---- Colour pickers ---- */
+  input[type="color"] {
+    box-sizing: border-box;
+    width: 32px;
+    height: var(--control-height);
+    padding: 2px;
+    background-color: var(--control-bg);
+    background-image: none;
+    border: 1px solid var(--control-border);
+    border-radius: var(--control-radius);
+    box-shadow: none;
+    cursor: pointer;
+  }
+
+  /* ---- Buttons ---- */
+  button,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    appearance: none;
+    -webkit-appearance: none;
+    box-sizing: border-box;
+    min-width: 0;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: var(--control-padding-y) 12px;
+    color: var(--control-text);
+    background-color: var(--control-bg-subtle);
+    background-image: none;
+    border: 1px solid var(--control-border);
+    border-radius: var(--control-radius);
+    box-shadow: none;
+    font-family: inherit;
+    font-size: var(--control-font-size);
+    font-weight: 600;
+    line-height: var(--control-line-height);
+    text-shadow: none;
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled),
+  input[type="button"]:hover:not(:disabled),
+  input[type="submit"]:hover:not(:disabled),
+  input[type="reset"]:hover:not(:disabled) {
+    background-color: var(--control-bg-hover);
+    border-color: var(--control-border-hover);
+    box-shadow: none;
+  }
+
+  /* Google's sheet gives these class names its blue action style; they are
+     ours to define now. `.blue` and `.action` are both in use or reserved. */
+  button.blue,
+  button.action,
+  input[type="submit"].blue {
+    color: var(--control-primary-text);
+    background-color: var(--control-primary-bg);
+    border-color: var(--control-primary-bg);
+  }
+
+  button.blue:hover:not(:disabled),
+  button.action:hover:not(:disabled),
+  input[type="submit"].blue:hover:not(:disabled) {
+    background-color: var(--control-primary-bg-hover);
+    border-color: var(--control-primary-bg-hover);
+  }
+
+  /* ---- Shared states ---- */
+  select:focus,
+  textarea:focus,
+  input:focus,
+  button:focus {
+    outline: none;
+  }
+
+  select:focus-visible,
+  textarea:focus-visible,
+  input:focus-visible,
+  button:focus-visible {
+    border-color: var(--control-border-focus);
+    box-shadow: var(--control-focus-ring);
+  }
+
+  select:focus,
+  textarea:focus,
+  input:not([type="checkbox"]):not([type="radio"]):focus {
+    border-color: var(--control-border-focus);
+  }
+
+  select:disabled,
+  textarea:disabled,
+  input:disabled,
+  button:disabled {
+    opacity: var(--control-disabled-opacity);
+    cursor: default;
+  }
+}
+</style>

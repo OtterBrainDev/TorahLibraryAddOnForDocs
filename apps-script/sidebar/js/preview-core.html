@@ -1,4 +1,8 @@
 <script>
+// Tracks which translation version titles the user has selected, in the order they clicked them.
+// DOM order is the fallback (what $select.val() returns); this array gives selection-order insertion.
+var orderedTranslationVersions = [];
+
 // Enable/disable the multiple-selection attribute on the translation version <select>.
 // Multi-select is only meaningful when the output will be stacked (he-top) or translation-only (en),
 // because those are the two layouts where inserting several translations in sequence makes sense.
@@ -14,11 +18,14 @@ function applyMultiSelectMode() {
     $select.prop('multiple', true);
     $select.attr('size', '6');
   } else if (!allowMulti && isMulti) {
-    // Collapse to single selection: keep the first selected option.
+    // Collapse to single selection: keep the first selected option (selection-order first if tracked).
     var vals = $select.val();
-    var first = Array.isArray(vals) ? vals[0] : vals;
+    var first = (orderedTranslationVersions.length > 0) ? orderedTranslationVersions[0] : (Array.isArray(vals) ? vals[0] : vals);
     $select.prop('multiple', false);
     if (first) $select.val(first);
+    orderedTranslationVersions = first ? [first] : [];
+    // Re-render the preview for the now-single selection.
+    if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
   }
 
   // Update the hint text below the select.
@@ -32,6 +39,42 @@ function applyMultiSelectMode() {
   } else {
     $hint.hide();
   }
+}
+
+function updateMultiSelectPreviewNotice() {
+  var count = orderedTranslationVersions.length;
+  if (count <= 1) return;
+  // Static text plus a number (the translation count).
+  $('.suggestions').html(
+    "<p class='preview-state-message'><strong>Preview not available for multiple translations.</strong><br>" +
+    count + " translation" + (count === 1 ? '' : 's') + " selected—they will be inserted in the order you selected them.</p>"
+  );
+}
+
+// Called after a multi-version insert reports translations the server skipped
+// for having no text on this ref: disable them in the list so they can't be
+// picked again, and drop them from the current selection.
+function markTranslationsUnavailable(ref, versionTitles) {
+  var $select = $('.translation-version-select').not('.he-version-selection');
+  (versionTitles || []).forEach(function (vt) {
+    translationAvailabilityByRef[ref + '::' + vt] = false;
+    $select.find('option').filter(function () { return $(this).val() === vt; }).each(function () {
+      if (!shouldShowUnavailableTranslations()) {
+        $(this).remove();
+        return;
+      }
+      var label = $(this).text() + ' – unavailable for this ref';
+      $(this).prop('selected', false).prop('disabled', true).addClass('translation-unavailable').text(label).attr('title', label);
+    });
+  });
+  orderedTranslationVersions = orderedTranslationVersions.filter(function (vt) {
+    return (versionTitles || []).indexOf(vt) < 0;
+  });
+  var remaining = orderedTranslationVersions.length;
+  var displayText = remaining > 1
+    ? remaining + ' versions selected'
+    : normalizeOptionText($select.find('option:selected').first().attr('title') || 'No translation selected.');
+  $('.translation-selected-display').first().text(displayText).attr('title', displayText);
 }
 
 function updatePesukimAvailability(response) {
@@ -81,6 +124,69 @@ function getResolvedNodeState(response) {
     isStructural: isStructural,
     prompt: buildDepthPrompt(response)
   };
+}
+
+// A version entry's language as a TRANSLATION_LANGUAGE_CATALOG code ('en',
+// 'yi', ...), or '' when it isn't one the catalog knows. normalizeLanguage
+// keys a non-English translation as 'other:<code>' (or 'other:<family name>'
+// when Sefaria gives no code).
+function translationEntryLanguageCode(entry) {
+  var key = String((entry && entry.languageKey) || '').toLowerCase();
+  if (key === 'en' || key === 'he') return key;
+  var raw = key.indexOf('other:') === 0 ? key.slice(6) : key;
+  var match = TRANSLATION_LANGUAGE_CATALOG.filter(function (lang) {
+    return lang.code === raw || lang.label.toLowerCase() === raw;
+  })[0];
+  return match ? match.code : '';
+}
+
+function shouldShowUnavailableTranslations() {
+  return String((effectivePreferences || {}).show_unavailable_translations) === 'true';
+}
+
+// The translations the version list offers at all, before the filter box: not
+// in a language hidden in Preferences → Search, and — unless "Show unavailable
+// translations" is on — not known to have no text for this ref. If hiding
+// languages would leave nothing, the language setting is set aside rather than
+// offering an empty list. Refreshes each item's availableForRef from
+// translationAvailabilityByRef, which fills in after the list is first built.
+function listTranslationItems(items, ref, preferences) {
+  items.forEach(function (item) {
+    var key = ref + '::' + item.value;
+    if (Object.prototype.hasOwnProperty.call(translationAvailabilityByRef, key)) item.availableForRef = translationAvailabilityByRef[key];
+  });
+  var showUnavailable = String((preferences || {}).show_unavailable_translations) === 'true';
+  var hiddenLanguages = normalizeHiddenTranslationLanguages((preferences || {}).hidden_translation_languages);
+  var byAvailability = items.filter(function (item) {
+    return showUnavailable || item.availableForRef !== false;
+  });
+  var byLanguage = byAvailability.filter(function (item) {
+    return !item.languageCode || hiddenLanguages.indexOf(item.languageCode) < 0;
+  });
+  return byLanguage.length ? byLanguage : byAvailability;
+}
+
+// Ask the server which translations have text for this exact ref; Sefaria's
+// version list is the whole book's. A failed or unusable answer changes
+// nothing: no translation is ever hidden on a lookup that didn't work.
+function requestTranslationAvailability(ref) {
+  if (!ref || translationAvailabilityRequested[ref]) return;
+  translationAvailabilityRequested[ref] = true;
+  google.script.run.withSuccessHandler(function (result) {
+    var versions = result && result.versions;
+    if (!versions || typeof versions !== 'object') return;
+    Object.keys(versions).forEach(function (versionTitle) {
+      var key = ref + '::' + versionTitle;
+      // What a fetch of that version found (text, no text, another version
+      // substituted) is first-hand; keep it over the summary.
+      if (Object.prototype.hasOwnProperty.call(translationAvailabilityByRef, key)) return;
+      translationAvailabilityByRef[key] = versions[versionTitle] === true;
+    });
+    if (activeTranslationOptions && activeTranslationOptions.ref === ref) activeTranslationOptions.refresh();
+  }).withFailureHandler(function () {
+    // Unknown availability: leave the list as it is, and allow a retry later.
+    delete translationAvailabilityRequested[ref];
+  }).getTranslationAvailability(ref);
 }
 
 function buildVersionModel(dataIn) {
@@ -136,27 +242,29 @@ function renderPreviewHTML(dataIn, inputTitle) {
   var mode = $('.output-mode-selection').val();
   var layout = $('.bilingual-layout-selection').val() || 'he-right';
 
+  // Sefaria's markup is rendered, not escaped — footnotes and emphasis are the
+  // point of the preview — but it is stripped of anything that would load a
+  // subresource or execute first. See sanitizeSourceHtml in shared/ui/dom.
+  var heHtml = sanitizeSourceHtml(dataIn.he) || '<p class="preview-state-message">No source text available.</p>';
+  var enHtml = sanitizeSourceHtml(dataIn.text) || '<p class="preview-state-message">No translation text available.</p>';
+
   if (mode === 'he') {
     return buildPreviewMeta(dataIn.heRef, dataIn) +
-      "<div class='preview-he'>" +
-      (dataIn.he || '<p class="preview-state-message">No source text available.</p>') +
-      "</div>";
+      "<div class='preview-he'>" + heHtml + "</div>";
   }
 
   if (mode === 'en') {
     return buildPreviewMeta(dataIn.ref, inputTitle) +
-      "<div>" +
-      (dataIn.text || '<p class="preview-state-message">No translation text available.</p>') +
-      "</div>";
+      "<div>" + enHtml + "</div>";
   }
 
-  var englishCell = "<td>" + buildPreviewMeta(dataIn.ref, inputTitle) + (dataIn.text || '<p class="preview-state-message">No translation text available.</p>') + "</td>";
-  var hebrewCell = "<td class='preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + (dataIn.he || '<p class="preview-state-message">No source text available.</p>') + "</td>";
+  var englishCell = "<td>" + buildPreviewMeta(dataIn.ref, inputTitle) + enHtml + "</td>";
+  var hebrewCell = "<td class='preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + heHtml + "</td>";
 
   if (layout === 'he-top') {
     return "<div class='preview-stack'>" +
-      "<div class='preview-stack-block preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + (dataIn.he || '<p class="preview-state-message">No source text available.</p>') + "</div>" +
-      "<div class='preview-stack-block'>" + buildPreviewMeta(dataIn.ref, inputTitle) + (dataIn.text || '<p class="preview-state-message">No translation text available.</p>') + "</div>" +
+      "<div class='preview-stack-block preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + heHtml + "</div>" +
+      "<div class='preview-stack-block'>" + buildPreviewMeta(dataIn.ref, inputTitle) + enHtml + "</div>" +
       "</div>";
   }
 
@@ -167,8 +275,16 @@ function renderPreviewHTML(dataIn, inputTitle) {
   return "<table class='preview-table'><tr>" + englishCell + hebrewCell + "</tr></table>";
 }
 
+
 function updateSuggestion(dataIn, inputTitle) {
+  // Reset selection-order tracking whenever the version UI is fully rebuilt for a new result/version.
+  orderedTranslationVersions = [];
   var resolvedRef = dataIn && dataIn.ref ? dataIn.ref : inputTitle;
+  // A translation that resolves but has no text for this ref is not worth
+  // offering: record it before the option list is built so it renders disabled.
+  var resolvedTranslationIsEmpty = !!(dataIn && dataIn.versionTitle) && !hasRenderableText(dataIn.text);
+  if (resolvedTranslationIsEmpty) translationAvailabilityByRef[resolvedRef + '::' + dataIn.versionTitle] = false;
+  else if (dataIn && dataIn.versionTitle) translationAvailabilityByRef[resolvedRef + '::' + dataIn.versionTitle] = true;
   var versionEntries = buildVersionModel(dataIn);
   var enSelectedVersionTitle = dataIn.versionTitle || "";
   var heSelectedVersionTitle = dataIn.heVersionTitle || "";
@@ -207,6 +323,7 @@ function updateSuggestion(dataIn, inputTitle) {
         value: entry.versionTitle,
         category: cleanGroupLabel,
         searchable: (normalizedLabel + " " + entry.versionTitle + " " + cleanGroupLabel).toLowerCase(),
+        languageCode: translationEntryLanguageCode(entry),
         availableForRef: Object.prototype.hasOwnProperty.call(translationAvailabilityByRef, resolvedRef + "::" + entry.versionTitle)
           ? translationAvailabilityByRef[resolvedRef + "::" + entry.versionTitle]
           : true
@@ -224,6 +341,9 @@ function updateSuggestion(dataIn, inputTitle) {
     };
   });
 
+  // Version-control shells interpolate only entry counts. The preview is
+  // Sefaria HTML run through sanitizeSourceHtml (an allowlist; see
+  // shared/ui/dom.html), with refs and titles escaped by buildPreviewMeta.
   $('.translation-version-control').html(translationInput);
   $('.hebrew-version-control').html(selectVersionHebrew);
   $('.suggestions').html(renderPreviewHTML(dataIn, inputTitle));
@@ -275,20 +395,25 @@ function updateSuggestion(dataIn, inputTitle) {
 
   function renderTranslationOptions(filterTerm) {
     var query = String(filterTerm || '').trim().toLowerCase();
-    var filtered = translationItems.filter(function (item) { return !query || item.searchable.indexOf(query) >= 0; });
+    var listed = listTranslationItems(translationItems, resolvedRef, effectivePreferences);
+    var filtered = listed.filter(function (item) { return !query || item.searchable.indexOf(query) >= 0; });
     var optionsHTML = '';
     var hasSelectableOption = false;
+    $('.translation-version-control .version-count').text(listed.length + ' available');
 
     if (!filtered.length) {
-      optionsHTML = '<option value="" disabled>No matching translations</option>';
+      optionsHTML = listed.length
+        ? '<option value="" disabled>No matching translations</option>'
+        : '<option value="" disabled>No translations with text for this passage</option>';
     } else {
       filtered.forEach(function (item) {
         var isUnavailable = item.availableForRef === false;
         var selected = item.value === currentEnVersion && !isUnavailable ? 'selected' : '';
         var disabled = isUnavailable ? 'disabled' : '';
+        var unavailableClass = isUnavailable ? ' class="translation-unavailable"' : '';
         var label = isUnavailable ? (item.optionLabel + ' – unavailable for this ref') : item.optionLabel;
         if (!isUnavailable) hasSelectableOption = true;
-        optionsHTML += '<option value="' + escapeHTML(item.value) + '" ' + selected + ' ' + disabled + ' title="' + escapeHTML(label) + '">' + escapeHTML(label) + '</option>';
+        optionsHTML += '<option value="' + escapeHTML(item.value) + '"' + unavailableClass + ' ' + selected + ' ' + disabled + ' title="' + escapeHTML(label) + '">' + escapeHTML(label) + '</option>';
       });
     }
 
@@ -296,6 +421,7 @@ function updateSuggestion(dataIn, inputTitle) {
       optionsHTML += '<option value="" disabled>No available translations for this ref</option>';
     }
 
+    // Every option value and label goes through escapeHTML above.
     $('.translation-version-select').html(optionsHTML);
     if (!$('.translation-version-select').val()) {
       var firstEnabled = $('.translation-version-select option:not(:disabled)').first();
@@ -305,6 +431,29 @@ function updateSuggestion(dataIn, inputTitle) {
       }
     }
     if (currentEnVersion && !$('.translation-version-select option:selected').length) currentEnVersion = '';
+
+    // Restore multi-selection order when the list is re-rendered (e.g., after filtering).
+    if (orderedTranslationVersions.length > 1) {
+      var $ts = $('.translation-version-select').not('.he-version-selection');
+      $ts.find('option').prop('selected', false);
+      orderedTranslationVersions.forEach(function (vt) {
+        $ts.find('option').filter(function () {
+          return $(this).val() === vt && !$(this).prop('disabled');
+        }).prop('selected', true);
+      });
+      var restoredVals = $ts.val();
+      if (!restoredVals || !restoredVals.length) {
+        $ts.find('option:not(:disabled)').first().prop('selected', true);
+        orderedTranslationVersions = [];
+      } else if (!query) {
+        // Only an unfiltered list shows every listed version, so only then can
+        // a missing one be dropped: it was hidden or found to have no text.
+        orderedTranslationVersions = orderedTranslationVersions.filter(function (vt) {
+          return restoredVals.indexOf(vt) >= 0;
+        });
+      }
+    }
+
     syncSelectedTranslationDisplay();
   }
 
@@ -322,6 +471,7 @@ function updateSuggestion(dataIn, inputTitle) {
       });
     }
 
+    // Every option value and label goes through escapeHTML above.
     $('.he-version-selection').html(optionsHTML);
     if (!$('.he-version-selection').val()) {
       var firstOption = $('.he-version-selection option:not(:disabled)').first();
@@ -343,6 +493,7 @@ function updateSuggestion(dataIn, inputTitle) {
     hasResolvedReference = false;
     setInsertButtonState(false);
     $('#open-on-sefaria').prop('disabled', true);
+    // buildPreviewLoadingHTML escapes its message.
     $('.suggestions').html(buildPreviewLoadingHTML('Refreshing preview…'));
 
     google.script.run.withSuccessHandler(function (response) {
@@ -355,6 +506,7 @@ function updateSuggestion(dataIn, inputTitle) {
         clearVersionSelectors();
         updatePesukimAvailability(null);
         updateActionabilityUI(nodeState);
+        // buildNonInsertableMessage escapes the ref (buildPreviewMeta) and the prompt.
         $('.suggestions').html('<br>' + buildNonInsertableMessage(response));
         return;
       }
@@ -369,8 +521,9 @@ function updateSuggestion(dataIn, inputTitle) {
       hasResolvedReference = true;
       setInsertButtonState(true);
       $('#open-on-sefaria').prop('disabled', false);
-    }).withFailureHandler(function () {
+    }).withFailureHandler(function (error) {
       if (requestId !== latestResolveRequestId) return;
+      if (error && error.message) showInsertWarning(error.message);
       markTranslationAvailability('', enVersion);
       renderTranslationOptions($('.translation-filter-input').val());
       hasResolvedReference = false;
@@ -379,10 +532,30 @@ function updateSuggestion(dataIn, inputTitle) {
       clearVersionSelectors();
       updatePesukimAvailability(null);
       updateActionabilityUI({ isInsertable: false });
-    }).findReference(resolvedRef, versions);
+    }).findReferenceForSidebar(resolvedRef, versions, sidebarSessionId);
   }
 
   renderTranslationOptions('');
+  var optionsBuiltForRequestId = latestResolveRequestId;
+  activeTranslationOptions = {
+    ref: resolvedRef,
+    refresh: function () {
+      if (!$('.translation-version-select').not('.he-version-selection').length) return;
+      // Another lookup started since this list was built: it owns the preview.
+      if (latestResolveRequestId !== optionsBuiltForRequestId) return;
+      var before = currentEnVersion;
+      renderTranslationOptions($('.translation-filter-input').not('.he-version-filter').val());
+      // The version in the preview is no longer listed: load the one the list
+      // moved to, so a plain Insert doesn't carry text the list doesn't show.
+      if (currentEnVersion && currentEnVersion !== before && orderedTranslationVersions.length <= 1
+          && $('.output-mode-selection').val() !== 'he') {
+        getVersions(currentEnVersion);
+      }
+    }
+  };
+  // Seed selection-order tracking with the single version auto-selected on initial render.
+  var _initEnVal = $('.translation-version-select').not('.he-version-selection').val();
+  orderedTranslationVersions = Array.isArray(_initEnVal) ? _initEnVal.slice() : (_initEnVal ? [_initEnVal] : []);
   renderHebrewOptions('');
 
   $('.translation-filter-input').off('input.translationFilter').on('input.translationFilter', function () {
@@ -398,9 +571,25 @@ function updateSuggestion(dataIn, inputTitle) {
 
   $('.translation-version-select').off('change.translationVersion').on('change.translationVersion', function () {
     var selected = $(this).val();
-    // With multiple selection, val() returns an array; preview uses only the primary (first) pick.
-    var primarySelected = Array.isArray(selected) ? selected[0] : selected;
+    var selectedArr = Array.isArray(selected) ? selected : (selected ? [selected] : []);
+
+    // Maintain selection order: drop deselected items, append newly selected items.
+    orderedTranslationVersions = orderedTranslationVersions.filter(function (vt) {
+      return selectedArr.indexOf(vt) >= 0;
+    });
+    selectedArr.forEach(function (vt) {
+      if (orderedTranslationVersions.indexOf(vt) < 0) orderedTranslationVersions.push(vt);
+    });
+
     syncSelectedTranslationDisplay();
+
+    if (orderedTranslationVersions.length > 1) {
+      // Multiple translations selected: show notice instead of re-fetching a single-version preview.
+      updateMultiSelectPreviewNotice();
+      return;
+    }
+
+    var primarySelected = orderedTranslationVersions[0] || selectedArr[0];
     if (!primarySelected) return;
     currentEnVersion = primarySelected;
     getVersions(primarySelected);
@@ -414,6 +603,7 @@ function updateSuggestion(dataIn, inputTitle) {
     getVersions();
   });
 
+  var refetchQueued = false;
   if (pendingPreferredVersions) {
     var prefEn = pendingPreferredVersions.en || '';
     var prefHe = pendingPreferredVersions.he || '';
@@ -421,9 +611,23 @@ function updateSuggestion(dataIn, inputTitle) {
     if (prefEn || prefHe) {
       var currentEn = $('.translation-version-select').val() || currentEnVersion || enSelectedVersionTitle;
       var currentHe = $('.he-version-selection').val() || currentHeVersion || heSelectedVersionTitle;
-      if (currentEn !== (dataIn.versionTitle || '') || currentHe !== (dataIn.heVersionTitle || '')) getVersions();
+      if (currentEn !== (dataIn.versionTitle || '') || currentHe !== (dataIn.heVersionTitle || '')) {
+        getVersions();
+        refetchQueued = true;
+      }
     }
   }
+
+  // The translation in the preview isn't offered — it has no text for this
+  // ref, or its language is hidden in Preferences — and the list has moved its
+  // selection to the next one; load that, so the preview and a plain Insert
+  // match the list. Terminates: each fetch either resolves the version asked
+  // for or marks it unavailable, and an unavailable version is never chosen.
+  if (!refetchQueued && $('.output-mode-selection').val() !== 'he' && dataIn.versionTitle
+      && currentEnVersion && currentEnVersion !== dataIn.versionTitle) {
+    getVersions(currentEnVersion);
+  }
+  requestTranslationAvailability(resolvedRef);
 
   updateVersionControlsVisibility();
   updateModeDependentSections();

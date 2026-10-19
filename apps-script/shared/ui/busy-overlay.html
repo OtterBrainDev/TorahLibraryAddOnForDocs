@@ -1,0 +1,96 @@
+<!--
+  The dialogs' "working" overlay (Preferences, Link Texts, first-run setup).
+  A save is a server round trip of a second or more, and a status line in the
+  footer was easy to miss: the dialog looked hung. This covers the page with a
+  spinner and what is happening until the server answers, and stops clicks
+  from starting a second save meanwhile. Colours are the sidebar busy
+  overlay's (css/tokens), so every surface waits the same way.
+
+  modalBusyShow('Saving…') / modalBusyHide(). Built with createElement and
+  textContent; nothing is parsed as HTML. The element is created on first use,
+  so a page that never saves has none.
+-->
+<style>
+  .modal-busy {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--busy-scrim);
+    animation: modal-busy-fade 0.15s ease-out;
+  }
+
+  .modal-busy[hidden] {
+    display: none;
+  }
+
+  .modal-busy-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    max-width: calc(100% - 48px);
+    padding: 14px 20px;
+    background: var(--panel);
+    border-radius: 14px;
+    box-shadow: var(--busy-card-shadow);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .modal-busy-spinner {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    box-sizing: border-box;
+    border: 3px solid var(--busy-accent-soft);
+    border-top-color: var(--busy-accent);
+    border-radius: 50%;
+    animation: modal-busy-spin 0.8s linear infinite;
+  }
+
+  @keyframes modal-busy-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes modal-busy-fade {
+    from { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .modal-busy { animation: none; }
+    .modal-busy-spinner { animation-duration: 2.4s; }
+  }
+</style>
+<script>
+  function modalBusyShow(message) {
+    var overlay = document.getElementById('modal-busy');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'modal-busy';
+      overlay.className = 'modal-busy';
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'polite');
+      var card = document.createElement('div');
+      card.className = 'modal-busy-card';
+      var spinner = document.createElement('span');
+      spinner.className = 'modal-busy-spinner';
+      spinner.setAttribute('aria-hidden', 'true');
+      var label = document.createElement('span');
+      label.className = 'modal-busy-label';
+      card.appendChild(spinner);
+      card.appendChild(label);
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+    }
+    overlay.querySelector('.modal-busy-label').textContent = message || 'Saving…';
+    overlay.hidden = false;
+  }
+
+  function modalBusyHide() {
+    var overlay = document.getElementById('modal-busy');
+    if (overlay) overlay.hidden = true;
+  }
+</script>

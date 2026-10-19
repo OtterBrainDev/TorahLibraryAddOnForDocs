@@ -11,11 +11,14 @@ function insertSheet(sheetPayload, frontendOptions) {
     throw new Error('Open a Google Doc before inserting a sheet.');
   }
 
-  const body = document.getBody();
   const typography = getTypographySettings();
   const normalizedOptions = normalizeSheetInsertOptions(sheetPayload, frontendOptions);
 
-  let index = getInsertionIndex_(document, body);
+  // `body` is the insertion container: the document body, or the table cell
+  // holding the cursor. Sheets insert paragraphs only. See insertion-target.gs.
+  const target = resolveInsertionTarget_({ layout: 'paragraphs', replaceSelection: false });
+  const body = target.container;
+  let index = target.index;
 
   if (normalizedOptions.includeReference) {
     index = insertSheetReferenceBlock_(body, index, sheetPayload, typography, true);
@@ -84,18 +87,6 @@ function getBooleanOption_(value, fallback) {
   return typeof value === 'boolean' ? value : fallback;
 }
 
-function getInsertionIndex_(document, body) {
-  let index = body.getNumChildren();
-  const cursor = document.getCursor();
-  if (cursor) {
-    const currentElement = cursor.getElement();
-    if (currentElement && currentElement.getParent()) {
-      index = currentElement.getParent().getChildIndex(currentElement) + 1;
-    }
-  }
-  return index;
-}
-
 function fetchSefariaSheetById_(sheetId) {
   const safeId = String(sheetId || '').trim();
   if (!safeId) {
@@ -115,11 +106,24 @@ function fetchSefariaSheetById_(sheetId) {
   return JSON.parse(response.getContentText() || '{}');
 }
 
+// Sheet content (media URLs, sheet URLs) is third-party user-generated data:
+// any Sefaria user can publish a source sheet. Only ever hand Docs a link we
+// have positively identified as http(s) or mailto, so a `javascript:` or
+// `data:` URL from a sheet can never become a live link in someone's document.
+function safeLinkUrl_(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  // Reject anything with control characters or embedded whitespace, which are
+  // the usual way a blocked scheme is smuggled past a naive prefix check.
+  if (/[\u0000-\u0020\u007f-\u009f]/.test(raw)) return '';
+  return /^(?:https?:\/\/|mailto:)/i.test(raw) ? raw : '';
+}
+
 function insertSheetReferenceBlock_(body, index, sheetPayload, typography, linkedTitle) {
   const title = String(sheetPayload.label || 'Sefaria Source Sheet').trim();
   const summary = String(sheetPayload.summary || '').trim();
   const owner = String(sheetPayload.owner || '').trim();
-  const url = String(sheetPayload.url || '').trim();
+  const url = safeLinkUrl_(sheetPayload.url);
   const topics = Array.isArray(sheetPayload.topics) ? sheetPayload.topics.filter(Boolean) : [];
 
   const titleParagraph = body.insertParagraph(index, title);
@@ -133,12 +137,7 @@ function insertSheetReferenceBlock_(body, index, sheetPayload, typography, linke
   if (summary) {
     const summaryParagraph = body.insertParagraph(index, summary);
     summaryParagraph.setLeftToRight(true);
-    applyTypographyToParagraph(
-      summaryParagraph,
-      typography.translationFont,
-      typography.translationFontSize,
-      typography.translationFontStyle
-    );
+    applyRoleTypography_(summaryParagraph, typography, 'translation');
     index += 1;
   }
 
@@ -150,12 +149,7 @@ function insertSheetReferenceBlock_(body, index, sheetPayload, typography, linke
   if (metaBits.length) {
     const metaParagraph = body.insertParagraph(index, metaBits.join(' • '));
     metaParagraph.setLeftToRight(true);
-    applyTypographyToParagraph(
-      metaParagraph,
-      typography.sefariaLinkFont,
-      Math.max(10, typography.sefariaLinkFontSize - 1),
-      typography.sefariaLinkFontStyle
-    );
+    applyRoleTypography_(metaParagraph, typography, 'sefariaLink', { size: smallerFontSize_(typography.sefariaLinkFontSize) });
     if (url) {
       metaParagraph.editAsText().setLinkUrl(url);
     }
@@ -175,12 +169,7 @@ function insertSheetContentsBlock_(body, index, sheetPayload, fullSheet, typogra
 
   if (normalizedOptions.includeReference) {
     const spacer = body.insertParagraph(index, '');
-    applyTypographyToParagraph(
-      spacer,
-      typography.translationFont,
-      typography.translationFontSize,
-      typography.translationFontStyle
-    );
+    applyRoleTypography_(spacer, typography, 'translation');
     index += 1;
   }
 
@@ -193,24 +182,14 @@ function insertSheetContentsBlock_(body, index, sheetPayload, fullSheet, typogra
     const ownerParagraph = body.insertParagraph(index, 'By ' + owner);
     ownerParagraph.setItalic(true);
     ownerParagraph.setLeftToRight(true);
-    applyTypographyToParagraph(
-      ownerParagraph,
-      typography.translationFont,
-      Math.max(10, typography.translationFontSize - 1),
-      typography.translationFontStyle
-    );
+    applyRoleTypography_(ownerParagraph, typography, 'translation', { size: smallerFontSize_(typography.translationFontSize) });
     index += 1;
   }
 
   if (!sources.length) {
     const emptyParagraph = body.insertParagraph(index, 'This sheet does not contain any source blocks.');
     emptyParagraph.setLeftToRight(true);
-    applyTypographyToParagraph(
-      emptyParagraph,
-      typography.translationFont,
-      typography.translationFontSize,
-      typography.translationFontStyle
-    );
+    applyRoleTypography_(emptyParagraph, typography, 'translation');
     index += 1;
     return index;
   }
@@ -244,12 +223,7 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
       refParagraph.setBold(true);
       refParagraph.setLeftToRight(true);
       if (shouldIndent) refParagraph.setIndentStart(24);
-      applyTypographyToParagraph(
-        refParagraph,
-        typography.sefariaLinkFont,
-        typography.sefariaLinkFontSize,
-        typography.sefariaLinkFontStyle
-      );
+      applyRoleTypography_(refParagraph, typography, 'sefariaLink');
       index += 1;
     }
 
@@ -258,12 +232,7 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
       titleParagraph.setItalic(true);
       titleParagraph.setLeftToRight(true);
       if (shouldIndent) titleParagraph.setIndentStart(24);
-      applyTypographyToParagraph(
-        titleParagraph,
-        typography.translationFont,
-        typography.translationFontSize,
-        typography.translationFontStyle
-      );
+      applyRoleTypography_(titleParagraph, typography, 'translation');
       index += 1;
     }
 
@@ -272,9 +241,8 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
       index = appendMultilineParagraphs_(body, index, hebrewText, {
         rtl: true,
         indent: shouldIndent ? 24 : 0,
-        fontFamily: typography.hebrewFont || typography.translationFont,
-        fontSize: typography.hebrewFontSize || typography.translationFontSize,
-        fontStyle: typography.hebrewFontStyle || typography.translationFontStyle
+        typography: typography,
+        role: 'hebrew'
       });
       if (normalizedOptions.transliterationScheme) {
         const translitText = transliterateHebrewHtmlPreservingBasicBreaks(hebrewText, normalizedOptions.transliterationScheme, {
@@ -285,9 +253,8 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
           index = appendMultilineParagraphs_(body, index, translitText, {
             rtl: false,
             indent: shouldIndent ? 24 : 0,
-            fontFamily: typography.transliterationFont,
-            fontSize: typography.transliterationFontSize,
-            fontStyle: typography.transliterationFontStyle
+            typography: typography,
+            role: 'transliteration'
           });
         }
       }
@@ -298,9 +265,8 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
       index = appendMultilineParagraphs_(body, index, englishText, {
         rtl: false,
         indent: shouldIndent ? 24 : 0,
-        fontFamily: typography.translationFont,
-        fontSize: typography.translationFontSize,
-        fontStyle: typography.translationFontStyle
+        typography: typography,
+        role: 'translation'
       });
     }
 
@@ -340,12 +306,7 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
     commentParagraph.setForegroundColor('#666666');
     commentParagraph.setItalic(true);
     commentParagraph.setIndentStart(shouldIndent ? 24 : 24);
-    applyTypographyToParagraph(
-      commentParagraph,
-      typography.translationFont,
-      typography.translationFontSize,
-      typography.translationFontStyle
-    );
+    applyRoleTypography_(commentParagraph, typography, 'translation');
     index += 1;
 
     body.insertParagraph(index, '');
@@ -354,8 +315,11 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
   }
 
   if (source.media) {
-    const mediaUrl = String(source.media).trim();
-    const mediaLabel = normalizedOptions.showMediaLabel ? buildMediaLabel_(mediaUrl) : mediaUrl;
+    const rawMediaUrl = String(source.media).trim();
+    const mediaUrl = safeLinkUrl_(rawMediaUrl);
+    // Show the raw value as text even when it is not a linkable scheme, so the
+    // source block still round-trips visibly instead of silently disappearing.
+    const mediaLabel = normalizedOptions.showMediaLabel ? buildMediaLabel_(rawMediaUrl) : rawMediaUrl;
 
     const mediaParagraph = body.insertParagraph(index, mediaLabel);
     mediaParagraph.setLeftToRight(true);
@@ -363,12 +327,7 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
     if (mediaUrl) {
       mediaParagraph.editAsText().setLinkUrl(mediaUrl);
     }
-    applyTypographyToParagraph(
-      mediaParagraph,
-      typography.sefariaLinkFont,
-      typography.sefariaLinkFontSize,
-      typography.sefariaLinkFontStyle
-    );
+    applyRoleTypography_(mediaParagraph, typography, 'sefariaLink');
     index += 1;
 
     body.insertParagraph(index, '');
@@ -415,8 +374,10 @@ function logUnknownSheetNode_(source, ordinal, normalizedOptions) {
     return;
   }
 
+  // The shape (key names) is what the diagnostic needs; the node's content is
+  // not logged.
   try {
-    console.log('Unknown Sefaria sheet node shape at ordinal ' + ordinal + ': ' + JSON.stringify(source));
+    console.log('Unknown Sefaria sheet node shape at ordinal ' + ordinal + ': keys=' + Object.keys(source || {}).join(','));
   } catch (err) {
     console.log('Unknown Sefaria sheet node shape at ordinal ' + ordinal + '.');
   }
@@ -468,12 +429,7 @@ function appendMultilineParagraphs_(body, index, text, style) {
     if (style.indent) {
       paragraph.setIndentStart(style.indent);
     }
-    applyTypographyToParagraph(
-      paragraph,
-      style.fontFamily,
-      style.fontSize,
-      style.fontStyle
-    );
+    applyRoleTypography_(paragraph, style.typography, style.role);
     index += 1;
   });
 
@@ -490,12 +446,7 @@ function appendIndentedBlock_(body, index, text, typography, rtl, indentStart, n
     if (typeof paragraph.setRightToLeft === 'function') {
       paragraph.setRightToLeft(!!rtl);
     }
-    applyTypographyToParagraph(
-      paragraph,
-      rtl ? (typography.hebrewFont || typography.translationFont) : typography.translationFont,
-      rtl ? (typography.hebrewFontSize || typography.translationFontSize) : typography.translationFontSize,
-      rtl ? (typography.hebrewFontStyle || typography.translationFontStyle) : typography.translationFontStyle
-    );
+    applyRoleTypography_(paragraph, typography, rtl ? 'hebrew' : 'translation');
     index += 1;
   });
 
@@ -528,6 +479,9 @@ function htmlToPlainText_(html, normalizedOptions) {
 
   const preserveSpacing = !normalizedOptions || normalizedOptions.preserveSheetSpacing !== false;
 
+  // Order matters: strip real tags FIRST, then decode entities. Decoding first
+  // turns an escaped `a &lt; b` into `a < b`, which the tag-strip below then
+  // eats as if it were markup, silently deleting the author's text.
   let text = String(html)
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<\/p>/gi, '\n\n')
@@ -535,14 +489,10 @@ function htmlToPlainText_(html, normalizedOptions) {
     .replace(/<li>/gi, '• ')
     .replace(/<\/li>/gi, '\n')
     .replace(/<\/h[1-6]>/gi, '\n\n')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&#160;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&#39;/gi, "'")
-    .replace(/&quot;/gi, '"')
     .replace(/<[^>]+>/g, '');
+  // Single-pass decode (utils.gs), which also covers the typographic spaces
+  // (&thinsp; etc.) that Sefaria puts in Hebrew.
+  text = decodeHTMLEntities(text);
 
   if (preserveSpacing) {
     text = text
@@ -555,4 +505,13 @@ function htmlToPlainText_(html, normalizedOptions) {
   }
 
   return text.trim();
+}
+
+/**
+ * One point smaller than a role's size, floored at 10. A role that matches the
+ * document may have no size of its own (null); then there is nothing to be
+ * smaller than, so the paragraph keeps the document's size too.
+ */
+function smallerFontSize_(size) {
+  return size > 0 ? Math.max(10, size - 1) : null;
 }

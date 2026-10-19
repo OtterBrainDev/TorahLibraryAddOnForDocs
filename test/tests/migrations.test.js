@@ -8,6 +8,17 @@ const MIGRATIONS_SOURCE = fs.readFileSync(
   path.resolve(__dirname, '../../apps-script/migrations.gs'),
   'utf8'
 );
+// migrateToV10_ reads the default menu layout. At runtime every .gs file
+// shares one global scope, so load the helper alongside.
+const MENU_LAYOUT_SOURCE = fs.readFileSync(
+  path.resolve(__dirname, '../../apps-script/server/menu-layout.gs'),
+  'utf8'
+);
+// seedDefaultPreferences_ reads getDefaultPreferences.
+const PREFERENCES_SOURCE = fs.readFileSync(
+  path.resolve(__dirname, '../../apps-script/server/preferences.gs'),
+  'utf8'
+);
 
 function makeUserPropertiesMock(initial = {}) {
   const store = Object.assign({}, initial);
@@ -27,6 +38,12 @@ function makeUserPropertiesMock(initial = {}) {
   };
 }
 
+// The version the code currently targets. Read from the module rather than
+// duplicated as a literal here — hardcoding it meant every schema bump broke
+// five unrelated assertions and taught the next person to edit tests to match
+// the code instead of reading them.
+const CURRENT = /var PREFS_SCHEMA_CURRENT_ = '(\d+)';/.exec(MIGRATIONS_SOURCE)[1];
+
 function loadMigrations(initialProps = {}) {
   const userProperties = makeUserPropertiesMock(initialProps);
   const context = {
@@ -36,6 +53,8 @@ function loadMigrations(initialProps = {}) {
     },
   };
   vm.createContext(context);
+  vm.runInContext(MENU_LAYOUT_SOURCE, context, { filename: 'menu-layout.gs' });
+  vm.runInContext(PREFERENCES_SOURCE, context, { filename: 'preferences.gs' });
   vm.runInContext(MIGRATIONS_SOURCE, context, { filename: 'migrations.gs' });
   return { context, userProperties };
 }
@@ -44,7 +63,7 @@ test('fresh install at current schema version does not rewrite anything', () => 
   // A new user installs the add-on; onInstall has already populated defaults,
   // and the schema version is already up to date. No migration work.
   const { context, userProperties } = loadMigrations({
-    prefs_schema_version: '4',
+    prefs_schema_version: CURRENT,
     apply_sheimot_on_insertion: 'true',
   });
   const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
@@ -64,7 +83,7 @@ test('upgrading user without apply_sheimot_on_insertion gets it set to "true"', 
   const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(rewrote, true);
   assert.equal(userProperties.getProperty('apply_sheimot_on_insertion'), 'true');
-  assert.equal(userProperties.getProperty('prefs_schema_version'), '4');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
 });
 
 test('migration is idempotent — second call does nothing', () => {
@@ -83,7 +102,7 @@ test('user who explicitly set apply_sheimot_on_insertion to "false" before migra
   });
   context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(userProperties.getProperty('apply_sheimot_on_insertion'), 'false');
-  assert.equal(userProperties.getProperty('prefs_schema_version'), '4');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
 });
 
 test('v4 migration sets link_sources_insert_after_linking to "false" for upgraders', () => {
@@ -93,8 +112,12 @@ test('v4 migration sets link_sources_insert_after_linking to "false" for upgrade
   });
   const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(rewrote, true);
-  assert.equal(userProperties.getProperty('prefs_schema_version'), '4');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
   assert.equal(userProperties.getProperty('link_sources_insert_after_linking'), 'false');
+  // v5 wrote insert_from_selection_at_top='false'; v10 retired the key, and a
+  // user who never pinned anything keeps tracking the default menu.
+  assert.equal(userProperties.getProperty('insert_from_selection_at_top'), null);
+  assert.equal(userProperties.getProperty('menu_layout'), null);
 });
 
 test('v4 migration does not clobber an explicit user choice', () => {
@@ -119,7 +142,7 @@ test('v3 migration scrubs stored AI state', () => {
   });
   const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
   assert.equal(rewrote, true);
-  assert.equal(userProperties.getProperty('prefs_schema_version'), '4');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
   // Every AI key is gone.
   assert.equal(userProperties.getProperty('ai_user_key_openai'), null);
   assert.equal(userProperties.getProperty('ai_user_key_anthropic'), null);
@@ -129,4 +152,415 @@ test('v3 migration scrubs stored AI state', () => {
   // Unrelated preferences survive.
   assert.equal(userProperties.getProperty('hebrew_font'), 'Noto Sans Hebrew');
   assert.equal(userProperties.getProperty('apply_sheimot_on_insertion'), 'true');
+});
+
+test('v6 migration turns source emphasis on for upgraders', () => {
+  // Sefaria's markup carries meaning (the Steinsaltz Talmud bolds the Talmud's
+  // own words). The insertion path was flattening it, so this is a bug fix
+  // reaching existing users — the migration writes "true", not the "false"
+  // that a new opt-in feature would get. Same reasoning as the v2 migration.
+  // v14 then carries that "true" into source_emphasis_mode as "keep".
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '5',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('source_emphasis_mode'), 'keep');
+  assert.equal(userProperties.getProperty('preserve_source_emphasis'), null);
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+});
+
+test('v6 migration does not overwrite an explicit opt-out', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '5',
+    preserve_source_emphasis: 'false',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('source_emphasis_mode'), 'discard');
+});
+
+test('v14 migration converts preserve_source_emphasis into source_emphasis_mode', () => {
+  // "Keep only the source's bold and italics" needed a third state. Nobody's
+  // output may change on upgrade: false -> discard, true -> keep, and the
+  // boolean key is removed so no dead preference outlives its last reader.
+  for (const [legacy, mode] of [['true', 'keep'], ['false', 'discard']]) {
+    const { context, userProperties } = loadMigrations({
+      prefs_schema_version: '13',
+      preserve_source_emphasis: legacy,
+    });
+    context.runUserPreferenceMigrationsIfNeeded_();
+    assert.equal(userProperties.getProperty('source_emphasis_mode'), mode, `from ${legacy}`);
+    assert.equal(userProperties.getProperty('preserve_source_emphasis'), null);
+    assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  }
+});
+
+test('v14 migration defaults to keep and never clobbers a stored mode', () => {
+  const unset = loadMigrations({ prefs_schema_version: '13' });
+  unset.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(unset.userProperties.getProperty('source_emphasis_mode'), 'keep');
+
+  const stored = loadMigrations({
+    prefs_schema_version: '13',
+    source_emphasis_mode: 'only',
+    preserve_source_emphasis: 'false',
+  });
+  stored.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(stored.userProperties.getProperty('source_emphasis_mode'), 'only');
+  assert.equal(stored.userProperties.getProperty('preserve_source_emphasis'), null);
+});
+
+test('v10 migration carries a pinned "Insert from Selection" into menu_layout', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '9',
+    insert_from_selection_at_top: 'true',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('insert_from_selection_at_top'), null);
+  const layout = JSON.parse(userProperties.getProperty('menu_layout'));
+  assert.equal(layout.top[0], 'insert_from_selection');
+  assert.equal(layout.top.filter((id) => id === 'insert_from_selection').length, 1);
+  assert.deepEqual(layout.quick_actions, JSON.parse(JSON.stringify(context.getDefaultMenuLayout_().quick_actions)));
+});
+
+test('v10 migration leaves an unpinned user on the default menu and never clobbers a stored layout', () => {
+  const unpinned = loadMigrations({ prefs_schema_version: '9', insert_from_selection_at_top: 'false' });
+  unpinned.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(unpinned.userProperties.getProperty('menu_layout'), null);
+  assert.equal(unpinned.userProperties.getProperty('insert_from_selection_at_top'), null);
+
+  const stored = JSON.stringify({ top: ['lexicon'], quick_actions: [] });
+  const custom = loadMigrations({
+    prefs_schema_version: '9',
+    insert_from_selection_at_top: 'true',
+    menu_layout: stored,
+  });
+  custom.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(custom.userProperties.getProperty('menu_layout'), stored);
+});
+
+test('v11 migration turns insert_from_selection_replace on for upgraders', () => {
+  // Insert Source from Selection replaced the selected citation until fefe9b9
+  // switched it, with no setting, to keeping the selection. The preference
+  // restores the original behaviour for upgraders, so this writes "true".
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '10',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('insert_from_selection_replace'), 'true');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+});
+
+test('v11 migration does not overwrite an explicit keep-selection choice', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '10',
+    insert_from_selection_replace: 'false',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('insert_from_selection_replace'), 'false');
+});
+
+test('upgraders get the new יהוה and font defaults — nothing is pinned to the old ones', () => {
+  // The published add-on stored none of these preferences, so an upgrader
+  // with nothing stored reads the new code defaults (יי; "match the
+  // document"), exactly like a new install. v12 is a deliberate no-op.
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '11',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  for (const key of ['meforash_replacement', 'hebrew_font', 'hebrew_font_size', 'translation_font',
+    'translation_font_size', 'transliteration_font', 'transliteration_font_size']) {
+    assert.equal(userProperties.getProperty(key), null, key);
+  }
+  assert.equal(userProperties.getProperty('source_title_heading'), 'normal');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+});
+
+test('v13 migration does not overwrite an explicit title heading', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '12',
+    source_title_heading: 'heading2',
+  });
+
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  assert.equal(userProperties.getProperty('source_title_heading'), 'heading2');
+});
+
+test('a first run with no schema version saves every default, except the menu layout', () => {
+  // So a default changed in a later release never moves someone already using
+  // the add-on: from their first run, every preference is their own.
+  const { context, userProperties } = loadMigrations({});
+  context.runUserPreferenceMigrationsIfNeeded_();
+
+  const defaults = context.getDefaultPreferences();
+  for (const key of Object.keys(defaults)) {
+    if (key === 'menu_layout') continue;
+    assert.equal(userProperties.getProperty(key), String(defaults[key]), key);
+  }
+  assert.equal(userProperties.getProperty('menu_layout'), null, 'an unset layout keeps tracking the code default');
+  assert.equal(userProperties.getProperty('meforash_replace'), 'true');
+  assert.equal(userProperties.getProperty('meforash_replacement'), 'יי');
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+});
+
+test('seeding never overwrites a stored preference', () => {
+  const { context, userProperties } = loadMigrations({
+    meforash_replace: 'false',
+    hebrew_font: 'SBL Hebrew',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('meforash_replace'), 'false');
+  assert.equal(userProperties.getProperty('hebrew_font'), 'SBL Hebrew');
+});
+
+test('a user already on the current schema is not re-seeded', () => {
+  // A later release that changes a default must not reach users who have
+  // already been set up — their unset keys stay unset rather than being
+  // written with the new value by a seeding pass.
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: CURRENT });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('hebrew_font'), null);
+});
+
+test('v15 migration seeds search corpus order/exclusions with "[]" for upgraders', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '14',
+    apply_sheimot_on_insertion: 'true',
+  });
+  const rewrote = context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(rewrote, true);
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // "[]" = built-in order and nothing hidden: no corpus disappears on upgrade.
+  assert.equal(userProperties.getProperty('search_corpus_order'), '[]');
+  assert.equal(userProperties.getProperty('search_corpus_excluded'), '[]');
+});
+
+test('v17 migration seeds the translation-list preferences for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '16' });
+  assert.equal(context.runUserPreferenceMigrationsIfNeeded_(), true);
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // Every language stays listed; empty translations are left out (CHANGELOG).
+  assert.equal(userProperties.getProperty('hidden_translation_languages'), '[]');
+  assert.equal(userProperties.getProperty('show_unavailable_translations'), 'false');
+});
+
+test('v17 migration does not clobber explicit translation-list values', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '16',
+    hidden_translation_languages: '["yi"]',
+    show_unavailable_translations: 'true',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('hidden_translation_languages'), '["yi"]');
+  assert.equal(userProperties.getProperty('show_unavailable_translations'), 'true');
+});
+
+test('v15 migration does not clobber an explicit corpus order or exclusion list', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '14',
+    search_corpus_order: '["talmud","close-matches"]',
+    search_corpus_excluded: '["kabbalah"]',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('search_corpus_order'), '["talmud","close-matches"]');
+  assert.equal(userProperties.getProperty('search_corpus_excluded'), '["kabbalah"]');
+});
+
+test('v16 migration seeds an empty per-language translation formatting map for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '15' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // "{}": no language has its own formatting, so no translation looks different.
+  assert.equal(userProperties.getProperty('translation_language_typography'), '{}');
+});
+
+test('v16 migration does not clobber stored per-language translation formatting', () => {
+  const stored = JSON.stringify({ fr: { font: 'Garamond', size: 12, style: 'italic' } });
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '15',
+    translation_language_typography: stored,
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('translation_language_typography'), stored);
+});
+
+test('v18 migration turns Hebrew and translation punctuation on for upgraders', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '17' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  // "true": punctuation shown, as every insert before this setting had it.
+  assert.equal(userProperties.getProperty('hebrew_punctuation'), 'true');
+  assert.equal(userProperties.getProperty('translation_punctuation'), 'true');
+});
+
+test('v18 migration never overwrites an explicit "false"', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '17',
+    hebrew_punctuation: 'false',
+    translation_punctuation: 'false',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('hebrew_punctuation'), 'false');
+  assert.equal(userProperties.getProperty('translation_punctuation'), 'false');
+});
+
+test('v19 migration stores "one row per line" off for upgraders, so side-by-side tables look as before', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '18' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('bilingual_aligned_rows'), 'false');
+});
+
+test('v19 migration does not clobber a stored "one row per line"', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '18', bilingual_aligned_rows: 'true' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('bilingual_aligned_rows'), 'true');
+});
+
+// First-run setup and Simple mode (docs/first-run-setup-design.md). The rule
+// that matters is hard rule 2: nobody who already uses the add-on is put into
+// Simple mode or sent through setup by an upgrade.
+test('v20 migration keeps upgraders in Full mode and never shows them first-run setup', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '19' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('ui_mode'), 'full');
+  assert.equal(userProperties.getProperty('first_run_setup'), 'done');
+  assert.equal(userProperties.getProperty('menu_layout_before_simple'), '');
+});
+
+test('v20 migration does not clobber a stored interface mode or setup state', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '19',
+    ui_mode: 'simple',
+    first_run_setup: 'pending',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('ui_mode'), 'simple');
+  assert.equal(userProperties.getProperty('first_run_setup'), 'pending');
+});
+
+test('a user with no schema is seeded before migrating, so first-run setup stays pending in Full mode', () => {
+  // A new user, or a user of the original published add-on (which stored no
+  // preferences): the two cannot be told apart. Both see setup; neither is
+  // switched to Simple without choosing it.
+  const { context, userProperties } = loadMigrations({});
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('first_run_setup'), 'pending');
+  assert.equal(userProperties.getProperty('ui_mode'), 'full');
+});
+
+test('a reinstall over a finished setup does not re-run it', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: CURRENT,
+    first_run_setup: 'done',
+  });
+  context.seedDefaultPreferences_(userProperties);
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('first_run_setup'), 'done');
+});
+
+// Borrowed Hebrew marks (server/hebrew-fonts.gs) are always on: v21 added a
+// switch, v22 retired it before release and removes what test builds stored.
+test('v22 migration removes the retired hebrew_mark_fallback', () => {
+  for (const stored of ['true', 'false']) {
+    const { context, userProperties } = loadMigrations({ prefs_schema_version: '21', hebrew_mark_fallback: stored });
+    context.runUserPreferenceMigrationsIfNeeded_();
+    assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+    assert.equal(userProperties.getProperty('hebrew_mark_fallback'), null);
+  }
+});
+
+test('an upgrade from v20 never writes hebrew_mark_fallback', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '20' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('hebrew_mark_fallback'), null);
+});
+
+// v23 sets the source (Hebrew) title apart from the translation title. Each
+// new key starts as the setting that governed both titles until now.
+test('v23 copies the title link switch and title styles to the source title', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '22',
+    insert_sefaria_link_default: 'false',
+    source_title_font: 'Lora',
+    source_title_font_size: '14',
+    source_title_font_style: 'bold',
+    sefaria_link_font_color: '#336699',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'false');
+  assert.equal(userProperties.getProperty('hebrew_title_font'), 'Lora');
+  assert.equal(userProperties.getProperty('hebrew_title_font_size'), '14');
+  assert.equal(userProperties.getProperty('hebrew_title_font_style'), 'bold');
+  assert.equal(userProperties.getProperty('hebrew_link_font_color'), '#336699');
+  // Nothing stored to copy: the default.
+  assert.equal(userProperties.getProperty('hebrew_link_font_style'), 'underline');
+  assert.equal(userProperties.getProperty('hebrew_title_font'), 'Lora');
+  assert.equal(userProperties.getProperty('hebrew_link_font'), '');
+});
+
+test('v23 never overwrites a stored source title setting', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '22',
+    insert_sefaria_link_default: 'true',
+    insert_hebrew_sefaria_link_default: 'false',
+    hebrew_title_font: 'David Libre',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'false');
+  assert.equal(userProperties.getProperty('hebrew_title_font'), 'David Libre');
+});
+
+test('an upgrader who linked titles keeps both linked', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '22', insert_sefaria_link_default: 'true' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('insert_hebrew_sefaria_link_default'), 'true');
+});
+
+// v24: the "Hyperlink formatting override" switches start on (linked titles
+// keep their linked style), and a legacy "torah" cantillation filter, which
+// always read as "tanakh", keeps meaning that now that "torah" means the
+// Five Books only.
+test('v24 turns the hyperlink formatting overrides on and rewrites a legacy "torah" filter', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '23', teamim_filter: 'torah' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('sefaria_link_format_override'), 'true');
+  assert.equal(userProperties.getProperty('hebrew_link_format_override'), 'true');
+  assert.equal(userProperties.getProperty('teamim_filter'), 'tanakh');
+});
+
+test('v24 never overwrites a stored override or another cantillation filter', () => {
+  const { context, userProperties } = loadMigrations({
+    prefs_schema_version: '23',
+    sefaria_link_format_override: 'false',
+    teamim_filter: 'available',
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('sefaria_link_format_override'), 'false');
+  assert.equal(userProperties.getProperty('teamim_filter'), 'available');
+});
+
+// v25: the citation style starts as the citation's old fixed look.
+test('v25 sets the citation style to its old look, never overwriting a stored value', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '24', citation_font_size: '10' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('citation_font'), '');
+  assert.equal(userProperties.getProperty('citation_font_size'), '10');
+  assert.equal(userProperties.getProperty('citation_font_style'), 'italic');
+  assert.equal(userProperties.getProperty('citation_font_color'), '');
 });

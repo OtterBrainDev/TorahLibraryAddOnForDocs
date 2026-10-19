@@ -3,5 +3,8 @@
   "private": true,
   "scripts": {
     "test": "node --test test/tests/*.test.js test/ui/*.test.js"
+  },
+  "devDependencies": {
+    "linkedom": "0.18.13"
   }
 }

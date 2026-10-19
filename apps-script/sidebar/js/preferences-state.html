@@ -11,15 +11,22 @@ var selectedResultKey = null;
 var selectedResultSummary = null;
 var selectedRefValue = null;
 var queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
-var resultPostProcessState = { availableCorpora: [], removedCorpora: [] };
+var resultPostProcessState = { availableCorpora: [], removedCorpora: [], restoredExcluded: [] };
 var resultsCollapsed = false;
 var pendingPreferredVersions = null;
 var translationAvailabilityByRef = {};
+// Set by updateSuggestion for the version list it built, so an availability
+// answer arriving later (or a preference change) can re-render that list.
+var activeTranslationOptions = null;
+var translationAvailabilityRequested = {};
 var hasResolvedReference = false;
 var searchDebounceHandle = null;
 var keyboardResultIndex = -1;
 var resultsLoading = false;
-var MAX_FUZZY_SUGGESTIONS = 3;
+// Enough to cover a near-miss plus a couple of genuine alternatives, few
+// enough that the panel still reads as "did you mean" rather than a result set
+// — the point is to avoid guessing the user's intent for them.
+var MAX_FUZZY_SUGGESTIONS = 5;
 var preferredTranslationLanguage = "en";
 var sidebarSessionId = null;
 var accountPreferences = {};
@@ -43,20 +50,8 @@ function syncSessionOverrideButtons() {
   $('#open-session-library').prop('disabled', false).attr('aria-disabled', 'false');
 }
 
-function syncAiQuickActionState() {
-  var enabled = String((effectivePreferences || {}).experimental_ai_source_sheet_enabled) === 'true' || (effectivePreferences || {}).experimental_ai_source_sheet_enabled === true;
-  $('.open-ai-lesson-tool').prop('disabled', !enabled).attr('aria-disabled', enabled ? 'false' : 'true');
-}
-
 function applyEffectivePreferencesToUI() {
   mergePreferenceDefaults(effectivePreferences);
-  // Sync AI Shiur audience/style preferences to experimental chip groups
-  if (typeof expSetGroupValue === 'function') {
-    if (effectivePreferences.ai_audience_default)
-      expSetGroupValue('ai-audience', effectivePreferences.ai_audience_default);
-    if (effectivePreferences.ai_lesson_style_default)
-      expSetGroupValue('ai-style', effectivePreferences.ai_lesson_style_default);
-  }
   syncDisplayModeCards();
   syncLayoutCards();
   updateBilingualLayoutVisibility();
@@ -66,10 +61,11 @@ function applyEffectivePreferencesToUI() {
   updateTransliterationVisibility();
   updateTranslationLanguageVisibility();
   syncSessionOverrideButtons();
-  syncAiQuickActionState();
   syncExperimentalAvailability();
   updateQuickActionsForMode();
   if (typeof updateCompositionCard === 'function') updateCompositionCard();
+  // Hidden languages / "Show unavailable translations" shape the version list.
+  if (activeTranslationOptions) activeTranslationOptions.refresh();
 }
 
 function saveAccountPreference(payload, onDone) {
@@ -83,17 +79,57 @@ function saveAccountPreference(payload, onDone) {
   }).setAccountPreferences(payload || {});
 }
 
+// Session saves go to the server one at a time. setSidebarSessionState reads,
+// merges and writes the whole session, so two saves in flight at once (two
+// quick clicks in Insertion Options) could each read the old session and the
+// later write would drop the earlier change: a Vowels choice followed by any
+// other click was lost. And each answer re-applied its own snapshot to the
+// switches, flipping the second click back on screen until its answer came.
+// Now a change shows at once, changes made while a save is in flight wait and
+// go together in the next one, and the switches are re-read from the server's
+// answer only when nothing is left to send.
+var sessionSaveQueue = { pending: null, callbacks: [], inFlight: false };
+
 function saveSessionPreference(payload, onDone) {
   if (!sidebarSessionId) {
     if (typeof onDone === 'function') onDone(sessionPreferences);
     return;
   }
-  google.script.run.withSuccessHandler(function (updated) {
-    sessionPreferences = clonePlainObject(updated || sessionPreferences);
-    effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
-    applyEffectivePreferencesToUI();   // <-- add this
-    if (typeof onDone === 'function') onDone(updated);
-  }).setSidebarSessionState(sidebarSessionId, payload || {});
+  var change = payload || {};
+  sessionPreferences = Object.assign({}, sessionPreferences, change);
+  effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
+  sessionSaveQueue.pending = Object.assign(sessionSaveQueue.pending || {}, change);
+  if (typeof onDone === 'function') sessionSaveQueue.callbacks.push(onDone);
+  flushSessionSaves_();
+}
+
+function flushSessionSaves_() {
+  var queue = sessionSaveQueue;
+  if (queue.inFlight || !queue.pending) return;
+  var batch = queue.pending;
+  var callbacks = queue.callbacks;
+  queue.pending = null;
+  queue.callbacks = [];
+  queue.inFlight = true;
+
+  function finish(updated) {
+    queue.inFlight = false;
+    if (!queue.pending) {
+      sessionPreferences = clonePlainObject(updated || sessionPreferences);
+      effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
+      applyEffectivePreferencesToUI();
+    }
+    callbacks.forEach(function (callback) { callback(updated); });
+    flushSessionSaves_();
+  }
+
+  google.script.run
+    .withSuccessHandler(finish)
+    .withFailureHandler(function () {
+      showSidebarToast('A setting could not be saved for this session. Try again.');
+      finish(null);
+    })
+    .setSidebarSessionState(sidebarSessionId, batch);
 }
 
 function saveSidebarPreference(payload, onDone, forceAccountSave) {
@@ -130,16 +166,22 @@ function saveSessionAsDefaults(onDone) {
 
 function mergePreferenceDefaults(preferences) {
   preferences = preferences || {};
-  if (preferences.include_translation_source_info == "true") {
-    $('.include-translation-source-info').prop('checked', true);
-  }
+  // Stored values are strings; an unset key falls back to the boolean default.
+  $('.include-translation-source-info').prop('checked', String(preferences.include_translation_source_info) === "true");
   $('.wants-vowels').prop('checked', String(preferences.nekudot) !== "false");
   $('.wants-cantillation').prop('checked', String(preferences.teamim) !== "false");
+  $('.wants-hebrew-punctuation').prop('checked', String(preferences.hebrew_punctuation) !== "false");
+  $('.wants-translation-punctuation').prop('checked', String(preferences.translation_punctuation) !== "false");
   $('.include-transliteration').prop('checked', String(preferences.include_transliteration_default) === "true");
   $('.insert-sefaria-link').prop('checked', String(preferences.insert_sefaria_link_default) !== "false");
+  // The source title follows the translation title until it is set apart.
+  var hebrewLink = preferences.insert_hebrew_sefaria_link_default;
+  $('.insert-hebrew-sefaria-link').prop('checked', String(hebrewLink == null ? preferences.insert_sefaria_link_default : hebrewLink) !== "false");
   $('.wants-pesukim').prop('checked', String(preferences.show_line_markers_default) !== "false");
+  $('.source-emphasis-mode').val(ccNormalizeEmphasisMode(preferences.source_emphasis_mode));
   $('.output-mode-selection').val(preferences.output_mode_default || 'both');
   $('.bilingual-layout-selection').val(preferences.bilingual_layout_default || 'he-right');
+  $('.wants-aligned-rows').prop('checked', String(preferences.bilingual_aligned_rows) === "true");
   $('.translation-only-filter').prop('checked', preferences.last_translation_only_filter === "true");
   $('.search-sort-select').val(preferences.last_search_sort_mode || 'relevance');
   $('.wants-relevance').prop('checked', String(preferences.last_search_relevance_sort) !== "false");
@@ -176,6 +218,21 @@ function mergePreferenceDefaults(preferences) {
       $('.translation-language-option[value="' + value.replace(/([\"'])/g, '\$1') + '"]').prop('checked', true);
     });
   }
+  applyHiddenTranslationLanguages(preferences.hidden_translation_languages);
+}
+
+// Leave the languages hidden in Preferences → Search out of the search
+// language filter. A hidden language that was ticked is unticked, so it can't
+// filter results from a row nobody can see; with none left ticked the filter
+// goes back to Any (updateTranslationLanguageVisibility).
+function applyHiddenTranslationLanguages(storedValue) {
+  var hidden = normalizeHiddenTranslationLanguages(storedValue);
+  $('.translation-language-option').each(function () {
+    var isHidden = hidden.indexOf(String($(this).val() || '').toLowerCase()) >= 0;
+    $(this).closest('.translation-language-row').toggleClass('is-pref-hidden', isHidden);
+    if (isHidden) $(this).prop('checked', false);
+  });
+  if (!$('.translation-language-option:checked').length) $('.translation-language-any').prop('checked', true);
 }
 
 function getSidebarTransliterationScheme() {

@@ -63,12 +63,14 @@ function insertSurpriseMe(options) {
 
   const pickedRefs = shuffleArray_(candidateRefs).slice(0, count);
   let inserted = 0;
+  let notice = '';
 
   pickedRefs.forEach(function (ref) {
     try {
       const data = findReference(ref);
       if (!isInsertableResolvedRef_(data)) return;
-      insertReference(data);
+      const outcome = insertReference(data);
+      if (outcome && outcome.notice) notice = outcome.notice;
       inserted++;
     } catch (err) {
       Logger.log('Surprise Me skipped ' + ref + ' because ' + err.message);
@@ -82,7 +84,8 @@ function insertSurpriseMe(options) {
   return {
     term: term,
     inserted: inserted,
-    message: 'Inserted ' + inserted + ' random source' + (inserted === 1 ? '' : 's') + ' for "' + term + '".'
+    message: 'Inserted ' + inserted + ' random source' + (inserted === 1 ? '' : 's') + ' for "' + term + '".' +
+      (notice ? ' ' + notice : '')
   };
 }
 

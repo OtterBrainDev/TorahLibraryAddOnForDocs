@@ -151,7 +151,8 @@ INCLUDE_RE = re.compile(r"""include\s*\(\s*['\"]([^'\"]+)['\"]\s*\)""")
 ENTRY_TEMPLATES = [
     "sidebar.html", "preferences.html", "ai_lesson.html", "surprise-me.html",
     "help-modal.html", "feedback-modal.html", "release-notes.html",
-    "gematriya-count.html", "session-library-modal.html",
+    "gematriya-count.html", "session-library-modal.html", "linker-results.html",
+    "first-run-setup.html",
 ]
 
 def walk(exts):
@@ -266,7 +267,8 @@ ENTRY_TEMPLATES = {
     "sidebar.html", "preferences.html", "ai_lesson.html",
     "surprise-me.html", "help-modal.html", "feedback-modal.html",
     "release-notes.html", "gematriya-count.html",
-    "session-library-modal.html",
+    "session-library-modal.html", "linker-results.html",
+    "first-run-setup.html",
 }
 
 INCLUDE_RE = re.compile(r"""include\s*\(\s*['\"]([^'\"]+)['\"]\s*\)""")
@@ -353,6 +355,59 @@ if unannotated:
 else:
     print("OK: Every .innerHTML assignment has an adjacent justification comment.")
 PY
+)
+
+blue "-- 9b) jQuery .html() writes are innerHTML sinks too --"
+while IFS= read -r line; do
+  case "$line" in
+    FAIL:*) note_fail "${line#FAIL: }" ;;
+    WARN:*) note_warn "${line#WARN: }" ;;
+    OK:*)   note_ok   "${line#OK: }" ;;
+    *)      [ -n "$line" ] && printf '   %s\n' "$line" ;;
+  esac
+done < <(python3 - <<'PYJQ'
+# Check 9 only sees `.innerHTML =`. jQuery's `$(sel).html(x)` is the same sink
+# and bypassed it entirely. It started at WARN while the pre-existing call sites
+# were reviewed; all of them now carry a justification comment, so it is a FAIL
+# like check 9: a new dynamic .html() write needs a comment saying why every
+# interpolated value is escaped, sanitized or static. A `.html()` call whose
+# only argument is a string literal is static markup and is skipped.
+import os, re
+from pathlib import Path
+
+JQUERY_HTML = re.compile(r'\$\([^)]*\)\s*(?:\.[A-Za-z_$][\w$]*\([^;]*?\))*\s*\.html\s*\(')
+STRING_LITERAL_ARG = re.compile(r"\.html\(\s*(['\"])(?:(?!\1).)*\1\s*\)")
+COMMENT_LINE = re.compile(r'^\s*(//|/\*|\*)')
+
+unannotated = []
+for dirpath, _dirs, files in os.walk("."):
+    if "node_modules" in dirpath.split(os.sep):
+        continue
+    for name in files:
+        if not name.endswith(".html"):
+            continue
+        path = os.path.join(dirpath, name)
+        try:
+            lines = Path(path).read_text(encoding="utf-8").split("\n")
+        except Exception:
+            continue
+        for i, ln in enumerate(lines):
+            if not JQUERY_HTML.search(ln):
+                continue
+            if STRING_LITERAL_ARG.search(ln):
+                continue
+            lo = max(0, i - 5)
+            if any(COMMENT_LINE.match(lines[j]) for j in range(lo, i)):
+                continue
+            unannotated.append(path + ":" + str(i + 1) + ": " + ln.strip()[:110])
+
+if unannotated:
+    print("FAIL: " + str(len(unannotated)) + " jQuery .html() write(s) with dynamic content and no justification comment:")
+    for u in unannotated:
+        print("  - " + u)
+else:
+    print("OK: Every dynamic jQuery .html() write has an adjacent justification comment.")
+PYJQ
 )
 
 blue "-- 10) Optional: clasp status --"

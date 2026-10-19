@@ -1,9 +1,11 @@
 {
   "sidebar.html": [
     "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
     "<?!= include('css/tokens'); ?>",
     "<?!= include('css/base'); ?>",
     "<?!= include('css/layout'); ?>",
+    "<?!= include('shared/insertion-options/css'); ?>",
     "<?!= include('shared/css/icon-mode-card'); ?>",
     "<?!= include('shared/ui/core-shared'); ?>",
     "<?!= include('shared/ui/api'); ?>",
@@ -18,12 +20,18 @@
     "<?!= include('sidebar/js/preview-core'); ?>",
     "<?!= include('sidebar/js/search-controller'); ?>",
     "<?!= include('sidebar/js/mode-controller'); ?>",
+    "<?!= include('shared/insertion-options/js'); ?>",
     "<?!= include('sidebar/js/display-controls'); ?>",
     "<?!= include('sidebar/js/event-bindings'); ?>",
-    "<?!= include('sidebar/js/bootstrap'); ?>"
+    "<?!= include('sidebar/js/bootstrap'); ?>",
+    "<?!= include('shared/insertion-options/markup') ?>",
+    "<?!= include('shared/composition-card/markup') ?>"
   ],
   "preferences.html": [
     "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
+    "<?!= include('css/tokens'); ?>",
+    "<?!= include('shared/insertion-options/css'); ?>",
     "<?!= include('preferences/css'); ?>",
     "<?!= include('shared/css/icon-mode-card'); ?>",
     "<?!= include('shared/ui/core-shared'); ?>",
@@ -31,10 +39,13 @@
     "<?!= include('shared/ui/dom'); ?>",
     "<?!= include('shared/ui/feedback'); ?>",
     "<?!= include('shared/ui/state'); ?>",
-    "<?!= include('preferences/js'); ?>"
+    "<?!= include('shared/insertion-options/js'); ?>",
+    "<?!= include('preferences/js'); ?>",
+    "<?!= include('shared/insertion-options/markup') ?>"
   ],
   "surprise-me.html": [
     "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
     "<?!= include('surprise-me/css'); ?>",
     "<?!= include('shared/ui/core-shared'); ?>",
     "<?!= include('shared/ui/api'); ?>",
@@ -42,5 +53,30 @@
     "<?!= include('shared/ui/feedback'); ?>",
     "<?!= include('shared/ui/state'); ?>",
     "<?!= include('surprise-me/js'); ?>"
+  ],
+  "linker-results.html": [
+    "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
+    "<?!= include('css/tokens'); ?>",
+    "<?!= include('shared/insertion-options/css'); ?>",
+    "<?!= include('shared/composition-card/css'); ?>",
+    "<?!= include('shared/insertion-options/markup') ?>",
+    "<?!= include('shared/composition-card/markup') ?>",
+    "<?!= include('shared/insertion-options/js'); ?>",
+    "<?!= include('shared/composition-card/shared'); ?>"
+  ],
+  "session-library-modal.html": [
+    "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
+    "<?!= include('css/tokens'); ?>",
+    "<?!= include('css/components/results'); ?>",
+    "<?!= include('css/utilities'); ?>"
+  ],
+  "first-run-setup.html": [
+    "<?!= include('shared/ui/head'); ?>",
+    "<?!= include('shared/css/native-controls'); ?>",
+    "<?!= include('css/tokens'); ?>",
+    "<?!= include('first-run-setup/css'); ?>",
+    "<?!= include('first-run-setup/js'); ?>"
   ]
 }

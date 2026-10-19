@@ -36,7 +36,11 @@ function buildSearchWrapperPayload_(input, searchConfig) {
 }
 
 function searchWrapperRequest_(payload) {
-  let url = 'https://www.sefaria.org/api/search-wrapper';
+  // /es8 is Sefaria's current route. The bare /api/search-wrapper is the
+  // Elasticsearch 6 compatibility alias (same handler, es6_compat=True), which
+  // only reshapes hits.total — nothing here reads that — and is the one most
+  // likely to be retired.
+  let url = 'https://www.sefaria.org/api/search-wrapper/es8';
   let postOptions = {
     method: 'post',
     payload: JSON.stringify(payload),

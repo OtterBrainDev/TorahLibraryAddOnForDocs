@@ -1,0 +1,24 @@
+<style>
+/*
+ * components/simple-mode.css — the sidebar in Simple mode
+ * (docs/first-run-setup-design.md §6).
+ *
+ * Simple mode hides the search tools with CSS only; nothing leaves the DOM,
+ * so selector contracts, RPC wiring and event bindings are identical in both
+ * modes. Add Source, Insertion Options and the footer's Session Library,
+ * Quick Actions and Preferences buttons show in both modes. Preferences →
+ * Interface → Everything shows what Simple mode hides.
+ */
+
+.unified-sidebar[data-ui-mode="simple"] #search-sort-mode,
+.unified-sidebar[data-ui-mode="simple"] #restore-corpus-menu-wrap {
+  display: none !important;
+}
+
+/* The Texts / Voices / Lexicon tabs. Shown when the sidebar was opened in
+   Voices or Lexicon (a menu item the user switched back on), so they can get
+   back to Texts. */
+.unified-sidebar[data-ui-mode="simple"][data-mode="texts"] .mode-switch-section {
+  display: none !important;
+}
+</style>

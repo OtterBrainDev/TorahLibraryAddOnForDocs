@@ -3,7 +3,7 @@
  * components/footer.css — sidebar footer: button rows, icons, links
  *
  * The footer uses three button-row grids:
- *   .primary-actions        — "Add Source" | "Open in Sefaria" (2-col)
+ *   .primary-actions        — "Add Source", then "Insertion Options" (stacked)
  *   .sidebar-footer-tools   — quick-action icons (3-col)
  *   .session-override-buttons — session override icons (3-col)
  *
@@ -53,8 +53,9 @@
   box-sizing: border-box;
 }
 
+/* Add Source, and Insertion Options under it. */
 .sidebar-footer .primary-actions {
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
 }
 
@@ -287,7 +288,6 @@
 .sidebar-footer .open-sefaria-icon {
   width: 18px;
   height: 18px;
-  object-fit: contain;
 }
 
 .sidebar-footer .session-library-primary-button {
@@ -308,13 +308,6 @@
 .sidebar-footer .samekh,
 .sidebar-footer .sefaria-badge.samekh {
   color: #335f96;
-}
-
-/* AI lesson button always at full opacity regardless of feature state */
-.sidebar-footer .open-ai-lesson-tool,
-.sidebar-footer .open-ai-lesson-tool[disabled],
-.sidebar-footer .open-ai-lesson-tool.is-inactive-feature {
-  opacity: 1;
 }
 
 /* =============================================================

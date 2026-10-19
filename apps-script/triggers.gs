@@ -13,80 +13,72 @@ Licensed under the MIT License. See repository LICENSE.md.
 // installs and opens cleanly. Domain logic lives in server/menu.gs; these
 // are the thinnest possible entry points. See docs/regression-log.md.
 
-function onInstall() {
-  const initialPrefs = {
-    "apply_sheimot_on_insertion": true,
-    "elodim_replace": false,
-    "extended_gemara": false,
-    "god_replace": false,
-    "god_replacement": "G-d",
-    "preferred_translation_language": "en",
-    "hebrew_font": "Noto Sans Hebrew",
-    "hebrew_font_size": 18,
-    "hebrew_font_style": "normal",
-    "include_translation_source_info": false,
-    "include_transliteration_default": false,
-    "insert_sefaria_link_default": true,
-    "show_line_markers_default": true,
-    "output_mode_default": "both",
-    "bilingual_layout_default": "he-right",
-    "meforash_replace": true,
-    "nekudot": true,
-    "nekudot_filter": "always",
-    "surprise_me_enabled": false,
-    "teamim": true,
-    "teamim_filter": "available",
-    "translation_font": "Noto Sans Hebrew",
-    "translation_font_size": 11,
-    "translation_font_style": "normal",
-    "transliteration_font": "Noto Sans Hebrew",
-    "transliteration_font_size": 11,
-    "transliteration_font_style": "italic",
-    "transliteration_scheme": "traditional",
-    "transliteration_overrides": "{}",
-    "transliteration_is_biblical_hebrew": true,
-    "transliteration_biblical_dagesh_mode": "none",
-    "versioning": true,
-    "voices_insert_mode_default": "reference",
-    "voices_translit_default": "none",
-    "lexicon_insert_mode_default": "entry",
-    "yaw_replace": false,
-    "search_mode": "texts"
-  };
-  setPreferences(initialPrefs);
+function onInstall(e) {
+  // Save every default the user does not already have (a reinstall keeps the
+  // user's own choices), then bring the schema up to date. Going through the
+  // migration driver rather than stamping the current version directly means
+  // a reinstall over an older schema still gets its pending migrations. See
+  // seedDefaultPreferences_ in migrations.gs.
+  try {
+    seedDefaultPreferences_(PropertiesService.getUserProperties());
+    runUserPreferenceMigrationsIfNeeded_();
+  } catch (error) {
+    Logger.log(`Could not seed preferences on install: ${error.message}`);
+  }
 
-  let html = HtmlService.createHtmlOutputFromFile('release-notes')
-      .setWidth(720)
-      .setHeight(760);
-  DocumentApp.getUi().showModalDialog(html, 'Release Notes');
+  // Build the menu now. onOpen does not fire for the document the user
+  // installed from, so without this the add-on's menu only appears after a
+  // reload — the first thing a Marketplace reviewer checks. Runs after the
+  // seeding above so the first menu reflects the new user's preferences.
+  onOpen(e);
+
+  // A new user gets first-run setup instead of the release notes (which stay
+  // one click away under Help). A reinstall over a finished setup gets the
+  // release notes as before. See server/first-run.gs.
+  try {
+    if (maybeShowFirstRunSetup_()) return;
+  } catch (error) {
+    Logger.log(`Could not show first-run setup on install: ${error.message}`);
+  }
+
+  try {
+    let html = HtmlService.createHtmlOutputFromFile('release-notes')
+        .setWidth(720)
+        .setHeight(760);
+    DocumentApp.getUi().showModalDialog(html, 'Release Notes');
+  } catch (error) {
+    Logger.log(`Could not show release notes on install: ${error.message}`);
+  }
+}
+
+function installDefaultMenu_() {
+  // The default layout, built without reading preferences. Surprise Me is
+  // omitted because whether it is enabled is itself a preference.
+  installMenuPlan_(planMenuFromLayout_(getDefaultMenuLayout_(), { surpriseMeEnabled: false }));
 }
 
 function onOpen(e) {
   // Per Google Workspace add-on guidance, avoid reading PropertiesService while
   // the add-on is still in AuthMode.NONE so the menu always renders.
-  if (!e || e.authMode !== ScriptApp.AuthMode.NONE) {
-    runUserPreferenceMigrationsIfNeeded_();
-    buildAndInstallMenu();
-  } else {
-    // During AuthMode.NONE, create a minimal menu without reading preferences
-    const ui = DocumentApp.getUi();
-    const addOnMenu = ui.createAddonMenu();
-    const quickActionsMenu = ui.createMenu('Quick Actions')
-        .addItem('Transform Divine Names', 'transformDivineNames')
-        .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
-        .addItem('Unlink Sources', 'unlinkSefariaSources')
-        .addItem('Insert Source from Selection', 'insertSourceFromSelection')
-        .addSeparator()
-        .addItem('Gematriya Count', 'gematriyaCountPopup');
+  if (e && e.authMode === ScriptApp.AuthMode.NONE) {
+    installDefaultMenu_();
+    return;
+  }
 
-    addOnMenu
-        .addItem('Texts', 'textsHTML')
-        .addItem('Voices', 'voicesHTML')
-        .addItem('Lexicon', 'lexiconHTML')
-        .addSubMenu(quickActionsMenu)
-        .addSeparator()
-        .addItem('Preferences', 'preferencesPopup')
-        .addItem('Help & Support', 'openHelpModal')
-        .addToUi();
+  // A migration failure must not cost the user their menu: log it and build
+  // the menu from whatever preferences are stored.
+  try {
+    runUserPreferenceMigrationsIfNeeded_();
+  } catch (error) {
+    Logger.log(`Preference migration failed in onOpen: ${error.message}`);
+  }
+
+  // And a failure reading preferences must not leave the document with no
+  // add-on menu at all: fall back to the default one.
+  try {
+    buildAndInstallMenu();
+  } catch (error) {
+    Logger.log(`Menu build failed in onOpen; installing the default menu: ${error.message}`);
+    installDefaultMenu_();
   }
 }

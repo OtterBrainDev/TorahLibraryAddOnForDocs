@@ -4,6 +4,23 @@ A Google Docs add-on that brings Sefaria-powered source finding, previewing, ins
 
 > This is not an official Sefaria project.
 
+## Privacy
+
+This add-on has no server of its own, no account, and no analytics. Google runs
+it and lets it read and edit **only** the document you have it open in; Sefaria
+is the only party that receives anything you search for or anything from your
+document. Its sidebar and dialogs also load a script library, a stylesheet, a
+font and a few images from Google and Sefaria, like any web page — none of
+those requests carries your data.
+
+Read the full policy: **[`docs/PRIVACY.md`](./docs/PRIVACY.md)**.
+
+The one command that sends text you did not type is **Link Texts with Sefaria**,
+which uploads document text so Sefaria's reference linker can find citations in
+it. By default only the passages that look like they contain a citation are
+uploaded — see *Preferences → Linking → Privacy & Document Scanning*, and §2.1 of the
+policy.
+
 ## Contributing (human or AI)
 
 Before editing anything beyond a typo, read **[`AGENTS.md`](./AGENTS.md)** (also duplicated as `CLAUDE.md`). It covers: what this codebase actually is, the non-negotiable rules, the anti-pattern catalog, and where the canonical documents live. Companion docs:
@@ -31,7 +48,7 @@ See [docs/CHANGELOG.md](./docs/CHANGELOG.md) for a fuller summary of changes and
 
 ### Unified Find & Insert workflow
 
-The add-on now centers on a unified **Find & Insert Source** sidebar that combines direct lookup and search into a single workflow:
+The add-on centers on a unified sidebar that combines direct lookup and search into a single workflow; a **Texts** / **Voices** / **Lexicon** control under the search box re-runs the same search for texts, source sheets or dictionary entries:
 
 1. find a source by reference, title, nested path, phrase, or Sefaria URL,
 2. select a result,
@@ -46,24 +63,37 @@ The sidebar groups results into:
 
 ### Display and layout controls
 
-The unified sidebar supports:
+The sidebar's **📰 Insertion Options** panel (the full-width button under
+**Add Source**) sets this session's insertion; **Preferences → Insertion** sets
+the defaults, and Link Texts' **📰 Customize this insertion** one linking pass.
+Its **Display** control has three modes:
 
-- **Source**
-- **Translation**
-- **Source with Translation**
+- **A** — translation only
+- **A + א** — Hebrew with translation
+- **א** — Hebrew only
 
-For bilingual insertion, layout options include:
+For bilingual insertion, **Arrangement** offers:
 
-- **Hebrew on top**
-- **Hebrew left**
-- **Hebrew right**
+- **Stacked** (Hebrew above the translation)
+- **Right–Left** (Hebrew on the right)
+- **Left–Right** (Hebrew on the left)
 
-### Hebrew formatting controls
+with switches for **Citation**, **Line by line** (one table row per verse, for
+the side-by-side arrangements) and **Line numbers**.
 
-The unified sidebar includes visible Hebrew formatting controls for:
+### Hebrew and translation formatting controls
 
-- **Vowels**
-- **Cantillation**
+The panel's **Insertion Format** card has a **Source** (Hebrew) section and a
+**Translation** section, each folding to a one-line summary. They hold:
+
+- **Link title to Sefaria**, **Title font** and **Text font** (each section its own),
+- **Vowels** (Off / Tanakh / On) and **Cantillation** (Off / Tanakh / Torah),
+- **Punctuation** (each section its own),
+- **Transliteration**, with its **Style**,
+- **Bold & italics** (Keep / Drop / Only) for the translation.
+
+Hebrew marks a chosen font lacks (often the cantillation) are set in Noto
+Serif / Sans Hebrew, so they never show as empty boxes.
 
 Advanced source-edition/version controls remain available for cases where a specific source edition is needed.
 
@@ -85,6 +115,13 @@ The add-on supports:
 - **Open on Sefaria** for the currently selected result,
 - **Link Texts with Sefaria** as a document-level action for turning recognizable references in the current Doc into Sefaria hyperlinks.
 
+### Simple or Everything
+
+New users get a short first-run setup and can pick **Simple** (search, preview,
+insert, with fewer tools in view and a shorter menu) or **Everything**.
+Existing users keep Everything. Switch at the top of Preferences; Simple hides
+with CSS only, so nothing is lost.
+
 ### Preferences
 
 Persistent user preferences include:
@@ -100,9 +137,10 @@ Persistent user preferences include:
 
 When a selected result is a non-leaf or structural node rather than directly insertable text, the sidebar now provides clearer guidance and keeps insertion disabled until a text-bearing node is selected.
 
-## Key enhancements in this fork
+## What's new compared with the original add-on
 
-This fork substantially expands the original add-on workflow, including:
+Torah Library builds on the original Sefaria add-on for Google Docs by Shlomi
+Helfgot (see [LICENSE.md](./LICENSE.md)) and substantially expands it, including:
 
 - replacing the older split insertion/search flow with a unified sidebar,
 - improving search-result selection and preview behavior,
@@ -116,17 +154,20 @@ This fork substantially expands the original add-on workflow, including:
 
 See [docs/CHANGELOG.md](./docs/CHANGELOG.md) for a fuller summary of changes and [LICENSE.md](./LICENSE.md) for the repository license.
 
-## Translation details / attribution
+## Source attribution
 
-When Translation text is inserted, the add-on can optionally append a compact translation details block.
+Each inserted source can carry a small credit block under it, and this is **on
+by default** (Preferences → Insertion, or the sidebar's details toggle). Many
+Sefaria texts are CC-BY or CC-BY-NC, so the credit is what lets a user reuse
+them properly.
 
-Behavior summary:
-
-1. Translation details are only relevant when Translation is inserted (Translation-only or bilingual output).
-2. The formatter first uses `data.versionSource` when present.
-3. If missing, it falls back to matching `data.versions`.
-4. If no source is found, it still emits a version-title-only block when possible.
-5. If no usable translation version title is available, no translation-details block is inserted.
+1. The translation is credited whenever it is inserted (Translation-only or
+   bilingual): its version title, source site, digitizer and license
+   (`apps-script/attribution.gs`).
+2. The Hebrew edition is credited whenever it is inserted (Hebrew-only or
+   bilingual): its version title and its own license (`heLicense`).
+3. When no version title is available for an edition, that edition gets no
+   credit line rather than an empty one.
 
 ## AI lesson generator (deferred)
 
@@ -134,20 +175,22 @@ An AI-assisted lesson / shiur drafting feature was developed on the rewrite bran
 
 ## Menu actions
 
-The add-on menu includes:
+The add-on menu (**Extensions → Torah Library**) includes, by default:
 
-- **Texts** — unified Find & Insert sidebar (default).
-- **Voices** — commentary/voices search with insert controls.
-- **Lexicon** — reverse-lookup dictionary.
-- **Quick Actions** submenu — Transform Divine Names, Link Texts with Sefaria, Gematriya Count.
-- **Preferences**
-- **Help & Support**
+- **Texts** — the unified search-and-insert sidebar.
+- **Voices** — source-sheet search with insert controls.
+- **Lexicon** — dictionary lookup.
+- **Insert Source from Selection** — look up the selected reference and insert it.
+- **Quick Actions** submenu — Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count.
 - **Surprise Me** — preference-gated experimental feature (random-reference discovery).
+- **Preferences** and **Help & Support** — always last.
+
+Users can reorder, group and hide items in **Preferences → Menu Bar**.
 
 ## Demo and walkthrough
 
-- [Worked example Google Doc](PASTE_GOOGLE_DOC_LINK_HERE)
 - [Google Docs walkthrough](./docs/google-docs-walkthrough.md)
+- [Live walkthroughs](./docs/walkthroughs/README.md) — five scripts for live demos: a stress test, a developer tour, a power-user tour, a guide for users of the original add-on, and a five-minute first run.
 
 
 ## Repository structure
@@ -159,7 +202,8 @@ The add-on menu includes:
 
 All Google Apps Script source files live under `apps-script/` (clasp rootDir):
 
-- `apps-script/Code.gs` — main server logic: menu, Sefaria API, insertion, linking, preferences, divine-name transforms, typography.
+- `apps-script/server/*.gs` — server logic, one file per domain: `menu.gs` / `menu-layout.gs` (menu and dialogs), `sefaria-fetch.gs` and `search.gs` (Sefaria API), `insertion.gs` (writing sources into the document), `document-actions.gs` (linking, divine-name transforms, insert from selection), `linker-prefilter.gs` and `citation-abbreviations.gs` (linker support), `preferences.gs`, `text-processing.gs`, `sheets.gs`, `lexicon.gs`, `utils.gs`.
+- `apps-script/triggers.gs` — the `onInstall` / `onOpen` simple triggers (kept at the root on purpose; see the file header).
 - `apps-script/appsscript.json` — Apps Script project manifest.
 - `apps-script/attribution.gs` — dual-mode (Apps Script + Node test) helper for translation/source attribution.
 - `apps-script/config.gs` — `DEV_FLAGS` object.
@@ -177,14 +221,16 @@ All Google Apps Script source files live under `apps-script/` (clasp rootDir):
 
 ### Documentation
 
-- `docs/CHANGELOG.md` - Summary of major enhancements in this fork.
+- `docs/CHANGELOG.md` - User-facing changes by release.
 - `docs/google-docs-walkthrough.md` - End-user walkthrough for the current unified workflow.
+- `docs/PRIVACY.md`, `docs/TERMS.md` - Privacy policy and terms of service.
+- `docs/marketplace-listing.md` - Google Workspace Marketplace console package and release procedure.
+- `docs/architecture.md`, `docs/regression-log.md`, `docs/versioning.md` - For contributors.
 
 ### Tests
-- `test/tests/attribution.test.js` - Lightweight local unit tests for attribution formatting/fallback behavior.
-- `test/tests/hebrew-preferences.test.js` - Hebrew display preference and divine-name replacement tests (runs `applyHebrewDisplayPreferences` / `applyHebrewDivineNamePreferences` against the real `Code.gs` via `vm`).
-- `test/ui/*.test.js` - Lightweight template / contract / snapshot tests for the sidebar and dialog entry points.
-- Run everything with `npm test` from the repo root.
+- `test/tests/*.test.js` - Unit tests for server logic (insertion, attribution, preferences and migrations, Hebrew display and divine names, linker, search normalization, the HTML sanitizer, triggers), loading the real `.gs` files via `vm`.
+- `test/ui/*.test.js` - Template, contract and snapshot tests for the sidebar and dialog entry points.
+- Run everything with `npm ci && npm test` from the repo root. `CLAUDE.md` lists every test file and the expected count.
 
 ## Development workflow
 
@@ -196,13 +242,14 @@ All Google Apps Script source files live under `apps-script/` (clasp rootDir):
 
 ### 2) Run local unit tests
 
-Prerequisite: Node.js 18+ (for built-in `node:test`).
+Prerequisite: Node.js 22 (what CI uses).
 
 ```bash
+npm ci    # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Current local tests are intentionally lightweight and cover pure logic only.
+Local tests cover logic and templates; they do not emulate Google Docs.
 
 ### 3) Manual validation in Apps Script
 
@@ -223,11 +270,9 @@ Recommended manual validation includes:
 
 ### 4) Local testing details
 
-Current local tests intentionally cover only pure logic such as:
-
-- attribution formatting,
-- source fallback resolution,
-- empty/edge input behavior.
+Local tests cover logic that can run outside Google Docs — formatting,
+preferences and migrations, text processing, the linker's pre-filter — plus
+contract and snapshot tests of the HTML templates.
 
 They do **not** attempt to emulate Google Docs `DocumentApp`, cursor behavior, selection behavior, or table insertion APIs.
 
@@ -253,34 +298,3 @@ The source code in this repository is licensed under the [MIT License](./LICENSE
 This project uses the Sefaria API but is not an official Sefaria project.
 Texts and metadata retrieved from Sefaria may carry separate attribution,
 copyright, or reuse terms depending on the source text.
-
-
-
-# Add-on UI Refactor Pack
-
-This pack contains guardrails, a migration checklist, test scaffolding, and a package.json script snippet to help Codex refactor your Apps Script add-on UI without drifting from your existing UX.
-
-## Files included
-
-- `docs/ui-refactor-guardrails.md`
-- `docs/ui-refactor-checklist.md`
-- `tests/validate-html-includes.mjs`
-- `tests/validate-selectors.mjs`
-- `tests/validate-page-contracts.mjs`
-- `tests/snapshot-page-templates.mjs`
-- `tests/fixtures/expected-selectors.json`
-- `package-scripts-snippet.json`
-
-## How to use
-
-1. Copy the `docs/` and `tests/` folders into your repo.
-2. Merge the scripts from `package-scripts-snippet.json` into your existing `package.json`.
-3. Adjust `tests/fixtures/expected-selectors.json` to match your actual critical selectors.
-4. Run `npm run test:ui-snapshots` once to generate baseline snapshots.
-5. After each Codex pass, run `npm run test:ui`.
-
-## Notes
-
-- The selector fixture is intentionally conservative and should be customized to your real contract.
-- The snapshot test is structure-oriented, not a visual browser screenshot test.
-- The JS contract test will intentionally fail until the shared/page module files exist.

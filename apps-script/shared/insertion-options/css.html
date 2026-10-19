@@ -1,0 +1,190 @@
+<style>
+/*
+ * shared/insertion-options/css — the Layout pickers
+ * (shared/insertion-options/markup.html). Used by the sidebar's Layout tray,
+ * Preferences and the Link Texts dialog's "Customize this insertion" panel;
+ * colours come from css/tokens.html, which each host includes first.
+ * Edit it here, not in a host.
+ *
+ * Each picker is a label over a segmented control (one track, the chosen
+ * option raised on it), the pattern Google Docs and most settings panels use
+ * for a choice of two to four. The pickers stack in a narrow host (the
+ * sidebar) and sit side by side where there is room (Preferences). The line
+ * options under them are switch rows: .cc-row in shared/composition-card/css.
+ */
+
+.display-layout-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px 16px;
+  align-items: start;
+}
+
+.display-choice-detail {
+  min-width: 0;
+}
+
+.display-choice-label {
+  margin: 0 0 5px;
+  color: var(--row-sublabel);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* =============================================================
+   SEGMENTED CONTROLS (Display and Arrangement)
+   ============================================================= */
+
+.mode-card-group,
+.layout-option-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  padding: 2px;
+  background: var(--seg-track);
+  border-radius: 9px;
+}
+
+.mode-card,
+.layout-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 6px;
+  overflow: hidden;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  color: var(--row-sublabel);
+  text-align: center;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.mode-card:hover,
+.layout-option:hover {
+  color: var(--sefaria-blue);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.mode-card.selected,
+.layout-option.selected {
+  color: var(--seg-selected-text);
+  background: var(--seg-selected-bg);
+  box-shadow: var(--seg-shadow);
+}
+
+.mode-card:focus-visible,
+.layout-option:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+/* =============================================================
+   DISPLAY OPTION CONTENT (A, A+א, א)
+   ============================================================= */
+
+.mode-card-content,
+.mode-card-content.both {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.mode-card-plus {
+  color: currentColor;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mode-card-symbol {
+  display: inline-block;
+  color: currentColor;
+  font-family: "Frank Ruhl Libre", "Noto Serif Hebrew", serif;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.mode-card-symbol.latin {
+  font-family: "EB Garamond", Georgia, serif;
+  font-size: 18px;
+}
+
+/* =============================================================
+   ARRANGEMENT ICONS (a schematic page per layout)
+   ============================================================= */
+
+.layout-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 30px;
+  height: 20px;
+  box-sizing: border-box;
+  padding: 2px;
+  background: #fff;
+  border: 1px solid #c9c4bb;
+  border-radius: 3px;
+}
+
+.layout-icon.stacked {
+  flex-direction: column;
+}
+
+.layout-col,
+.layout-row {
+  display: block;
+  border-radius: 1px;
+}
+
+.layout-col {
+  width: 9px;
+  height: 100%;
+}
+
+.layout-row {
+  width: 100%;
+  height: 5px;
+}
+
+/* The Hebrew dark, the translation light, whichever side each is on. */
+.layout-col.he,
+.layout-row.he {
+  background: #1f3f75;
+}
+
+.layout-col.en,
+.layout-row.en {
+  background: #a9b8d1;
+}
+
+.layout-option:not(.selected) .layout-col.he,
+.layout-option:not(.selected) .layout-row.he {
+  background: #7c8595;
+}
+
+.layout-option:not(.selected) .layout-col.en,
+.layout-option:not(.selected) .layout-row.en {
+  background: #cfd3da;
+}
+
+/* =============================================================
+   The line options: "Line by line" (#layout-rows-toggle, one table row per
+   line for the side-by-side layouts), Line numbers and Citation. Switch rows
+   (.cc-row / .cc-toggle in shared/composition-card/css) under the pickers.
+   ============================================================= */
+
+.layout-rows-row {
+  margin-top: 8px;
+}
+</style>

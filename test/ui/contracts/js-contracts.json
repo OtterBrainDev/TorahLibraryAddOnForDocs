@@ -25,7 +25,33 @@
     "insertSheet",
     "insertReference",
     "sheetPayload",
-    "insertMode"
+    "insertMode",
+    "sourceEmphasisMode"
+  ],
+  "apps-script/shared/composition-card/shared.html": [
+    "function initCompositionCard",
+    "function updateCompositionCard",
+    "function ccNormalizeEmphasisMode",
+    "function ccVowelsMode",
+    "function ccCantillationMode",
+    "function ccFontStateFrom",
+    "function ccFontPrefixFor",
+    "#cc-emphasis-toggle",
+    "#cc-he-title-toggle"
+  ],
+  "apps-script/shared/insertion-options/js.html": [
+    "function initInsertionOptions",
+    "function updateInsertionOptions"
+  ],
+  "apps-script/sidebar/js/display-controls.html": [
+    "initInsertionOptions(",
+    "function syncDisplayModeCards",
+    "function syncLayoutCards"
+  ],
+  "apps-script/preferences/js.html": [
+    "function _initPreferencesInsertionOptions",
+    "initInsertionOptions(",
+    "hideInapplicable: false"
   ],
   "apps-script/sidebar/js/bootstrap.html": [
     "function initializeSidebar",

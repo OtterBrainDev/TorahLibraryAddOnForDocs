@@ -20,11 +20,9 @@ function updateActionabilityUI(state) {
 function setResultsLoading(isLoading) {
   resultsLoading = !!isLoading;
   $('.results-panel').toggleClass('is-loading', resultsLoading);
-  if (!$('.results-loading-indicator').length) {
-    $('.results-header').append("<div class='results-loading-indicator' aria-live='polite' style='display:none;'><span class='preview-loading-spinner' aria-hidden='true'></span><span>Searching…</span></div>");
-  }
   if (isLoading) {
-    var skeletonHtml = '';
+    var skeletonHtml = "<li class='search-busy-row' role='status' aria-live='polite'>" +
+      "<span class='search-busy-lens' aria-hidden='true'></span><span>Searching Sefaria…</span></li>";
     for (var i = 0; i < 4; i++) {
       skeletonHtml += "<li class='skeleton-result-item' aria-hidden='true'>" +
         "<div class='skeleton-bar skeleton-title'></div>" +
@@ -32,12 +30,12 @@ function setResultsLoading(isLoading) {
         "<div class='skeleton-bar skeleton-meta'></div>" +
         "</li>";
     }
+    // Static skeleton markup; nothing interpolated.
     $('.library-results').html(skeletonHtml);
     $('.search-results').empty();
   } else {
-    $('.skeleton-result-item').remove();
+    $('.skeleton-result-item, .search-busy-row').remove();
   }
-  $('.results-loading-indicator').hide();
 }
 
 
@@ -48,14 +46,31 @@ function setResultsLoading(isLoading) {
 
 // Session library and results rendering extracted to sidebar_session_library and sidebar_results_render.
 
-function runUnifiedQuery() {
-  if (appMode === 'voices') return runVoicesQuery();
-  if (appMode === 'lexicon') return runLexiconQuery();
+function runUnifiedQuery(options) {
+  // Also bound directly as a click handler, so `options` may be a jQuery event.
+  var fromTyping = !!(options && options.fromTyping === true);
+  if (appMode === 'voices') return runVoicesQuery(fromTyping);
+  if (appMode === 'lexicon') return runLexiconQuery(fromTyping);
   updateModeDependentSections();
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  $('.input').val(input);
+  // Write the tidied query back only on an explicit search (Enter, the search
+  // button, a history or suggestion click). Doing it from the as-you-type
+  // debounce fought the reader for the field: a pause after "Deuteronomy "
+  // trimmed the space they had just typed, and any rewrite moved the caret to
+  // the end mid-edit.
+  if (!fromTyping) $('.input').val(input);
   var inputExpanded = expandShevaApostrophe(input);
-  var inputForNameApi = applyConsonantClusterVoweling(inputExpanded);
+  // Canonicalize traditional abbreviations before the title lookup: Sefaria's
+  // autocompleter indexes "Hilchot Shabbat", never "Hil. Shabbat".
+  // The title lookup is tried with the reader's own spelling first, and only
+  // falls back to the voweled form. applyConsonantClusterVoweling turns
+  // "Bshalach" into "Beshalach", which is the point — but it also turns
+  // "Psalms" into "Pesalms" and "Stone Edition" into "Setone Edition", because
+  // nothing distinguishes a transliterated sheva from an ordinary English onset
+  // cluster by shape. Used as a FALLBACK it can only add matches; used as the
+  // query it silently loses one of the most-searched titles in the library.
+  var inputForNameApi = canonicalizeCitationAbbreviation(inputExpanded);
+  var inputForNameApiFallback = applyConsonantClusterVoweling(inputForNameApi);
   var useNameApi = isLikelyTitleQuery(inputExpanded);
   clearSelectedResult();
   setResultsHint('');
@@ -104,15 +119,8 @@ function runUnifiedQuery() {
     return;
   }
 
-  var prefixTitles = titles
-    .filter(function (title) {
-      if (!title) return false;
-      var expandedTitle = expandShevaApostrophe(title).toUpperCase();
-      var queryA = inputExpanded.toUpperCase();
-      var queryB = inputForNameApi.toUpperCase();
-      return expandedTitle.indexOf(queryA) === 0 || (queryB !== queryA && expandedTitle.indexOf(queryB) === 0);
-    })
-    .slice(0, 6)
+  // Punctuation-blind: "The Torah A Women" lists "The Torah; A Women's ...".
+  var prefixTitles = getLoosePrefixTitleMatches([inputExpanded, inputForNameApi], 6)
     .map(function (title, index) {
       return {
         key: "library-title-" + index + "-" + title,
@@ -125,20 +133,28 @@ function runUnifiedQuery() {
       };
     });
 
+  // Rewrites the title to the catalogue's spelling ("The Torah, A Womens
+  // Commentary, ..." → "The Torah; A Women's Commentary, ..."). The row shows
+  // that canonical form, so the reader sees what will actually be inserted.
   var directLookupInput = normalizeLatinLookupTitleCase(inputExpanded);
   var directRefMatch = {
     key: "library-ref-" + directLookupInput,
     ref: directLookupInput,
-    label: input,
+    label: directLookupInput,
     subtitle: 'Direct reference lookup',
     typeLabel: 'Library',
     hasTranslation: true,
     availableLangs: []
   };
 
+  var fuzzyMatches = buildFuzzyLibraryMatches(inputExpanded);
+  function setLibraryMatches(matches) {
+    queryState.rawLibraryMatches = mergeLibraryMatchesWithFuzzy(matches, fuzzyMatches, 10);
+  }
+
   var isHebrewScript = isLikelyHebrewScriptInput(input);
   resetResultPostProcessState();
-  queryState.rawLibraryMatches = prefixTitles;
+  setLibraryMatches(prefixTitles);
   queryState.rawSearchResults = [];
   reprocessAndRenderResults();
 
@@ -158,8 +174,16 @@ function runUnifiedQuery() {
 
   google.script.run.withSuccessHandler(function (response) {
     if (validationRequestId !== latestDirectRefValidationRequestId || requestId !== latestQueryRequestId) return;
-    var isValidDirectRef = getResolvedNodeState(response).resolved;
-    if (isValidDirectRef) {
+    var directRefState = getResolvedNodeState(response);
+    if (directRefState.isStructural) {
+      // A real ref with no text of its own (a book or section heading). Listing
+      // it would offer a row that can only end in "Choose a more specific ref",
+      // so leave it out — along with any title match for the same ref — and
+      // say what to add instead.
+      markResultRefNonInsertable(directLookupInput);
+      if (response && response.ref) markResultRefNonInsertable(response.ref);
+      setResultsHint(buildNonInsertableHint(directLookupInput, directRefState.prompt));
+    } else if (directRefState.isInsertable) {
       var resolvedLangs = Array.isArray(response && response.availableLangs)
         ? response.availableLangs.map(function(l) { return String(l || '').toLowerCase(); }).filter(Boolean)
         : (Array.isArray(response && response.versions)
@@ -167,18 +191,21 @@ function runUnifiedQuery() {
             : []);
       directRefMatch.availableLangs = resolvedLangs;
       directRefMatch.hasTranslation = resolvedLangs.length > 0;
-      queryState.rawLibraryMatches = [directRefMatch].concat(queryState.rawLibraryMatches).slice(0, 10);
+      setLibraryMatches([directRefMatch].concat(queryState.rawLibraryMatches));
       setResultsHint('');
     } else if (isHebrewScript) {
       setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
     }
     reprocessAndRenderResults();
     finishResultGroup();
-  }).withFailureHandler(function () {
+  }).withFailureHandler(function (error) {
     if (validationRequestId !== latestDirectRefValidationRequestId || requestId !== latestQueryRequestId) return;
-    if (isHebrewScript) setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
+    // findReference throws only when Sefaria can't be reached; say that
+    // rather than implying the reference doesn't exist.
+    if (error && error.message) setResultsHint(error.message);
+    else if (isHebrewScript) setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
     finishResultGroup();
-  }).findReference(directLookupInput);
+  }).findReferenceForSidebar(directLookupInput, null, sidebarSessionId);
 
   var searchParameters = getSearchParameters();
   google.script.run.withSuccessHandler(function (response) {
@@ -198,7 +225,7 @@ function runUnifiedQuery() {
     });
     var filteredLibraryPathHits = applyClientSideSearchFilters(libraryPathHits, searchParameters).slice(0, 10);
     var filteredContentHits = applyClientSideSearchFilters(contentHits, searchParameters).slice(0, 12);
-    queryState.rawLibraryMatches = queryState.rawLibraryMatches.concat(filteredLibraryPathHits).slice(0, 10);
+    setLibraryMatches(queryState.rawLibraryMatches.concat(filteredLibraryPathHits));
     queryState.rawSearchResults = filteredContentHits;
     if (searchParameters.translationOnly && !queryState.libraryMatches.length && !queryState.searchResults.length) {
       setResultsHint('No results matched the selected translation language filter.');
@@ -214,28 +241,48 @@ function runUnifiedQuery() {
   }).findSearchAdvanced(inputExpanded, searchParameters);
 
   if (useNameApi) {
-    google.script.run.withSuccessHandler(function(nameCandidates) {
-      if (requestId !== latestQueryRequestId) return;
-      var nameMatches = (Array.isArray(nameCandidates) ? nameCandidates : [])
-        .filter(function(c) { return nameCandidatePassesFullQueryGuard(c, inputExpanded); })
-        .map(function(c, idx) {
-          return {
-            key: 'name-candidate-' + idx + '-' + c,
-            ref: c,
-            label: c,
-            subtitle: 'Title match',
-            typeLabel: 'Library',
-            hasTranslation: true,
-            availableLangs: []
-          };
-        });
-      queryState.rawLibraryMatches = nameMatches.concat(queryState.rawLibraryMatches).slice(0, 10);
-      reprocessAndRenderResults();
-      finishResultGroup();
-    }).withFailureHandler(function() {
-      if (requestId !== latestQueryRequestId) return;
-      finishResultGroup();
-    }).getNameCandidates(inputForNameApi);
+    requestNameCandidates(inputForNameApi, function (candidates) {
+      if (candidates.length || inputForNameApiFallback === inputForNameApi) {
+        applyNameCandidates(candidates);
+        return;
+      }
+      // Nothing matched the reader's spelling; try the voweled form before
+      // giving up. Two calls only in the miss case, one in the hit case.
+      requestNameCandidates(inputForNameApiFallback, applyNameCandidates);
+    });
+  }
+
+  function requestNameCandidates(query, done) {
+    google.script.run
+      .withSuccessHandler(function (candidates) {
+        if (requestId !== latestQueryRequestId) return;
+        done(Array.isArray(candidates) ? candidates : []);
+      })
+      .withFailureHandler(function () {
+        if (requestId !== latestQueryRequestId) return;
+        finishResultGroup();
+      })
+      .getNameCandidates(query);
+  }
+
+  function applyNameCandidates(candidates) {
+    if (requestId !== latestQueryRequestId) return;
+    var nameMatches = candidates
+      .filter(function(c) { return nameCandidatePassesFullQueryGuard(c, inputExpanded); })
+      .map(function(c, idx) {
+        return {
+          key: 'name-candidate-' + idx + '-' + c,
+          ref: c,
+          label: c,
+          subtitle: 'Title match',
+          typeLabel: 'Library',
+          hasTranslation: true,
+          availableLangs: []
+        };
+      });
+    setLibraryMatches(nameMatches.concat(queryState.rawLibraryMatches));
+    reprocessAndRenderResults();
+    finishResultGroup();
   }
 }
 
@@ -272,6 +319,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     setInsertButtonState(!!lexItem);
     $('#open-on-sefaria').prop('disabled', true);
     if (lexItem) {
+      // buildLexiconPreviewHtml escapes the headword, source, morphology and body text.
       $('.suggestions').html(buildLexiconPreviewHtml(lexItem));
     }
     updateModeDependentSections();
@@ -284,6 +332,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
   setInsertButtonState(false);
   $('#open-on-sefaria').prop('disabled', true);
   updatePesukimAvailability(null);
+  // buildPreviewLoadingHTML escapes its message.
   $('.suggestions').html(buildPreviewLoadingHTML('Loading preview…'));
 
   google.script.run.withSuccessHandler(function (response) {
@@ -314,8 +363,10 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     clearVersionSelectors();
     updatePesukimAvailability(null);
     updateActionabilityUI(nodeState);
-    $('.suggestions').html("<br>" + buildNonInsertableMessage(response));
-  }).withFailureHandler(function () {
+    // buildNonInsertableMessage escapes the ref (buildPreviewMeta) and the prompt.
+    $('.suggestions').html("<br>" + buildNonInsertableMessage(response, true));
+    scheduleReturnToResults(requestId, selectedRef, inputLabel, nodeState.prompt);
+  }).withFailureHandler(function (error) {
     if (requestId !== latestResolveRequestId) return;
     hasResolvedReference = false;
     setInsertButtonState(false);
@@ -323,8 +374,45 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     clearVersionSelectors();
     updatePesukimAvailability(null);
     updateActionabilityUI({ isInsertable: false });
-    $('.suggestions').html("<br><b>Enter a valid reference to insert.</b>");
-  }).findReference(selectedRef);
+    // Static markup; the only interpolated value is the server's error
+    // message, escaped with escapeHTML.
+    $('.suggestions').html("<br><b>" + escapeHTML((error && error.message) || 'Enter a valid reference to insert.') + "</b>");
+  }).findReferenceForSidebar(selectedRef, null, sidebarSessionId);
+}
+
+// How long the "not directly insertable" notice stays up before the sidebar
+// goes back to the result list by itself.
+var NON_INSERTABLE_RETURN_DELAY_MS = 2500;
+
+function buildNonInsertableHint(label, prompt) {
+  return '\u201c' + String(label || '').trim() + '\u201d is a whole book or section, so it can\u2019t be inserted on its own. ' +
+    String(prompt || '').trim();
+}
+
+function scheduleReturnToResults(requestId, ref, label, prompt) {
+  setTimeout(function () {
+    // The reader has already moved on (another result, a new search, another
+    // tab): leave their new state alone.
+    if (requestId !== latestResolveRequestId || selectedRefValue !== ref || appMode !== 'texts') return;
+    returnToResultsFromDeadEnd(ref, label, prompt);
+  }, NON_INSERTABLE_RETURN_DELAY_MS);
+}
+
+// Undo the selection of a result that turned out to have no text of its own:
+// drop it from the list, select nothing, reopen the results, and put the
+// cursor back in the search box so the reader can add a chapter or verse.
+function returnToResultsFromDeadEnd(ref, label, prompt) {
+  markResultRefNonInsertable(ref);
+  resetSelectedResultView();
+  reprocessAndRenderResults();
+  setResultsHint(buildNonInsertableHint(label || ref, prompt));
+  var $input = $('.input');
+  $input.trigger('focus');
+  var inputEl = $input.get(0);
+  if (inputEl && typeof inputEl.setSelectionRange === 'function') {
+    var end = String($input.val() || '').length;
+    inputEl.setSelectionRange(end, end);
+  }
 }
 
 function refreshSelectedResult() {
@@ -378,7 +466,7 @@ function buildVoicesPreviewHtml(item) {
   var accentAttr = accent ? " data-accent='" + accent + "'" : '';
 
   var openBtn = item.url
-    ? "<a class='voice-preview-open-btn' href='" + escapeHTML(item.url) + "' target='_blank' rel='noopener' aria-label='Open " + title + " on Sefaria'><img src='https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png' alt='' class='open-sefaria-icon'></a>"
+    ? "<a class='voice-preview-open-btn' href='" + escapeHTML(item.url) + "' target='_blank' rel='noopener' aria-label='Open " + title + " on Sefaria'><span class='open-sefaria-icon' aria-hidden='true'></span></a>"
     : '';
   var copyBtn = "<button type='button' class='voice-preview-copy-btn' aria-label='Copy citation to clipboard'>📋</button>";
 
@@ -423,9 +511,9 @@ function renderVoicesCard(item) {
   updateVoiceNavButtons();
 }
 
-function runVoicesQuery() {
+function runVoicesQuery(fromTyping) {
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  $('.input').val(input);
+  if (fromTyping !== true) $('.input').val(input);
   clearSelectedResult();
   selectedVoiceItem = null;
   setResultsHint('');
@@ -993,9 +1081,9 @@ $(document).on('input', '.input', function () {
 
 /* ── Main lexicon query ─────────────────────────────────────────────────────── */
 
-function runLexiconQuery() {
+function runLexiconQuery(fromTyping) {
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  $('.input').val(input);
+  if (fromTyping !== true) $('.input').val(input);
   clearSelectedResult();
   selectedLexiconItem = null;
   setResultsHint('');

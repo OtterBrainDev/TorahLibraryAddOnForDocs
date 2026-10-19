@@ -75,6 +75,7 @@ test('getSidebarBootstrapData returns an object with every contract key at the d
     },
   };
   vm.createContext(context);
+  vm.runInContext(fs.readFileSync(path.join(ROOT, 'apps-script/server/menu-layout.gs'), 'utf8'), context, { filename: 'menu-layout.gs' });
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'apps-script/migrations.gs'), 'utf8'), context, { filename: 'migrations.gs' });
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'apps-script/server/preferences.gs'), 'utf8'), context, { filename: 'preferences.gs' });
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'apps-script/server/menu.gs'), 'utf8'), context, { filename: 'menu.gs' });

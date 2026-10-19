@@ -1,0 +1,231 @@
+# Live test checklist — v2.1.0
+
+Run this in a real Google Doc against HEAD — after `clasp push`, installed via
+Apps Script → Deploy → Test deployments — before creating the release version
+and pointing the Marketplace SDK at it. Everything here is something the automated suite **cannot** reach:
+`npm test` covers logic, contracts and snapshots, and every page has been
+loaded in headless Chromium without script errors, but nothing automated
+holds a `DocumentApp` handle or makes a request to Sefaria.
+
+**Version under test:** 2.1.0 · **preference schema:** 13 (both from
+`docs/VERSION.json`)
+Confirm both before starting — *Help & Support → About* should read
+**Current line: 2.1**. If it says 2.0, the push did not land.
+
+Two accounts' worth of setup matters, because half the risk in this release is
+in the *upgrade* path:
+
+- **Account A — upgrading user.** Already had the add-on installed before this
+  push. Do **not** reset preferences. This is the account that proves the
+  migrations work.
+- **Account B — fresh install.** A Google account that has never had the
+  add-on. Proves `onInstall` seeds correctly and builds the menu. Resetting
+  preferences on Account A is *not* a substitute: it does not run `onInstall`.
+
+---
+
+## 0. Smoke — does it load at all
+
+| # | Check | Expected |
+| --- | --- | --- |
+| 0.0 | **Account B:** install the test deployment from a Doc, then open **Extensions** *without reloading* | The add-on's menu is already there, and the Release Notes dialog opened. (Marketplace reviewers check this first.) |
+| 0.1 | Open a Doc, open the add-on menu | Menu builds; **Texts / Voices / Lexicon / Insert Source from Selection / Quick Actions / Preferences / Help** all present |
+| 0.2 | Open the sidebar | Renders fully — not a blank or half-styled panel |
+| 0.3 | Type a query and press search | Results appear |
+
+> **0.2 and 0.3 are the jQuery 3.7.1 canary.** jQuery moved from 1.9.1 (2013),
+> and it is loaded with Subresource Integrity — if the hash is wrong the script
+> does not load *at all* and every interactive element is dead. A blank sidebar
+> or a search box that does nothing means jQuery, not your query. Check the
+> browser console for an integrity error before debugging anything else.
+
+---
+
+## 1. Content Security Policy
+
+The CSP is new and restricts image loading. It is the other thing that fails
+silently.
+
+| # | Check | Expected |
+| --- | --- | --- |
+| 1.1 | Sidebar footer | The Sefaria logo renders |
+| 1.2 | Trigger a loading state (search) | The spinner GIF renders, not a broken-image icon |
+| 1.3 | Voices tab → select a sheet; and any Texts result row | The Sefarrow "open on Sefaria" icon renders, crisp and with no white box behind it (it is bundled now, so it loads from nowhere) |
+| 1.4 | Open **Help**, **Feedback**, **Release Notes**, **Gematriya Count** and **Link Texts with Sefaria** | Each renders fully; Feedback shows the embedded form. These five dialogs now carry the CSP too |
+
+Any missing image here means the `img-src` list in
+`apps-script/shared/ui/head.html` is short a host (and the copies in the five
+dialogs — `test/ui/csp-coverage.test.js` keeps them identical). The browser
+console names it.
+
+---
+
+## 2. Upgrade path — Account A only
+
+The most consequential and least reversible part of this release.
+
+| # | Check | Expected |
+| --- | --- | --- |
+| 2.1 | Open Preferences → Fonts | Your previous fonts, sizes and styles are intact |
+| 2.2 | Preferences → Fonts → **Source Emphasis** | Toggle is **on** |
+| 2.3 | Fonts → colour and highlight fields | All show **Auto / None** (muted), *not* black |
+| 2.4 | Preferences → **Linking** | Document scanning = **Candidate passages only**; After linking = **Show a summary…** |
+| 2.5 | Divine Name Mappings | Your previous replacement settings are unchanged |
+| 2.6 | Insert any source | The source-credit block is on or off exactly as it was before the upgrade — the new default must not change an existing user's saved choice |
+
+> **2.3 is the one to look hardest at.** Colour defaults to *unset*. If any field
+> shows a solid black swatch instead of the muted Auto state, the v8 migration
+> wrote `#000000` somewhere and every insertion from now on will force black
+> text — including in dark or themed documents.
+
+---
+
+## 3. Insertion and source emphasis
+
+| # | Check | Expected |
+| --- | --- | --- |
+| 3.1 | Insert **Steinsaltz Talmud**, e.g. `Berakhot 2a`, English | The Talmud's own words arrive **bold**, Steinsaltz's explanation plain |
+| 3.2 | Insert a footnoted text (Rashi, or any Tanakh with notes) | Footnote markers survive; no raw `<sup>` or `<i>` in the document |
+| 3.3 | Preferences → set Translation style to *italic*, re-insert 3.1 | Body italic **and** the source's bold still visible on top |
+| 3.4 | Set a translation **text colour**, insert | Colour applies to the body; source bold still bold |
+| 3.5 | Set a **highlight**, insert, then set it back to *None* and insert again | Highlight applies, then stops applying |
+| 3.6 | Source Emphasis → **Advanced**: map bold → blue text, no bold. Insert 3.1 | The Talmud's words are blue and not bold |
+| 3.7 | Insert a **title** with a hyperlink | Title styling follows your *hyperlink* preference, not the source's emphasis |
+
+| 3.8 | **Account B:** insert `Genesis 1:1`, Hebrew + English | A small credit block under the source naming the translation and the Hebrew edition, each with its license where Sefaria provides one |
+| 3.9 | **Account B:** insert Hebrew only | A credit block for the Hebrew edition (Hebrew-only inserts used to get none) |
+| 3.10 | Divine Name Mappings → turn on the יה replacement; insert `Genesis 29:35` and `Exodus 15:2`, Hebrew | In Genesis 29:35 **יְהוּדָה stays intact**; in Exodus 15:2 the standalone **יָהּ** is replaced |
+| 3.11 | Set a replacement text containing `$&`, insert a text with that name | The replacement appears literally as typed |
+| 3.12 | Turn niqqud **off**, insert a Tanakh verse | Vowels gone; the sof pasuq **׃** (and any paseq ׀) is still there |
+
+> 3.3 is the layering claim: your style is the baseline, the source's emphasis
+> sits on top. 3.7 is its boundary — titles deliberately do *not* preserve
+> source emphasis.
+
+---
+
+## 4. Search
+
+| # | Check | Expected |
+| --- | --- | --- |
+| 4.1 | `A Woman's Commentary` | Results, or a **"related entries"** panel offering *The Torah: A Women's Commentary* — **not** a blank panel |
+| 4.2 | `Jacob's Ladder`, `don't` | Not mangled; no zero-result dead end from the apostrophe |
+| 4.3 | `Psalms 23` | Resolves. **Not** "Pesalms" |
+| 4.4 | `Hil. Shabbat 1:1` | Resolves to *Mishneh Torah, Hilchot Shabbat 1:1* |
+| 4.5 | `Hil. Avodah Zarah 12:11` | Suggests *Mishneh Torah, Hilchot Avodah Kochavim* **first**; the Talmud tractate also offered, lower |
+| 4.6 | `רמב״ם` (with gershayim) | Resolves or suggests — **not** silently nothing |
+| 4.7 | `בראשית א׳:א׳` | Resolves |
+| 4.8 | `qqqq zzzz` | An explicit "no results" message naming what to try — not a blank panel |
+| 4.9 | A footnoted text's **preview** in the sidebar — Rashi on Genesis 1:1, and a Steinsaltz Talmud page | Bold/italic/footnote markers render; no visible tags, and nothing missing compared with sefaria.org. **This is the check for the new sanitizer**, which only keeps a fixed set of formatting tags |
+| 4.10 | A phrase search, e.g. `in the beginning` | Results appear (text search now uses Sefaria's `/api/search-wrapper/es8` route) |
+| 4.11 | Voices: search a topic | Result snippets show highlighted matches, no raw tags |
+
+> 4.1–4.7 are the five normalization bugs found in this cycle. Each one failed
+> *silently* before — the query returned nothing and looked like a gap in
+> Sefaria's library. If any returns an empty panel with no message, that is the
+> bug class recurring.
+
+---
+
+## 5. Link Texts with Sefaria
+
+Build one test document containing, in this order:
+
+1. A clean citation — `Genesis 1:1`
+2. An ambiguous one — `Avodah Zarah 2a` (Talmud vs. its commentaries)
+3. A nonsense one — `Fakebook 99:99`
+4. A citation on a line **~200 characters away** from any other, surrounded by
+   plain prose with no citations
+5. Two paragraphs of ordinary prose containing no citation at all
+
+| # | Check | Expected |
+| --- | --- | --- |
+| 5.1 | Run it for the **first time** | A one-time confirmation naming which scan mode is active, and asking to continue |
+| 5.2 | Decline it | Nothing is uploaded, nothing changes in the document |
+| 5.3 | Run again, accept | Dialog opens **immediately** with a scanning state — not a frozen menu |
+| 5.4 | When the scan finishes | Summary line: how many will link automatically, how many need a choice, how many could not be resolved |
+| 5.5 | The ambiguous row | Link and Insert both **unchecked**, a dropdown of candidates; the selected one shows its Hebrew title and an excerpt below it. Only the review state is visible — no scanning bar or Close button around the table |
+| 5.6 | Pick a candidate from the dropdown | The row's Link box checks itself |
+| 5.7 | Apply | Progress advances; links land on the right words |
+| 5.8 | Check the linked text | `Genesis 1:1` links to Genesis; your chosen candidate links where you chose |
+| 5.9 | Item 3 (`Fakebook 99:99`) | Counted as unresolved in the summary — **not** silently absent |
+| 5.10 | Run the whole thing again | Already-linked references are **not** re-offered or double-linked |
+| 5.11 | Preferences → After linking → **Show every match**, re-run on a fresh copy | All matches listed, unambiguous ones pre-checked |
+| 5.12 | Preferences → After linking → **Just link and report a count**, re-run | No dialog; an alert with counts including what was skipped |
+| 5.12a | In the dialog, tick **Insert** on one row (Link left on) and **Insert only** on another, then apply | Both sources inserted below their paragraphs; only the first citation is hyperlinked |
+| 5.12b | Preferences → Linking: switch *After linking* between modes | **Insert text after linking** appears only for *Just link and report a count* |
+| 5.12c | Turn it on, re-run on a fresh copy | No dialog; each linked source is inserted below its paragraph, and the alert counts insertions |
+| 5.12d | Select `Genesis 1:1`, run **Insert Source from Selection** | The selection is **replaced** by the inserted source (titled `Genesis 1:1`). With Preferences → Insertion → Insert from Selection → *replaces the selection* off, the selection stays and the source goes below it |
+
+> **5.9 is the point of the whole feature.** The published add-on reported
+> "Linked N references" and nothing else. If a failure is still invisible here,
+> the release has not delivered its main claim.
+>
+> **5.4** may also report *"fell across a gap in the partial scan"* — that is the
+> unplaceable count, and item 4 in the test document is what provokes it. Its
+> remedy is switching to **Whole document**, which 5.13 checks.
+
+| # | Check | Expected |
+| --- | --- | --- |
+| 5.13 | Preferences → Document scanning → **Whole document**, re-run on a fresh copy | Any previously-unplaceable citation now links |
+
+---
+
+## 6. Privacy surfaces
+
+| # | Check | Expected |
+| --- | --- | --- |
+| 6.1 | Preferences → Linking → Privacy & Document Scanning → policy link | Opens the privacy policy in the **TheMerkazDev** repository (after the sync; before it, a 404 is expected) |
+| 6.2 | Help & Support → About → **Privacy policy** pill | Same |
+| 6.4 | Help → About and the **GitHub** pills | Open `TheMerkazDev/TorahLibraryAddOnForDocs`; About reads as user-facing text, with no "fork" wording |
+| 6.3 | Preferences shows both scanning controls | *Document scanning* and *After linking* |
+
+---
+
+## 7. Everything else still works
+
+Quick regression sweep — these were not the focus, so they are the ones a
+refactor breaks quietly.
+
+| # | Check | Expected |
+| --- | --- | --- |
+| 7.1 | **Voices** tab: search, select, insert a source sheet | Inserts; media links present and pointing at real URLs |
+| 7.2 | **Lexicon** tab: look up a Hebrew word, and an English one | Both return entries; insertion works |
+| 7.3 | Quick Actions → **Transform Divine Names** | Applies your enabled replacements |
+| 7.4 | Quick Actions → **Unlink Sources** | Removes Sefaria links, leaves other links alone |
+| 7.5 | Quick Actions → **Gematriya Count** | Opens with a value |
+| 7.6 | **Insert Source from Selection** — select `Genesis 1:1`, run | Inserts, replacing the selection (the default — see 5.12d) |
+| 7.7 | Preferences → **Reset Preferences** | Returns to defaults; colours go back to Auto |
+| 7.8 | Preferences → **Refresh Sidebar** | Sidebar reopens |
+| 7.9 | Multi-select translations, insert | All selected translations inserted, in the order chosen |
+| 7.10 | 7.9 again with **Insert Sefaria link** and **translation source info** on | Each title names its version **once**; each link opens that translation; a blank line after every citation, including the last |
+| 7.11 | Multi-select a translation that has no text for the ref (e.g. a partial translation, on a verse it skips), insert | It is not inserted; the sidebar says it was skipped and the option is now greyed out *unavailable for this ref* |
+| 7.12 | Insert Hebrew for a text that uses thin spaces (the ref where `&thinsp;` was reported) | No literal `&thinsp;` (or any `&…;`) in the document |
+| 7.13 | Preferences → Experimental → enable, turn on Surprise Me; run it | Works. **No AI Shiur** card, footer 🧠 button, or AI option anywhere |
+| 7.14 | Session Library: insert a source, open Session Library | Lists it; opens without errors |
+
+---
+
+## Reporting back
+
+For anything that fails, the useful report is:
+
+1. The check number
+2. What you saw versus what the table says
+3. **Browser console output** — most of the new failure modes (SRI, CSP,
+   `google.script.run`) show there and nowhere else
+4. Which account (A upgrading / B fresh) and the scan mode in effect
+
+State the version too: **2.1.0, schema 13**. "It broke" is not checkable
+later; the version and the check number are.
+
+---
+
+## Results
+
+Record each run here and commit it with the release, so there is evidence the
+checklist was run against the code that shipped.
+
+| Date | Tester | Account (A/B) | Apps Script version / commit | Result | Failures (check numbers) |
+| --- | --- | --- | --- | --- | --- |
+| | | | | | |

@@ -1,0 +1,96 @@
+<script>
+// ================================
+// Shared Insertion Options (the Layout section)
+// ================================
+//
+// The Display (Translation / Both / Original) and Arrangement (Stacked /
+// Right–Left / Left–Right) pickers of shared/insertion-options/markup.html,
+// always open as segmented controls, and the line options. Knows nothing
+// about the host: the sidebar's Layout tray keeps its state in hidden selects
+// and saves it; the Link Texts dialog keeps it in a plain object for one pass;
+// Preferences keeps it in hidden inputs saved with the rest of the form.
+// Pair with the composition card (shared/composition-card/shared.html) for the
+// rest of the insertion options.
+//
+// Usage:
+//   initInsertionOptions({
+//     root: '#layout-tray',   // holds this markup and the composition card
+//     getState:        function () { return { outputMode: 'both', layout: 'he-right' }; },
+//     onSelectDisplay: function (mode) { /* store it */ },
+//     onSelectLayout:  function (layout) { /* store it */ },
+//     onToggleAlignedRows: function () { /* optional: flip "one row per line";
+//                              getState().alignedRows reads it. Without it the
+//                              "Line by line" button stays hidden. */ },
+//     hideInapplicable: true   // optional: hide Layout unless both languages,
+//                              // and the card's Hebrew-only parts for a
+//                              // translation-only insert
+//   });
+//
+// Then call updateInsertionOptions() any time the host's state changes.
+
+var _ioConfig = null;
+
+function initInsertionOptions(config) {
+  _ioConfig = config;
+  var $root = $(config.root);
+  if (!$root.length) return;
+
+  function chooser(attribute, callbackName) {
+    return function (event) {
+      if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      _ioConfig[callbackName]($(this).attr(attribute));
+      updateInsertionOptions();
+    };
+  }
+  $root.find('.mode-card').off('.io').on('click.io keydown.io', chooser('data-mode', 'onSelectDisplay'));
+  $root.find('.layout-option').off('.io').on('click.io keydown.io', chooser('data-layout', 'onSelectLayout'));
+  $root.find('#layout-rows-toggle').off('.io').on('click.io', function (event) {
+    event.preventDefault();
+    if (_ioConfig.onToggleAlignedRows) _ioConfig.onToggleAlignedRows();
+    updateInsertionOptions();
+  });
+
+  updateInsertionOptions();
+}
+
+function updateInsertionOptions() {
+  if (!_ioConfig) return;
+  var $root = $(_ioConfig.root);
+  var state = _ioConfig.getState() || {};
+  var mode = state.outputMode || 'both';
+  var layout = state.layout || 'he-right';
+
+  $root.find('.mode-card').each(function () {
+    var isSelected = $(this).attr('data-mode') === mode;
+    $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false');
+  });
+
+  $root.find('.layout-option').each(function () {
+    var isSelected = $(this).attr('data-layout') === layout;
+    $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false');
+  });
+
+  // A layout only means something with both languages, and a translation-only
+  // insert has no Hebrew to vocalise or transliterate. Line numbers and the
+  // citation stay reachable in the row under the pickers.
+  // Preferences keeps everything visible: each is still the default for an
+  // insert that picks another display.
+  var hide = _ioConfig.hideInapplicable !== false;
+  $root.find('.bilingual-layout-wrapper').toggle(!hide || mode === 'both');
+
+  // "Line by line" (one table row per line) only applies to the side-by-side
+  // layouts; Preferences shows it whatever the layout, as a default.
+  var alignedRows = !!state.alignedRows;
+  var sideBySide = layout === 'he-right' || layout === 'he-left';
+  $root.find('#layout-rows-toggle')
+    .prop('hidden', !_ioConfig.onToggleAlignedRows || (hide && !(mode === 'both' && sideBySide)))
+    .toggleClass('is-off', !alignedRows)
+    .attr('aria-pressed', alignedRows ? 'true' : 'false');
+  // The card's Source section (Hebrew marks, font, transliteration) means
+  // nothing to a translation-only insert, nor its Translation section to a
+  // Hebrew-only one.
+  $root.find('.cc-section--source').toggle(!hide || mode !== 'en');
+  $root.find('.cc-section--translation').toggle(!hide || mode !== 'he');
+}
+</script>

@@ -20,13 +20,39 @@ const SETTINGS = [
   "insert_sefaria_link_default",
   "link_texts_default",
   "link_sources_insert_after_linking",
+  "linker_scan_mode",
+  "linker_review_mode",
   "show_line_markers_default",
+  "source_emphasis_mode",
+  "hebrew_font_color",
+  "hebrew_font_background",
+  "translation_font_color",
+  "translation_font_background",
+  "transliteration_font_color",
+  "transliteration_font_background",
+  "source_title_font_color",
+  "source_title_font_background",
+  "sefaria_link_font_color",
+  "sefaria_link_font_background",
+  "emphasis_bold_style",
+  "emphasis_bold_color",
+  "emphasis_bold_background",
+  "emphasis_bold_font",
+  "emphasis_italic_style",
+  "emphasis_italic_color",
+  "emphasis_italic_background",
+  "emphasis_italic_font",
   "output_mode_default",
   "bilingual_layout_default",
+  "bilingual_aligned_rows",
   "last_translation_languages",
   "last_translation_only_filter",
   "last_search_sort_mode",
   "last_search_relevance_sort",
+  "search_corpus_order",
+  "search_corpus_excluded",
+  "hidden_translation_languages",
+  "show_unavailable_translations",
   "meforash_replace",
   "meforash_replacement",
   "nekudot",
@@ -35,10 +61,13 @@ const SETTINGS = [
   "surprise_me_enabled",
   "teamim",
   "teamim_filter",
+  "hebrew_punctuation",
+  "translation_punctuation",
   "translation_font",
   "translation_font_size",
   "translation_font_style",
   "preferred_translation_language",
+  "translation_language_typography",
   "transliteration_font",
   "transliteration_font_size",
   "transliteration_font_style",
@@ -55,10 +84,31 @@ const SETTINGS = [
   "source_title_font",
   "source_title_font_size",
   "source_title_font_style",
+  "source_title_heading",
   "sefaria_link_font",
   "sefaria_link_font_size",
   "sefaria_link_font_style",
-  "search_mode"
+  "insert_hebrew_sefaria_link_default",
+  "hebrew_title_font",
+  "hebrew_title_font_size",
+  "hebrew_title_font_style",
+  "hebrew_title_font_color",
+  "hebrew_title_font_background",
+  "hebrew_link_font",
+  "hebrew_link_font_size",
+  "hebrew_link_font_style",
+  "hebrew_link_font_color",
+  "hebrew_link_font_background",
+  "sefaria_link_format_override",
+  "hebrew_link_format_override",
+  "citation_font",
+  "citation_font_size",
+  "citation_font_style",
+  "citation_font_color",
+  "citation_font_background",
+  "search_mode",
+  "menu_layout",
+  "insert_from_selection_replace"
 ];
 
 //returns the user preference w.r.t. displaying the versioning dropdowns in the insertion module
@@ -74,41 +124,120 @@ function getVersioningPreference() {
 
 function getDefaultPreferences() {
   return {
-    apply_sheimot_on_insertion: false,
+    // Divine-name substitution is on for every new user, יהוה only. (This used
+    // to be an install-only override, so "Reset to defaults" turned it off.)
+    apply_sheimot_on_insertion: true,
     elodim_replace: false,
     elodim_replacement: "אלוקים",
     extended_gemara: false,
     god_replace: false,
     god_replacement: "G-d",
     preferred_translation_language: "en",
-    hebrew_font: "Noto Sans Hebrew",
-    hebrew_font_size: 18,
+    // Font and size default to EMPTY for every role: "match the document" —
+    // take the font and size of the text at the insertion point (for a title
+    // with a heading style, the heading's own).
+    hebrew_font: "",
+    hebrew_font_size: "",
     hebrew_font_style: "normal",
-    include_translation_source_info: false,
+    // Credit line (edition and license) under every inserted source. On by
+    // default: many Sefaria texts are CC-BY / CC-BY-NC and require attribution.
+    include_translation_source_info: true,
     include_transliteration_default: false,
     insert_citation_default: false,
     insert_sefaria_link_default: true,
     link_texts_default: false,
+    // "candidates": only windows that look like they could hold a reference
+    // are uploaded to /api/find-refs. "full": the entire document body is
+    // uploaded, which is what this feature originally did.
+    linker_scan_mode: "candidates",
+    // What happens after the scan finds citations.
+    //   "summary" (default): a count of what will be linked, plus a panel to
+    //                        resolve any citation that matched more than one
+    //                        source. Nothing is silently skipped.
+    //   "full":              every match listed for review before anything is
+    //                        applied.
+    //   "quiet":             link the unambiguous ones, report counts, skip the
+    //                        rest without asking — closest to the published
+    //                        add-on's behaviour.
+    linker_review_mode: "summary",
     link_sources_insert_after_linking: false,
     show_line_markers_default: true,
+    // Sefaria marks up its own emphasis (the Steinsaltz Talmud bolds the Talmud's
+    // words against Steinsaltz's interpolation). "keep" by default: the source
+    // knows what it meant, and the font-style preference still sets the
+    // baseline. "discard" flattens it; "only" keeps the emphasized words and
+    // drops the rest. See normalizeSourceEmphasisMode_. Replaced the boolean
+    // `preserve_source_emphasis` in schema v14.
+    source_emphasis_mode: "keep",
+    // Colour and background are intentionally EMPTY by default: an empty
+    // value means "leave the document's own formatting alone". Defaulting to
+    // "#000000" would force black text on every user, including those with a
+    // dark or themed document.
+    hebrew_font_color: "",
+    hebrew_font_background: "",
+    translation_font_color: "",
+    translation_font_background: "",
+    transliteration_font_color: "",
+    transliteration_font_background: "",
+    source_title_font_color: "",
+    source_title_font_background: "",
+    sefaria_link_font_color: "",
+    sefaria_link_font_background: "",
+    // How the source's own emphasis is rendered. Identity by default: bold
+    // stays bold, italic stays italic. Changing these lets a user map, say,
+    // Steinsaltz's bolding to a colour instead, so the inserted passage
+    // matches their own document conventions.
+    emphasis_bold_style: "bold",
+    emphasis_bold_color: "",
+    emphasis_bold_background: "",
+    emphasis_bold_font: "",
+    emphasis_italic_style: "italic",
+    emphasis_italic_color: "",
+    emphasis_italic_background: "",
+    emphasis_italic_font: "",
     output_mode_default: "both",
     bilingual_layout_default: "he-right",
+    // Right–Left / Left–Right: true gives each line (verse) its own table row,
+    // beside its translation; false keeps the whole passage in one row, as
+    // side-by-side inserts always were.
+    bilingual_aligned_rows: false,
     last_translation_languages: JSON.stringify(["en"]),
     last_translation_only_filter: false,
     last_search_sort_mode: "relevance",
     last_search_relevance_sort: true,
-    meforash_replace: false,
-    meforash_replacement: "ה'",
+    // Text-search corpus order / exclusions (JSON arrays of corpus keys).
+    // "[]" order means the built-in order (direct match, near matches,
+    // then Sefaria's library order); "[]" exclusions hides nothing.
+    search_corpus_order: "[]",
+    search_corpus_excluded: "[]",
+    // Translation languages left out of the search language filter and the
+    // translation version list (JSON array of codes). "[]" shows them all.
+    hidden_translation_languages: "[]",
+    // Translations with no text for the passage are left out of the version
+    // list; true lists them greyed out instead (for diagnosing Sefaria data).
+    show_unavailable_translations: false,
+    meforash_replace: true,
+    meforash_replacement: "יי",
     nekudot: true,
     nekudot_filter: "always",
+    experimental_features_enabled: false,
     surprise_me_enabled: false,
     teamim: true,
     teamim_filter: "available",
-    translation_font: "Noto Sans Hebrew",
-    translation_font_size: 12,
+    // Punctuation in the inserted Hebrew and in the translation. On (shown)
+    // unless switched off; text-processing.gs strips it when "false".
+    hebrew_punctuation: true,
+    translation_punctuation: true,
+    translation_font: "",
+    translation_font_size: "",
     translation_font_style: "normal",
-    transliteration_font: "Noto Sans Hebrew",
-    transliteration_font_size: 12,
+    // Translation formatting for particular languages (Preferences → Fonts →
+    // Translation → Advanced), as JSON: {"fr": {font, size, style}, ...}.
+    // "{}" means every language uses the Translation settings above. An empty
+    // font or size in an entry also falls back to them.
+    translation_language_typography: "{}",
+    transliteration_font: "",
+    transliteration_font_size: "",
     transliteration_font_style: "italic",
     transliteration_scheme: "traditional",
     transliteration_overrides: "{}",
@@ -117,13 +246,69 @@ function getDefaultPreferences() {
     versioning: true,
     yaw_replace: false,
     yaw_replacement: "קה",
-    source_title_font: "Noto Sans Hebrew",
-    source_title_font_size: 14,
+    source_title_font: "",
+    source_title_font_size: "",
     source_title_font_style: "normal",
-    sefaria_link_font: "Noto Sans Hebrew",
-    sefaria_link_font_size: 14,
+    // Paragraph style for inserted titles: "normal" or "heading1".."heading6".
+    // "normal" is what titles have always been.
+    source_title_heading: "normal",
+    sefaria_link_font: "",
+    sefaria_link_font_size: "",
     sefaria_link_font_style: "underline",
-    search_mode: "texts"
+    // The source (Hebrew) title has its own link switch and its own fonts, so
+    // it can be set apart from the translation title. The keys above
+    // (insert_sefaria_link_default, source_title_*, sefaria_link_*) are the
+    // translation title's; schema v23 copies them here for upgraders, so
+    // nothing changes until the user sets the two apart.
+    insert_hebrew_sefaria_link_default: true,
+    hebrew_title_font: "",
+    hebrew_title_font_size: "",
+    hebrew_title_font_style: "normal",
+    hebrew_title_font_color: "",
+    hebrew_title_font_background: "",
+    hebrew_link_font: "",
+    hebrew_link_font_size: "",
+    hebrew_link_font_style: "underline",
+    hebrew_link_font_color: "",
+    hebrew_link_font_background: "",
+    // Each title has its own font whether or not it is linked. "Hyperlink
+    // formatting override" (true) formats a linked title with its linked
+    // style (sefaria_link_* / hebrew_link_*) instead; false keeps the title's
+    // own. True is how linked titles have always looked.
+    sefaria_link_format_override: true,
+    hebrew_link_format_override: true,
+    // The citation under an inserted source (edition and license). The
+    // defaults are its look from before it could be set: 8 pt italic, in the
+    // font of the text above it (an empty font or size keeps that text's,
+    // rather than matching the text at the cursor).
+    citation_font: "",
+    citation_font_size: "8",
+    citation_font_style: "italic",
+    citation_font_color: "",
+    citation_font_background: "",
+    search_mode: "texts",
+    // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
+    // server/menu-layout.gs for the shape. Replaced `insert_from_selection_at_top`
+    // in schema v10; the migration carries a pinned item over.
+    menu_layout: getDefaultMenuLayoutJson_(),
+    // Insert Source from Selection: true replaces the selected citation with
+    // the inserted source (whose title is that same citation text); false
+    // keeps the selection and inserts the source below it.
+    insert_from_selection_replace: true,
+    // Interface mode: "full" (every tool and setting) or "simple" (search,
+    // preview, insert; the rest one click away). "full" is the default because
+    // a user of the original published add-on has no stored schema and looks
+    // exactly like a new user: nobody is put into Simple without choosing it
+    // (AGENTS.md hard rule 2). Not in SETTINGS: written only by setUiMode and
+    // completeFirstRunSetup, which keep the menu in step. See server/first-run.gs.
+    ui_mode: "full",
+    // "pending" until the user finishes or dismisses first-run setup. Seeded
+    // only for users with no stored schema; migrateToV20_ marks every upgrader
+    // "done". Not in SETTINGS, so "Reset to defaults" never re-runs setup.
+    first_run_setup: "pending",
+    // The menu_layout a user had before switching to Simple, restored when they
+    // switch back ("" = they had none, i.e. the code default).
+    menu_layout_before_simple: ""
   };
 }
 
@@ -194,35 +379,279 @@ function getPreferences() {
   return getAccountPreferences();
 }
 
+/**
+ * A read-only stand-in for UserProperties: `overrides` first, the stored
+ * preferences for every other key. For code that reads preferences with
+ * getProperty (the Hebrew display filters) during a one-off insert whose
+ * settings differ from the saved ones. Nothing is written.
+ */
+function preferenceOverlay_(overrides) {
+  const values = overrides || {};
+  return {
+    getProperty: function (key) {
+      if (Object.prototype.hasOwnProperty.call(values, key)) return String(values[key]);
+      return PropertiesService.getUserProperties().getProperty(key);
+    }
+  };
+}
+
+// Apps Script caps a single property value at 9 KB. Anything longer would fail
+// inside setProperty anyway; rejecting it up front keeps the failure explicit.
+const PREFERENCE_VALUE_MAX_CHARS_ = 9000;
+
+// setPreferences is reachable from google.script.run, so its argument is
+// untrusted: only keys in SETTINGS are stored (nothing else is ever read back
+// through this path), and only primitive values of bounded size. Without this
+// a caller could write internal state that lives in the same UserProperties —
+// `linker_upload_acknowledged` (skips the privacy confirmation before the
+// first upload), `prefs_schema_version` (skips or re-runs migrations) — or
+// fill the store with junk keys.
 function setPreferences(preferenceObject) {
   const userProperties = PropertiesService.getUserProperties();
-  for (const property in (preferenceObject || {})) {
+  const input = (preferenceObject && typeof preferenceObject === 'object') ? preferenceObject : {};
+  Object.keys(input).forEach(function (property) {
+    if (SETTINGS.indexOf(property) < 0) return;
+    const value = input[property];
+    const type = typeof value;
+    if (value === null || (type !== 'string' && type !== 'boolean' && type !== 'number')) return;
+    const stored = String(value);
+    if (stored.length > PREFERENCE_VALUE_MAX_CHARS_) {
+      Logger.log(`setPreferences: value for ${property} exceeds ${PREFERENCE_VALUE_MAX_CHARS_} chars; not saved.`);
+      return;
+    }
     try {
-      userProperties.setProperty(property, preferenceObject[property]);
+      userProperties.setProperty(property, stored);
     } catch (error) {
       Logger.log(`The system has made a mach'ah: ${error.message}`);
     }
-  }
+  });
   return getAccountPreferences();
 }
 
-function getTypographySettings() {
-  const userProperties = PropertiesService.getUserProperties();
+/**
+ * Normalize a stored colour preference into something Docs will accept.
+ * Empty / malformed values return null, which every caller treats as
+ * "don't touch the existing colour".
+ */
+function normalizeDocsColor_(value) {
+  var raw = String(value == null ? '' : value).trim();
+  if (!raw) return null;
+  if (/^#[0-9a-fA-F]{6}$/.test(raw)) return raw.toLowerCase();
+  if (/^#[0-9a-fA-F]{3}$/.test(raw)) {
+    return ('#' + raw[1] + raw[1] + raw[2] + raw[2] + raw[3] + raw[3]).toLowerCase();
+  }
+  return null;
+}
+
+/**
+ * An unset font/size falls back to the role default; a stored EMPTY value
+ * means "match the document" and comes back as font "" / size null, which
+ * getTypographySettings then fills from the text at the insertion point.
+ */
+function readTypographyRole_(userProperties, prefix, fallbackFont, fallbackSize, fallbackStyle) {
+  const storedFont = userProperties.getProperty(prefix + "_font");
+  const storedSize = userProperties.getProperty(prefix + "_font_size");
+  const rawSize = storedSize == null ? fallbackSize : storedSize;
+  const size = (rawSize == null || String(rawSize).trim() === "") ? NaN : Number(rawSize);
   return {
-    hebrewFont: userProperties.getProperty("hebrew_font") || "Noto Sans Hebrew",
-    hebrewFontSize: Number(userProperties.getProperty("hebrew_font_size") || 18),
-    hebrewFontStyle: userProperties.getProperty("hebrew_font_style") || "normal",
-    translationFont: userProperties.getProperty("translation_font") || "Noto Sans Hebrew",
-    translationFontSize: Number(userProperties.getProperty("translation_font_size") || 12),
-    translationFontStyle: userProperties.getProperty("translation_font_style") || "normal",
-    transliterationFont: userProperties.getProperty("transliteration_font") || "Noto Sans Hebrew",
-    transliterationFontSize: Number(userProperties.getProperty("transliteration_font_size") || 12),
-    transliterationFontStyle: userProperties.getProperty("transliteration_font_style") || "italic",
-    sourceTitleFont: userProperties.getProperty("source_title_font") || "Noto Sans Hebrew",
-    sourceTitleFontSize: Number(userProperties.getProperty("source_title_font_size") || 14),
-    sourceTitleFontStyle: userProperties.getProperty("source_title_font_style") || "normal",
-    sefariaLinkFont: userProperties.getProperty("sefaria_link_font") || "Noto Sans Hebrew",
-    sefariaLinkFontSize: Number(userProperties.getProperty("sefaria_link_font_size") || 14),
-    sefariaLinkFontStyle: userProperties.getProperty("sefaria_link_font_style") || "underline"
+    font: String(storedFont == null ? fallbackFont : storedFont).trim(),
+    size: size > 0 ? size : null,
+    style: userProperties.getProperty(prefix + "_font_style") || fallbackStyle,
+    color: normalizeDocsColor_(userProperties.getProperty(prefix + "_font_color")),
+    background: normalizeDocsColor_(userProperties.getProperty(prefix + "_font_background"))
   };
+}
+
+/**
+ * How one channel of the source's own emphasis should be rendered.
+ * `style` reuses the comma-separated flag idiom of the other style prefs;
+ * "none" means "drop this emphasis entirely".
+ */
+function readEmphasisMapping_(userProperties, prefix, fallbackStyle) {
+  var style = userProperties.getProperty(prefix + "_style");
+  return {
+    style: (style === null || style === undefined) ? fallbackStyle : style,
+    color: normalizeDocsColor_(userProperties.getProperty(prefix + "_color")),
+    background: normalizeDocsColor_(userProperties.getProperty(prefix + "_background")),
+    font: String(userProperties.getProperty(prefix + "_font") || '').trim()
+  };
+}
+
+/**
+ * What happens to the bold and italics in Sefaria's own markup:
+ *   "keep"    — re-applied on top of the user's font style (the default).
+ *   "discard" — dropped; the user's font style applies uniformly.
+ *   "only"    — only the emphasized words are kept, e.g. just the Talmud's
+ *               own words (bold) out of the Steinsaltz translation.
+ * Also accepts the boolean `preserve_source_emphasis` values ("true"/"false")
+ * it replaced, so a value that was never migrated still means what it meant.
+ * Anything unrecognised is "keep", the default.
+ */
+var SOURCE_EMPHASIS_MODES_ = ["keep", "discard", "only"];
+
+function normalizeSourceEmphasisMode_(value) {
+  const v = String(value == null ? "" : value).trim().toLowerCase();
+  if (SOURCE_EMPHASIS_MODES_.indexOf(v) >= 0) return v;
+  if (v === "false") return "discard";
+  return "keep";
+}
+
+var TITLE_HEADINGS_ = ["normal", "heading1", "heading2", "heading3", "heading4", "heading5", "heading6"];
+
+function normalizeTitleHeading_(value) {
+  const v = String(value == null ? "" : value).trim().toLowerCase();
+  return TITLE_HEADINGS_.indexOf(v) >= 0 ? v : "normal";
+}
+
+var TITLE_ROLES_ = ["sourceTitle", "sefariaLink", "hebrewTitle", "hebrewLink"];
+
+function isTitleRole_(roleName) {
+  return TITLE_ROLES_.indexOf(roleName) >= 0;
+}
+
+/**
+ * Roles that "match the document". A title with a heading style is left out:
+ * there, an empty font/size means the heading's own look, which the paragraph
+ * gets by not having one set at all.
+ */
+function rolesMatchingDocument_(roles, titleHeading) {
+  return Object.keys(roles).filter(function (name) {
+    const role = roles[name];
+    // The citation's empty font or size keeps the text above it (the
+    // paragraph inherits it), as it always has.
+    if (name === "citation") return false;
+    if (!role || (role.font !== "" && role.size != null)) return false;
+    return !(isTitleRole_(name) && titleHeading !== "normal");
+  });
+}
+
+function typographyNeedsSurroundingText_(roles, titleHeading) {
+  return rolesMatchingDocument_(roles, titleHeading).length > 0;
+}
+
+/**
+ * Fill "match the document" font/size from the text at the insertion point.
+ * Pure: `surrounding` is {font, size} (either may be empty/null — Docs reports
+ * null when the text just follows the Normal text style). Whatever stays
+ * empty is simply not applied, so the paragraph follows the document's
+ * Normal text style.
+ */
+function fillTypographyFromSurroundingText_(roles, surrounding, titleHeading) {
+  const font = surrounding && surrounding.font ? String(surrounding.font) : "";
+  const size = surrounding && Number(surrounding.size) > 0 ? Number(surrounding.size) : null;
+  rolesMatchingDocument_(roles, titleHeading).forEach(function (name) {
+    const role = roles[name];
+    if (role.font === "" && font) role.font = font;
+    if (role.size == null && size) role.size = size;
+  });
+  return roles;
+}
+
+/**
+ * @param {Object} [properties]  what to read the settings from, with
+ *        getProperty: the stored preferences unless given (the sidebar's
+ *        session overrides, Link Texts' "Customize this insertion"; see
+ *        typographyPropertiesFor_).
+ */
+function getTypographySettings(properties) {
+  const userProperties = properties || PropertiesService.getUserProperties();
+
+  const roles = {
+    hebrew:          readTypographyRole_(userProperties, "hebrew", "", null, "normal"),
+    translation:     readTypographyRole_(userProperties, "translation", "", null, "normal"),
+    transliteration: readTypographyRole_(userProperties, "transliteration", "", null, "italic"),
+    sourceTitle:     readTypographyRole_(userProperties, "source_title", "", null, "normal"),
+    sefariaLink:     readTypographyRole_(userProperties, "sefaria_link", "", null, "underline"),
+    hebrewTitle:     readTypographyRole_(userProperties, "hebrew_title", "", null, "normal"),
+    hebrewLink:      readTypographyRole_(userProperties, "hebrew_link", "", null, "underline"),
+    citation:        readTypographyRole_(userProperties, "citation", "", 8, "italic")
+  };
+  const titleHeading = normalizeTitleHeading_(userProperties.getProperty("source_title_heading"));
+  // A linked title takes its linked style only with the override on (an
+  // unset value is on: the linked style is what linked titles always had).
+  const linkFormatOverride = {
+    en: userProperties.getProperty("sefaria_link_format_override") !== "false",
+    he: userProperties.getProperty("hebrew_link_format_override") !== "false"
+  };
+
+  if (typographyNeedsSurroundingText_(roles, titleHeading)) {
+    let surrounding = null;
+    try {
+      surrounding = readSurroundingTextStyle_();
+    } catch (error) {
+      surrounding = null;
+    }
+    fillTypographyFromSurroundingText_(roles, surrounding, titleHeading);
+  }
+
+  return {
+    roles: roles,
+    titleHeading: titleHeading,
+    linkFormatOverride: linkFormatOverride,
+    translationLanguages: normalizeTranslationLanguageTypography_(
+      userProperties.getProperty("translation_language_typography")
+    ),
+
+    // Flat aliases kept for the existing call sites. `roles` is the shape new
+    // code should read; these mirror it so nothing had to change at once.
+    hebrewFont: roles.hebrew.font,
+    hebrewFontSize: roles.hebrew.size,
+    hebrewFontStyle: roles.hebrew.style,
+    translationFont: roles.translation.font,
+    translationFontSize: roles.translation.size,
+    translationFontStyle: roles.translation.style,
+    transliterationFont: roles.transliteration.font,
+    transliterationFontSize: roles.transliteration.size,
+    transliterationFontStyle: roles.transliteration.style,
+    sourceTitleFont: roles.sourceTitle.font,
+    sourceTitleFontSize: roles.sourceTitle.size,
+    sourceTitleFontStyle: roles.sourceTitle.style,
+    sefariaLinkFont: roles.sefariaLink.font,
+    sefariaLinkFontSize: roles.sefariaLink.size,
+    sefariaLinkFontStyle: roles.sefariaLink.style,
+
+    sourceEmphasisMode: normalizeSourceEmphasisMode_(userProperties.getProperty("source_emphasis_mode")),
+    emphasisMap: {
+      bold: readEmphasisMapping_(userProperties, "emphasis_bold", "bold"),
+      italic: readEmphasisMapping_(userProperties, "emphasis_italic", "italic")
+    }
+  };
+}
+
+
+var TRANSLATION_STYLE_FLAGS_ = ["bold", "italic", "underline"];
+
+/**
+ * The stored `translation_language_typography` JSON, cleaned: language codes
+ * ("fr", "lad") to {font, size, style}. font "" and size null mean "as the
+ * Translation settings"; style is "normal" or comma-separated flags. Anything
+ * malformed is dropped, so a bad value only ever means "no override".
+ */
+function normalizeTranslationLanguageTypography_(raw) {
+  let parsed = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw || "{}");
+    } catch (error) {
+      return {};
+    }
+  }
+  const out = {};
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return out;
+  Object.keys(parsed).forEach(function (key) {
+    const lang = String(key).trim().toLowerCase();
+    const entry = parsed[key];
+    if (!/^[a-z]{2,3}$/.test(lang) || lang === "he" || !entry || typeof entry !== "object") return;
+    const size = Number(entry.size);
+    const flags = String(entry.style || "").split(",")
+      .map(function (flag) { return flag.trim().toLowerCase(); })
+      .filter(function (flag, i, all) { return TRANSLATION_STYLE_FLAGS_.indexOf(flag) >= 0 && all.indexOf(flag) === i; })
+      .sort();
+    out[lang] = {
+      font: String(entry.font == null ? "" : entry.font).trim().slice(0, 100),
+      size: entry.size !== "" && entry.size != null && size > 0 && size <= 400 ? size : null,
+      style: flags.length ? flags.join(",") : "normal"
+    };
+  });
+  return out;
 }

@@ -1,55 +1,200 @@
 name: Deploy to Apps Script
 
+# Deployment is per-repository configuration, not part of the add-on.
+#
+# The same code lives in more than one repository (the OtterBrainDev fork, where
+# it is developed, and TheMerkazDev, which publishes it), and each pushes to its
+# own Apps Script project — or to none. So nothing here names a repository or a
+# script. Each repository opts in with its own settings
+# (Settings → Secrets and variables → Actions):
+#
+#   variable CLASP_SCRIPT_ID  the Apps Script project this repository pushes to
+#   secret   CLASP_TOKEN      base64 of a clasp credential file with access to it
+#
+# With no CLASP_SCRIPT_ID the whole workflow is skipped — a fork, or a
+# repository that has not set up deploys yet, sees skipped jobs, never a failed
+# deploy or a push into someone else's project. The scriptId in `.clasp.json`
+# is only the default for running `clasp` by hand; this workflow replaces it
+# with CLASP_SCRIPT_ID before pushing.
+#
+# What this does and does NOT do for users
+# ----------------------------------------
+# `clasp push` replaces the script project's HEAD code. HEAD is what the
+# project's editors see through Apps Script's "Test deployments" (Deploy ->
+# Test deployments, installed into a test document). Marketplace users do not
+# run HEAD: they run the numbered script version that the Google Workspace
+# Marketplace SDK's App Configuration page points to. So a push to master
+# stages the code for testing; it does not change anything installed users
+# see.
+#
+# Releasing to users is a separate, manual step, taken after the live test
+# checklist passes against HEAD:
+#   1. `clasp version "v<version>"` (or Project history -> New version in the
+#      editor) freezes HEAD as a new numbered version.
+#   2. Marketplace SDK -> App Configuration -> set the add-on's script version
+#      to that number, and save.
+# Installed users then get the new version the next time they open a
+# document, with no action on their part and no way to stay on the old one.
+# Rolling back is the same step pointing at the previous version number.
+
 on:
   push:
     branches:
       - master
-      - claude/appscript-github-sync-EOqjD
+  workflow_dispatch:
+
+# Never let two deploys race into the same Apps Script project.
+concurrency:
+  group: apps-script-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  deploy:
+  verify:
+    # Gate the whole pipeline, not just the push step, so a repository that has
+    # not opted in (see the header) does no work.
+    if: vars.CLASP_SCRIPT_ID != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '18'
+          node-version: "22"
 
-      - name: Install clasp
-        run: npm install -g @google/clasp
+      # HEAD is what gets live-tested and then frozen into the version users
+      # receive (see the header), so a broken push costs a test cycle and can
+      # end up released if nobody catches it. These are the same checks CI
+      # runs on every branch; running them here too is what makes the gate real.
+      - name: Install test dependencies
+        run: npm ci
+
+      - name: Run Node test suite
+        run: npm test
+
+      - name: Run pre-clasp QC on apps-script/
+        run: bash pre_clasp_qc.sh apps-script
+
+  deploy:
+    needs: verify
+    if: vars.CLASP_SCRIPT_ID != ''
+    runs-on: ubuntu-latest
+    environment: apps-script-production
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+
+      - name: Check deploy credentials are configured
+        env:
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
+        run: |
+          if [ -z "${CLASP_TOKEN}" ]; then
+            echo "::error::CLASP_TOKEN secret is not set. Add it in Settings → Secrets and variables → Actions, or disable this workflow."
+            exit 1
+          fi
+          echo "CLASP_TOKEN is present."
+
+      # clasp and all of its dependencies come from tools/clasp/package-lock.json
+      # (every package pinned with an integrity hash), with install scripts
+      # disabled. This job holds the CLASP_TOKEN credential, so nothing may be
+      # resolved fresh from the registry here. The version is pinned to 2.4.2
+      # on purpose: the credential conversion below writes clasp 2's
+      # `.clasprc.json` shape. See tools/clasp/README.md to change it.
+      - name: Install pinned clasp
+        run: |
+          npm ci --prefix tools/clasp --ignore-scripts --no-audit --no-fund
+          echo "${GITHUB_WORKSPACE}/tools/clasp/node_modules/.bin" >> "$GITHUB_PATH"
+          "${GITHUB_WORKSPACE}/tools/clasp/node_modules/.bin/clasp" --version
 
       - name: Authenticate with Google
+        env:
+          # Passed through the environment rather than interpolated into the
+          # script body, so the value never becomes part of the command line.
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
         run: |
-          echo "${{ secrets.CLASP_TOKEN }}" | base64 -d > ~/.clasprc_v3.json
+          set -euo pipefail
+          umask 077
+          # Remove the decoded input whether or not the conversion succeeds.
+          trap 'rm -f "${HOME}/.clasprc_in.json"' EXIT
+          printf '%s' "${CLASP_TOKEN}" | base64 -d > "${HOME}/.clasprc_in.json"
           python3 <<'PY'
           import json, os
+
           home = os.path.expanduser('~')
-          with open(f'{home}/.clasprc_v3.json') as f:
-              v3 = json.load(f)
-          tok = v3['tokens']['default']
-          v2 = {
-              "token": {
-                  "access_token":  tok.get('access_token'),
-                  "refresh_token": tok.get('refresh_token'),
-                  "scope":         tok.get('scope', ''),
-                  "token_type":    tok.get('token_type', 'Bearer'),
-                  "expiry_date":   tok.get('expiry_date'),
-                  "id_token":      tok.get('id_token'),
-              },
-              "oauth2ClientSettings": {
-                  "clientId":     tok['client_id'],
-                  "clientSecret": tok['client_secret'],
-                  "redirectUri":  "http://localhost"
-              },
-              "isLocalCreds": False
-          }
-          v2['token'] = {k: v for k, v in v2['token'].items() if v is not None}
+          with open(f'{home}/.clasprc_in.json') as f:
+              creds = json.load(f)
+
+          # CLASP_TOKEN is the base64 of ~/.clasprc.json from `clasp login`.
+          # clasp 2 (what tools/clasp pins) writes {"token", "oauth2ClientSettings"}
+          # and is used as is. clasp 3 writes {"tokens": {"default": ...}}, which
+          # is converted to the clasp 2 shape. See tools/clasp/README.md.
+          if 'token' in creds and 'oauth2ClientSettings' in creds:
+              v2 = creds
+              source = 'clasp 2'
+          elif 'tokens' in creds and 'default' in creds['tokens']:
+              tok = creds['tokens']['default']
+              v2 = {
+                  "token": {
+                      "access_token":  tok.get('access_token'),
+                      "refresh_token": tok.get('refresh_token'),
+                      "scope":         tok.get('scope', ''),
+                      "token_type":    tok.get('token_type', 'Bearer'),
+                      "expiry_date":   tok.get('expiry_date'),
+                      "id_token":      tok.get('id_token'),
+                  },
+                  "oauth2ClientSettings": {
+                      "clientId":     tok['client_id'],
+                      "clientSecret": tok['client_secret'],
+                      "redirectUri":  "http://localhost"
+                  },
+                  "isLocalCreds": False
+              }
+              v2['token'] = {k: v for k, v in v2['token'].items() if v is not None}
+              source = 'clasp 3, converted'
+          else:
+              raise SystemExit('::error::CLASP_TOKEN is not a clasp credential file (expected the base64 of ~/.clasprc.json after `clasp login`).')
+
           with open(f'{home}/.clasprc.json', 'w') as f:
               json.dump(v2, f)
-          print('Converted v3 → v2 format. Token keys:', list(v2['token'].keys()))
+
+          # Key names only — never values.
+          print(f'Credential format: {source}. Token keys:', sorted(v2['token']))
           PY
-          chmod 600 ~/.clasprc.json
-      
-      - name: Push to Apps Script
+          chmod 600 "${HOME}/.clasprc.json"
+
+      - name: Select the target script project
+        env:
+          CLASP_SCRIPT_ID: ${{ vars.CLASP_SCRIPT_ID }}
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          import json, os, re
+
+          script_id = os.environ['CLASP_SCRIPT_ID'].strip()
+          if not re.fullmatch(r'[A-Za-z0-9_-]{20,}', script_id):
+              raise SystemExit('::error::CLASP_SCRIPT_ID does not look like an Apps Script script ID.')
+          with open('.clasp.json') as f:
+              config = json.load(f)
+          config['scriptId'] = script_id
+          with open('.clasp.json', 'w') as f:
+              json.dump(config, f, indent=2)
+          print(f'Deploying to scriptId: {script_id} (rootDir: {config.get("rootDir")})')
+          PY
+
+      - name: Push to the script project's HEAD (test deployments only)
         run: clasp push -f
+
+      - name: Next step for a release
+        run: |
+          {
+            echo "### Pushed to HEAD — not yet released to Marketplace users"
+            echo ""
+            echo "Test it through Apps Script → Deploy → Test deployments, then run docs/live-test-checklist-*.md."
+            echo "To release: \`clasp version \"v<version>\"\`, then set that version number in"
+            echo "Marketplace SDK → App Configuration and save. Users get it on their next document open."
+          } >> "$GITHUB_STEP_SUMMARY"

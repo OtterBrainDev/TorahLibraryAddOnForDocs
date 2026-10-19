@@ -13,34 +13,33 @@ Licensed under the MIT License. See repository LICENSE.md.
 // under apps-script/server/.
 
 function buildAndInstallMenu() {
-  const ui = DocumentApp.getUi();
-  const addOnMenu = ui.createAddonMenu();
-  const quickActionsMenu = ui.createMenu('Quick Actions')
-      .addItem('Transform Divine Names', 'transformDivineNames')
-      .addItem('Link Texts with Sefaria', 'linkTextsWithSefaria')
-      .addItem('Unlink Sources', 'unlinkSefariaSources')
-      .addItem('Insert Source from Selection', 'insertSourceFromSelection')
-      .addSeparator()
-      .addItem('Gematriya Count', 'gematriyaCountPopup');
-
   const prefs = getPreferences();
-  const surpriseEnabled = prefs.surprise_me_enabled == "true";
+  const plan = planMenuFromLayout_(prefs.menu_layout, {
+    surpriseMeEnabled: DEV_FLAGS.SURPRISE_ME && prefs.surprise_me_enabled == "true"
+  });
+  installMenuPlan_(plan);
+}
 
-  addOnMenu
-      .addItem('Texts', 'textsHTML')
-      .addItem('Voices', 'voicesHTML')
-      .addItem('Lexicon', 'lexiconHTML')
-      .addSubMenu(quickActionsMenu);
-
-  if (DEV_FLAGS.SURPRISE_ME && surpriseEnabled) {
-    addOnMenu.addSeparator().addItem('Surprise Me', 'surpriseMeHTML');
-  }
-
-  addOnMenu
-      .addSeparator()
-      .addItem('Preferences', 'preferencesPopup')
-      .addItem('Help & Support', 'openHelpModal')
-      .addToUi();
+/**
+ * Build the add-on menu from a plan produced by planMenuFromLayout_
+ * (server/menu-layout.gs). Also used by onOpen in AuthMode.NONE, where
+ * preferences cannot be read, with the default layout.
+ */
+function installMenuPlan_(plan) {
+  const ui = DocumentApp.getUi();
+  const addEntries = function(menu, entries) {
+    entries.forEach(function(entry) {
+      if (entry.type === 'separator') {
+        menu.addSeparator();
+      } else if (entry.type === 'submenu') {
+        menu.addSubMenu(addEntries(ui.createMenu(entry.label), entry.entries));
+      } else {
+        menu.addItem(entry.label, entry.fn);
+      }
+    });
+    return menu;
+  };
+  addEntries(ui.createAddonMenu(), plan).addToUi();
 }
 
 function setSearchMode_(mode) {
@@ -54,15 +53,25 @@ function getSearchMode_() {
   return (stored === 'voices' || stored === 'experimental' || stored === 'lexicon') ? stored : 'texts';
 }
 
-function openSharedSidebar_(mode) {
+function openSharedSidebar_(mode, options) {
   var resolvedMode = setSearchMode_(mode || getSearchMode_());
   var template = HtmlService.createTemplateFromFile('sidebar');
   template.initialMode = resolvedMode;
-  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode));
+  template.uiMode = getUiMode_();
+  var extra = (options && typeof options === 'object') ? options : {};
+  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode, extra));
   var output = template.evaluate()
     .setTitle('Sefaria')
     .setWidth(300);
   DocumentApp.getUi().showSidebar(output);
+
+  // First use after a Marketplace-website or admin install, where onInstall
+  // never ran: setup opens over the sidebar. Never blocks the sidebar itself.
+  try {
+    maybeShowFirstRunSetup_();
+  } catch (error) {
+    Logger.log(`Could not show first-run setup: ${error.message}`);
+  }
 }
 
 function textsHTML() {
@@ -90,6 +99,31 @@ function voicesHTML() {
 
 function lexiconHTML() {
   openSharedSidebar_('lexicon');
+}
+
+function quickActionsHTML() {
+  var selectionText = '';
+  try {
+    var doc = DocumentApp.getActiveDocument();
+    var selection = doc.getSelection();
+    if (selection) {
+      var rangeElements = selection.getRangeElements();
+      for (var i = 0; i < rangeElements.length; i++) {
+        var re = rangeElements[i];
+        var el = re.getElement();
+        if (el.getType && el.getType() === DocumentApp.ElementType.TEXT) {
+          var textEl = el.asText();
+          if (re.isPartial()) {
+            selectionText += textEl.getText().substring(re.getStartOffset(), re.getEndOffsetInclusive() + 1);
+          } else {
+            selectionText += textEl.getText();
+          }
+        }
+      }
+    }
+  } catch (e) {}
+  selectionText = String(selectionText || '').trim();
+  openSharedSidebar_('texts', { initialQuery: selectionText || null, openActionsPanel: true });
 }
 
 function getSidebarBootstrapData(mode, sessionId) {
@@ -127,7 +161,7 @@ function releaseNotesPopup() {
   var html = HtmlService.createHtmlOutputFromFile('release-notes')
     .setWidth(700)
     .setHeight(700);
-  SpreadsheetApp.getUi().showModalDialog(html, 'Release Notes');
+  DocumentApp.getUi().showModalDialog(html, 'Release Notes');
 }
 
 function gematriyaCountPopup() {
@@ -145,7 +179,7 @@ function gematriyaCountPopup() {
     Logger.log('Error in gematriyaCountPopup: ' + error.message);
   }
   const template = HtmlService.createTemplateFromFile('gematriya-count');
-  template.statsJson = JSON.stringify(stats);
+  template.statsJson = toEmbeddedJson_(stats);
   const html = template.evaluate().setWidth(480).setHeight(420);
   DocumentApp.getUi().showModalDialog(html, 'Gematriya Count');
 }
@@ -226,7 +260,10 @@ function sefariaSearch() {
 
 function preferencesPopup() {
   const template = HtmlService.createTemplateFromFile('preferences');
-  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences'));
+  template.uiMode = getUiMode_();
+  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences', {
+    menuLayoutEditor: getMenuLayoutEditorConfig_(DEV_FLAGS)
+  }));
   template.devFlagsJson = JSON.stringify(DEV_FLAGS);
   const output = template.evaluate()
     .setTitle('Preferences')
@@ -243,7 +280,7 @@ function sessionLibraryPopup(sessionDataJson) {
   if (!Array.isArray(parsed.pinned)) parsed.pinned = [];
   if (!Array.isArray(parsed.inserted)) parsed.inserted = [];
   const template = HtmlService.createTemplateFromFile('session-library-modal');
-  template.sessionDataJson = JSON.stringify(parsed);
+  template.sessionDataJson = toEmbeddedJson_(parsed);
   const html = template.evaluate().setWidth(680).setHeight(640);
   DocumentApp.getUi().showModalDialog(html, 'Session Library');
 }
@@ -277,3 +314,4 @@ function divineNamePopup() {
 function linkerHTML() {
   linkTextsWithSefaria();
 }
+

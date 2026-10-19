@@ -1,0 +1,8 @@
+{
+  "name": "torah-library-clasp-tooling",
+  "private": true,
+  "description": "Pinned clasp for deploying the add-on. Development and CI tooling only: nothing here is pushed to Apps Script or shipped to users. See tools/clasp/README.md.",
+  "dependencies": {
+    "@google/clasp": "2.4.2"
+  }
+}
