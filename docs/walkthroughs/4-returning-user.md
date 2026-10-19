@@ -26,7 +26,7 @@ Open **Extensions → Torah Library** and compare with the old menu.
 | **Pesukim/line markers** checkbox | **📰 Insertion Options → Line numbers** |
 | Version dropdowns under the source | **Versions**: Translation Versions and Original Versions |
 | **Preferences** dialog | **⚙︎ Preferences**, now with tabs. Your old choices are kept. |
-| Nekudot / Ta'amei HaMiqra | **Preferences → Insertion** defaults, and **Vowels** / **Cantillation** in the Layout tray for one session |
+| Nekudot / Ta'amei HaMiqra | **Vowels** (Off / Tanakh / On) and **Cantillation** (Off / Tanakh / Torah): defaults in **Preferences → Insertion**, and in **📰 Insertion Options → Source** for one session |
 | Sheimot: replace יהוה / יה / אלוהים | **Preferences → Insertion → Divine Name Mappings**, plus English *God* |
 | **Support** | **Help & Support** (always last in the menu) and **Feedback** |
 | **Popcorn (beta)** | **Surprise Me**, in **Preferences → 🧪 Experimental** |
@@ -49,8 +49,13 @@ English.
 4. **Add Source** (or <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd>).
 
 With both languages the default layout is the one you know: a two-column
-table, Hebrew on the right. **📰 Insertion Options** also offers **Stacked** (Hebrew
-above English) and **Left–Right**.
+table, Hebrew on the right. **📰 Insertion Options → Arrangement** also offers
+**Stacked** (Hebrew above English) and **Left–Right**, and **Line by line**
+puts each verse in its own row beside its translation.
+
+You get the full interface (**Everything**), as before; the first-run setup new
+users see is never shown to you. **Simple**, a pared-down sidebar and menu, is
+at the top of Preferences if you want it.
 
 ---
 
@@ -59,8 +64,8 @@ above English) and **Left–Right**.
 - **Link Texts with Sefaria** (🏃 Quick Actions, or the menu). Turns the
   citations you've typed into links. It shows what it found, asks when a
   citation could mean more than one text, and tells you what it couldn't link.
-  Before sending anything to Sefaria it asks, and by default it sends only the
-  passages that look like citations. Tick **Insert** on a row to put the
+  By default it sends Sefaria only the passages that look like citations
+  (**Preferences → Linking** can send the whole document instead). Tick **Insert** on a row to put the
   source's text in as well; **📰 Customize this insertion** in the review lets
   you pick the layout, vowels and so on for that batch without touching your
   Preferences.
@@ -68,7 +73,10 @@ above English) and **Left–Right**.
   `Psalms 92:1`, and run it. The citation becomes the source.
 - **Several translations at once.** In **Versions**, <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click
   more than one.
-- **Transliteration**, in several schemes, under the Hebrew.
+- **Transliteration**, in several schemes, under the Hebrew: the
+  **Transliteration** switch in Insertion Options' **Source** section, with
+  its **Style**.
+- **Punctuation** on or off, for the Hebrew and the translation separately.
 - **Fonts and title style.** By default sources match your document's font.
   Titles can be Headings, so they appear in the outline.
 - **Voices** (search Sefaria source sheets) and **Lexicon** (the dictionary)
@@ -88,19 +96,25 @@ nobody warns them.
 1. **Vowels on texts outside Tanakh.** The original add-on removed niqqud from
    everything except Tanakh, whatever your settings said. Now vowels appear
    wherever Sefaria has them: Mishnah, the Siddur, some commentaries. For the
-   old look, turn on **Preferences → Insertion → Vowels only in Tanakh**. To
-   leave vowels out of a single insert, set **Vowels** to **Off** in **📰 Insertion Options**.
+   old look, set **Vowels** to **Tanakh** in **Preferences → Insertion**. To
+   leave vowels out of a single insert, set **Vowels** to **Off** in **📰
+   Insertion Options**. Cantillation has the same idea: **Tanakh** (the
+   default) or **Torah** (the Five Books only).
 2. **Divine-name replacement for new users is on.** New users start with
    יהוה → **יי**. If you set a replacement in the old add-on, such as ה' or
    יקוק, it has been kept. Check **Preferences → Insertion → Divine Name
    Mappings** once to make sure it's what you expect.
 3. **A credit line under each source.** Each insert now ends with a small
    block naming the translation and Hebrew edition and their licenses. Many
-   Sefaria texts require it. Turn it off in **Preferences → Insertion** if you
-   credit sources another way.
+   Sefaria texts require it. Turn **Citation** off in **Preferences →
+   Insertion → Layout** if you credit sources another way, or restyle it in
+   **Preferences → Fonts → Citation**.
 4. **Titles aren't bold and underlined any more.** They follow your document,
-   or the heading style you pick in **Preferences → Fonts → Title**. To get the
-   old look, set the Title style to bold with an underline.
+   or the heading style you pick in **Preferences → Fonts → Title**. The
+   source (Hebrew) title and the translation title each have their own font
+   and their own **Link title to Sefaria** switch. To get the old look, set
+   each title (the **Translation title** / **Source title** switch there) to
+   bold with an underline.
 5. **Fonts match your document.** The old add-on used the document's default.
    Now it uses the font and size of the text where you insert. If you want one
    font everywhere, set it in **Preferences → Fonts**.

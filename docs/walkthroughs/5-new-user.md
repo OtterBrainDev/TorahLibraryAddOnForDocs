@@ -12,6 +12,12 @@ in translation or both, straight into your Google Doc.
 
 ## 1. Open it
 
+The first time you open the add-on, a short **setup** asks three questions:
+what you'll use it for, how sources should look (with a preview of
+Deuteronomy 6:4), and whether you want **Simple** or **Everything**. Every
+answer is already filled in, so you can just click **Continue** through it, or
+**Skip for now**. You can change all of it later.
+
 In your document, click **Extensions → Torah Library → Texts**.
 
 A panel opens on the right. That's the sidebar.
@@ -35,12 +41,14 @@ just a few words from a verse.*
 
 The **Preview** shows exactly what will go into your document.
 
-Want only English, or only Hebrew? Click **📰 Insertion Options** under Add Source and
-choose:
+Want only English, or only Hebrew? Click **📰 Insertion Options** under Add
+Source and, under **Display**, choose:
 
 - **A** — translation only
 - **A + א** — Hebrew and translation
 - **א** — Hebrew only
+
+The preview changes as you choose. Press <kbd>Esc</kbd> to close the panel.
 
 ## 4. Insert it
 
@@ -59,6 +67,7 @@ top and a short credit line underneath naming the translation.
   (Preferences).
 - **Link the references you've typed** to Sefaria: **🏃 → Link Texts with
   Sefaria**.
+- **Run the setup again:** **Help** → **Run setup again**.
 - **Get help:** click **Help** at the bottom of the sidebar, or email
   [help@the-merkaz.org](mailto:help@the-merkaz.org).
 
@@ -72,3 +81,4 @@ top and a short credit line underneath naming the translation.
 | "Couldn't reach Sefaria" | Check your internet connection and try again. |
 | **Add Source** is greyed out | You picked a whole book or a section heading. Pick a specific passage, like `Genesis 1:1`. |
 | Nothing found | Check the spelling, or try the Hebrew name, or a phrase from the text. |
+| No Voices or Lexicon buttons under the search box | You chose **Simple**. Switch to **Everything** at the top of Preferences. |
