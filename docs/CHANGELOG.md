@@ -103,6 +103,12 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **Voices' Both inserts the sheet's text under a linked title.** It used to
+  insert the whole Citation (title, summary, "Curated by … • Topics … •
+  link") and then the text under its own title, so the title appeared up to
+  three times. Both is now the text, its title linked to the sheet on Sefaria.
+  Citation also leaves out a summary that only repeats the title (many authors
+  type the title again as the summary).
 - **A Vowels choice in the sidebar could be lost.** The sidebar saved each
   change to the session with its own server call, and each call read, merged
   and wrote the whole session, so with two in flight (a Vowels click and then

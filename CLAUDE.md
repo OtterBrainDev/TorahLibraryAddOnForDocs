@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **474 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **464 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -187,6 +187,9 @@ and fix it before touching the feature you came to change.
 - `insertion-target.test.js` — where an insert goes: after the cursor's
   block, inside a table cell for paragraph layouts, below the table (with a
   notice) for side-by-side layouts, never into a header, footer or footnote.
+- `sheet-insert.test.js` — a Voices (source sheet) insert: Both is the
+  sheet's text under a title linked to the sheet, never the citation block on
+  top of it; Citation leaves out a summary that only repeats the title.
 - `insert-title.test.js` — a sidebar insert is titled with the text chosen
   (its ref), never with what was typed in the search box.
 - `sefaria-unavailable.test.js` — "couldn't reach Sefaria" and a find-refs
