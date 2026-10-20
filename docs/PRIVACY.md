@@ -68,6 +68,11 @@ Document Scanning**:
   can catch unusual citation forms the local scan misses. This was the
   add-on's original behavior.
 
+If Sefaria's linker can't match a citation it found, the add-on looks that
+citation up again in other spellings, as the search box does. Those lookups
+send only the citation's own words (for example `Hil. Shabbat 1:1`), which
+were already part of what was uploaded.
+
 In either mode, nothing is uploaded until you explicitly run the command.
 Sefaria receives the text; it does not receive your name, your email address,
 your document's title, or its Google Drive location, because the add-on never

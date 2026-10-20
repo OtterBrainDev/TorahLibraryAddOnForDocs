@@ -79,3 +79,28 @@ test('every key the dialog can override is one the server accepts', () => {
   const clientKeys = [...clientBlock.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort();
   assert.deepEqual(clientKeys, serverKeys);
 });
+
+test('linker dialog: the "Not matched" list is collapsed, three columns, and built with textContent', () => {
+  // The dialog used to say only "N citations could not be matched", with no
+  // way to find them. The list is a <details>, so it starts collapsed.
+  const section = html.match(/<details class="unmatched-section" id="unmatched-section" hidden>([\s\S]*?)<\/details>/);
+  assert.ok(section, 'the Not matched section is missing');
+  assert.doesNotMatch(section[0], /<details[^>]*\sopen/);
+  const headings = [...section[1].matchAll(/<th>([^<]*)<\/th>/g)].map((m) => m[1]);
+  assert.deepEqual(headings, ['Search term', 'Variants searched', 'Why it didn’t match']);
+  // Its summary reads Show / Hide, and it follows the reader to the done
+  // state when nothing could be linked.
+  assert.match(html, /\(section\.open \? '▾ Hide ' : '▸ Show '\)/);
+  assert.match(html, /function placeUnmatched\(stateName\)/);
+  assert.match(html, /buildUnmatched\(report\.unmatched \|\| \[\]\);/);
+  // The cells are the reader's own document text and Sefaria's messages.
+  const builder = html.match(/function buildUnmatched\(unmatched\) \{([\s\S]*?)\n        \}\n/)[1];
+  assert.match(builder, /term\.textContent = item\.documentText/);
+  assert.match(builder, /li\.textContent = variant/);
+  assert.match(builder, /detail\.textContent = 'Sefaria: ' \+ item\.detail/);
+});
+
+test('linker dialog: a match found by another spelling says which', () => {
+  assert.match(html, /if \(match\.recoveredFrom\) \{/);
+  assert.match(html, /note\.textContent = 'Found by searching “' \+ match\.recoveredFrom \+ '”'/);
+});

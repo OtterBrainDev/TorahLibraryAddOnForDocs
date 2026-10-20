@@ -330,3 +330,44 @@ test('a decision without documentText falls back to in-bounds offsets only', () 
   );
   assert.equal(context.relocateLinkerDecision_('Short.', { startChar: 4, endChar: 15 }), null);
 });
+
+test('an unmatched citation keeps its words and context for the "Not matched" list', () => {
+  const context = load();
+  const at = DOC.indexOf('Avodah Zarah 2a');
+  const result = classify(context, [raw({ startChar: at, endChar: at + 15, linkFailed: true, refs: null })]);
+
+  assert.equal(result.unresolvedCount, 1);
+  assert.equal(result.unmatched.length, 1);
+  const entry = result.unmatched[0];
+  assert.equal(entry.documentText, 'Avodah Zarah 2a');
+  assert.equal(entry.startChar, at);
+  assert.equal(entry.occurrence, 0);
+  assert.ok(entry.snippet.includes('in the notes'), 'context, so the reader can find it');
+});
+
+test('an unmatched citation the reader already hyperlinked is not reported', () => {
+  const context = load();
+  const result = classify(context, [raw({ linkFailed: true, refs: null })], { isAlreadyLinked: () => true });
+
+  assert.equal(result.unresolvedCount, 0);
+  assert.equal(result.unmatched.length, 0);
+});
+
+test('an unmatched citation stitched across two windows is unplaceable, not unmatched', () => {
+  const context = load();
+  const segments = [
+    { docStart: 0, payloadStart: 0, length: 10 },
+    { docStart: 500, payloadStart: 12, length: 10 },
+  ];
+  const result = context.classifyLinkerMatches_({
+    rawMatches: [{ startChar: 8, endChar: 15, linkFailed: true, refs: null }],
+    refData: {},
+    segments,
+    docText: 'y'.repeat(600),
+    isAlreadyLinked: () => false,
+  });
+
+  // There is no run of the document to show; "Whole document" is the remedy.
+  assert.equal(result.unplaceableCount, 1);
+  assert.equal(result.unresolvedCount, 0);
+});

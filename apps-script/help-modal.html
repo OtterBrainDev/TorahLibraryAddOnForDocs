@@ -711,7 +711,7 @@
             </ul>
           </section>
 
-          <section class="card topic-section" id="link-texts" data-search-title="Link Texts with Sefaria" data-search-terms="link texts linker hyperlink citations references existing document scan ambiguous review summary every match count insert after linking could not be placed unresolved whole document candidate passages privacy customize this insertion layout display vowels transliteration replace citation own line duplicate twice revert save as defaults">
+          <section class="card topic-section" id="link-texts" data-search-title="Link Texts with Sefaria" data-search-terms="link texts linker hyperlink citations references existing document scan ambiguous review summary every match count insert after linking could not be placed unresolved not matched unmatched variants spellings ibid whole document candidate passages privacy customize this insertion layout display vowels transliteration replace citation own line duplicate twice revert save as defaults">
             <h2>Link Texts with Sefaria</h2>
             <p>Turns the citations already in your document — <em>Genesis 1:1</em>, <em>Berakhot 2a</em>, <em>Rambam, Hil. Teshuvah 3:4</em> — into links to Sefaria.</p>
             <ol class="steps">
@@ -741,7 +741,10 @@
             </ul>
             <h3>What is sent to Sefaria</h3>
             <p>Sefaria's linker has to read the text to find citations. With <strong>Candidate passages only</strong> (the default, in <span class="ui-label">Preferences → Linking → Document scanning</span>), your document is checked on your own computer first and only passages that look like they contain a citation are sent. <strong>Whole document</strong> sends everything, which can catch unusual citations the local check misses.</p>
-            <div class="callout">If the report says some citations <em>could not be placed</em>, switch Document scanning to <strong>Whole document</strong> and run it again. Citations that <em>could not be resolved</em> are ones Sefaria didn't recognise.</div>
+            <h3>Citations that couldn't be matched</h3>
+            <p>When Sefaria's linker can't match a citation, the add-on looks it up again the way the search box does: with consistent punctuation, Hebrew numerals without their marks, and abbreviations such as <em>Hil.</em> written out. A citation found this way is linked like any other, and its row says <em>Found by searching</em> the spelling that worked.</p>
+            <p>The rest are listed under <span class="ui-label">▸ Show … citations that couldn't be matched</span>, below the table. Each row shows the words in your document, every spelling that was searched, and why none matched — usually a chapter or page the book doesn't have, a book name Sefaria doesn't know, or <em>ibid.</em> / <em>there</em> / <span class="he" dir="rtl">שם</span>, which points back to an earlier citation. Fix the citation in your document and run Link Texts again.</p>
+            <div class="callout">If the report says some citations <em>fell across a gap in the partial scan</em>, switch Document scanning to <strong>Whole document</strong> and run it again.</div>
           </section>
 
           <section class="card topic-section" id="divine-names" data-search-title="Divine names" data-search-terms="divine names god name hashem adonai yy yud yud yhvh elokim sheimot replacement transform replace on insertion g-d">

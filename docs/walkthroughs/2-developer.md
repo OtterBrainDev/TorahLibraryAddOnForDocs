@@ -368,12 +368,21 @@ most time.
    lets the review table show excerpts without a request per row.
 5. `classifyLinkerMatches_` is pure and unit-tested. Each raw match becomes
    exactly one of: **linked** (one ref), **ambiguous** (several refs, kept in
-   Sefaria's order and never re-ranked), **unresolved** (`linkFailed` or no
-   refs), **unplaceable** (resolved, but it spans two pre-filter windows, so no
-   single run of document text holds it; the fix is Whole document mode), or
-   **skipped** (already hyperlinked, and not counted as a failure). The
-   original add-on linked `refs[0]` of ambiguous matches and reported only
-   successes.
+   Sefaria's order and never re-ranked), **unmatched** (`linkFailed` or no
+   refs; kept with its text and snippet), **unplaceable** (it spans two
+   pre-filter windows, so no single run of document text holds it; the fix is
+   Whole document mode), or **skipped** (already hyperlinked, matched or not,
+   and not counted as a failure). The original add-on linked `refs[0]` of
+   ambiguous matches and reported only successes.
+   `recoverUnmatchedCitations_` then looks each unmatched citation up again
+   with `buildReferenceVariants_` (`server/sefaria-fetch.gs`), the spellings
+   the sidebar search tries, in the same order, one `UrlFetchApp.fetchAll`
+   round per spelling, at most 30 citations. A hit becomes a single-source
+   match with `recoveredFrom`; the rest go to the report's `unmatched` with
+   the spellings tried and a `reason` (`out-of-range`, `unknown-title`,
+   `refers-back`, `not-found`, `unavailable`, `not-checked`), which the
+   dialog's collapsed "Not matched" list shows. Pinned by
+   `test/tests/linker-retry.test.js`.
 6. **Apply:** each match carries `occurrence` (which occurrence of its exact
    text it is). `applyLinkerDecisions(json)` re-finds that occurrence in the
    document as it is now (`relocateLinkerDecision_`), so an edit made while

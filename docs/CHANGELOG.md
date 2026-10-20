@@ -45,6 +45,35 @@ heading until the next release consolidates it.
 > the citation's fixed look until now: 8 pt italic, in the font of the text
 > above it.
 
+### Link Texts: which citations didn't match, and why
+
+#### Added
+
+- **A "Not matched" list in the Link Texts dialog.** Where the dialog used to
+  say only "3 citations could not be matched to a Sefaria source", it now has
+  a collapsed **▸ Show 3 citations that couldn't be matched** under the review
+  table (or under the message, when nothing could be linked). It lists each
+  one's words in your document with the sentence around it, every spelling
+  that was looked up, and why none matched: a chapter, verse or page the book
+  doesn't have (with Sefaria's own message, e.g. *Genesis ends at Chapter
+  50*), a book name Sefaria doesn't recognise, or a citation that points back
+  to an earlier one (*ibid.*, *there*, *שם*).
+
+#### Changed
+
+- **Link Texts tries the same spellings as the search box.** A citation
+  Sefaria's linker can't match is looked up again the way the sidebar search
+  looks up a typed reference: punctuation made consistent, Hebrew numerals
+  without their geresh/gershayim, and traditional abbreviations written out
+  (*Hil. Shabbat 1:1* → *Mishneh Torah, Hilchot Shabbat 1:1*). One found
+  this way is linked like any other single match, and its row says which
+  spelling found it. Only the citation's own words are sent for these
+  lookups, and at most 30 citations per scan are retried.
+- A citation that couldn't be matched but is already a hyperlink in your
+  document is no longer counted as a failure, and one the partial scan split
+  in two is reported as *fell across a gap in the partial scan* (the remedy
+  is *Whole document*) instead of as unmatched.
+
 ### Help and walkthroughs
 
 #### Changed
