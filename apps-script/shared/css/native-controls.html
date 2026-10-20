@@ -54,6 +54,8 @@
 
   --option-bg:              #fff;
   --option-text:            #222;
+  --option-selected-bg:     #18345d;  /* a list box's chosen option, focused or not */
+  --option-selected-text:   #fff;
 }
 
 @layer native-controls {
@@ -105,6 +107,16 @@
     background-color: var(--option-bg);
     background-image: none;
     font-family: inherit;
+  }
+
+  /* The background above also covers the browser's highlight of a chosen
+     option whenever its list box isn't focused, so a list looked deselected
+     as soon as the other one was clicked (the sidebar's Translation versions
+     and Source editions). Give the chosen option its own colours. */
+  select[multiple] option:checked,
+  select[size]:not([size="1"]) option:checked {
+    color: var(--option-selected-text);
+    background-color: var(--option-selected-bg);
   }
 
   /* ---- Text-like inputs and textareas ---- */

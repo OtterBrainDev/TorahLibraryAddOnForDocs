@@ -195,7 +195,8 @@ and in `test/ui/`:
   translation list is never reached by the class the Source editions list
   shares, a click in a multi-select list toggles one translation, a re-render
   of the same passage keeps the multi-selection, neither list can be left
-  empty, and the filter box never changes the selection.
+  empty, the filter box never changes the selection, and a list that isn't
+  focused still shows what is selected.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

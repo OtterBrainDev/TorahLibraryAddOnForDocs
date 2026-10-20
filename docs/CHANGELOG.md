@@ -90,6 +90,11 @@ heading until the next release consolidates it.
   selection to its first match. The preview now lists the selected
   translations in insertion order, and the box under the list always names
   what is selected.
+- **Choosing a translation made the source edition look deselected, and the
+  reverse.** The add-on's own list colours covered the browser's highlight in
+  whichever list wasn't focused, and after each choice the preview reload left
+  neither focused. The choice was still there, just invisible. A selected
+  version now stays highlighted in both lists.
 - **A misclick could leave nothing selected.** <kbd>Ctrl</kbd> / <kbd>⌘</kbd>
   + click on the selected item emptied either list, and Insert then used
   whatever the preview had last loaded. Now the last selection stays and the

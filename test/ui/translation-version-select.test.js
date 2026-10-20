@@ -75,3 +75,14 @@ test('the filter box narrows the lists without changing what is selected', () =>
   // A version the filter hides can't have been deselected.
   assert.match(update, /selectedArr\.indexOf\(vt\) >= 0 \|\| \(\$select\.prop\('multiple'\) && shown\.indexOf\(vt\) < 0\)/);
 });
+
+test('a list box shows its chosen option when it is not focused', () => {
+  // `select option { background-color }` also covers the browser's highlight
+  // of a chosen option in an unfocused list box, so clicking a translation
+  // made the Source editions list look deselected, and the reverse.
+  const css = readAppScriptFile('shared/css/native-controls.html');
+  const rule = css.match(/select\[multiple\] option:checked,\s*select\[size\]:not\(\[size="1"\]\) option:checked \{([^}]*)\}/);
+  assert.ok(rule, 'native-controls styles a list box\'s checked option');
+  assert.match(rule[1], /background-color:\s*var\(--option-selected-bg\)/);
+  assert.match(css, /--option-selected-bg:\s*#[0-9a-f]{3,6};/i);
+});
