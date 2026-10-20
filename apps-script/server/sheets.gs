@@ -20,7 +20,9 @@ function insertSheet(sheetPayload, frontendOptions) {
   const body = target.container;
   let index = target.index;
 
-  if (normalizedOptions.includeReference) {
+  // "Both" is the sheet's text under a title linked to the sheet. The citation
+  // block on top of it repeated the title, the summary and the owner.
+  if (normalizedOptions.includeReference && !normalizedOptions.includeContents) {
     index = insertSheetReferenceBlock_(body, index, sheetPayload, typography, true);
   }
 
@@ -83,6 +85,14 @@ function normalizeSheetInsertOptions(sheetPayload, frontendOptions) {
   };
 }
 
+// Same words, ignoring case, spacing and punctuation.
+function sameSheetText_(a, b) {
+  const squash = function(text) {
+    return String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+  };
+  return squash(a) === squash(b);
+}
+
 function getBooleanOption_(value, fallback) {
   return typeof value === 'boolean' ? value : fallback;
 }
@@ -134,7 +144,8 @@ function insertSheetReferenceBlock_(body, index, sheetPayload, typography, linke
   applyTitleTypography(titleParagraph, typography, true);
   index += 1;
 
-  if (summary) {
+  // Many authors write their title again as the summary; don't print it twice.
+  if (summary && !sameSheetText_(summary, title)) {
     const summaryParagraph = body.insertParagraph(index, summary);
     summaryParagraph.setLeftToRight(true);
     applyRoleTypography_(summaryParagraph, typography, 'translation');
@@ -166,15 +177,13 @@ function insertSheetContentsBlock_(body, index, sheetPayload, fullSheet, typogra
   const title = htmlToPlainText_(fullSheet.title || sheetPayload.label || 'Sefaria Source Sheet', normalizedOptions);
   const owner = String(fullSheet.ownerName || sheetPayload.owner || '').trim();
   const sources = Array.isArray(fullSheet.sources) ? fullSheet.sources : [];
-
-  if (normalizedOptions.includeReference) {
-    const spacer = body.insertParagraph(index, '');
-    applyRoleTypography_(spacer, typography, 'translation');
-    index += 1;
-  }
+  const url = normalizedOptions.includeReference ? safeLinkUrl_(sheetPayload.url) : '';
 
   const heading = body.insertParagraph(index, title);
   heading.setHeading(DocumentApp.ParagraphHeading.HEADING2);
+  if (url) {
+    heading.editAsText().setLinkUrl(url);
+  }
   applyTitleTypography(heading, typography, true);
   index += 1;
 
