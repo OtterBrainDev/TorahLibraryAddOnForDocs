@@ -74,6 +74,27 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **Several translations with the source no longer inserted.** The Source
+  editions list shared a class with the Translation versions list, so
+  refreshing the translations also filled the Source editions with translation
+  titles. The Hebrew was then fetched by a translation's name, and choosing a
+  source edition reset the translations. Each list now updates only itself.
+- **A multi-selection of translations reset itself.** A plain click replaced
+  the selection (only <kbd>Ctrl</kbd> / <kbd>⌘</kbd> added to it). Any
+  Insertion Options change, a new source edition, or typing in the filter box
+  also dropped every translation but one. Now each click adds or removes one
+  translation. The selection survives those changes, and the filter box only
+  narrows the list.
+- **It wasn't clear what would be inserted.** Picking a translation could
+  leave no option visibly selected, and the filter box quietly moved the
+  selection to its first match. The preview now lists the selected
+  translations in insertion order, and the box under the list always names
+  what is selected.
+- **A misclick could leave nothing selected.** <kbd>Ctrl</kbd> / <kbd>⌘</kbd>
+  + click on the selected item emptied either list, and Insert then used
+  whatever the preview had last loaded. Now the last selection stays and the
+  sidebar says why. A multi-version insert that skips translations with no
+  text no longer leaves the list empty either.
 - **A Vowels choice in the sidebar could be lost.** The sidebar saved each
   change to the session with its own server call, and each call read, merged
   and wrote the whole session, so with two in flight (a Vowels click and then

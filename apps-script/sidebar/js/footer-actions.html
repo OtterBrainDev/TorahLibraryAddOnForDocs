@@ -123,7 +123,7 @@ $('#insert-source').click(function () {
 
   // Multi-version insertion: only available in translation-only (en) or Hebrew-on-top (he-top) modes.
   var allowMulti = outputMode === 'en' || (outputMode === 'both' && bilingualLayout === 'he-top');
-  var $translationSelect = $('.translation-version-select').not('.he-version-selection');
+  var $translationSelect = translationVersionSelect();
   // Prefer selection-order tracking; fall back to DOM order from $select.val().
   var selectedVersions = $translationSelect.prop('multiple')
     ? (typeof orderedTranslationVersions !== 'undefined' && orderedTranslationVersions.length > 0
@@ -150,7 +150,8 @@ $('#insert-source').click(function () {
       showInsertWarning(error && error.message);
     }).insertReferenceVersions(data.ref, {
       versionTitles: selectedVersions,
-      heVersionTitle: $('.he-version-selection').val() || '',
+      // The edition loaded, even while the filter box hides its option.
+      heVersionTitle: $('.he-version-selection').val() || data.heVersionTitle || '',
       singleLanguage: language,
       bilingualLayout: bilingualLayout,
       pasukPreference: showPesukim,

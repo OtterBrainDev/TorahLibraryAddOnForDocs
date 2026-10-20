@@ -435,7 +435,7 @@ and the offset mapping) and `linker-classify.test.js`.
 ## 9. Guardrails and shipping (5 min)
 
 ```bash
-npm ci && npm test                 # 459 passing, 0 skipped (skipped > 0 = linkedom missing = red)
+npm ci && npm test                 # 465 passing, 0 skipped (skipped > 0 = linkedom missing = red)
 bash pre_clasp_qc.sh apps-script   # must exit 0
 npx --prefix tools/clasp clasp push  # HEAD only: test deployments, not users
 ```

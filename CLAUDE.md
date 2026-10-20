@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **459 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **465 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -280,6 +280,11 @@ and in `test/ui/`:
   a fetch-time change shows "Updating preview…" at once, every Preferences save
   reaches an open sidebar, and the card's transliteration sample drops the
   maqaf with Hebrew punctuation off.
+- `translation-version-select.test.js` — the sidebar's version lists: the
+  translation list is never reached by the class the Source editions list
+  shares, a click in a multi-select list toggles one translation, a re-render
+  of the same passage keeps the multi-selection, neither list can be left
+  empty, and the filter box never changes the selection.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

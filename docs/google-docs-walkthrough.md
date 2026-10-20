@@ -103,9 +103,9 @@ needed, a specific Hebrew edition (**Original Versions**). Your preferred
 translation language is set in **Preferences → Fonts → Translation**.
 
 With **Translation** only, or **Hebrew and translation** in the **Stacked**
-layout, hold <kbd>Ctrl</kbd> (<kbd>⌘</kbd>) to select several translations.
-Each is inserted as its own block, in the order selected. The Preview can't
-show several at once. A translation with no text for the passage is greyed out
+layout, each click on a translation adds or removes it, so several can be
+selected. Each is inserted as its own block, in the order selected. The Preview
+can't show several at once; it lists them in that order. A translation with no text for the passage is greyed out
 as *unavailable for this ref* and skipped.
 
 **🔁 Preview** shows what **Add Source** will insert right now.
