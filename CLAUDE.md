@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **466 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **464 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -147,6 +147,11 @@ and fix it before touching the feature you came to change.
 - `linker-classify.test.js` — which citation becomes a link, a
   question, or a counted failure; Apply re-finds each citation by occurrence,
   so an edit while the dialog is open can't move a link.
+- `linker-retry.test.js` — a citation Sefaria's linker can't match is looked
+  up again with exactly the sidebar search's spellings, in its order; a hit
+  is linked like any single match (and says which spelling found it); the
+  rest reach the review dialog's "Not matched" list with the spellings tried
+  and why each failed; no network while retrying never fails the scan.
 - `linker-insert-replace.test.js` — Link Texts' Insert follows "Insert from
   Selection replaces the selection": a citation on its own line is replaced
   by the source (titled with it, link kept); one inside a sentence is kept.
@@ -182,6 +187,9 @@ and fix it before touching the feature you came to change.
 - `insertion-target.test.js` — where an insert goes: after the cursor's
   block, inside a table cell for paragraph layouts, below the table (with a
   notice) for side-by-side layouts, never into a header, footer or footnote.
+- `sheet-insert.test.js` — a Voices (source sheet) insert: Both is the
+  sheet's text under a title linked to the sheet, never the citation block on
+  top of it; Citation leaves out a summary that only repeats the title.
 - `insert-title.test.js` — a sidebar insert is titled with the text chosen
   (its ref), never with what was typed in the search box.
 - `sefaria-unavailable.test.js` — "couldn't reach Sefaria" and a find-refs

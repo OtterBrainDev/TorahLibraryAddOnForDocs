@@ -166,10 +166,16 @@ function parseJsonOrNull_(text) {
 }
 
 /**
- * `properties` (optional) is what the Hebrew display and divine-name filters
- * read instead of the stored preferences; see preferenceOverlay_.
+ * Every spelling of a reference worth trying, in the order to try them: the
+ * normalized form, the text as written, the form without Hebrew numeral marks,
+ * then traditional abbreviations expanded. The sidebar search and Link Texts
+ * both try exactly this list (resolveReferenceWithFallbacks,
+ * recoverUnmatchedCitations_), so a citation one of them finds, the other does
+ * too.
+ *
+ * @returns {Array<string>} deduped, most faithful first
  */
-function resolveReferenceWithFallbacks(reference, versions, properties) {
+function buildReferenceVariants_(reference) {
   const candidates = [];
   const normalized = normalizeReferenceInput(reference);
   if (normalized) {
@@ -197,6 +203,16 @@ function resolveReferenceWithFallbacks(reference, versions, properties) {
       candidates.push(expansions[e]);
     }
   }
+
+  return candidates;
+}
+
+/**
+ * `properties` (optional) is what the Hebrew display and divine-name filters
+ * read instead of the stored preferences; see preferenceOverlay_.
+ */
+function resolveReferenceWithFallbacks(reference, versions, properties) {
+  const candidates = buildReferenceVariants_(reference);
 
   for (let i = 0; i < candidates.length; i++) {
     const resolved = fetchReference_(candidates[i], versions, properties);
@@ -266,8 +282,8 @@ function findReferenceForSidebar(reference, versions, sessionId) {
   return resolveReferenceWithFallbacks(safeReference, versions || undefined, sidebarSessionPreferenceOverlay_(sessionId));
 }
 
-/** Fetch one exact reference; `properties` defaults to the stored preferences. */
-function fetchReference_(safeReference, versions, properties) {
+/** The texts-API URL fetchReference_ reads; Link Texts' retries use it too. */
+function sefariaTextsUrl_(safeReference, versions) {
   let url = 'https://www.sefaria.org/api/texts/'
 
   let encodedReference = encodeURIComponent(safeReference);
@@ -282,6 +298,12 @@ function fetchReference_(safeReference, versions, properties) {
     let nonVersionedAdditions = `${encodedReference}?commentary=0&context=0`;
     url = url + nonVersionedAdditions;
   }
+  return url;
+}
+
+/** Fetch one exact reference; `properties` defaults to the stored preferences. */
+function fetchReference_(safeReference, versions, properties) {
+  const url = sefariaTextsUrl_(safeReference, versions);
 
   // A reference Sefaria doesn't know is an ordinary outcome ("no match"). Not
   // reaching Sefaria at all is not, and used to be reported the same way:

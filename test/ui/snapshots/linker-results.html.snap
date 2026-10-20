@@ -359,6 +359,51 @@
       }
       .customize-actions .btn { padding: 4px 10px; font-size: 12px; }
 
+      /* "Not matched": the citations Sefaria couldn't match, collapsed until
+         asked for. Shown under the review table, or under the done message
+         when nothing could be linked. */
+      .unmatched-section {
+        margin-top: 10px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--panel);
+      }
+      .unmatched-section > summary {
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--amber);
+        list-style: none;
+      }
+      .unmatched-section > summary::-webkit-details-marker { display: none; }
+      .unmatched-section > summary:hover { text-decoration: underline; }
+      .unmatched-body {
+        max-height: min(220px, 34vh);
+        overflow-y: auto;
+        border-top: 1px solid #ededea;
+      }
+      .unmatched-body table { font-size: 13px; }
+      .unmatched-body td.variants-cell { width: 30%; }
+      .unmatched-body td.reason-cell { width: 34%; }
+      .variant-list { margin: 0; padding: 0; list-style: none; }
+      .variant-list li { word-break: break-word; }
+      .unmatched-detail {
+        display: block;
+        margin-top: 2px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      #state-done .unmatched-section { margin: 0 0 14px; }
+
+      .recovered-note {
+        display: block;
+        margin-top: 2px;
+        font-size: 12px;
+        color: var(--muted);
+        font-style: italic;
+      }
+
       .done-message { margin: 0 0 14px; font-size: 14px; white-space: pre-line; }
       .error-message { color: #a32017; }
     </style>
@@ -400,6 +445,22 @@
             <tbody id="confident-tbody"></tbody>
           </table>
         </div>
+
+        <details class="unmatched-section" id="unmatched-section" hidden>
+          <summary id="unmatched-toggle"></summary>
+          <div class="unmatched-body">
+            <table>
+              <thead>
+                <tr>
+                  <th>Search term</th>
+                  <th>Variants searched</th>
+                  <th>Why it didn’t match</th>
+                </tr>
+              </thead>
+              <tbody id="unmatched-tbody"></tbody>
+            </table>
+          </div>
+        </details>
 
         <details class="customize-insertion" id="customize-insertion" hidden>
           <summary>📰 Customize this insertion <span class="customize-state" id="customize-state">Your defaults</span></summary>
@@ -476,6 +537,7 @@
           ['scanning', 'review', 'applying', 'done'].forEach(function (state) {
             byId('state-' + state).hidden = (state !== name);
           });
+          placeUnmatched(name);
         }
 
         function plural(n, singular, pluralForm) {
@@ -684,12 +746,15 @@
             return;
           }
 
+          buildUnmatched(report.unmatched || []);
+
           var matches = report.matches || [];
           if (!matches.length) {
             var nothing = 'No new references to link.';
             if (report.unresolvedCount) {
               nothing += '\n\n' + plural(report.unresolvedCount, 'citation') +
-                ' looked like a reference but could not be matched to a Sefaria source.';
+                ' looked like a reference but could not be matched to a Sefaria source' +
+                (unmatchedCount() ? ' — see the list below.' : '.');
             }
             if (report.unplaceableCount) {
               nothing += '\n\n' + plural(report.unplaceableCount, 'citation') +
@@ -725,7 +790,8 @@
             summaryParts.push(plural(ambiguous.length, 'citation') + ' matched more than one source — choose a source, then tick Link or Insert.');
           }
           if (report.unresolvedCount) {
-            summaryParts.push(plural(report.unresolvedCount, 'citation') + ' could not be matched to a Sefaria source and will be left alone.');
+            summaryParts.push(plural(report.unresolvedCount, 'citation') + ' could not be matched to a Sefaria source and will be left alone' +
+              (unmatchedCount() ? ' — see the list below the table.' : '.'));
           }
           // Kept separate from "unresolved" because the reader can act on this
           // one: the citation was recognised, but the partial scan uploaded it
@@ -758,6 +824,87 @@
 
           syncMasterCheckboxes();
           updateSelectionCount();
+        }
+
+        // ---- not matched ------------------------------------------------------
+        //
+        // What the reader needs to find and fix each one: the words in their
+        // document (with context), every spelling that was looked up — the
+        // same ones the sidebar search tries — and why none matched.
+
+        function unmatchedCount() {
+          return byId('unmatched-tbody').rows.length;
+        }
+
+        function buildUnmatched(unmatched) {
+          var tbody = byId('unmatched-tbody');
+          unmatched.forEach(function (item) {
+            var tr = document.createElement('tr');
+
+            var tdTerm = document.createElement('td');
+            var term = document.createElement('span');
+            term.className = 'doc-text';
+            term.textContent = item.documentText;
+            tdTerm.appendChild(term);
+            var snippet = document.createElement('span');
+            snippet.className = 'snippet';
+            snippet.textContent = item.snippet || '';
+            tdTerm.appendChild(snippet);
+            tr.appendChild(tdTerm);
+
+            var tdVariants = document.createElement('td');
+            tdVariants.className = 'variants-cell';
+            var variants = item.variants || [];
+            if (variants.length) {
+              var list = document.createElement('ul');
+              list.className = 'variant-list';
+              variants.forEach(function (variant) {
+                var li = document.createElement('li');
+                li.textContent = variant;
+                list.appendChild(li);
+              });
+              tdVariants.appendChild(list);
+            } else {
+              tdVariants.textContent = '—';
+            }
+            tr.appendChild(tdVariants);
+
+            var tdReason = document.createElement('td');
+            tdReason.className = 'reason-cell';
+            tdReason.appendChild(document.createTextNode(item.reasonText || 'Sefaria couldn’t match this to a source.'));
+            if (item.detail) {
+              var detail = document.createElement('span');
+              detail.className = 'unmatched-detail';
+              detail.textContent = 'Sefaria: ' + item.detail;
+              tdReason.appendChild(detail);
+            }
+            tr.appendChild(tdReason);
+
+            tbody.appendChild(tr);
+          });
+
+          var section = byId('unmatched-section');
+          var toggle = byId('unmatched-toggle');
+          function render() {
+            toggle.textContent = (section.open ? '▾ Hide ' : '▸ Show ') +
+              plural(unmatched.length, 'citation') + ' that couldn’t be matched';
+          }
+          section.addEventListener('toggle', render);
+          render();
+        }
+
+        // Under the review table, or under the done message; never while
+        // scanning or applying.
+        function placeUnmatched(stateName) {
+          var section = byId('unmatched-section');
+          if (stateName !== 'review' && stateName !== 'done') {
+            section.hidden = true;
+            return;
+          }
+          var host = byId('state-' + stateName);
+          var before = stateName === 'review' ? byId('customize-insertion') : host.querySelector('.actions');
+          host.insertBefore(section, before);
+          section.hidden = unmatchedCount() === 0;
         }
 
         function setupConfidentGroup(count) {
@@ -854,6 +1001,14 @@
             single.className = 'single-ref';
             single.textContent = match.candidates[0].ref;
             tdRef.appendChild(single);
+            // Sefaria's linker missed it; one of the sidebar search's other
+            // spellings found it.
+            if (match.recoveredFrom) {
+              var note = document.createElement('span');
+              note.className = 'recovered-note';
+              note.textContent = 'Found by searching “' + match.recoveredFrom + '”';
+              tdRef.appendChild(note);
+            }
           }
 
           tdRef.appendChild(preview);
@@ -1016,7 +1171,8 @@
           if (failed) lines.push(plural(failed, 'source') + ' could not be inserted.');
           if (skipped) lines.push(plural(skipped, 'reference') + ' could not be linked.');
           if (report && report.unresolvedCount) {
-            lines.push(plural(report.unresolvedCount, 'citation') + ' could not be matched to a Sefaria source.');
+            lines.push(plural(report.unresolvedCount, 'citation') + ' could not be matched to a Sefaria source' +
+              (unmatchedCount() ? ' — see the list below.' : '.'));
           }
           if (report && report.unplaceableCount) {
             lines.push(plural(report.unplaceableCount, 'citation') + ' fell across a gap in the partial scan.');

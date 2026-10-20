@@ -195,10 +195,12 @@ function confirmLinkerUploadOnce_(scanMode) {
  *
  * Everything that cannot become a link is counted rather than dropped. The
  * published add-on returned "Linked N references" with no hint that anything
- * else had happened, which is the silence this replaces.
+ * else had happened, which is the silence this replaces. A citation Sefaria
+ * could not match is kept with its words and context (`unmatched`), so the
+ * review dialog can show the reader which ones they were, not just how many.
  *
  * @param {Object} input {rawMatches, refData, segments, docText, isAlreadyLinked}
- * @returns {{matches: Array, unresolvedCount: number}}
+ * @returns {{matches: Array, unmatched: Array, unresolvedCount: number, unplaceableCount: number}}
  */
 function classifyLinkerMatches_(input) {
   const rawMatches = (input && input.rawMatches) || [];
@@ -208,7 +210,7 @@ function classifyLinkerMatches_(input) {
   const isAlreadyLinked = (input && input.isAlreadyLinked) || function () { return false; };
 
   const matches = [];
-  let unresolvedCount = 0;
+  const unmatched = [];
   let unplaceableCount = 0;
 
   for (let i = 0; i < rawMatches.length; i++) {
@@ -216,20 +218,17 @@ function classifyLinkerMatches_(input) {
     if (!raw) continue;
 
     // Sefaria recognised a citation but could not resolve it.
-    if (raw.linkFailed || !Array.isArray(raw.refs) || !raw.refs.length) {
-      unresolvedCount++;
-      continue;
-    }
+    const linkFailed = !!raw.linkFailed || !Array.isArray(raw.refs) || !raw.refs.length;
 
     const range = segments
       ? mapPayloadRangeToDocRange_(segments, Number(raw.startChar), Number(raw.endChar))
       : { startChar: Number(raw.startChar), endChar: Number(raw.endChar) };
     if (!range) {
-      // Sefaria resolved this one, but it was stitched together across two
-      // pre-filter windows, so no contiguous span of the document holds it.
-      // Distinct from "unresolved": the citation is fine, our upload shape lost
-      // it, and the reader has a remedy — scan the whole document. Nothing to
-      // put in the review table, because there is no document text to link.
+      // Stitched together across two pre-filter windows, so no contiguous span
+      // of the document holds it. Distinct from "unresolved": our upload shape
+      // lost it, and the reader has a remedy — scan the whole document. Nothing
+      // to put in the review table, because there is no document text to link
+      // (or, for a failed one, to show).
       unplaceableCount++;
       continue;
     }
@@ -242,24 +241,22 @@ function classifyLinkerMatches_(input) {
       continue;
     }
 
-    // Already hyperlinked: leave it alone, and do not report it as a problem.
+    // Already hyperlinked: leave it alone, and do not report it as a problem —
+    // matched or not, the reader has already linked it.
     if (isAlreadyLinked(start, endExclusive - 1)) {
       continue;
     }
 
     const candidates = [];
-    for (let c = 0; c < raw.refs.length; c++) {
-      const candidate = buildLinkerCandidate_(raw.refs[c], refData);
-      if (candidate) candidates.push(candidate);
-    }
-    if (!candidates.length) {
-      unresolvedCount++;
-      continue;
+    if (!linkFailed) {
+      for (let c = 0; c < raw.refs.length; c++) {
+        const candidate = buildLinkerCandidate_(raw.refs[c], refData);
+        if (candidate) candidates.push(candidate);
+      }
     }
 
     const documentText = docText.substring(start, endExclusive);
-    matches.push({
-      key: 'match-' + i + '-' + start,
+    const placement = {
       documentText: documentText,
       // Which occurrence of this exact text the citation is. Apply re-finds it
       // by this, not by raw offset, so an edit made while the review dialog
@@ -267,16 +264,221 @@ function classifyLinkerMatches_(input) {
       occurrence: countOccurrencesBefore_(docText, documentText, start),
       snippet: buildLinkerSnippet_(docText, start, endExclusive),
       startChar: start,
-      endChar: endExclusive,
+      endChar: endExclusive
+    };
+
+    if (!candidates.length) {
+      unmatched.push(placement);
+      continue;
+    }
+
+    matches.push(Object.assign({
+      key: 'match-' + i + '-' + start,
       ambiguous: candidates.length > 1,
       candidates: candidates
-    });
+    }, placement));
   }
 
   return {
     matches: matches,
-    unresolvedCount: unresolvedCount,
+    unmatched: unmatched,
+    unresolvedCount: unmatched.length,
     unplaceableCount: unplaceableCount
+  };
+}
+
+// How many unmatched citations one scan looks up again. Each costs up to one
+// request per spelling (buildReferenceVariants_), sent in parallel rounds; past
+// this a scan of a long, citation-heavy document would spend its time here.
+var LINKER_RETRY_MAX_CITATIONS_ = 30;
+
+/**
+ * Give each citation Sefaria's linker could not match the lookups the sidebar
+ * search would: every spelling buildReferenceVariants_ offers (the normalized
+ * form, the text as written, Hebrew numerals without their marks, traditional
+ * abbreviations expanded), each tried against the same texts API, in the same
+ * order, stopping at the first that resolves. A citation found this way becomes
+ * an ordinary single-source match; one that is not keeps the spellings tried
+ * and why it failed, for the review dialog's "Not matched" list.
+ *
+ * The close-match suggester ("did you mean…") is deliberately not used: it
+ * proposes a different work, which is a question for the reader, not a link.
+ *
+ * Never throws: when Sefaria cannot be reached, the citations still unchecked
+ * are reported as such and the scan's other results stand.
+ *
+ * @param {Array} unmatched  classifyLinkerMatches_'s `unmatched`
+ * @param {function(Array): Array} fetchAll  UrlFetchApp.fetchAll, injected for tests
+ * @returns {{recovered: Array, unmatched: Array}}
+ */
+function recoverUnmatchedCitations_(unmatched, fetchAll) {
+  const items = (unmatched || []).map(function (entry, index) {
+    return {
+      entry: entry,
+      variants: buildReferenceVariants_(entry.documentText),
+      checked: index < LINKER_RETRY_MAX_CITATIONS_,
+      tried: [],
+      errors: [],
+      resolved: null,
+      variant: '',
+      unavailable: false
+    };
+  });
+
+  const longest = items.reduce(function (max, item) { return Math.max(max, item.variants.length); }, 0);
+  // One round per spelling, all citations at once, so spelling 1 is always
+  // tried before spelling 2 — the order the sidebar tries them in.
+  for (let round = 0; round < longest; round++) {
+    const batch = items.filter(function (item) {
+      return item.checked && !item.resolved && !item.unavailable && round < item.variants.length;
+    });
+    if (!batch.length) break;
+
+    let responses;
+    try {
+      responses = fetchAll(batch.map(function (item) {
+        return { url: sefariaTextsUrl_(item.variants[round]), muteHttpExceptions: true };
+      }));
+    } catch (error) {
+      responses = null;
+    }
+    if (!responses) {
+      items.forEach(function (item) {
+        if (item.checked && !item.resolved) item.unavailable = true;
+      });
+      break;
+    }
+
+    batch.forEach(function (item, b) {
+      const outcome = interpretTextsResponse_(responses[b]);
+      if (outcome.unavailable) {
+        item.unavailable = true;
+        return;
+      }
+      item.tried.push(item.variants[round]);
+      if (outcome.resolved) {
+        item.resolved = outcome.resolved;
+        item.variant = item.variants[round];
+      } else if (outcome.error) {
+        item.errors.push(outcome.error);
+      }
+    });
+  }
+
+  const recovered = [];
+  const stillUnmatched = [];
+  items.forEach(function (item) {
+    const entry = item.entry;
+    if (item.resolved) {
+      recovered.push(Object.assign({
+        key: 'recovered-' + entry.startChar,
+        ambiguous: false,
+        candidates: [buildLinkerCandidateFromText_(item.resolved)],
+        // The spelling that found it, shown under the source.
+        recoveredFrom: item.variant
+      }, entry));
+      return;
+    }
+    const reason = classifyUnmatchedCitation_(entry.documentText, item);
+    stillUnmatched.push(Object.assign({}, entry, {
+      variants: item.tried,
+      reason: reason.code,
+      reasonText: reason.text,
+      detail: reason.detail
+    }));
+  });
+
+  return { recovered: recovered, unmatched: stillUnmatched };
+}
+
+/** One texts-API response as {resolved}, {error}, or {unavailable}. */
+function interpretTextsResponse_(response) {
+  if (!response) return { unavailable: true };
+  const status = response.getResponseCode ? response.getResponseCode() : 200;
+  if (status === 429 || status >= 500) return { unavailable: true };
+  const data = parseJsonOrNull_(response.getContentText());
+  // The same test the sidebar applies (resolveReferenceWithFallbacks).
+  if (status < 400 && data && data.ref && !data.error) return { resolved: data };
+  return { error: (data && typeof data.error === 'string') ? data.error : '' };
+}
+
+/** A review-table candidate from a texts-API payload, like buildLinkerCandidate_. */
+function buildLinkerCandidateFromText_(data) {
+  const english = htmlToPlainText_(firstTextSegment_(data.text), null);
+  const hebrew = htmlToPlainText_(firstTextSegment_(data.he), null);
+  return {
+    ref: String(data.ref || ''),
+    heRef: String(data.heRef || ''),
+    preview: truncateLinkerPreview_(english || hebrew, 220),
+    category: String(data.primary_category || '')
+  };
+}
+
+/** The first non-empty string in a (possibly nested) texts-API text array. */
+function firstTextSegment_(value) {
+  if (typeof value === 'string') return value;
+  if (!Array.isArray(value)) return '';
+  for (let i = 0; i < value.length; i++) {
+    const found = firstTextSegment_(value[i]);
+    if (found) return found;
+  }
+  return '';
+}
+
+// "Ibid.", "ad loc.", "Rashi there", "שם": a citation that points back at an
+// earlier one, which neither Sefaria's linker nor a lookup can follow.
+var LINKER_REFERS_BACK_RE_ = /(?:^|[\s(\[])(?:ibid|ib|id|op\.?\s*cit|loc\.?\s*cit|ad\s+loc|there)(?![A-Za-z])|(?:^|[\s(\[])שם(?![\u05D0-\u05EA])/i;
+
+/**
+ * Why a citation stayed unmatched, in words the reader can act on. `detail` is
+ * Sefaria's own message, when it gave one.
+ */
+function classifyUnmatchedCitation_(documentText, item) {
+  if (!item.checked) {
+    return {
+      code: 'not-checked',
+      text: 'Not looked up again: this scan had more than ' + LINKER_RETRY_MAX_CITATIONS_ + ' unmatched citations.',
+      detail: ''
+    };
+  }
+  if (item.unavailable) {
+    return {
+      code: 'unavailable',
+      text: 'Sefaria didn\u2019t answer while other spellings were being tried. Run Link Texts again.',
+      detail: ''
+    };
+  }
+  if (LINKER_REFERS_BACK_RE_.test(String(documentText || ''))) {
+    return {
+      code: 'refers-back',
+      text: 'Points back to an earlier citation (ibid., there, \u05E9\u05DD), which Sefaria can\u2019t follow. Write the source out in full.',
+      detail: ''
+    };
+  }
+  const errors = item.errors || [];
+  // A spelling that found the book but not the place says more than one that
+  // found nothing: "Hil. Shabbat 40:1" fails as written, but its expansion
+  // reaches Mishneh Torah and is told where it ends.
+  const outOfRange = errors.filter(function (e) { return /ends at|only has|out of range|exceed/i.test(e); })[0];
+  if (outOfRange) {
+    return {
+      code: 'out-of-range',
+      text: 'Sefaria knows the book, but not this chapter, verse or page.',
+      detail: outOfRange
+    };
+  }
+  const unknownTitle = errors.filter(function (e) { return /could not find title|unrecognized|not a valid|no index/i.test(e); })[0];
+  if (unknownTitle) {
+    return {
+      code: 'unknown-title',
+      text: 'Sefaria doesn\u2019t recognise the book name. Check the spelling, or write the title out in full.',
+      detail: unknownTitle
+    };
+  }
+  return {
+    code: 'not-found',
+    text: 'Sefaria couldn\u2019t match this to a source.',
+    detail: errors[0] || ''
   };
 }
 
@@ -305,6 +507,7 @@ function scanDocumentForReferences() {
   if (!scan) {
     return {
       matches: [],
+      unmatched: [],
       unresolvedCount: 0,
       unplaceableCount: 0,
       reviewMode: getLinkerReviewMode_(prefs),
@@ -325,13 +528,18 @@ function scanDocumentForReferences() {
       return !!(bodyText.getLinkUrl(start) || bodyText.getLinkUrl(endInclusive));
     }
   });
-  const matches = classified.matches;
-  const unresolvedCount = classified.unresolvedCount;
+  // Look the unmatched ones up the way the sidebar search would.
+  const recovery = recoverUnmatchedCitations_(classified.unmatched, function (requests) {
+    return UrlFetchApp.fetchAll(requests);
+  });
+  const matches = classified.matches.concat(recovery.recovered)
+    .sort(function (a, b) { return a.startChar - b.startChar; });
   const unplaceableCount = classified.unplaceableCount;
 
   return {
     matches: matches,
-    unresolvedCount: unresolvedCount,
+    unmatched: recovery.unmatched,
+    unresolvedCount: recovery.unmatched.length,
     unplaceableCount: unplaceableCount,
     reviewMode: getLinkerReviewMode_(prefs),
     nothingToScan: false,
