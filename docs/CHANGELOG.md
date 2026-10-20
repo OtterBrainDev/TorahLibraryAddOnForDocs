@@ -103,6 +103,32 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- **Several translations with the source no longer inserted.** The Source
+  editions list shared a class with the Translation versions list, so
+  refreshing the translations also filled the Source editions with translation
+  titles. The Hebrew was then fetched by a translation's name, and choosing a
+  source edition reset the translations. Each list now updates only itself.
+- **A multi-selection of translations reset itself.** A plain click replaced
+  the selection (only <kbd>Ctrl</kbd> / <kbd>⌘</kbd> added to it). Any
+  Insertion Options change, a new source edition, or typing in the filter box
+  also dropped every translation but one. Now each click adds or removes one
+  translation. The selection survives those changes, and the filter box only
+  narrows the list.
+- **It wasn't clear what would be inserted.** Picking a translation could
+  leave no option visibly selected, and the filter box quietly moved the
+  selection to its first match. The preview now lists the selected
+  translations in insertion order, and the box under the list always names
+  what is selected.
+- **Choosing a translation made the source edition look deselected, and the
+  reverse.** The add-on's own list colours covered the browser's highlight in
+  whichever list wasn't focused, and after each choice the preview reload left
+  neither focused. The choice was still there, just invisible. A selected
+  version now stays highlighted in both lists.
+- **A misclick could leave nothing selected.** <kbd>Ctrl</kbd> / <kbd>⌘</kbd>
+  + click on the selected item emptied either list, and Insert then used
+  whatever the preview had last loaded. Now the last selection stays and the
+  sidebar says why. A multi-version insert that skips translations with no
+  text no longer leaves the list empty either.
 - **Voices' Both inserts the sheet's text under a linked title.** It used to
   insert the whole Citation (title, summary, "Curated by … • Topics … •
   link") and then the text under its own title, so the title appeared up to

@@ -405,6 +405,18 @@
   word-break: break-word;
 }
 
+/* "At least one translation stays selected" (a click that would empty the list). */
+.translation-selected-display.is-warning {
+  color: var(--halakhah-red);
+  border-color: var(--halakhah-red);
+}
+
+.version-multi-hint {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .version-control + .version-control {
   margin-top: 10px;
 }

@@ -288,6 +288,12 @@ and in `test/ui/`:
   a fetch-time change shows "Updating preview…" at once, every Preferences save
   reaches an open sidebar, and the card's transliteration sample drops the
   maqaf with Hebrew punctuation off.
+- `translation-version-select.test.js` — the sidebar's version lists: the
+  translation list is never reached by the class the Source editions list
+  shares, a click in a multi-select list toggles one translation, a re-render
+  of the same passage keeps the multi-selection, neither list can be left
+  empty, the filter box never changes the selection, and a list that isn't
+  focused still shows what is selected.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

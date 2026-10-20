@@ -81,7 +81,8 @@ function buildSefariaOpenUrl() {
   else if (outputMode === 'en') params.set('lang', 'en');
   else params.set('lang', 'bi');
 
-  var selectedTranslationVersion = $('.translation-version-select').val() || data.versionTitle || '';
+  // The first translation picked (a multi-selection's .val() is an array).
+  var selectedTranslationVersion = (typeof orderedTranslationVersions !== 'undefined' && orderedTranslationVersions[0]) || data.versionTitle || '';
   var selectedSourceVersion = $('.he-version-selection').val() || data.heVersionTitle || '';
   if (outputMode !== 'he' && selectedTranslationVersion) params.set('ven', selectedTranslationVersion);
   if (outputMode !== 'en' && selectedSourceVersion) params.set('vhe', selectedSourceVersion);
