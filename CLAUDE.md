@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **501 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **509 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -205,6 +205,10 @@ and fix it before touching the feature you came to change.
   Hebrew as fetched (vowels kept, the Hebrew "Punctuation: Off" setting and
   divine names applied), never the vowel-stripped Hebrew;
   `aligned-rows.test.js` pins the insert side.
+- `transliteration-style.test.js` — the Name and every substitute for it
+  (יי, יקוק, ה', השם) read "HaShem", prefixes kept (laHaShem), IPA in IPA;
+  each sentence (line, after sof pasuq or period) starts with a capital,
+  except in IPA; no cantillation mark or meteg is left in the Latin text.
 - `aligned-rows.test.js` — the side-by-side "Line by line" setting: each
   verse paired with its translation in its own table row (numbering, spanning
   refs, missing segments, per-row transliteration); off keeps one row.

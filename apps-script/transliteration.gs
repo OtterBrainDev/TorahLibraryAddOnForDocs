@@ -63,7 +63,6 @@ var TRANSLITERATION_SCHEME_OPTIONS = [
 
 var HEBREW_LETTER_RE = /[\u05D0-\u05EA\u05DA\u05DD\u05DF\u05E3\u05E5]/;
 var NIQQUD_RE = /[\u05B0-\u05BC\u05C7]/;
-var CANTILLATION_RE = /[\u0591-\u05AF]/;
 var BGDKPT_RE = /[בגדכפתךף]/;
 var VOWEL_RE = /[\u05B1-\u05BB\u05C7]/;
 var SHEVA = "\u05B0";
@@ -71,8 +70,13 @@ var DAGESH = "\u05BC";
 var SHIN_DOT = "\u05C1";
 var SIN_DOT = "\u05C2";
 
+// Every cantillation mark, and the marks the schemes have no reading for:
+// meteg, rafe and the upper and lower dots. Without the g flag only the first
+// mark went, and the rest were copied into the Latin text (yehva + the mark).
+var UNREAD_MARKS_RE = /[\u0591-\u05AF\u05BD\u05BF\u05C4\u05C5]/g;
+
 function stripCantillationMarks_(text) {
-  return String(text || "").replace(CANTILLATION_RE, "");
+  return String(text || "").replace(UNREAD_MARKS_RE, "");
 }
 
 function isHebrewLetter_(ch) {
@@ -214,15 +218,51 @@ function normalizeBiblicalOptions_(options) {
   return options;
 }
 
-function transliterateHebrewText(text, schemeKey, options) {
-  options = normalizeBiblicalOptions_(options);
-  var cleaned = stripCantillationMarks_(String(text || ""));
-  if (!cleaned) return "";
+// The Name is read, not spelled out: "HaShem", however the text writes it.
+// That is יהוה and the substitutes for it, the add-on's (Preferences ->
+// Divine Name Mappings) and those Sefaria's texts already use: יי, יקוק,
+// ה' and השם. Up to two prefix letters (וַ, לַ, בַּ, מֵ, שֶׁ) keep their own
+// reading: לַיהוָה -> laHaShem. IPA reads it too, in IPA (הַשֵּׁם).
+var DIVINE_NAME_TRANSLITERATION = "HaShem";
+var DIVINE_NAME_SPELLED = "הַשֵּׁם";
+var DIVINE_NAME_WORD_RE = /[\u05D0-\u05EA\u05B0-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]+['\u05F3]?/g;
+var DIVINE_NAME_LETTERS_RE = /^([ובכלמש]{0,2})(?:יהוה|יי|יקוק)$|^()(?:ה['\u05F3]|השם)$/;
+// Stands in for the Name while the rest of the text is transliterated.
+var DIVINE_NAME_PLACEHOLDER = "\uE000";
 
-  var scheme = TRANSLITERATION_SCHEMES[schemeKey] || TRANSLITERATION_SCHEMES.simple_english;
-  var overrides = options.overrideMap || getTransliterationOverrides_();
+/** Replaces each spelling of the Name with DIVINE_NAME_PLACEHOLDER, keeping any prefix. */
+function markDivineNamesForTransliteration_(text) {
+  return text.replace(DIVINE_NAME_WORD_RE, function (word) {
+    var match = DIVINE_NAME_LETTERS_RE.exec(word.replace(/[^\u05D0-\u05EA'\u05F3]/g, ""));
+    if (!match) return word;
+    var prefixLetters = (match[1] || "").length;
+    var end = 0;
+    for (var seen = 0; end < word.length; end += 1) {
+      if (isHebrewLetter_(word.charAt(end)) && seen++ === prefixLetters) break;
+    }
+    return word.slice(0, end) + DIVINE_NAME_PLACEHOLDER;
+  });
+}
+
+function isIpaScheme_(schemeKey) {
+  return /^ipa_/.test(String(schemeKey || ""));
+}
+
+/**
+ * Capitalizes the first word of each sentence: at the start of the text (a
+ * line, as transliterateHebrewHtmlPreservingBasicBreaks calls it), and after
+ * a sof pasuq, a period, a question mark or an exclamation mark. A line
+ * marker ("(1) ") and an aleph or ayin sign (', ʾ, ʿ) before the first
+ * letter are skipped. Not for IPA, where case is part of the notation.
+ */
+function capitalizeTransliteration_(text) {
+  return text.replace(/(^|[.?!\u05C3]\s*)(\([^)]*\)\s*)?([^\s\p{L}]*)(\p{Ll})/gu, function (all, before, marker, signs, letter) {
+    return before + (marker || "") + signs + letter.toUpperCase();
+  });
+}
+
+function transliterateLetters_(cleaned, scheme, options, overrides) {
   var out = "";
-
   for (var i = 0; i < cleaned.length;) {
     var ch = cleaned.charAt(i);
     if (!isHebrewLetter_(ch)) {
@@ -236,8 +276,27 @@ function transliterateHebrewText(text, schemeKey, options) {
     out += transliterateCluster_(cluster, scheme, dageshType, options, overrides);
     i = cluster.nextIndex;
   }
+  return out;
+}
 
-  return out.replace(/\s+/g, " ").replace(/['ʾ]\s+/g, " ").trim();
+function transliterateHebrewText(text, schemeKey, options) {
+  options = normalizeBiblicalOptions_(options);
+  var cleaned = stripCantillationMarks_(String(text || ""));
+  if (!cleaned) return "";
+
+  var scheme = TRANSLITERATION_SCHEMES[schemeKey] || TRANSLITERATION_SCHEMES.simple_english;
+  var overrides = options.overrideMap || getTransliterationOverrides_();
+  var ipa = isIpaScheme_(schemeKey);
+  var out = transliterateLetters_(markDivineNamesForTransliteration_(cleaned), scheme, options, overrides);
+  if (out.indexOf(DIVINE_NAME_PLACEHOLDER) >= 0) {
+    var name = ipa
+      ? transliterateLetters_(DIVINE_NAME_SPELLED, scheme, { keepNiqqud: true, isBiblicalHebrew: false, dageshMode: "none" }, {})
+      : DIVINE_NAME_TRANSLITERATION;
+    out = out.split(DIVINE_NAME_PLACEHOLDER).join(name);
+  }
+
+  out = out.replace(/\s+/g, " ").replace(/['ʾ]\s+/g, " ").trim();
+  return ipa ? out : capitalizeTransliteration_(out);
 }
 
 function transliterateHebrewHtmlPreservingBasicBreaks(html, schemeKey, options) {

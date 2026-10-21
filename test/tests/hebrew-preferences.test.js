@@ -155,7 +155,8 @@ test('transliteration honors explicit override maps during insertion path', () =
     dageshMode: 'none',
     overrideMap: { 'ח': 'ch' },
   });
-  assert.equal(output, 'chag');
+  // Capitalized: the start of the text is the start of a sentence.
+  assert.equal(output, 'Chag');
 });
 
 test('transliterateHebrewHtmlPreservingBasicBreaks strips HTML entities before transliterating', () => {

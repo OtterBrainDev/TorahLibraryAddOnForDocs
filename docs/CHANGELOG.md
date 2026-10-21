@@ -64,6 +64,27 @@ heading until the next release consolidates it.
   (*אֱלֹהִים*), as Transform Divine Names already did; on insert it only
   matched *אלוהים*.
 
+### Transliteration: HaShem, and capitals
+
+#### Changed
+
+- **The Name is transliterated *HaShem*.** It was spelled out letter by
+  letter: *yehvah* for *יְהוָה*, and *yy* or *h'* for a substitute. Now
+  *יהוה* and every substitute for it (*יי*, *יקוק*, *ה'*, *השם*) read
+  *HaShem*, with a prefix kept (*לַיהוָה* → *laHaShem*). IPA writes it in
+  IPA.
+- **Sentences start with a capital letter.** The transliteration was all
+  lower case. The first word of each line, and the word after a sof pasuq or
+  a period, is now capitalized, in every scheme but IPA (where case is part
+  of the notation). Names (Moshe, Yisrael) are not capitalized: the text does
+  not mark them.
+
+#### Fixed
+
+- Cantillation marks and the meteg were copied into the transliteration
+  (*yehva֥h*, *'ekhaֽd*): only the first cantillation mark in a passage was
+  removed. They are all dropped now.
+
 ### "Bold only": the translation's bold, without its commentary
 
 #### Changed
