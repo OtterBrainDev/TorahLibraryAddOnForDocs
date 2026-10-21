@@ -76,8 +76,17 @@ heading until the next release consolidates it.
 - **Sentences start with a capital letter.** The transliteration was all
   lower case. The first word of each line, and the word after a sof pasuq or
   a period, is now capitalized, in every scheme but IPA (where case is part
-  of the notation). Names (Moshe, Yisrael) are not capitalized: the text does
-  not mark them.
+  of the notation).
+- **Names are capitalized.** People, places and peoples of the Tanakh and the
+  Talmud, after any prefix (Simple English): *Mosheh*, *miMitserayim*,
+  *Beyt־'El*, *Rabiy 'Akiyva*, *veRav Nakheman*, *diShemv'el*,
+  *beFvmebediyta'*. The Tanakh's names (about 4,800
+  spellings) come from STEPBible.org's tagged Hebrew Bible (CC BY 4.0), each
+  kept only if it is a name most of the time, and read by its vowels when it
+  has them: *עֵשָׂו* is Esav, *עָשׂוּ* "they did". The Talmud's sages and
+  places are a list in `tools/proper-names/`; one that is also a word
+  (*מאיר*, *ששת*) is capitalized only after *רבי*, *רב*, *ר'*, *מר* or *בן*.
+  Help → About → Credits credits STEPBible.
 
 #### Fixed
 

@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **509 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **518 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -208,7 +208,11 @@ and fix it before touching the feature you came to change.
 - `transliteration-style.test.js` — the Name and every substitute for it
   (יי, יקוק, ה', השם) read "HaShem", prefixes kept (laHaShem), IPA in IPA;
   each sentence (line, after sof pasuq or period) starts with a capital,
-  except in IPA; no cantillation mark or meteg is left in the Latin text.
+  except in IPA; no cantillation mark or meteg is left in the Latin text;
+  names of people, places and peoples are capitalized (pointed spelling first,
+  so עֵשָׂו but not עָשׂוּ; two-word names; Talmud sages with their titles and
+  prefixes; a name that is also a word only after a title), and the generated
+  pointed keys match `pointedKey_`.
 - `aligned-rows.test.js` — the side-by-side "Line by line" setting: each
   verse paired with its translation in its own table row (numbering, spanning
   refs, missing segments, per-row transliteration); off keeps one row.
@@ -391,6 +395,10 @@ different repo.
 - `tools/hebrew-font-coverage/` — generates the table of which Hebrew marks
   each font lacks (`server/hebrew-font-coverage.gs`, `shared/fonts/coverage.html`)
   from the font files. Never hand-edit those two; re-run the generator.
+- `tools/proper-names/` — generates `server/proper-names.gs`, the names the
+  transliteration capitalizes, from STEPBible's tagged Tanakh (CC BY 4.0) and
+  `talmud-names.txt`. Never hand-edit the `.gs`; add a Talmud name to the
+  `.txt` and re-run the generator.
 - `docs/ai-lesson/DESIGN.md` — design notes for the detached AI
   feature (not shipped in v1).
 - `reference/ai-lesson/` — preserved AI source files, excluded from
