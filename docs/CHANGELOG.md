@@ -79,7 +79,7 @@ heading until the next release consolidates it.
   of the notation).
 - **Names are capitalized.** People, places and peoples of the Tanakh and the
   Talmud, after any prefix (Simple English): *Mosheh*, *miMitserayim*,
-  *Beyt־'El*, *Rabiy 'Akiyva*, *veRav Nakheman*, *diShemv'el*,
+  *Beyt-'El*, *Rabiy 'Akiyva*, *veRav Nakheman*, *diShemv'el*,
   *beFvmebediyta'*. The Tanakh's names (about 4,800
   spellings) come from STEPBible.org's tagged Hebrew Bible (CC BY 4.0), each
   kept only if it is a name most of the time, and read by its vowels when it
@@ -90,6 +90,8 @@ heading until the next release consolidates it.
 
 #### Fixed
 
+- A maqaf was copied into the transliteration as the Hebrew mark (*Beyt־'El*);
+  it is a plain hyphen now (*Beyt-'El*, *kol-ha'am*).
 - Cantillation marks and the meteg were copied into the transliteration
   (*yehva֥h*, *'ekhaֽd*): only the first cantillation mark in a passage was
   removed. They are all dropped now.

@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **518 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **519 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -212,7 +212,7 @@ and fix it before touching the feature you came to change.
   names of people, places and peoples are capitalized (pointed spelling first,
   so עֵשָׂו but not עָשׂוּ; two-word names; Talmud sages with their titles and
   prefixes; a name that is also a word only after a title), and the generated
-  pointed keys match `pointedKey_`.
+  pointed keys match `pointedKey_`; a maqaf is a plain hyphen.
 - `aligned-rows.test.js` — the side-by-side "Line by line" setting: each
   verse paired with its translation in its own table row (numbering, spanning
   refs, missing segments, per-row transliteration); off keeps one row.

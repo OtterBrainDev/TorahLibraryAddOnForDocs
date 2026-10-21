@@ -465,6 +465,8 @@ function transliterateHebrewText(text, schemeKey, options) {
     out = out.split(DIVINE_NAME_PLACEHOLDER).join(name);
   }
 
+  // A maqaf is a plain hyphen in Latin text: kol-ha'am, Beyt-'El.
+  out = out.replace(/\u05BE/g, "-");
   out = out.replace(/\s+/g, " ").replace(/['ʾ]\s+/g, " ").trim();
   return ipa ? out : capitalizeTransliteration_(capitalizeProperNames_(out));
 }
