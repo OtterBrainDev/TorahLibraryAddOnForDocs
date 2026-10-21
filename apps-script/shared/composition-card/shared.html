@@ -67,7 +67,7 @@ function ccTranslitSample(text, hebrewPunctuationOn) {
 // Mirrors normalizeSourceEmphasisMode_ in server/preferences.gs, including the
 // legacy boolean values of `preserve_source_emphasis`.
 var CC_EMPHASIS_MODES = ['keep', 'discard', 'only'];
-var CC_EMPHASIS_SUMMARY = { keep: 'B&I kept', discard: 'B&I dropped', only: 'B&I words only' };
+var CC_EMPHASIS_SUMMARY = { keep: 'B&I kept', discard: 'B&I dropped', only: 'Bold only' };
 
 function ccNormalizeEmphasisMode(value) {
   var v = String(value == null ? '' : value).trim().toLowerCase();

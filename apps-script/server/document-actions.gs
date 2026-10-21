@@ -10,8 +10,10 @@ function transformDivineNames() {
     DocumentApp.getUi().alert('No divine-name transforms are enabled. Open Preferences and enable at least one transform before running this action.');
     return;
   }
-  const hebrewMarks = "\\u0591-\\u05C7";
-  const hebrewChars = "\\u0590-\\u05FF";
+  // A name's letters and their marks (HEBREW_LETTER_MARKS_). Maqaf, paseq and
+  // sof pasuq end a word: a name before one is matched and the mark kept.
+  const hebrewMarks = HEBREW_LETTER_MARKS_;
+  const hebrewChars = hebrewMarks + "\\u05D0-\\u05EA";
   const replaceRangesInTextElement = (textElement, ranges) => {
     if (!ranges || !ranges.length) {
       return;
@@ -51,7 +53,8 @@ function transformDivineNames() {
       const tokenStart = match.index + prefix.length;
       const tokenEnd = tokenStart + token.length - 1;
       if (token.length > 0) {
-        ranges.push({ start: tokenStart, end: tokenEnd, replacement });
+        // The occurrence's vowels and cantillation stay on the substitute.
+        ranges.push({ start: tokenStart, end: tokenEnd, replacement: markDivineNameSubstitute_(token, replacement) });
       }
     }
 

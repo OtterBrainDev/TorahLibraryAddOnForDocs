@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **464 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **501 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -168,13 +168,16 @@ and fix it before touching the feature you came to change.
 - `source-attribution.test.js` — source credit on by default; the Hebrew
   edition and its license are credited.
 - `divine-name-rules.test.js` — יה only as a whole word, replacement text
-  used literally, punctuation kept when niqqud is stripped.
+  used literally, punctuation kept when niqqud is stripped; a substitute keeps
+  the name's vowels and cantillation (יְהוָ֥ה → יְיָ֥, אֱלֹהִ֑ים → אֱלוֹקִ֑ים;
+  another word such as השם keeps the cantillation only), on insert and in
+  Transform Divine Names.
 - `typography-defaults.test.js` — "Match the document" fonts, the title
   heading style, and reading the style at the insertion point.
 - `source-emphasis-mode.test.js` — the source's bold and italics: keep,
-  discard, or keep only the emphasized words (what "keep only" removes, and
-  what it keeps: line markers, punctuation, unemphasized paragraphs, and the
-  whole Hebrew — it applies to the translation only).
+  discard, or "Bold only" (what it removes — plain text and italics alone —
+  and what it keeps: bold italics, line markers, punctuation, paragraphs with
+  no bold, and the whole Hebrew — it applies to the translation only).
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped, every block
   formatted like the first; HTML-entity decoding (`&thinsp;` and friends).

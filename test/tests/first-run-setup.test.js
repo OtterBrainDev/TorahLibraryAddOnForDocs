@@ -336,11 +336,27 @@ PREVIEW_CASES.forEach((answers, index) => {
   });
 });
 
+// The dialog's copy of markDivineNameSubstitute_ marks a substitute as the
+// server does, on names and substitutes the sample does not have.
+test('the preview marks a divine-name substitute exactly as the server does', () => {
+  const preview = loadPreview();
+  const server = { console };
+  vm.createContext(server);
+  vm.runInContext(TEXT_PROCESSING, server, { filename: 'text-processing.gs' });
+  const names = ['יְהוָ֥ה', 'יְהֹוָה', 'יֱהֹוִה', 'יהו֥ה', 'יהוה', 'אֱלֹהִ֑ים', 'אֱלוֹהִים', 'יָ֑הּ', 'יָהּ'];
+  const substitutes = ['יי', "ה'", 'יקוק', 'השם', 'אלוקים', 'אלקים', 'אלודים', 'קה', 'יְיָ', 'יי֑', 'HaShem', '$&', ''];
+  for (const name of names) {
+    for (const substitute of substitutes) {
+      assert.equal(preview.setupMarkSubstitute_(name, substitute), server.markDivineNameSubstitute_(name, substitute), `${name} -> ${substitute}`);
+    }
+  }
+});
+
 test('the preview sample really shows the choices: the Name, vowels and "God" all change it', () => {
   const preview = loadPreview();
   const base = preview.setupPreviewText_({ vowels: 'always', teamim: true, divine: {} });
   const named = preview.setupPreviewText_({ vowels: 'always', teamim: true, divine: { meforash: { on: true, text: 'יי' }, god: { on: true, text: 'G-d' } } });
-  assert.ok(!base.he.includes('יי') && named.he.includes('יי'));
+  assert.ok(base.he.includes('יְהֹוָ֥ה') && !named.he.includes('יְהֹוָ֥ה') && named.he.includes('יְיָ֥'));
   assert.match(named.en, /our G-d,/);
   assert.notEqual(preview.setupPreviewText_({ vowels: 'never', teamim: true, divine: {} }).he, base.he);
   assert.notEqual(preview.setupPreviewText_({ vowels: 'always', teamim: false, divine: {} }).he, base.he);

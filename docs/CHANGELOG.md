@@ -45,6 +45,40 @@ heading until the next release consolidates it.
 > the citation's fixed look until now: 8 pt italic, in the font of the text
 > above it.
 
+### Divine names keep their vowels and cantillation
+
+#### Fixed
+
+- **A divine-name substitute no longer strips the Name's vowels and
+  cantillation.** In a pointed verse the substitute was inserted bare:
+  *יְהוָ֥ה* became *יי*, losing its niqqud and its ta'am. Now *יְהוָ֥ה*
+  becomes *יְיָ֥* (or *יְקוָ֥ק*), *אֱלֹהִ֑ים* becomes *אֱלוֹקִ֑ים*, and
+  *יָהּ* becomes *קָהּ*. A substitute that is another word (*השם*, *ה'*)
+  keeps the cantillation, and one typed with its own vowels is used as typed.
+  Whatever Vowels and Cantillation leave out stays out. The same holds for
+  Quick Actions → Transform Divine Names, and for first-run setup's preview.
+- A sof pasuq or maqaf right after the Name is kept (*יְהוָֽה׃* lost its
+  *׃*), and Transform Divine Names now replaces the Name after a maqaf
+  (*אֶת־יְהוָה*), which it used to skip.
+- The *אלוהים* rule now matches the Bible's spelling without the ו
+  (*אֱלֹהִים*), as Transform Divine Names already did; on insert it only
+  matched *אלוהים*.
+
+### "Bold only": the translation's bold, without its commentary
+
+#### Changed
+
+- **Bold & italics → *Only* is now *Bold only*, and keeps the bold alone.**
+  Sefaria sets its direct translation in bold and the commentary around it in
+  plain text (the Steinsaltz Talmud), and italicizes a transliterated word
+  (*Shema*, *teruma*) wherever it falls. *Only* used to keep italics too, so
+  an italicized word from the commentary came along with the translation. Now
+  words in italics alone are left out like any other commentary; words in
+  bold italics are bold, and are kept in italics. The stored value
+  (`source_emphasis_mode = "only"`) is unchanged, so no migration: users who
+  chose *Only* get *Bold only*. Preferences → Fonts → ✒️ Source Emphasis calls
+  it *Bold only* too.
+
 ### Link Texts: which citations didn't match, and why
 
 #### Added
