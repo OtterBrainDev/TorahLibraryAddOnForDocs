@@ -91,8 +91,9 @@ test('applies Hebrew divine-name replacements after display normalization', () =
   const ctx = loadAppsScriptFiles(['apps-script/server/text-processing.gs'], props);
   const input = { he: 'יְהֹוָה', heRef: 'יְהֹוָה א׳' };
   const output = ctx.applyHebrewDivineNamePreferences(input, ctx.PropertiesService.getUserProperties());
-  assert.equal(output.he, 'יי');
-  assert.equal(output.heRef, 'יי א׳');
+  // The substitute keeps the Name's vowels (markDivineNameSubstitute_).
+  assert.equal(output.he, 'יְיָ');
+  assert.equal(output.heRef, 'יְיָ א׳');
 });
 
 test('unified applyDivineNameReplacements handles both languages in one pass', () => {
@@ -110,8 +111,9 @@ test('unified applyDivineNameReplacements handles both languages in one pass', (
     text: 'Blessed is God in His glory',
   };
   const output = ctx.applyDivineNameReplacements(input, ctx.PropertiesService.getUserProperties());
-  assert.equal(output.he, 'יי');
-  assert.equal(output.heRef, 'יי א׳');
+  // The substitute keeps the Name's vowels (markDivineNameSubstitute_).
+  assert.equal(output.he, 'יְיָ');
+  assert.equal(output.heRef, 'יְיָ א׳');
   assert.equal(output.text, 'Blessed is G-d in His glory');
   // Input was not mutated (clone contract).
   assert.equal(input.he, 'יְהֹוָה');
@@ -153,7 +155,8 @@ test('transliteration honors explicit override maps during insertion path', () =
     dageshMode: 'none',
     overrideMap: { 'ח': 'ch' },
   });
-  assert.equal(output, 'chag');
+  // Capitalized: the start of the text is the start of a sentence.
+  assert.equal(output, 'Chag');
 });
 
 test('transliterateHebrewHtmlPreservingBasicBreaks strips HTML entities before transliterating', () => {

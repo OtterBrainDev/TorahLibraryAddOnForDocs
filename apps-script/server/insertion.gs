@@ -62,8 +62,10 @@ const EMPHASIS_ONLY_WORD_CHAR_ = /[\p{L}\p{N}]/u;
 const EMPHASIS_ONLY_SPACE_ = /[ \t\u00a0]/;
 
 /**
- * Plan the edits for "keep only the source's bold and italics": delete the
- * text the source did not emphasize, keep what it did. Pure, so the rules are
+ * Plan the edits for "Bold only": delete the text the source did not
+ * emphasize, keep what it did. The caller passes the bold runs alone
+ * (applyTypographyToParagraph): Sefaria's bold is its direct translation, and
+ * text in italics alone is the commentary's. Pure, so the rules are
  * tested in Node (test/tests/source-emphasis-mode.test.js); applyTextEdits_
  * carries the plan out on a Docs Text element.
  *
@@ -242,9 +244,10 @@ function applyEmphasisMapping_(text, start, end, mapping) {
  *        preference must stay authoritative there.
  * @param {string} [opts.sourceEmphasisMode="keep"]  The user's choice for an
  *        opted-in paragraph (normalizeSourceEmphasisMode_): "keep" as above;
- *        "discard" applies the baseline only; "only" first removes the text
- *        the source did not emphasize (planEmphasisOnlyEdits_), then keeps
- *        the emphasis on what is left.
+ *        "discard" applies the baseline only; "only" ("Bold only") first
+ *        removes the text the source did not set in bold
+ *        (planEmphasisOnlyEdits_; bold italics is bold), then keeps the
+ *        emphasis on what is left.
  * @param {Object} [opts.emphasisMap]  {bold: mapping, italic: mapping}. When
  *        absent, source emphasis is re-asserted as itself.
  * @param {Array<string>} [opts.keepLines]  Lines "only" keeps whole
@@ -275,7 +278,12 @@ function applyTypographyToParagraph(paragraph, font, size, style, opts) {
   let emphasisRuns = emphasisMode === "discard" ? [] : captureEmphasisRuns_(text, len);
 
   if (emphasisMode === "only" && emphasisRuns.length) {
-    applyTextEdits_(text, planEmphasisOnlyEdits_(text.getText(), emphasisRuns, options.keepLines));
+    // Bold, not italics: Sefaria's translations (Steinsaltz's Talmud) set the
+    // translation itself in bold and the commentary around it in plain text,
+    // and italicize a transliterated word (Shema, teruma) in either. So
+    // italics alone is commentary; bold italics is bold, and kept.
+    const boldRuns = emphasisRuns.filter(function (run) { return run.bold; });
+    applyTextEdits_(text, planEmphasisOnlyEdits_(text.getText(), boldRuns, options.keepLines));
     len = text.getText().length;
     if (len <= 0) {
       return;
@@ -358,10 +366,10 @@ function documentFontOf_(typography) {
  */
 /**
  * The source-emphasis mode for one role's paragraph. The B&I setting is the
- * translation's: "Keep only" picks its emphasized words (the Talmud's own
+ * translation's: "Bold only" picks its bold words (the Talmud's own
  * words in Steinsaltz) and "Discard" drops its bold and italics. The Hebrew's
  * bold is a different thing (the Mishnah's opening word, the Gemara's
- * "גמ׳"), so every other role always keeps its own: "Keep only" applied
+ * "גמ׳"), so every other role always keeps its own: "Bold only" applied
  * there deleted nearly all of the Hebrew.
  */
 function sourceEmphasisModeForRole_(typography, roleName) {

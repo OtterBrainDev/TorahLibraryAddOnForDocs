@@ -113,6 +113,138 @@ function transliterationSourceOf_(data) {
   return data.heTransliterationSource !== undefined ? data.heTransliterationSource : data.he;
 }
 
+// The marks that belong to a Hebrew letter: cantillation (U+0591-U+05AF) and
+// niqqud. Not maqaf (U+05BE), paseq (U+05C0), sof pasuq (U+05C3) or nun
+// hafukha (U+05C6): those are punctuation, and a name followed by one keeps it.
+const HEBREW_LETTER_MARKS_ = '\\u0591-\\u05BD\\u05BF\\u05C1\\u05C2\\u05C4\\u05C5\\u05C7';
+const HEBREW_LETTER_RE_ = /[\u05D0-\u05EA]/;
+const HEBREW_TEAMIM_RE_ = /[\u0591-\u05AF]/;
+const HEBREW_NIQQUD_RE_ = /[\u05B0-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/;
+// Dagesh / mapiq, rafe and the shin and sin dots say something about the
+// letter they sit on, so they move only onto the same letter.
+const HEBREW_LETTER_SPECIFIC_MARK_RE_ = /[\u05BC\u05BF\u05C1\u05C2]/;
+const HEBREW_HOLAM_ = '\u05B9';
+// Where a substitute's letters take their vowels from, by the name's letters,
+// when the two are not spelled alike: יי is printed יְיָ, the vowels of
+// the Name's first and third letters (יְהוָה, and יֱיִ for יֱהֹוִה).
+const DIVINE_NAME_VOWEL_SOURCES_ = { 'יי': { letters: 4, from: [0, 2] } };
+
+/** A Hebrew word as [{letter, marks}], marks in their order. */
+function hebrewLetterClusters_(word) {
+  const clusters = [];
+  Array.from(String(word || '')).forEach(function (ch) {
+    if (HEBREW_LETTER_RE_.test(ch)) clusters.push({ letter: ch, marks: [] });
+    else if (clusters.length && (HEBREW_TEAMIM_RE_.test(ch) || HEBREW_NIQQUD_RE_.test(ch))) clusters[clusters.length - 1].marks.push(ch);
+  });
+  return clusters;
+}
+
+/**
+ * For each letter of `to`, the index of the letter of `from` it stands for,
+ * or -1. Letters line up in order, none of `from` left out, as many alike as
+ * possible (אלהים -> אלוקים: the ו is new, the ה became ק). Null when that
+ * is not a respelling of the name but another word (השם, ה'), whose vowels
+ * would mean nothing on it.
+ */
+function alignDivineNameLetters_(from, to) {
+  const known = DIVINE_NAME_VOWEL_SOURCES_[to.join('')];
+  if (known && known.letters === from.length) return known.from.slice();
+  const n = from.length;
+  const m = to.length;
+  if (!n || m < n) return null;
+  // best[i][j]: most letters alike placing the first i of `from` among the
+  // first j of `to`.
+  const NONE = -1;
+  const best = [];
+  for (let i = 0; i <= n; i++) {
+    best.push([]);
+    for (let j = 0; j <= m; j++) {
+      if (i === 0) best[i][j] = 0;
+      else if (j < i) best[i][j] = NONE;
+      else best[i][j] = Math.max(best[i][j - 1], best[i - 1][j - 1] + (from[i - 1] === to[j - 1] ? 1 : 0));
+    }
+  }
+  if (best[n][m] * 2 < n) return null;
+  // From the end, placing a letter as late as it can go: the new letters of a
+  // longer spelling come before the changed one (אלוקים, not אלקוים).
+  const source = new Array(m).fill(-1);
+  for (let i = n, j = m; i > 0; j--) {
+    if (best[i - 1][j - 1] !== NONE && best[i][j] === best[i - 1][j - 1] + (from[i - 1] === to[j - 1] ? 1 : 0)) {
+      source[j - 1] = i - 1;
+      i--;
+    }
+  }
+  return source;
+}
+
+/**
+ * The substitute for one occurrence of a divine name, carrying that
+ * occurrence's vowels and cantillation (a substitute was inserted bare, so a
+ * pointed verse lost both on the Name). The substitute's letters take the
+ * vowels of the letters they stand for (alignDivineNameLetters_): יְהוָה ->
+ * יְיָ, יְקוָק; אֱלֹהִים -> אֱלוֹקִים; יָהּ -> קָהּ. A substitute that is
+ * another word (השם, ה') takes no vowels, but keeps the cantillation, on the
+ * letter in the same place (ה֥'). Marks already typed into a substitute win:
+ * pointed, it takes no vowels; with cantillation, none is added. Only marks
+ * the name has are carried, so whatever the display filters stripped stays
+ * stripped.
+ */
+function markDivineNameSubstitute_(name, substitute) {
+  const literal = String(substitute == null ? '' : substitute);
+  const from = hebrewLetterClusters_(name);
+  const chars = Array.from(literal);
+  const letterAt = [];
+  chars.forEach(function (ch, k) { if (HEBREW_LETTER_RE_.test(ch)) letterAt.push(k); });
+  const n = from.length;
+  const m = letterAt.length;
+  if (!n || !m || !from.some(function (c) { return c.marks.length; })) return literal;
+
+  const typedNiqqud = chars.some(function (ch) { return HEBREW_NIQQUD_RE_.test(ch); });
+  const typedTeamim = chars.some(function (ch) { return HEBREW_TEAMIM_RE_.test(ch); });
+  const to = letterAt.map(function (k) { return chars[k]; });
+  const source = alignDivineNameLetters_(from.map(function (c) { return c.letter; }), to);
+  const added = to.map(function () { return []; });
+
+  if (source && !typedNiqqud) {
+    source.forEach(function (i, j) {
+      if (i < 0) return;
+      from[i].marks.forEach(function (mark) {
+        if (!HEBREW_NIQQUD_RE_.test(mark)) return;
+        if (HEBREW_LETTER_SPECIFIC_MARK_RE_.test(mark) && from[i].letter !== to[j]) return;
+        added[j].push(mark);
+      });
+    });
+    // A new ו after a holam is the holam's own letter: אֱלֹהִים -> אֱלוֹקִים.
+    for (let j = 1; j < m; j++) {
+      const holam = added[j - 1].indexOf(HEBREW_HOLAM_);
+      if (source[j] < 0 && to[j] === 'ו' && holam >= 0) {
+        added[j - 1].splice(holam, 1);
+        added[j].push(HEBREW_HOLAM_);
+      }
+    }
+  }
+
+  if (!typedTeamim) {
+    from.forEach(function (cluster, i) {
+      const teamim = cluster.marks.filter(function (mark) { return HEBREW_TEAMIM_RE_.test(mark); });
+      if (!teamim.length) return;
+      let j = source ? source.indexOf(i) : -1;
+      if (j < 0) j = (i === n - 1) ? m - 1 : Math.floor(i * m / n);
+      Array.prototype.push.apply(added[j], teamim);
+    });
+  }
+
+  const out = chars.slice();
+  added.forEach(function (marks, j) {
+    if (!marks.length) return;
+    // After the letter's own marks, if the substitute has any.
+    let k = letterAt[j];
+    while (k + 1 < chars.length && (HEBREW_TEAMIM_RE_.test(chars[k + 1]) || HEBREW_NIQQUD_RE_.test(chars[k + 1]))) k++;
+    out[k] += marks.join('');
+  });
+  return out.join('');
+}
+
 /**
  * Config-driven union of the Hebrew and English divine-name replacement passes.
  * One gate (`apply_sheimot_on_insertion`) covers both. Each rule names the
@@ -131,7 +263,7 @@ function applyDivineNameReplacements(data, userProperties, options) {
 
   const allRules = [];
   if (includeHebrew) {
-    allRules.push({ enabledBy: "meforash_replace", pattern: /י[֑-ׇ]*ה[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*/g, replacementKey: "meforash_replacement", requireReplacement: true, fields: ["he", "heRef"] });
+    allRules.push({ enabledBy: "meforash_replace", pattern: new RegExp(`י[${HEBREW_LETTER_MARKS_}]*ה[${HEBREW_LETTER_MARKS_}]*ו[${HEBREW_LETTER_MARKS_}]*ה[${HEBREW_LETTER_MARKS_}]*`, "g"), replacementKey: "meforash_replacement", requireReplacement: true, fields: ["he", "heRef"] });
     // יה only as a whole word. Without the boundaries it matched the start of
     // יהודה, יהושע and friends (יהודה -> קהודה). A word here is Hebrew letters
     // plus their vowel and cantillation marks; maqaf, paseq and sof pasuq end
@@ -139,7 +271,9 @@ function applyDivineNameReplacements(data, userProperties, options) {
     // unbounded on purpose: their prefixed forms (לַיהוָה, וֵאלֹהִים) are
     // common and should be replaced too.
     allRules.push({ enabledBy: "yaw_replace",      pattern: /(^|[^\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA])(י[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]*ה[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]*)(?![\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\u05D0-\u05EA])/g, keepPrefixGroup: true, replacementKey: "yaw_replacement", requireReplacement: false, fields: ["he", "heRef"] });
-    allRules.push({ enabledBy: "elodim_replace",   pattern: /א[֑-ׇ]*ל[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*י[֑-ׇ]*ם[֑-ׇ]*/g, replacementKey: "elodim_replacement",   requireReplacement: false, fields: ["he", "heRef"] });
+    // The ו is optional: the Bible spells it אֱלֹהִים, and Transform Divine
+    // Names already matched both spellings.
+    allRules.push({ enabledBy: "elodim_replace",   pattern: new RegExp(`א[${HEBREW_LETTER_MARKS_}]*ל[${HEBREW_LETTER_MARKS_}]*(?:ו[${HEBREW_LETTER_MARKS_}]*)?ה[${HEBREW_LETTER_MARKS_}]*י[${HEBREW_LETTER_MARKS_}]*ם[${HEBREW_LETTER_MARKS_}]*`, "g"), replacementKey: "elodim_replacement",   requireReplacement: false, fields: ["he", "heRef"] });
   }
   if (includeEnglish) {
     allRules.push({ enabledBy: "god_replace", pattern: /\bGod\b/g, replacementKey: "god_replacement", defaultReplacement: "G-d", requireReplacement: false, fields: ["text"] });
@@ -155,9 +289,11 @@ function applyDivineNameReplacements(data, userProperties, options) {
     const literal = replacement || rule.defaultReplacement || "";
     activeRules.push({
       pattern: rule.pattern,
+      // Each occurrence keeps its own vowels and cantillation
+      // (markDivineNameSubstitute_); "God" has neither.
       replacement: rule.keepPrefixGroup
-        ? function (match, prefix) { return prefix + literal; }
-        : function () { return literal; },
+        ? function (match, prefix, name) { return prefix + markDivineNameSubstitute_(name, literal); }
+        : function (match) { return markDivineNameSubstitute_(match, literal); },
       fields: rule.fields,
     });
   }

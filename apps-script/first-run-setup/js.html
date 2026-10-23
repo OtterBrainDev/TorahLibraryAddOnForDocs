@@ -15,13 +15,113 @@ var SETUP_SAMPLE_EN = 'Hear, O Israel! The LORD is our God, the LORD alone.';
 
 var SETUP_MARKS_ = '\\u0591-\\u05BD\\u05BF\\u05C1\\u05C2\\u05C4\\u05C5\\u05C7';
 var SETUP_DIVINE_RULES_ = {
-  meforash: { pattern: new RegExp('י[֑-ׇ]*ה[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*', 'g'), requireText: true },
+  meforash: { pattern: new RegExp('י[' + SETUP_MARKS_ + ']*ה[' + SETUP_MARKS_ + ']*ו[' + SETUP_MARKS_ + ']*ה[' + SETUP_MARKS_ + ']*', 'g'), requireText: true },
   yaw: {
     pattern: new RegExp('(^|[^' + SETUP_MARKS_ + '\\u05D0-\\u05EA])(י[' + SETUP_MARKS_ + ']*ה[' + SETUP_MARKS_ + ']*)(?![' + SETUP_MARKS_ + '\\u05D0-\\u05EA])', 'g'),
     keepPrefix: true
   },
-  elodim: { pattern: new RegExp('א[֑-ׇ]*ל[֑-ׇ]*ו[֑-ׇ]*ה[֑-ׇ]*י[֑-ׇ]*ם[֑-ׇ]*', 'g') }
+  elodim: { pattern: new RegExp('א[' + SETUP_MARKS_ + ']*ל[' + SETUP_MARKS_ + ']*(?:ו[' + SETUP_MARKS_ + ']*)?ה[' + SETUP_MARKS_ + ']*י[' + SETUP_MARKS_ + ']*ם[' + SETUP_MARKS_ + ']*', 'g') }
 };
+
+// markDivineNameSubstitute_ and its helpers (server/text-processing.gs): the
+// substitute keeps the vowels and cantillation of the name it replaces.
+var SETUP_LETTER_RE_ = /[\u05D0-\u05EA]/;
+var SETUP_TEAMIM_RE_ = /[\u0591-\u05AF]/;
+var SETUP_NIQQUD_RE_ = /[\u05B0-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/;
+var SETUP_LETTER_SPECIFIC_MARK_RE_ = /[\u05BC\u05BF\u05C1\u05C2]/;
+var SETUP_HOLAM_ = '\u05B9';
+var SETUP_VOWEL_SOURCES_ = { 'יי': { letters: 4, from: [0, 2] } };
+
+function setupLetterClusters_(word) {
+  var clusters = [];
+  Array.from(String(word || '')).forEach(function (ch) {
+    if (SETUP_LETTER_RE_.test(ch)) clusters.push({ letter: ch, marks: [] });
+    else if (clusters.length && (SETUP_TEAMIM_RE_.test(ch) || SETUP_NIQQUD_RE_.test(ch))) clusters[clusters.length - 1].marks.push(ch);
+  });
+  return clusters;
+}
+
+function setupAlignLetters_(from, to) {
+  var known = SETUP_VOWEL_SOURCES_[to.join('')];
+  if (known && known.letters === from.length) return known.from.slice();
+  var n = from.length;
+  var m = to.length;
+  if (!n || m < n) return null;
+  var NONE = -1;
+  var best = [];
+  for (var i = 0; i <= n; i++) {
+    best.push([]);
+    for (var j = 0; j <= m; j++) {
+      if (i === 0) best[i][j] = 0;
+      else if (j < i) best[i][j] = NONE;
+      else best[i][j] = Math.max(best[i][j - 1], best[i - 1][j - 1] + (from[i - 1] === to[j - 1] ? 1 : 0));
+    }
+  }
+  if (best[n][m] * 2 < n) return null;
+  var source = [];
+  for (var k = 0; k < m; k++) source.push(-1);
+  for (var a = n, b = m; a > 0; b--) {
+    if (best[a - 1][b - 1] !== NONE && best[a][b] === best[a - 1][b - 1] + (from[a - 1] === to[b - 1] ? 1 : 0)) {
+      source[b - 1] = a - 1;
+      a--;
+    }
+  }
+  return source;
+}
+
+function setupMarkSubstitute_(name, substitute) {
+  var literal = String(substitute == null ? '' : substitute);
+  var from = setupLetterClusters_(name);
+  var chars = Array.from(literal);
+  var letterAt = [];
+  chars.forEach(function (ch, k) { if (SETUP_LETTER_RE_.test(ch)) letterAt.push(k); });
+  var n = from.length;
+  var m = letterAt.length;
+  if (!n || !m || !from.some(function (c) { return c.marks.length; })) return literal;
+
+  var typedNiqqud = chars.some(function (ch) { return SETUP_NIQQUD_RE_.test(ch); });
+  var typedTeamim = chars.some(function (ch) { return SETUP_TEAMIM_RE_.test(ch); });
+  var to = letterAt.map(function (k) { return chars[k]; });
+  var source = setupAlignLetters_(from.map(function (c) { return c.letter; }), to);
+  var added = to.map(function () { return []; });
+
+  if (source && !typedNiqqud) {
+    source.forEach(function (i, j) {
+      if (i < 0) return;
+      from[i].marks.forEach(function (mark) {
+        if (!SETUP_NIQQUD_RE_.test(mark)) return;
+        if (SETUP_LETTER_SPECIFIC_MARK_RE_.test(mark) && from[i].letter !== to[j]) return;
+        added[j].push(mark);
+      });
+    });
+    for (var j = 1; j < m; j++) {
+      var holam = added[j - 1].indexOf(SETUP_HOLAM_);
+      if (source[j] < 0 && to[j] === 'ו' && holam >= 0) {
+        added[j - 1].splice(holam, 1);
+        added[j].push(SETUP_HOLAM_);
+      }
+    }
+  }
+
+  if (!typedTeamim) {
+    from.forEach(function (cluster, i) {
+      var teamim = cluster.marks.filter(function (mark) { return SETUP_TEAMIM_RE_.test(mark); });
+      if (!teamim.length) return;
+      var j = source ? source.indexOf(i) : -1;
+      if (j < 0) j = (i === n - 1) ? m - 1 : Math.floor(i * m / n);
+      Array.prototype.push.apply(added[j], teamim);
+    });
+  }
+
+  var out = chars.slice();
+  added.forEach(function (marks, j) {
+    if (!marks.length) return;
+    var k = letterAt[j];
+    while (k + 1 < chars.length && (SETUP_TEAMIM_RE_.test(chars[k + 1]) || SETUP_NIQQUD_RE_.test(chars[k + 1]))) k++;
+    out[k] += marks.join('');
+  });
+  return out.join('');
+}
 
 function setupStripTeamim_(text) {
   return text.replace(/[֑-֯]/g, '');
@@ -49,8 +149,8 @@ function setupPreviewText_(answers) {
     var literal = answer.text || '';
     if (rule.requireText && !literal) return;
     he = he.replace(rule.pattern, rule.keepPrefix
-      ? function (match, prefix) { return prefix + literal; }
-      : function () { return literal; });
+      ? function (match, prefix, name) { return prefix + setupMarkSubstitute_(name, literal); }
+      : function (match) { return setupMarkSubstitute_(match, literal); });
   });
   if (divine.god && divine.god.on) {
     var god = divine.god.text || 'G-d';

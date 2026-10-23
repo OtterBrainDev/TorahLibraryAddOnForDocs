@@ -45,6 +45,72 @@ heading until the next release consolidates it.
 > the citation's fixed look until now: 8 pt italic, in the font of the text
 > above it.
 
+### Divine names keep their vowels and cantillation
+
+#### Fixed
+
+- **A divine-name substitute no longer strips the Name's vowels and
+  cantillation.** In a pointed verse the substitute was inserted bare:
+  *יְהוָ֥ה* became *יי*, losing its niqqud and its ta'am. Now *יְהוָ֥ה*
+  becomes *יְיָ֥* (or *יְקוָ֥ק*), *אֱלֹהִ֑ים* becomes *אֱלוֹקִ֑ים*, and
+  *יָהּ* becomes *קָהּ*. A substitute that is another word (*השם*, *ה'*)
+  keeps the cantillation, and one typed with its own vowels is used as typed.
+  Whatever Vowels and Cantillation leave out stays out. The same holds for
+  Quick Actions → Transform Divine Names, and for first-run setup's preview.
+- A sof pasuq or maqaf right after the Name is kept (*יְהוָֽה׃* lost its
+  *׃*), and Transform Divine Names now replaces the Name after a maqaf
+  (*אֶת־יְהוָה*), which it used to skip.
+- The *אלוהים* rule now matches the Bible's spelling without the ו
+  (*אֱלֹהִים*), as Transform Divine Names already did; on insert it only
+  matched *אלוהים*.
+
+### Transliteration: HaShem, and capitals
+
+#### Changed
+
+- **The Name is transliterated *HaShem*.** It was spelled out letter by
+  letter: *yehvah* for *יְהוָה*, and *yy* or *h'* for a substitute. Now
+  *יהוה* and every substitute for it (*יי*, *יקוק*, *ה'*, *השם*) read
+  *HaShem*, with a prefix kept (*לַיהוָה* → *laHaShem*). IPA writes it in
+  IPA.
+- **Sentences start with a capital letter.** The transliteration was all
+  lower case. The first word of each line, and the word after a sof pasuq or
+  a period, is now capitalized, in every scheme but IPA (where case is part
+  of the notation).
+- **Names are capitalized.** People, places and peoples of the Tanakh and the
+  Talmud, after any prefix (Simple English): *Mosheh*, *miMitserayim*,
+  *Beyt-'El*, *Rabiy 'Akiyva*, *veRav Nakheman*, *diShemv'el*,
+  *beFvmebediyta'*. The Tanakh's names (about 4,800
+  spellings) come from STEPBible.org's tagged Hebrew Bible (CC BY 4.0), each
+  kept only if it is a name most of the time, and read by its vowels when it
+  has them: *עֵשָׂו* is Esav, *עָשׂוּ* "they did". The Talmud's sages and
+  places are a list in `tools/proper-names/`; one that is also a word
+  (*מאיר*, *ששת*) is capitalized only after *רבי*, *רב*, *ר'*, *מר* or *בן*.
+  Help → About → Credits credits STEPBible.
+
+#### Fixed
+
+- A maqaf was copied into the transliteration as the Hebrew mark (*Beyt־'El*);
+  it is a plain hyphen now (*Beyt-'El*, *kol-ha'am*).
+- Cantillation marks and the meteg were copied into the transliteration
+  (*yehva֥h*, *'ekhaֽd*): only the first cantillation mark in a passage was
+  removed. They are all dropped now.
+
+### "Bold only": the translation's bold, without its commentary
+
+#### Changed
+
+- **Bold & italics → *Only* is now *Bold only*, and keeps the bold alone.**
+  Sefaria sets its direct translation in bold and the commentary around it in
+  plain text (the Steinsaltz Talmud), and italicizes a transliterated word
+  (*Shema*, *teruma*) wherever it falls. *Only* used to keep italics too, so
+  an italicized word from the commentary came along with the translation. Now
+  words in italics alone are left out like any other commentary; words in
+  bold italics are bold, and are kept in italics. The stored value
+  (`source_emphasis_mode = "only"`) is unchanged, so no migration: users who
+  chose *Only* get *Bold only*. Preferences → Fonts → ✒️ Source Emphasis calls
+  it *Bold only* too.
+
 ### Link Texts: which citations didn't match, and why
 
 #### Added

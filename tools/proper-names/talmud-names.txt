@@ -1,0 +1,40 @@
+# Talmud (Mishnah, Tosefta, Bavli, Yerushalmi) names the Tanakh data does not
+# cover, in consonants. One group per line; # starts a comment.
+#
+# A line ending in * holds names that are also ordinary words (מאיר "gives
+# light", ששת "six", אידי in אידי ואידי): they are capitalized only after a
+# title (רבי, רבן, רב, מר, ר') or בן / בר. Every other name is capitalized
+# anywhere, after up to two prefix letters (ו ב כ ל מ ש ה ד: ואביי, דרבא,
+# בפומבדיתא). generate.py moves a name to the title-only list when the Tanakh
+# often uses its spelling as a word, and says so: רבה, or the prefixes would
+# make Rabbah of הרבה "much" and מרבה "increases".
+#
+# Names the Tanakh has (משה, יהודה, שמעון, יוחנן, שמואל, יצחק, אליעזר...)
+# are capitalized from its data and need no line here.
+
+# The Rabbis; Rabbi (Yehudah HaNasi) and the titles of a sage
+רבנן רבי רבן
+
+# Zugot and early Tannaim
+הלל שמאי אנטיגנוס סוכו אבטליון פרחיה ניתאי ארבלי טבאי צרדה
+# Tannaim
+עקיבא טרפון יוסי נחוניא נחוניה יוחאי חנינא חנניא דוסא דוסתאי עזאי זומא
+בתירא בתירה ברוקה פפיאס חלפתא אילעאי אלעאי נהוראי תרדיון הורקנוס עקביא
+חוצפית ביתוס בייתוס אבטולמוס חוני גוריון נקדימון מונבז
+# Amoraim
+אביי רבא רבה רבינא אשי פפא הונא נחמן זירא אבהו זביד הושעיא אושעיא ינאי
+אבין רבין דימי אחאי עולא זעירי שילא אמימר מרימר טביומי מניומי משרשיא
+אויא רפרם תחליפא קטינא ברונא חיננא פדת מיאשא אבדימי אחדבוי תנחום תנחומא
+סימון לקיש שמלאי אילא פזי ביבי אבימי
+
+# Also words: only after a title, or son of
+מאיר נתן כהנא אחא אדא חמא טבי ענן רמי זוטרא אבא חנן ערך שטח קרחה *
+ששת חסדא חייא אמי אסי גידל אידי רחבה גניבא ספרא יימר חלבו *
+
+# The Talmud's spellings of Tanakh names
+ירושלים דויד
+
+# Talmudic places
+סורא פומבדיתא נהרדעא מחוזא נרש הוצל מחסיא שכנציב פפוניא טבריא ציפורי צפורי
+אושא שפרעם קיסרין קיסרי סכנין ביתר יודפת עכו אנטוכיא אלכסנדריא אספמיא נציבין
+רומי
