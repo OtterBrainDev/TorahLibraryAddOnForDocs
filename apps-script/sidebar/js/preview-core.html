@@ -261,6 +261,246 @@ function languagePriorityKey(label) {
   return 2;
 }
 
+// ---- Bold & italics in the preview ------------------------------------------
+//
+// Keep / Drop / Bold only are applied by the insert, to the translation only,
+// once it is in the document (applyTypographyToParagraph, server/insertion.gs).
+// The preview showed Sefaria's markup as fetched, so with "Bold only" it showed
+// commentary that the insert then removed (BUG-001). For Drop and Bold only the
+// preview's translation is now read the way the insert reads it (the segments
+// joined as formatDataForPesukim joins them, then insertRichTextFromHTML's
+// rules) and Bold only applies the insert's own plan. Each mirror below names
+// the server function it follows; preview-emphasis.test.js runs both on the
+// same input. Like the rest of the preview, it shows no line numbers or
+// chapter headings. Keep still renders the sanitized markup as before.
+
+var PREVIEW_HTML_ENTITIES = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'",
+  nbsp: ' ', ensp: ' ', emsp: ' ', thinsp: ' ', hairsp: ' ',
+  zwnj: '‌', zwj: '‍', lrm: '‎', rlm: '‏',
+  ndash: '–', mdash: '—', hellip: '…', middot: '·', bull: '•',
+  ldquo: '"', rdquo: '"', lsquo: "'", rsquo: "'", laquo: '«', raquo: '»',
+  shy: ''
+};
+
+/** decodeHTMLEntities (server/utils.gs). */
+function decodePreviewEntities(text) {
+  if (!text || typeof text !== 'string') return text;
+  var unDoubled = text.replace(/&amp;(nbsp|ensp|emsp|thinsp|hairsp|zwnj|zwj|lrm|rlm|shy);/gi, '&$1;');
+  return unDoubled.replace(/&(#x[0-9a-fA-F]+|#\d+|[a-zA-Z][a-zA-Z0-9]*);/g, function (match, body) {
+    if (body[0] === '#') {
+      var code = body[1] === 'x' || body[1] === 'X' ? parseInt(body.slice(2), 16) : parseInt(body.slice(1), 10);
+      if (!(code > 0) || code > 0x10FFFF) return match;
+      if (code === 0xA0) return ' ';
+      return String.fromCodePoint(code);
+    }
+    var name = body.toLowerCase();
+    return Object.prototype.hasOwnProperty.call(PREVIEW_HTML_ENTITIES, name) ? PREVIEW_HTML_ENTITIES[name] : match;
+  });
+}
+
+/**
+ * The translation's segments as one string, joined the way formatDataForPesukim
+ * (server/text-processing.gs) joins them: a line each with line numbers on,
+ * run together with a space otherwise. The numbers themselves are left out.
+ */
+function joinPreviewTranslation(text, lineMarkers) {
+  if (!Array.isArray(text)) return String(text == null ? '' : text);
+  var verses = [];
+  text.forEach(function (item) {
+    if (Array.isArray(item)) item.forEach(function (verse) { verses.push(verse); });
+    else verses.push(item);
+  });
+  var out = '';
+  verses.forEach(function (verse) {
+    var value = String(verse == null ? '' : verse);
+    out = lineMarkers ? out + value + '\n' : out + (out ? ' ' : '') + value;
+  });
+  return out;
+}
+
+/**
+ * The text and its per-character bold / italic, read as insertRichTextFromHTML
+ * (server/insertion.gs) reads Sefaria's markup: each <b> tag toggles bold,
+ * <strong> and <i> toggle too (with Extended Gemara on, only inside bold), <br>
+ * is a line break, and a <sup> footnote marker is skipped up to the end of its
+ * footnote.
+ */
+function readPreviewEmphasis(html, extendedGemara) {
+  var parts = String(html || '').split(/(<\/?[a-zA-Z]+[^>]*>)/g);
+  var out = { text: '', bold: [], italic: [] };
+  var bolded = false, italicized = false, inFootnote = false, footnoteDepth = 0;
+  function add(snippet) {
+    var decoded = decodePreviewEntities(snippet);
+    for (var c = 0; c < decoded.length; c++) {
+      out.text += decoded[c];
+      out.bold.push(bolded);
+      out.italic.push(italicized);
+    }
+  }
+  for (var i = 0; i < parts.length; i++) {
+    var word = parts[i];
+    if (inFootnote) {
+      if (word === '<i class="footnote">' || word === '<i>') {
+        footnoteDepth++;
+      } else if (word === '</i>') {
+        footnoteDepth--;
+        if (footnoteDepth === 0) inFootnote = false;
+      }
+      continue;
+    }
+    if (i % 2 === 1) {
+      var tagName = /^<\/?([a-zA-Z]+)/.exec(word)[1].toLowerCase();
+      if (tagName === 'b') bolded = !bolded;
+      else if (tagName === 'strong') { if (!extendedGemara || bolded) bolded = !bolded; }
+      else if (tagName === 'i') { if (!extendedGemara || bolded) italicized = !italicized; }
+      else if (tagName === 'br') add('\n');
+      else if (tagName === 'sup') { inFootnote = true; footnoteDepth = 0; }
+      continue;
+    }
+    add(word);
+  }
+  return out;
+}
+
+var PREVIEW_EMPHASIS_LINE_BREAK = /[\n\r\u000b]/;
+var PREVIEW_EMPHASIS_LINE_MARKER = /^[ \t]*\([^)\n\r\u000b]*\)[ \t]*/;
+var PREVIEW_EMPHASIS_WORD_CHAR = /[\p{L}\p{N}]/u;
+var PREVIEW_EMPHASIS_SPACE = /[ \t ]/;
+
+/** planEmphasisOnlyEdits_ (server/insertion.gs), rule for rule. */
+function planPreviewEmphasisOnlyEdits(fullText, runs, keepLines) {
+  var text = String(fullText || '');
+  var n = text.length;
+  if (!n || !Array.isArray(runs) || !runs.length) return [];
+
+  var keep = new Array(n).fill(false);
+  var kept = 0;
+  runs.forEach(function (run) {
+    var from = Math.max(0, run.start);
+    var to = Math.min(n - 1, run.end);
+    if (!text.slice(from, to + 1).trim()) return;
+    for (var i = from; i <= to; i++) keep[i] = true;
+    kept++;
+  });
+  if (!kept) return [];
+
+  var edits = [];
+  var hasWordChar = function (from, to) {
+    return PREVIEW_EMPHASIS_WORD_CHAR.test(text.slice(from, to + 1));
+  };
+
+  var lines = [];
+  var lineStart = 0;
+  while (lineStart <= n) {
+    var lineEnd = lineStart;
+    while (lineEnd < n && !PREVIEW_EMPHASIS_LINE_BREAK.test(text[lineEnd])) lineEnd++;
+    var emphasized = false;
+    for (var i = lineStart; i < lineEnd; i++) {
+      if (keep[i]) { emphasized = true; break; }
+    }
+    var whole = Array.isArray(keepLines) && keepLines.indexOf(text.slice(lineStart, lineEnd).trim()) >= 0;
+    lines.push({
+      start: lineStart,
+      end: lineEnd,
+      emphasized: emphasized && !whole,
+      removed: !emphasized && !whole && text.slice(lineStart, lineEnd).trim() !== ''
+    });
+    lineStart = lineEnd + 1;
+  }
+
+  for (var l = 0; l < lines.length; l++) {
+    if (!lines[l].removed) continue;
+    var first = l;
+    while (l + 1 < lines.length && lines[l + 1].removed) l++;
+    if (l + 1 < lines.length) {
+      edits.push({ start: lines[first].start, end: lines[l + 1].start - 1, insert: '' });
+    } else {
+      edits.push({ start: Math.max(0, lines[first].start - 1), end: lines[l].end - 1, insert: '' });
+    }
+  }
+
+  lines.forEach(function (line) {
+    if (!line.emphasized) return;
+    var end = line.end;
+    var marker = PREVIEW_EMPHASIS_LINE_MARKER.exec(text.slice(line.start, end));
+    var contentStart = line.start + (marker ? marker[0].length : 0);
+    var i = contentStart;
+    while (i < end) {
+      if (keep[i]) { i++; continue; }
+      var gapStart = i;
+      while (i < end && !keep[i]) i++;
+      var gapEnd = i - 1;
+      if (!hasWordChar(gapStart, gapEnd)) continue;
+
+      var interior = gapStart > contentStart && gapEnd < end - 1;
+      var spacedAlready = interior &&
+        (PREVIEW_EMPHASIS_SPACE.test(text[gapStart - 1]) || PREVIEW_EMPHASIS_SPACE.test(text[gapEnd + 1]));
+      if (!interior || spacedAlready) {
+        edits.push({ start: gapStart, end: gapEnd, insert: '' });
+        continue;
+      }
+      var space = -1;
+      for (var k = gapStart; k <= gapEnd; k++) {
+        if (PREVIEW_EMPHASIS_SPACE.test(text[k])) { space = k; break; }
+      }
+      if (space < 0) {
+        edits.push({ start: gapStart, end: gapEnd, insert: ' ' });
+      } else {
+        if (space < gapEnd) edits.push({ start: space + 1, end: gapEnd, insert: '' });
+        if (space > gapStart) edits.push({ start: gapStart, end: space - 1, insert: '' });
+      }
+    }
+  });
+
+  return edits.sort(function (a, b) { return b.start - a.start; });
+}
+
+/**
+ * The preview's translation for Drop and Bold only, as escaped HTML with only
+ * our own <b>, <i> and <br>; null for Keep (the caller renders the sanitized
+ * markup). Bold only keeps the bold runs (bold italics included) and drops the
+ * rest by the insert's plan; a translation with no bold is kept whole.
+ */
+function previewTranslationEmphasisHtml(text, mode, lineMarkers, extendedGemara) {
+  if (mode !== 'discard' && mode !== 'only') return null;
+  var read = readPreviewEmphasis(joinPreviewTranslation(text, lineMarkers), extendedGemara);
+  var chars = [];
+  for (var c = 0; c < read.text.length; c++) {
+    chars.push({ ch: read.text[c], bold: mode === 'only' && read.bold[c], italic: mode === 'only' && read.italic[c] });
+  }
+  if (mode === 'only') {
+    var runs = [];
+    for (var s = 0; s < chars.length; s++) {
+      if (!read.bold[s]) continue;
+      var e = s;
+      while (e + 1 < chars.length && read.bold[e + 1]) e++;
+      runs.push({ start: s, end: e });
+      s = e;
+    }
+    planPreviewEmphasisOnlyEdits(read.text, runs, []).forEach(function (edit) {
+      if (edit.end >= edit.start) chars.splice(edit.start, edit.end - edit.start + 1);
+      if (edit.insert) {
+        chars.splice.apply(chars, [edit.start, 0].concat(edit.insert.split('').map(function (ch) {
+          return { ch: ch, bold: false, italic: false };
+        })));
+      }
+    });
+  }
+  var html = '';
+  var bold = false, italic = false;
+  chars.forEach(function (ch) {
+    if (italic && (!ch.italic || ch.bold !== bold)) { html += '</i>'; italic = false; }
+    if (bold && !ch.bold) { html += '</b>'; bold = false; }
+    if (!bold && ch.bold) { html += '<b>'; bold = true; }
+    if (!italic && ch.italic) { html += '<i>'; italic = true; }
+    html += PREVIEW_EMPHASIS_LINE_BREAK.test(ch.ch) ? '<br>' : escapeHTML(ch.ch);
+  });
+  if (italic) html += '</i>';
+  if (bold) html += '</b>';
+  return html.replace(/(<br>)+$/, '');
+}
+
 function renderPreviewHTML(dataIn, inputTitle) {
   var mode = $('.output-mode-selection').val();
   var layout = $('.bilingual-layout-selection').val() || 'he-right';
@@ -269,7 +509,15 @@ function renderPreviewHTML(dataIn, inputTitle) {
   // point of the preview — but it is stripped of anything that would load a
   // subresource or execute first. See sanitizeSourceHtml in shared/ui/dom.
   var heHtml = sanitizeSourceHtml(dataIn.he) || '<p class="preview-state-message">No source text available.</p>';
-  var enHtml = sanitizeSourceHtml(dataIn.text) || '<p class="preview-state-message">No translation text available.</p>';
+  // Drop and Bold only are previewed as the insert will write them (above).
+  var emphasisHtml = previewTranslationEmphasisHtml(
+    dataIn.text,
+    ccNormalizeEmphasisMode($('.source-emphasis-mode').val()),
+    Boolean($('.wants-pesukim').prop('checked')),
+    typeof effectivePreferences !== 'undefined' && effectivePreferences &&
+      String(effectivePreferences.extended_gemara) === 'true'
+  );
+  var enHtml = emphasisHtml || sanitizeSourceHtml(dataIn.text) || '<p class="preview-state-message">No translation text available.</p>';
 
   if (mode === 'he') {
     return buildPreviewMeta(dataIn.heRef, dataIn) +

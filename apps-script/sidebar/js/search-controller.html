@@ -512,6 +512,8 @@ function renderVoicesCard(item) {
 }
 
 function runVoicesQuery(fromTyping) {
+  // An answer to an earlier query (or another mode's) is dropped, as in Texts.
+  var requestId = ++latestQueryRequestId;
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
   if (fromTyping !== true) $('.input').val(input);
   clearSelectedResult();
@@ -528,6 +530,7 @@ function runVoicesQuery(fromTyping) {
   }
   setResultsLoading(true);
   google.script.run.withSuccessHandler(function(response) {
+    if (requestId !== latestQueryRequestId) return;
     var items = Array.isArray(response) ? response : [];
     queryState.rawLibraryMatches = [];
     queryState.rawSearchResults = items;
@@ -537,6 +540,7 @@ function runVoicesQuery(fromTyping) {
     setResultsLoading(false);
     updateVoicesTabBadge(items.length);
   }).withFailureHandler(function(error) {
+    if (requestId !== latestQueryRequestId) return;
     queryState.rawLibraryMatches = [];
     queryState.rawSearchResults = [];
     reprocessAndRenderResults();
@@ -1082,11 +1086,17 @@ $(document).on('input', '.input', function () {
 /* ── Main lexicon query ─────────────────────────────────────────────────────── */
 
 function runLexiconQuery(fromTyping) {
+  // An answer to an earlier query is dropped. Without this, switching to
+  // Lexicon looked up what was still in the box ("Genesis 1:1"); that empty
+  // answer landed while שלום was being looked up, and its "No lexicon entries
+  // found for 'Genesis 1:1'" stayed above שלום's 14 entries (BUG-005).
+  var requestId = ++latestQueryRequestId;
   var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
   if (fromTyping !== true) $('.input').val(input);
   clearSelectedResult();
   selectedLexiconItem = null;
   setResultsHint('');
+  $('.lexicon-result-count').remove();
   updateModeDependentSections();
 
   if (!input) {
@@ -1107,6 +1117,7 @@ function runLexiconQuery(fromTyping) {
 
   google.script.run
     .withSuccessHandler(function (response) {
+      if (requestId !== latestQueryRequestId) return;
       var items = Array.isArray(response) ? response : [];
       queryState.rawLibraryMatches = [];
       queryState.rawSearchResults = items;
@@ -1114,6 +1125,7 @@ function runLexiconQuery(fromTyping) {
 
       var count = items.length;
       updateLexiconTabBadge(count);
+      setResultsHint('');
 
       if (!count) {
         setResultsHint('No lexicon entries found for “' + input + '”. Try a different spelling or root form.');
@@ -1134,6 +1146,7 @@ function runLexiconQuery(fromTyping) {
       setResultsLoading(false);
     })
     .withFailureHandler(function (error) {
+      if (requestId !== latestQueryRequestId) return;
       queryState.rawLibraryMatches = [];
       queryState.rawSearchResults = [];
       reprocessAndRenderResults();

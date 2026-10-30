@@ -228,21 +228,41 @@ $('.open-divine-names-tool').on('click', function () {
   showBusyOverlay('transform');
   google.script.run.withSuccessHandler(function () {
     hideBusyOverlay();
-  }).withFailureHandler(function () {
+  }).withFailureHandler(function (error) {
     hideBusyOverlay();
+    showSidebarToast((error && error.message) || 'Transform Divine Names could not run. Nothing was changed.', 8000);
   }).transformDivineNames();
 });
 
+// These open a dialog. They used to give no sign of failing: Link Texts from
+// the sidebar did nothing, twice, until the menu was used instead (BUG-007).
+var linkerOpening = false;
 $('.open-linker-tool').on('click', function () {
-  google.script.run.linkerHTML();
+  if (linkerOpening) return;
+  linkerOpening = true;
+  $('.open-linker-tool').prop('disabled', true).attr('aria-busy', 'true');
+  function linkerOpened() {
+    linkerOpening = false;
+    $('.open-linker-tool').prop('disabled', false).removeAttr('aria-busy');
+  }
+  google.script.run.withSuccessHandler(linkerOpened).withFailureHandler(function (error) {
+    linkerOpened();
+    showSidebarToast('Link Texts could not be opened' +
+      ((error && error.message) ? ': ' + error.message : '.') +
+      ' Try again, or use Link Texts in the add-on\u2019s Extensions menu.', 8000);
+  }).linkerHTML();
 });
 
 $('#open-help-modal').on('click', function () {
-  google.script.run.openHelpModal();
+  google.script.run.withFailureHandler(function () {
+    showSidebarToast('Help could not be opened. Try again.');
+  }).openHelpModal();
 });
 
 $('#open-feedback-modal').on('click', function () {
-  google.script.run.openFeedbackModal();
+  google.script.run.withFailureHandler(function () {
+    showSidebarToast('The feedback form could not be opened. Try again.');
+  }).openFeedbackModal();
 });
 
 </script>

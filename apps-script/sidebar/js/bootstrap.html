@@ -26,12 +26,14 @@ function validateSidebarBootstrapShape(bootstrap) {
   }
 }
 
-google.script.run.withSuccessHandler(function (bootstrap) {
+function applySidebarBootstrap(bootstrap) {
   validateSidebarBootstrapShape(bootstrap);
-  sidebarSessionId = (bootstrap && bootstrap.sessionId) || null;
   accountPreferences = clonePlainObject((bootstrap && (bootstrap.accountPreferences || bootstrap.preferences)) || {});
-  sessionPreferences = clonePlainObject((bootstrap && bootstrap.sessionState) || {});
-  effectivePreferences = clonePlainObject((bootstrap && (bootstrap.effectivePreferences || bootstrap.preferences)) || accountPreferences);
+  // Changes made before this answer came are kept over it (adoptSidebarSession).
+  var keptEarlierChanges = adoptSidebarSession(bootstrap && bootstrap.sessionId, bootstrap && bootstrap.sessionState);
+  effectivePreferences = keptEarlierChanges
+    ? mergePreferenceLayers(accountPreferences, sessionPreferences)
+    : clonePlainObject((bootstrap && (bootstrap.effectivePreferences || bootstrap.preferences)) || accountPreferences);
   var bootstrapMode = (bootstrap && bootstrap.mode) || window.INITIAL_SIDEBAR_MODE || 'texts';
   setSidebarMode(bootstrapMode, true);
   applyEffectivePreferencesToUI();
@@ -39,7 +41,33 @@ google.script.run.withSuccessHandler(function (bootstrap) {
   updateSidebarCompositionCard();
   loadSessionLibrary();
   setFooterButtonStates();
-}).getSidebarBootstrapData(window.INITIAL_SIDEBAR_MODE || 'texts');
+  if (keptEarlierChanges && sidebarSessionId) flushSessionSaves_();
+}
+
+// Until the bootstrap arrives the Insertion Options card is not wired up:
+// Citation, Bold & italics and the other card switches don't respond, and the
+// card shows the page's defaults, not the saved settings. A failed bootstrap
+// used to leave it that way with no word of why, until Refresh Sidebar
+// (BUG-007). It is asked for once more, then the sidebar says so.
+var SIDEBAR_BOOTSTRAP_RETRY_MS = 1500;
+function requestSidebarBootstrap(retried) {
+  google.script.run
+    .withSuccessHandler(applySidebarBootstrap)
+    .withFailureHandler(function (error) {
+      if (!retried) {
+        setTimeout(function () { requestSidebarBootstrap(true); }, SIDEBAR_BOOTSTRAP_RETRY_MS);
+        return;
+      }
+      showSidebarNotice(
+        'The sidebar couldn\u2019t load your settings, so Insertion Options won\u2019t respond and an insert ' +
+        'may not use your settings. Click OK to try again, or close the sidebar and open it again from the Extensions menu.' +
+        ((error && error.message) ? '\n\n' + error.message : ''),
+        function () { requestSidebarBootstrap(true); }
+      );
+    })
+    .getSidebarBootstrapData(window.INITIAL_SIDEBAR_MODE || 'texts');
+}
+requestSidebarBootstrap(false);
 
 function initializeSidebar(receivedTitles) {
   titles = Array.isArray(receivedTitles) ? receivedTitles : [];

@@ -382,6 +382,10 @@
         if (custom) custom.value = value;
       }
       toggleCustomReplacementField(selectId);
+      // The native select is hidden; the label shown is the custom dropdown's.
+      // Without this it kept the page's default (G-d, יי) after a reopen, over a
+      // saved custom value or another preset (BUG-013).
+      syncCustomSelect(select);
     }
 
     function toggleCustomReplacementField(selectId) {
@@ -707,7 +711,7 @@
                   const el = byId(id);
                   if (!el) return;
                   if (preferences[id] !== undefined && preferences[id] !== null && preferences[id] !== '') {
-                    if (customReplacementFields.indexOf(id) === -1) el.value = preferences[id];
+                    el.value = preferences[id];
                   }
                   syncCustomSelect(el);
                 });

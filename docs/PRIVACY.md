@@ -1,6 +1,6 @@
 # Privacy Policy — Torah Library Add-On for Google Docs
 
-**Last updated: 2026-10-13**
+**Last updated: 2026-10-30**
 
 This add-on inserts texts from [Sefaria](https://www.sefaria.org) into your
 Google Doc. This policy describes exactly what data it touches, what leaves
@@ -12,7 +12,8 @@ Sefaria, and only the text you ask for (§2). Its windows also load their
 page resources — a script library, a stylesheet, fonts, and a few images —
 from Google and Sefaria, like any web page does (§2.2). It stores only your
 own preference settings, in Google's per-user storage for this add-on, and
-your sidebar history, in your own browser (§3).
+your sidebar history, in your own browser — except that the Session Library's
+list passes briefly through Google when you open and close its window (§3).
 
 ---
 
@@ -118,10 +119,24 @@ automatically within 6 hours.
 
 **Your sidebar history** — the Session Library (sources you inserted or
 pinned), recent searches, and recent and starred Lexicon entries — is kept in
-your own browser's local storage, on the computer you used. It never leaves
-that browser and is not synced to other computers. **Reset Session** in the
-Session Library clears the Session Library; clearing your browser's site data
-removes all of it.
+your own browser's local storage, on the computer you used, and is not synced
+to other computers. Recent searches and Lexicon entries never leave that
+browser.
+
+The Session Library is the one exception: it opens in a separate window,
+which the add-on can only fill, and read back, through Google Apps Script. When you open that window, the list — each source's reference,
+title and link, and the search text that found it — is sent to Google's Apps
+Script service to build the window. When you close it, the list as you left
+it is put in Google's per-user `CacheService` storage for this add-on, where
+the sidebar collects it, normally within a few seconds, and then deletes it;
+if it is never collected it expires within an hour. (Versions before
+30 October 2026 kept that copy in `PropertiesService` until you next opened
+the window; opening it still deletes any such copy.) The list is not stored
+anywhere else, and the add-on's authors cannot read it. If the window can't
+open, the sidebar shows the list itself, and then nothing leaves the browser.
+
+**Reset Session** in the Session Library clears the Session Library; clearing
+your browser's site data removes all of the sidebar history.
 
 **Nothing else is stored.** Specifically:
 
@@ -161,8 +176,9 @@ retains only your preference settings. To delete them:
 - Uninstall the add-on. Google removes the add-on's `PropertiesService`
   storage when you uninstall it.
 
-Cached sidebar session state expires on its own within 6 hours and requires
-no action.
+Cached sidebar session state expires on its own within 6 hours, and the
+Session Library window's hand-off (§3) is deleted when the sidebar collects it
+or expires within an hour; neither requires any action.
 
 ## 7. Children
 

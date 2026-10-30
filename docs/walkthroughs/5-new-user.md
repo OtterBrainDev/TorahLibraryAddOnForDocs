@@ -79,6 +79,7 @@ top and a short credit line underneath naming the translation.
 | "Sources can't be inserted into a header, footer or footnote" | Click in the main text of your document, then try again. |
 | "Inserted below the table" | Your cursor was in a table, and the layout you chose is a table itself. Choose one language or **Stacked** to insert inside the cell. |
 | "Couldn't reach Sefaria" | Check your internet connection and try again. |
-| **Add Source** is greyed out | You picked a whole book or a section heading. Pick a specific passage, like `Genesis 1:1`. |
+| **Add Source** is greyed out | You picked a book or section heading with no text of its own. Pick a specific passage, like `Genesis 1:1`. |
+| You picked **Genesis** and the preview says **Genesis 1** | A whole book opens at its first chapter, and that one chapter is what **Add Source** inserts. Add a chapter or verse for a different passage. |
 | Nothing found | Check the spelling, or try the Hebrew name, or a phrase from the text. |
 | No Voices or Lexicon buttons under the search box | You chose **Simple**. Switch to **Everything** at the top of Preferences. |

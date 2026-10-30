@@ -312,9 +312,30 @@ function getDefaultPreferences() {
   };
 }
 
+/**
+ * The stored preferences as a read-only getProperty source, read from storage
+ * once. Every reader here asks for dozens of keys; asking UserProperties for
+ * each one made a Link Texts rerun ~310 separate storage reads in three
+ * executions, two of them in parallel, and that rerun failed with "a server
+ * error occurred while reading from storage ... RESOURCE_EXHAUSTED" (BUG-012).
+ * One getProperties() call per reader is the same data. A `source` without
+ * getProperties (preferenceOverlay_, which reads through this itself) is
+ * returned as it is.
+ */
+function snapshotProperties_(source) {
+  const properties = source || PropertiesService.getUserProperties();
+  if (typeof properties.getProperties !== 'function') return properties;
+  const all = properties.getProperties() || {};
+  return {
+    getProperty: function (key) {
+      return Object.prototype.hasOwnProperty.call(all, key) ? all[key] : null;
+    }
+  };
+}
+
 function readUserPreferenceObject_() {
   const defaults = getDefaultPreferences();
-  const preferences = PropertiesService.getUserProperties();
+  const preferences = snapshotProperties_();
   const out = {};
   for (let i = 0; i < SETTINGS.length; i++) {
     const key = SETTINGS[i];
@@ -387,10 +408,12 @@ function getPreferences() {
  */
 function preferenceOverlay_(overrides) {
   const values = overrides || {};
+  let stored = null;
   return {
     getProperty: function (key) {
       if (Object.prototype.hasOwnProperty.call(values, key)) return String(values[key]);
-      return PropertiesService.getUserProperties().getProperty(key);
+      if (!stored) stored = snapshotProperties_();
+      return stored.getProperty(key);
     }
   };
 }
@@ -554,7 +577,7 @@ function fillTypographyFromSurroundingText_(roles, surrounding, titleHeading) {
  *        typographyPropertiesFor_).
  */
 function getTypographySettings(properties) {
-  const userProperties = properties || PropertiesService.getUserProperties();
+  const userProperties = snapshotProperties_(properties);
 
   const roles = {
     hebrew:          readTypographyRole_(userProperties, "hebrew", "", null, "normal"),

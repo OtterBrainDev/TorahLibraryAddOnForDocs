@@ -388,6 +388,12 @@
       .unmatched-body td.reason-cell { width: 34%; }
       .variant-list { margin: 0; padding: 0; list-style: none; }
       .variant-list li { word-break: break-word; }
+      .variant-list li + li { margin-top: 3px; }
+      .variant-answer {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+      }
       .unmatched-detail {
         display: block;
         margin-top: 2px;
@@ -855,12 +861,23 @@
             var tdVariants = document.createElement('td');
             tdVariants.className = 'variants-cell';
             var variants = item.variants || [];
+            // What Sefaria said to each spelling, when it said something.
+            var answers = {};
+            (item.attempts || []).forEach(function (attempt) {
+              if (attempt && attempt.error) answers[attempt.spelling] = attempt.error;
+            });
             if (variants.length) {
               var list = document.createElement('ul');
               list.className = 'variant-list';
               variants.forEach(function (variant) {
                 var li = document.createElement('li');
                 li.textContent = variant;
+                if (answers[variant]) {
+                  var answer = document.createElement('span');
+                  answer.className = 'variant-answer';
+                  answer.textContent = answers[variant];
+                  li.appendChild(answer);
+                }
                 list.appendChild(li);
               });
               tdVariants.appendChild(list);

@@ -173,7 +173,8 @@ test('Transform Divine Names keeps the vowels and cantillation as well', () => {
   context.DocumentApp = {
     ElementType: { TEXT: 'TEXT' },
     getActiveDocument: () => ({ getBody: () => ({ getType: () => 'BODY', getNumChildren: () => 1, getChild: () => textElement }) }),
-    getUi: () => ({ alert() {} }),
+    // It asks before changing anything (transform-scope.test.js); answer Yes.
+    getUi: () => ({ Button: { YES: 'YES' }, ButtonSet: { YES_NO: 'YES_NO' }, alert: () => 'YES' }),
   };
   context.getPreferences = () => ({
     meforash_replace: 'true', meforash_replacement: 'יי', elodim_replace: 'true', elodim_replacement: 'אלוקים',

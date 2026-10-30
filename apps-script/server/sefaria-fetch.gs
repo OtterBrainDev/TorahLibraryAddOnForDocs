@@ -331,7 +331,7 @@ function fetchReference_(safeReference, versions, properties) {
   all representations of this data need to have these applied to them such that the preview is נאמן to what the actual
   ref will look like when inserted*/
 
-    const userProperties = properties || PropertiesService.getUserProperties();
+    const userProperties = snapshotProperties_(properties);
     // The transliteration reads the Hebrew as fetched, vowels included: with
     // Vowels off it read the bare consonants (שמע -> "shm'"). The Hebrew
     // punctuation setting and the divine-name substitutes still apply, as they

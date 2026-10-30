@@ -92,9 +92,11 @@ Result tools:
   <kbd>Enter</kbd> picks one.
 
 The selected-source card has **‹ Prev** / **Next ›** to step to the
-neighbouring passage and **Open on Sefaria**. Whole books and section headings
-can't be inserted — the sidebar says so and keeps **Add Source** disabled until
-you pick a specific passage.
+neighbouring passage and **Open on Sefaria**. Book and section headings with no
+text of their own (*Mishneh Torah*) can't be inserted — the sidebar says so and
+keeps **Add Source** disabled until you pick a specific passage. A book Sefaria
+opens at its first chapter (*Genesis* on its own) previews and inserts that one
+chapter, titled *Genesis 1*.
 
 ## Versions & Preview
 
@@ -213,7 +215,7 @@ browser only.
 | Action | What it does |
 | --- | --- |
 | **Sel → ס** Insert Source from Selection | Select a reference typed in the document and run it. By default the selection is replaced by the source; turn off **Preferences → Insertion → Insert from Selection** to keep it and insert below. Link Texts' Insert follows the same setting. |
-| **ה → ש** Transform Divine Names | Apply your divine-name replacements to text already in the document. |
+| **ה → ש** Transform Divine Names | Apply your divine-name replacements to text already in the document: every match in the body of the open tab, not only a selection (headers, footers, footnotes and other tabs are left alone). It asks first. |
 | **🔗 → ס** Link Texts with Sefaria | Find citations in the document and link them to Sefaria. |
 | **🎲** Surprise Me | Experimental; shown only when enabled in **Preferences → 🧪 Experimental**. |
 
@@ -256,7 +258,8 @@ By default, inserted יהוה becomes יי. The rules are in **Preferences →
 Insertion → Divine Name Mappings**: a master switch for replacement on
 insertion, and a rule each for יהוה, יה, אלוהים and English *God*, each with a
 choice of replacement or **Other**. **Transform Divine Names** applies the same
-rules to text already in the document.
+rules to text already in the document — the whole body of the open tab, not
+only a selection — after asking.
 
 ## Preferences
 

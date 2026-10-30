@@ -283,3 +283,116 @@ test('scanDocumentForReferences: the report lists what stayed unmatched and link
   assert.equal(report.unmatched[0].documentText, 'Genesis 51:3');
   assert.equal(report.unmatched[0].reason, 'out-of-range');
 });
+
+// BUG-010 (T07, 30 October 2026): "Duplicate A: Genesis 2:1" and "Duplicate B:
+// Genesis 2:1" each came back from Sefaria's linker as one unmatched citation,
+// label included, and every spelling of that failed with a book-name error.
+// The words after the label are tried as well, and linked on their own.
+const T07 = [
+  'Rough notes — synthetic material only',
+  'Traditional citation: Hil. Shabbat 1:1',
+  'Invalid candidate: Fakebook 99:99',
+  'Duplicate A: Genesis 2:1',
+  'Duplicate B: Genesis 2:1',
+  'Inline citation: Compare Exodus 20:1 and Deuteronomy 5:6 before discussing wording.',
+].join('\n');
+
+test('a label taken into the citation is left out, and each duplicate is linked at its own place', () => {
+  const ctx = load();
+  const fetchAll = recordingFetchAll(textsApi({ 'Genesis 2:1': { text: ['The heaven and the earth were finished'] } }));
+  const result = ctx.recoverUnmatchedCitations_([
+    unmatchedEntry(T07, 'Duplicate A: Genesis 2:1'),
+    unmatchedEntry(T07, 'Duplicate B: Genesis 2:1'),
+  ], fetchAll, T07);
+
+  assert.equal(result.unmatched.length, 0);
+  assert.equal(result.recovered.length, 2);
+  const [a, b] = result.recovered;
+  assert.equal(a.documentText, 'Genesis 2:1');
+  assert.equal(b.documentText, 'Genesis 2:1');
+  assert.equal(a.startChar, T07.indexOf('Duplicate A: ') + 'Duplicate A: '.length);
+  assert.equal(b.startChar, T07.indexOf('Duplicate B: ') + 'Duplicate B: '.length);
+  assert.equal(a.endChar - a.startChar, 'Genesis 2:1'.length);
+  assert.deepEqual([a.occurrence, b.occurrence], [0, 1]);
+  assert.notEqual(a.key, b.key);
+  assert.equal(a.recoveredFrom, 'Genesis 2:1');
+  assert.equal(a.candidates[0].ref, 'Genesis 2:1');
+  // The citation as written was tried first; the label-free words after it.
+  assert.deepEqual(fetchAll.rounds[0], ['Duplicate A: Genesis 2:1', 'Duplicate B: Genesis 2:1']);
+  assert.deepEqual(fetchAll.rounds[1], ['Genesis 2:1', 'Genesis 2:1']);
+
+  // Apply re-finds each by its occurrence: the link goes on that line's words
+  // and the labels stay plain prose.
+  const placeA = ctx.relocateLinkerDecision_(T07, a);
+  const placeB = ctx.relocateLinkerDecision_(T07, b);
+  assert.equal(placeA.start, a.startChar);
+  assert.equal(placeB.start, b.startChar);
+  assert.equal(T07.slice(placeA.start, placeA.end), 'Genesis 2:1');
+  assert.ok(T07.slice(0, placeB.start).endsWith('Duplicate B: '));
+});
+
+test('a labelled citation that still fails stays as written; nothing is made up', () => {
+  const ctx = load();
+  const fetchAll = recordingFetchAll(textsApi({}));
+  const result = ctx.recoverUnmatchedCitations_([unmatchedEntry(T07, 'Invalid candidate: Fakebook 99:99')], fetchAll, T07);
+
+  assert.equal(result.recovered.length, 0);
+  const row = result.unmatched[0];
+  assert.equal(row.documentText, 'Invalid candidate: Fakebook 99:99');
+  assert.equal(row.startChar, T07.indexOf('Invalid candidate'));
+  assert.deepEqual(Array.from(row.variants), ['Invalid candidate: Fakebook 99:99', 'Fakebook 99:99']);
+  assert.equal(row.reason, 'unknown-title');
+});
+
+test('only a reference after the colon is split off: never prose, never a verse number', () => {
+  const ctx = load();
+  for (const text of ['Genesis 2: In the beginning', 'Genesis 2: 3', 'Note: see the next page']) {
+    const doc = `x ${text} y`;
+    const fetchAll = recordingFetchAll(textsApi({}));
+    ctx.recoverUnmatchedCitations_([unmatchedEntry(doc, text)], fetchAll, doc);
+    assert.ok(fetchAll.rounds.flat().every((spelling) => spelling.includes(text.split(':')[0])),
+      `${text}: tried ${JSON.stringify(fetchAll.rounds.flat())}`);
+  }
+});
+
+test('a Hebrew label is left out the same way', () => {
+  const DOC = 'הערות\nכפילות א: בראשית ב:א\n';
+  const ctx = load();
+  const fetchAll = recordingFetchAll(textsApi({ 'בראשית ב:א': { text: ['x'] } }));
+  const result = ctx.recoverUnmatchedCitations_([unmatchedEntry(DOC, 'כפילות א: בראשית ב:א')], fetchAll, DOC);
+  assert.equal(result.recovered.length, 1);
+  assert.equal(result.recovered[0].documentText, 'בראשית ב:א');
+  assert.equal(result.recovered[0].startChar, DOC.indexOf('בראשית ב:א'));
+});
+
+test('without the document text no label is split off (older callers)', () => {
+  const ctx = load();
+  const fetchAll = recordingFetchAll(textsApi({ 'Genesis 2:1': { text: ['x'] } }));
+  const result = ctx.recoverUnmatchedCitations_([unmatchedEntry(T07, 'Duplicate A: Genesis 2:1')], fetchAll);
+  assert.equal(result.recovered.length, 0);
+  assert.deepEqual(fetchAll.rounds.flat(), ['Duplicate A: Genesis 2:1']);
+});
+
+// BUG-011 (T07): "Hil. Shabbat 1:1" stayed unmatched after its Hilchot,
+// Mishneh Torah and Rambam spellings, and the row gave one book-name reason.
+// That reason is the most telling of the spellings' answers, not all of them;
+// each spelling now carries Sefaria's own answer, so a live run shows what
+// each expansion was told.
+test('each spelling tried keeps Sefaria\'s own answer to it', () => {
+  const ctx = load();
+  const fetchAll = recordingFetchAll(textsApi({}, {
+    'Hil. Shabbat 1:1': 'Could not find title in reference: Hil. Shabbat 1:1',
+    'Hilchot Shabbat 1:1': 'Could not find title in reference: Hilchot Shabbat 1:1',
+    'Mishneh Torah, Hilchot Shabbat 1:1': 'Something else entirely',
+    'Rambam, Hilchot Shabbat 1:1': 'And a third answer',
+  }));
+  const result = ctx.recoverUnmatchedCitations_([unmatchedEntry(T07, 'Hil. Shabbat 1:1')], fetchAll, T07);
+  const row = result.unmatched[0];
+  assert.equal(row.reason, 'unknown-title');
+  assert.deepEqual(Array.from(row.attempts, (a) => [a.spelling, a.error]), [
+    ['Hil. Shabbat 1:1', 'Could not find title in reference: Hil. Shabbat 1:1'],
+    ['Hilchot Shabbat 1:1', 'Could not find title in reference: Hilchot Shabbat 1:1'],
+    ['Mishneh Torah, Hilchot Shabbat 1:1', 'Something else entirely'],
+    ['Rambam, Hilchot Shabbat 1:1', 'And a third answer'],
+  ]);
+});
