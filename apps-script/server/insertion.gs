@@ -1223,9 +1223,15 @@ function insertReferenceVersions(ref, opts) {
     index += 1;
   };
 
+  // The Hebrew edition's credit, once, under the Hebrew; the translations each
+  // credit their own edition below. Only the single-translation insert used to
+  // credit the Hebrew, so two translations left out its license (BUG-004).
+  let hebrewCreditLines = [];
+
   if (singleLanguage !== 'en') {
     // Hebrew on top: insert Hebrew once from the first version, then each translation.
     let firstData = formatDataForPesukim(kept[0].data, includeLineMarkers);
+    if (includeTranslationSourceInfo) hebrewCreditLines = getHebrewAttributionLines_(firstData);
     typography.sectionHeadingLines = firstData.sectionHeadingLines || [];
     let heTitle = insertHebrewSefariaLink ? buildLinkedTitleText(firstData.heRef, firstData, 'he') : firstData.heRef;
     doc.insertParagraph(index, heTitle).setAttributes(headerStyle).setLeftToRight(false);
@@ -1284,6 +1290,12 @@ function insertReferenceVersions(ref, opts) {
     // follows the insert point (typically the next source) doesn't butt
     // against the last citation.
     insertSeparator();
+  }
+
+  // After the blocks, so no translation title follows an 8 pt credit line and
+  // takes its formatting (see above).
+  if (hebrewCreditLines.length) {
+    insertAttributionParagraph(doc.insertParagraph(blockStart, ''), hebrewCreditLines, typography);
   }
 
   return {

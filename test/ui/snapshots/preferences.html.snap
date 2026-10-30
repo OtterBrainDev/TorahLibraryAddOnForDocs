@@ -863,7 +863,7 @@
                   </div>
                 </div>
 
-                <div class="mini-help">These define the replacement rules themselves. The document-wide transform command remains separate from insertion-time replacement. <span id="sheimot_summary_note">None</span></div>
+                <div class="mini-help">These define the replacement rules themselves. Quick Actions &rarr; Transform Divine Names applies them to text already in the document: every match in the body of the tab you have open, not only a selection, and not headers, footers, footnotes or other tabs. It asks before changing anything. Turning off replacement on insertion does not turn it off. <span id="sheimot_summary_note">None</span></div>
               </div>
             </div>
           </details>

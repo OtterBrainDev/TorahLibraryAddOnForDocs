@@ -98,3 +98,33 @@ test('a change the fetch applies disables Add Source and fetches once, after the
   assert.match(fn, /hasResolvedReference = false;\s*setInsertButtonState\(false\);/);
   assert.match(fn, /sessionSaveQueue\.inFlight \|\| sessionSaveQueue\.pending/);
 });
+
+// BUG-002 (T04): Stacked, chosen and inserted at once, came out Right-Left,
+// and Insertion Options then showed Right-Left. Until the bootstrap answers
+// the sidebar has no session id, and a change made then was dropped; the
+// bootstrap then re-drew the saved default over it. It now waits, is kept over
+// the bootstrap's state, and is sent once the session exists.
+test('a change made before the sidebar has its session is kept, shown and then sent', () => {
+  const { ctx, calls, get } = load();
+  vm.runInContext('sidebarSessionId = null; accountPreferences = { bilingual_layout_default: "he-right" };', ctx);
+
+  ctx.saveSessionPreference({ bilingual_layout_default: 'he-top' });
+  assert.equal(calls.length, 0, 'nothing can be sent without a session');
+  assert.equal(get('effectivePreferences').bilingual_layout_default, 'he-top', 'shown at once');
+
+  // The bootstrap arrives with the saved default and an empty session.
+  const kept = ctx.adoptSidebarSession('s1', {});
+  assert.equal(kept, true);
+  assert.equal(get('sessionPreferences').bilingual_layout_default, 'he-top', 'the bootstrap does not undo it');
+  ctx.flushSessionSaves_();
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].payload, { bilingual_layout_default: 'he-top' });
+});
+
+test('with no early change the bootstrap\'s session is taken as it is', () => {
+  const { ctx, get } = load();
+  vm.runInContext('sidebarSessionId = null;', ctx);
+  assert.equal(ctx.adoptSidebarSession('s1', { nekudot: 'false' }), false);
+  assert.equal(get('sidebarSessionId'), 's1');
+  assert.deepEqual({ ...get('sessionPreferences') }, { nekudot: 'false' });
+});

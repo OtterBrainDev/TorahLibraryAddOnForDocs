@@ -1,15 +1,58 @@
 // Document actions module: Quick Actions menu handlers for in-document text
 // transformation (divine names) and reference linking to Sefaria.
 
+/**
+ * The divine-name rules switched on, as the confirmation lists them. Defaults
+ * match the replacements transformDivineNames falls back to.
+ */
+function enabledDivineNameRules_(prefs) {
+  const p = prefs || {};
+  return [
+    { on: p.meforash_replace, name: 'יהוה', replacement: p.meforash_replacement || 'יי' },
+    { on: p.yaw_replace, name: 'יה', replacement: p.yaw_replacement || 'קה' },
+    { on: p.elodim_replace, name: 'אלהים / אלוהים', replacement: p.elodim_replacement || 'אלוקים' },
+    { on: p.god_replace, name: 'God', replacement: p.god_replacement || 'G-d' }
+  ].filter(function (rule) { return rule.on == 'true'; })
+    .map(function (rule) { return { name: rule.name, replacement: String(rule.replacement) }; });
+}
+
+/**
+ * What Transform Divine Names is about to change, asked before it changes it.
+ * It edits every match in the body of the open tab: a selection does not limit
+ * it, and headers, footers, footnotes and other tabs are left alone. Nothing
+ * said so; Preferences called it "document-wide", and a tutorial promised that
+ * unselected text would be kept (BUG-006). The scope is unchanged; it is stated.
+ */
+function divineNameTransformPrompt_(rules, hasSelection) {
+  return 'This replaces every match in the body of the tab you have open \u2014 the whole tab, not only selected text. ' +
+    'Headers, footers, footnotes and other tabs are not changed.' +
+    (hasSelection ? '\n\nYou have text selected: the selection does not limit what is replaced.' : '') +
+    '\n\nRules turned on (Preferences \u2192 Divine Name Mappings):\n' +
+    rules.map(function (rule) { return '    ' + rule.name + '  \u2192  ' + rule.replacement; }).join('\n') +
+    '\n\nEdit \u2192 Undo reverses it. Continue?';
+}
+
+function divineNameTransformSummary_(count) {
+  if (!count) return 'No divine names matching your rules were found in this tab\u2019s body. Nothing was changed.';
+  return 'Replaced ' + count + ' divine name' + (count === 1 ? '' : 's') + ' in this tab\u2019s body.';
+}
+
 function transformDivineNames() {
-  const body = DocumentApp.getActiveDocument().getBody();
+  const doc = DocumentApp.getActiveDocument();
+  const body = doc.getBody();
   const prefs = getPreferences();
-  const noTransformsEnabled = [prefs.meforash_replace, prefs.yaw_replace, prefs.elodim_replace, prefs.god_replace]
-    .every((value) => value != "true");
-  if (noTransformsEnabled) {
-    DocumentApp.getUi().alert('No divine-name transforms are enabled. Open Preferences and enable at least one transform before running this action.');
+  const ui = DocumentApp.getUi();
+  const rules = enabledDivineNameRules_(prefs);
+  if (!rules.length) {
+    ui.alert('No divine-name transforms are enabled. Open Preferences and enable at least one transform before running this action.');
     return;
   }
+  let hasSelection = false;
+  try { hasSelection = !!(doc.getSelection && doc.getSelection()); } catch (e) { hasSelection = false; }
+  if (ui.alert('Transform Divine Names', divineNameTransformPrompt_(rules, hasSelection), ui.ButtonSet.YES_NO) !== ui.Button.YES) {
+    return;
+  }
+  let replacedCount = 0;
   // A name's letters and their marks (HEBREW_LETTER_MARKS_). Maqaf, paseq and
   // sof pasuq end a word: a name before one is matched and the mark kept.
   const hebrewMarks = HEBREW_LETTER_MARKS_;
@@ -18,6 +61,7 @@ function transformDivineNames() {
     if (!ranges || !ranges.length) {
       return;
     }
+    replacedCount += ranges.length;
 
     for (let i = ranges.length - 1; i >= 0; i--) {
       const range = ranges[i];
@@ -117,6 +161,8 @@ function transformDivineNames() {
       replaceRegexInTextElement(textElement, /\bGod\b/g, prefs.god_replacement || "G-d");
     }
   });
+
+  ui.alert(divineNameTransformSummary_(replacedCount));
 }
 
 /**
@@ -307,23 +353,44 @@ var LINKER_RETRY_MAX_CITATIONS_ = 30;
  * The close-match suggester ("did you mean…") is deliberately not used: it
  * proposes a different work, which is a question for the reader, not a link.
  *
+ * Sefaria's linker sometimes takes a label before a colon as part of the
+ * citation: "Duplicate A: Genesis 2:1" came back as one unmatched citation, and
+ * every spelling of it failed (BUG-010). When the words after the label carry a
+ * reference of their own, their spellings are tried too, after the citation's
+ * own; one that resolves is linked on those words alone, at their position.
+ *
  * Never throws: when Sefaria cannot be reached, the citations still unchecked
  * are reported as such and the scan's other results stand.
  *
  * @param {Array} unmatched  classifyLinkerMatches_'s `unmatched`
  * @param {function(Array): Array} fetchAll  UrlFetchApp.fetchAll, injected for tests
+ * @param {string} [docText]  the scanned document text; without it no label is
+ *        split off (a narrowed citation needs its own occurrence and context)
  * @returns {{recovered: Array, unmatched: Array}}
  */
-function recoverUnmatchedCitations_(unmatched, fetchAll) {
+function recoverUnmatchedCitations_(unmatched, fetchAll, docText) {
   const items = (unmatched || []).map(function (entry, index) {
+    const variants = buildReferenceVariants_(entry.documentText).map(function (spelling) {
+      return { spelling: spelling, placement: null };
+    });
+    const narrowed = docText ? narrowLabelledCitation_(entry, docText) : null;
+    if (narrowed) {
+      buildReferenceVariants_(narrowed.documentText).forEach(function (spelling) {
+        if (!variants.some(function (v) { return v.spelling === spelling; })) {
+          variants.push({ spelling: spelling, placement: narrowed });
+        }
+      });
+    }
     return {
       entry: entry,
-      variants: buildReferenceVariants_(entry.documentText),
+      variants: variants,
       checked: index < LINKER_RETRY_MAX_CITATIONS_,
       tried: [],
+      attempts: [],
       errors: [],
       resolved: null,
       variant: '',
+      placement: null,
       unavailable: false
     };
   });
@@ -340,7 +407,7 @@ function recoverUnmatchedCitations_(unmatched, fetchAll) {
     let responses;
     try {
       responses = fetchAll(batch.map(function (item) {
-        return { url: sefariaTextsUrl_(item.variants[round]), muteHttpExceptions: true };
+        return { url: sefariaTextsUrl_(item.variants[round].spelling), muteHttpExceptions: true };
       }));
     } catch (error) {
       responses = null;
@@ -358,12 +425,18 @@ function recoverUnmatchedCitations_(unmatched, fetchAll) {
         item.unavailable = true;
         return;
       }
-      item.tried.push(item.variants[round]);
+      const variant = item.variants[round];
+      item.tried.push(variant.spelling);
       if (outcome.resolved) {
         item.resolved = outcome.resolved;
-        item.variant = item.variants[round];
-      } else if (outcome.error) {
-        item.errors.push(outcome.error);
+        item.variant = variant.spelling;
+        item.placement = variant.placement;
+      } else {
+        // Each spelling's own answer: the row's one reason can only be the
+        // most telling of them (BUG-011: "book-name error" was shown for a
+        // citation whose expansions may have failed some other way).
+        item.attempts.push({ spelling: variant.spelling, error: outcome.error || '' });
+        if (outcome.error) item.errors.push(outcome.error);
       }
     });
   }
@@ -373,18 +446,21 @@ function recoverUnmatchedCitations_(unmatched, fetchAll) {
   items.forEach(function (item) {
     const entry = item.entry;
     if (item.resolved) {
+      // Found on the words after a label: those words are the citation.
+      const placement = item.placement ? Object.assign({}, entry, item.placement) : entry;
       recovered.push(Object.assign({
-        key: 'recovered-' + entry.startChar,
+        key: 'recovered-' + placement.startChar,
         ambiguous: false,
         candidates: [buildLinkerCandidateFromText_(item.resolved)],
         // The spelling that found it, shown under the source.
         recoveredFrom: item.variant
-      }, entry));
+      }, placement));
       return;
     }
     const reason = classifyUnmatchedCitation_(entry.documentText, item);
     stillUnmatched.push(Object.assign({}, entry, {
       variants: item.tried,
+      attempts: item.attempts,
       reason: reason.code,
       reasonText: reason.text,
       detail: reason.detail
@@ -392,6 +468,35 @@ function recoverUnmatchedCitations_(unmatched, fetchAll) {
   });
 
   return { recovered: recovered, unmatched: stillUnmatched };
+}
+
+// "Duplicate A: Genesis 2:1", "Source 1: בראשית ב:א": up to 40 characters of
+// label, a colon, a space, then a letter.
+var LINKER_CITATION_LABEL_RE_ = /^([^:\n]{1,40}?):\s+(?=[A-Za-z\u05D0-\u05EA])/;
+
+/**
+ * The citation inside an unmatched span that starts with a label, as a
+ * placement of its own ({documentText, startChar, endChar, occurrence,
+ * snippet}), or null. Only when the words after the label carry a reference's
+ * numbers themselves (lineLooksLikeReference_ without titles), so
+ * "Genesis 2: In the beginning" is never split into prose.
+ */
+function narrowLabelledCitation_(entry, docText) {
+  const text = String((entry && entry.documentText) || '');
+  const match = LINKER_CITATION_LABEL_RE_.exec(text);
+  if (!match) return null;
+  const rest = text.slice(match[0].length).replace(/\s+$/, '');
+  if (!rest || !lineLooksLikeReference_(rest, null)) return null;
+  const startChar = Number(entry.startChar) + match[0].length;
+  const endChar = startChar + rest.length;
+  if (docText.substring(startChar, endChar) !== rest) return null;
+  return {
+    documentText: rest,
+    startChar: startChar,
+    endChar: endChar,
+    occurrence: countOccurrencesBefore_(docText, rest, startChar),
+    snippet: buildLinkerSnippet_(docText, startChar, endChar)
+  };
 }
 
 /** One texts-API response as {resolved}, {error}, or {unavailable}. */
@@ -504,7 +609,12 @@ function classifyUnmatchedCitation_(documentText, item) {
 function scanDocumentForReferences() {
   const bodyText = DocumentApp.getActiveDocument().getBody().editAsText();
   const docText = bodyText.getText();
-  const prefs = getPreferences();
+  let prefs;
+  try {
+    prefs = getPreferences();
+  } catch (error) {
+    throw linkerSettingsUnreadableError_(error);
+  }
 
   const scan = buildLinkerScanRequest_(docText, prefs);
   if (!scan) {
@@ -534,7 +644,7 @@ function scanDocumentForReferences() {
   // Look the unmatched ones up the way the sidebar search would.
   const recovery = recoverUnmatchedCitations_(classified.unmatched, function (requests) {
     return UrlFetchApp.fetchAll(requests);
-  });
+  }, docText);
   const matches = classified.matches.concat(recovery.recovered)
     .sort(function (a, b) { return a.startChar - b.startChar; });
   const unplaceableCount = classified.unplaceableCount;
@@ -549,6 +659,22 @@ function scanDocumentForReferences() {
     scannedChars: scan.scannedChars,
     totalChars: scan.totalChars
   };
+}
+
+/**
+ * The scan's error when Google's storage would not return the saved settings
+ * (BUG-012: "a server error occurred while reading from storage. Error code
+ * RESOURCE_EXHAUSTED"). The scan changes nothing, so that can be said; Google's
+ * own message is kept at the end for a support report. Not retried here: a
+ * storage service that is refusing reads is not helped by more of them.
+ */
+function linkerSettingsUnreadableError_(cause) {
+  const detail = String((cause && cause.message) || cause || '').trim();
+  return new Error(
+    'Google couldn’t read this add-on’s saved settings just now, so the document was not scanned and nothing in it was changed. ' +
+    'Wait a minute, then run Link Texts again.' +
+    (detail ? '\n\nGoogle’s message: ' + detail : '')
+  );
 }
 
 function getLinkerReviewMode_(prefs) {

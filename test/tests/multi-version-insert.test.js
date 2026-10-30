@@ -246,3 +246,71 @@ test('the sidebar session reaches each version\'s re-fetch (Layout tray cantilla
   // ... and the fonts: the Layout tray's font pickers are session overrides too.
   assert.deepEqual(typographySessions, ['s1']);
 });
+
+// BUG-004: with two translations, Hebrew on top and Citation on, the inserted
+// credits named only the translations; the Hebrew edition's license was left
+// out, though a one-translation or Hebrew-only insert of the same edition had
+// it. The Hebrew edition is credited once, under the Hebrew.
+const withHebrewEdition = (entry) => Object.assign({}, entry, {
+  heVersionTitle: 'Miqra according to the Masorah', heLicense: 'CC-BY-SA',
+});
+const credited = {
+  Koren: withHebrewEdition(resolved.Koren),
+  JPS: withHebrewEdition(resolved.JPS),
+};
+
+test('Hebrew on top with two translations credits the Hebrew edition once, and each translation', () => {
+  const { ctx, texts } = loadInsertion({ resolved: credited });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], bilingualLayout: 'he-top', includeTranslationSourceInfo: true,
+  });
+  assert.deepEqual(texts(), [
+    'בראשית א:א', 'בְּרֵאשִׁית', 'Hebrew: Miqra according to the Masorah\nLicense: CC-BY-SA',
+    'Genesis 1:1 (Koren)', 'In the beginning', 'Translation: Koren',
+    '',
+    'Genesis 1:1 (JPS)', 'When God began', 'Translation: JPS',
+    '',
+  ]);
+});
+
+test('one translation on the multi-version path credits the Hebrew edition too', () => {
+  const { ctx, texts } = loadInsertion({ resolved: credited });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren'], bilingualLayout: 'he-top', includeTranslationSourceInfo: true,
+  });
+  assert.equal(texts().filter((t) => t.startsWith('Hebrew: ')).length, 1);
+});
+
+test('no Hebrew credit with Citation off, without Hebrew, or without a Hebrew edition title', () => {
+  const off = loadInsertion({ resolved: credited });
+  off.ctx.insertReferenceVersions('Genesis 1:1', { versionTitles: ['Koren', 'JPS'], bilingualLayout: 'he-top' });
+  assert.equal(off.texts().some((t) => /Hebrew:|License:|Translation:/.test(t)), false);
+
+  const translationOnly = loadInsertion({ resolved: credited });
+  translationOnly.ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], singleLanguage: 'en', includeTranslationSourceInfo: true,
+  });
+  assert.equal(translationOnly.texts().some((t) => t.startsWith('Hebrew: ')), false);
+
+  // A license without the edition's name says nothing usable; as on the
+  // single-translation path (source-attribution.test.js), it is left out.
+  const untitled = loadInsertion({
+    resolved: { Koren: Object.assign({}, resolved.Koren, { heLicense: 'CC-BY-SA' }), JPS: resolved.JPS },
+  });
+  untitled.ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], bilingualLayout: 'he-top', includeTranslationSourceInfo: true,
+  });
+  assert.equal(untitled.texts().some((t) => /Hebrew:|CC-BY-SA/.test(t)), false);
+});
+
+test('the Hebrew credit does not pass its 8 pt size on to the translation titles', () => {
+  const { ctx, children } = loadInsertion({
+    resolved: credited,
+    typography: { roles: { citation: { size: 8 } } },
+  });
+  ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], bilingualLayout: 'he-top', includeTranslationSourceInfo: true,
+  });
+  const titles = children.filter((c) => c._state.text.startsWith('Genesis'));
+  titles.forEach((t) => assert.notEqual(t._state.attrs.FONT_SIZE, 8, t._state.text));
+});

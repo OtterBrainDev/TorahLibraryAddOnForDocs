@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **519 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **598 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -151,7 +151,10 @@ and fix it before touching the feature you came to change.
   up again with exactly the sidebar search's spellings, in its order; a hit
   is linked like any single match (and says which spelling found it); the
   rest reach the review dialog's "Not matched" list with the spellings tried
-  and why each failed; no network while retrying never fails the scan.
+  and why each failed (with what Sefaria answered to each); no network while
+  retrying never fails the scan. A label Sefaria's linker took into the
+  citation ("Duplicate A: Genesis 2:1") is left out and the reference linked
+  at its own place; a made-up book after a label stays unmatched.
 - `linker-insert-replace.test.js` — Link Texts' Insert follows "Insert from
   Selection replaces the selection": a citation on its own line is replaced
   by the source (titled with it, link kept); one inside a sentence is kept.
@@ -180,7 +183,8 @@ and fix it before touching the feature you came to change.
   no bold, and the whole Hebrew — it applies to the translation only).
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped, every block
-  formatted like the first; HTML-entity decoding (`&thinsp;` and friends).
+  formatted like the first; HTML-entity decoding (`&thinsp;` and friends). With
+  the Hebrew on top and Citation on, the Hebrew edition is credited once.
 - `translation-language-typography.test.js` — per-language translation
   formatting: stored entries cleaned, the translation's language read from
   Sefaria's payload, and only that language's blocks reformatted.
@@ -237,10 +241,30 @@ and fix it before touching the feature you came to change.
 - `sidebar-session-saves.test.js` — the sidebar's session saves go one at a
   time (a quick second click once overwrote the first: the lost Vowels
   choice), switches re-draw only when nothing is left to save, and a change
-  the fetch applies re-fetches once, with Add Source disabled meanwhile.
+  the fetch applies re-fetches once, with Add Source disabled meanwhile. A
+  change made before the bootstrap gives the sidebar its session is kept.
 - `citation-style.test.js` — the citation under a source has its own style
   (Preferences → Fonts → Citation); its defaults and schema v25 keep the old
   8 pt italic in the font of the text above.
+- `storage-reads.test.js` — each preference reader reads UserProperties once
+  (`snapshotProperties_`): a Link Texts rerun is ~4 reads, not ~310; a scan
+  whose settings can't be read says nothing was scanned or changed.
+- `session-library-handoff.test.js` — the Session Library dialog's changes
+  reach the sidebar: Done stays open if they can't be saved, the sidebar backs
+  off for an hour and says so when it can't read them, Library always reopens.
+- `sidebar-recovery.test.js` — a failed sidebar bootstrap is retried once,
+  then reported (the Insertion Options card is not wired up without it);
+  Link Texts from the sidebar shows it is opening and says why it couldn't.
+- `divine-name-mapping-label.test.js` — a saved divine-name replacement,
+  custom or preset, reopens under its own label (all four rules, linkedom).
+- `transform-scope.test.js` — Transform Divine Names asks first, naming its
+  scope (the open tab's body, not the selection; not headers, footers,
+  footnotes or other tabs) and the rules, and says how many it replaced.
+- `preview-emphasis.test.js` — the sidebar preview shows Drop and Bold only as
+  the insert writes them: the real server pipeline and the preview's mirrors
+  give the same words and bold.
+- `lexicon-stale-response.test.js` — a Lexicon or Voices answer to an earlier
+  search is dropped (the stale "No lexicon entries found for 'Genesis 1:1'").
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
   cantillation) are set in Noto Serif / Sans Hebrew at insert, and only those:
   letters and the marks it has stay; "Match the document" judges the

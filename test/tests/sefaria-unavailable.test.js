@@ -36,6 +36,8 @@ function load(fetchImpl) {
     Utilities: { sleep(ms) { slept.push(ms); } },
     UrlFetchApp: { fetch: fetchImpl },
     PropertiesService: { getUserProperties() { return { getProperty() { return null; } }; } },
+    // preferences.gs; the stored preferences are all unset here.
+    snapshotProperties_: (p) => p || { getProperty() { return null; } },
     // The display and divine-name filters are pinned elsewhere; identity here.
     attachTransliterationSource_: (d) => d,
     applyHebrewDisplayPreferences: (d) => d,

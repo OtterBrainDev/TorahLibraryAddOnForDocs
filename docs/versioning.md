@@ -84,6 +84,33 @@ unlisted copy is one the test cannot protect, and it will drift.
 8. Tag the commit `v2.1.0`. The tag is the only durable record that a given
    commit is what a given user is running.
 
+### Which commit is a test deployment running?
+
+Nothing in the add-on can tell you. *About* shows `Current line` from
+`help-modal.html`, which changes only at a release, so every build between two
+releases shows the same number; its GitHub link is a fixed URL, not where the
+build came from; and the name in the Extensions menu of a **test deployment**
+is the Apps Script project's title, set in the editor, not anything in this
+repository (a Marketplace install shows the listing's name). Two documents can
+show the same menu name and run different code.
+
+To match a test deployment to a commit, read its code, not its labels. With
+the project's script ID (Apps Script editor → Project Settings):
+
+```bash
+mkdir /tmp/deployed && cd /tmp/deployed
+printf '{"scriptId":"<script id>","fileExtension":"gs"}' > .clasp.json   # .gs, as here
+npx --prefix <repo>/tools/clasp clasp pull
+git -C <repo> diff --no-index --stat <repo>/apps-script /tmp/deployed
+```
+
+No output means the project's HEAD is exactly `apps-script/` at the commit
+checked out in `<repo>`; try candidate commits until one is clean. A test
+deployment runs HEAD unless it was set to a numbered version (Deploy → Test
+deployments shows which). Record the script ID, HEAD or version number, and
+the matching commit for each test document before reporting a live result as
+a test of a fix.
+
 ## 5. For AI agents specifically
 
 - **Never bump the version as a side effect.** If you are asked to fix a bug,

@@ -91,16 +91,24 @@ function saveAccountPreference(payload, onDone) {
 var sessionSaveQueue = { pending: null, callbacks: [], inFlight: false };
 
 function saveSessionPreference(payload, onDone) {
-  if (!sidebarSessionId) {
-    if (typeof onDone === 'function') onDone(sessionPreferences);
-    return;
-  }
   var change = payload || {};
   sessionPreferences = Object.assign({}, sessionPreferences, change);
   effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
   sessionSaveQueue.pending = Object.assign(sessionSaveQueue.pending || {}, change);
   if (typeof onDone === 'function') sessionSaveQueue.callbacks.push(onDone);
-  flushSessionSaves_();
+  // Until the bootstrap gives this sidebar its session, a change waits here.
+  if (sidebarSessionId) flushSessionSaves_();
+}
+
+// The session the bootstrap gives this sidebar, with any change made before it
+// arrived kept on top; the caller re-draws the switches and sends those
+// changes. A change made in those first moments used to be dropped, and the
+// bootstrap then put the saved default back on screen: Stacked, picked as the
+// sidebar opened, was inserted Right-Left and showed Right-Left (BUG-002).
+function adoptSidebarSession(sessionId, sessionState) {
+  sidebarSessionId = sessionId || null;
+  sessionPreferences = Object.assign(clonePlainObject(sessionState || {}), sessionSaveQueue.pending || {});
+  return !!sessionSaveQueue.pending;
 }
 
 function flushSessionSaves_() {

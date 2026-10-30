@@ -45,6 +45,80 @@ heading until the next release consolidates it.
 > the citation's fixed look until now: 8 pt italic, in the font of the text
 > above it.
 
+### Beta tutorial QA fixes (30 October 2026)
+
+No new preference, no migration. Found while recording the beta tutorials;
+each one is in `docs/regression-log.md` with the test that pins it.
+
+#### Fixed
+
+- **The preview shows Drop and Bold only as they will be inserted.** With
+  *Bold & italics → Bold only* the preview still showed the whole
+  translation, explanation included, and the insert then kept only the bold.
+  The preview now applies the same rules as the insert: bold (bold italics
+  included) is kept, italics alone and plain text go, a line with no bold
+  goes, and a translation with no bold at all is shown whole. *Drop* shows
+  every word without the source's bold and italics. The preview still leaves
+  out line numbers and chapter headings.
+- **Two translations with the Hebrew on top now credit the Hebrew edition.**
+  With *Citation* on, each translation was credited but the Hebrew edition's
+  license was left out, though a one-translation insert of the same edition
+  had it. It is credited once, under the Hebrew.
+- **Link Texts links a citation that follows a label.** Sefaria's linker took
+  *Duplicate A: Genesis 2:1* as one citation and could not match it. When the
+  words after a label are a reference of their own, they are searched too,
+  and only they are linked; the label stays as written. A made-up book after
+  a label still stays unmatched.
+- **Link Texts asks Google's storage for your settings far less.** A second
+  Link Texts run failed with *"a server error occurred while reading from
+  storage. Error code RESOURCE_EXHAUSTED."* Every settings read had asked for
+  one setting at a time, about 310 reads for a rerun; it is now one read per
+  step, about 4. If the settings still can't be read, the dialog says that
+  the document was not scanned and nothing was changed, and keeps Google's
+  message for a support report. (Which Google service refused is for the
+  Apps Script execution log to say; this does not claim to have found it.)
+- **Session Library: a pin made in the dialog is no longer lost, and Library
+  always reopens.** The dialog hands its changes back through a saved value
+  the sidebar waits for. A failed save closed the dialog anyway, a failed
+  read looked like "not closed yet", and while the sidebar waited Library
+  would not open again until Refresh Sidebar; the wait also gave up after ten
+  minutes. Now Done stays open and says so if the changes can't be saved, the
+  sidebar keeps waiting for an hour, says so if it can't read them, and
+  Library opens whenever it is clicked.
+- **A saved divine-name mapping shows its own label when Preferences is
+  reopened.** A custom replacement (or a preset other than the first) reopened
+  under the page's default label — *G-d*, *יי* — beside the custom field. The
+  replacement used was always the saved one.
+- **Lexicon no longer shows an earlier search's "No lexicon entries found".**
+  Switching to Lexicon looked up what was still in the search box; when that
+  answer arrived during the next search, its message stayed above the new
+  results. An answer to an earlier search (in Lexicon or Voices, or in the mode
+  just left) is now dropped.
+- **A layout picked as the sidebar opens is kept.** A choice made before the
+  sidebar had loaded your settings was dropped, and the saved default was then
+  put back on screen: Stacked could insert as Right–Left.
+- **The sidebar says when it can't load your settings.** Until then the
+  Insertion Options card doesn't respond (Citation, Bold & italics), and a
+  failed load left it that way with no word of why. It is tried once more,
+  then the sidebar says so, with Google's message and a way to try again.
+  Link Texts, Help and the feedback form say so when they can't open from the
+  sidebar, and Link Texts ignores a second click while it opens.
+
+#### Changed
+
+- **Transform Divine Names asks first, and says what it will change.** It
+  changes every match in the body of the tab you have open: a selection does
+  not limit it, and headers, footers, footnotes and other tabs are left alone.
+  It now says so, lists the rules that are on, and asks before changing
+  anything; afterwards it says how many names it replaced. What it changes is
+  unchanged. Preferences no longer calls it "document-wide".
+- **Link Texts' "couldn't be matched" list shows what Sefaria answered to each
+  spelling it searched**, not only the row's one reason.
+- **Help:** how to keep a citation from splitting across a page (Docs' *Keep
+  lines together*; the add-on can't set it); and that a whole book such as
+  *Genesis* opens at its first chapter, which is what Add Source inserts,
+  while a heading with no text of its own (*Mishneh Torah*) can't be inserted.
+
 ### Divine names keep their vowels and cantillation
 
 #### Fixed

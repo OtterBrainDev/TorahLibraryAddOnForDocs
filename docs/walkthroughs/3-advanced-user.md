@@ -84,7 +84,8 @@ Open **Texts** and press <kbd>/</kbd> to jump to the search box. Try:
 | `the torah a womens commentary deuteronomy 29 9-14` | Titles match whatever the punctuation or capitalisation |
 | `https://www.sefaria.org/Genesis.1.1` | Paste a Sefaria link |
 | `in the beginning` | Phrase search across the library |
-| `Genesis` (whole book) | Not insertable; pick a passage |
+| `Genesis` (whole book) | Opens at its first chapter: the preview is titled *Genesis 1*, and Add Source inserts that chapter only |
+| `Mishneh Torah` (a heading with no text) | Not insertable; pick a passage |
 
 - <kbd>↑</kbd>/<kbd>↓</kbd> then <kbd>Enter</kbd> picks a result without the
   mouse.
@@ -216,7 +217,9 @@ alone.
 - **Insert Source from Selection** (**Sel → ס**): type `Psalms 92:1` in your
   notes, select it, run it, and the citation becomes the source.
 - **Transform Divine Names** (**ה → ש**): apply your divine-name rules to text
-  already in the document, including text you pasted from elsewhere.
+  already in the document, including text you pasted from elsewhere. It changes
+  every match in the body of the tab you have open — a selection does not limit
+  it; headers, footers, footnotes and other tabs are left alone — and asks first.
 - **Unlink Sources** (menu): removes every sefaria.org link and leaves other
   links alone. Useful before printing.
 - **Gematriya Count** (menu): the gematria total of the selection or the whole

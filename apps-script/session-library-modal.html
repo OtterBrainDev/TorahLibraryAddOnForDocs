@@ -78,6 +78,7 @@
 
       <!-- Footer -->
       <div class="sl-modal-footer">
+        <p class="sl-save-error" id="sl-save-error" role="alert" hidden></p>
         <button type="button" class="sl-btn sl-btn--ghost" id="sl-copy-refs" title="Copy all references as plain text" disabled>Copy References</button>
         <button type="button" class="sl-btn sl-btn--primary" id="sl-modal-done">Done</button>
       </div>
@@ -593,16 +594,35 @@ function toggleSlDensity() {
 // ============================================================
 // SAVE AND CLOSE
 // ============================================================
+// The sidebar receives this dialog's changes only through what is saved here.
+// A failed save used to close the dialog anyway, and the changes were lost
+// (BUG-009); now it stays open and says so.
+var _slHandedBack = false;
+var _slSaving = false;
 function _slSaveAndClose(selectedRef) {
+  if (_slSaving) return;
+  _slSaving = true;
   var action = { sessionData: JSON.stringify(sessionLibrary), closed: true };
   if (selectedRef) action.selectedRef = selectedRef;
+  $('#sl-modal-done').prop('disabled', true);
+  $('#sl-save-error').attr('hidden', true).text('');
   google.script.run
-    .withSuccessHandler(function() { google.script.host.close(); })
-    .withFailureHandler(function() { google.script.host.close(); })
+    .withSuccessHandler(function() {
+      _slHandedBack = true;
+      google.script.host.close();
+    })
+    .withFailureHandler(function() {
+      _slSaving = false;
+      $('#sl-modal-done').prop('disabled', false);
+      $('#sl-save-error').text('Your changes couldn\u2019t be passed back to the sidebar. Try Done again \u2014 closing this window now may lose them.').removeAttr('hidden');
+    })
     .saveSessionLibraryAction(JSON.stringify(action));
 }
 
+// Closed some other way (the window's ×): one last try. Not after Done has
+// saved: a second copy would outlive the sidebar's read of the first.
 window.addEventListener('beforeunload', function() {
+  if (_slHandedBack) return;
   google.script.run.saveSessionLibraryAction(
     JSON.stringify({ sessionData: JSON.stringify(sessionLibrary), closed: true })
   );

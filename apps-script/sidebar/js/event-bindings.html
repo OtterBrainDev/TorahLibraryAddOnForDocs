@@ -374,15 +374,59 @@ $(document).on('click', '.save-session-defaults-button', function () {
 // SESSION LIBRARY — modal open / close
 // ============================================================
 
-var _slDialogPollTimer = null;
-var _slDialogPollCount = 0;
-var _slDialogActive    = false;
+var _slDialogPollTimer   = null;
+var _slDialogPollStarted = 0;
+var _slDialogPollFailures = 0;
+var _slDialogOpening     = false;
+
+// Every second for two minutes, then every five, for an hour: the dialog's
+// changes come back only through this poll. It used to stop after ten minutes,
+// which dropped them, and while it ran Library would not reopen (BUG-009).
+var SL_DIALOG_POLL_FAST_MS_ = 1000;
+var SL_DIALOG_POLL_SLOW_MS_ = 5000;
+var SL_DIALOG_POLL_FAST_FOR_MS_ = 2 * 60 * 1000;
+var SL_DIALOG_POLL_GIVE_UP_MS_ = 60 * 60 * 1000;
+var SL_DIALOG_POLL_MAX_FAILURES_ = 3;
 
 function _stopSlDialogPoll() {
-  if (_slDialogPollTimer) clearInterval(_slDialogPollTimer);
+  if (_slDialogPollTimer) clearTimeout(_slDialogPollTimer);
   _slDialogPollTimer = null;
-  _slDialogPollCount = 0;
-  _slDialogActive    = false;
+  _slDialogPollStarted = 0;
+  _slDialogPollFailures = 0;
+}
+
+function _scheduleSlDialogPoll() {
+  var elapsed = Date.now() - _slDialogPollStarted;
+  if (elapsed > SL_DIALOG_POLL_GIVE_UP_MS_) { _stopSlDialogPoll(); return; }
+  var delay = elapsed < SL_DIALOG_POLL_FAST_FOR_MS_ ? SL_DIALOG_POLL_FAST_MS_ : SL_DIALOG_POLL_SLOW_MS_;
+  _slDialogPollTimer = setTimeout(_pollSlDialog, delay);
+}
+
+function _pollSlDialog() {
+  var started = _slDialogPollStarted;
+  google.script.run
+    .withSuccessHandler(function (action) {
+      if (started !== _slDialogPollStarted) return; // a newer dialog took over
+      _slDialogPollFailures = 0;
+      if (action) _handleSlDialogResult(action);
+      else _scheduleSlDialogPoll();
+    })
+    .withFailureHandler(function () {
+      if (started !== _slDialogPollStarted) return;
+      if (++_slDialogPollFailures >= SL_DIALOG_POLL_MAX_FAILURES_) {
+        _stopSlDialogPoll();
+        showSidebarToast('Couldn\u2019t get the Session Library\u2019s changes back. Open it again to check them.', 6000);
+        return;
+      }
+      _scheduleSlDialogPoll();
+    })
+    .checkSessionLibraryAction();
+}
+
+function _startSlDialogPoll() {
+  _stopSlDialogPoll();
+  _slDialogPollStarted = Date.now();
+  _scheduleSlDialogPoll();
 }
 
 function _handleSlDialogResult(action) {
@@ -415,20 +459,19 @@ function _handleSlDialogResult(action) {
 }
 
 function openSessionLibraryModal() {
-  if (_slDialogActive) return;
+  // Only a click while the dialog is being opened is ignored. One already open
+  // is replaced (Docs shows one dialog at a time), so Library always reopens.
+  if (_slDialogOpening) return;
+  _slDialogOpening = true;
   _stopSlDialogPoll();
   var data = localStorage.getItem('sefariaSidebarSessionLibrary') || '{"pinned":[],"inserted":[]}';
   google.script.run
     .withSuccessHandler(function () {
-      _slDialogActive = true;
-      _slDialogPollTimer = setInterval(function () {
-        if (++_slDialogPollCount > 600) { _stopSlDialogPoll(); return; }
-        google.script.run
-          .withSuccessHandler(function (action) { if (action) _handleSlDialogResult(action); })
-          .checkSessionLibraryAction();
-      }, 1000);
+      _slDialogOpening = false;
+      _startSlDialogPoll();
     })
     .withFailureHandler(function () {
+      _slDialogOpening = false;
       sessionLibrarySearch = '';
       $('#sl-search-input').val('');
       $('#sl-sort-select').val(sessionLibrarySortMode);

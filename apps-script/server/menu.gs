@@ -272,8 +272,17 @@ function preferencesPopup() {
   DocumentApp.getUi().showModalDialog(output, 'Preferences');
 }
 
+// The Session Library dialog hands its changes back to the sidebar here: the
+// dialog writes them as it closes, the sidebar polls for them. A failed write
+// used to be swallowed, so the dialog closed as if it had saved; a failed read
+// looked like "not closed yet", so the sidebar kept waiting and Library would
+// not reopen (BUG-009). The hand-off lives for seconds, so it is kept in the
+// user cache rather than UserProperties, which every preference read shares.
+var SL_DIALOG_ACTION_KEY_ = 'SL_DIALOG_ACTION';
+var SL_DIALOG_ACTION_TTL_SECONDS_ = 3600;
+
 function sessionLibraryPopup(sessionDataJson) {
-  PropertiesService.getUserProperties().deleteProperty('SL_DIALOG_ACTION');
+  CacheService.getUserCache().remove(SL_DIALOG_ACTION_KEY_);
   let parsed;
   try { parsed = JSON.parse(sessionDataJson); } catch(e) { parsed = { pinned: [], inserted: [] }; }
   if (!parsed || typeof parsed !== 'object') parsed = { pinned: [], inserted: [] };
@@ -285,26 +294,29 @@ function sessionLibraryPopup(sessionDataJson) {
   DocumentApp.getUi().showModalDialog(html, 'Session Library');
 }
 
+// Throws when the write fails: the dialog then stays open and says so, instead
+// of closing on changes the sidebar will never receive.
 function saveSessionLibraryAction(actionJson) {
-  try {
-    PropertiesService.getUserProperties().setProperty('SL_DIALOG_ACTION', String(actionJson || ''));
-  } catch(e) {}
+  CacheService.getUserCache().put(SL_DIALOG_ACTION_KEY_, String(actionJson || ''), SL_DIALOG_ACTION_TTL_SECONDS_);
 }
 
+// Throws when the cache can't be read, so the sidebar can tell "not closed
+// yet" (null) from "can't tell" and stop asking.
 function checkSessionLibraryAction() {
-  try {
-    const props = PropertiesService.getUserProperties();
-    const val = props.getProperty('SL_DIALOG_ACTION');
-    if (!val) return null;
-    const action = JSON.parse(val);
-    if (action && action.closed) {
-      props.deleteProperty('SL_DIALOG_ACTION');
-      return action;
-    }
-    return null;
-  } catch(e) {
+  const cache = CacheService.getUserCache();
+  const val = cache.get(SL_DIALOG_ACTION_KEY_);
+  if (!val) return null;
+  let action = null;
+  try { action = JSON.parse(val); } catch (e) { action = null; }
+  if (!action) {
+    cache.remove(SL_DIALOG_ACTION_KEY_);
     return null;
   }
+  if (action.closed) {
+    cache.remove(SL_DIALOG_ACTION_KEY_);
+    return action;
+  }
+  return null;
 }
 
 function divineNamePopup() {

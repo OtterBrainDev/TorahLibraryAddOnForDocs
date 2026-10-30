@@ -248,6 +248,11 @@ function updateModeDependentSections() {
 
 $('.mode-switch-button, .experimental-menu-button').off('click').on('click', function () {
   var nextMode = $(this).attr('data-sidebar-mode');
+  // A search still running in the mode being left must not fill this one, and
+  // its hint or count must not stay (BUG-005).
+  latestQueryRequestId++;
+  setResultsHint('');
+  $('.lexicon-result-count').remove();
   setSidebarMode(nextMode);
   clearSelectedResult();
   selectedVoiceItem = null;

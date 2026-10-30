@@ -150,3 +150,28 @@ test('the direct lookup lists only refs that can be inserted, and the dead-end n
   const utils = readScriptBody('apps-script/sidebar/js/search-utils.html');
   assert.match(utils, /Returning to your results/);
 });
+
+// BUG-008 (30 October 2026): picking "Genesis" showed "Ready to insert" with a
+// Genesis 1 preview, though the walkthrough said Add Source stays disabled. A
+// ref is refused only when Sefaria's answer has no text of its own (a heading
+// such as Mishneh Torah); for a bare book Sefaria answers with its first
+// chapter, which has text, so it is insertable as that chapter — the insert
+// takes the previewed payload and its ref (insert-title.test.js), never the
+// whole book. This pins that behaviour; refusing whole books instead is an
+// open owner decision, and would change this test on purpose.
+test('a heading with no text is refused; a book Sefaria answers with chapter 1 is that chapter', () => {
+  const context = { console };
+  context.window = context;
+  vm.createContext(context);
+  ['apps-script/shared/ui/core-shared.html', 'apps-script/shared/ui/state.html', 'apps-script/sidebar/js/preview-core.html']
+    .forEach((file) => vm.runInContext(readScriptBody(file), context, { filename: file }));
+
+  const heading = context.getResolvedNodeState({ ref: 'Mishneh Torah', indexTitle: 'Mishneh Torah', text: [], he: [], sectionNames: ['Section'] });
+  assert.equal(heading.isInsertable, false);
+  assert.equal(heading.isStructural, true);
+
+  const genesis = context.getResolvedNodeState({
+    ref: 'Genesis 1', indexTitle: 'Genesis', heRef: 'בראשית א', text: ['In the beginning'], he: ['בְּרֵאשִׁית'], sections: [1],
+  });
+  assert.equal(genesis.isInsertable, true);
+});
