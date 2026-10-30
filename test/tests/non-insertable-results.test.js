@@ -157,8 +157,9 @@ test('the direct lookup lists only refs that can be inserted, and the dead-end n
 // such as Mishneh Torah); for a bare book Sefaria answers with its first
 // chapter, which has text, so it is insertable as that chapter — the insert
 // takes the previewed payload and its ref (insert-title.test.js), never the
-// whole book. This pins that behaviour; refusing whole books instead is an
-// open owner decision, and would change this test on purpose.
+// whole book. Kept by decision (30 October 2026): a whole book opens at its
+// first chapter, and for a short work (one chapter) that is the whole book,
+// which is what the reader meant.
 test('a heading with no text is refused; a book Sefaria answers with chapter 1 is that chapter', () => {
   const context = { console };
   context.window = context;

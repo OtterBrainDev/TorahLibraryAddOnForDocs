@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **598 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **599 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -251,7 +251,8 @@ and fix it before touching the feature you came to change.
   whose settings can't be read says nothing was scanned or changed.
 - `session-library-handoff.test.js` — the Session Library dialog's changes
   reach the sidebar: Done stays open if they can't be saved, the sidebar backs
-  off for an hour and says so when it can't read them, Library always reopens.
+  off for an hour and says so when it can't read them, Library always reopens;
+  opening it deletes a copy an earlier version left in UserProperties.
 - `sidebar-recovery.test.js` — a failed sidebar bootstrap is retried once,
   then reported (the Insertion Options card is not wired up without it);
   Link Texts from the sidebar shows it is opening and says why it couldn't.

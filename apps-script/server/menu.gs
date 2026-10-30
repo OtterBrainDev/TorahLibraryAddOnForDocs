@@ -283,6 +283,9 @@ var SL_DIALOG_ACTION_TTL_SECONDS_ = 3600;
 
 function sessionLibraryPopup(sessionDataJson) {
   CacheService.getUserCache().remove(SL_DIALOG_ACTION_KEY_);
+  // Before 30 October 2026 the hand-off lived in UserProperties and was
+  // deleted here; keep deleting any left there (PRIVACY.md §3 says so).
+  try { PropertiesService.getUserProperties().deleteProperty(SL_DIALOG_ACTION_KEY_); } catch (e) { /* nothing to clear */ }
   let parsed;
   try { parsed = JSON.parse(sessionDataJson); } catch(e) { parsed = { pinned: [], inserted: [] }; }
   if (!parsed || typeof parsed !== 'object') parsed = { pinned: [], inserted: [] };

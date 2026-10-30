@@ -48,7 +48,10 @@ heading until the next release consolidates it.
 ### Beta tutorial QA fixes (30 October 2026)
 
 No new preference, no migration. Found while recording the beta tutorials;
-each one is in `docs/regression-log.md` with the test that pins it.
+each one is in `docs/regression-log.md` with the test that pins it. These
+change what an insert writes (the Hebrew credit) and how Transform Divine
+Names behaves, so by `docs/versioning.md` §1 they ship in a MINOR release:
+the next one, 2.2.0, which the preference changes above already require.
 
 #### Fixed
 
@@ -116,8 +119,16 @@ each one is in `docs/regression-log.md` with the test that pins it.
   spelling it searched**, not only the row's one reason.
 - **Help:** how to keep a citation from splitting across a page (Docs' *Keep
   lines together*; the add-on can't set it); and that a whole book such as
-  *Genesis* opens at its first chapter, which is what Add Source inserts,
-  while a heading with no text of its own (*Mishneh Torah*) can't be inserted.
+  *Genesis* opens at its first chapter, which is what Add Source inserts (for
+  a one-chapter book, the whole book), while a heading with no text of its own
+  (*Mishneh Torah*) can't be inserted.
+- **Privacy policy (§3, §6):** it now says that the Session Library's list
+  passes briefly through Google when its window opens and closes, instead of
+  saying it never leaves the browser. That was already untrue before this
+  release (the closed window's list was kept in `PropertiesService` until the
+  window was next opened); it now goes through the user cache, is deleted when
+  the sidebar collects it, and expires within an hour. Opening the window still
+  deletes any copy an earlier version left.
 
 ### Divine names keep their vowels and cantillation
 

@@ -60,11 +60,20 @@ function scriptRun() {
 
 function loadServer({ cacheFails = false } = {}) {
   const cache = {};
+  const legacyDeleted = [];
   const context = {
     console,
     Logger: { log() {} },
-    // The hand-off must not touch UserProperties at all.
-    PropertiesService: { getUserProperties() { throw new Error('UserProperties used'); } },
+    // The hand-off never reads or writes UserProperties; opening the dialog
+    // only deletes the copy versions before 30 October 2026 left there.
+    PropertiesService: {
+      getUserProperties: () => new Proxy({}, {
+        get(_, name) {
+          if (name === 'deleteProperty') return (key) => legacyDeleted.push(key);
+          throw new Error(`UserProperties.${String(name)} used`);
+        },
+      }),
+    },
     CacheService: {
       getUserCache: () => ({
         get: (k) => (k in cache ? cache[k] : null),
@@ -78,7 +87,7 @@ function loadServer({ cacheFails = false } = {}) {
   };
   vm.createContext(context);
   vm.runInContext(read('apps-script/server/menu.gs'), context, { filename: 'menu.gs' });
-  return { context, cache };
+  return { context, cache, legacyDeleted };
 }
 
 function bigLibrary() {
@@ -291,4 +300,13 @@ test('after Done has saved, closing does not write a second copy; closing withou
   cross.unload();
   assert.equal(cross.calls.length, 1);
   assert.equal(cross.calls[0].name, 'saveSessionLibraryAction');
+});
+
+test('opening the dialog deletes a hand-off an earlier version left in UserProperties', () => {
+  const { context, legacyDeleted } = loadServer();
+  context.sessionLibraryPopup('{"pinned":[],"inserted":[]}');
+  assert.deepEqual(legacyDeleted, ['SL_DIALOG_ACTION']);
+  context.saveSessionLibraryAction('{"closed":true}');
+  context.checkSessionLibraryAction();
+  assert.deepEqual(legacyDeleted, ['SL_DIALOG_ACTION'], 'saving and reading never touch UserProperties');
 });
