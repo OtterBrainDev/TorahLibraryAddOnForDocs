@@ -20,9 +20,16 @@ sort, Restore Corpus and the Texts / Voices / Lexicon tabs, plus the Search,
 Linking and Experimental tabs here (**Show advanced settings** brings those
 back). This tour uses Everything.
 
-**Fonts tab**
+**Insertion tab: fonts and titles**
 
-- Every role (Title, Hebrew, Transliteration, Translation, Citation)
+Every font is set beside what it styles. In **Insertion Defaults → Texts**,
+each **Title font** and **Text font** button (in the Source and the
+Translation section), and the transliteration's **Font** under its Style,
+opens that font's full settings in place: font, size, bold / italic /
+underline, colour, highlight and a preview. **Layout → Citation style** does
+the same for the citation.
+
+- Every role (titles, Hebrew, transliteration, translation, citation)
   starts on **Match the document**: the font and size of the text where you
   insert. Leave it there if your documents already have a style. Pick a
   specific font if you want every source to look the same everywhere, e.g.
@@ -31,32 +38,33 @@ back). This tour uses Everything.
   marks a font lacks in Noto Serif Hebrew (Noto Sans Hebrew for a sans-serif
   font). There's no setting; Help → Insertion Options → *Fonts and
   cantillation marks* explains it.
-- **Title → paragraph style → Heading 2 or 3.** Every inserted source then
+- **Layout → Title style → Heading 2 or 3.** Every inserted source then
   shows up in the document outline and in a table of contents. For a long
-  source sheet this is the most useful setting in the add-on. The paragraph
-  style is shared; the font is not. Switch between **Translation title** and
-  **Source title** to give each its own font, size, colour and highlight.
-  **Hyperlink formatting override** (on by default) gives a title a separate
-  look while it's linked; off, a linked title keeps its title font.
+  source sheet this is the most useful setting in the add-on. The title
+  style is shared; the font is not: each title's **Title font** gives it its
+  own font, size, colour and highlight.
+  **Hyperlink formatting override** there (on by default) gives a title a
+  separate look while it's linked; off, a linked title keeps its title font.
   **Name the edition** (on by default) writes a linked title as
   *Genesis 1:1 (Translation • The Koren Jerusalem Bible)*; off, just
   *Genesis 1:1*, still linked.
-- **Citation:** the editions-and-licenses line under each source has its own
-  style, 8 pt italic in the font of the text above unless you change it.
-  *Same as the text above* and a blank size follow the passage.
+- **Citation style:** the editions-and-licenses line under each source has
+  its own style, 8 pt italic in the font of the text above unless you change
+  it. *Same as the text above* and a blank size follow the passage.
 - **Colour and highlight** default to *Auto / None* (your document decides).
   Set a colour on the translation to set it apart from your own commentary.
-- **✒️ Source Emphasis:** **Keep / Discard / Keep only.** Sefaria's own bold
-  and italics are kept by default. In the Steinsaltz Talmud the bold marks the
-  Talmud's own words and the plain text is Steinsaltz's explanation, so
-  **Keep only** inserts just the Talmud's words. **Advanced** maps bold to
-  something else, such as blue text without bold. **Bold & italics** in
-  Insertion Options (**Keep / Drop / Only**) switches between the three for
-  one session. It applies to the translation only; the Hebrew always keeps
-  its own bold and italics.
-- **Translation → preferred language** if you don't work in English.
+- **Bold & italics** (Translation section): **Keep / Drop / Bold only.**
+  Sefaria's own bold and italics are kept by default. In the Steinsaltz
+  Talmud the bold marks the Talmud's own words and the plain text is
+  Steinsaltz's explanation, so **Bold only** inserts just the Talmud's words.
+  **Advanced** under it maps bold to something else, such as blue text
+  without bold. The sidebar's Insertion Options has the same control for one
+  session. It applies to the translation only; the Hebrew always keeps its
+  own bold and italics.
+- **Language** (Translation section): the preferred translation language, if
+  you don't work in English.
 
-**Insertion tab**
+**Insertion tab: the rest**
 
 - **Layout** and **Insertion Defaults → Texts:** what Insertion Options
   starts on. The same controls as the sidebar, with the Source and
@@ -71,7 +79,7 @@ back). This tour uses Everything.
 **Menu Bar tab:** reorder, group or hide menu items. Put the three you use
 most at the top. Reload the document to see the change.
 
-> Demo tip: set Title to Heading 3 now. You'll use it in step 5.
+> Demo tip: set Layout → Title style to Heading 3 now. You'll use it in step 5.
 
 ---
 

@@ -678,8 +678,9 @@ function buildLinkedTitleText(baseTitle, data, singleLanguage) {
 }
 
 /**
- * A linked title's text: with the label on (Preferences → Fonts → "Name the
- * edition", per title; unset is on), the reference and the edition it links
+ * A linked title's text: with the label on ("Name the edition", per title,
+ * in Preferences under that title's Title font button; unset is on), the
+ * reference and the edition it links
  * to, as buildLinkedTitleText writes it; off, the reference alone, exactly as
  * the unlinked title reads. Only the text changes: the link and the linked
  * style are applied as before.

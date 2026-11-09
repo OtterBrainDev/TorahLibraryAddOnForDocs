@@ -261,15 +261,15 @@ modes.
 
 | Tab | Simple | Full |
 | --- | --- | --- |
-| Fonts | Shown | Shown |
 | Insertion | Shown | Shown |
 | Search | Behind "Show advanced settings" | Shown |
 | Linking | Behind "Show advanced settings" | Shown |
 | Menu Bar | Shown | Shown |
 | Experimental | Behind "Show advanced settings" | As today |
 
-Inside the Fonts tab, the per-language translation typography and the
-emphasis-mapping sections collapse behind the same switch.
+Inside the Insertion tab's card, the per-language translation typography and
+the emphasis-mapping sections collapse behind the same switch. (There was a
+Fonts tab when this was written; its settings now sit beside what they style.)
 
 "Show advanced settings" is a switch at the bottom of the tab bar. It reveals the
 tabs for this dialog session only; it does not change `ui_mode`.
