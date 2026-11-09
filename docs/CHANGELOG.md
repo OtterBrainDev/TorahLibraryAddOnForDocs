@@ -72,6 +72,27 @@ styles:
 - Preferences opens on the Insertion tab. The sidebar and Link Texts keep the
   compact font panel.
 
+> **Preference migration (schema 26). Two new preferences; no existing
+> user's inserts change.** Whether a linked title names its edition is now a
+> setting, one per title: `sefaria_link_edition_label` (translation title)
+> and `hebrew_link_edition_label` (source title). Schema 26 turns both **on**
+> for everyone, which is how linked titles have always read.
+
+### Linked titles: "Name the edition" (9 November 2026)
+
+#### Added
+
+- **A linked title can be just the reference.** A title linked to Sefaria
+  has always added the edition after it — *Genesis 1:1 (Translation • The
+  Koren Jerusalem Bible)* — with no way to turn that off short of unlinking
+  the title. *Name the edition*, in each title's settings (Preferences →
+  Insertion → **Title font**, in the Source and in the Translation section),
+  now sets it for each title.
+  On (the default) is as before; off, a linked title reads *Genesis 1:1*,
+  still linked and in its linked style. With several translations inserted
+  at once and the switch off, each title still names its translation, as an
+  unlinked title does: *Genesis 1:1 (Koren)*.
+
 ### Beta tutorial QA fixes (30 October 2026)
 
 No new preference, no migration. Found while recording the beta tutorials;

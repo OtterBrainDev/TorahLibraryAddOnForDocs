@@ -268,6 +268,18 @@
                         <div class="inline-preview" id="hebrew_link_preview" dir="rtl" lang="he"><span class="label">Preview</span><span class="preview-link-sample">דברים יא:יח</span></div>
                       </div>
                     </div>
+                    <div class="subsection-card">
+                      <div class="toggle-row">
+                        <div class="toggle-copy">
+                          <div class="toggle-title">Name the edition</div>
+                          <div class="toggle-help">While the source title is linked to Sefaria (<strong>Link title to Sefaria</strong>, above), add the edition after it: <em><bdi lang="he">בראשית א:א</bdi> (Hebrew • Miqra according to the Masorah)</em>. Off, the linked title is the reference alone.</div>
+                        </div>
+                        <label class="switch" for="hebrew_link_edition_label">
+                          <input id="hebrew_link_edition_label" type="checkbox" name="hebrew_link_edition_label">
+                          <span class="slider"></span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                   <div class="pref-font-editor" data-font-editor="hebrew" aria-label="Hebrew font">
                     <div class="subsection-card">
@@ -454,6 +466,18 @@
                           </div>
                         </div>
                         <div class="inline-preview" id="sefaria_link_preview"><span class="label">Preview</span><span class="preview-link-sample">Deuteronomy 11:18</span></div>
+                      </div>
+                    </div>
+                    <div class="subsection-card">
+                      <div class="toggle-row">
+                        <div class="toggle-copy">
+                          <div class="toggle-title">Name the edition</div>
+                          <div class="toggle-help">While the translation title is linked to Sefaria (<strong>Link title to Sefaria</strong>, above), add the edition after it: <em>Genesis 1:1 (Translation • The Koren Jerusalem Bible)</em>. Off, the linked title is the reference alone.</div>
+                        </div>
+                        <label class="switch" for="sefaria_link_edition_label">
+                          <input id="sefaria_link_edition_label" type="checkbox" name="sefaria_link_edition_label">
+                          <span class="slider"></span>
+                        </label>
                       </div>
                     </div>
                   </div>

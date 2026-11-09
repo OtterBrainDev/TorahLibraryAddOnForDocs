@@ -101,6 +101,8 @@ const SETTINGS = [
   "hebrew_link_font_background",
   "sefaria_link_format_override",
   "hebrew_link_format_override",
+  "sefaria_link_edition_label",
+  "hebrew_link_edition_label",
   "citation_font",
   "citation_font_size",
   "citation_font_style",
@@ -277,6 +279,11 @@ function getDefaultPreferences() {
     // own. True is how linked titles have always looked.
     sefaria_link_format_override: true,
     hebrew_link_format_override: true,
+    // A linked title names the edition it links to: "Genesis 1:1
+    // (Translation • The Koren Jerusalem Bible)". On, as linked titles always
+    // were; off, a linked title is the reference alone. Schema v26.
+    sefaria_link_edition_label: true,
+    hebrew_link_edition_label: true,
     // The citation under an inserted source (edition and license). The
     // defaults are its look from before it could be set: 8 pt italic, in the
     // font of the text above it (an empty font or size keeps that text's,
@@ -596,6 +603,12 @@ function getTypographySettings(properties) {
     en: userProperties.getProperty("sefaria_link_format_override") !== "false",
     he: userProperties.getProperty("hebrew_link_format_override") !== "false"
   };
+  // Whether a linked title names its edition (unset is on: linked titles
+  // always did). See linkedTitleText_ in insertion.gs.
+  const linkEditionLabel = {
+    en: userProperties.getProperty("sefaria_link_edition_label") !== "false",
+    he: userProperties.getProperty("hebrew_link_edition_label") !== "false"
+  };
 
   if (typographyNeedsSurroundingText_(roles, titleHeading)) {
     let surrounding = null;
@@ -611,6 +624,7 @@ function getTypographySettings(properties) {
     roles: roles,
     titleHeading: titleHeading,
     linkFormatOverride: linkFormatOverride,
+    linkEditionLabel: linkEditionLabel,
     translationLanguages: normalizeTranslationLanguageTypography_(
       userProperties.getProperty("translation_language_typography")
     ),

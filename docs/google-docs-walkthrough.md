@@ -273,7 +273,7 @@ settings**.
 
 | Tab | Contents |
 | --- | --- |
-| **Insertion** | Default Layout (the sidebar's pickers, plus the titles' **Title style** — e.g. Heading 2 — and **Citation style**, 8 pt italic in the font of the text above unless changed); Insertion Defaults for Texts (the card, plus the translation **Language**), Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). Every font button (each title, the Hebrew, transliteration and translation text, the citation) opens that font's full settings in place: font, size, style, colour, highlight and a preview, and for a title its **Hyperlink formatting override**. |
+| **Insertion** | Default Layout (the sidebar's pickers, plus the titles' **Title style** — e.g. Heading 2 — and **Citation style**, 8 pt italic in the font of the text above unless changed); Insertion Defaults for Texts (the card, plus the translation **Language**), Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). Every font button (each title, the Hebrew, transliteration and translation text, the citation) opens that font's full settings in place: font, size, style, colour, highlight and a preview, and for a title its **Hyperlink formatting override** and **Name the edition** (whether a linked title names its edition). |
 | **Search** | Text Search Results (group order and hidden groups); Translation Languages; Advanced (Show unavailable translations). |
 | **Linking** | After linking; Insert text after linking; Document scanning. |
 | **Menu Bar** | Reorder, group, hide and divide menu items. |

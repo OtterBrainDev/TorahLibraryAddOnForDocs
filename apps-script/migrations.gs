@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '25';
+var PREFS_SCHEMA_CURRENT_ = '26';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -224,6 +224,12 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // now (8 pt italic, the font of the text above).
   if (from < 25) {
     migrateToV25_(userProperties);
+  }
+  // v25 -> v26: introduces `sefaria_link_edition_label` and
+  // `hebrew_link_edition_label` ("Name the edition"), set on, so a linked
+  // title keeps naming its edition as it always has.
+  if (from < 26) {
+    migrateToV26_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -617,6 +623,18 @@ function migrateToV25_(userProperties) {
   var defaults = getDefaultPreferences();
   ['citation_font', 'citation_font_size', 'citation_font_style', 'citation_font_color', 'citation_font_background'].forEach(function(key) {
     if (userProperties.getProperty(key) == null) userProperties.setProperty(key, String(defaults[key]));
+  });
+  return true;
+}
+
+/**
+ * V26: the two "Name the edition" switches start on: a linked title has
+ * always read "Genesis 1:1 (Translation • Edition)". A stored switch is never
+ * overwritten.
+ */
+function migrateToV26_(userProperties) {
+  ['sefaria_link_edition_label', 'hebrew_link_edition_label'].forEach(function(key) {
+    if (userProperties.getProperty(key) == null) userProperties.setProperty(key, 'true');
   });
   return true;
 }

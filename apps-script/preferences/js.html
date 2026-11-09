@@ -1171,7 +1171,7 @@
       renderCorpusOrderList();
     }
 
-    // ── Per-language translation formatting (Fonts → Translation → Advanced) ─
+    // ── Per-language translation formatting (translation Text font → Advanced) ─
     // The entries live in one hidden input (translation_language_typography),
     // as JSON {code: {font, size, style}}, so collectPreferenceObject() saves
     // them like any other field. A blank font or size means "as the Translation
@@ -1806,7 +1806,7 @@
     }
 
     // ── Interface mode (Simple / Everything) ─────────────────────────────
-    // Simple mode hides these tabs (and two "Advanced" sections in Fonts)
+    // Simple mode hides these tabs (and two "Advanced" sections in the card)
     // until "Show advanced settings" is ticked; preferences/css.html has the
     // rules. The switch lasts for this dialog only and stores nothing.
     var PREF_ADVANCED_TABS_ = ['search', 'linking', 'experimental'];

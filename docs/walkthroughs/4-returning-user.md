@@ -107,17 +107,19 @@ nobody warns them.
 3. **A credit line under each source.** Each insert now ends with a small
    block naming the translation and Hebrew edition and their licenses. Many
    Sefaria texts require it. Turn **Citation** off in **Preferences →
-   Insertion → Layout** if you credit sources another way, or restyle it in
-   **Preferences → Fonts → Citation**.
+   Insertion → Layout** if you credit sources another way, or restyle it with
+   **Citation style** in the same place.
 4. **Titles aren't bold and underlined any more.** They follow your document,
-   or the heading style you pick in **Preferences → Fonts → Title**. The
-   source (Hebrew) title and the translation title each have their own font
-   and their own **Link title to Sefaria** switch. To get the old look, set
-   each title (the **Translation title** / **Source title** switch there) to
-   bold with an underline.
+   or the heading style you pick in **Preferences → Insertion → Layout →
+   Title style**. The source (Hebrew) title and the translation title each
+   have their own font and their own **Link title to Sefaria** switch. To get
+   the old look, open each title's **Title font** (Preferences → Insertion →
+   Insertion Defaults, in the Source and in the Translation section) and set
+   it to bold with an underline.
 5. **Fonts match your document.** The old add-on used the document's default.
    Now it uses the font and size of the text where you insert. If you want one
-   font everywhere, set it in **Preferences → Fonts**.
+   font everywhere, set it with the font buttons in **Preferences →
+   Insertion → Insertion Defaults**.
 6. **Nothing is inserted until you click Add Source.** Clicking a search
    result only previews it.
 7. **Insert Source from Selection replaces the selection** — and so does
