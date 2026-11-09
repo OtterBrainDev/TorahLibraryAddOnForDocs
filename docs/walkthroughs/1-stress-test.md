@@ -28,8 +28,9 @@ should say so.
 
 Found while writing this walkthrough, by reading the code. K1–K5, K8 and K9
 are fixed on this branch, each with a pinning test; the steps below now check
-the fixed behaviour. K6 and K7 are left as they are: the published add-on
-stores no preferences, so there is nothing to carry over.
+the fixed behaviour. K6 and K7 are left as they are: the add-on people move
+from, Sefaria for Google Docs, stores no preferences, so there is nothing to
+carry over.
 
 | # | Was | Fix | Status |
 | --- | --- | --- | --- |
@@ -38,7 +39,7 @@ stores no preferences, so there is nothing to carry over.
 | K3 | **Linker offsets went stale if the document changed before Apply.** | Each match records which occurrence of its text it is; Apply re-finds it, and reports citations that are gone. | **Fixed.** `linker-classify.test.js`. Step 7.7. |
 | K4 | **Insert from a table** (linker per-row Insert, and the cursor in general). The cursor path in fact put the source at an unrelated place in the body, silently, for texts, sheets and lexicon alike. | One resolver for every insert path (`server/insertion-target.gs`): paragraph layouts go inside the cell; Right–Left / Left–Right go below the table with a notice; headers, footers and footnotes are refused with a message. | **Fixed.** `insertion-target.test.js`. Steps 2.5–2.8, 7.4, 8.4. |
 | K5 | **Network failure read as "no match".** | `findReference` throws "Couldn't reach Sefaria…" for no response, 5xx and 429; an unknown reference is still "no match". | **Fixed.** `sefaria-unavailable.test.js`. Step 11.1. |
-| K6 | Original-add-on users' stored preferences. | — | **Not applicable**: the published add-on stores no preferences. |
+| K6 | Stored preferences of users coming from another add-on. | — | **Not applicable**: Sefaria for Google Docs stores no preferences, and is a separate add-on. |
 | K7 | Legacy `nekudot_filter="tanach"`. | — | **Not applicable**, as K6. |
 | K8 | **"Vowels only in Tanakh" had no control**, and toggling Vowels reset it. | **Vowels** is a three-way control, **Off / Tanakh / On**, in the composition card (Insertion Options, Preferences → Insertion, Link Texts); *Tanakh* is its own choice, so nothing resets it. Cantillation likewise: **Off / Tanakh / Torah**. | **Fixed.** `vowels-tanakh-only.test.js`. Steps 5.9, 5.9a. |
 | K9 | **Link Texts' Insert repeated the citation.** The citation stayed, and the inserted source's title said the same thing on the next line; Insert from Selection replaced it. To insert one batch differently you had to cancel the review or change Preferences for good. | Insert follows *Insert from Selection replaces the selection*: a citation on a line of its own is replaced (title = the citation, link kept); one inside a sentence stays. The review dialog's **📰 Customize this insertion** panel sets the layout for one pass. | **Fixed.** `linker-insert-replace.test.js`, `linker-dialog.test.js`. Steps 7.4–7.4b, 7.18–7.25. |
@@ -56,7 +57,7 @@ Fixed; step 2.6 now depends on it.
 | --- | --- | --- |
 | **A — upgrader** | Had an earlier build of *this* add-on (2.0 or an early 2.1) with preferences you changed: a font, a divine-name rule, a layout. | Proves the migrations keep what users chose. |
 | **B — fresh** | Has never installed any version. | Proves `onInstall` seeding and the first-run experience. |
-| **C — original-add-on user** | Has the published *Sefaria for Google Docs* installed (menu: *Insert Source / Search Texts / Preferences / Support / Popcorn (beta)*). | Proves the path most Sefaria users will take. |
+| **C — Sefaria for Google Docs user** | Has Sefaria's own *Sefaria for Google Docs* installed (menu: *Add Sources with Sefaria / Transform Divine Names / Link Texts with Sefaria*), and documents it inserted sources into. | Proves the path most users will take: a separate add-on, installed beside it. |
 
 ### Instruments
 
@@ -341,19 +342,21 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 
 ---
 
-## 13. Users of the original add-on (account C)
+## 13. Users of Sefaria for Google Docs (account C)
 
-The published add-on stores no preferences, so an account that used it opens
-this version as a new user would: it gets the defaults, and the migrations
-run once.
+Sefaria for Google Docs is a separate add-on that stores no settings, so an
+account that uses it meets Torah Library as a new user: the first-run setup,
+the defaults, and the migrations once. Walkthrough 4 is the script for these
+users.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
-| 13.1 | **C:** open a Doc that used the published add-on; open Extensions | The new menu; no error; no duplicate menu. | The old menu items still listed. |
-| 13.2 | Open Preferences | Defaults: יהוה → יי on, colours Auto, Linking in Candidate mode. | Blank fields. |
-| 13.3 | Insert `Mishnah Berakhot 1:1` | Niqqud appears. The published add-on removed it from every non-Tanakh text; walkthrough 4 warns about this. | — |
-| 13.4 | Set **Vowels: Tanakh**; insert it again | No niqqud, as before. | The choice doing nothing. |
-| 13.5 | Bilingual insert with defaults | A two-column table, Hebrew on the right: the published add-on's layout. | A different default layout. |
+| 13.1 | **C:** install Torah Library; open a Doc that Sefaria for Google Docs inserted sources into; open Extensions | Two submenus, *Sefaria for Google Docs* and *Torah Library*, each with its own items; first-run setup opens once. | Either menu missing or broken; setup shown again on the next open. |
+| 13.2 | Help → **Coming from Sefaria for Google Docs** | The topic is in the Help navigation and Quick start; its links (Menu Bar, Divine names, Link Texts, Insertion Options, Preferences) all land. | A dead link. |
+| 13.3 | Open Preferences | Defaults: יהוה → יי on insertion (unless the setup changed it), colours Auto, Linking in Candidate mode. | Blank fields. |
+| 13.4 | Bilingual insert with defaults | A two-column table, Hebrew on the right, as Sefaria for Google Docs inserts it. | A different default layout. |
+| 13.5 | Quick Actions → **Transform Divine Names**, **Link Texts**, then **Unlink Sources**, on the text Sefaria for Google Docs inserted | Each works on it like any other text; Transform asks first; Unlink removes its sefaria.org links too. | The other add-on's text or links skipped. |
+| 13.6 | Uninstall Sefaria for Google Docs; reload | Torah Library's menu, settings and sources unaffected. | Anything of Torah Library's gone. |
 
 ---
 

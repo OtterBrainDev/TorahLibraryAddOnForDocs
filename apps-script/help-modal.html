@@ -299,6 +299,10 @@
         border-top: none;
       }
       .ref-table td:first-child { white-space: nowrap; width: 1%; }
+      /* A two-sided comparison: both columns are prose, so both wrap. */
+      .ref-table--compare { table-layout: fixed; }
+      .ref-table--compare td:first-child { white-space: normal; width: 40%; }
+      .ref-table--compare .ui-label { white-space: normal; overflow-wrap: anywhere; }
       .faq details { margin-top: 8px; }
       .faq details p:last-child, .faq details ul:last-child { margin-bottom: 0; }
       .faq summary { font-weight: 600; }
@@ -478,6 +482,7 @@
             </div>
             <div class="section-nav">
               <a href="#quick-start">Quick start</a>
+              <a href="#coming-from-sefaria">Coming from Sefaria for Google Docs</a>
               <a href="#sidebar-tour">The sidebar</a>
               <a href="#interface-mode">Simple or Everything</a>
               <a href="#texts">Find a text</a>
@@ -513,7 +518,46 @@
               <div class="action-card"><a href="#lexicon"><h3>Look up a word</h3><p class="muted">Use the Lexicon tab.</p></a></div>
               <div class="action-card"><a href="#link-texts"><h3>Link citations already in my document</h3><p class="muted">Quick Actions → Link Texts with Sefaria.</p></a></div>
               <div class="action-card"><a href="#preferences"><h3>Change how inserted text looks</h3><p class="muted">Fonts, titles, vowels, divine names — in Preferences.</p></a></div>
+              <div class="action-card"><a href="#coming-from-sefaria"><h3>Used Sefaria for Google Docs?</h3><p class="muted">Where everything went, and what's different.</p></a></div>
             </div>
+          </section>
+
+          <section class="card topic-section" id="coming-from-sefaria" data-search-title="Coming from Sefaria for Google Docs" data-search-terms="sefaria for google docs old add-on previous switch switching migrate migration moving from add sources with sefaria transform divine names link texts uninstall both installed side by side differences what changed where did it go">
+            <h2>Coming from Sefaria for Google Docs</h2>
+            <p>If you've used Sefaria's own add-on, <em>Sefaria for Google Docs</em>, the basics will feel familiar: the same Sefaria library, the same search-and-insert sidebar, and commands with the same names. Torah Library is a separate add-on with its own menu, so nothing is moved over or changed — that add-on keeps no settings to move — and the two can stay installed side by side while you try this one.</p>
+            <h3>Where things went</h3>
+            <table class="ref-table ref-table--compare">
+              <thead><tr><th>In Sefaria for Google Docs</th><th>In Torah Library</th></tr></thead>
+              <tbody>
+                <tr><td><span class="ui-label">Extensions → Sefaria for Google Docs</span></td><td><span class="ui-label">Extensions → Torah Library</span>. You can rearrange it in <a href="#menu">Preferences → Menu Bar</a>.</td></tr>
+                <tr><td><span class="ui-label">Add Sources with Sefaria</span></td><td><span class="ui-label">Texts</span> opens the sidebar. Type a citation (a range such as <code>Genesis 1:1-9</code> works as before) or a title, click a result, check the <strong>Preview</strong>, then <span class="ui-label">Add Source</span> as before.</td></tr>
+                <tr><td>The format, edition and translation you picked for each source</td><td><span class="ui-label">📰 Insertion Options</span> (Hebrew, translation or both, and how they sit on the page) and <strong>Versions</strong> under the preview, for the source in front of you. Save what you usually want in <a href="#preferences">Preferences</a>, so you don't have to pick it every time.</td></tr>
+                <tr><td><span class="ui-label">Transform Divine Names</span> and its spellings</td><td><span class="ui-label">Quick Actions → Transform Divine Names</span>, using the spellings you choose in <span class="ui-label">Preferences → Insertion → Divine Name Mappings</span>. See <a href="#divine-names">Divine names</a>.</td></tr>
+                <tr><td><span class="ui-label">Link Texts with Sefaria</span></td><td><span class="ui-label">Quick Actions → Link Texts with Sefaria</span>. See <a href="#link-texts">Link Texts</a>.</td></tr>
+              </tbody>
+            </table>
+            <h3>What stays the same</h3>
+            <ul>
+              <li>Hebrew and translation together go in as a two-column table with the Hebrew on the right, as before.</li>
+              <li>Links and text the other add-on put in your documents stay as they are. Torah Library's <strong>Transform Divine Names</strong>, <strong>Link Texts</strong> and <strong>Unlink Sources</strong> work on them like any other text.</li>
+            </ul>
+            <h3>What's new</h3>
+            <ul>
+              <li><strong>Saved defaults.</strong> <a href="#preferences">Preferences</a> remembers how you like sources inserted, in every document. A short setup the first time you open the add-on picks the basics; <span class="ui-label">Run setup again</span>, under <a href="#quick-start">Quick start</a>, brings it back.</li>
+              <li><strong>Layout and formatting.</strong> Hebrew on the right, on the left or on top, or line by line beside its translation; vowels and cantillation (all, Tanakh only, or none); punctuation; transliteration; fonts that match your document; titles as headings, so they appear in the outline. See <a href="#layout-settings">Insertion Options</a>.</li>
+              <li><strong>Commentary in translations.</strong> Keep Sefaria's commentary as marked, run it together with the translation, or leave it out (the Steinsaltz Talmud). See <a href="#layout-settings">Insertion Options</a>.</li>
+              <li><strong>Insert Source from Selection</strong>, the <strong>Voices</strong> (source sheets) and <strong>Lexicon</strong> (dictionary) tabs, the <strong>Session Library</strong> of what you've inserted, and several translations at once.</li>
+              <li><strong>Settings files</strong>, in <span class="ui-label">Preferences → Advanced</span>, so a teacher can hand a class the same settings.</li>
+            </ul>
+            <h3>What works differently</h3>
+            <ol>
+              <li><strong>Divine names are replaced as you insert.</strong> Out of the box <span class="he" dir="rtl">יהוה</span> becomes <span class="he" dir="rtl">יי</span> in every new source, so you don't have to run Transform Divine Names afterwards. Choose the spelling, or turn this off, in the setup or in <span class="ui-label">Preferences → Insertion → Divine Name Mappings</span>. Transform Divine Names asks before it changes anything, and works on the tab you have open.</li>
+              <li><strong>Link Texts tells you what it did.</strong> It links the citations it is sure of, then shows a summary, asks when a citation could mean more than one text, and lists what it couldn't link. Tick <strong>Insert</strong> on a row to put the source's text in as well. It sends Sefaria only the passages that look like citations. <span class="ui-label">Preferences → Linking</span> can review every match before linking, just link and report a count, or send the whole document.</li>
+              <li><strong>A credit line under each source</strong> names the translation and Hebrew edition and their licenses, which many Sefaria texts require. Turn <strong>Citation</strong> off in <span class="ui-label">📰 Insertion Options</span> or Preferences if you credit sources another way.</li>
+              <li><strong>Clicking a result only previews it.</strong> Nothing goes into your document until you click <span class="ui-label">Add Source</span>.</li>
+              <li><strong>It asks for less.</strong> Torah Library does not ask to see your email address or profile; it needs only this document, its own sidebar and dialogs, its settings, and Sefaria.</li>
+            </ol>
+            <p class="small" style="margin-top:10px;">Done comparing? Remove the other add-on from <span class="ui-label">Extensions → Add-ons → Manage add-ons</span> if you no longer need it; it doesn't affect Torah Library. Sefaria's own help for that add-on is at <a target="_blank" rel="noopener noreferrer" href="https://help.sefaria.org/hc/en-us/sections/20235182393244">help.sefaria.org</a>.</p>
           </section>
 
           <section class="card topic-section" id="sidebar-tour" data-search-title="The sidebar at a glance" data-search-terms="sidebar tour overview tabs footer buttons icons what does this button do texts voices lexicon experimental flask keyboard search box segmented under the search footer add source insertion options layout session library quick actions preferences gear help feedback opening preferences">
@@ -626,7 +670,7 @@
                 <tr><td><span class="ui-label">Title font</span></td><td>One in each section: the font and size of that title, whether or not it is linked. In Preferences the same button opens the title's full settings in place — colour, bold and the rest. There, <strong>Hyperlink formatting override</strong> gives a title a different look while it is linked (on by default, which keeps the underlined look linked titles have always had).</td></tr>
                 <tr><td><span class="ui-label">Name the edition in the title</span> / <span class="ui-label">Name the translation in the title</span></td><td>Preferences only, under each <span class="ui-label">Link title to Sefaria</span> while it is on: adds the edition after the linked title — <em>Genesis 1:1 (Translation • The Koren Jerusalem Bible)</em>. Turn it off for the reference alone; the title stays linked.</td></tr>
                 <tr><td><span class="ui-label">Text font</span></td><td>The font and size of the Hebrew, and of the translation. A font button opens a small panel with <strong>Font</strong> and <strong>Size</strong> (a blank size matches the text where you insert); <span class="ui-label">Colour, style and more…</span> there opens Preferences.</td></tr>
-                <tr><td><span class="ui-label">Vowels</span></td><td>The vowels (niqqud): <strong>Off</strong>; <strong>Tanakh</strong>, kept in Tanakh and removed from every other text (Mishnah, Talmud, the Siddur, commentaries), as the original add-on did; or <strong>On</strong>, kept wherever Sefaria has them.</td></tr>
+                <tr><td><span class="ui-label">Vowels</span></td><td>The vowels (niqqud): <strong>Off</strong>; <strong>Tanakh</strong>, kept in Tanakh and removed from every other text (Mishnah, Talmud, the Siddur, commentaries); or <strong>On</strong>, kept wherever Sefaria has them.</td></tr>
                 <tr><td><span class="ui-label">Cantillation</span></td><td>The cantillation marks (ta'amim): <strong>Off</strong>; <strong>Tanakh</strong>, kept in Tanakh and removed from every other text; or <strong>Torah</strong>, kept only in the Five Books.</td></tr>
                 <tr><td><span class="ui-label">Transliteration</span></td><td>Add a transliteration of the Hebrew. While it is on, <span class="ui-label">Style</span> under it picks the scheme — Simple English, Traditional, Modern Israeli, Ashkenazi, Academic, or IPA. It is read from the fully vowelled text Sefaria provides, so it is complete even with <span class="ui-label">Vowels</span> off; with the Hebrew&rsquo;s <span class="ui-label">Punctuation</span> off it leaves out the same punctuation, and a maqaf becomes a space. Each sentence starts with a capital letter (after a sof pasuq or a period), and so does each name of a person, place or people in the Tanakh and the Talmud — <em>Moshe</em>, <em>miMitzrayim</em>, <em>Beit El</em>, <em>Rabbi 'Akiva</em> — except in IPA. A name that is also an ordinary word (<span class="he" dir="rtl">מאיר</span>, <span class="he" dir="rtl">אשר</span>) is capitalized only where it is plainly the name: by its vowels, or after <span class="he" dir="rtl">רבי</span>, <span class="he" dir="rtl">רב</span> or <span class="he" dir="rtl">בן</span>. The Name is written <em>HaShem</em> — <span class="he" dir="rtl">יהוה</span> and every substitute for it (<span class="he" dir="rtl">יי</span>, <span class="he" dir="rtl">יקוק</span>, <span class="he" dir="rtl">ה'</span>, <span class="he" dir="rtl">השם</span>), with a prefix kept: <span class="he" dir="rtl">לַיהוָה</span> is <em>laHaShem</em>.</td></tr>
                 <tr><td><span class="ui-label">Punctuation</span></td><td>One in each section: keep the punctuation in the Hebrew, and in the translation.</td></tr>

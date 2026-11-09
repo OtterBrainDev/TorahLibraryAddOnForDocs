@@ -70,7 +70,13 @@ stored flag, checked on first use.
 | New, installed from inside a document | `onInstall` fires; no schema stored | Yes, straight after install (replaces the Release Notes dialog) | Chosen in setup |
 | New, installed from the Marketplace website or by an admin | No schema stored at first open | Yes, the first time they open the sidebar | Chosen in setup |
 | Upgrader from the current add-on (schema 1–19) | Schema stored | **No** | Full, set by migration |
+| Someone coming from Sefaria for Google Docs | A separate add-on with separate storage, which stores no preferences anyway: no schema stored, so a new user here | Yes; screen 1's other answers fit them (its "I've used Torah Library before" is for this add-on's own users) | Chosen in setup; dismissing keeps Full |
 | Legacy user of the original published add-on | No schema stored (that add-on stored no preferences), so indistinguishable from a new user | Yes; screen 1 offers "I've used Torah Library before: keep everything" | Chosen in setup; dismissing keeps Full |
+
+Help's *Coming from Sefaria for Google Docs* topic and walkthrough 4 are for
+the first of those two rows: where that add-on's three commands went, and what
+works differently (divine names replaced on insert, the credit line, reviewed
+linking).
 
 The last row is why **the code default for the interface mode is Full, not
 Simple.** Legacy users look exactly like new ones, so nobody can be put into

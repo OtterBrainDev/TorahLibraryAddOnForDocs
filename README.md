@@ -139,10 +139,28 @@ Persistent user preferences include:
 
 When a selected result is a non-leaf or structural node rather than directly insertable text, the sidebar now provides clearer guidance and keeps insertion disabled until a text-bearing node is selected.
 
+## Coming from Sefaria for Google Docs
+
+Most people arrive from Sefaria's own add-on,
+[*Sefaria for Google Docs*](https://workspace.google.com/marketplace/app/sefaria_for_google_docs/849562338091)
+([help](https://help.sefaria.org/hc/en-us/sections/20235182393244)): one
+sidebar (**Add Sources with Sefaria**) and two commands (**Transform Divine
+Names**, **Link Texts with Sefaria**), with format, edition and translation
+picked for each source and nothing saved. Torah Library is a separate add-on,
+installed beside it; nothing carries over because there is nothing stored to
+carry. The same commands are under **Extensions → Torah Library** (Texts, and
+Quick Actions); what's new is saved defaults, layout and formatting choices,
+reviewed linking, and the Voices, Lexicon and Session Library tools. Two
+things work differently out of the box: divine names are replaced as sources
+are inserted (יהוה → יי), and each source gets a credit line. In-app Help has
+a *Coming from Sefaria for Google Docs* topic, and
+[walkthrough 4](./docs/walkthroughs/4-returning-user.md) is the demo script.
+
 ## What's new compared with the original add-on
 
 Torah Library builds on the original Sefaria add-on for Google Docs by Shlomi
-Helfgot (see [LICENSE.md](./LICENSE.md)) and substantially expands it, including:
+Helfgot (see [LICENSE.md](./LICENSE.md)), the code it was forked from, and
+substantially expands it, including:
 
 - replacing the older split insertion/search flow with a unified sidebar,
 - improving search-result selection and preview behavior,
@@ -192,7 +210,7 @@ Users can reorder, group and hide items in **Preferences → Menu Bar**.
 ## Demo and walkthrough
 
 - [Google Docs walkthrough](./docs/google-docs-walkthrough.md)
-- [Live walkthroughs](./docs/walkthroughs/README.md) — five scripts for live demos: a stress test, a developer tour, a power-user tour, a guide for users of the original add-on, and a five-minute first run.
+- [Live walkthroughs](./docs/walkthroughs/README.md) — five scripts for live demos: a stress test, a developer tour, a power-user tour, a guide for people coming from Sefaria for Google Docs, and a five-minute first run.
 
 
 ## Repository structure

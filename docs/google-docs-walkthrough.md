@@ -23,6 +23,52 @@ for, how sources should look (with a preview) and how much of the add-on to
 show. Every answer starts at the current setting, so clicking through changes
 nothing. **Help & Support → Quick start → Run setup again** reopens it.
 
+## Coming from Sefaria for Google Docs
+
+If you've used Sefaria's own add-on, *Sefaria for Google Docs*, the basics
+are familiar: the same library, the same search-and-insert sidebar, and
+commands with the same names. Torah Library is a separate add-on with its own
+menu. Nothing is moved over or changed (that add-on keeps no settings), and
+the two can stay installed side by side.
+
+| Sefaria for Google Docs | Torah Library |
+| --- | --- |
+| **Extensions → Sefaria for Google Docs** | **Extensions → Torah Library** (rearrange it in Preferences → Menu Bar) |
+| **Add Sources with Sefaria** | **Texts**: type a citation (ranges such as `Genesis 1:1-9` work) or a title, click a result, check the **Preview**, **Add Source** |
+| Format, edition and translation, picked for each source | **📰 Insertion Options** and **Versions** for this source; saved defaults in **Preferences** |
+| **Transform Divine Names** | **Quick Actions → Transform Divine Names**, with the spellings set in Preferences → Insertion → Divine Name Mappings |
+| **Link Texts with Sefaria** | **Quick Actions → Link Texts with Sefaria** |
+
+**The same:** Hebrew and translation go in as a two-column table, Hebrew on
+the right. Text and links the other add-on inserted stay as they are, and
+Torah Library's Transform Divine Names, Link Texts and Unlink Sources work on
+them like any other text.
+
+**New:** saved defaults (a short setup the first time; Help → Quick start →
+**Run setup again**); arrangement, vowels, cantillation, punctuation,
+transliteration, fonts and heading titles; **Commentary** for translations
+that weave commentary in; Insert Source from Selection; Voices, Lexicon and the
+Session Library; several translations at once; settings files (Preferences →
+Advanced).
+
+**Different:**
+
+1. **Divine names are replaced as you insert:** out of the box יהוה becomes
+   **יי**. Choose the spelling, or turn it off, in the setup or in Preferences →
+   Insertion → Divine Name Mappings. Transform Divine Names asks first and
+   works on the tab you have open.
+2. **Link Texts tells you what it did:** it links what it is sure of, asks
+   about citations that could mean more than one text, and lists what it
+   couldn't link. It sends Sefaria only the passages that look like citations.
+3. **A credit line under each source** names the editions and their licenses;
+   turn **Citation** off if you credit sources another way.
+4. **Clicking a result only previews it;** nothing goes in until **Add Source**.
+5. **It asks for less:** no access to your email address or profile.
+
+When you're done comparing, remove the other add-on in **Extensions →
+Add-ons → Manage add-ons** if you no longer need it. Sefaria's help for it is
+at [help.sefaria.org](https://help.sefaria.org/hc/en-us/sections/20235182393244).
+
 ## The sidebar at a glance
 
 **The search box**
@@ -146,7 +192,7 @@ hidden, and with the Hebrew alone the Translation section.
 | **Link title to Sefaria** | both | Link that title to the passage on sefaria.org. The source title and the translation title are set separately. |
 | **Title font** | both | That title's font and size, linked or not. |
 | **Text font** | both | The Hebrew's, or the translation's, font and size. Opens a small panel (**Font**, **Size**; a blank size matches the text where you insert); **Colour, style and more…** there opens Preferences. |
-| **Vowels** | Source | **Off** / **Tanakh** (Tanakh only, as the original add-on did) / **On**. |
+| **Vowels** | Source | **Off** / **Tanakh** (Tanakh only) / **On**. |
 | **Cantillation** | Source | **Off** / **Tanakh** / **Torah** (the Five Books only). |
 | **Punctuation** | both | Keep the punctuation. Off removes sof pasuq, paseq, {פ}/{ס}, commas and the like; a maqaf becomes a space. |
 | **Transliteration** | Source | Add a transliteration; **Style** under it picks the scheme while it is on. Read from the fully vowelled text, so it is complete with Vowels off; with the Hebrew's Punctuation off it drops the same punctuation. |

@@ -22,6 +22,14 @@ No new preference and no migration: no stored value changes meaning.
   out and keeps the bold translation. **Note: "Drop" now means what "Bold
   only" meant.** Stored choices are unchanged (`keep`, `discard`, `only`).
   "Corpuses" is now "corpora" throughout.
+- **Help: *Coming from Sefaria for Google Docs*.** A new Help topic (in the
+  navigation and on Quick start) for people arriving from Sefaria's own
+  add-on: where *Add Sources with Sefaria*, *Transform Divine Names* and *Link
+  Texts with Sefaria* went, what stays the same, what's new, and what works
+  differently (divine names replaced on insert, the credit line, reviewed
+  linking, fewer permissions). Walkthrough 4, the README and the stress test's
+  account C now describe that add-on; they described an older one, and said
+  settings from it were kept, which can't happen: it stores none.
 - **Italics is never treated as commentary, and is always kept.** Sefaria
   italicizes foreign and transliterated words (*Shema*, *teruma*) in the
   translation and its commentary alike, so only bold decides what is
