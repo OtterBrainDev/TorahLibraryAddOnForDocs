@@ -276,6 +276,9 @@ function applyDivineNameReplacements(data, userProperties, options) {
     allRules.push({ enabledBy: "elodim_replace",   pattern: new RegExp(`א[${HEBREW_LETTER_MARKS_}]*ל[${HEBREW_LETTER_MARKS_}]*(?:ו[${HEBREW_LETTER_MARKS_}]*)?ה[${HEBREW_LETTER_MARKS_}]*י[${HEBREW_LETTER_MARKS_}]*ם[${HEBREW_LETTER_MARKS_}]*`, "g"), replacementKey: "elodim_replacement",   requireReplacement: false, fields: ["he", "heRef"] });
   }
   if (includeEnglish) {
+    // "God" and "GOD" (keyed on the capital G): lowercase "god"/"gods" are
+    // left alone. An all-caps match gets an all-caps substitute.
+    allRules.push({ enabledBy: "god_replace", pattern: /\bGOD\b/g, replacementKey: "god_replacement", defaultReplacement: "G-d", upperCase: true, requireReplacement: false, fields: ["text"] });
     allRules.push({ enabledBy: "god_replace", pattern: /\bGod\b/g, replacementKey: "god_replacement", defaultReplacement: "G-d", requireReplacement: false, fields: ["text"] });
   }
 
@@ -286,7 +289,8 @@ function applyDivineNameReplacements(data, userProperties, options) {
     if (rule.requireReplacement && !replacement) continue;
     // A function, not a string: String.replace expands `$&`, `$1` and friends
     // in a replacement string, and this one is user-entered text.
-    const literal = replacement || rule.defaultReplacement || "";
+    const base = replacement || rule.defaultReplacement || "";
+    const literal = rule.upperCase ? base.toUpperCase() : base;
     activeRules.push({
       pattern: rule.pattern,
       // Each occurrence keeps its own vowels and cantillation

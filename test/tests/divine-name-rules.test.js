@@ -66,6 +66,18 @@ test('replacement text is inserted literally', () => {
   assert.equal(context.applyDivineNameReplacements({ text: 'God' }, userProperties).text, 'G$&d');
 });
 
+test('"God" and "GOD" are replaced (keyed on the capital G); "god" and "gods" are not', () => {
+  const { context, userProperties } = load({
+    apply_sheimot_on_insertion: 'true', god_replace: 'true', god_replacement: 'G-d',
+  });
+  const run = (text) => context.applyDivineNameReplacements({ text }, userProperties).text;
+  assert.equal(run('God'), 'G-d');
+  assert.equal(run('GOD'), 'G-D');
+  assert.equal(run('GOD said, God said'), 'G-D said, G-d said');
+  assert.equal(run('god'), 'god');
+  assert.equal(run('gods and GODS'), 'gods and GODS');
+});
+
 test('the four-letter names still match with a prefix', () => {
   assert.equal(
     replaceHebrew('לַיהוָה', { meforash_replace: 'true', meforash_replacement: 'יי' }),

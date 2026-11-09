@@ -158,7 +158,10 @@ function transformDivineNames() {
       replaceHebrewWordInTextElement(textElement, `א[${hebrewMarks}]*ל[${hebrewMarks}]*(?:ו[${hebrewMarks}]*)?ה[${hebrewMarks}]*י[${hebrewMarks}]*ם[${hebrewMarks}]*`, prefs.elodim_replacement || "אלוקים");
     }
     if (prefs.god_replace == "true") {
-      replaceRegexInTextElement(textElement, /\bGod\b/g, prefs.god_replacement || "G-d");
+      // "God" and "GOD" only; lowercase "god"/"gods" are untouched.
+      const godReplacement = prefs.god_replacement || "G-d";
+      replaceRegexInTextElement(textElement, /\bGod\b/g, godReplacement);
+      replaceRegexInTextElement(textElement, /\bGOD\b/g, godReplacement.toUpperCase());
     }
   });
 
