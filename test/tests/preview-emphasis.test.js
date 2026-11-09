@@ -9,9 +9,10 @@
 // server/insertion.gs); the preview never applied the mode at all. For
 // `discard` and `only` the preview now reads and filters the markup with mirrors of those
 // server functions (sidebar/js/preview-core.html). This runs the real server
-// pipeline and the preview on the same markup and requires the same words and
-// the same bold — including bold italics, italics alone, footnotes, line
-// numbers on and off, and a translation with no bold.
+// pipeline and the preview on the same markup and requires the same words,
+// bold and italics — italics inside the bold and outside it (kept on whatever
+// text is kept: it never marks commentary), footnotes, line numbers on and
+// off, and a translation with no bold.
 //
 // Loaded with vm.runInContext; see AGENTS.md hard rule #3.
 
@@ -159,7 +160,7 @@ const BERAKHOT = '<b>MISHNA:</b> From when may one recite <i>Shema</i> in the ev
 
 const CASES = {
   'bold text with explanatory commentary (Berakhot 2a:1, William Davidson)': [BERAKHOT],
-  'bold italics are kept, italics alone are not': ['<b>Rabbi <i>Eliezer</i> says</b> — <i>this is the view of</i> <b>until the end</b>.'],
+  'italics in the bold and in the commentary': ['<b>Rabbi <i>Eliezer</i> says</b> — <i>this is the view of</i> <b>until the end</b>.'],
   'a translation with no bold is kept whole, italics too': ['In the beginning <i>Elohim</i> created the heaven and the earth.'],
   'a footnote is skipped, as at insert': ['<b>He said</b> it plainly<sup>1</sup><i class="footnote">A gloss.</i> and <b>went on</b>.'],
   'entities, a line break and strong': ['<strong>One&nbsp;who</strong> says&thinsp;so,<br><b>&quot;Amen&quot;</b> &amp;c.'],
@@ -222,10 +223,10 @@ test('Drop (only): the preview\'s translation is the bold alone, and the Hebrew 
   assert.doesNotMatch(html, /Until when/);
 });
 
-test('Combine (discard): every word, no bold or italics; Default (keep): the sanitized markup as before', () => {
-  const drop = loadPreview({ mode: 'discard' }).renderPreviewHTML({ ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
-  assert.match(drop, /MISHNA: From when may one recite Shema in the evening\?/);
-  assert.doesNotMatch(drop.split('[sanitized:x]').join(''), /<b>|<i>/);
+test('Combine (discard): every word, no bold, italics kept; Default (keep): the sanitized markup as before', () => {
+  const combined = loadPreview({ mode: 'discard' }).renderPreviewHTML({ ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
+  assert.match(combined, /MISHNA: From when may one recite <i>Shema<\/i> in the evening\?/);
+  assert.doesNotMatch(combined.split('[sanitized:x]').join(''), /<b>/);
 
   const keep = loadPreview({ mode: 'keep' }).renderPreviewHTML({ ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
   assert.ok(keep.includes(`[sanitized:${BERAKHOT}]`));

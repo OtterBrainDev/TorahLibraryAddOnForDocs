@@ -59,7 +59,8 @@ the same for the citation.
   Talmud the bold marks the Talmud's own words and the plain text is
   Steinsaltz's explanation: **Combine** drops the bold so the two read as one
   text, and **Drop** leaves the explanation out, inserting just the Talmud's
-  words.
+  words. Italics marks foreign and transliterated words (*Shema*), not
+  commentary, so it is kept in all three.
   **Advanced** under it maps bold to something else, such as blue text
   without bold. The sidebar's Insertion Options has the same control for one
   session. It applies to the translation only; the Hebrew always keeps its

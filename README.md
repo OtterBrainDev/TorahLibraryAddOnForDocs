@@ -91,8 +91,8 @@ The panel's **Insertion Format** card has a **Source** (Hebrew) section and a
 - **Punctuation** (each section its own),
 - **Transliteration**, with its **Style**,
 - **Commentary** (Default / Combine / Drop) for the translation: keep the
-  commentary as Sefaria marks it, run it together with the translation, or
-  leave it out.
+  commentary as Sefaria marks it (translation in bold), run it together with
+  the translation, or leave it out. Italics is always kept.
 
 Hebrew marks a chosen font lacks (often the cantillation) are set in Noto
 Serif / Sans Hebrew, so they never show as empty boxes.

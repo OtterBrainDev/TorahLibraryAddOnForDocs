@@ -461,16 +461,17 @@ function planPreviewEmphasisOnlyEdits(fullText, runs, keepLines) {
 /**
  * The preview's translation for Combine (`discard`) and Drop (`only`), as
  * escaped HTML with only our own <b>, <i> and <br>; null for Default (`keep`:
- * the caller renders the sanitized markup). `only` keeps the bold runs (bold
- * italics included) and drops the rest by the insert's plan; a translation
- * with no bold is kept whole.
+ * the caller renders the sanitized markup). As at insert, bold alone decides
+ * what is commentary and italics is kept on whatever text is kept: `discard`
+ * shows every word without the bold; `only` keeps the bold runs and drops the
+ * rest by the insert's plan; a translation with no bold is kept whole.
  */
 function previewTranslationEmphasisHtml(text, mode, lineMarkers, extendedGemara) {
   if (mode !== 'discard' && mode !== 'only') return null;
   var read = readPreviewEmphasis(joinPreviewTranslation(text, lineMarkers), extendedGemara);
   var chars = [];
   for (var c = 0; c < read.text.length; c++) {
-    chars.push({ ch: read.text[c], bold: mode === 'only' && read.bold[c], italic: mode === 'only' && read.italic[c] });
+    chars.push({ ch: read.text[c], bold: mode === 'only' && read.bold[c], italic: read.italic[c] });
   }
   if (mode === 'only') {
     var runs = [];

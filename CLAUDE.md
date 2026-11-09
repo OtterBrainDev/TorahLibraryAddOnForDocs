@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **638 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **641 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -187,11 +187,13 @@ and fix it before touching the feature you came to change.
 - `typography-defaults.test.js` — "Match the document" fonts, the title
   heading style, and reading the style at the insertion point.
 - `source-emphasis-mode.test.js` — the translation's Commentary choice:
-  Default (`keep`), Combine (`discard`) or Drop (`only`, once "Bold only"; what
-  it removes — plain text and italics alone — and what it keeps: bold
-  italics, line markers, punctuation, paragraphs with no bold, and the whole
-  Hebrew — it applies to the translation only); each card label is pinned to
-  its value, since "Drop" used to mean `discard`.
+  Default (`keep`), Combine (`discard`: the bold goes, the italics stays) or
+  Drop (`only`, once "Bold only": the text that is not bold goes; what it
+  keeps: line markers, punctuation, paragraphs with no bold, and the whole
+  Hebrew — it applies to the translation only). Only bold decides what is
+  commentary; italics (foreign and transliterated words) is kept on whatever
+  text is kept, in every mode. Each card label is pinned to its value, since
+  "Drop" used to mean `discard`.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped, every block
   formatted like the first; HTML-entity decoding (`&thinsp;` and friends). With
@@ -279,7 +281,7 @@ and fix it before touching the feature you came to change.
   footnotes or other tabs) and the rules, and says how many it replaced.
 - `preview-emphasis.test.js` — the sidebar preview shows Combine and Drop as
   the insert writes them: the real server pipeline and the preview's mirrors
-  give the same words and bold.
+  give the same words, bold and italics.
 - `lexicon-stale-response.test.js` — a Lexicon or Voices answer to an earlier
   search is dropped (the stale "No lexicon entries found for 'Genesis 1:1'").
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's

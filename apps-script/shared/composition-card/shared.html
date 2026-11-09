@@ -68,9 +68,11 @@ function ccTranslitSample(text, hebrewPunctuationOn) {
   return hebrewPunctuationOn ? text : String(text).replace(CC_TRANSLIT_MAQAF_RE, '$1$2 ');
 }
 
-// The translation's commentary, which Sefaria marks with bold and italics
-// (the `source_emphasis_mode` preference; the card's "Commentary" row:
-// Default = keep, Combine = discard, Drop = only). The Hebrew always keeps its
+// The translation's commentary, which Sefaria tells apart from its direct
+// translation by bold (the `source_emphasis_mode` preference; the card's
+// "Commentary" row: Default = keep, Combine = discard (no bold), Drop = only
+// (only the bold text)). Italics is kept in every mode: it marks foreign and
+// transliterated words, not commentary. The Hebrew always keeps its
 // own (sourceEmphasisModeForRole_ in server/insertion.gs).
 // Mirrors normalizeSourceEmphasisMode_ in server/preferences.gs, including the
 // legacy boolean values of `preserve_source_emphasis`.
