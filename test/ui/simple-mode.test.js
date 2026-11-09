@@ -64,7 +64,7 @@ test('Preferences hides only advanced tabs and sections, and "Show advanced sett
   ids.filter((id) => id !== 'pref-tab-experimental-btn').forEach((id) => {
     assert.ok(PREFS.includes(`id="${id}"`), `preferences/css.html hides #${id}, which preferences.html does not have`);
   });
-  ['fonts', 'insertion', 'menu'].forEach((tab) => {
+  ['insertion', 'menu'].forEach((tab) => {
     assert.ok(!ids.includes(`pref-tab-${tab}-btn`), `the ${tab} tab must stay visible in Simple mode`);
   });
 });

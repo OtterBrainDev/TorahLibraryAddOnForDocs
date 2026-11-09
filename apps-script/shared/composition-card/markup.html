@@ -10,7 +10,9 @@
        is one row: its name on the left, its control on the right (a switch,
        a font button, or a segmented choice). Each title has its own link
        switch and font ("linkedTitle", "titleFonts" in data-cc-features); the
-       font is the title's whether or not it is linked. -->
+       font is the title's whether or not it is linked. Where the host has
+       a full editor for a font (Preferences: fontEditor), its button opens
+       that editor in place, under the row, instead of the font panel. -->
   <details class="cc-section cc-section--source">
     <summary class="cc-section-summary"><span class="cc-section-label">Source</span><span class="cc-section-state" id="cc-source-state"></span></summary>
     <div class="cc-section-body">
@@ -55,6 +57,11 @@
           <div class="cc-row cc-translit-scheme-row" id="cc-translit-scheme-row">
             <span class="cc-row-label cc-row-label--sub">Style</span>
             <button type="button" class="cc-translit-button" id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
+          </div>
+          <!-- Preferences only ("translitFont"): the transliteration's font. -->
+          <div class="cc-row cc-font-row cc-translit-font-row" id="cc-translit-font-row" data-cc-feature="translitFont">
+            <span class="cc-row-label cc-row-label--sub">Font</span>
+            <button type="button" class="cc-font-chip" id="cc-transliteration-font-chip" data-font-role="transliteration" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Transliteration font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
           </div>
 
           <div class="cc-translit-menu hidden" id="cc-translit-menu" role="listbox">

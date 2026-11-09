@@ -174,7 +174,8 @@ document at 1280 × 800, sidebar open, no personal content visible:
    setting applied.
 4. Link Texts with Sefaria: the review dialog, with an ambiguous citation's
    dropdown open.
-5. Preferences: the Fonts tab or the Menu Bar tab.
+5. Preferences: the Insertion tab with a font's settings open, or the Menu Bar
+   tab.
 
 Caption each one in a few words (e.g. *"Preview, then insert Hebrew and English
 side by side"*).

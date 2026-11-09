@@ -34,8 +34,7 @@
         </section>
 
         <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
-          <button type="button" id="pref-tab-fonts-btn" class="pref-tab" role="tab" data-pref-tab="fonts" aria-controls="pref-tab-fonts" aria-selected="true">Fonts</button>
-          <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="false">Insertion</button>
+          <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="true">Insertion</button>
           <button type="button" id="pref-tab-search-btn" class="pref-tab" role="tab" data-pref-tab="search" aria-controls="pref-tab-search" aria-selected="false">Search</button>
           <button type="button" id="pref-tab-linking-btn" class="pref-tab" role="tab" data-pref-tab="linking" aria-controls="pref-tab-linking" aria-selected="false">Linking</button>
           <button type="button" id="pref-tab-menu-btn" class="pref-tab" role="tab" data-pref-tab="menu" aria-controls="pref-tab-menu" aria-selected="false">Menu Bar</button>
@@ -44,17 +43,22 @@
 <? } ?>
         </nav>
 
-        <div class="pref-tab-panel" id="pref-tab-fonts" role="tabpanel" aria-labelledby="pref-tab-fonts-btn">
-          <details class="section-card section-accordion" id="title-typography" name="title-typography" open>
-            <summary class="section-card-summary"><span>Title</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Applies to the titles inserted above each passage. The translation title and the source (Hebrew) title each have their own font, linked or not; turn on a title’s hyperlink formatting override to give it a different look while it is linked to Sefaria.</p>
+        <div class="pref-tab-panel" id="pref-tab-insertion" role="tabpanel" aria-labelledby="pref-tab-insertion-btn">
 
-              <div class="scheme-inline-row">
-                <div class="compact-field compact-field--label">
-                  <label for="source_title_heading">Paragraph style</label>
-                </div>
-                <div class="compact-field">
+          <!-- Layout — above Insertion Defaults per UX requirement -->
+          <details class="section-card section-accordion" id="display-defaults" name="display-defaults" open>
+            <summary class="section-card-summary"><span>Layout</span></summary>
+            <div class="section-card-body">
+              <?!= include('shared/insertion-options/markup') ?>
+              <input type="hidden" id="output_mode_default" name="output_mode_default" value="both">
+              <input type="hidden" id="bilingual_layout_default" name="bilingual_layout_default" value="he-right">
+              <input type="hidden" id="bilingual_aligned_rows" name="bilingual_aligned_rows" value="false">
+              <!-- Preferences only: the titles' paragraph style, and the citation's
+                   style (its button opens the editor in place, like the card's font
+                   buttons: fontEditor in preferences/js.html). -->
+              <div class="cc-rows pref-layout-rows">
+                <div class="cc-row pref-card-row" title="A heading puts each inserted title in the document outline and table of contents; with “Match the document” the title then takes the heading’s own font and size.">
+                  <label class="cc-row-label" for="source_title_heading">Title style</label>
                   <select id="source_title_heading" name="source_title_heading">
                     <option value="normal">Normal text</option>
                     <option value="heading1">Heading 1</option>
@@ -65,596 +69,57 @@
                     <option value="heading6">Heading 6</option>
                   </select>
                 </div>
-              </div>
-              <p class="subsection-note">A heading puts each inserted title in the document outline and table of contents.</p>
-
-              <div class="title-language-tabs" role="tablist" aria-label="Which title">
-                <button type="button" class="title-language-tab is-active" role="tab" id="title-language-tab-translation" data-title-language="translation" aria-selected="true" aria-controls="title-language-panel-translation">Translation title</button>
-                <button type="button" class="title-language-tab" role="tab" id="title-language-tab-source" data-title-language="source" aria-selected="false" aria-controls="title-language-panel-source" tabindex="-1">Source title</button>
-              </div>
-              <div class="title-language-panel" id="title-language-panel-translation" role="tabpanel" aria-labelledby="title-language-tab-translation" data-title-language-panel="translation">
-                <div class="subsection-card">
-                  <div class="subsection-title">Title font</div>
-                  <p class="subsection-note">The translation title’s font, whether or not it is linked to Sefaria. <strong>Match the document</strong> and a blank size take the font and size of the text where you insert — or, with a heading style, the heading’s own font and size.</p>
-                  <div class="compact-row">
-                    <div class="compact-field">
-                      <label for="source_title_font">Font</label>
-                      <select name="source_title_font" id="source_title_font" data-font-role="latin">
-                        <option value="">Match the document</option>
-                        <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                      </select>
-                    </div>
-                    <div class="compact-field compact-field--size">
-                      <label for="source_title_font_size">Size</label>
-                      <input id="source_title_font_size" type="number" name="source_title_font_size" min="1" max="400" step="0.1" placeholder="Auto">
-                    </div>
-                    <div class="compact-field compact-field--style">
-                      <label>Style</label>
-                      <div class="style-control" data-style-control="source_title_font_style">
-                        <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                        <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                        <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                      </div>
-                      <input type="hidden" id="source_title_font_style" name="source_title_font_style">
-                    </div>
-                  </div>
-                  <div class="compact-inline-pair compact-inline-pair--spaced">
-                    <div class="compact-field compact-field--color">
-                      <label for="source_title_font_color">Text colour</label>
-                      <div class="color-control">
-                        <input id="source_title_font_color" type="color" name="source_title_font_color" value="#000000" aria-label="Title text colour">
-                        <button type="button" class="color-clear-btn" data-color-clear="source_title_font_color" title="Use the document’s own colour">Auto</button>
-                      </div>
-                    </div>
-                    <div class="compact-field compact-field--color">
-                      <label for="source_title_font_background">Highlight</label>
-                      <div class="color-control">
-                        <input id="source_title_font_background" type="color" name="source_title_font_background" value="#ffff00" aria-label="Title highlight colour">
-                        <button type="button" class="color-clear-btn" data-color-clear="source_title_font_background" title="No highlight">None</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="inline-preview" id="source_title_preview"><span class="label">Preview</span>Deuteronomy 11:18</div>
-                </div>
-
-                <div class="subsection-card">
-                  <div class="toggle-row">
-                    <div class="toggle-copy">
-                      <div class="toggle-title">Hyperlink formatting override</div>
-                      <div class="toggle-help">When the translation title is linked to Sefaria (Insertion tab), format it as set here instead of with the title font above.</div>
-                    </div>
-                    <label class="switch" for="sefaria_link_format_override">
-                      <input id="sefaria_link_format_override" type="checkbox" name="sefaria_link_format_override">
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                  <div class="link-override-fields" data-link-override="sefaria_link_format_override">
-                    <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert — or, with a heading style, the heading’s own font and size.</p>
-                    <div class="compact-row">
-                      <div class="compact-field">
-                        <label for="sefaria_link_font">Font</label>
-                        <select name="sefaria_link_font" id="sefaria_link_font" data-font-role="latin">
-                          <option value="">Match the document</option>
-                          <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                        </select>
-                      </div>
-                      <div class="compact-field compact-field--size">
-                        <label for="sefaria_link_font_size">Size</label>
-                        <input id="sefaria_link_font_size" type="number" name="sefaria_link_font_size" min="1" max="400" step="0.1" placeholder="Auto">
-                      </div>
-                      <div class="compact-field compact-field--style">
-                        <label>Style</label>
-                        <div class="style-control" data-style-control="sefaria_link_font_style">
-                          <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                          <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                          <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                        </div>
-                        <input type="hidden" id="sefaria_link_font_style" name="sefaria_link_font_style">
-                      </div>
-                    </div>
-                    <div class="compact-inline-pair compact-inline-pair--spaced">
-                      <div class="compact-field compact-field--color">
-                        <label for="sefaria_link_font_color">Text colour</label>
-                        <div class="color-control">
-                          <input id="sefaria_link_font_color" type="color" name="sefaria_link_font_color" value="#000000" aria-label="Linked title text colour">
-                          <button type="button" class="color-clear-btn" data-color-clear="sefaria_link_font_color" title="Use the document’s own colour">Auto</button>
-                        </div>
-                      </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="sefaria_link_font_background">Highlight</label>
-                        <div class="color-control">
-                          <input id="sefaria_link_font_background" type="color" name="sefaria_link_font_background" value="#ffff00" aria-label="Linked title highlight colour">
-                          <button type="button" class="color-clear-btn" data-color-clear="sefaria_link_font_background" title="No highlight">None</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="inline-preview" id="sefaria_link_preview"><span class="label">Preview</span><span class="preview-link-sample">Deuteronomy 11:18</span></div>
-                  </div>
+                <div class="cc-row cc-font-row">
+                  <span class="cc-row-label">Citation style</span>
+                  <button type="button" class="cc-font-chip" id="cc-citation-font-chip" data-font-role="citation" aria-expanded="false" title="The citation’s font, size and style"><span class="cc-font-chip-name">Same as the text above</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
                 </div>
               </div>
-              <div class="title-language-panel" id="title-language-panel-source" role="tabpanel" aria-labelledby="title-language-tab-source" data-title-language-panel="source" hidden>
-                <div class="subsection-card">
-                  <div class="subsection-title">Title font</div>
-                  <p class="subsection-note">The source title’s font, whether or not it is linked to Sefaria. <strong>Match the document</strong> and a blank size take the font and size of the text where you insert — or, with a heading style, the heading’s own font and size.</p>
-                  <div class="compact-row">
-                    <div class="compact-field">
-                      <label for="hebrew_title_font">Font</label>
-                      <select name="hebrew_title_font" id="hebrew_title_font" data-font-role="hebrew">
-                        <option value="">Match the document</option>
-                        <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                      </select>
-                    </div>
-                    <div class="compact-field compact-field--size">
-                      <label for="hebrew_title_font_size">Size</label>
-                      <input id="hebrew_title_font_size" type="number" name="hebrew_title_font_size" min="1" max="400" step="0.1" placeholder="Auto">
-                    </div>
-                    <div class="compact-field compact-field--style">
-                      <label>Style</label>
-                      <div class="style-control" data-style-control="hebrew_title_font_style">
-                        <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                        <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                        <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                      </div>
-                      <input type="hidden" id="hebrew_title_font_style" name="hebrew_title_font_style">
-                    </div>
-                  </div>
-                  <div class="compact-inline-pair compact-inline-pair--spaced">
-                    <div class="compact-field compact-field--color">
-                      <label for="hebrew_title_font_color">Text colour</label>
-                      <div class="color-control">
-                        <input id="hebrew_title_font_color" type="color" name="hebrew_title_font_color" value="#000000" aria-label="Source title text colour">
-                        <button type="button" class="color-clear-btn" data-color-clear="hebrew_title_font_color" title="Use the document’s own colour">Auto</button>
-                      </div>
-                    </div>
-                    <div class="compact-field compact-field--color">
-                      <label for="hebrew_title_font_background">Highlight</label>
-                      <div class="color-control">
-                        <input id="hebrew_title_font_background" type="color" name="hebrew_title_font_background" value="#ffff00" aria-label="Source title highlight colour">
-                        <button type="button" class="color-clear-btn" data-color-clear="hebrew_title_font_background" title="No highlight">None</button>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="inline-preview" id="hebrew_title_preview" dir="rtl" lang="he"><span class="label">Preview</span>דברים יא:יח</div>
-                </div>
-
-                <div class="subsection-card">
-                  <div class="toggle-row">
-                    <div class="toggle-copy">
-                      <div class="toggle-title">Hyperlink formatting override</div>
-                      <div class="toggle-help">When the source title is linked to Sefaria (Insertion tab), format it as set here instead of with the title font above.</div>
-                    </div>
-                    <label class="switch" for="hebrew_link_format_override">
-                      <input id="hebrew_link_format_override" type="checkbox" name="hebrew_link_format_override">
-                      <span class="slider"></span>
-                    </label>
-                  </div>
-                  <div class="link-override-fields" data-link-override="hebrew_link_format_override">
-                    <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert — or, with a heading style, the heading’s own font and size.</p>
-                    <div class="compact-row">
-                      <div class="compact-field">
-                        <label for="hebrew_link_font">Font</label>
-                        <select name="hebrew_link_font" id="hebrew_link_font" data-font-role="hebrew">
-                          <option value="">Match the document</option>
-                          <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                        </select>
-                      </div>
-                      <div class="compact-field compact-field--size">
-                        <label for="hebrew_link_font_size">Size</label>
-                        <input id="hebrew_link_font_size" type="number" name="hebrew_link_font_size" min="1" max="400" step="0.1" placeholder="Auto">
-                      </div>
-                      <div class="compact-field compact-field--style">
-                        <label>Style</label>
-                        <div class="style-control" data-style-control="hebrew_link_font_style">
-                          <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                          <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                          <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+              <div class="pref-card-extras" hidden>
+                  <div class="pref-font-editor" data-font-editor="citation" aria-label="Citation style">
+                    <div class="subsection-card">
+                      <p class="subsection-note"><strong>Same as the text above</strong> and a blank size keep the font and size of the passage the citation follows.</p>
+                      <div class="compact-row">
+                        <div class="compact-field">
+                          <label for="citation_font">Font</label>
+                          <select name="citation_font" id="citation_font" data-font-role="latin">
+                            <option value="">Same as the text above</option>
+                            <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                          </select>
                         </div>
-                        <input type="hidden" id="hebrew_link_font_style" name="hebrew_link_font_style">
-                      </div>
-                    </div>
-                    <div class="compact-inline-pair compact-inline-pair--spaced">
-                      <div class="compact-field compact-field--color">
-                        <label for="hebrew_link_font_color">Text colour</label>
-                        <div class="color-control">
-                          <input id="hebrew_link_font_color" type="color" name="hebrew_link_font_color" value="#000000" aria-label="Linked source title text colour">
-                          <button type="button" class="color-clear-btn" data-color-clear="hebrew_link_font_color" title="Use the document’s own colour">Auto</button>
+                        <div class="compact-field compact-field--size">
+                          <label for="citation_font_size">Size</label>
+                          <input id="citation_font_size" type="number" name="citation_font_size" min="1" max="400" step="0.1" placeholder="Auto">
+                        </div>
+                        <div class="compact-field compact-field--style">
+                          <label>Style</label>
+                          <div class="style-control" data-style-control="citation_font_style">
+                            <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                            <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                            <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                          </div>
+                          <input type="hidden" id="citation_font_style" name="citation_font_style">
                         </div>
                       </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="hebrew_link_font_background">Highlight</label>
-                        <div class="color-control">
-                          <input id="hebrew_link_font_background" type="color" name="hebrew_link_font_background" value="#ffff00" aria-label="Linked source title highlight colour">
-                          <button type="button" class="color-clear-btn" data-color-clear="hebrew_link_font_background" title="No highlight">None</button>
+                      <div class="compact-inline-pair compact-inline-pair--spaced">
+                        <div class="compact-field compact-field--color">
+                          <label for="citation_font_color">Text colour</label>
+                          <div class="color-control">
+                            <input id="citation_font_color" type="color" name="citation_font_color" value="#000000" aria-label="Citation text colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="citation_font_color" title="Use the document’s own colour">Auto</button>
+                          </div>
+                        </div>
+                        <div class="compact-field compact-field--color">
+                          <label for="citation_font_background">Highlight</label>
+                          <div class="color-control">
+                            <input id="citation_font_background" type="color" name="citation_font_background" value="#ffff00" aria-label="Citation highlight colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="citation_font_background" title="No highlight">None</button>
+                          </div>
                         </div>
                       </div>
+                      <div class="inline-preview" id="citation_preview"><span class="label">Preview</span>Translation: The Contemporary Torah, JPS, 2006 · License: CC-BY-NC</div>
                     </div>
-                    <div class="inline-preview" id="hebrew_link_preview" dir="rtl" lang="he"><span class="label">Preview</span><span class="preview-link-sample">דברים יא:יח</span></div>
                   </div>
-                </div>
               </div>
-            </div>
-          </details>
-
-          <details class="section-card section-accordion" id="hebrew-text-settings" name="hebrew-text-settings">
-            <summary class="section-card-summary"><span>Hebrew</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Applies to the Hebrew source text. Vowels and cantillation are set in the Insertion tab.</p>
-
-              <div class="subsection-card">
-                <div class="subsection-title">Typography</div>
-                <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert.</p>
-                <div class="compact-row">
-                  <div class="compact-field">
-                    <label for="hebrew_font">Font</label>
-                    <select name="hebrew_font" id="hebrew_font" data-font-role="hebrew">
-                      <option value="">Match the document</option>
-                      <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                    </select>
-                  </div>
-                  <div class="compact-field compact-field--size">
-                    <label for="hebrew_font_size">Size</label>
-                    <input id="hebrew_font_size" type="number" name="hebrew_font_size" min="1" max="400" step="0.1" placeholder="Auto">
-                  </div>
-                  <div class="compact-field compact-field--style">
-                    <label>Style</label>
-                    <div class="style-control" data-style-control="hebrew_font_style">
-                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                    </div>
-                    <input type="hidden" id="hebrew_font_style" name="hebrew_font_style">
-                  </div>
-                </div>
-                <div class="compact-inline-pair compact-inline-pair--spaced">
-                  <div class="compact-field compact-field--color">
-                    <label for="hebrew_font_color">Text colour</label>
-                    <div class="color-control">
-                      <input id="hebrew_font_color" type="color" name="hebrew_font_color" value="#000000" aria-label="Hebrew text colour">
-                      <button type="button" class="color-clear-btn" data-color-clear="hebrew_font_color" title="Use the document’s own colour">Auto</button>
-                    </div>
-                  </div>
-                  <div class="compact-field compact-field--color">
-                    <label for="hebrew_font_background">Highlight</label>
-                    <div class="color-control">
-                      <input id="hebrew_font_background" type="color" name="hebrew_font_background" value="#ffff00" aria-label="Hebrew highlight colour">
-                      <button type="button" class="color-clear-btn" data-color-clear="hebrew_font_background" title="No highlight">None</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="inline-preview hebrew" id="hebrew_font_preview"><span class="label">Preview</span><span class="inline-preview-text" id="hebrew_font_preview_text">וְשַׂמְתֶּם֙ אֶת־דְּבָרַ֣י אֵ֔לֶּה עַל־לְבַבְכֶ֖ם</span></div>
-              </div>
-            </div>
-          </details>
-
-          <details class="section-card section-accordion" id="transliteration-typography" name="transliteration-typography">
-            <summary class="section-card-summary"><span>Transliteration</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Applies to the transliteration inserted with the Hebrew. Whether it is inserted is set in the Insertion tab.</p>
-
-              <div class="scheme-inline-row">
-                <div class="compact-field compact-field--label">
-                  <label for="transliteration_scheme">Scheme</label>
-                </div>
-                <div class="compact-field">
-                  <select id="transliteration_scheme" name="transliteration_scheme">
-                    <option value="simple_english">Simple English</option>
-                    <option value="traditional">Traditional</option>
-                    <option value="modern_israeli">Modern Israeli</option>
-                    <option value="ashkenazi">Ashkenazi</option>
-                    <option value="academic_full">Academic (Full)</option>
-                    <option value="ipa_modern">IPA (Modern Israeli)</option>
-                    <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
-                  </select>
-                </div>
-              </div>
-              <p class="subsection-note">How Hebrew sounds are spelled in Latin letters. Individual letters can be adjusted under Insertion → Transliteration Mapping.</p>
-
-              <div class="subsection-card">
-                <div class="subsection-title">Typography</div>
-                <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert.</p>
-                <div class="compact-row">
-                  <div class="compact-field">
-                    <label for="transliteration_font">Font</label>
-                    <select name="transliteration_font" id="transliteration_font" data-font-role="latin">
-                      <option value="">Match the document</option>
-                      <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                    </select>
-                  </div>
-                  <div class="compact-field compact-field--size">
-                    <label for="transliteration_font_size">Size</label>
-                    <input id="transliteration_font_size" type="number" name="transliteration_font_size" min="1" max="400" step="0.1" placeholder="Auto">
-                  </div>
-                  <div class="compact-field compact-field--style">
-                    <label>Style</label>
-                    <div class="style-control" data-style-control="transliteration_font_style">
-                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                    </div>
-                    <input type="hidden" id="transliteration_font_style" name="transliteration_font_style">
-                  </div>
-                </div>
-                <div class="compact-inline-pair compact-inline-pair--spaced">
-                  <div class="compact-field compact-field--color">
-                    <label for="transliteration_font_color">Text colour</label>
-                    <div class="color-control">
-                      <input id="transliteration_font_color" type="color" name="transliteration_font_color" value="#000000" aria-label="Transliteration text colour">
-                      <button type="button" class="color-clear-btn" data-color-clear="transliteration_font_color" title="Use the document’s own colour">Auto</button>
-                    </div>
-                  </div>
-                  <div class="compact-field compact-field--color">
-                    <label for="transliteration_font_background">Highlight</label>
-                    <div class="color-control">
-                      <input id="transliteration_font_background" type="color" name="transliteration_font_background" value="#ffff00" aria-label="Transliteration highlight colour">
-                      <button type="button" class="color-clear-btn" data-color-clear="transliteration_font_background" title="No highlight">None</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="inline-preview transliteration" id="transliteration_preview"><span class="label">Preview</span>Ve-samtem et devarai eileh al levavchem</div>
-              </div>
-            </div>
-          </details>
-
-          <details class="section-card section-accordion" id="translation" name="translation">
-            <summary class="section-card-summary"><span>Translation</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Applies to the translation text.</p>
-
-              <div class="scheme-inline-row">
-                <div class="compact-field compact-field--label">
-                  <label for="preferred_translation_language">Language</label>
-                </div>
-                <div class="compact-field">
-                  <select id="preferred_translation_language" name="preferred_translation_language">
-                    <option value="en">English</option>
-                    <option value="he">Hebrew</option>
-                    <option value="ar">Arabic</option>
-                    <option value="cs">Czech</option>
-                    <option value="eo">Esperanto</option>
-                    <option value="fa">Farsi (Persian)</option>
-                    <option value="fi">Finnish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="hu">Hungarian</option>
-                    <option value="it">Italian</option>
-                    <option value="itk">Judeo-Italian</option>
-                    <option value="jrb">Judeo-Arabic</option>
-                    <option value="lad">Ladino (Judeo-Spanish)</option>
-                    <option value="ko">Korean</option>
-                    <option value="pl">Polish</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="ru">Russian</option>
-                    <option value="es">Spanish</option>
-                    <option value="yi">Yiddish</option>
-                  </select>
-                </div>
-              </div>
-              <p class="subsection-note">If your preferred language is unavailable, the sidebar tries English next and then any other available language.</p>
-
-              <div class="subsection-card">
-                <div class="subsection-title">Typography</div>
-                <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert.</p>
-                <div class="compact-row">
-                  <div class="compact-field">
-                    <label for="translation_font">Font</label>
-                    <select name="translation_font" id="translation_font" data-font-role="latin">
-                      <option value="">Match the document</option>
-                      <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                    </select>
-                  </div>
-                  <div class="compact-field compact-field--size">
-                    <label for="translation_font_size">Size</label>
-                    <input id="translation_font_size" type="number" name="translation_font_size" min="1" max="400" step="0.1" placeholder="Auto">
-                  </div>
-                  <div class="compact-field compact-field--style">
-                    <label>Style</label>
-                    <div class="style-control" data-style-control="translation_font_style">
-                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                    </div>
-                    <input type="hidden" id="translation_font_style" name="translation_font_style">
-                  </div>
-                </div>
-                <div class="compact-inline-pair compact-inline-pair--spaced">
-                  <div class="compact-field compact-field--color">
-                    <label for="translation_font_color">Text colour</label>
-                    <div class="color-control">
-                      <input id="translation_font_color" type="color" name="translation_font_color" value="#000000" aria-label="Translation text colour">
-                      <button type="button" class="color-clear-btn" data-color-clear="translation_font_color" title="Use the document’s own colour">Auto</button>
-                    </div>
-                  </div>
-                  <div class="compact-field compact-field--color">
-                    <label for="translation_font_background">Highlight</label>
-                    <div class="color-control">
-                      <input id="translation_font_background" type="color" name="translation_font_background" value="#ffff00" aria-label="Translation highlight colour">
-                      <button type="button" class="color-clear-btn" data-color-clear="translation_font_background" title="No highlight">None</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="inline-preview translation" id="translation_font_preview"><span class="label">Preview</span>Therefore place these words of Mine upon your heart…</div>
-              </div>
-
-              <details class="subsection-card" id="translation-language-typography">
-                <summary class="subsection-title">Advanced: formatting for specific languages</summary>
-                <p class="subsection-note">Give translations in one language their own font, size and style. Every language you don’t add here uses the Translation settings above, and so does a blank font or size. Remove a language to go back to them.</p>
-                <div class="language-typography-add">
-                  <label for="translation-language-typography-add">Add a language</label>
-                  <!-- No name: picking a language adds an entry to the hidden translation_language_typography field. -->
-                  <select id="translation-language-typography-add">
-                    <option value="">Choose a language…</option>
-                  </select>
-                </div>
-                <div class="language-typography-list" id="translation-language-typography-list"></div>
-                <input type="hidden" id="translation_language_typography" name="translation_language_typography" value="{}">
-              </details>
-            </div>
-          </details>
-
-          <details class="section-card section-accordion" id="citation-typography" name="citation-typography">
-            <summary class="section-card-summary"><span>Citation</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Applies to the citation under each inserted source: the editions used and their licenses. Turn it on or off with <strong>Citation</strong> in the Insertion tab’s Layout.</p>
-
-              <div class="subsection-card">
-                <div class="subsection-title">Typography</div>
-                <p class="subsection-note"><strong>Same as the text above</strong> and a blank size keep the font and size of the passage the citation follows.</p>
-                <div class="compact-row">
-                  <div class="compact-field">
-                    <label for="citation_font">Font</label>
-                    <select name="citation_font" id="citation_font" data-font-role="latin">
-                      <option value="">Same as the text above</option>
-                      <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                    </select>
-                  </div>
-                  <div class="compact-field compact-field--size">
-                    <label for="citation_font_size">Size</label>
-                    <input id="citation_font_size" type="number" name="citation_font_size" min="1" max="400" step="0.1" placeholder="Auto">
-                  </div>
-                  <div class="compact-field compact-field--style">
-                    <label>Style</label>
-                    <div class="style-control" data-style-control="citation_font_style">
-                      <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                      <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                      <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                    </div>
-                    <input type="hidden" id="citation_font_style" name="citation_font_style">
-                  </div>
-                </div>
-                <div class="compact-inline-pair compact-inline-pair--spaced">
-                  <div class="compact-field compact-field--color">
-                    <label for="citation_font_color">Text colour</label>
-                    <div class="color-control">
-                      <input id="citation_font_color" type="color" name="citation_font_color" value="#000000" aria-label="Citation text colour">
-                      <button type="button" class="color-clear-btn" data-color-clear="citation_font_color" title="Use the document’s own colour">Auto</button>
-                    </div>
-                  </div>
-                  <div class="compact-field compact-field--color">
-                    <label for="citation_font_background">Highlight</label>
-                    <div class="color-control">
-                      <input id="citation_font_background" type="color" name="citation_font_background" value="#ffff00" aria-label="Citation highlight colour">
-                      <button type="button" class="color-clear-btn" data-color-clear="citation_font_background" title="No highlight">None</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="inline-preview" id="citation_preview"><span class="label">Preview</span>Translation: The Contemporary Torah, JPS, 2006 · License: CC-BY-NC</div>
-              </div>
-            </div>
-          </details>
-
-          <details class="section-card section-accordion" id="source-emphasis" name="source-emphasis">
-            <summary class="section-card-summary"><span>✒️ Source Emphasis</span></summary>
-            <div class="section-card-body">
-              <p class="section-note">Some Sefaria texts use bold and italics to carry meaning — the Steinsaltz Talmud bolds the Talmud’s own words to separate them from Steinsaltz’s explanation, and many translations italicize interpolated words.</p>
-
-              <div class="subsection-card">
-                <div class="segmented-row">
-                  <div class="segmented-copy">
-                    <div class="segmented-title" id="pref-source-emphasis-label">The translation’s bold and italics</div>
-                    <div class="segmented-help"><strong>Keep</strong>: your font styles set the baseline and the translation’s own emphasis is kept on top of it. <strong>Discard</strong>: your font styles are applied uniformly and the translation’s emphasis is dropped. <strong>Bold only</strong>: only the translation’s bold is inserted. Sefaria sets its direct translation in bold and the commentary around it in plain text, so this inserts, for example, just the Talmud’s own words, without Steinsaltz’s explanation. This setting never changes the Hebrew: it is always inserted whole, its own emphasis kept. <strong>Bold &amp; italics</strong> in the sidebar’s Insertion Options is the same setting.</div>
-                  </div>
-                  <div class="segmented-control emphasis-mode-control" role="radiogroup" aria-labelledby="pref-source-emphasis-label" data-pref-group="source_emphasis_mode">
-                    <button type="button" class="segmented-option is-active" data-value="keep" role="radio" aria-checked="true" title="Keep the translation’s bold and italics"><span class="emphasis-mode-glyph emphasis-mode-glyph--keep" aria-hidden="true"><b>B&amp;I</b></span>Keep</button>
-                    <button type="button" class="segmented-option" data-value="discard" role="radio" aria-checked="false" title="Discard the translation’s bold and italics"><span class="emphasis-mode-glyph emphasis-mode-glyph--discard" aria-hidden="true"><s>B&amp;I</s></span>Discard</button>
-                    <button type="button" class="segmented-option" data-value="only" role="radio" aria-checked="false" title="Keep only the bold: Sefaria’s direct translation, without its commentary"><span class="emphasis-mode-glyph emphasis-mode-glyph--only" aria-hidden="true"><b><u>B</u></b></span>Bold only</button>
-                  </div>
-                  <input type="hidden" id="source_emphasis_mode" name="source_emphasis_mode" value="keep">
-                </div>
-              </div>
-
-              <details class="subsection-card" id="emphasis-mapping">
-                <summary class="subsection-title">Advanced: map the source’s emphasis to your own formatting</summary>
-                <p class="subsection-note">Keeping the source’s bold as bold is the default. If your documents use a different convention — say, blue text instead of bold for the Talmud’s own words — map it here. Turn every option off in a card to drop that emphasis entirely. These settings do nothing while the source’s bold and italics are set to Discard.</p>
-                <div class="emphasis-map-grid">
-                  <div class="emphasis-map-card">
-                    <div class="subsection-title">Where the source is bold</div>
-                    <span class="emphasis-sample">e.g. the Talmud’s own words in the Steinsaltz translation</span>
-                    <div class="compact-row compact-row--comfortable">
-                      <div class="compact-field compact-field--style">
-                        <label>Render as</label>
-                        <div class="style-control" data-style-control="emphasis_bold_style">
-                          <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                          <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                          <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                        </div>
-                        <input type="hidden" id="emphasis_bold_style" name="emphasis_bold_style" value="bold">
-                      </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="emphasis_bold_color">Text colour</label>
-                        <div class="color-control">
-                          <input id="emphasis_bold_color" type="color" name="emphasis_bold_color" value="#1f3b68" aria-label="Colour for bold source text">
-                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_bold_color" title="No colour change">Auto</button>
-                        </div>
-                      </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="emphasis_bold_background">Highlight</label>
-                        <div class="color-control">
-                          <input id="emphasis_bold_background" type="color" name="emphasis_bold_background" value="#fff3b0" aria-label="Highlight for bold source text">
-                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_bold_background" title="No highlight">None</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="compact-field">
-                      <label for="emphasis_bold_font">Font override</label>
-                      <select name="emphasis_bold_font" id="emphasis_bold_font" data-font-role="latin">
-                        <option value="">Same as the surrounding text</option>
-                        <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                      </select>
-                    </div>
-                  </div>
-                  <div class="emphasis-map-card">
-                    <div class="subsection-title">Where the source is italic</div>
-                    <span class="emphasis-sample">e.g. words a translator supplied that are not in the Hebrew</span>
-                    <div class="compact-row compact-row--comfortable">
-                      <div class="compact-field compact-field--style">
-                        <label>Render as</label>
-                        <div class="style-control" data-style-control="emphasis_italic_style">
-                          <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
-                          <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
-                          <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
-                        </div>
-                        <input type="hidden" id="emphasis_italic_style" name="emphasis_italic_style" value="italic">
-                      </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="emphasis_italic_color">Text colour</label>
-                        <div class="color-control">
-                          <input id="emphasis_italic_color" type="color" name="emphasis_italic_color" value="#1f3b68" aria-label="Colour for italic source text">
-                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_italic_color" title="No colour change">Auto</button>
-                        </div>
-                      </div>
-                      <div class="compact-field compact-field--color">
-                        <label for="emphasis_italic_background">Highlight</label>
-                        <div class="color-control">
-                          <input id="emphasis_italic_background" type="color" name="emphasis_italic_background" value="#fff3b0" aria-label="Highlight for italic source text">
-                          <button type="button" class="color-clear-btn" data-color-clear="emphasis_italic_background" title="No highlight">None</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="compact-field">
-                      <label for="emphasis_italic_font">Font override</label>
-                      <select name="emphasis_italic_font" id="emphasis_italic_font" data-font-role="latin">
-                        <option value="">Same as the surrounding text</option>
-                        <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </details>
-
-        </div>
-
-        <div class="pref-tab-panel" id="pref-tab-insertion" role="tabpanel" aria-labelledby="pref-tab-insertion-btn" hidden>
-
-          <!-- Layout — above Insertion Defaults per UX requirement -->
-          <details class="section-card section-accordion" id="display-defaults" name="display-defaults" open>
-            <summary class="section-card-summary"><span>Layout</span></summary>
-            <div class="section-card-body">
-              <?!= include('shared/insertion-options/markup') ?>
-              <input type="hidden" id="output_mode_default" name="output_mode_default" value="both">
-              <input type="hidden" id="bilingual_layout_default" name="bilingual_layout_default" value="he-right">
-              <input type="hidden" id="bilingual_aligned_rows" name="bilingual_aligned_rows" value="false">
               <div class="mini-help">Which text layers and layout to use when inserting a source.</div>
             </div>
           </details>
@@ -672,7 +137,7 @@
               <!-- Texts workflow -->
               <div class="pref-workflow-panel" id="pref-workflow-texts" role="tabpanel" aria-labelledby="pref-workflow-tab-texts">
                 <p class="section-note">Set the defaults applied to new text insertions: the linked title and title font (source and translation, separately), cantillation, vowels, punctuation (Hebrew and translation, separately), transliteration, and the translation’s bold and italics. Line numbers and the citation are under Layout. The sidebar can still override these for a single insertion.</p>
-                <div class="cc-card" id="composition-card-container" data-cc-features="linkedTitle,openSections,fonts,titleFonts" aria-label="Default insertion preview">
+                <div class="cc-card" id="composition-card-container" data-cc-features="linkedTitle,openSections,fonts,titleFonts,translitFont" aria-label="Default insertion preview">
                   <?!= include('shared/composition-card/markup') ?>
                 </div>
                 <div class="composition-state-inputs" hidden>
@@ -687,6 +152,472 @@
                   <input id="insert_hebrew_sefaria_link_default" type="checkbox" name="insert_hebrew_sefaria_link_default">
                   <input id="show_line_markers_default" type="checkbox" name="show_line_markers_default" checked>
                   <input id="include_translation_source_info" type="checkbox" name="include_translation_source_info">
+                  <!-- Shown in the card: Style (transliteration) and Bold & italics. -->
+                  <select id="transliteration_scheme" name="transliteration_scheme">
+                    <option value="simple_english">Simple English</option>
+                    <option value="traditional">Traditional</option>
+                    <option value="modern_israeli">Modern Israeli</option>
+                    <option value="ashkenazi">Ashkenazi</option>
+                    <option value="academic_full">Academic (Full)</option>
+                    <option value="ipa_modern">IPA (Modern Israeli)</option>
+                    <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
+                  </select>
+                  <input type="hidden" id="source_emphasis_mode" name="source_emphasis_mode" value="keep">
+                </div>
+                <!-- Moved into the card above by preferences/js.html (_initPreferencesCompositionCard):
+                     each data-font-editor opens in place under its font button (fontEditor),
+                     and each data-cc-attach is placed beside the setting it belongs to. Hidden
+                     until then; every field keeps its name, so Save stores it wherever it is. -->
+                <div class="pref-card-extras" id="pref-card-extras" hidden>
+                  <div class="pref-font-editor" data-font-editor="hebrewTitle" aria-label="Source title font">
+                    <div class="subsection-card">
+                      <div class="subsection-title">Title font</div>
+                      <p class="subsection-note">The source title’s font, whether or not it is linked to Sefaria. <strong>Match the document</strong> and a blank size take the font and size of the text where you insert — or, with a heading style, the heading’s own font and size.</p>
+                      <div class="compact-row">
+                        <div class="compact-field">
+                          <label for="hebrew_title_font">Font</label>
+                          <select name="hebrew_title_font" id="hebrew_title_font" data-font-role="hebrew">
+                            <option value="">Match the document</option>
+                            <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                          </select>
+                        </div>
+                        <div class="compact-field compact-field--size">
+                          <label for="hebrew_title_font_size">Size</label>
+                          <input id="hebrew_title_font_size" type="number" name="hebrew_title_font_size" min="1" max="400" step="0.1" placeholder="Auto">
+                        </div>
+                        <div class="compact-field compact-field--style">
+                          <label>Style</label>
+                          <div class="style-control" data-style-control="hebrew_title_font_style">
+                            <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                            <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                            <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                          </div>
+                          <input type="hidden" id="hebrew_title_font_style" name="hebrew_title_font_style">
+                        </div>
+                      </div>
+                      <div class="compact-inline-pair compact-inline-pair--spaced">
+                        <div class="compact-field compact-field--color">
+                          <label for="hebrew_title_font_color">Text colour</label>
+                          <div class="color-control">
+                            <input id="hebrew_title_font_color" type="color" name="hebrew_title_font_color" value="#000000" aria-label="Source title text colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="hebrew_title_font_color" title="Use the document’s own colour">Auto</button>
+                          </div>
+                        </div>
+                        <div class="compact-field compact-field--color">
+                          <label for="hebrew_title_font_background">Highlight</label>
+                          <div class="color-control">
+                            <input id="hebrew_title_font_background" type="color" name="hebrew_title_font_background" value="#ffff00" aria-label="Source title highlight colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="hebrew_title_font_background" title="No highlight">None</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="inline-preview" id="hebrew_title_preview" dir="rtl" lang="he"><span class="label">Preview</span>דברים יא:יח</div>
+                    </div>
+
+                    <div class="subsection-card">
+                      <div class="toggle-row">
+                        <div class="toggle-copy">
+                          <div class="toggle-title">Hyperlink formatting override</div>
+                          <div class="toggle-help">While the source title is linked to Sefaria (<strong>Link title to Sefaria</strong>, above), format it as set here instead of with the title font above.</div>
+                        </div>
+                        <label class="switch" for="hebrew_link_format_override">
+                          <input id="hebrew_link_format_override" type="checkbox" name="hebrew_link_format_override">
+                          <span class="slider"></span>
+                        </label>
+                      </div>
+                      <div class="link-override-fields" data-link-override="hebrew_link_format_override">
+                        <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert — or, with a heading style, the heading’s own font and size.</p>
+                        <div class="compact-row">
+                          <div class="compact-field">
+                            <label for="hebrew_link_font">Font</label>
+                            <select name="hebrew_link_font" id="hebrew_link_font" data-font-role="hebrew">
+                              <option value="">Match the document</option>
+                              <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                            </select>
+                          </div>
+                          <div class="compact-field compact-field--size">
+                            <label for="hebrew_link_font_size">Size</label>
+                            <input id="hebrew_link_font_size" type="number" name="hebrew_link_font_size" min="1" max="400" step="0.1" placeholder="Auto">
+                          </div>
+                          <div class="compact-field compact-field--style">
+                            <label>Style</label>
+                            <div class="style-control" data-style-control="hebrew_link_font_style">
+                              <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                              <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                              <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                            </div>
+                            <input type="hidden" id="hebrew_link_font_style" name="hebrew_link_font_style">
+                          </div>
+                        </div>
+                        <div class="compact-inline-pair compact-inline-pair--spaced">
+                          <div class="compact-field compact-field--color">
+                            <label for="hebrew_link_font_color">Text colour</label>
+                            <div class="color-control">
+                              <input id="hebrew_link_font_color" type="color" name="hebrew_link_font_color" value="#000000" aria-label="Linked source title text colour">
+                              <button type="button" class="color-clear-btn" data-color-clear="hebrew_link_font_color" title="Use the document’s own colour">Auto</button>
+                            </div>
+                          </div>
+                          <div class="compact-field compact-field--color">
+                            <label for="hebrew_link_font_background">Highlight</label>
+                            <div class="color-control">
+                              <input id="hebrew_link_font_background" type="color" name="hebrew_link_font_background" value="#ffff00" aria-label="Linked source title highlight colour">
+                              <button type="button" class="color-clear-btn" data-color-clear="hebrew_link_font_background" title="No highlight">None</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="inline-preview" id="hebrew_link_preview" dir="rtl" lang="he"><span class="label">Preview</span><span class="preview-link-sample">דברים יא:יח</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pref-font-editor" data-font-editor="hebrew" aria-label="Hebrew font">
+                    <div class="subsection-card">
+                      <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert.</p>
+                      <div class="compact-row">
+                        <div class="compact-field">
+                          <label for="hebrew_font">Font</label>
+                          <select name="hebrew_font" id="hebrew_font" data-font-role="hebrew">
+                            <option value="">Match the document</option>
+                            <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                          </select>
+                        </div>
+                        <div class="compact-field compact-field--size">
+                          <label for="hebrew_font_size">Size</label>
+                          <input id="hebrew_font_size" type="number" name="hebrew_font_size" min="1" max="400" step="0.1" placeholder="Auto">
+                        </div>
+                        <div class="compact-field compact-field--style">
+                          <label>Style</label>
+                          <div class="style-control" data-style-control="hebrew_font_style">
+                            <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                            <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                            <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                          </div>
+                          <input type="hidden" id="hebrew_font_style" name="hebrew_font_style">
+                        </div>
+                      </div>
+                      <div class="compact-inline-pair compact-inline-pair--spaced">
+                        <div class="compact-field compact-field--color">
+                          <label for="hebrew_font_color">Text colour</label>
+                          <div class="color-control">
+                            <input id="hebrew_font_color" type="color" name="hebrew_font_color" value="#000000" aria-label="Hebrew text colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="hebrew_font_color" title="Use the document’s own colour">Auto</button>
+                          </div>
+                        </div>
+                        <div class="compact-field compact-field--color">
+                          <label for="hebrew_font_background">Highlight</label>
+                          <div class="color-control">
+                            <input id="hebrew_font_background" type="color" name="hebrew_font_background" value="#ffff00" aria-label="Hebrew highlight colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="hebrew_font_background" title="No highlight">None</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="inline-preview hebrew" id="hebrew_font_preview"><span class="label">Preview</span><span class="inline-preview-text" id="hebrew_font_preview_text">וְשַׂמְתֶּם֙ אֶת־דְּבָרַ֣י אֵ֔לֶּה עַל־לְבַבְכֶ֖ם</span></div>
+                    </div>
+                  </div>
+                  <div class="pref-font-editor" data-font-editor="transliteration" aria-label="Transliteration font">
+                    <div class="subsection-card">
+                      <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert.</p>
+                      <div class="compact-row">
+                        <div class="compact-field">
+                          <label for="transliteration_font">Font</label>
+                          <select name="transliteration_font" id="transliteration_font" data-font-role="latin">
+                            <option value="">Match the document</option>
+                            <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                          </select>
+                        </div>
+                        <div class="compact-field compact-field--size">
+                          <label for="transliteration_font_size">Size</label>
+                          <input id="transliteration_font_size" type="number" name="transliteration_font_size" min="1" max="400" step="0.1" placeholder="Auto">
+                        </div>
+                        <div class="compact-field compact-field--style">
+                          <label>Style</label>
+                          <div class="style-control" data-style-control="transliteration_font_style">
+                            <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                            <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                            <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                          </div>
+                          <input type="hidden" id="transliteration_font_style" name="transliteration_font_style">
+                        </div>
+                      </div>
+                      <div class="compact-inline-pair compact-inline-pair--spaced">
+                        <div class="compact-field compact-field--color">
+                          <label for="transliteration_font_color">Text colour</label>
+                          <div class="color-control">
+                            <input id="transliteration_font_color" type="color" name="transliteration_font_color" value="#000000" aria-label="Transliteration text colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="transliteration_font_color" title="Use the document’s own colour">Auto</button>
+                          </div>
+                        </div>
+                        <div class="compact-field compact-field--color">
+                          <label for="transliteration_font_background">Highlight</label>
+                          <div class="color-control">
+                            <input id="transliteration_font_background" type="color" name="transliteration_font_background" value="#ffff00" aria-label="Transliteration highlight colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="transliteration_font_background" title="No highlight">None</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="inline-preview transliteration" id="transliteration_preview"><span class="label">Preview</span>Ve-samtem et devarai eileh al levavchem</div>
+                    </div>
+                  </div>
+                  <div class="pref-font-editor" data-font-editor="translationTitle" aria-label="Translation title font">
+                    <div class="subsection-card">
+                      <div class="subsection-title">Title font</div>
+                      <p class="subsection-note">The translation title’s font, whether or not it is linked to Sefaria. <strong>Match the document</strong> and a blank size take the font and size of the text where you insert — or, with a heading style, the heading’s own font and size.</p>
+                      <div class="compact-row">
+                        <div class="compact-field">
+                          <label for="source_title_font">Font</label>
+                          <select name="source_title_font" id="source_title_font" data-font-role="latin">
+                            <option value="">Match the document</option>
+                            <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                          </select>
+                        </div>
+                        <div class="compact-field compact-field--size">
+                          <label for="source_title_font_size">Size</label>
+                          <input id="source_title_font_size" type="number" name="source_title_font_size" min="1" max="400" step="0.1" placeholder="Auto">
+                        </div>
+                        <div class="compact-field compact-field--style">
+                          <label>Style</label>
+                          <div class="style-control" data-style-control="source_title_font_style">
+                            <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                            <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                            <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                          </div>
+                          <input type="hidden" id="source_title_font_style" name="source_title_font_style">
+                        </div>
+                      </div>
+                      <div class="compact-inline-pair compact-inline-pair--spaced">
+                        <div class="compact-field compact-field--color">
+                          <label for="source_title_font_color">Text colour</label>
+                          <div class="color-control">
+                            <input id="source_title_font_color" type="color" name="source_title_font_color" value="#000000" aria-label="Title text colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="source_title_font_color" title="Use the document’s own colour">Auto</button>
+                          </div>
+                        </div>
+                        <div class="compact-field compact-field--color">
+                          <label for="source_title_font_background">Highlight</label>
+                          <div class="color-control">
+                            <input id="source_title_font_background" type="color" name="source_title_font_background" value="#ffff00" aria-label="Title highlight colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="source_title_font_background" title="No highlight">None</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="inline-preview" id="source_title_preview"><span class="label">Preview</span>Deuteronomy 11:18</div>
+                    </div>
+
+                    <div class="subsection-card">
+                      <div class="toggle-row">
+                        <div class="toggle-copy">
+                          <div class="toggle-title">Hyperlink formatting override</div>
+                          <div class="toggle-help">While the translation title is linked to Sefaria (<strong>Link title to Sefaria</strong>, above), format it as set here instead of with the title font above.</div>
+                        </div>
+                        <label class="switch" for="sefaria_link_format_override">
+                          <input id="sefaria_link_format_override" type="checkbox" name="sefaria_link_format_override">
+                          <span class="slider"></span>
+                        </label>
+                      </div>
+                      <div class="link-override-fields" data-link-override="sefaria_link_format_override">
+                        <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert — or, with a heading style, the heading’s own font and size.</p>
+                        <div class="compact-row">
+                          <div class="compact-field">
+                            <label for="sefaria_link_font">Font</label>
+                            <select name="sefaria_link_font" id="sefaria_link_font" data-font-role="latin">
+                              <option value="">Match the document</option>
+                              <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                            </select>
+                          </div>
+                          <div class="compact-field compact-field--size">
+                            <label for="sefaria_link_font_size">Size</label>
+                            <input id="sefaria_link_font_size" type="number" name="sefaria_link_font_size" min="1" max="400" step="0.1" placeholder="Auto">
+                          </div>
+                          <div class="compact-field compact-field--style">
+                            <label>Style</label>
+                            <div class="style-control" data-style-control="sefaria_link_font_style">
+                              <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                              <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                              <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                            </div>
+                            <input type="hidden" id="sefaria_link_font_style" name="sefaria_link_font_style">
+                          </div>
+                        </div>
+                        <div class="compact-inline-pair compact-inline-pair--spaced">
+                          <div class="compact-field compact-field--color">
+                            <label for="sefaria_link_font_color">Text colour</label>
+                            <div class="color-control">
+                              <input id="sefaria_link_font_color" type="color" name="sefaria_link_font_color" value="#000000" aria-label="Linked title text colour">
+                              <button type="button" class="color-clear-btn" data-color-clear="sefaria_link_font_color" title="Use the document’s own colour">Auto</button>
+                            </div>
+                          </div>
+                          <div class="compact-field compact-field--color">
+                            <label for="sefaria_link_font_background">Highlight</label>
+                            <div class="color-control">
+                              <input id="sefaria_link_font_background" type="color" name="sefaria_link_font_background" value="#ffff00" aria-label="Linked title highlight colour">
+                              <button type="button" class="color-clear-btn" data-color-clear="sefaria_link_font_background" title="No highlight">None</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="inline-preview" id="sefaria_link_preview"><span class="label">Preview</span><span class="preview-link-sample">Deuteronomy 11:18</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pref-font-editor" data-font-editor="translation" aria-label="Translation font">
+                    <div class="subsection-card">
+                      <p class="subsection-note"><strong>Match the document</strong> and a blank size take the font and size of the text where you insert.</p>
+                      <div class="compact-row">
+                        <div class="compact-field">
+                          <label for="translation_font">Font</label>
+                          <select name="translation_font" id="translation_font" data-font-role="latin">
+                            <option value="">Match the document</option>
+                            <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                          </select>
+                        </div>
+                        <div class="compact-field compact-field--size">
+                          <label for="translation_font_size">Size</label>
+                          <input id="translation_font_size" type="number" name="translation_font_size" min="1" max="400" step="0.1" placeholder="Auto">
+                        </div>
+                        <div class="compact-field compact-field--style">
+                          <label>Style</label>
+                          <div class="style-control" data-style-control="translation_font_style">
+                            <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                            <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                            <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                          </div>
+                          <input type="hidden" id="translation_font_style" name="translation_font_style">
+                        </div>
+                      </div>
+                      <div class="compact-inline-pair compact-inline-pair--spaced">
+                        <div class="compact-field compact-field--color">
+                          <label for="translation_font_color">Text colour</label>
+                          <div class="color-control">
+                            <input id="translation_font_color" type="color" name="translation_font_color" value="#000000" aria-label="Translation text colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="translation_font_color" title="Use the document’s own colour">Auto</button>
+                          </div>
+                        </div>
+                        <div class="compact-field compact-field--color">
+                          <label for="translation_font_background">Highlight</label>
+                          <div class="color-control">
+                            <input id="translation_font_background" type="color" name="translation_font_background" value="#ffff00" aria-label="Translation highlight colour">
+                            <button type="button" class="color-clear-btn" data-color-clear="translation_font_background" title="No highlight">None</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="inline-preview translation" id="translation_font_preview"><span class="label">Preview</span>Therefore place these words of Mine upon your heart…</div>
+                    </div>
+
+                    <details class="subsection-card" id="translation-language-typography">
+                      <summary class="subsection-title">Advanced: formatting for specific languages</summary>
+                      <p class="subsection-note">Give translations in one language their own font, size and style. Every language you don’t add here uses the Translation settings above, and so does a blank font or size. Remove a language to go back to them.</p>
+                      <div class="language-typography-add">
+                        <label for="translation-language-typography-add">Add a language</label>
+                        <!-- No name: picking a language adds an entry to the hidden translation_language_typography field. -->
+                        <select id="translation-language-typography-add">
+                          <option value="">Choose a language…</option>
+                        </select>
+                      </div>
+                      <div class="language-typography-list" id="translation-language-typography-list"></div>
+                      <input type="hidden" id="translation_language_typography" name="translation_language_typography" value="{}">
+                    </details>
+                  </div>
+                  <div class="cc-row pref-card-row" data-cc-attach="translationLanguage" title="If this language is unavailable, the sidebar tries English next and then any other available language.">
+                    <label class="cc-row-label" for="preferred_translation_language">Language</label>
+                    <select id="preferred_translation_language" name="preferred_translation_language">
+                      <option value="en">English</option>
+                      <option value="he">Hebrew</option>
+                      <option value="ar">Arabic</option>
+                      <option value="cs">Czech</option>
+                      <option value="eo">Esperanto</option>
+                      <option value="fa">Farsi (Persian)</option>
+                      <option value="fi">Finnish</option>
+                      <option value="fr">French</option>
+                      <option value="de">German</option>
+                      <option value="hu">Hungarian</option>
+                      <option value="it">Italian</option>
+                      <option value="itk">Judeo-Italian</option>
+                      <option value="jrb">Judeo-Arabic</option>
+                      <option value="lad">Ladino (Judeo-Spanish)</option>
+                      <option value="ko">Korean</option>
+                      <option value="pl">Polish</option>
+                      <option value="pt">Portuguese</option>
+                      <option value="ru">Russian</option>
+                      <option value="es">Spanish</option>
+                      <option value="yi">Yiddish</option>
+                    </select>
+                  </div>
+                  <details class="subsection-card pref-card-details" id="emphasis-mapping" data-cc-attach="emphasisMapping">
+                    <summary class="subsection-title">Advanced: how the kept bold and italics look</summary>
+                    <p class="subsection-note">Some Sefaria texts use bold and italics to carry meaning — the Steinsaltz Talmud bolds the Talmud’s own words to separate them from Steinsaltz’s explanation, and many translations italicize interpolated words. Keeping the source’s bold as bold is the default. If your documents use a different convention — say, blue text instead of bold for the Talmud’s own words — map it here. Turn every option off in a card to drop that emphasis entirely. These settings do nothing while <strong>Bold &amp; italics</strong> is set to Drop.</p>
+                    <div class="emphasis-map-grid">
+                      <div class="emphasis-map-card">
+                        <div class="subsection-title">Where the source is bold</div>
+                        <span class="emphasis-sample">e.g. the Talmud’s own words in the Steinsaltz translation</span>
+                        <div class="compact-row compact-row--comfortable">
+                          <div class="compact-field compact-field--style">
+                            <label>Render as</label>
+                            <div class="style-control" data-style-control="emphasis_bold_style">
+                              <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                              <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                              <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                            </div>
+                            <input type="hidden" id="emphasis_bold_style" name="emphasis_bold_style" value="bold">
+                          </div>
+                          <div class="compact-field compact-field--color">
+                            <label for="emphasis_bold_color">Text colour</label>
+                            <div class="color-control">
+                              <input id="emphasis_bold_color" type="color" name="emphasis_bold_color" value="#1f3b68" aria-label="Colour for bold source text">
+                              <button type="button" class="color-clear-btn" data-color-clear="emphasis_bold_color" title="No colour change">Auto</button>
+                            </div>
+                          </div>
+                          <div class="compact-field compact-field--color">
+                            <label for="emphasis_bold_background">Highlight</label>
+                            <div class="color-control">
+                              <input id="emphasis_bold_background" type="color" name="emphasis_bold_background" value="#fff3b0" aria-label="Highlight for bold source text">
+                              <button type="button" class="color-clear-btn" data-color-clear="emphasis_bold_background" title="No highlight">None</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="compact-field">
+                          <label for="emphasis_bold_font">Font override</label>
+                          <select name="emphasis_bold_font" id="emphasis_bold_font" data-font-role="latin">
+                            <option value="">Same as the surrounding text</option>
+                            <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                          </select>
+                        </div>
+                      </div>
+                      <div class="emphasis-map-card">
+                        <div class="subsection-title">Where the source is italic</div>
+                        <span class="emphasis-sample">e.g. words a translator supplied that are not in the Hebrew</span>
+                        <div class="compact-row compact-row--comfortable">
+                          <div class="compact-field compact-field--style">
+                            <label>Render as</label>
+                            <div class="style-control" data-style-control="emphasis_italic_style">
+                              <button type="button" class="style-btn bold" data-style-flag="bold">B</button>
+                              <button type="button" class="style-btn italic" data-style-flag="italic">I</button>
+                              <button type="button" class="style-btn underline" data-style-flag="underline">U</button>
+                            </div>
+                            <input type="hidden" id="emphasis_italic_style" name="emphasis_italic_style" value="italic">
+                          </div>
+                          <div class="compact-field compact-field--color">
+                            <label for="emphasis_italic_color">Text colour</label>
+                            <div class="color-control">
+                              <input id="emphasis_italic_color" type="color" name="emphasis_italic_color" value="#1f3b68" aria-label="Colour for italic source text">
+                              <button type="button" class="color-clear-btn" data-color-clear="emphasis_italic_color" title="No colour change">Auto</button>
+                            </div>
+                          </div>
+                          <div class="compact-field compact-field--color">
+                            <label for="emphasis_italic_background">Highlight</label>
+                            <div class="color-control">
+                              <input id="emphasis_italic_background" type="color" name="emphasis_italic_background" value="#fff3b0" aria-label="Highlight for italic source text">
+                              <button type="button" class="color-clear-btn" data-color-clear="emphasis_italic_background" title="No highlight">None</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="compact-field">
+                          <label for="emphasis_italic_font">Font override</label>
+                          <select name="emphasis_italic_font" id="emphasis_italic_font" data-font-role="latin">
+                            <option value="">Same as the surrounding text</option>
+                            <!-- The rest is filled from shared/fonts/js.html (populateFontSelect). -->
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
                 </div>
               </div>
 
