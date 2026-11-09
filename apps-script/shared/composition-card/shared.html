@@ -25,14 +25,18 @@
 //     // with font "" / size "" meaning "match the document". The title font
 //     // buttons ("titleFonts") edit each title's own font (source_title /
 //     // hebrew_title), linked or not; the linked style that can override it
-//     // is set in Preferences → Fonts → Title. The preview is
+//     // is set in that title's editor in Preferences. The preview is
 //     // drawn in those fonts, with the marks a font lacks borrowed from Noto as
 //     // the insert always does. The borrowing is a design decision noted in
 //     // Help, not a setting, and not something the card talks about.
 //     onFontChange:   function(prefix, field, value) { /* prefix: one of CC_FONT_PREFIXES, so the
 //                     preference is prefix + '_font' / prefix + '_font_size'; field 'font'|'size' */ },
 //     onMoreFontSettings:  function(role) { /* optional: shows "Colour, style and more…";
-//                     role 'hebrew'|'translation'|'hebrewTitle'|'translationTitle' */ }
+//                     role 'hebrew'|'translation'|'hebrewTitle'|'translationTitle' */ },
+//     fontEditor:     function(role) { /* optional: an element holding the host's own
+//                     full editor for that font (Preferences). A font button
+//                     with one opens it in place, under the button's row,
+//                     instead of the small font-and-size panel. */ }
 //   });
 //
 // The Source and Translation sections are <details>, closed so the card stays
@@ -111,9 +115,11 @@ function ccSetChoice($group, value) {
 }
 
 // The font preferences the card's font buttons read and write: the Hebrew
-// and translation text, and each title (source = hebrew_*, translation =
-// source_title / sefaria_link), plain and linked.
-var CC_FONT_PREFIXES = ['hebrew', 'translation', 'source_title', 'sefaria_link', 'hebrew_title', 'hebrew_link'];
+// and translation text, each title (source = hebrew_*, translation =
+// source_title / sefaria_link), plain and linked, and the transliteration and
+// citation (their buttons are Preferences' only: "translitFont", and a button
+// Preferences adds to its Layout section).
+var CC_FONT_PREFIXES = ['hebrew', 'translation', 'source_title', 'sefaria_link', 'hebrew_title', 'hebrew_link', 'transliteration', 'citation'];
 
 /** getState().fonts from a reader of stored values: read('hebrew_font') etc. */
 function ccFontStateFrom(read) {
@@ -165,7 +171,9 @@ var CC_FONT_ROLE_TITLES = {
   hebrew: 'Hebrew font',
   translation: 'Translation font',
   hebrewTitle: 'Source title font',
-  translationTitle: 'Translation title font'
+  translationTitle: 'Translation title font',
+  transliteration: 'Transliteration font',
+  citation: 'Citation style'
 };
 
 function ccFontPanelTitle(role) {
@@ -179,6 +187,8 @@ var _ccFontsEnabled = false;
 // (getInsertionPointFont). Null until the server answers, or with no server.
 var _ccDocumentFont = null;
 var _ccFontPanelRole = null;
+// The font button whose full editor is open in place (fontEditor), if any.
+var _ccInlineFontRole = null;
 
 function initCompositionCard(config) {
   _ccConfig = config;
@@ -198,6 +208,7 @@ function initCompositionCard(config) {
   if (features.indexOf('openSections') >= 0) $container.find('.cc-section').prop('open', true);
 
   _ccFontsEnabled = features.indexOf('fonts') >= 0 && typeof planHebrewMarkFallback === 'function';
+  if (_ccFontsEnabled) _ccMountInlineFontEditors();
   _bindCompositionCardEvents();
   updateCompositionCard();
   if (_ccFontsEnabled) ccRefreshDocumentFont();
@@ -230,8 +241,10 @@ function _ccEffectiveFont(roleState) {
   return roleState.font || _ccDocumentFont || '';
 }
 
-function _ccFontChipLabel(roleState) {
-  var name = roleState.font || (_ccDocumentFont ? 'Document: ' + _ccDocumentFont : 'Match the document');
+function _ccFontChipLabel(roleState, prefix) {
+  // The citation's blank font is the font of the passage above it.
+  var match = prefix === 'citation' ? 'Same as the text above' : (_ccDocumentFont ? 'Document: ' + _ccDocumentFont : 'Match the document');
+  var name = roleState.font || match;
   return roleState.size ? name + ' \u00B7 ' + roleState.size + ' pt' : name;
 }
 
@@ -274,7 +287,7 @@ function _ccUpdateFonts(state) {
 
   $('.cc-font-chip').each(function () {
     var prefix = ccFontPrefixFor($(this).attr('data-font-role'));
-    $(this).find('.cc-font-chip-name').text(_ccFontChipLabel(fontState[prefix] || { font: '', size: '' }));
+    $(this).find('.cc-font-chip-name').text(_ccFontChipLabel(fontState[prefix] || { font: '', size: '' }, prefix));
   });
 
   var note = _ccFontNote(fontState);
@@ -310,6 +323,7 @@ function ccOpenFontPanel(role, chip) {
   if (!_ccFontsEnabled || !_ccConfig) return;
   var $panel = $('#cc-font-panel');
   var $surface = $panel.closest('.cc-surface');
+  ccCloseInlineFontEditor(false);
   _ccFontPanelRole = role;
   $('#cc-font-more').prop('hidden', typeof _ccConfig.onMoreFontSettings !== 'function');
   $('.cc-font-chip').attr('aria-expanded', 'false');
@@ -327,12 +341,76 @@ function ccOpenFontPanel(role, chip) {
   ccRefreshDocumentFont();
 }
 
+// ---- full editors in place (fontEditor) -----------------------------------
+
+function _ccInlineSlotId(role) {
+  return 'cc-font-inline-' + role;
+}
+
+/**
+ * For each font button the host has a full editor for, a region under the
+ * button's row (after the Hebrew font's note) that holds it, closed. The
+ * editor is moved, not copied: its fields stay the host's own.
+ */
+function _ccMountInlineFontEditors() {
+  if (!_ccConfig || typeof _ccConfig.fontEditor !== 'function') return;
+  $('.cc-font-chip').each(function () {
+    var chip = this;
+    var role = $(chip).attr('data-font-role');
+    var editor = _ccConfig.fontEditor(role);
+    if (!editor) return;
+    var slotId = _ccInlineSlotId(role);
+    var slot = document.getElementById(slotId);
+    if (!slot) {
+      slot = document.createElement('div');
+      slot.className = 'cc-font-inline';
+      slot.id = slotId;
+      slot.setAttribute('role', 'region');
+      slot.setAttribute('aria-label', ccFontPanelTitle(role));
+      slot.setAttribute('data-font-role', role);
+      slot.hidden = true;
+      var $row = $(chip).closest('.cc-row');
+      var $after = $row.next('.cc-font-note').length ? $row.next('.cc-font-note') : $row;
+      $after.after(slot);
+    }
+    slot.appendChild(editor);
+    editor.hidden = false;
+    $(chip).attr({ 'aria-controls': slotId, 'aria-haspopup': null, 'aria-expanded': 'false' }).addClass('has-inline-editor');
+  });
+}
+
+function ccHasInlineFontEditor(role) {
+  return !!document.getElementById(_ccInlineSlotId(role));
+}
+
+/** Opens one font's full editor in place, closing any other. */
+function ccOpenInlineFontEditor(role) {
+  ccCloseFontPanel(false);
+  if (_ccInlineFontRole && _ccInlineFontRole !== role) ccCloseInlineFontEditor(false);
+  var slot = document.getElementById(_ccInlineSlotId(role));
+  if (!slot) return;
+  _ccInlineFontRole = role;
+  slot.hidden = false;
+  $('.cc-font-chip[data-font-role="' + role + '"]').attr('aria-expanded', 'true');
+  if (slot.scrollIntoView) slot.scrollIntoView({ block: 'nearest' });
+}
+
+function ccCloseInlineFontEditor(returnFocus) {
+  if (!_ccInlineFontRole) return;
+  var role = _ccInlineFontRole;
+  _ccInlineFontRole = null;
+  var slot = document.getElementById(_ccInlineSlotId(role));
+  if (slot) slot.hidden = true;
+  $('.cc-font-chip[data-font-role="' + role + '"]').attr('aria-expanded', 'false');
+  if (returnFocus) $('.cc-font-chip[data-font-role="' + role + '"]').trigger('focus');
+}
+
 function ccCloseFontPanel(returnFocus) {
   if (!_ccFontPanelRole) return;
   var role = _ccFontPanelRole;
   _ccFontPanelRole = null;
   $('#cc-font-panel').prop('hidden', true);
-  $('.cc-font-chip').attr('aria-expanded', 'false');
+  $('.cc-font-chip:not(.has-inline-editor)').attr('aria-expanded', 'false');
   if (returnFocus) $('.cc-font-chip[data-font-role="' + role + '"]').trigger('focus');
 }
 
@@ -394,6 +472,8 @@ function updateCompositionCard() {
   // Transliteration: the switch, and the scheme only while it is on
   ccSetToggle($('#cc-translit-pill'), !!state.transliterationOn);
   $('#cc-translit-scheme-row').prop('hidden', !state.transliterationOn);
+  $('#cc-translit-font-row').prop('hidden', !state.transliterationOn);
+  if (!state.transliterationOn && _ccInlineFontRole === 'transliteration') ccCloseInlineFontEditor(false);
 
   // Line numbers and the source citation (in shared/insertion-options)
   ccSetToggle($('#cc-lines-toggle'), !!state.linesOn);
@@ -502,8 +582,20 @@ function _bindCompositionCardEvents() {
   $('.cc-font-chip').off('click.cc').on('click.cc', function (event) {
     event.preventDefault();
     var role = $(this).attr('data-font-role');
+    if (ccHasInlineFontEditor(role)) {
+      if (_ccInlineFontRole === role) ccCloseInlineFontEditor(false);
+      else ccOpenInlineFontEditor(role);
+      return;
+    }
     if (_ccFontPanelRole === role) ccCloseFontPanel(true);
     else ccOpenFontPanel(role, this);
+  });
+  $('.cc-font-inline').off('keydown.cc').on('keydown.cc', function (event) {
+    // Escape closes the editor, unless a dropdown inside it is open.
+    if (event.key !== 'Escape' || $(event.target).closest('.custom-select.open').length) return;
+    event.preventDefault();
+    event.stopPropagation();
+    ccCloseInlineFontEditor(true);
   });
   $('#cc-font-select').off('change.cc').on('change.cc', function () {
     if (_ccFontPanelRole) fontChange(ccFontPrefixFor(_ccFontPanelRole), 'font', this.value);

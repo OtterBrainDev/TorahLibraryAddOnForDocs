@@ -357,21 +357,6 @@
     color: #fff;
   }
 
-  /* Source Emphasis: the same B&I glyphs as the sidebar's Layout tray button. */
-  .emphasis-mode-control .segmented-option {
-    gap: 6px;
-    font-size: 13px;
-  }
-
-  .emphasis-mode-glyph {
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
-  .emphasis-mode-glyph--discard {
-    opacity: 0.6;
-  }
-
   .style-control {
     display: grid;
     align-items: center;
@@ -1276,11 +1261,10 @@
 
   /* ── Insertion Defaults: workflow sub-tabs ──────────────────────────── */
 
-  /* Segmented tabs: the Texts / Voices / Lexicon defaults, and Fonts →
-     Title's translation / source title. One light track, the chosen tab
-     raised on it, as the shared Layout pickers (shared/insertion-options). */
-  .pref-workflow-tabs,
-  .title-language-tabs {
+  /* Segmented tabs: the Texts / Voices / Lexicon defaults. One light track,
+     the chosen tab raised on it, as the shared Layout pickers
+     (shared/insertion-options). */
+  .pref-workflow-tabs {
     display: flex;
     gap: 2px;
     margin: 0 0 14px;
@@ -1289,8 +1273,7 @@
     border-radius: 9px;
   }
 
-  .pref-workflow-tab,
-  .title-language-tab {
+  .pref-workflow-tab {
     flex: 1;
     min-width: 0;
     min-height: 30px;
@@ -1305,27 +1288,93 @@
     font-weight: 600;
   }
 
-  .pref-workflow-tab:hover:not(.is-active):not([aria-selected="true"]),
-  .title-language-tab:hover:not([aria-selected="true"]) {
+  .pref-workflow-tab:hover:not(.is-active):not([aria-selected="true"]) {
     color: var(--sefaria-blue);
   }
 
   .pref-workflow-tab.is-active,
-  .pref-workflow-tab[aria-selected="true"],
-  .title-language-tab[aria-selected="true"] {
+  .pref-workflow-tab[aria-selected="true"] {
     background: var(--seg-selected-bg);
     box-shadow: var(--seg-shadow);
     color: var(--seg-selected-text);
   }
 
-  .pref-workflow-tab:focus-visible,
-  .title-language-tab:focus-visible {
+  .pref-workflow-tab:focus-visible {
     outline: 2px solid var(--focus-ring);
     outline-offset: 1px;
   }
 
-  .title-language-panel[hidden] {
+  /* ── Font editors in place, and the rows Preferences adds to the card ── */
+
+  /* A font's full editor, opened under its font button
+     (shared/composition-card: .cc-font-inline). The cards inside it lose
+     their own frame: the region around them is the frame. */
+  .pref-card-extras[hidden] {
     display: none;
+  }
+
+  .cc-font-inline .subsection-card {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .cc-font-inline .subsection-card + .subsection-card,
+  .cc-font-inline .subsection-card + details.subsection-card {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #dde4ee;
+  }
+
+  .cc-font-inline .subsection-note {
+    margin-top: 0;
+  }
+
+  .cc-font-inline .inline-preview {
+    margin-bottom: 0;
+    background: #fff;
+  }
+
+  /* A row with a select (Title style, Language): the select on the right,
+     no wider than a font button. */
+  .pref-card-row > select,
+  .pref-card-row > .custom-select {
+    flex: 0 1 auto;
+    width: auto;
+    max-width: 62%;
+    min-width: 150px;
+  }
+
+  /* …and as low as a font button, so the rows line up. */
+  .pref-card-row .custom-select-button {
+    height: 28px;
+    padding: 0 8px;
+    border-color: var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .pref-layout-rows {
+    margin-top: 0;
+  }
+
+  /* The emphasis mapping, under Bold & italics in the card. */
+  .cc-card .pref-card-details {
+    margin: 4px 0 0;
+    padding: 10px 12px;
+    background: #fff;
+  }
+
+  .cc-card .pref-card-details > .subsection-title {
+    margin: 0;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .cc-card .pref-card-details[open] > .subsection-title {
+    margin-bottom: 8px;
   }
 
   .link-override-fields {

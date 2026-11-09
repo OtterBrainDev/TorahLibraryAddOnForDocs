@@ -329,6 +329,8 @@ test('the composition card calls the third choice "Bold only"', () => {
   const markup = fs.readFileSync('apps-script/shared/composition-card/markup.html', 'utf8');
   assert.match(markup, /data-value="only"[^>]*>Bold only</);
   assert.equal(loadCardScript().CC_EMPHASIS_SUMMARY.only, 'Bold only');
+  // Preferences sets it with the card's own control, and has no second copy.
   const prefs = fs.readFileSync('apps-script/preferences.html', 'utf8');
-  assert.match(prefs, /data-value="only"[^>]*>.*Bold only<\/button>/);
+  assert.match(prefs, /<input type="hidden" id="source_emphasis_mode" name="source_emphasis_mode"/);
+  assert.doesNotMatch(prefs, /data-pref-group="source_emphasis_mode"/);
 });

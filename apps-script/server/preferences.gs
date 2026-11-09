@@ -233,8 +233,8 @@ function getDefaultPreferences() {
     translation_font: "",
     translation_font_size: "",
     translation_font_style: "normal",
-    // Translation formatting for particular languages (Preferences → Fonts →
-    // Translation → Advanced), as JSON: {"fr": {font, size, style}, ...}.
+    // Translation formatting for particular languages (Preferences → Insertion,
+    // the translation's Text font → Advanced), as JSON: {"fr": {font, size, style}, ...}.
     // "{}" means every language uses the Translation settings above. An empty
     // font or size in an entry also falls back to them.
     translation_language_typography: "{}",

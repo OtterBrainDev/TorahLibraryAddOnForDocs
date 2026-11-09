@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **604 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **609 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -247,7 +247,7 @@ and fix it before touching the feature you came to change.
   the fetch applies re-fetches once, with Add Source disabled meanwhile. A
   change made before the bootstrap gives the sidebar its session is kept.
 - `citation-style.test.js` — the citation under a source has its own style
-  (Preferences → Fonts → Citation); its defaults and schema v25 keep the old
+  (Preferences → Insertion → Layout → Citation style); its defaults and schema v25 keep the old
   8 pt italic in the font of the text above.
 - `storage-reads.test.js` — each preference reader reads UserProperties once
   (`snapshotProperties_`): a Link Texts rerun is ~4 reads, not ~310; a scan
@@ -322,6 +322,11 @@ and in `test/ui/`:
   and loads `shared/fonts` first; Preferences' font lists come from that one
   list; fonts Docs does not have (SBL Hebrew, Ezra SIL) are never offered;
   no font UI mentions borrowed marks (Help does).
+- `preferences-font-editors.test.js` — Preferences has no Fonts tab: every
+  font button (titles, Hebrew, transliteration, translation, Layout's Citation
+  style) opens its one full editor in place, moved not copied; the sidebar
+  and Link Texts keep the font panel; the transliteration scheme and Bold &
+  italics have only the card's control.
 - `insertion-options-refresh.test.js` — the Insertion Options tray scrolls
   (its end, the transliteration Style, was cut off in Translation and Both),
   a fetch-time change shows "Updating preview…" at once, every Preferences save
