@@ -146,6 +146,25 @@ function planFirstRunPreferences_(answers, prefs) {
   return { changes: changes, uiMode: uiMode };
 }
 
+/**
+ * What Preferences → Reset To Defaults stores: every setting's default, and
+ * the menu that goes with the interface mode in use (the Simple menu in
+ * Simple mode), so a reset in Simple mode does not leave the full menu under
+ * the Simple interface. The interface mode itself is not a setting and stays.
+ *
+ * @param {Object} defaults  getDefaultPreferences()
+ * @param {string} uiMode    the stored ui_mode
+ * @return {Object<string,*>} values for setPreferences (SETTINGS keys only)
+ */
+function planPreferenceReset_(defaults, uiMode) {
+  var values = {};
+  SETTINGS.forEach(function (key) {
+    if (defaults[key] !== undefined) values[key] = defaults[key];
+  });
+  if (normalizeUiMode_(uiMode) === 'simple') values.menu_layout = getSimpleMenuLayoutJson_();
+  return values;
+}
+
 function menuLayoutsEqual_(a, b) {
   return JSON.stringify(normalizeMenuLayout_(a)) === JSON.stringify(normalizeMenuLayout_(b));
 }
@@ -307,4 +326,18 @@ function setUiMode(mode) {
     menuLayout: PropertiesService.getUserProperties().getProperty('menu_layout') || '',
     menuKept: plan.menuKept
   };
+}
+
+/**
+ * Preferences → Reset To Defaults. Writes planPreferenceReset_, and clears the
+ * menu kept aside for leaving Simple mode, so one menu is left, not the
+ * Simple one and a kept one that would come back on switching to Everything.
+ * Rebuilds the menu at once (it used to change only on the next open).
+ * @return {Object} the stored preferences, as getPreferences returns them
+ */
+function resetPreferencesToDefaults() {
+  setPreferences(planPreferenceReset_(getDefaultPreferences(), getUiMode_()));
+  PropertiesService.getUserProperties().setProperty('menu_layout_before_simple', '');
+  rebuildMenuQuietly_();
+  return getAccountPreferences();
 }

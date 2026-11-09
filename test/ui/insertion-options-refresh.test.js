@@ -38,10 +38,16 @@ test('a change the fetch applies shows the preview as updating at once', () => {
 
 test('every Preferences save tells an open sidebar, which re-reads them and refreshes the preview', () => {
   const prefs = readAppScriptFile('preferences/js.html');
-  const saves = prefs.match(/\.setPreferences\(/g) || [];
+  // Every server write: Save, Save & Close, Reset To Defaults.
+  const saves = prefs.match(/\.(setPreferences|resetPreferencesToDefaults)\(/g) || [];
+  assert.ok(saves.length >= 3);
   // The helper's definition, plus one call per save.
   const marks = prefs.match(/markPreferencesSaved\(\)/g) || [];
-  assert.equal(marks.length, saves.length + 1, 'each setPreferences success marks the save');
+  assert.equal(marks.length, saves.length + 1, 'each save\'s success marks the save');
+  // A settings-file import writes too (preferences/settings-file-js).
+  const importJs = readAppScriptFile('preferences/settings-file-js.html');
+  assert.match(importJs, /withSuccessHandler\(function \(result\) \{[\s\S]*?dialog\.markSaved\(\);[\s\S]*?\.applySettingsImport\(/);
+  assert.match(prefs, /markSaved: markPreferencesSaved/);
   const key = prefs.match(/localStorage\.setItem\('([^']+)'/)[1];
 
   const sidebar = readAppScriptFile('sidebar/js/mode-controller.html');

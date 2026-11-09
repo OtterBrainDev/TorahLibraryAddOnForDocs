@@ -256,6 +256,8 @@
           var hebrewLinkCheck = byId('insert_hebrew_sefaria_link_default');
           var linesCheck = byId('show_line_markers_default');
           var detailsCheck = byId('include_translation_source_info');
+          var editionCheck = byId('sefaria_link_edition_label');
+          var hebrewEditionCheck = byId('hebrew_link_edition_label');
           var emphasisInput = byId('source_emphasis_mode');
           var hebrewPunctuation = byId('hebrew_punctuation');
           var translationPunctuation = byId('translation_punctuation');
@@ -268,6 +270,8 @@
             scheme: transliterationOn ? (scheme || 'simple_english') : 'none',
             linkOn: linkCheck ? linkCheck.checked : false,
             hebrewLinkOn: hebrewLinkCheck ? hebrewLinkCheck.checked : false,
+            editionOn: editionCheck ? editionCheck.checked : true,
+            hebrewEditionOn: hebrewEditionCheck ? hebrewEditionCheck.checked : true,
             linesOn: linesCheck ? linesCheck.checked : false,
             detailsOn: detailsCheck ? detailsCheck.checked : false,
             emphasisMode: ccNormalizeEmphasisMode(emphasisInput ? emphasisInput.value : ''),
@@ -301,6 +305,9 @@
           } else if (key === 'link' || key === 'hebrewLink') {
             var linkBox = byId(key === 'link' ? 'insert_sefaria_link_default' : 'insert_hebrew_sefaria_link_default');
             if (linkBox) linkBox.checked = !linkBox.checked;
+          } else if (key === 'edition' || key === 'hebrewEdition') {
+            var editionBox = byId(key === 'edition' ? 'sefaria_link_edition_label' : 'hebrew_link_edition_label');
+            if (editionBox) editionBox.checked = !editionBox.checked;
           } else if (key === 'lines') {
             var linesBox = byId('show_line_markers_default');
             if (linesBox) linesBox.checked = !linesBox.checked;
@@ -917,22 +924,18 @@
       byId('reset_modal').hidden = true;
       setResultsMessage('');
       modalBusyShow('Resetting to defaults…');
-      google.script.run.withSuccessHandler(function(defaults) {
-        google.script.run.withSuccessHandler(function() {
-          markPreferencesSaved();
-          modalBusyHide();
-          applyPreferencesToForm(defaults);
-          setResultsMessage('Preferences reset to defaults.');
-        }).withFailureHandler(function(error) {
-          console.error('Preferences reset failed:', error);
-          modalBusyHide();
-          setResultsMessage('Could not reset preferences.');
-        }).setPreferences(defaults);
+      // One call: the defaults, with the menu that goes with the interface
+      // mode in use (server/first-run.gs resetPreferencesToDefaults).
+      google.script.run.withSuccessHandler(function(stored) {
+        markPreferencesSaved();
+        modalBusyHide();
+        applyPreferencesToForm(stored || {});
+        setResultsMessage('Preferences reset to defaults. The interface stays ' + (currentUiMode_() === 'simple' ? 'Simple' : 'Everything') + '.');
       }).withFailureHandler(function(error) {
         console.error('Preferences reset failed:', error);
         modalBusyHide();
         setResultsMessage('Could not reset preferences.');
-      }).getDefaultPreferences();
+      }).resetPreferencesToDefaults();
     });
 
     $('.refresh-sidebar-button').on('click', function() {
@@ -954,6 +957,7 @@
       const preferenceObject = collectPreferenceObject();
       google.script.run.withSuccessHandler(function() {
         markPreferencesSaved();
+        markMenuLayoutSaved(preferenceObject.menu_layout);
         google.script.run.withSuccessHandler(function() {
           modalBusyHide();
           setResultsMessage('Successfully updated preferences.');
@@ -1644,10 +1648,10 @@
       return menuEditorConfig.items[id].label;
     }
 
-    function menuLayoutButton(text, title, action, disabled) {
+    function menuLayoutButton(text, title, action, disabled, extraClass) {
       var btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'menu-layout-btn';
+      btn.className = 'menu-layout-btn' + (extraClass ? ' ' + extraClass : '');
       btn.textContent = text;
       btn.title = title;
       btn.setAttribute('aria-label', title);
@@ -1709,9 +1713,11 @@
         if (id === MENU_DIVIDER) {
           actions.appendChild(menuLayoutButton('✕', 'Remove divider', 'remove'));
         } else if (id !== MENU_SUBMENU_ID) {
+          // Says where it goes: an arrow alone beside ↑ and ↓ read as one more
+          // way to reorder, and the move between the lists went unnoticed.
           actions.appendChild(listName === 'top'
-            ? menuLayoutButton('→', 'Move ' + name + ' into ' + menuEditorConfig.submenuLabel, 'move')
-            : menuLayoutButton('←', 'Move ' + name + ' to the main menu', 'move'));
+            ? menuLayoutButton('Move to ' + menuEditorConfig.submenuLabel + ' ▸', 'Move ' + name + ' into the ' + menuEditorConfig.submenuLabel + ' submenu', 'move', false, 'menu-layout-btn--move')
+            : menuLayoutButton('◂ Move to main menu', 'Move ' + name + ' out of ' + menuEditorConfig.submenuLabel + ', to the main menu', 'move', false, 'menu-layout-btn--move'));
         }
         li.appendChild(actions);
         listEl.appendChild(li);
@@ -1727,22 +1733,62 @@
       }
     }
 
+    function menuLayoutFieldValue(layout) {
+      return menuLayoutIsDefault(layout) ? '' : JSON.stringify(layout);
+    }
+
     function renderMenuLayoutEditor(focus) {
       renderMenuLayoutList('top', focus);
       renderMenuLayoutList('quick_actions', focus);
       var field = byId('menu_layout');
-      if (field) field.value = menuLayoutIsDefault(menuLayoutState) ? '' : JSON.stringify(menuLayoutState);
+      if (field) field.value = menuLayoutFieldValue(menuLayoutState);
     }
 
-    function loadMenuLayoutEditor(storedLayout) {
+    // The menu as stored (the menu_layout field's value for it), so a change
+    // of interface mode, which moves the stored menu, can tell whether the
+    // editor holds changes not yet saved and keep them instead of redrawing.
+    var menuLayoutSavedValue = null;
+
+    function menuLayoutHasUnsavedChanges() {
+      var field = byId('menu_layout');
+      return menuLayoutSavedValue !== null && !!field && field.value !== menuLayoutSavedValue;
+    }
+
+    function markMenuLayoutSaved(storedLayout) {
+      if (!menuEditorConfig) return;
+      menuLayoutSavedValue = menuLayoutFieldValue(menuLayoutNormalize(storedLayout));
+    }
+
+    // opts.edit: the user's own change ("Restore default menu"), not yet saved.
+    function loadMenuLayoutEditor(storedLayout, opts) {
       if (!menuEditorConfig) return;
       menuLayoutState = menuLayoutNormalize(storedLayout);
       renderMenuLayoutEditor();
+      if (!(opts && opts.edit)) markMenuLayoutSaved(storedLayout);
+    }
+
+    // Move an item between the menu and the Quick Actions submenu, and say
+    // where it went. Into the submenu: at its end, and the submenu is put
+    // back in the menu (and shown) if it was empty or hidden, so the item
+    // never vanishes. Out of it: just below the Quick Actions entry, where it
+    // came from, not at the bottom of the menu.
+    function menuLayoutMove(state, listName, index) {
+      var otherName = listName === 'top' ? 'quick_actions' : 'top';
+      var moved = state[listName].splice(index, 1)[0];
+      if (otherName === 'quick_actions') {
+        state.quick_actions.push(moved);
+        if (state.top.indexOf(MENU_SUBMENU_ID) === -1) state.top.push(MENU_SUBMENU_ID);
+        var hiddenAt = state.hidden.indexOf(MENU_SUBMENU_ID);
+        if (hiddenAt !== -1) state.hidden.splice(hiddenAt, 1);
+      } else {
+        var submenuAt = state.top.indexOf(MENU_SUBMENU_ID);
+        state.top.splice(submenuAt === -1 ? state.top.length : submenuAt + 1, 0, moved);
+      }
+      return { list: otherName, index: state[otherName].indexOf(moved) };
     }
 
     function handleMenuLayoutAction(listName, index, action) {
       var list = menuLayoutState[listName];
-      var otherName = listName === 'top' ? 'quick_actions' : 'top';
       var focus = { list: listName, index: index, action: action };
       var step = action === 'up' ? -1 : action === 'down' ? 1 : 0;
       var target = step ? menuLayoutVisibleNeighbour(list, index, step) : -1;
@@ -1753,13 +1799,8 @@
         list.splice(index, 1);
         focus.index = Math.min(index, list.length - 1);
       } else if (action === 'move') {
-        var moved = list.splice(index, 1)[0];
-        menuLayoutState[otherName].push(moved);
-        // Moving into an empty submenu must also put the submenu back in the menu.
-        if (otherName === 'quick_actions' && menuLayoutState.top.indexOf(MENU_SUBMENU_ID) === -1) {
-          menuLayoutState.top.push(MENU_SUBMENU_ID);
-        }
-        focus = { list: otherName, index: menuLayoutState[otherName].indexOf(moved), action: 'move' };
+        focus = menuLayoutMove(menuLayoutState, listName, index);
+        focus.action = 'move';
       }
       renderMenuLayoutEditor(focus);
     }
@@ -1799,17 +1840,24 @@
       var reset = document.querySelector('.menu-layout-reset');
       if (reset) {
         reset.addEventListener('click', function() {
-          loadMenuLayoutEditor('');
+          loadMenuLayoutEditor('', { edit: true });
         });
       }
       loadMenuLayoutEditor('');
     }
 
     // ── Interface mode (Simple / Everything) ─────────────────────────────
-    // Simple mode hides these tabs (and two "Advanced" sections in the card)
-    // until "Show advanced settings" is ticked; preferences/css.html has the
-    // rules. The switch lasts for this dialog only and stores nothing.
-    var PREF_ADVANCED_TABS_ = ['search', 'linking', 'experimental'];
+    // One switch, at the top. It is not a preference and Save never sends it:
+    // setUiMode stores it at once and moves the menu with it, and it changes
+    // what is shown, never a setting. In this dialog Simple hides the tabs
+    // below and two "Advanced" sections of the card (preferences/css.html).
+    // Nothing else changes: values not yet saved stay as they are, and so
+    // do unsaved Menu Bar edits. An open sidebar follows at once
+    // (UI_MODE_STORAGE_KEY), so it never has to be refreshed, which would
+    // clear its session's settings. A link straight to a hidden tab
+    // (PREF_NAVIGATE_TAB) shows the hidden tabs for this dialog only.
+    var PREF_ADVANCED_TABS_ = ['search', 'linking', 'advanced', 'experimental'];
+    var UI_MODE_STORAGE_KEY = 'sefariaUiMode';
     var _activatePrefTab = null;
 
     function prefDialog_() {
@@ -1820,30 +1868,52 @@
       return tabs.filter(function (t) { return window.getComputedStyle(t).display !== 'none'; });
     }
 
-    function setShowAdvanced_(on) {
+    function currentUiMode_() {
       var dialog = prefDialog_();
-      if (dialog) dialog.classList.toggle('show-advanced', !!on);
-      var box = byId('show_advanced_settings');
-      if (box) box.checked = !!on;
-      // Hiding the tab that is open would leave its panel without a tab.
+      return dialog && dialog.getAttribute('data-ui-mode') === 'simple' ? 'simple' : 'full';
+    }
+
+    // Hiding the tab that is open would leave its panel without a tab.
+    function keepOpenTabVisible_() {
       var selected = document.querySelector('.pref-tab[aria-selected="true"]');
-      if (!on && selected && _activatePrefTab && window.getComputedStyle(selected).display === 'none') {
+      if (selected && _activatePrefTab && window.getComputedStyle(selected).display === 'none') {
         _activatePrefTab(document.querySelector('.pref-tab'));
       }
     }
 
+    function revealAdvancedTabs_() {
+      var dialog = prefDialog_();
+      if (dialog) dialog.classList.add('show-advanced');
+    }
+
     function setInterfaceModeUi_(mode) {
       var dialog = prefDialog_();
-      if (dialog) dialog.setAttribute('data-ui-mode', mode === 'simple' ? 'simple' : 'full');
+      if (dialog) {
+        dialog.setAttribute('data-ui-mode', mode === 'simple' ? 'simple' : 'full');
+        dialog.classList.remove('show-advanced');
+      }
       document.querySelectorAll('input[name="interface_mode_choice"]').forEach(function (input) {
         input.checked = input.value === mode;
       });
-      setShowAdvanced_(byId('show_advanced_settings') && byId('show_advanced_settings').checked);
+      keepOpenTabVisible_();
+    }
+
+    function announceUiModeToSidebar_(mode) {
+      try { localStorage.setItem(UI_MODE_STORAGE_KEY, JSON.stringify({ mode: mode, at: Date.now() })); } catch (e) {}
+    }
+
+    function interfaceModeMessage_(mode, result, keptMenuEdits) {
+      var parts = [mode === 'simple'
+        ? 'Simple: the sidebar, the menu and Preferences show the essentials.'
+        : 'Everything: every tool and setting is shown.'];
+      parts.push('Your settings are unchanged.');
+      if (keptMenuEdits) parts.push('Your unsaved Menu Bar changes are kept; Save to apply them.');
+      else if (result && result.menuKept) parts.push('Your menu was kept as you arranged it.');
+      return parts.join(' ');
     }
 
     function initInterfaceMode() {
-      var dialog = prefDialog_();
-      var current = dialog && dialog.getAttribute('data-ui-mode') === 'simple' ? 'simple' : 'full';
+      var current = currentUiMode_();
       setInterfaceModeUi_(current);
       var status = byId('interface-mode-status');
       document.querySelectorAll('input[name="interface_mode_choice"]').forEach(function (input) {
@@ -1856,23 +1926,22 @@
             modalBusyHide();
             current = (result && result.uiMode) || input.value;
             setInterfaceModeUi_(current);
-            // setUiMode may have moved the menu; keep the Menu Bar editor (and
-            // what Save sends) in step with it.
-            loadMenuLayoutEditor((result && result.menuLayout) || '');
-            if (status) {
-              status.textContent = (result && result.menuKept)
-                ? 'Saved. Your menu was kept as you arranged it. Refresh the sidebar to see the change.'
-                : 'Saved. Refresh the sidebar to see the change.';
-            }
+            announceUiModeToSidebar_(current);
+            // setUiMode may have moved the stored menu. Show it in the Menu
+            // Bar editor, unless the editor holds changes not saved yet:
+            // those stay, and Save stores them.
+            var storedMenu = (result && result.menuLayout) || '';
+            var keptMenuEdits = menuLayoutHasUnsavedChanges();
+            if (keptMenuEdits) markMenuLayoutSaved(storedMenu);
+            else loadMenuLayoutEditor(storedMenu);
+            if (status) status.textContent = interfaceModeMessage_(current, result, keptMenuEdits);
           }).withFailureHandler(function () {
             modalBusyHide();
             setInterfaceModeUi_(previous);
-            if (status) status.textContent = 'Could not change the interface.';
+            if (status) status.textContent = 'Could not change the interface. Nothing was changed.';
           }).setUiMode(input.value);
         });
       });
-      var box = byId('show_advanced_settings');
-      if (box) box.addEventListener('change', function () { setShowAdvanced_(box.checked); });
     }
 
     function _initPreferencesTabs() {
@@ -1901,8 +1970,9 @@
       var preferredTab = window.PREF_NAVIGATE_TAB || sessionStorage.getItem('PREF_NAVIGATE_TAB');
       sessionStorage.removeItem('PREF_NAVIGATE_TAB');
 
-      // A hint that lands on a tab Simple mode hides shows the advanced tabs.
-      if (preferredTab && PREF_ADVANCED_TABS_.indexOf(preferredTab) >= 0) setShowAdvanced_(true);
+      // A hint that lands on a tab Simple mode hides shows the hidden tabs,
+      // for this dialog only.
+      if (preferredTab && PREF_ADVANCED_TABS_.indexOf(preferredTab) >= 0 && currentUiMode_() === 'simple') revealAdvancedTabs_();
 
       var initial = null;
       if (preferredTab) {
@@ -1953,6 +2023,19 @@
         });
       });
     }
+
+    // What the Advanced tab's settings file (preferences/settings-file-js,
+    // loaded after this file) needs from the dialog.
+    window.PreferencesDialog = {
+      collect: collectPreferenceObject,
+      reloadFrom: function (stored) { applyPreferencesToForm(stored || {}); },
+      markSaved: markPreferencesSaved,
+      showInterfaceMode: function (mode) {
+        setInterfaceModeUi_(mode);
+        announceUiModeToSidebar_(mode);
+      },
+      currentUiMode: currentUiMode_
+    };
 
     _initPreferencesTabs();
     initInterfaceMode();

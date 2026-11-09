@@ -1,0 +1,205 @@
+<script>
+  // Preferences → Advanced → Settings file (server/settings-file.gs).
+  //
+  // Export: the dialog's values, saved or not (PreferencesDialog.collect),
+  // go to the server, which writes the file; the browser downloads it, and
+  // its text is offered to copy wherever a download is blocked.
+  //
+  // Import: a file, or pasted text, is checked by the server, which says what
+  // each part would change. Nothing is written until Apply, and then only the
+  // parts ticked; the dialog then shows the stored settings. A file is
+  // untrusted (its name included): the preview is built with textContent.
+  document.addEventListener('DOMContentLoaded', function () {
+    var dialog = window.PreferencesDialog;
+    if (!dialog || !document.getElementById('pref-tab-advanced')) return;
+
+    var pendingImportText = null;
+
+    function el(id) { return document.getElementById(id); }
+
+    function setStatus(id, message, isError) {
+      var node = el(id);
+      if (!node) return;
+      node.textContent = message || '';
+      node.classList.toggle('is-error', !!isError);
+    }
+
+    function errorText(error, fallback) {
+      return (error && error.message) ? error.message : fallback;
+    }
+
+    // A download from the dialog. `target` overrides the page's
+    // <base target="_top">, which would try to open the file in the document's
+    // window instead.
+    function download(fileName, text) {
+      try {
+        var url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+        var link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.target = '_self';
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    // ── Export ────────────────────────────────────────────────────────────
+    el('settings-export').addEventListener('click', function () {
+      var button = this;
+      button.disabled = true;
+      setStatus('settings-export-status', 'Preparing the file…');
+      google.script.run.withSuccessHandler(function (result) {
+        button.disabled = false;
+        var downloaded = download(result.fileName, result.text);
+        el('settings-export-text').value = result.text;
+        el('settings-export-filename').textContent = result.fileName;
+        el('settings-export-fallback').hidden = false;
+        setStatus('settings-export-status', downloaded
+          ? 'Exported ' + result.count + ' settings to ' + result.fileName + '. Share the file; anyone can import it in Preferences → Advanced.'
+          : 'Your browser did not download the file. Copy the settings below instead.');
+      }).withFailureHandler(function (error) {
+        button.disabled = false;
+        setStatus('settings-export-status', errorText(error, 'Could not export your settings.'), true);
+      }).exportSettingsFile(dialog.collect(), el('settings-file-name').value || '');
+    });
+
+    el('settings-export-copy').addEventListener('click', function () {
+      var box = el('settings-export-text');
+      box.focus();
+      box.select();
+      var copied = false;
+      try { copied = document.execCommand('copy'); } catch (error) { copied = false; }
+      setStatus('settings-export-status', copied ? 'Copied.' : 'Select the text and copy it (Ctrl+C or ⌘C).');
+    });
+
+    // ── Import ────────────────────────────────────────────────────────────
+    function hidePreview() {
+      pendingImportText = null;
+      el('settings-import-preview').hidden = true;
+      el('settings-import-groups').textContent = '';
+    }
+
+    function describeFrom(plan) {
+      var parts = [];
+      parts.push(plan.name ? '“' + plan.name + '”' : 'This file');
+      if (plan.exportedAt && !isNaN(Date.parse(plan.exportedAt))) {
+        parts.push('exported ' + new Date(plan.exportedAt).toLocaleDateString());
+      }
+      var text = parts.join(', ') + '.';
+      if (plan.interfaceMode) text += ' Interface: ' + (plan.interfaceMode === 'simple' ? 'Simple' : 'Everything') + '.';
+      return text;
+    }
+
+    function groupRow(group) {
+      var label = document.createElement('label');
+      label.className = 'settings-import-group' + (group.changes ? '' : ' is-unchanged');
+      var box = document.createElement('input');
+      box.type = 'checkbox';
+      box.value = group.id;
+      box.checked = group.changes > 0;
+      box.disabled = group.changes === 0;
+      label.appendChild(box);
+      var text = document.createElement('span');
+      var name = document.createElement('span');
+      name.className = 'settings-import-group-label';
+      name.textContent = group.label;
+      var count = document.createElement('span');
+      count.className = 'settings-import-group-count';
+      count.textContent = group.changes
+        ? ' — changes ' + group.changes + ' of ' + group.inFile
+        : ' — already the same as yours';
+      var help = document.createElement('span');
+      help.className = 'settings-import-group-help';
+      help.textContent = group.help;
+      text.appendChild(name);
+      text.appendChild(count);
+      text.appendChild(help);
+      label.appendChild(text);
+      return label;
+    }
+
+    function showPreview(text, plan) {
+      pendingImportText = text;
+      el('settings-import-from').textContent = describeFrom(plan);
+      var list = el('settings-import-groups');
+      list.textContent = '';
+      plan.groups.forEach(function (group) { list.appendChild(groupRow(group)); });
+      var skipped = el('settings-import-skipped');
+      skipped.hidden = !plan.skippedCount;
+      skipped.textContent = plan.skippedCount
+        ? plan.skippedCount + (plan.skippedCount === 1 ? ' entry' : ' entries') + ' in the file ' + (plan.skippedCount === 1 ? 'is' : 'are') + ' not a setting this version has, or not a value it can take, and will be skipped.'
+        : '';
+      var anything = plan.groups.some(function (group) { return group.changes > 0; });
+      el('settings-import-apply').disabled = !anything;
+      el('settings-import-preview').hidden = false;
+      setStatus('settings-import-status', anything
+        ? 'Nothing has changed yet. Apply saves the parts ticked at once; changes in this dialog you have not saved are replaced.'
+        : (plan.groups.length ? 'Your settings already match this file.' : 'This file has no settings this version can use.'));
+    }
+
+    function check(text) {
+      hidePreview();
+      setStatus('settings-import-status', 'Reading the file…');
+      google.script.run.withSuccessHandler(function (plan) {
+        showPreview(text, plan);
+      }).withFailureHandler(function (error) {
+        setStatus('settings-import-status', errorText(error, 'Could not read that file.'), true);
+      }).previewSettingsImport(text);
+    }
+
+    el('settings-import-file').addEventListener('change', function () {
+      var input = this;
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function () { check(String(reader.result || '')); };
+      reader.onerror = function () { setStatus('settings-import-status', 'Could not open that file.', true); };
+      reader.readAsText(file);
+      // Choosing the same file again should check it again.
+      input.value = '';
+    });
+
+    el('settings-import-paste').addEventListener('click', function () {
+      check(el('settings-import-text').value || '');
+    });
+
+    el('settings-import-cancel').addEventListener('click', function () {
+      hidePreview();
+      setStatus('settings-import-status', 'Nothing was changed.');
+    });
+
+    el('settings-import-apply').addEventListener('click', function () {
+      if (pendingImportText === null) return;
+      var groups = Array.prototype.map.call(
+        el('settings-import-groups').querySelectorAll('input[type="checkbox"]:checked'),
+        function (box) { return box.value; }
+      );
+      if (!groups.length) {
+        setStatus('settings-import-status', 'Tick at least one part to apply.', true);
+        return;
+      }
+      var button = this;
+      button.disabled = true;
+      modalBusyShow('Importing settings…');
+      google.script.run.withSuccessHandler(function (result) {
+        modalBusyHide();
+        button.disabled = false;
+        hidePreview();
+        dialog.markSaved();
+        dialog.reloadFrom(result.preferences);
+        if (result.uiMode && result.uiMode !== dialog.currentUiMode()) dialog.showInterfaceMode(result.uiMode);
+        setStatus('settings-import-status', 'Imported: ' + result.applied + (result.applied === 1 ? ' setting' : ' settings') + ' changed and saved.');
+      }).withFailureHandler(function (error) {
+        modalBusyHide();
+        button.disabled = false;
+        setStatus('settings-import-status', errorText(error, 'Could not import the settings.'), true);
+      }).applySettingsImport(pendingImportText, groups);
+    });
+  });
+</script>

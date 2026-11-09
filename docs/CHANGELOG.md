@@ -9,6 +9,58 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Settings files; one Interface switch; Voices transliteration; Surprise Me
+
+No new preference and no migration: no stored value changes meaning.
+
+- **Settings file (Preferences → Advanced, a new tab).** *Export settings
+  file* saves the settings shown in Preferences (unsaved changes included) to
+  a `.json` file, optionally named ("Grade 7 Chumash"); *Import* reads one,
+  shows what each part would change (Text and layout; Fonts, colours and
+  titles; Search and linking; Menu and interface) and applies only the parts
+  you tick. A teacher can give a class the same vowels, layout and
+  transliteration; an organization can hand out its fonts, colours and title
+  styles. A file holds settings only, never searches, documents or account
+  details; an import writes only real settings with valid values and skips
+  the rest. Where a browser blocks the download, the text can be copied, and
+  pasted into Import. Everything happens in the browser: no new permission.
+- **One Interface switch.** *Show advanced settings* did in Preferences
+  exactly what switching to *Everything* does, beside it, and switching
+  looked as if it might reset settings or keep two sets. It is gone:
+  *Interface: Simple / Everything* is the one switch. Switching never changes
+  a setting, keeps values you have not saved yet (and unsaved Menu Bar
+  edits), and reaches an open sidebar at once, so the sidebar no longer has
+  to be refreshed (which cleared its Insertion Options for the session).
+  *Reset To Defaults* keeps the interface and resets the menu to the one for
+  it: in Simple mode it used to put the full menu under the Simple interface
+  and keep a second, older menu for leaving Simple.
+- **Name the edition, visible.** *Name the edition in the title* (Source) and
+  *Name the translation in the title* (Translation) are rows under each *Link
+  title to Sefaria* in Preferences → Insertion, shown while that title is
+  linked. They were inside each title's font editor, behind the *Title font*
+  button.
+- **Cantillation without vowels shows in the preview.** With Vowels off, the
+  Insertion card's sample showed bare letters whatever Cantillation said, so
+  the two looked tied; the insert always kept them apart. The sample now
+  shows each combination.
+- **Voices transliteration.** Choosing a transliteration in the Voices tab
+  silently changed the Texts transliteration instead (the two menus shared
+  a class the composition card listened to) and left the Voices button on
+  *None*. It now selects, says what it will insert, and shows a sample. In
+  the inserted sheet each Hebrew passage is followed by its transliteration
+  in parentheses, and only Hebrew is transliterated (the Hebrew of sources
+  and of the author's own Hebrew text; never the English or comments).
+  Choosing one no longer resets *What to insert* to its saved default.
+- **Menu Bar: moving items is labelled.** Each item has *Move to Quick
+  Actions ▸* or *◂ Move to main menu* instead of a bare arrow beside ↑ ↓; an
+  item moved out lands just below Quick Actions, and moving one into a hidden
+  or empty Quick Actions shows the submenu again.
+- **Surprise Me is one form.** The sidebar's Experimental card and the
+  Surprise Me dialog (Quick Actions 🎲, the menu) had drifted apart: a topic
+  hint, 3 sources and five fixed corpuses in one; a search term, 5 sources and
+  a choice of fourteen corpuses in the other. Both now show the same form,
+  and report what the server actually inserted.
+
 - The English divine-name replacement now also catches "GOD" (keyed on the capital G; lowercase "god"/"gods" are untouched), on insert and in Transform Divine Names. An all-caps match gets an all-caps substitute (G-D). No new preference.
 
 > **Preference migration (schemas 21 and 22). No new preference.** Borrowing

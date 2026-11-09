@@ -7,8 +7,7 @@
       ".results-panel",
       "data-sidebar-mode=\"texts\"",
       "data-sidebar-mode=\"experimental\"",
-      "#sm-inline-launch",
-      "#sm-inline-term",
+      "#exp-card-surprise",
       "#voices-insert-mode",
       ".voices-insert-options",
       ".source-emphasis-mode",
@@ -36,17 +35,24 @@
       "#hebrew_punctuation",
       "#translation_punctuation",
       "#bilingual_aligned_rows",
-      "#show_advanced_settings",
-      "#interface-mode-status"
+      "#interface-mode-note",
+      "#interface-mode-status",
+      "#pref-tab-advanced",
+      "#settings-export",
+      "#settings-import-file",
+      "#settings-import-preview",
+      "#settings-import-apply"
     ]
   },
   "surprise_me": {
-    "template": "apps-script/surprise-me.html",
+    "template": "apps-script/shared/surprise-me/markup.html",
     "requiredSelectors": [
+      "#surprise-form",
       "#surprise-term",
       "#surprise-count",
       "#toggle-all-corpuses",
       "#surprise-submit",
+      "#surprise-cancel",
       "#surprise-status"
     ]
   },

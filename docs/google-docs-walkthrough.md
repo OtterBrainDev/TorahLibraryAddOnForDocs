@@ -65,9 +65,10 @@ takes effect at once, without Save). Simple hides, and never removes:
 - **Menu:** a shorter menu — Texts, Insert Source from Selection, Transform
   Divine Names, Link Texts with Sefaria, then Preferences and Help & Support.
   Switching back to Everything restores the menu you had.
-- **Preferences:** the Search, Linking and 🧪 Experimental tabs and the
-  advanced formatting sections (formatting for specific languages, how kept
-  bold and italics look), until **Show advanced settings** is ticked.
+- **Preferences:** the Search, Linking, Advanced and 🧪 Experimental tabs and
+  the advanced formatting sections (formatting for specific languages, how
+  kept bold and italics look). Switch to **Everything** to see them; the switch
+  never changes a setting.
 
 Existing users keep Everything and never see the setup.
 
@@ -273,7 +274,7 @@ settings**.
 
 | Tab | Contents |
 | --- | --- |
-| **Insertion** | Default Layout (the sidebar's pickers, plus the titles' **Title style** — e.g. Heading 2 — and **Citation style**, 8 pt italic in the font of the text above unless changed); Insertion Defaults for Texts (the card, plus the translation **Language**), Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). Every font button (each title, the Hebrew, transliteration and translation text, the citation) opens that font's full settings in place: font, size, style, colour, highlight and a preview, and for a title its **Hyperlink formatting override** and **Name the edition** (whether a linked title names its edition). |
+| **Insertion** | Default Layout (the sidebar's pickers, plus the titles' **Title style** — e.g. Heading 2 — and **Citation style**, 8 pt italic in the font of the text above unless changed); Insertion Defaults for Texts (the card, plus the translation **Language**), Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). Every font button (each title, the Hebrew, transliteration and translation text, the citation) opens that font's full settings in place: font, size, style, colour, highlight and a preview, and for a title its **Hyperlink formatting override**. Under each **Link title to Sefaria**, while it is on, **Name the edition in the title** (Source) and **Name the translation in the title** (Translation) say whether a linked title names its edition. |
 | **Search** | Text Search Results (group order and hidden groups); Translation Languages; Advanced (Show unavailable translations). |
 | **Linking** | After linking; Insert text after linking; Document scanning. |
 | **Menu Bar** | Reorder, group, hide and divide menu items. |

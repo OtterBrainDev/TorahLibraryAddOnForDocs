@@ -262,17 +262,24 @@ modes.
 | Tab | Simple | Full |
 | --- | --- | --- |
 | Insertion | Shown | Shown |
-| Search | Behind "Show advanced settings" | Shown |
-| Linking | Behind "Show advanced settings" | Shown |
+| Search | Hidden | Shown |
+| Linking | Hidden | Shown |
 | Menu Bar | Shown | Shown |
-| Experimental | Behind "Show advanced settings" | As today |
+| Advanced (settings file) | Hidden | Shown |
+| Experimental | Hidden | As today |
 
 Inside the Insertion tab's card, the per-language translation typography and
-the emphasis-mapping sections collapse behind the same switch. (There was a
-Fonts tab when this was written; its settings now sit beside what they style.)
+the emphasis-mapping sections are hidden too. (There was a Fonts tab when this
+was written; its settings now sit beside what they style.)
 
-"Show advanced settings" is a switch at the bottom of the tab bar. It reveals the
-tabs for this dialog session only; it does not change `ui_mode`.
+The Interface switch is the only control for this. A "Show advanced settings"
+switch used to reveal the hidden tabs for one dialog session without changing
+`ui_mode`; it did what switching to Everything does, so it was removed
+(2026-11). A link straight to a hidden tab (`PREF_NAVIGATE_TAB`) still shows
+the hidden tabs for that dialog only. Switching keeps unsaved values and
+unsaved Menu Bar edits, and reaches an open sidebar through `localStorage`
+(`sefariaUiMode`) instead of asking for a refresh, which cleared the sidebar's
+session settings.
 
 ---
 

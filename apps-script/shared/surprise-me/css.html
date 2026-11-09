@@ -1,0 +1,153 @@
+<style>
+  /* The Surprise Me form (shared/surprise-me/markup), in the sidebar and the
+     dialog alike. Colours come from css/tokens. */
+  .sm-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  .sm-intro {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .sm-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .sm-label {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .sm-optional,
+  .sm-hint {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 400;
+  }
+
+  .sm-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .sm-input {
+    width: 100%;
+  }
+
+  .sm-stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .sm-stepper .sm-stepper-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1;
+  }
+
+  .sm-stepper .sm-stepper-btn:first-child { border-radius: 6px 0 0 6px; }
+  .sm-stepper .sm-stepper-btn:nth-child(3) { border-radius: 0 6px 6px 0; }
+
+  .sm-stepper .sm-stepper-val {
+    width: 44px;
+    height: 28px;
+    padding: 0;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    text-align: center;
+    font-weight: 600;
+    -moz-appearance: textfield;
+  }
+
+  .sm-stepper-val::-webkit-outer-spin-button,
+  .sm-stepper-val::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .sm-hint { margin-left: 8px; }
+
+  .sm-form .sm-link {
+    padding: 0;
+    color: var(--sefaria-blue);
+    background: none;
+    border: 0;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .sm-form .sm-link:hover { text-decoration: underline; background: none; }
+
+  .sm-form .corpus-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 6px;
+  }
+
+  .sm-form .corpus-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 5px 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .sm-form .corpus-option:has(input:checked) {
+    background: var(--selected-soft);
+    border-color: var(--sefaria-blue);
+  }
+
+  .sm-form .corpus-option input { margin: 0; flex: 0 0 auto; }
+  .sm-form .corpus-option span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .sm-how { font-size: 12px; color: var(--muted); }
+  .sm-how > summary { cursor: pointer; font-weight: 600; color: var(--sefaria-blue); }
+  .sm-how ol { margin: 6px 0 0 18px; padding: 0; line-height: 1.5; }
+
+  .sm-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .sm-actions .sm-submit { flex: 1 1 auto; }
+  .sm-actions [hidden] { display: none; }
+
+  .sm-status {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--muted);
+    word-break: break-word;
+  }
+
+  .sm-status:empty { display: none; }
+  .sm-status.is-error { color: #a50e0e; }
+  .sm-status.is-success { color: #137333; }
+
+  /* While a search runs, the fields wait. */
+  .sm-form.is-busy .sm-field,
+  .sm-form.is-busy .sm-how {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+</style>

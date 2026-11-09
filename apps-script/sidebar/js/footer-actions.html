@@ -64,7 +64,7 @@ $('#insert-source').click(function () {
     if (!selectedVoiceItem || !selectedVoiceItem.ref) return;
 
     var insertMode = $('#voices-insert-mode .icon-mode-card[aria-checked="true"]').data('value') || 'reference';
-    var transliterationScheme = $('#voices-translit-menu .cc-translit-option.is-selected').attr('data-value') || 'none';
+    var transliterationScheme = selectedVoicesTransliteration();
     var fetchesSheet = insertMode === 'contents' || insertMode === 'both';
 
     // Build a payload from the selected sheet item, forwarding all hook fields.

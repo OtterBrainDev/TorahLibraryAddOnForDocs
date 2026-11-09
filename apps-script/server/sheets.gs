@@ -253,20 +253,7 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
         typography: typography,
         role: 'hebrew'
       });
-      if (normalizedOptions.transliterationScheme) {
-        const translitText = transliterateHebrewHtmlPreservingBasicBreaks(hebrewText, normalizedOptions.transliterationScheme, {
-          keepNiqqud: true,
-          isBiblicalHebrew: false
-        });
-        if (translitText) {
-          index = appendMultilineParagraphs_(body, index, translitText, {
-            rtl: false,
-            indent: shouldIndent ? 24 : 0,
-            typography: typography,
-            role: 'transliteration'
-          });
-        }
-      }
+      index = appendSheetTransliteration_(body, index, hebrewText, typography, normalizedOptions, shouldIndent ? 24 : 0);
     }
 
     const englishText = extractSheetText_(source.text, 'en', normalizedOptions);
@@ -298,6 +285,7 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
 
     if (he) {
       index = appendIndentedBlock_(body, index, he, typography, true, shouldIndent ? 24 : 24, normalizedOptions);
+      index = appendSheetTransliteration_(body, index, he, typography, normalizedOptions, 24);
     }
     if (en) {
       index = appendIndentedBlock_(body, index, en, typography, false, shouldIndent ? 24 : 24, normalizedOptions);
@@ -346,6 +334,50 @@ function renderSheetSource_(body, index, source, ordinal, typography, normalized
 
   logUnknownSheetNode_(source, ordinal, normalizedOptions);
   return index;
+}
+
+// A Hebrew letter: what makes a line of a sheet's Hebrew worth transliterating.
+var SHEET_HEBREW_LETTER_RE_ = /[\u05D0-\u05EA]/;
+
+/**
+ * The transliteration that follows a Hebrew passage of a sheet, as lines: the
+ * passage's lines transliterated, together in parentheses (the first line
+ * opens them, the last closes them), so the reader sees it belongs to the
+ * Hebrew just above. Only the Hebrew is transliterated: a line of the Hebrew
+ * with no Hebrew letter in it (a number, an English note) is left out, and
+ * the sheet's English and comments never get a transliteration.
+ *
+ * @param {string} hebrewText  the passage as inserted, lines split by "\n"
+ * @param {?string} scheme     a transliteration scheme, or null for none
+ * @return {string[]} the lines to insert; empty when there is nothing to add
+ */
+function sheetTransliterationLines_(hebrewText, scheme) {
+  if (!scheme || !hebrewText) return [];
+  const lines = [];
+  String(hebrewText).split('\n').forEach(function(line) {
+    if (!SHEET_HEBREW_LETTER_RE_.test(line)) return;
+    const latin = String(transliterateHebrewHtmlPreservingBasicBreaks(line, scheme, {
+      keepNiqqud: true,
+      isBiblicalHebrew: false
+    }) || '').replace(/\s+/g, ' ').trim();
+    if (latin) lines.push(latin);
+  });
+  if (!lines.length) return [];
+  lines[0] = '(' + lines[0];
+  lines[lines.length - 1] = lines[lines.length - 1] + ')';
+  return lines;
+}
+
+/** Insert sheetTransliterationLines_ right after a Hebrew passage. */
+function appendSheetTransliteration_(body, index, hebrewText, typography, normalizedOptions, indent) {
+  const lines = sheetTransliterationLines_(hebrewText, normalizedOptions.transliterationScheme);
+  if (!lines.length) return index;
+  return appendMultilineParagraphs_(body, index, lines.join('\n'), {
+    rtl: false,
+    indent: indent,
+    typography: typography,
+    role: 'transliteration'
+  });
 }
 
 function isEmptySheetSource_(source) {

@@ -17,8 +17,7 @@ your Google account and apply in every document.
 
 At the top, **Interface** should be **Everything**. **Simple** hides the result
 sort, Restore Corpus and the Texts / Voices / Lexicon tabs, plus the Search,
-Linking and Experimental tabs here (**Show advanced settings** brings those
-back). This tour uses Everything.
+Linking, Advanced and Experimental tabs here. This tour uses Everything.
 
 **Insertion tab: fonts and titles**
 
@@ -45,7 +44,9 @@ the same for the citation.
   own font, size, colour and highlight.
   **Hyperlink formatting override** there (on by default) gives a title a
   separate look while it's linked; off, a linked title keeps its title font.
-  **Name the edition** (on by default) writes a linked title as
+  Under each **Link title to Sefaria**, **Name the edition in the title**
+  (Source) and **Name the translation in the title** (Translation), on by
+  default, write a linked title as
   *Genesis 1:1 (Translation • The Koren Jerusalem Bible)*; off, just
   *Genesis 1:1*, still linked.
 - **Citation style:** the editions-and-licenses line under each source has

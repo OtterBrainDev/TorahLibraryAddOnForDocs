@@ -1,6 +1,6 @@
 # Privacy Policy — Torah Library Add-On for Google Docs
 
-**Last updated: 2026-10-30**
+**Last updated: 2026-11-09**
 
 This add-on inserts texts from [Sefaria](https://www.sefaria.org) into your
 Google Doc. This policy describes exactly what data it touches, what leaves
@@ -112,6 +112,14 @@ settings, default insertion options — are stored using Google's
 `PropertiesService` user storage. This is per-user, per-add-on storage
 managed by Google. It is not readable by other add-ons, by other users, or by
 the add-on's authors.
+
+**Settings files.** Preferences → Advanced → *Export settings file* saves
+your preference settings (no searches, document text or account details) to
+a file on your own computer, built from your preferences by Google's Apps
+Script service and downloaded by your browser. Who receives the file is up
+to you. *Import* reads a file you choose in your browser and sends its text
+to Google's Apps Script service, which writes only recognised preference
+settings to your `PropertiesService` storage; the file is not kept.
 
 **Sidebar session state** — the temporary choices you make in a single
 sidebar session — is stored in Google's `CacheService` and expires

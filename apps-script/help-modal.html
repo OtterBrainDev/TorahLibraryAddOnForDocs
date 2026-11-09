@@ -552,13 +552,13 @@
 
           <section class="card topic-section" id="interface-mode" data-search-title="Simple or Everything" data-search-terms="simple mode everything full interface hide hidden missing tabs show advanced settings more options menu shorter first run setup welcome run setup again sort restore corpus voices lexicon">
             <h2>Simple or Everything</h2>
-            <p>The add-on has two interfaces. Switch between them at the top of <span class="ui-label">Preferences</span>, under <span class="ui-label">Interface</span>; it takes effect at once. Nothing is removed in Simple — it is hidden, and every setting you made still applies.</p>
+            <p>The add-on has two interfaces. Switch between them at the top of <span class="ui-label">Preferences</span>, under <span class="ui-label">Interface</span>; it takes effect at once, in Preferences, the menu and an open sidebar, without Save and without refreshing anything. It is the one switch for what is shown: it never changes a setting, and there is one set of settings for both. Nothing is removed in Simple — it is hidden, and every setting you made still applies.</p>
             <table class="ref-table">
               <thead><tr><th>Where</th><th>What Simple hides</th></tr></thead>
               <tbody>
                 <tr><td>Sidebar</td><td>The result sort (<span class="ui-label">Rel. ▾</span>), <span class="ui-label">⤦</span> <em>Restore Corpus</em>, and the Texts / Voices / Lexicon buttons while you're in Texts. Add Source, Insertion Options and the footer buttons stay.</td></tr>
                 <tr><td>Menu</td><td>A shorter menu: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria, then Preferences and Help. Switching back to Everything brings back the menu you had.</td></tr>
-                <tr><td>Preferences</td><td>The Search, Linking and 🧪 Experimental tabs, and a few advanced sections. Tick <span class="ui-label">Show advanced settings</span> to see them.</td></tr>
+                <tr><td>Preferences</td><td>The Search, Linking, Advanced and 🧪 Experimental tabs, and a few advanced sections. Switch to Everything to see them.</td></tr>
               </tbody>
             </table>
             <p style="margin-top:10px;">New users choose a mode in the setup shown the first time the add-on opens. To see it again, use <span class="ui-label">Run setup again</span> under <a href="#quick-start">Quick start</a>.</p>
@@ -623,7 +623,8 @@
             <table class="ref-table">
               <tbody>
                 <tr><td><span class="ui-label">Link title to Sefaria</span></td><td>One in each section: link the source (Hebrew) title, and the translation title, to the passage on sefaria.org. Each is set on its own.</td></tr>
-                <tr><td><span class="ui-label">Title font</span></td><td>One in each section: the font and size of that title, whether or not it is linked. In Preferences the same button opens the title's full settings in place — colour, bold and the rest. There, <strong>Hyperlink formatting override</strong> gives a title a different look while it is linked (on by default, which keeps the underlined look linked titles have always had), and <strong>Name the edition</strong> adds the edition after a linked title — <em>Genesis 1:1 (Translation • The Koren Jerusalem Bible)</em>. Turn it off for the reference alone; the title stays linked.</td></tr>
+                <tr><td><span class="ui-label">Title font</span></td><td>One in each section: the font and size of that title, whether or not it is linked. In Preferences the same button opens the title's full settings in place — colour, bold and the rest. There, <strong>Hyperlink formatting override</strong> gives a title a different look while it is linked (on by default, which keeps the underlined look linked titles have always had).</td></tr>
+                <tr><td><span class="ui-label">Name the edition in the title</span> / <span class="ui-label">Name the translation in the title</span></td><td>Preferences only, under each <span class="ui-label">Link title to Sefaria</span> while it is on: adds the edition after the linked title — <em>Genesis 1:1 (Translation • The Koren Jerusalem Bible)</em>. Turn it off for the reference alone; the title stays linked.</td></tr>
                 <tr><td><span class="ui-label">Text font</span></td><td>The font and size of the Hebrew, and of the translation. A font button opens a small panel with <strong>Font</strong> and <strong>Size</strong> (a blank size matches the text where you insert); <span class="ui-label">Colour, style and more…</span> there opens Preferences.</td></tr>
                 <tr><td><span class="ui-label">Vowels</span></td><td>The vowels (niqqud): <strong>Off</strong>; <strong>Tanakh</strong>, kept in Tanakh and removed from every other text (Mishnah, Talmud, the Siddur, commentaries), as the original add-on did; or <strong>On</strong>, kept wherever Sefaria has them.</td></tr>
                 <tr><td><span class="ui-label">Cantillation</span></td><td>The cantillation marks (ta'amim): <strong>Off</strong>; <strong>Tanakh</strong>, kept in Tanakh and removed from every other text; or <strong>Torah</strong>, kept only in the Five Books.</td></tr>
@@ -758,10 +759,10 @@
             <p>To apply the same rules to text that's <em>already</em> in the document, run <span class="ui-label">ה → ש</span> <strong>Transform Divine Names</strong> from Quick Actions. It changes every match in the <em>body of the tab you have open</em>: selecting text does not limit it, and headers, footers, footnotes and other tabs are left alone. It lists the rules that are on and asks before changing anything, then says how many names it replaced; <span class="ui-label">Edit → Undo</span> reverses it. It runs whether or not replacement on insertion is switched on. If no rules are turned on, it tells you so and changes nothing.</p>
           </section>
 
-          <section class="card topic-section" id="preferences" data-search-title="Preferences" data-search-terms="preferences settings defaults save save and close reset refresh fonts insertion linking menu bar experimental title heading hebrew transliteration translation language source emphasis transliteration mapping insertion defaults current session difference">
+          <section class="card topic-section" id="preferences" data-search-title="Preferences" data-search-terms="preferences settings defaults save save and close reset refresh fonts insertion linking menu bar advanced settings file export import share class teacher brand kit house style experimental title heading hebrew transliteration translation language source emphasis transliteration mapping insertion defaults current session difference">
             <h2>Preferences</h2>
             <p>Open with <span class="ui-label">⚙︎</span> in the sidebar or <span class="ui-label">Extensions → Torah Library → Preferences</span>. Preferences are your <strong>saved defaults</strong>; they follow your Google account into every document. The sidebar's <span class="ui-label">📰 Insertion Options</span> changes only the current session, and Link Texts' <span class="ui-label">📰 Customize this insertion</span> only one linking pass.</p>
-            <p>At the top, <span class="ui-label">Interface</span> switches between <a href="#interface-mode">Simple and Everything</a> at once, without Save. In Simple, <span class="ui-label">Show advanced settings</span> shows the tabs and sections Simple hides.</p>
+            <p>At the top, <span class="ui-label">Interface</span> switches between <a href="#interface-mode">Simple and Everything</a> at once, without Save; changes you have not saved yet stay as they are. Simple hides the Search, Linking, Advanced and Experimental tabs; Everything shows them.</p>
             <table class="ref-table">
               <thead><tr><th>Tab</th><th>What's there</th></tr></thead>
               <tbody>
@@ -769,6 +770,7 @@
                 <tr><td><span class="ui-label">Search</span></td><td><strong>Text Search Results</strong>: the order of the result groups, and which are hidden (the sidebar's <span class="ui-label">⤦</span> brings one back for a single search). <strong>Translation Languages</strong>: which languages the sidebar offers. <strong>Advanced</strong>: <em>Show unavailable translations</em>.</td></tr>
                 <tr><td><span class="ui-label">Linking</span></td><td>How <a href="#link-texts">Link Texts with Sefaria</a> reviews what it finds, and how much of your document it sends.</td></tr>
                 <tr><td><span class="ui-label">Menu Bar</span></td><td>Rearrange the add-on's menu. See <a href="#menu">The menu</a>.</td></tr>
+                <tr><td><span class="ui-label">Advanced</span></td><td><strong>Settings file.</strong> <span class="ui-label">Export settings file</span> saves the settings shown in Preferences (unsaved changes included) to a <code>.json</code> file you can share; give it a name such as <em>Grade 7 Chumash</em>. <span class="ui-label">Choose a settings file…</span> (or paste its text) shows what each part would change — Text and layout; Fonts, colours and titles; Search and linking; Menu and interface — and applies only the parts you tick, saved at once. Teachers can give a class the same settings; organizations their house style. A file holds settings only: never your searches, documents or account. Everything only.</td></tr>
                 <tr><td><span class="ui-label">🧪 Experimental</span></td><td>Optional features still in progress, such as Surprise Me. Off by default.</td></tr>
               </tbody>
             </table>
@@ -777,7 +779,7 @@
               <div class="compare-card"><h3>Save Defaults</h3><p class="muted">Save and keep the dialog open.</p></div>
               <div class="compare-card"><h3>Save &amp; Close</h3><p class="muted">Save and close.</p></div>
               <div class="compare-card"><h3>🔁 Refresh</h3><p class="muted">Reload the sidebar from your saved defaults, dropping this session's Insertion Options changes.</p></div>
-              <div class="compare-card"><h3>Reset To Defaults</h3><p class="muted">Put every preference back to the add-on's original settings. Asks first.</p></div>
+              <div class="compare-card"><h3>Reset To Defaults</h3><p class="muted">Put every preference back to the add-on's original settings, and the menu to the default for your interface. Simple or Everything stays as it is. Asks first.</p></div>
             </div>
             <p style="margin-top:10px;">While a save, reset or refresh is under way, the dialog is covered by a spinner that says what it is doing (<em>Saving preferences…</em>); wait for it to clear.</p>
             <div class="callout">Changed a preference but the sidebar still does the old thing? A saved preference reaches an open sidebar, but a setting you changed in <span class="ui-label">📰 Insertion Options</span> keeps its session value until you click <span class="ui-label">↺ Revert</span> there, or <span class="ui-label">🔁 Refresh</span> in Preferences.</div>
@@ -786,7 +788,7 @@
           <section class="card topic-section" id="menu" data-search-title="The add-on menu (Menu Bar)" data-search-terms="menu extensions menu bar customize reorder hide items quick actions submenu divider restore default menu reload">
             <h2>The add-on menu</h2>
             <p>Everything is under <span class="ui-label">Extensions → Torah Library</span>. Out of the box the menu has: <strong>Texts</strong>, <strong>Voices</strong>, <strong>Lexicon</strong>, <strong>Insert Source from Selection</strong>, and a <strong>Quick Actions</strong> submenu (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count) — then <strong>Preferences</strong> and <strong>Help &amp; Support</strong>. In <a href="#interface-mode">Simple</a> mode it is shorter: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria; switching back to Everything restores the menu you had.</p>
-            <p>To change it, open <span class="ui-label">Preferences → Menu Bar</span>. Use the arrows to reorder items, move them into or out of the Quick Actions submenu, add dividers, or untick an item to hide it (tick it again to bring it back). <strong>Preferences</strong> and <strong>Help &amp; Support</strong> always stay at the bottom, so you can't lose your way back. <span class="ui-label">Restore default menu</span> undoes everything.</p>
+            <p>To change it, open <span class="ui-label">Preferences → Menu Bar</span>. Use &uarr; and &darr; to reorder items, an item's <span class="ui-label">Move to Quick Actions ▸</span> or <span class="ui-label">◂ Move to main menu</span> to move it into the Quick Actions submenu or back out (it lands just below Quick Actions), add dividers, or untick an item to hide it (tick it again to bring it back). <strong>Preferences</strong> and <strong>Help &amp; Support</strong> always stay at the bottom, so you can't lose your way back. <span class="ui-label">Restore default menu</span> undoes everything.</p>
             <p class="small">After saving, reload the document if the menu hasn't changed — Google Docs builds the menu when the document opens.</p>
           </section>
 
@@ -828,7 +830,7 @@
             </details>
             <details>
               <summary>A tab, a button or a Preferences tab is missing</summary>
-              <p>You are probably in <a href="#interface-mode">Simple</a> mode, which hides the result sort, Restore Corpus, the Texts / Voices / Lexicon buttons, some menu items, and the Search, Linking and Experimental tabs of Preferences. Switch to <strong>Everything</strong> at the top of Preferences, or tick <span class="ui-label">Show advanced settings</span> there.</p>
+              <p>You are probably in <a href="#interface-mode">Simple</a> mode, which hides the result sort, Restore Corpus, the Texts / Voices / Lexicon buttons, some menu items, and the Search, Linking, Advanced and Experimental tabs of Preferences. Switch to <strong>Everything</strong> at the top of Preferences.</p>
             </details>
             <details>
               <summary>Cantillation marks look different from the rest of the Hebrew</summary>

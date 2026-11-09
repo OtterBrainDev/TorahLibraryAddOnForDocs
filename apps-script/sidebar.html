@@ -17,6 +17,7 @@
     <?!= include('shared/css/icon-mode-card'); ?>
     <?!= include('css/components/redesign'); ?>
     <?!= include('css/components/simple-mode'); ?>
+    <?!= include('shared/surprise-me/css'); ?>
     <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
     <script>
       window.APP_CONFIG = JSON.parse(document.getElementById('app-config-json').textContent);
@@ -296,16 +297,20 @@
             <div class="cc-translit-wrap" style="margin-top:4px;">
               <button type="button" class="cc-translit-button is-none" id="voices-translit-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="voices-translit-label">None &#x25be;</button>
               <div class="cc-translit-menu hidden" id="voices-translit-menu" role="listbox" aria-labelledby="voices-translit-label">
-                <button type="button" class="cc-translit-option is-selected" data-value="none">None</button>
-                <button type="button" class="cc-translit-option" data-value="simple_english">Simple English</button>
-                <button type="button" class="cc-translit-option" data-value="traditional">Traditional</button>
-                <button type="button" class="cc-translit-option" data-value="modern_israeli">Modern Israeli</button>
-                <button type="button" class="cc-translit-option" data-value="ashkenazi">Ashkenazi</button>
-                <button type="button" class="cc-translit-option" data-value="academic_full">Academic (Full)</button>
-                <button type="button" class="cc-translit-option" data-value="ipa_modern">IPA (Modern Israeli)</button>
-                <button type="button" class="cc-translit-option" data-value="ipa_tiberian">IPA (Tiberian-ish)</button>
+                <button type="button" class="cc-translit-option voices-translit-option is-selected" data-value="none">None</button>
+                <button type="button" class="cc-translit-option voices-translit-option" data-value="simple_english">Simple English</button>
+                <button type="button" class="cc-translit-option voices-translit-option" data-value="traditional">Traditional</button>
+                <button type="button" class="cc-translit-option voices-translit-option" data-value="modern_israeli">Modern Israeli</button>
+                <button type="button" class="cc-translit-option voices-translit-option" data-value="ashkenazi">Ashkenazi</button>
+                <button type="button" class="cc-translit-option voices-translit-option" data-value="academic_full">Academic (Full)</button>
+                <button type="button" class="cc-translit-option voices-translit-option" data-value="ipa_modern">IPA (Modern Israeli)</button>
+                <button type="button" class="cc-translit-option voices-translit-option" data-value="ipa_tiberian">IPA (Tiberian-ish)</button>
               </div>
             </div>
+            <!-- What the chosen transliteration looks like in the sheet's text: in
+                 parentheses after each Hebrew passage (server/sheets.gs). Drawn by
+                 syncVoicesTransliterationUi (sidebar/js/search-controller). -->
+            <p class="voices-translit-sample" id="voices-translit-sample" hidden><bdi class="voices-translit-sample-he" lang="he" dir="rtl">הַסֵּפֶר כָל־הָעָם</bdi> <span class="voices-translit-sample-latin" id="voices-translit-sample-latin"></span></p>
             <div class="voices-insertion-summary" aria-live="polite">Will insert: Citation only</div>
           </div>
           <div class="voices-fetch-loading preview-loading" style="display:none;" aria-live="polite" aria-label="Fetching sheet contents">
@@ -400,32 +405,13 @@
             </div>
           </div>
 
-          <!-- Surprise Me card -->
+          <!-- Surprise Me card: the same form as the Surprise Me dialog. -->
           <div class="exp-card" id="exp-card-surprise">
             <div class="exp-card-header">
               <h3 class="exp-card-title"><span aria-hidden="true">🎲</span> Surprise Me</h3>
               <span class="exp-badge" title="This is an experimental feature — output may vary.">⚗ Beta</span>
             </div>
-            <p class="exp-card-desc">Inserts sources that match a word or theme. Leave blank to let us pick.</p>
-            <div class="exp-form">
-              <div class="exp-field">
-                <label class="exp-label" for="sm-inline-term">Topic hint <span class="exp-label-optional">(optional)</span></label>
-                <input id="sm-inline-term" type="text" class="exp-input" placeholder="e.g. shabbat, forgiveness, water, joy…" autocomplete="off">
-              </div>
-              <div class="exp-field">
-                <p class="exp-label" id="sm-count-label">Sources</p>
-                <div class="exp-stepper" role="group" aria-labelledby="sm-count-label">
-                  <button type="button" class="exp-stepper-btn" id="sm-count-dec" aria-label="Decrease source count" aria-controls="sm-inline-count">−</button>
-                  <input type="number" id="sm-inline-count" class="exp-stepper-val" min="1" max="10" value="3" aria-label="Number of sources" readonly>
-                  <button type="button" class="exp-stepper-btn" id="sm-count-inc" aria-label="Increase source count" aria-controls="sm-inline-count">+</button>
-                  <span class="exp-stepper-hint" aria-hidden="true">1–10</span>
-                </div>
-              </div>
-            </div>
-            <div class="exp-action-row">
-              <button type="button" id="sm-inline-launch" class="exp-action-btn">Discover Sources</button>
-            </div>
-            <p class="exp-status" id="sm-inline-status" role="status" aria-live="polite"></p>
+            <?!= include('shared/surprise-me/markup') ?>
           </div>
         </section>
 
@@ -615,6 +601,7 @@
     <?!= include('shared/fonts/js'); ?>
     <?!= include('shared/composition-card/shared'); ?>
     <?!= include('sidebar/js/composition-controls'); ?>
+    <?!= include('shared/surprise-me/js'); ?>
     <?!= include('sidebar/js/layout-tray'); ?>
   </body>
 </html>
