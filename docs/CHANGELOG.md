@@ -9,6 +9,8 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+- The English divine-name replacement now also catches "GOD" (keyed on the capital G; lowercase "god"/"gods" are untouched), on insert and in Transform Divine Names. An all-caps match gets an all-caps substitute (G-D). No new preference.
+
 > **Preference migration (schemas 21 and 22). No new preference.** Borrowing
 > the Hebrew marks a font has no glyph for is always on, for new and existing
 > users alike; there is no setting. It changes only those marks, which until
