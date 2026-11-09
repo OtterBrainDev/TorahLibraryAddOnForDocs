@@ -583,7 +583,7 @@ function getAttributionParagraphText(attributionLines) {
 
 /**
  * The citation under a source (edition and license). 8 pt italic, as it has
- * always been, then the citation style (Preferences → Fonts → Citation) on
+ * always been, then the citation style (Preferences → Layout → Citation style) on
  * top, when the caller has the typography; its defaults are that same look.
  */
 function insertAttributionParagraph(paragraph, attributionLines, typography) {

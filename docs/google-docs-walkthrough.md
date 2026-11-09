@@ -66,7 +66,8 @@ takes effect at once, without Save). Simple hides, and never removes:
   Divine Names, Link Texts with Sefaria, then Preferences and Help & Support.
   Switching back to Everything restores the menu you had.
 - **Preferences:** the Search, Linking and 🧪 Experimental tabs and the
-  advanced Fonts sections, until **Show advanced settings** is ticked.
+  advanced formatting sections (formatting for specific languages, how kept
+  bold and italics look), until **Show advanced settings** is ticked.
 
 Existing users keep Everything and never see the setup.
 
@@ -102,7 +103,8 @@ chapter, titled *Genesis 1*.
 
 **Versions** chooses the translation (**Translation Versions**) and, when
 needed, a specific Hebrew edition (**Original Versions**). Your preferred
-translation language is set in **Preferences → Fonts → Translation**.
+translation language is set in **Preferences → Insertion → Insertion
+Defaults → Translation → Language**.
 
 With **Translation** only, or **Hebrew and translation** in the **Stacked**
 layout, each click on a translation adds or removes it, so several can be
@@ -165,18 +167,19 @@ setting for it.
 An insertion is a title (linked if that title's **Link title to Sefaria** is
 on), then the Hebrew, transliteration and/or translation in your chosen
 arrangement, then the citation if **Citation** is on, styled as set in
-**Preferences → Fonts → Citation**.
+**Preferences → Insertion → Layout → Citation style**.
 
 With the cursor in a table cell, one language or the **Stacked** layout goes
 inside the cell. **Right–Left** and **Left–Right** are tables themselves, so
 they go directly below the table, and the sidebar says so. Headers, footers
 and footnotes can't hold a source.
 
-Fonts, sizes and colours come from **Preferences → Fonts**, and default to
+Fonts, sizes and colours come from the font buttons in **Preferences →
+Insertion** (each opens its font's settings in place), and default to
 **Match the document** — the font and size of the text where you insert.
-Titles can be set to Heading 1–6 so they appear in the outline and table of
-contents. Sefaria's own bold and italics are kept; change how they look under
-**Preferences → Fonts → ✒️ Source Emphasis**.
+Titles can be set to Heading 1–6 (Layout → **Title style**) so they appear in
+the outline and table of contents. Sefaria's own bold and italics are kept;
+change how they look under **Bold & italics → Advanced** in Insertion Defaults.
 
 **Bold & italics: Only** inserts just the words the translation puts in bold
 or italics. For example, Sefaria's English Talmud (Steinsaltz) bolds the
@@ -270,8 +273,7 @@ settings**.
 
 | Tab | Contents |
 | --- | --- |
-| **Fonts** | Title (a **Translation title** / **Source title** switch, each with its own font, size, style, colour, highlight and **Hyperlink formatting override** for its linked look; the paragraph style is shared), Hebrew, Transliteration (scheme), Translation (preferred language), Citation (8 pt italic in the font of the text above unless changed) — each with a preview — and ✒️ Source Emphasis (Keep / Discard / Bold only). |
-| **Insertion** | Default Layout (the sidebar's pickers); Insertion Defaults for Texts, Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). |
+| **Insertion** | Default Layout (the sidebar's pickers, plus the titles' **Title style** — e.g. Heading 2 — and **Citation style**, 8 pt italic in the font of the text above unless changed); Insertion Defaults for Texts (the card, plus the translation **Language**), Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). Every font button (each title, the Hebrew, transliteration and translation text, the citation) opens that font's full settings in place: font, size, style, colour, highlight and a preview, and for a title its **Hyperlink formatting override**. |
 | **Search** | Text Search Results (group order and hidden groups); Translation Languages; Advanced (Show unavailable translations). |
 | **Linking** | After linking; Insert text after linking; Document scanning. |
 | **Menu Bar** | Reorder, group, hide and divide menu items. |

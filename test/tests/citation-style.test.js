@@ -66,10 +66,12 @@ test('every citation the inserts write is given the typography', () => {
   for (const call of calls) assert.match(call, /, typography\);$/, call.trim());
 });
 
-test('Preferences has a Citation section with every citation field', () => {
+test('Preferences: Layout\'s Citation style button opens an editor with every citation field', () => {
   const html = fs.readFileSync('apps-script/preferences.html', 'utf8');
-  assert.match(html, /<details class="section-card section-accordion" id="citation-typography"/);
+  assert.match(html, /<button type="button" class="cc-font-chip" id="cc-citation-font-chip" data-font-role="citation"/);
+  const editor = html.match(/<div class="pref-font-editor" data-font-editor="citation"[\s\S]*?id="citation_preview"/);
+  assert.ok(editor, 'the citation editor');
   for (const name of ['citation_font', 'citation_font_size', 'citation_font_style', 'citation_font_color', 'citation_font_background']) {
-    assert.match(html, new RegExp(`name="${name}"`), name);
+    assert.match(editor[0], new RegExp(`name="${name}"`), name);
   }
 });

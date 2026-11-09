@@ -291,6 +291,30 @@
   flex: 0 0 auto;
   color: #8b8b8b;
   font-size: 10px;
+  transition: transform 0.15s ease;
+}
+
+/* A font button with a full editor in place (Preferences) points down to it
+   while it is open. */
+.cc-font-chip.has-inline-editor[aria-expanded='true'] .cc-font-chip-caret {
+  transform: rotate(180deg);
+}
+
+.cc-font-chip.has-inline-editor[aria-expanded='true'] {
+  background: var(--cc-inline-editor-bg, #f4f7fb);
+}
+
+/* The full editor, opened in place under its font button's row. */
+.cc-font-inline {
+  margin: 2px 0 8px;
+  padding: 10px 12px 12px;
+  background: var(--cc-inline-editor-bg, #f4f7fb);
+  border: 1px solid #d5dfeb;
+  border-radius: 8px;
+}
+
+.cc-font-inline[hidden] {
+  display: none;
 }
 
 .cc-font-note {

@@ -11,12 +11,12 @@
     };
 
     const FONT_SIZE_FIELDS = ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size','hebrew_title_font_size','hebrew_link_font_size','citation_font_size'];
-    // The four title styles (Fonts → Title): the translation title's plain and
+    // The four title styles (the title font editors): the translation title's plain and
     // linked, and the source (Hebrew) title's. Each has prefix_font, _font_size,
     // _font_style, _font_color, _font_background and a prefix_preview.
     const TITLE_FONT_PREFIXES = ['source_title', 'sefaria_link', 'hebrew_title', 'hebrew_link'];
     // Roles laid out like the titles (prefix_font … prefix_preview): the
-    // titles and the citation under each source (Fonts → Citation).
+    // titles and the citation under each source (Layout → Citation style).
     const STYLED_FONT_PREFIXES = TITLE_FONT_PREFIXES.concat(['citation']);
 
     const overrideChars = ["א","ב","ג","ד","ה","ו","ז","ח","ט","י","כ","ך","ל","מ","ם","נ","ן","ס","ע","פ","ף","צ","ץ","ק","ר","ש","ת"];
@@ -140,20 +140,6 @@
       updateStandardPreview(prefix + '_font', prefix + '_preview', prefix + '_font_style');
     }
 
-    // Fonts → Title shows one title's settings at a time: the translation
-    // title's or the source (Hebrew) title's.
-    function showTitleLanguage(language) {
-      document.querySelectorAll('[data-title-language]').forEach(function (tab) {
-        var selected = tab.getAttribute('data-title-language') === language;
-        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
-        tab.classList.toggle('is-active', selected);
-        tab.tabIndex = selected ? 0 : -1;
-      });
-      document.querySelectorAll('[data-title-language-panel]').forEach(function (panel) {
-        panel.hidden = panel.getAttribute('data-title-language-panel') !== language;
-      });
-    }
-
     function updateTransliterationPreview() {
       const scheme = byId('transliteration_scheme');
       const preview = byId('transliteration_preview');
@@ -244,8 +230,22 @@
       });
     }
 
+    // The settings that once had a Fonts tab of their own sit beside what they
+    // style: the translation's language and the emphasis mapping in the card
+    // (data-cc-attach, placed here), and each font's full editor under its
+    // font button (data-font-editor, opened in place by the card: fontEditor).
+    function _attachCardExtras() {
+      var language = document.querySelector('[data-cc-attach="translationLanguage"]');
+      var translationRows = document.querySelector('#composition-card-container .cc-section--translation .cc-pill-row');
+      if (language && translationRows) translationRows.insertBefore(language, translationRows.firstChild);
+      var mapping = document.querySelector('[data-cc-attach="emphasisMapping"]');
+      var emphasisRow = byId('cc-emphasis-toggle') && byId('cc-emphasis-toggle').closest('.cc-row');
+      if (mapping && emphasisRow) emphasisRow.parentNode.insertBefore(mapping, emphasisRow.nextSibling);
+    }
+
     // Preferences adapter for the shared composition card component.
     function _initPreferencesCompositionCard() {
+      _attachCardExtras();
       initCompositionCard({
         containerId: 'composition-card-container',
         getState: function () {
@@ -274,9 +274,15 @@
             fonts: ccFontStateFrom(function (id) { return (byId(id) || {}).value; })
           };
         },
-        // The font buttons (text and title fonts) edit the Fonts tab's own
-        // fields, so the two always agree and Save stores them like any other
-        // change. `prefix` names the field: hebrew_font, source_title_font…
+        // Each font button opens that font's full editor in place: font,
+        // size, style, colours and preview (and, for a title, its linked
+        // style). Its fields are the form's own, so Save stores them.
+        fontEditor: function (role) {
+          return document.querySelector('[data-font-editor="' + role + '"]');
+        },
+        // Only the font panel calls this, and Preferences opens none; kept so
+        // a font without an editor here still writes the form's own field.
+        // `prefix` names the field: hebrew_font, source_title_font…
         onFontChange: function (prefix, field, value) {
           var el = byId(prefix + (field === 'size' ? '_font_size' : '_font'));
           if (!el) return;
@@ -284,17 +290,6 @@
           else el.value = value;
           syncCustomSelect(el);
           el.dispatchEvent(new Event('change', { bubbles: true }));
-        },
-        onMoreFontSettings: function (role) {
-          var tab = byId('pref-tab-fonts-btn');
-          if (tab) tab.click();
-          var isTitle = role === 'hebrewTitle' || role === 'translationTitle';
-          if (isTitle) showTitleLanguage(role === 'hebrewTitle' ? 'source' : 'translation');
-          var section = byId(isTitle ? 'title-typography' : 'hebrew-text-settings');
-          if (section) {
-            section.open = true;
-            section.scrollIntoView({ block: 'start' });
-          }
         },
         onToggle: function (key) {
           if (key === 'hebrewPunctuation' || key === 'translationPunctuation') {
@@ -804,9 +799,6 @@
       var box = byId(fields.getAttribute('data-link-override'));
       if (box) box.addEventListener('change', syncLinkOverrideFields);
     });
-    document.querySelectorAll('[data-title-language]').forEach(function (tab) {
-      tab.addEventListener('click', function () { showTitleLanguage(tab.getAttribute('data-title-language')); });
-    });
     // Emphasis mapping has no live preview element; bindStyleControl tolerates
     // a missing previewId and just keeps the button state in sync.
     bindStyleControl('emphasis_bold_style', null);
@@ -826,7 +818,6 @@
       'select#hebrew_link_font',
       'select#citation_font',
       'select#source_title_heading',
-      'select#transliteration_scheme',
       'select#preferred_translation_language',
       'select#meforash_replacement',
       'select#yaw_replacement',
@@ -853,7 +844,6 @@
     }
 
     byId('transliteration_font').addEventListener('change', function(){ updateTransliterationPreview(); updateCompositionCard(); });
-    byId('transliteration_scheme').addEventListener('change', function(){ syncCustomSelect(byId('transliteration_scheme')); updateTransliterationPreview(); updateCompositionCard(); });
     if (byId('include_transliteration_default')) byId('include_transliteration_default').addEventListener('change', function(){ updateCompositionCard(); });
     if (byId('insert_sefaria_link_default')) byId('insert_sefaria_link_default').addEventListener('change', function(){ updateCompositionCard(); });
     if (byId('insert_hebrew_sefaria_link_default')) byId('insert_hebrew_sefaria_link_default').addEventListener('change', function(){ updateCompositionCard(); });
@@ -1473,8 +1463,6 @@
         selector.querySelectorAll('button[data-value]').forEach(function(btn) {
           btn.addEventListener('click', function() {
             setPrefButtonGroup(groupId, btn.getAttribute('data-value'));
-            // The Texts tab's B&I pill shows the same setting.
-            if (groupId === 'source_emphasis_mode') updateCompositionCard();
           });
         });
       });

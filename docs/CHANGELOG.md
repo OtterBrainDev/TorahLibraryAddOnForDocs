@@ -45,6 +45,31 @@ heading until the next release consolidates it.
 > the citation's fixed look until now: 8 pt italic, in the font of the text
 > above it.
 
+### Preferences: fonts are set where they apply; no Fonts tab
+
+No new preference, no migration; every stored setting is read and saved as
+before. Once the composition card had font buttons, the Fonts tab repeated the
+Insertion tab, and the buttons' small font-and-size panel sent you to the
+Fonts tab for anything more. Now every font has one place, beside what it
+styles:
+
+- In **Preferences → Insertion**, each font button (**Title font** and **Text
+  font** in Source and Translation, and the transliteration's new **Font**
+  under its Style) opens that font's full settings in place: font, size,
+  bold / italic / underline, text colour, highlight and a preview; a title's
+  also has its **Hyperlink formatting override**, and the translation's its
+  formatting for specific languages.
+- **Layout** gains **Title style** (Normal text or Heading 1–6) and **Citation
+  style** (a button that opens the citation's settings the same way).
+- The translation's preferred **Language** is a row in Insertion Defaults →
+  Translation; how kept bold and italics look is under **Bold & italics →
+  Advanced**.
+- The Fonts tab's second copies of the transliteration scheme and of Keep /
+  Discard / Bold only are gone: the card's **Style** and **Bold & italics**
+  are those settings.
+- Preferences opens on the Insertion tab. The sidebar and Link Texts keep the
+  compact font panel.
+
 ### Beta tutorial QA fixes (30 October 2026)
 
 No new preference, no migration. Found while recording the beta tutorials;
