@@ -270,7 +270,7 @@ settings**.
 
 | Tab | Contents |
 | --- | --- |
-| **Fonts** | Title (a **Translation title** / **Source title** switch, each with its own font, size, style, colour, highlight and **Hyperlink formatting override** for its linked look; the paragraph style is shared), Hebrew, Transliteration (scheme), Translation (preferred language), Citation (8 pt italic in the font of the text above unless changed) — each with a preview — and ✒️ Source Emphasis (Keep / Discard / Bold only). |
+| **Fonts** | Title (a **Translation title** / **Source title** switch, each with its own font, size, style, colour, highlight and **Hyperlink formatting override** for its linked look and **Name the edition** for whether a linked title names its edition; the paragraph style is shared), Hebrew, Transliteration (scheme), Translation (preferred language), Citation (8 pt italic in the font of the text above unless changed) — each with a preview — and ✒️ Source Emphasis (Keep / Discard / Bold only). |
 | **Insertion** | Default Layout (the sidebar's pickers); Insertion Defaults for Texts, Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). |
 | **Search** | Text Search Results (group order and hidden groups); Translation Languages; Advanced (Show unavailable translations). |
 | **Linking** | After linking; Insert text after linking; Document scanning. |

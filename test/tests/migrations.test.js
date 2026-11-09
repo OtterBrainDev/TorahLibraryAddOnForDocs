@@ -564,3 +564,13 @@ test('v25 sets the citation style to its old look, never overwriting a stored va
   assert.equal(userProperties.getProperty('citation_font_style'), 'italic');
   assert.equal(userProperties.getProperty('citation_font_color'), '');
 });
+
+// v26: the "Name the edition" switches start on: a linked title has always
+// named its edition.
+test('v26 turns "Name the edition" on for both titles, never overwriting a stored switch', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '25', hebrew_link_edition_label: 'false' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('sefaria_link_edition_label'), 'true');
+  assert.equal(userProperties.getProperty('hebrew_link_edition_label'), 'false');
+});

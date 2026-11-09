@@ -678,6 +678,19 @@ function buildLinkedTitleText(baseTitle, data, singleLanguage) {
 }
 
 /**
+ * A linked title's text: with the label on (Preferences → Fonts → "Name the
+ * edition", per title; unset is on), the reference and the edition it links
+ * to, as buildLinkedTitleText writes it; off, the reference alone, exactly as
+ * the unlinked title reads. Only the text changes: the link and the linked
+ * style are applied as before.
+ */
+function linkedTitleText_(baseTitle, data, language, typography) {
+  const labels = typography && typography.linkEditionLabel;
+  if (labels && labels[language] === false) return baseTitle;
+  return buildLinkedTitleText(baseTitle, data, language);
+}
+
+/**
  * Insert a resolved Sefaria source into the active Google Doc.
  *
  * Signature is an options bag so callers don't have to remember the order of
@@ -859,7 +872,7 @@ function insertReference(data, opts) {
     let titleText = (singleLanguage == "he") ? data.heRef : title;
     const titleLinked = (singleLanguage == "he") ? insertHebrewSefariaLink : insertSefariaLink;
     if (titleLinked) {
-      titleText = buildLinkedTitleText(titleText, data, singleLanguage);
+      titleText = linkedTitleText_(titleText, data, singleLanguage, typography);
     }
     let mainText = (singleLanguage == "he") ? data.he : data.text;
 
@@ -909,7 +922,7 @@ function insertReference(data, opts) {
   }
   else {
     if (resolvedBilingualLayout == "he-top") {
-      doc.insertParagraph(index, insertHebrewSefariaLink ? buildLinkedTitleText(data.heRef, data, 'he') : data.heRef)
+      doc.insertParagraph(index, insertHebrewSefariaLink ? linkedTitleText_(data.heRef, data, 'he', typography) : data.heRef)
         .setAttributes(headerStyle)
         .setLeftToRight(false);
       let hebTitleParagraph = doc.getChild(index).asParagraph();
@@ -929,7 +942,7 @@ function insertReference(data, opts) {
         insertTransliterationParagraphAfter(doc, index + 2, transliterationText, typography, true);
       }
 
-      doc.insertParagraph(index + (transliterationText ? 3 : 2), insertSefariaLink ? buildLinkedTitleText(title, data, 'en') : title)
+      doc.insertParagraph(index + (transliterationText ? 3 : 2), insertSefariaLink ? linkedTitleText_(title, data, 'en', typography) : title)
         .setAttributes(headerStyle)
         .setLeftToRight(true);
       let enTitleParagraph = doc.getChild(index + (transliterationText ? 3 : 2)).asParagraph();
@@ -973,7 +986,7 @@ function insertReference(data, opts) {
         .setText("")
         .insertParagraph(0, "");
       engTitle.setLeftToRight(true);
-      insertRichTextFromHTML(engTitle, insertSefariaLink ? buildLinkedTitleText(title, data, 'en') : title);
+      insertRichTextFromHTML(engTitle, insertSefariaLink ? linkedTitleText_(title, data, 'en', typography) : title);
       engTitle.setAttributes(headerStyle);
       applyTitleTypography(engTitle, typography, insertSefariaLink, 'en');
       if (insertSefariaLink) {
@@ -984,7 +997,7 @@ function insertReference(data, opts) {
         .setText("")
         .insertParagraph(0, "");
       hebTitle.setLeftToRight(false);
-      insertRichTextFromHTML(hebTitle, insertHebrewSefariaLink ? buildLinkedTitleText(data.heRef, data, 'he') : data.heRef);
+      insertRichTextFromHTML(hebTitle, insertHebrewSefariaLink ? linkedTitleText_(data.heRef, data, 'he', typography) : data.heRef);
       hebTitle.setAttributes(headerStyle);
       applyTitleTypography(hebTitle, typography, insertHebrewSefariaLink, 'he');
       if (insertHebrewSefariaLink) {
@@ -1115,10 +1128,12 @@ function selectInsertableVersions_(versionTitles, dataList) {
  * Title for one translation block of a multi-version insert. The linked form
  * already names the version ("Title (Translation • Version)"), so the plain
  * "(Version)" suffix is only added when there is no link — adding both printed
- * the version twice.
+ * the version twice. A linked title with "Name the edition" off reads like an
+ * unlinked one, so blocks of two or more still say which translation each is.
  */
-function buildVersionBlockTitle_(baseTitle, versionTitle, data, insertSefariaLink, blockCount) {
-  if (insertSefariaLink) {
+function buildVersionBlockTitle_(baseTitle, versionTitle, data, insertSefariaLink, blockCount, typography) {
+  const labels = typography && typography.linkEditionLabel;
+  if (insertSefariaLink && !(labels && labels.en === false)) {
     return buildLinkedTitleText(baseTitle, data, 'en');
   }
   let title = String(baseTitle || '').trim();
@@ -1233,7 +1248,7 @@ function insertReferenceVersions(ref, opts) {
     let firstData = formatDataForPesukim(kept[0].data, includeLineMarkers);
     if (includeTranslationSourceInfo) hebrewCreditLines = getHebrewAttributionLines_(firstData);
     typography.sectionHeadingLines = firstData.sectionHeadingLines || [];
-    let heTitle = insertHebrewSefariaLink ? buildLinkedTitleText(firstData.heRef, firstData, 'he') : firstData.heRef;
+    let heTitle = insertHebrewSefariaLink ? linkedTitleText_(firstData.heRef, firstData, 'he', typography) : firstData.heRef;
     doc.insertParagraph(index, heTitle).setAttributes(headerStyle).setLeftToRight(false);
     let heTitlePara = doc.getChild(index).asParagraph();
     applyTitleTypography(heTitlePara, typography, insertHebrewSefariaLink, 'he');
@@ -1262,7 +1277,7 @@ function insertReferenceVersions(ref, opts) {
 
     let d = formatDataForPesukim(kept[i].data, includeLineMarkers);
     typography.sectionHeadingLines = d.sectionHeadingLines || [];
-    let displayTitle = buildVersionBlockTitle_(preferredTitle || d.ref, kept[i].versionTitle, d, insertSefariaLink, kept.length);
+    let displayTitle = buildVersionBlockTitle_(preferredTitle || d.ref, kept[i].versionTitle, d, insertSefariaLink, kept.length, typography);
     doc.insertParagraph(index, displayTitle).setAttributes(headerStyle).setLeftToRight(true);
     let titlePara = doc.getChild(index).asParagraph();
     applyTitleTypography(titlePara, typography, insertSefariaLink, 'en');

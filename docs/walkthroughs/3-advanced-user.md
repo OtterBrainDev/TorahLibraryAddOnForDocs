@@ -38,6 +38,9 @@ back). This tour uses Everything.
   **Source title** to give each its own font, size, colour and highlight.
   **Hyperlink formatting override** (on by default) gives a title a separate
   look while it's linked; off, a linked title keeps its title font.
+  **Name the edition** (on by default) writes a linked title as
+  *Genesis 1:1 (Translation • The Koren Jerusalem Bible)*; off, just
+  *Genesis 1:1*, still linked.
 - **Citation:** the editions-and-licenses line under each source has its own
   style, 8 pt italic in the font of the text above unless you change it.
   *Same as the text above* and a blank size follow the passage.

@@ -183,3 +183,69 @@ test('getTypographySettings reads each override, unset meaning on', () => {
     assert.ok(vm.runInContext('SETTINGS', ctx).includes(key), key);
   }
 });
+
+// "Name the edition" (Preferences → Fonts, per title): a linked title names
+// the edition it links to — "Genesis 1:1 (Translation • Koren)" — unless that
+// title's switch is off, when it reads like an unlinked title. The link and
+// the linked style stay either way. Schema v26 turns both on for upgraders
+// (migrations.test.js), which is how linked titles always read.
+const GENESIS_EDITIONS = Object.assign({}, GENESIS, { versionTitle: 'Koren', heVersionTitle: 'Miqra' });
+
+function insertWithLabels(labels, opts) {
+  const loaded = loadInsertion();
+  loaded.ctx.getTypographySettings = () => (labels ? { roles: {}, linkEditionLabel: labels } : { roles: {} });
+  loaded.ctx.insertReference(Object.assign({}, GENESIS_EDITIONS), opts);
+  const title = (prefix) => loaded.paragraphs().find((p) => p.text.startsWith(prefix));
+  return { title, titleCalls: loaded.titleCalls };
+}
+
+test('each linked title names its edition only while its "Name the edition" switch is on', () => {
+  const linkedBoth = { bilingualLayout: 'he-top', insertSefariaLink: true, insertHebrewSefariaLink: true };
+
+  let r = insertWithLabels({ en: true, he: true }, linkedBoth);
+  assert.equal(r.title('Genesis').text, 'Genesis 1:1 (Translation • Koren)');
+  assert.equal(r.title('בראשית').text, 'בראשית א:א (Hebrew • Miqra)');
+
+  r = insertWithLabels({ en: false, he: true }, linkedBoth);
+  assert.equal(r.title('Genesis').text, 'Genesis 1:1', 'off: the reference alone');
+  assert.ok(r.title('Genesis').link.includes('sefaria.org'), 'still linked');
+  assert.equal(r.title('בראשית').text, 'בראשית א:א (Hebrew • Miqra)', 'the other title keeps its own setting');
+  assert.deepEqual(r.titleCalls.map((c) => c.role), ['hebrewLink', 'sefariaLink'], 'still in the linked style');
+
+  r = insertWithLabels({ en: true, he: false }, linkedBoth);
+  assert.equal(r.title('Genesis').text, 'Genesis 1:1 (Translation • Koren)');
+  assert.equal(r.title('בראשית').text, 'בראשית א:א');
+  assert.ok(r.title('בראשית').link);
+
+  r = insertWithLabels({ en: false, he: false }, { singleLanguage: 'en', insertSefariaLink: true });
+  assert.equal(r.title('Genesis').text, 'Genesis 1:1');
+  r = insertWithLabels({ en: false, he: false }, { singleLanguage: 'he', insertHebrewSefariaLink: true });
+  assert.equal(r.title('בראשית').text, 'בראשית א:א');
+});
+
+test('a caller with no edition-label settings names the edition, as linked titles always did', () => {
+  const r = insertWithLabels(null, { singleLanguage: 'en', insertSefariaLink: true });
+  assert.equal(r.title('Genesis').text, 'Genesis 1:1 (Translation • Koren)');
+});
+
+test('multi-translation blocks with "Name the edition" off still say which translation each is', () => {
+  const { ctx } = loadInsertion();
+  const off = { linkEditionLabel: { en: false, he: true } };
+  const on = { linkEditionLabel: { en: true, he: true } };
+  const d = { versionTitle: 'Koren' };
+  assert.equal(ctx.buildVersionBlockTitle_('Genesis 1:1', 'Koren', d, true, 2, off), 'Genesis 1:1 (Koren)');
+  assert.equal(ctx.buildVersionBlockTitle_('Genesis 1:1', 'Koren', d, true, 1, off), 'Genesis 1:1');
+  assert.equal(ctx.buildVersionBlockTitle_('Genesis 1:1', 'Koren', d, true, 2, on), 'Genesis 1:1 (Translation • Koren)', 'the version once, as before');
+  assert.equal(ctx.buildVersionBlockTitle_('Genesis 1:1', 'Koren', d, true, 2), 'Genesis 1:1 (Translation • Koren)');
+});
+
+test('getTypographySettings reads each "Name the edition" switch, unset meaning on', () => {
+  assert.deepEqual({ ...loadPreferences({}).ctx.getTypographySettings().linkEditionLabel }, { en: true, he: true });
+  const { ctx, props } = loadPreferences({ sefaria_link_edition_label: 'false', hebrew_link_edition_label: 'true' });
+  assert.deepEqual({ ...ctx.getTypographySettings(props).linkEditionLabel }, { en: false, he: true });
+  const defaults = ctx.getDefaultPreferences();
+  for (const key of ['sefaria_link_edition_label', 'hebrew_link_edition_label']) {
+    assert.equal(defaults[key], true, key);
+    assert.ok(vm.runInContext('SETTINGS', ctx).includes(key), key);
+  }
+});

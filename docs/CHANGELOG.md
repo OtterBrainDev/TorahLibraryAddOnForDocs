@@ -45,6 +45,26 @@ heading until the next release consolidates it.
 > the citation's fixed look until now: 8 pt italic, in the font of the text
 > above it.
 
+> **Preference migration (schema 26). Two new preferences; no existing
+> user's inserts change.** Whether a linked title names its edition is now a
+> setting, one per title: `sefaria_link_edition_label` (translation title)
+> and `hebrew_link_edition_label` (source title). Schema 26 turns both **on**
+> for everyone, which is how linked titles have always read.
+
+### Linked titles: "Name the edition" (9 November 2026)
+
+#### Added
+
+- **A linked title can be just the reference.** A title linked to Sefaria
+  has always added the edition after it — *Genesis 1:1 (Translation • The
+  Koren Jerusalem Bible)* — with no way to turn that off short of unlinking
+  the title. Preferences → Fonts → Title → *Name the edition*, under
+  *Translation title* and under *Source title*, now sets it for each title.
+  On (the default) is as before; off, a linked title reads *Genesis 1:1*,
+  still linked and in its linked style. With several translations inserted
+  at once and the switch off, each title still names its translation, as an
+  unlinked title does: *Genesis 1:1 (Koren)*.
+
 ### Beta tutorial QA fixes (30 October 2026)
 
 No new preference, no migration. Found while recording the beta tutorials;

@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **599 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **604 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -237,7 +237,10 @@ and fix it before touching the feature you came to change.
   the linked style applies only with that title's "Hyperlink formatting
   override" on (schema v24 turns both on); a caller that passes only the old
   `insertSefariaLink` links both alike, as before; schema v23 copies the old
-  values (`migrations.test.js`).
+  values (`migrations.test.js`). Each title's "Name the edition" switch
+  decides whether its linked form adds `(Translation • Edition)`; off, it is
+  the reference alone, still linked (multi-translation blocks still name
+  their version); schema v26 turns both on.
 - `sidebar-session-saves.test.js` — the sidebar's session saves go one at a
   time (a quick second click once overwrote the first: the lost Vowels
   choice), switches re-draw only when nothing is left to save, and a change
