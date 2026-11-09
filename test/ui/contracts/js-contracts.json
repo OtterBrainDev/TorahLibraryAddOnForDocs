@@ -51,7 +51,14 @@
   "apps-script/preferences/js.html": [
     "function _initPreferencesInsertionOptions",
     "initInsertionOptions(",
-    "hideInapplicable: false"
+    "hideInapplicable: false",
+    "window.PreferencesDialog = {"
+  ],
+  "apps-script/preferences/settings-file-js.html": [
+    ".exportSettingsFile(",
+    ".previewSettingsImport(",
+    ".applySettingsImport(",
+    "window.PreferencesDialog"
   ],
   "apps-script/sidebar/js/bootstrap.html": [
     "function initializeSidebar",

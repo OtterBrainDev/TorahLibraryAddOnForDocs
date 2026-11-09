@@ -1075,6 +1075,23 @@
   color: var(--muted);
 }
 
+/* The chosen transliteration, as the sheet's text will show it. */
+.voices-translit-sample {
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.voices-translit-sample[hidden] { display: none; }
+
+.voices-translit-sample-he { font-size: 15px; }
+
+.voices-translit-sample-latin { color: var(--muted); }
+
 /* =============================================================
    VOICE PREVIEW CARD
    ============================================================= */
@@ -1508,194 +1525,9 @@
   cursor: default;
 }
 
-/* Card description */
-.exp-card-desc {
-  margin: 0 0 10px;
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.35;
-}
 
-/* Form layout */
-.exp-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.exp-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Labels */
-.exp-label {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-}
-.exp-label-optional {
-  font-size: 11px;
-  font-weight: 400;
-  color: #888;
-  margin-left: 2px;
-}
-/* Text inputs */
-.exp-input {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 6px 10px;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 13px;
-  color: var(--text);
-  transition: border-color 0.1s;
-}
-.exp-input:focus {
-  outline: none;
-  border-color: var(--sefaria-blue);
-}
-/* Stepper control */
-.exp-stepper {
-  display: flex;
-  align-items: center;
-}
-.exp-stepper-btn {
-  width: 28px;
-  height: 28px;
-  border: 1px solid #ccc;
-  background: var(--card);
-  font-size: 15px;
-  font-family: inherit;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  transition: background 0.1s;
-  padding: 0;
-}
-.exp-stepper-btn:first-child {
-  border-radius: 6px 0 0 6px;
-}
-.exp-stepper-btn:nth-child(3) {
-  border-radius: 0 6px 6px 0;
-}
-.exp-stepper-btn:hover:not(:disabled) {
-  background: #e8e6e2;
-}
-.exp-stepper-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-.exp-stepper-btn:focus-visible {
-  outline: 2px solid var(--sefaria-blue);
-  outline-offset: 2px;
-}
-.exp-stepper-val {
-  width: 40px;
-  height: 28px;
-  border: 1px solid #ccc;
-  border-left: 0;
-  border-right: 0;
-  background: #fff;
-  text-align: center;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  -moz-appearance: textfield;
-  box-sizing: border-box;
-}
-.exp-stepper-val::-webkit-outer-spin-button,
-.exp-stepper-val::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-}
-.exp-stepper-hint {
-  margin-left: 6px;
-  font-size: 11px;
-  color: #888;
-}
-
-/* Action row */
-.exp-action-row {
-  margin-top: 10px;
-}
-.exp-action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  width: 100%;
-  padding: 8px 14px;
-  background: var(--sefaria-blue);
-  border: 0;
-  border-radius: 6px;
-  color: #fff;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  transition: background 0.1s;
-}
-.exp-action-btn:hover:not(:disabled) {
-  background: var(--selected-hover);
-}
-.exp-action-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-.exp-action-btn:focus-visible {
-  outline: 2px solid var(--sefaria-blue);
-  outline-offset: 2px;
-}
-
-/* Status area (always reserves space to prevent layout shift) */
-.exp-status {
-  min-height: 18px;
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.4;
-  word-break: break-word;
-}
-.exp-status.exp-error  { color: #c0392b; }
-.exp-status.exp-success { color: #1a7a4a; }
-
-/* Error link in status */
-.exp-error-link {
-  color: inherit;
-  text-decoration: underline;
-  cursor: pointer;
-  font-weight: 500;
-}
-.exp-error-link:hover {
-  opacity: 0.8;
-}
-
-/* Busy state: dim entire form */
-.exp-card.exp-busy .exp-form {
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-/* Spinner */
-@keyframes exp-spin { to { transform: rotate(360deg); } }
-.exp-spinner {
-  display: inline-block;
-  width: 11px;
-  height: 11px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: exp-spin 0.7s linear infinite;
-  vertical-align: middle;
-  margin-right: 4px;
-}
+/* The card's form is the shared Surprise Me form: shared/surprise-me/css. */
+#exp-card-surprise .exp-card-header { margin-bottom: 8px; }
 
 /* =============================================================
    RESULT TYPE (Texts / Voices / Lexicon) — under the search box

@@ -21,16 +21,17 @@
         <section class="preferences-toc section-card" aria-label="Preferences sections">
           <h1>Preferences</h1>
           <p class="section-note">These are your default settings for new insertions. The sidebar is where you pick what to insert right now and override these defaults for a single insertion. Saved changes apply to all Google Docs for your account.</p>
-          <!-- Interface mode (server/first-run.gs setUiMode). Takes effect at
-               once, apart from Save: it also moves the menu. Save collects
-               no radio inputs, and neither control is a preference. -->
-          <div class="interface-mode-row" role="radiogroup" aria-labelledby="interface-mode-label">
+          <!-- Interface mode (server/first-run.gs setUiMode): the one switch for
+               what is shown, here, in the sidebar and in the menu. Takes effect
+               at once, apart from Save: it also moves the menu. Save collects
+               no radio inputs, and it is not a preference. -->
+          <div class="interface-mode-row" role="radiogroup" aria-labelledby="interface-mode-label" aria-describedby="interface-mode-note">
             <span class="interface-mode-label" id="interface-mode-label">Interface</span>
             <label><input type="radio" name="interface_mode_choice" value="simple"> Simple</label>
             <label><input type="radio" name="interface_mode_choice" value="full"> Everything</label>
-            <span class="interface-mode-status" id="interface-mode-status" role="status" aria-live="polite"></span>
           </div>
-          <label class="show-advanced-row" for="show_advanced_settings"><input type="checkbox" id="show_advanced_settings"> Show advanced settings</label>
+          <p class="interface-mode-note" id="interface-mode-note">Simple shows the essentials; Everything adds the Search, Linking, Advanced and Experimental tabs here, and every tool in the sidebar and menu. It applies at once and never changes your settings.</p>
+          <p class="interface-mode-status" id="interface-mode-status" role="status" aria-live="polite"></p>
         </section>
 
         <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
@@ -38,6 +39,7 @@
           <button type="button" id="pref-tab-search-btn" class="pref-tab" role="tab" data-pref-tab="search" aria-controls="pref-tab-search" aria-selected="false">Search</button>
           <button type="button" id="pref-tab-linking-btn" class="pref-tab" role="tab" data-pref-tab="linking" aria-controls="pref-tab-linking" aria-selected="false">Linking</button>
           <button type="button" id="pref-tab-menu-btn" class="pref-tab" role="tab" data-pref-tab="menu" aria-controls="pref-tab-menu" aria-selected="false">Menu Bar</button>
+          <button type="button" id="pref-tab-advanced-btn" class="pref-tab" role="tab" data-pref-tab="advanced" aria-controls="pref-tab-advanced" aria-selected="false">Advanced</button>
 <? if (devFlags.SURPRISE_ME) { ?>
           <button type="button" id="pref-tab-experimental-btn" class="pref-tab" role="tab" data-pref-tab="experimental" aria-controls="pref-tab-experimental" aria-selected="false">🧪 Experimental</button>
 <? } ?>
@@ -136,8 +138,8 @@
 
               <!-- Texts workflow -->
               <div class="pref-workflow-panel" id="pref-workflow-texts" role="tabpanel" aria-labelledby="pref-workflow-tab-texts">
-                <p class="section-note">Set the defaults applied to new text insertions: the linked title and title font (source and translation, separately), cantillation, vowels, punctuation (Hebrew and translation, separately), transliteration, and the translation’s bold and italics. Line numbers and the citation are under Layout. The sidebar can still override these for a single insertion.</p>
-                <div class="cc-card" id="composition-card-container" data-cc-features="linkedTitle,openSections,fonts,titleFonts,translitFont" aria-label="Default insertion preview">
+                <p class="section-note">Set the defaults applied to new text insertions: the linked title and title font (source and translation, separately), cantillation, vowels, punctuation (Hebrew and translation, separately), transliteration, and what to do with the translation’s commentary. Line numbers and the citation are under Layout. The sidebar can still override these for a single insertion.</p>
+                <div class="cc-card" id="composition-card-container" data-cc-features="linkedTitle,editionLabel,openSections,fonts,titleFonts,translitFont" aria-label="Default insertion preview">
                   <?!= include('shared/composition-card/markup') ?>
                 </div>
                 <div class="composition-state-inputs" hidden>
@@ -152,7 +154,11 @@
                   <input id="insert_hebrew_sefaria_link_default" type="checkbox" name="insert_hebrew_sefaria_link_default">
                   <input id="show_line_markers_default" type="checkbox" name="show_line_markers_default" checked>
                   <input id="include_translation_source_info" type="checkbox" name="include_translation_source_info">
-                  <!-- Shown in the card: Style (transliteration) and Bold & italics. -->
+                  <!-- "Name the edition/translation in the title": the card's rows under each
+                       "Link title to Sefaria" (the editionLabel feature). -->
+                  <input id="hebrew_link_edition_label" type="checkbox" name="hebrew_link_edition_label">
+                  <input id="sefaria_link_edition_label" type="checkbox" name="sefaria_link_edition_label">
+                  <!-- Shown in the card: Style (transliteration) and Commentary. -->
                   <select id="transliteration_scheme" name="transliteration_scheme">
                     <option value="simple_english">Simple English</option>
                     <option value="traditional">Traditional</option>
@@ -266,18 +272,6 @@
                           </div>
                         </div>
                         <div class="inline-preview" id="hebrew_link_preview" dir="rtl" lang="he"><span class="label">Preview</span><span class="preview-link-sample">דברים יא:יח</span></div>
-                      </div>
-                    </div>
-                    <div class="subsection-card">
-                      <div class="toggle-row">
-                        <div class="toggle-copy">
-                          <div class="toggle-title">Name the edition</div>
-                          <div class="toggle-help">While the source title is linked to Sefaria (<strong>Link title to Sefaria</strong>, above), add the edition after it: <em><bdi lang="he">בראשית א:א</bdi> (Hebrew • Miqra according to the Masorah)</em>. Off, the linked title is the reference alone.</div>
-                        </div>
-                        <label class="switch" for="hebrew_link_edition_label">
-                          <input id="hebrew_link_edition_label" type="checkbox" name="hebrew_link_edition_label">
-                          <span class="slider"></span>
-                        </label>
                       </div>
                     </div>
                   </div>
@@ -468,18 +462,6 @@
                         <div class="inline-preview" id="sefaria_link_preview"><span class="label">Preview</span><span class="preview-link-sample">Deuteronomy 11:18</span></div>
                       </div>
                     </div>
-                    <div class="subsection-card">
-                      <div class="toggle-row">
-                        <div class="toggle-copy">
-                          <div class="toggle-title">Name the edition</div>
-                          <div class="toggle-help">While the translation title is linked to Sefaria (<strong>Link title to Sefaria</strong>, above), add the edition after it: <em>Genesis 1:1 (Translation • The Koren Jerusalem Bible)</em>. Off, the linked title is the reference alone.</div>
-                        </div>
-                        <label class="switch" for="sefaria_link_edition_label">
-                          <input id="sefaria_link_edition_label" type="checkbox" name="sefaria_link_edition_label">
-                          <span class="slider"></span>
-                        </label>
-                      </div>
-                    </div>
                   </div>
                   <div class="pref-font-editor" data-font-editor="translation" aria-label="Translation font">
                     <div class="subsection-card">
@@ -566,7 +548,7 @@
                   </div>
                   <details class="subsection-card pref-card-details" id="emphasis-mapping" data-cc-attach="emphasisMapping">
                     <summary class="subsection-title">Advanced: how the kept bold and italics look</summary>
-                    <p class="subsection-note">Some Sefaria texts use bold and italics to carry meaning — the Steinsaltz Talmud bolds the Talmud’s own words to separate them from Steinsaltz’s explanation, and many translations italicize interpolated words. Keeping the source’s bold as bold is the default. If your documents use a different convention — say, blue text instead of bold for the Talmud’s own words — map it here. Turn every option off in a card to drop that emphasis entirely. These settings do nothing while <strong>Bold &amp; italics</strong> is set to Drop.</p>
+                    <p class="subsection-note">Some Sefaria texts use bold and italics to carry meaning — the Steinsaltz Talmud bolds the Talmud’s own words to separate them from Steinsaltz’s explanation, and translations italicize foreign and transliterated words. Keeping the source’s bold as bold and its italics as italics is the default. If your documents use a different convention — say, blue text instead of bold for the Talmud’s own words — map it here. Turn every option off in a card to drop that emphasis entirely. With <strong>Commentary</strong> set to Combine there is no bold to map; italics is mapped whichever you choose.</p>
                     <div class="emphasis-map-grid">
                       <div class="emphasis-map-card">
                         <div class="subsection-title">Where the source is bold</div>
@@ -894,7 +876,7 @@
         <div class="pref-tab-panel" id="pref-tab-menu" role="tabpanel" aria-labelledby="pref-tab-menu-btn" hidden>
           <div class="section-card">
             <div class="section-card-body">
-              <p class="section-note">Arrange the add-on&rsquo;s menu under <strong>Extensions</strong>: reorder items, move them into or out of the Quick Actions submenu, add dividers, and untick an item to hide it (tick it again to bring it back). Preferences and Help &amp; Support always stay at the bottom, so you can always get back here. Save to apply; if the menu does not change, reload the document.</p>
+              <p class="section-note">Arrange the add-on&rsquo;s menu under <strong>Extensions</strong>: reorder items with &uarr; and &darr;, move an item into the Quick Actions submenu or back out to the main menu with its <strong>Move to</strong> button, add dividers, and untick an item to hide it (tick it again to bring it back). Preferences and Help &amp; Support always stay at the bottom, so you can always get back here. Save to apply; if the menu does not change, reload the document.</p>
               <input type="hidden" id="menu_layout" name="menu_layout" value="">
 
               <div class="subsection-card">
@@ -919,6 +901,64 @@
               </div>
 
               <button type="button" class="submit menu-layout-reset">Restore default menu</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advanced: the settings file (server/settings-file.gs; behaviour in
+             preferences/settings-file-js). None of these fields has a name, so
+             Save never collects them. -->
+        <div class="pref-tab-panel" id="pref-tab-advanced" role="tabpanel" aria-labelledby="pref-tab-advanced-btn" hidden>
+          <div class="section-card">
+            <div class="section-card-body">
+              <h2 class="settings-file-heading">Settings file</h2>
+              <p class="section-note">Share your settings as a file. A teacher can give a class the same vowels, layout and transliteration; an organization can hand out its fonts, colours and title styles. A file holds these settings and nothing else: not your searches, your documents or your account.</p>
+
+              <div class="subsection-card">
+                <div class="subsection-title">Export</div>
+                <p class="subsection-note">Saves the settings shown in this dialog, including changes you have not saved yet, as a <code>.json</code> file to share.</p>
+                <div class="settings-file-row">
+                  <label class="settings-file-label" for="settings-file-name">Name it <span class="settings-file-optional">(optional)</span></label>
+                  <input type="text" id="settings-file-name" maxlength="80" placeholder="e.g. Grade 7 Chumash" autocomplete="off">
+                </div>
+                <div class="settings-file-actions">
+                  <button type="button" class="blue submit" id="settings-export">Export settings file</button>
+                </div>
+                <p class="settings-file-status" id="settings-export-status" role="status" aria-live="polite"></p>
+                <details class="settings-file-fallback" id="settings-export-fallback" hidden>
+                  <summary>No file downloaded? Copy the settings instead</summary>
+                  <p class="subsection-note">Paste this into an email or a file named <code id="settings-export-filename">torah-library-settings.json</code>. Anyone can paste it into Import, below.</p>
+                  <textarea id="settings-export-text" rows="6" readonly spellcheck="false" aria-label="The settings file's text"></textarea>
+                  <button type="button" class="submit" id="settings-export-copy">Copy</button>
+                </details>
+              </div>
+
+              <div class="subsection-card">
+                <div class="subsection-title">Import</div>
+                <p class="subsection-note">Choose a settings file someone shared with you. You will see what it would change, and choose which parts to apply, before anything changes.</p>
+                <div class="settings-file-actions">
+                  <label class="submit settings-file-pick" for="settings-import-file">Choose a settings file…</label>
+                  <input type="file" id="settings-import-file" class="visually-hidden" accept=".json,application/json,text/plain">
+                </div>
+                <details class="settings-file-fallback">
+                  <summary>Or paste a settings file's text</summary>
+                  <textarea id="settings-import-text" rows="5" spellcheck="false" aria-label="A settings file's text"></textarea>
+                  <button type="button" class="submit" id="settings-import-paste">Check this text</button>
+                </details>
+                <div class="settings-import-preview" id="settings-import-preview" hidden>
+                  <p class="settings-import-from" id="settings-import-from"></p>
+                  <fieldset class="settings-import-groups">
+                    <legend>Apply these parts</legend>
+                    <div id="settings-import-groups"></div>
+                  </fieldset>
+                  <p class="subsection-note" id="settings-import-skipped" hidden></p>
+                  <div class="settings-file-actions">
+                    <button type="button" class="blue submit" id="settings-import-apply">Apply</button>
+                    <button type="button" class="submit" id="settings-import-cancel">Cancel</button>
+                  </div>
+                </div>
+                <p class="settings-file-status" id="settings-import-status" role="status" aria-live="polite"></p>
+              </div>
             </div>
           </div>
         </div>
@@ -1036,7 +1076,7 @@
       <div class="modal-backdrop" id="reset_modal" hidden>
         <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reset_modal_title">
           <h2 id="reset_modal_title">Reset Preferences?</h2>
-          <p>This will restore all preferences to their default values for your account.</p>
+          <p>This will restore all preferences to their default values for your account, and the menu to the default for your interface. The interface itself (Simple or Everything) stays as it is.</p>
           <div class="modal-actions">
             <button type="button" class="submit reset-cancel-button">Cancel</button>
             <button type="button" class="blue submit reset-confirm-button">Reset</button>
@@ -1055,5 +1095,6 @@
     <?!= include('shared/composition-card/shared'); ?>
     <?!= include('shared/insertion-options/js'); ?>
     <?!= include('preferences/js'); ?>
+    <?!= include('preferences/settings-file-js'); ?>
   </body>
 </html>

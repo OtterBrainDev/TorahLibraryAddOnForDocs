@@ -556,9 +556,44 @@ $(document).on('click', '#voices-insert-mode .icon-mode-card', function () {
   var $group = $(this).closest('[role="radiogroup"]');
   $group.find('.icon-mode-card').removeClass('is-active').attr('aria-checked', 'false');
   $(this).addClass('is-active').attr('aria-checked', 'true');
-  var mode = $(this).data('value') || 'reference';
-  $('.voices-insertion-summary').text('Will insert: ' + (VOICE_MODE_SUMMARY_LABELS[mode] || 'Citation only'));
+  syncVoicesTransliterationUi(selectedVoicesTransliteration());
 });
+
+function selectedVoicesTransliteration() {
+  return $('#voices-translit-menu .voices-translit-option.is-selected').attr('data-value') || 'none';
+}
+
+/**
+ * Draw the Voices transliteration choice: the menu's selection, the button,
+ * a sample in the form the insert uses (the Hebrew, then its transliteration
+ * in parentheses: server/sheets.gs), and the "Will insert" line. A citation
+ * alone has no Hebrew to transliterate, so the line says when it applies.
+ */
+function syncVoicesTransliterationUi(value) {
+  var scheme = value && value !== 'none' ? value : 'none';
+  var $options = $('#voices-translit-menu .voices-translit-option');
+  $options.each(function () {
+    var selected = $(this).attr('data-value') === scheme;
+    $(this).toggleClass('is-selected', selected).attr('aria-selected', selected ? 'true' : 'false');
+  });
+  var label = $options.filter('[data-value="' + scheme + '"]').text() || 'None';
+  $('#voices-translit-trigger').text(label + ' \u25BE').toggleClass('is-none', scheme === 'none');
+
+  // The card's samples (shared/composition-card/shared, loaded after this file).
+  var samples = typeof CC_TRANSLIT_LABELS === 'object' ? CC_TRANSLIT_LABELS : {};
+  var sample = scheme === 'none' ? '' : (samples[scheme] || samples.simple_english || label);
+  $('#voices-translit-sample-latin').text(sample ? '(' + sample + ')' : '');
+  $('#voices-translit-sample').prop('hidden', !sample);
+
+  var mode = $('#voices-insert-mode .icon-mode-card[aria-checked="true"]').data('value') || 'reference';
+  var summary = 'Will insert: ' + (VOICE_MODE_SUMMARY_LABELS[mode] || 'Citation only');
+  if (sample) {
+    summary += mode === 'reference'
+      ? '. Transliteration (' + label + ') applies to the sheet\u2019s text: choose Text or Both.'
+      : ', each Hebrew passage followed by its transliteration (' + label + ') in parentheses.';
+  }
+  $('.voices-insertion-summary').text(summary);
+}
 
 // Transliteration dropdown: open/close trigger.
 $(document).on('click', '#voices-translit-trigger', function (e) {
@@ -569,21 +604,23 @@ $(document).on('click', '#voices-translit-trigger', function (e) {
   $(this).attr('aria-expanded', opening ? 'true' : 'false');
 });
 
-// Transliteration dropdown: option selected — persist to preferences.
-$(document).on('click', '.voices-translit-option', function () {
-  if (appMode !== 'voices') return;
-  var value = $(this).attr('data-value');
-  var label = $(this).text();
-  $('#voices-translit-menu').find('.cc-translit-option').removeClass('is-selected');
-  $(this).addClass('is-selected');
-  $('#voices-translit-trigger')
-    .text(label + ' ▾')
-    .toggleClass('is-none', value === 'none')
-    .attr('aria-expanded', 'false');
+// Transliteration dropdown: an option chosen. It is the Voices default
+// (voices_translit_default), so it is saved; the sample and the summary show
+// the choice at once. Saved without redrawing the sidebar from the answer
+// (saveAccountPreference does): that put "What to insert" back to its saved
+// default, so Both turned into Citation as a transliteration was chosen.
+$(document).on('click', '#voices-translit-menu .voices-translit-option', function () {
+  var value = $(this).attr('data-value') || 'none';
+  syncVoicesTransliterationUi(value);
   $('#voices-translit-menu').addClass('hidden');
-  if (typeof saveAccountPreference === 'function') {
-    saveAccountPreference({ voices_translit_default: value });
-  }
+  $('#voices-translit-trigger').attr('aria-expanded', 'false').trigger('focus');
+  accountPreferences.voices_translit_default = value;
+  effectivePreferences.voices_translit_default = value;
+  google.script.run
+    .withFailureHandler(function () {
+      showSidebarToast('Your transliteration choice could not be saved; it applies to this insert only.');
+    })
+    .setAccountPreferences({ voices_translit_default: value });
 });
 
 // Dismiss voices translit menu when clicking outside the wrap.

@@ -9,9 +9,12 @@
 //     getState:       function() { return { vowelsMode, cantillationMode, hebrewPunctuationOn, transliterationOn, scheme, translationPunctuationOn, linkOn, hebrewLinkOn, linesOn, detailsOn, emphasisMode }; },
 //                     (vowelsMode: ccVowelsMode(); cantillationMode: ccCantillationMode();
 //                      hebrewPunctuationOn / translationPunctuationOn: undefined reads as on;
-//                      linkOn is the translation title's link, hebrewLinkOn the source title's)
+//                      linkOn is the translation title's link, hebrewLinkOn the source title's;
+//                      with "editionLabel" in data-cc-features, editionOn / hebrewEditionOn
+//                      say whether each linked title names its edition, undefined reading as on)
 //     onToggle:       function(key) { /* flip underlying state for key: hebrewPunctuation,
-//                     translationPunctuation, translit, link, hebrewLink, lines, details */ },
+//                     translationPunctuation, translit, link, hebrewLink, edition,
+//                     hebrewEdition, lines, details */ },
 //     onChoice:       function(key, value) { /* a three-way choice: 'vowels' (never / tanakh /
 //                     always), 'cantillation' (never / tanakh / torah), 'emphasis' (keep /
 //                     discard / only) */ },
@@ -65,13 +68,16 @@ function ccTranslitSample(text, hebrewPunctuationOn) {
   return hebrewPunctuationOn ? text : String(text).replace(CC_TRANSLIT_MAQAF_RE, '$1$2 ');
 }
 
-// The translation's bold and italics (the `source_emphasis_mode` preference;
-// the Hebrew always keeps its own, sourceEmphasisModeForRole_ in
-// server/insertion.gs).
+// The translation's commentary, which Sefaria tells apart from its direct
+// translation by bold (the `source_emphasis_mode` preference; the card's
+// "Commentary" row: Default = keep, Combine = discard (no bold), Drop = only
+// (only the bold text)). Italics is kept in every mode: it marks foreign and
+// transliterated words, not commentary. The Hebrew always keeps its
+// own (sourceEmphasisModeForRole_ in server/insertion.gs).
 // Mirrors normalizeSourceEmphasisMode_ in server/preferences.gs, including the
 // legacy boolean values of `preserve_source_emphasis`.
 var CC_EMPHASIS_MODES = ['keep', 'discard', 'only'];
-var CC_EMPHASIS_SUMMARY = { keep: 'B&I kept', discard: 'B&I dropped', only: 'Bold only' };
+var CC_EMPHASIS_SUMMARY = { keep: 'Commentary as marked', discard: 'Commentary combined', only: 'Commentary dropped' };
 
 function ccNormalizeEmphasisMode(value) {
   var v = String(value == null ? '' : value).trim().toLowerCase();
@@ -454,9 +460,15 @@ function updateCompositionCard() {
   state.vowelsOn = state.vowelsMode !== 'never';
   state.cantillationOn = state.cantillationMode !== 'never';
 
-  // Linked titles: the translation title's and the source title's
+  // Linked titles: the translation title's and the source title's, and
+  // under each, while it is linked, whether it names its edition ("Genesis
+  // 1:1 (Translation • Koren)"). Undefined reads as on, as the server does.
   ccSetToggle($('#cc-title-toggle'), !!state.linkOn);
   ccSetToggle($('#cc-he-title-toggle'), !!state.hebrewLinkOn);
+  ccSetToggle($('#cc-edition-toggle'), state.editionOn !== false);
+  ccSetToggle($('#cc-he-edition-toggle'), state.hebrewEditionOn !== false);
+  $('#cc-edition-toggle').prop('hidden', !state.linkOn);
+  $('#cc-he-edition-toggle').prop('hidden', !state.hebrewLinkOn);
 
   ccSetChoice($('#cc-vowels-toggle'), state.vowelsMode);
   ccSetChoice($('#cc-cantillation-toggle'), state.cantillationMode);
@@ -479,14 +491,17 @@ function updateCompositionCard() {
   ccSetToggle($('#cc-lines-toggle'), !!state.linesOn);
   ccSetToggle($('#cc-details-toggle'), !!state.detailsOn);
 
-  // Translation bold and italics: keep / discard / keep only
+  // Commentary: Default (keep) / Combine (discard) / Drop (only)
   var emphasisMode = ccNormalizeEmphasisMode(state.emphasisMode);
   ccSetChoice($('#cc-emphasis-toggle'), emphasisMode);
 
-  // Hebrew text visibility
+  // Hebrew text visibility: one sample per combination. Vowels and
+  // cantillation are separate filters (server/text-processing.gs), so with
+  // Vowels off the cantillation still shows when it is on.
   $('.cc-hebrew-text--full').prop('hidden', !(state.vowelsOn && state.cantillationOn));
   $('.cc-hebrew-text--no-cantillation').prop('hidden', !(state.vowelsOn && !state.cantillationOn));
-  $('.cc-hebrew-text--consonants').prop('hidden', !!state.vowelsOn);
+  $('.cc-hebrew-text--cantillation-only').prop('hidden', !(!state.vowelsOn && state.cantillationOn));
+  $('.cc-hebrew-text--consonants').prop('hidden', !!(state.vowelsOn || state.cantillationOn));
 
   // Transliteration toggle button label
   var scheme = state.transliterationOn ? (state.scheme || 'simple_english') : 'none';
@@ -508,8 +523,9 @@ function updateCompositionCard() {
   $('#cc-source-state').text(ccSourceSummary(state, hebrewPunctuationOn, scheme));
   $('#cc-translation-state').text(ccTranslationSummary(translationPunctuationOn, emphasisMode, !!state.linkOn));
 
-  // Scheme menu selection state
-  $('.cc-translit-option').each(function () {
+  // Scheme menu selection state. Only this card's menu: the Voices menus
+  // (sidebar, Preferences) share the option class but not the setting.
+  $('#cc-translit-menu .cc-translit-option').each(function () {
     $(this).toggleClass('is-selected', $(this).attr('data-value') === scheme);
   });
 
@@ -543,6 +559,8 @@ function _bindCompositionCardEvents() {
 
   $('#cc-title-toggle').off('click.cc').on('click.cc', function () { doToggle('link'); });
   $('#cc-he-title-toggle').off('click.cc').on('click.cc', function () { doToggle('hebrewLink'); });
+  $('#cc-edition-toggle').off('click.cc').on('click.cc', function () { doToggle('edition'); });
+  $('#cc-he-edition-toggle').off('click.cc').on('click.cc', function () { doToggle('hebrewEdition'); });
   $('#cc-hebrew-punct-toggle').off('click.cc').on('click.cc', function () { doToggle('hebrewPunctuation'); });
   $('#cc-translation-punct-toggle').off('click.cc').on('click.cc', function () { doToggle('translationPunctuation'); });
   $('#cc-translit-pill').off('click.cc').on('click.cc', function () { doToggle('translit'); });
@@ -560,7 +578,7 @@ function _bindCompositionCardEvents() {
     $(this).attr('aria-expanded', $('#cc-translit-menu').hasClass('hidden') ? 'false' : 'true');
   });
 
-  $('.cc-translit-option').off('click.cc').on('click.cc', function () {
+  $('#cc-translit-menu .cc-translit-option').off('click.cc').on('click.cc', function () {
     var value = $(this).attr('data-value');
     _ccConfig.onSchemeSelect(value);
     closeCompositionCardTranslitMenu();

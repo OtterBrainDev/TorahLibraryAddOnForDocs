@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **609 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **646 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -130,7 +130,16 @@ and fix it before touching the feature you came to change.
 - `migrations.test.js` — the UserProperties schema migrations.
 - `menu-layout.test.js` — the customizable add-on menu: default layout
   matches the pre-customization menu, Preferences and Help are always last,
-  dividers collapse, stored layouts are normalized.
+  dividers collapse, stored layouts are normalized; the Menu Bar's labelled
+  *Move to Quick Actions ▸* / *◂ Move to main menu* move an item into the
+  submenu (its end; a hidden or emptied submenu comes back) or out (just
+  below Quick Actions).
+- `settings-file.test.js` — Preferences → Advanced's settings file: an
+  export holds settings only (with the dialog's unsaved values) and round
+  trips; an import writes only `SETTINGS` keys with valid values, only the
+  parts ticked and only what differs, refuses foreign, broken or newer files,
+  and takes a file's interface mode through the Interface switch; Reset To
+  Defaults leaves one menu, the one for the interface in use.
 - `extended-gemara.test.js`, `format-data-for-pesukim.test.js` — the
   regressions named in `docs/regression-log.md`.
 - `search-input-normalization.test.js` — query normalization, punctuation-blind
@@ -177,10 +186,14 @@ and fix it before touching the feature you came to change.
   Transform Divine Names.
 - `typography-defaults.test.js` — "Match the document" fonts, the title
   heading style, and reading the style at the insertion point.
-- `source-emphasis-mode.test.js` — the source's bold and italics: keep,
-  discard, or "Bold only" (what it removes — plain text and italics alone —
-  and what it keeps: bold italics, line markers, punctuation, paragraphs with
-  no bold, and the whole Hebrew — it applies to the translation only).
+- `source-emphasis-mode.test.js` — the translation's Commentary choice:
+  Default (`keep`), Combine (`discard`: the bold goes, the italics stays) or
+  Drop (`only`, once "Bold only": the text that is not bold goes; what it
+  keeps: line markers, punctuation, paragraphs with no bold, and the whole
+  Hebrew — it applies to the translation only). Only bold decides what is
+  commentary; italics (foreign and transliterated words) is kept on whatever
+  text is kept, in every mode. Each card label is pinned to its value, since
+  "Drop" used to mean `discard`.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped, every block
   formatted like the first; HTML-entity decoding (`&thinsp;` and friends). With
@@ -196,7 +209,9 @@ and fix it before touching the feature you came to change.
   notice) for side-by-side layouts, never into a header, footer or footnote.
 - `sheet-insert.test.js` — a Voices (source sheet) insert: Both is the
   sheet's text under a title linked to the sheet, never the citation block on
-  top of it; Citation leaves out a summary that only repeats the title.
+  top of it; Citation leaves out a summary that only repeats the title; the
+  Voices transliteration follows each Hebrew passage in parentheses, and
+  only Hebrew is transliterated.
 - `insert-title.test.js` — a sidebar insert is titled with the text chosen
   (its ref), never with what was typed in the search box.
 - `sefaria-unavailable.test.js` — "couldn't reach Sefaria" and a find-refs
@@ -232,6 +247,9 @@ and fix it before touching the feature you came to change.
   values the dialog can produce are stored, switching to Simple and back
   returns the user's own menu, setup is shown once (never to an upgrader), and
   the dialog's preview transforms its sample exactly as an insert would.
+  Screen 1 has "I've used Sefaria for Google Docs" (that add-on's look);
+  "Keep my settings" is offered only to someone with settings of their own,
+  never at install.
 - `title-link-and-fonts.test.js` — the source (Hebrew) title and the
   translation title each have their own link switch and font, linked or not;
   the linked style applies only with that title's "Hyperlink formatting
@@ -264,9 +282,9 @@ and fix it before touching the feature you came to change.
 - `transform-scope.test.js` — Transform Divine Names asks first, naming its
   scope (the open tab's body, not the selection; not headers, footers,
   footnotes or other tabs) and the rules, and says how many it replaced.
-- `preview-emphasis.test.js` — the sidebar preview shows Drop and Bold only as
+- `preview-emphasis.test.js` — the sidebar preview shows Combine and Drop as
   the insert writes them: the real server pipeline and the preview's mirrors
-  give the same words and bold.
+  give the same words, bold and italics.
 - `lexicon-stale-response.test.js` — a Lexicon or Voices answer to an earlier
   search is dropped (the stale "No lexicon entries found for 'Genesis 1:1'").
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
@@ -315,9 +333,11 @@ and in `test/ui/`:
 - `simple-mode.test.js` — Simple mode hides with CSS only (never removes),
   hides only the search tools in the sidebar (no "More options"), the footer
   is Add Source, Insertion Options, then Session Library / Quick Actions /
-  Preferences in both modes, Preferences' "Show advanced settings" brings back
-  what it hides, and the server tells each page its mode. Opening Preferences
-  from the sidebar shows "Opening Preferences…" and ignores repeat clicks.
+  Preferences in both modes, and the server tells each page its mode.
+  Preferences has one Interface switch (no "Show advanced settings"):
+  switching reloads no value, keeps unsaved Menu Bar edits and reaches an
+  open sidebar without a refresh. Opening Preferences from the sidebar shows
+  "Opening Preferences…" and ignores repeat clicks.
 - `font-pickers.test.js` — every composition-card host has the font buttons
   and loads `shared/fonts` first; Preferences' font lists come from that one
   list; fonts Docs does not have (SBL Hebrew, Ezra SIL) are never offered;
@@ -338,6 +358,19 @@ and in `test/ui/`:
   of the same passage keeps the multi-selection, neither list can be left
   empty, the filter box never changes the selection, and a list that isn't
   focused still shows what is selected.
+- `card-hebrew-samples.test.js` — the composition card's Hebrew sample has
+  one state per Vowels × Cantillation combination (cantillation shows with
+  vowels off), each what the insert's filter makes of the full text.
+- `voices-transliteration.test.js` — the Voices transliteration menu selects
+  (the composition card reaches only its own menu, so a Voices choice never
+  changes the Texts transliteration), shows the choice with a sample in
+  parentheses, and saves it without resetting *What to insert*.
+- `edition-label-rows.test.js` — "Name the edition / translation in the
+  title" are rows under each "Link title to Sefaria" in Preferences, shown
+  while that title is linked, and nowhere else.
+- `surprise-me-shared.test.js` — the sidebar's Surprise Me card and the
+  Surprise Me dialog are one form (`shared/surprise-me`), which shows what
+  the server inserted.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy
@@ -432,6 +465,8 @@ different repo.
   transliteration capitalizes, from STEPBible's tagged Tanakh (CC BY 4.0) and
   `talmud-names.txt`. Never hand-edit the `.gs`; add a Talmud name to the
   `.txt` and re-run the generator.
+- `apps-script/server/settings-file.gs` — the settings file (Preferences →
+  Advanced): what an export holds and what an import may write.
 - `docs/ai-lesson/DESIGN.md` — design notes for the detached AI
   feature (not shipped in v1).
 - `reference/ai-lesson/` — preserved AI source files, excluded from

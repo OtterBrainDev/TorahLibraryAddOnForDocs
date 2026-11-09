@@ -44,9 +44,16 @@
               <span class="setup-card-note">Papers, articles, books with citations</span>
             </label>
             <label class="setup-card">
+              <input type="radio" name="purpose" value="sefaria">
+              <span class="setup-card-title">I've used Sefaria for Google Docs</span>
+              <span class="setup-card-note">Start from what you know: Hebrew on the right, a simple menu</span>
+            </label>
+            <!-- Only for someone with settings of their own (config.hasSavedSettings,
+                 server/first-run.gs firstRunHasSavedSettings_): never at install. -->
+            <label class="setup-card" id="setup-purpose-keep" hidden>
               <input type="radio" name="purpose" value="returning">
-              <span class="setup-card-title">I've used Torah Library before</span>
-              <span class="setup-card-note">Keep my settings as they are</span>
+              <span class="setup-card-title">Keep my settings</span>
+              <span class="setup-card-note">I've set up Torah Library before; change nothing</span>
             </label>
           </div>
         </fieldset>
@@ -94,6 +101,7 @@
         <fieldset class="setup-fieldset" id="setup-divine">
           <legend>God's name</legend>
           <p class="setup-help">Many communities avoid writing God's name in full on paper that may be thrown away. Choose what your community does.</p>
+          <p class="setup-help setup-note" id="setup-divine-sefaria-note" hidden>Coming from Sefaria for Google Docs: there, God's name went in as Sefaria has it, and <strong>Transform Divine Names</strong> changed it afterwards. Here what you tick is applied as each source goes in. Untick everything to insert it as before; Transform Divine Names is still in the menu.</p>
           <div class="setup-divine-row">
             <label><input type="checkbox" data-divine="meforash"> Write <span lang="he">יהוה</span> as</label>
             <select data-divine-text="meforash" aria-label="Replacement for יהוה">

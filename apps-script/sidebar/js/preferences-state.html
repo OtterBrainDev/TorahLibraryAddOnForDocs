@@ -208,13 +208,8 @@ function mergePreferenceDefaults(preferences) {
     $(this).toggleClass('is-active', active).attr('aria-checked', active ? 'true' : 'false');
   });
 
-  // Sync voices transliteration dropdown to saved preference
-  var voicesTranslit = preferences.voices_translit_default || 'none';
-  $('#voices-translit-menu').find('.cc-translit-option').each(function() {
-    $(this).toggleClass('is-selected', $(this).attr('data-value') === voicesTranslit);
-  });
-  var translitLabel = voicesTranslit === 'none' ? 'None' : ($('#voices-translit-menu .cc-translit-option[data-value="' + voicesTranslit + '"]').text() || voicesTranslit);
-  $('#voices-translit-trigger').text(translitLabel + ' ▾').toggleClass('is-none', voicesTranslit === 'none');
+  // Sync voices transliteration dropdown (and its sample) to saved preference
+  syncVoicesTransliterationUi(preferences.voices_translit_default || 'none');
 
   preferredTranslationLanguage = String(preferences.preferred_translation_language || 'en').toLowerCase();
   var savedTranslationLanguages = parseStoredArrayPreference(preferences.last_translation_languages, ['en']);

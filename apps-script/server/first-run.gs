@@ -146,6 +146,55 @@ function planFirstRunPreferences_(answers, prefs) {
   return { changes: changes, uiMode: uiMode };
 }
 
+/**
+ * What Preferences → Reset To Defaults stores: every setting's default, and
+ * the menu that goes with the interface mode in use (the Simple menu in
+ * Simple mode), so a reset in Simple mode does not leave the full menu under
+ * the Simple interface. The interface mode itself is not a setting and stays.
+ *
+ * @param {Object} defaults  getDefaultPreferences()
+ * @param {string} uiMode    the stored ui_mode
+ * @return {Object<string,*>} values for setPreferences (SETTINGS keys only)
+ */
+function planPreferenceReset_(defaults, uiMode) {
+  var values = {};
+  SETTINGS.forEach(function (key) {
+    if (defaults[key] !== undefined) values[key] = defaults[key];
+  });
+  if (normalizeUiMode_(uiMode) === 'simple') values.menu_layout = getSimpleMenuLayoutJson_();
+  return values;
+}
+
+// Stored keys that record what someone last did, not a choice they made:
+// they change on their own as the sidebar is used.
+var FIRST_RUN_NOT_A_CHOICE_ = ['last_translation_languages', 'last_translation_only_filter',
+  'last_search_sort_mode', 'last_search_relevance_sort', 'search_mode'];
+
+/**
+ * Whether setup should offer "Keep my settings as they are": only to someone
+ * who has settings of their own to keep. At install nobody does — onInstall
+ * seeds the defaults, and the add-on people come from (Sefaria for Google
+ * Docs) is separate and stores none — so a first-run setup never offers it.
+ * It is offered when setup was finished or dismissed before (Help → Run setup
+ * again), or when a stored setting differs from its default, which covers a
+ * future upgrade that sets `first_run_setup` back to "pending" to show setup
+ * again to people who already chose things.
+ *
+ * @param {Object} stored    stored values (strings), `first_run_setup` and the keys
+ * @param {Object} defaults  getDefaultPreferences()
+ * @param {string[]} keys    the setting keys to compare (SETTINGS)
+ */
+function firstRunHasSavedSettings_(stored, defaults, keys) {
+  var s = stored || {};
+  if (s.first_run_setup === 'done') return true;
+  return (keys || []).some(function (key) {
+    if (FIRST_RUN_NOT_A_CHOICE_.indexOf(key) >= 0) return false;
+    var value = s[key];
+    if (value == null || defaults[key] === undefined) return false;
+    return String(value) !== String(defaults[key]);
+  });
+}
+
 function menuLayoutsEqual_(a, b) {
   return JSON.stringify(normalizeMenuLayout_(a)) === JSON.stringify(normalizeMenuLayout_(b));
 }
@@ -243,10 +292,26 @@ function rebuildMenuQuietly_() {
   }
 }
 
+// Never stops setup from opening: if the settings can't be compared, only a
+// finished or dismissed setup counts.
+function readHasSavedSettings_() {
+  try {
+    var all = PropertiesService.getUserProperties().getProperties() || {};
+    return firstRunHasSavedSettings_(all, getDefaultPreferences(), SETTINGS);
+  } catch (error) {
+    try {
+      return PropertiesService.getUserProperties().getProperty('first_run_setup') === 'done';
+    } catch (ignored) {
+      return false;
+    }
+  }
+}
+
 function showFirstRunSetup_() {
   var template = HtmlService.createTemplateFromFile('first-run-setup');
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('first-run-setup', 'setup', {
-    answers: firstRunAnswersFromPreferences_(readStoredPreferences_(firstRunPreferenceKeys_()))
+    answers: firstRunAnswersFromPreferences_(readStoredPreferences_(firstRunPreferenceKeys_())),
+    hasSavedSettings: readHasSavedSettings_()
   }));
   var output = template.evaluate()
     .setWidth(640)
@@ -307,4 +372,18 @@ function setUiMode(mode) {
     menuLayout: PropertiesService.getUserProperties().getProperty('menu_layout') || '',
     menuKept: plan.menuKept
   };
+}
+
+/**
+ * Preferences → Reset To Defaults. Writes planPreferenceReset_, and clears the
+ * menu kept aside for leaving Simple mode, so one menu is left, not the
+ * Simple one and a kept one that would come back on switching to Everything.
+ * Rebuilds the menu at once (it used to change only on the next open).
+ * @return {Object} the stored preferences, as getPreferences returns them
+ */
+function resetPreferencesToDefaults() {
+  setPreferences(planPreferenceReset_(getDefaultPreferences(), getUiMode_()));
+  PropertiesService.getUserProperties().setProperty('menu_layout_before_simple', '');
+  rebuildMenuQuietly_();
+  return getAccountPreferences();
 }

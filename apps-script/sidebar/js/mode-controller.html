@@ -110,7 +110,23 @@ function reloadAccountPreferences() {
 
 window.addEventListener('storage', function (event) {
   if (event.key === PREFERENCES_SAVED_STORAGE_KEY) reloadAccountPreferences();
+  if (event.key === UI_MODE_STORAGE_KEY) applyUiModeFromStorage(event.newValue);
 });
+
+// Preferences' Interface switch (Simple / Everything) reaches an open sidebar
+// at once, through UI_MODE_STORAGE_KEY (preferences/js.html). Simple mode is
+// CSS only (css/components/simple-mode), so the attribute is all that
+// changes. The sidebar used to say "Refresh the sidebar to see the change",
+// and the refresh cleared this session's Insertion Options.
+var UI_MODE_STORAGE_KEY = 'sefariaUiMode';
+
+function applyUiModeFromStorage(raw) {
+  if (!raw) return;
+  var mode = null;
+  try { mode = JSON.parse(raw).mode; } catch (e) { return; }
+  if (mode !== 'simple' && mode !== 'full') return;
+  $('.unified-sidebar').attr('data-ui-mode', mode);
+}
 
 function reloadAccountPreferencesIfStale_() {
   if (preferencesMayHaveChanged) reloadAccountPreferences();
@@ -152,7 +168,7 @@ function syncExperimentalAvailability() {
   var hasExperimental = hasExperimentalFeaturesEnabled();
   var surpriseEnabled = isSurpriseEnabled();
   $('.experimental-menu-button').toggle(hasExperimental);
-  $('#sm-inline-launch').closest('.exp-card').toggle(surpriseEnabled);
+  $('#exp-card-surprise').toggle(surpriseEnabled);
   $('#footer-actions-panel .open-surprise-tool').toggle(surpriseEnabled);
   if (!hasExperimental && appMode === 'experimental') {
     appMode = 'texts';

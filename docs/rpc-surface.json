@@ -213,6 +213,26 @@
       "definedIn": "apps-script/server/first-run.gs"
     },
     {
+      "name": "resetPreferencesToDefaults",
+      "arity": 0,
+      "definedIn": "apps-script/server/first-run.gs"
+    },
+    {
+      "name": "exportSettingsFile",
+      "arity": 2,
+      "definedIn": "apps-script/server/settings-file.gs"
+    },
+    {
+      "name": "previewSettingsImport",
+      "arity": 1,
+      "definedIn": "apps-script/server/settings-file.gs"
+    },
+    {
+      "name": "applySettingsImport",
+      "arity": 2,
+      "definedIn": "apps-script/server/settings-file.gs"
+    },
+    {
       "name": "releaseNotesPopup",
       "arity": 0,
       "definedIn": "apps-script/server/menu.gs"

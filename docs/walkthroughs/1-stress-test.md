@@ -28,8 +28,9 @@ should say so.
 
 Found while writing this walkthrough, by reading the code. K1–K5, K8 and K9
 are fixed on this branch, each with a pinning test; the steps below now check
-the fixed behaviour. K6 and K7 are left as they are: the published add-on
-stores no preferences, so there is nothing to carry over.
+the fixed behaviour. K6 and K7 are left as they are: the add-on people move
+from, Sefaria for Google Docs, stores no preferences, so there is nothing to
+carry over.
 
 | # | Was | Fix | Status |
 | --- | --- | --- | --- |
@@ -38,7 +39,7 @@ stores no preferences, so there is nothing to carry over.
 | K3 | **Linker offsets went stale if the document changed before Apply.** | Each match records which occurrence of its text it is; Apply re-finds it, and reports citations that are gone. | **Fixed.** `linker-classify.test.js`. Step 7.7. |
 | K4 | **Insert from a table** (linker per-row Insert, and the cursor in general). The cursor path in fact put the source at an unrelated place in the body, silently, for texts, sheets and lexicon alike. | One resolver for every insert path (`server/insertion-target.gs`): paragraph layouts go inside the cell; Right–Left / Left–Right go below the table with a notice; headers, footers and footnotes are refused with a message. | **Fixed.** `insertion-target.test.js`. Steps 2.5–2.8, 7.4, 8.4. |
 | K5 | **Network failure read as "no match".** | `findReference` throws "Couldn't reach Sefaria…" for no response, 5xx and 429; an unknown reference is still "no match". | **Fixed.** `sefaria-unavailable.test.js`. Step 11.1. |
-| K6 | Original-add-on users' stored preferences. | — | **Not applicable**: the published add-on stores no preferences. |
+| K6 | Stored preferences of users coming from another add-on. | — | **Not applicable**: Sefaria for Google Docs stores no preferences, and is a separate add-on. |
 | K7 | Legacy `nekudot_filter="tanach"`. | — | **Not applicable**, as K6. |
 | K8 | **"Vowels only in Tanakh" had no control**, and toggling Vowels reset it. | **Vowels** is a three-way control, **Off / Tanakh / On**, in the composition card (Insertion Options, Preferences → Insertion, Link Texts); *Tanakh* is its own choice, so nothing resets it. Cantillation likewise: **Off / Tanakh / Torah**. | **Fixed.** `vowels-tanakh-only.test.js`. Steps 5.9, 5.9a. |
 | K9 | **Link Texts' Insert repeated the citation.** The citation stayed, and the inserted source's title said the same thing on the next line; Insert from Selection replaced it. To insert one batch differently you had to cancel the review or change Preferences for good. | Insert follows *Insert from Selection replaces the selection*: a citation on a line of its own is replaced (title = the citation, link kept); one inside a sentence stays. The review dialog's **📰 Customize this insertion** panel sets the layout for one pass. | **Fixed.** `linker-insert-replace.test.js`, `linker-dialog.test.js`. Steps 7.4–7.4b, 7.18–7.25. |
@@ -56,7 +57,7 @@ Fixed; step 2.6 now depends on it.
 | --- | --- | --- |
 | **A — upgrader** | Had an earlier build of *this* add-on (2.0 or an early 2.1) with preferences you changed: a font, a divine-name rule, a layout. | Proves the migrations keep what users chose. |
 | **B — fresh** | Has never installed any version. | Proves `onInstall` seeding and the first-run experience. |
-| **C — original-add-on user** | Has the published *Sefaria for Google Docs* installed (menu: *Insert Source / Search Texts / Preferences / Support / Popcorn (beta)*). | Proves the path most Sefaria users will take. |
+| **C — Sefaria for Google Docs user** | Has Sefaria's own *Sefaria for Google Docs* installed (menu: *Add Sources with Sefaria / Transform Divine Names / Link Texts with Sefaria*), and documents it inserted sources into. | Proves the path most users will take: a separate add-on, installed beside it. |
 
 ### Instruments
 
@@ -168,7 +169,7 @@ preview, then insert.
 | 4.1 | `Genesis 1:1`, **Translation** only; <kbd>Ctrl</kbd>-select three translations; insert. | Three blocks, in the order clicked, a blank line between each, one title each naming its version **once**. | A version named twice; blocks run together. |
 | 4.2 | Same, with the Translation section's **Link title to Sefaria** on | Each title opens *that* translation on sefaria.org. | Every link opening the default translation. |
 | 4.2a | Both languages, Stacked. Source section's **Link title to Sefaria** on, Translation's off; insert. Then the reverse | Only the Hebrew title linked, then only the translation title. Each title keeps its own **Title font** whether linked or not; a linked title takes its linked style (Preferences → Insertion, that title's **Title font**) only while that title's **Hyperlink formatting override** is on (the default). | One switch linking both titles; a linked title losing its font with the override off. |
-| 4.2b | Both titles linked. Preferences → Insertion → the Translation section's **Title font** → **Name the edition** off; insert. Then the same under the Source section's **Title font** | First: the translation title is just `Genesis 1:1`, still linked and in its linked style, and the Hebrew title still names its edition. Then the Hebrew title is just the reference too. With three translations and the switch off, each title reads `Genesis 1:1 (Version)`. | The switch changing both titles; the link or linked style lost with the label; multi-translation blocks with identical titles. |
+| 4.2b | Both titles linked. Preferences → Insertion → the Translation section's **Name the translation in the title** (under **Link title to Sefaria**) off; insert. Then the Source section's **Name the edition in the title** | First: the translation title is just `Genesis 1:1`, still linked and in its linked style, and the Hebrew title still names its edition. Then the Hebrew title is just the reference too. With three translations and the switch off, each title reads `Genesis 1:1 (Version)`. | The switch changing both titles; the link or linked style lost with the label; multi-translation blocks with identical titles. |
 | 4.3 | Add a translation that doesn't cover the verse (a partial translation) to the multi-select | Skipped, reported, and greyed out *unavailable for this ref*. | An empty block, or a duplicate of the default translation. |
 | 4.4 | Multi-select, then switch Arrangement to **Right–Left** | Blocked, or reduced to one translation with a message. | Several translations crammed into one table cell, or silently dropped. |
 | 4.5 | Preferences → Insertion → Insertion Defaults → Translation → **Language**: **French**; search `Genesis 1:1` | A French translation if one exists; otherwise a fallback that is clearly labelled. | English inserted with no indication. |
@@ -186,10 +187,10 @@ preview, then insert.
 | 5.3 | Title style → **Heading 2**; insert three sources; Insert → Table of contents | All three titles in the TOC. | Title font forced over the heading style. |
 | 5.4 | Set a translation text colour and highlight; insert; reset both to **Auto/None**; insert | Applied, then not applied. | Colour sticking after reset; black text forced. |
 | 5.5 | File → Page setup → a dark page colour; insert with default colours | Text inherits the document; nothing forced black. | Black text on the dark page. |
-| 5.6 | Source Emphasis → Advanced: bold → blue, no bold. Insert `Berakhot 2a` (Steinsaltz) | Talmud words blue, not bold. | Nothing blue; or the title also blue. |
-| 5.7 | Source Emphasis → **Discard**; insert the same | Flat text. | Leftover bold. |
-| 5.7a | 📰 Insertion Options → Translation section → **Bold & italics** → **Only**; insert `Berakhot 2a` both languages, then translation only | Translation: only the bold words (the Talmud's own; bold italics kept, italics alone dropped), line markers kept, lines with no emphasis left out. The preview shows the same words before inserting (without line numbers). The Hebrew/Aramaic is inserted whole, with its own bold (מֵאֵימָתַי) kept. | Empty insert; Steinsaltz's explanation left in, in the insert or the preview; Hebrew cut down to its bold words. |
-| 5.7b | **Bold & italics** → **Drop**; insert `Mishnah Berakhot 1:1`, both languages | Translation flat; the Hebrew's opening מֵאֵימָתַי still bold. | The Hebrew's bold dropped too (the setting is the translation's only). |
+| 5.6 | Preferences → Insertion → **Commentary** → *Advanced: how the kept bold and italics look*: bold → blue, no bold. Insert `Berakhot 2a` (Steinsaltz) | Talmud words blue, not bold. | Nothing blue; or the title also blue. |
+| 5.7 | **Commentary** → **Combine**; insert the same | Every word, no bold; *Shema* and *teruma* still in italics. | Leftover bold; italics removed. |
+| 5.7a | 📰 Insertion Options → Translation section → **Commentary** → **Drop**; insert `Berakhot 2a` both languages, then translation only | Translation: only the bold words (the Talmud's own, *Shema* still in italics), line markers kept, lines with no bold left out. The preview shows the same words before inserting (without line numbers). The Hebrew/Aramaic is inserted whole, with its own bold (מֵאֵימָתַי) kept. | Empty insert; Steinsaltz's explanation left in, in the insert or the preview; an italic word kept from the explanation, or italics removed from the bold; Hebrew cut down to its bold words. |
+| 5.7b | **Commentary** → **Combine**; insert `Mishnah Berakhot 1:1`, both languages | Translation without bold, its italics kept; the Hebrew's opening מֵאֵימָתַי still bold. | The Hebrew's bold dropped too (the setting is the translation's only). |
 | 5.8 | Vowels **Off**, Cantillation **Tanakh**; insert `Genesis 1:1` | Cantillation kept, vowels gone, sof pasuq **׃** and paseq **׀** kept. | Punctuation stripped with the vowels. |
 | 5.9 | Preferences → Insertion → **Vowels: Tanakh**; save. Insert `Mishnah Berakhot 1:1` and `Genesis 1:1`. Then click **Off** and **Tanakh** again, save, and reopen | Mishnah without niqqud, Genesis with. After reopening, **Tanakh** is still selected. | **K8 (fixed):** *Tanakh* lost when Vowels changed. |
 | 5.9a | Cantillation **Torah**; insert `Genesis 1:1` and `Isaiah 40:1`. Then **Tanakh** | *Torah*: marks on Genesis only. *Tanakh*: on both. An account that had an old stored `"torah"` shows **Tanakh** (schema 24 rewrote it). | Torah-only applied to Isaiah; an upgrader's setting changing meaning. |
@@ -256,7 +257,7 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
 | 7.18 | Run; open the panel without changing anything | Collapsed by default. Opened, it shows the same controls as the sidebar's 📰 Insertion Options (Layout, then Insertion Format with folded Source and Translation sections), set to your **Preferences** (not the sidebar's session choices), and says *Your defaults*. Revert and Save are disabled. | Session choices from the sidebar; blank controls; the panel missing entirely (it stays hidden only if Preferences couldn't be read). |
-| 7.19 | Set Display **A + א**, Arrangement **Stacked**, Vowels **Off**, **Line numbers** off, Bold & italics **Drop**; tick **Insert** on paragraph 3's two citations and `Leviticus 19:18`; apply | All three sources: no vowels, no line numbers, the translation without bold (the Hebrew keeps its own). The panel said *Customized for this pass*. Afterwards Preferences → Insertion and the sidebar's 📰 Insertion Options are unchanged. | Any source with your defaults instead; Preferences changed without **Save as defaults**. |
+| 7.19 | Set Display **A + א**, Arrangement **Stacked**, Vowels **Off**, **Line numbers** off, Commentary **Combine**; tick **Insert** on paragraph 3's two citations and `Leviticus 19:18`; apply | All three sources: no vowels, no line numbers, the translation without bold (the Hebrew keeps its own). The panel said *Customized for this pass*. Afterwards Preferences → Insertion and the sidebar's 📰 Insertion Options are unchanged. | Any source with your defaults instead; Preferences changed without **Save as defaults**. |
 | 7.20 | Display **A** (translation only), then **א** | **A**: Arrangement and the Source section (Vowels, Cantillation, Transliteration…) are hidden; Citation, Line numbers and the Translation section stay. **א**: the Translation section is hidden. Back to **A + א** shows both. | Hebrew controls offered for a translation-only insert. |
 | 7.21 | Untick **Replace a citation on its own line**; insert `Leviticus 19:18` | The citation stays and the source goes below it. Preferences' *replaces the selection* is still on. | The citation removed; the preference turned off. |
 | 7.22 | Change two settings, then **↺ Revert to defaults** | Everything back to Preferences; *Your defaults*. | A setting left changed. |
@@ -311,7 +312,12 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 | 10.7c | Open the sidebar and, before it finishes loading, open 📰 Insertion Options and pick **Stacked**; insert `Genesis 1:1` | Stacked, and Insertion Options still shows Stacked. | Right–Left inserted; the choice flipped back. |
 | 10.7d | Pin `Genesis 1:1` from the results; open 📜, pin `Isaiah 40:1-5` in the dialog, **Done**; reopen 📜 at once; then **Refresh** | Both pinned every time; 📜 opens on the first click. | Isaiah unpinned; 📜 doing nothing until Refresh. |
 | 10.8 | Preferences → Insertion → **Layout**: hover each option; choose **A**; save; open the sidebar's 📰 Insertion Options | Both pickers (Display, Arrangement) are labelled segmented controls. Option names match the sidebar's (*Translation*, *Original with Translation*, *Original*; *Stacked*, *Right–Left*, *Left–Right*). In Preferences the Source and Translation sections start open. Insertion Options starts on **A**. | Different names than the sidebar; Layout hidden in Preferences; Insertion Options not following the saved default. |
-| 10.9 | Preferences → **Interface: Simple**; reopen the sidebar; then **Everything** | Simple: no result sort or Restore Corpus, no Texts / Voices / Lexicon tabs while in Texts, no "More options"; Add Source, 📰 Insertion Options and the 📜 🏃 ⚙︎ footer buttons still there. Menu: Texts, Insert Source from Selection, Transform Divine Names, Link Texts, then Preferences and Help. Preferences hides Search, Linking and Experimental until **Show advanced settings**. Everything brings back your own menu. | Anything removed rather than hidden; your custom menu lost on the way back. |
+| 10.9 | Preferences → **Interface: Simple**; reopen the sidebar; then **Everything** | Simple: no result sort or Restore Corpus, no Texts / Voices / Lexicon tabs while in Texts, no "More options"; Add Source, 📰 Insertion Options and the 📜 🏃 ⚙︎ footer buttons still there. Menu: Texts, Insert Source from Selection, Transform Divine Names, Link Texts, then Preferences and Help. Preferences hides Search, Linking, Advanced and Experimental; the open sidebar follows without a refresh; values not saved yet (and Menu Bar edits) are still there. Everything brings back your own menu. | Anything removed rather than hidden; your custom menu lost on the way back; unsaved changes lost by switching. |
+| 10.9a | Preferences → **Advanced** → name it *Test*, **Export settings file**; then change Vowels and Hebrew font, Save; **Choose a settings file…** → the exported file | A `torah-library-settings-test.json` download (if blocked, *No file downloaded?* shows the text to copy). The preview names *“Test”*, lists the parts that would change with counts, nothing changed yet; **Apply** with only *Text and layout* ticked restores Vowels and leaves the font. | A download that opens in the document's tab; anything changed before Apply; the font restored with its part unticked. |
+| 10.9b | **Import**: paste `{"format":"torah-library-settings","formatVersion":1,"prefsSchemaVersion":"99","settings":{}}`, then a file from another add-on (any `.json`) | "made by a newer version"; "not a Torah Library settings file". Nothing changes. | A script error, or anything written. |
+| 10.9c | Menu Bar: **Move to Quick Actions ▸** on Lexicon, then **◂ Move to main menu** on it; Save; reload | Lexicon goes to the end of Quick Actions, then back just below Quick Actions in the menu. | An item that vanishes. |
+| 10.9d | Voices: select a sheet with Hebrew sources; **Both**; Transliteration → **Traditional**; Add Sheet | The button reads *Traditional*, a sample shows the Hebrew then the transliteration in parentheses, *Will insert* says so, *Both* stays chosen. In the document each Hebrew passage is followed by `(…)`; the English and comments have none. The Texts tab's transliteration is unchanged. | The Texts transliteration changing; *What to insert* jumping back to Citation; a transliteration block after the English. |
+| 10.9e | Experimental on; compare the sidebar's 🧪 Surprise Me card with the 🎲 dialog from Quick Actions; run one with two corpora ticked | The same fields (word, how many, corpora, How it works); the status says how many were inserted and for which word. | Two different forms; "3 sources inserted" when fewer were. |
 
 ---
 
@@ -336,19 +342,21 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 
 ---
 
-## 13. Users of the original add-on (account C)
+## 13. Users of Sefaria for Google Docs (account C)
 
-The published add-on stores no preferences, so an account that used it opens
-this version as a new user would: it gets the defaults, and the migrations
-run once.
+Sefaria for Google Docs is a separate add-on that stores no settings, so an
+account that uses it meets Torah Library as a new user: the first-run setup,
+the defaults, and the migrations once. Walkthrough 4 is the script for these
+users.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
-| 13.1 | **C:** open a Doc that used the published add-on; open Extensions | The new menu; no error; no duplicate menu. | The old menu items still listed. |
-| 13.2 | Open Preferences | Defaults: יהוה → יי on, colours Auto, Linking in Candidate mode. | Blank fields. |
-| 13.3 | Insert `Mishnah Berakhot 1:1` | Niqqud appears. The published add-on removed it from every non-Tanakh text; walkthrough 4 warns about this. | — |
-| 13.4 | Set **Vowels: Tanakh**; insert it again | No niqqud, as before. | The choice doing nothing. |
-| 13.5 | Bilingual insert with defaults | A two-column table, Hebrew on the right: the published add-on's layout. | A different default layout. |
+| 13.1 | **C:** install Torah Library; open a Doc that Sefaria for Google Docs inserted sources into; open Extensions | Two submenus, *Sefaria for Google Docs* and *Torah Library*, each with its own items; first-run setup opens once. | Either menu missing or broken; setup shown again on the next open. |
+| 13.2 | Help → **Coming from Sefaria for Google Docs** | The topic is in the Help navigation and Quick start; its links (Menu Bar, Divine names, Link Texts, Insertion Options, Preferences) all land. | A dead link. |
+| 13.3 | Open Preferences | Defaults: יהוה → יי on insertion (unless the setup changed it), colours Auto, Linking in Candidate mode. | Blank fields. |
+| 13.4 | Bilingual insert with defaults | A two-column table, Hebrew on the right, as Sefaria for Google Docs inserts it. | A different default layout. |
+| 13.5 | Quick Actions → **Transform Divine Names**, **Link Texts**, then **Unlink Sources**, on the text Sefaria for Google Docs inserted | Each works on it like any other text; Transform asks first; Unlink removes its sefaria.org links too. | The other add-on's text or links skipped. |
+| 13.6 | Uninstall Sefaria for Google Docs; reload | Torah Library's menu, settings and sources unaffected. | Anything of Torah Library's gone. |
 
 ---
 

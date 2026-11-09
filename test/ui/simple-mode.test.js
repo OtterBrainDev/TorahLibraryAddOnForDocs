@@ -51,11 +51,12 @@ test('the Texts tab bar is hidden only in Texts mode, so Voices and Lexicon can 
   assert.ok(!/\[data-ui-mode="simple"\] \.mode-switch-section/.test(SIMPLE_CSS));
 });
 
-test('Preferences hides only advanced tabs and sections, and "Show advanced settings" brings them back', () => {
+test('Preferences hides only advanced tabs and sections, and Everything shows them', () => {
   assert.match(PREFS, /<div class="preferences-dialog" data-ui-mode="<\?= uiMode \?>">/);
   const ids = hiddenIds(PREFS_CSS, /data-ui-mode="simple"\]:not\(\.show-advanced\)/);
   assert.deepEqual(ids.sort(), [
     'emphasis-mapping',
+    'pref-tab-advanced-btn',
     'pref-tab-experimental-btn',
     'pref-tab-linking-btn',
     'pref-tab-search-btn',
@@ -69,12 +70,41 @@ test('Preferences hides only advanced tabs and sections, and "Show advanced sett
   });
 });
 
-test('the Interface and advanced switches are not preferences, so Save never sends them', () => {
-  const advanced = PREFS.match(/<input type="checkbox" id="show_advanced_settings"[^>]*>/);
-  assert.ok(advanced && !/\bname=/.test(advanced[0]), 'Show advanced settings must have no name');
-  assert.ok(/name="interface_mode_choice"/.test(PREFS));
+// The Interface switch is the one control for what is shown. A "Show
+// advanced settings" checkbox used to do in Preferences what Everything does,
+// beside it; with two controls for one thing, switching looked like it might
+// reset settings or keep two sets of them.
+test('one Interface switch, no "Show advanced settings", and Save never sends it', () => {
+  assert.ok(!/show_advanced_settings|Show advanced settings|show-advanced-row/.test(PREFS + PREFS_CSS));
+  const radios = PREFS.match(/<input type="radio" name="interface_mode_choice" value="(simple|full)">/g) || [];
+  assert.equal(radios.length, 2);
   assert.ok(!/type="radio"/.test(readAppScriptFile('preferences/js.html').match(/function collectPreferenceObject\(\)[\s\S]*?\n    }/)[0]),
     'collectPreferenceObject must not start collecting radio inputs');
+  // Only a link straight to a hidden tab shows the hidden tabs, for that dialog.
+  const js = readAppScriptFile('preferences/js.html');
+  assert.equal((js.match(/(?<!function )revealAdvancedTabs_\(\)/g) || []).length, 1, 'revealAdvancedTabs_ is called by the tab hint only');
+  assert.match(js, /PREF_ADVANCED_TABS_\.indexOf\(preferredTab\) >= 0 && currentUiMode_\(\) === 'simple'\) revealAdvancedTabs_\(\)/);
+});
+
+test('switching the interface changes no setting, keeps unsaved edits and reaches an open sidebar', () => {
+  const js = readAppScriptFile('preferences/js.html');
+  const init = js.match(/function initInterfaceMode\(\) \{[\s\S]*?\n    \}/)[0];
+  // No reload of the form: values not yet saved stay as they are.
+  assert.doesNotMatch(init, /applyPreferencesToForm|loadPreferencesIntoForm|getPreferences/);
+  // The Menu Bar editor is redrawn from the stored menu only without unsaved edits.
+  assert.match(init, /var keptMenuEdits = menuLayoutHasUnsavedChanges\(\);\s*if \(keptMenuEdits\) markMenuLayoutSaved\(storedMenu\);\s*else loadMenuLayoutEditor\(storedMenu\);/);
+  // The sidebar follows at once instead of being refreshed (which cleared its session).
+  assert.match(init, /announceUiModeToSidebar_\(current\)/);
+  assert.doesNotMatch(js, /Refresh the sidebar to see the change/);
+  const key = js.match(/var UI_MODE_STORAGE_KEY = '([^']+)'/)[1];
+  const sidebar = readAppScriptFile('sidebar/js/mode-controller.html');
+  assert.match(sidebar, new RegExp(`var UI_MODE_STORAGE_KEY = '${key}'`));
+  assert.match(sidebar, /if \(event\.key === UI_MODE_STORAGE_KEY\) applyUiModeFromStorage\(event\.newValue\);/);
+  assert.match(sidebar, /\$\('\.unified-sidebar'\)\.attr\('data-ui-mode', mode\)/);
+  // Save marks the menu saved, so a later switch sees no stale "unsaved" edit.
+  assert.match(js, /markMenuLayoutSaved\(preferenceObject\.menu_layout\);/);
+  // Restore default menu is an edit, not the stored menu.
+  assert.match(js, /loadMenuLayoutEditor\('', \{ edit: true \}\);/);
 });
 
 test('the footer: Add Source, Insertion Options under it, then Session Library, Quick Actions and Preferences, in both modes', () => {

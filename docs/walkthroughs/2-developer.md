@@ -303,7 +303,7 @@ got inserted. While it runs the sidebar shows its busy overlay
    re-assert, mapped through the user's emphasis settings
    (`applyEmphasisMapping_`). Without this, the Steinsaltz Talmud loses the
    bold that marks the Talmud's own words. `source_emphasis_mode` (schema 14;
-   the card's **Bold & italics** Keep / Drop / Only) picks **keep**,
+   the card's **Commentary**: Default / Combine / Drop) picks **keep**,
    **discard**, or **only**, which first removes the text the source didn't
    emphasise (`planEmphasisOnlyEdits_`). It applies to the translation only:
    `sourceEmphasisModeForRole_` returns `keep` for every other role, so the

@@ -54,9 +54,11 @@ QC check (see `pre_clasp_qc.sh` step 6).
 - **`sidebar.html`** — the main sidebar; most functionality lives here.
   Composes most of `sidebar/js/*.html`, the `shared/ui/*` partials,
   and the `css/` tokens and components.
-- **`preferences.html`** — preferences dialog. Composes `preferences/css`
-  and `preferences/js`.
-- **`surprise-me.html`** — "surprise me" random-text dialog.
+- **`preferences.html`** — preferences dialog. Composes `preferences/css`,
+  `preferences/js` and `preferences/settings-file-js` (the Advanced tab's
+  settings file, which reaches the dialog through `window.PreferencesDialog`).
+- **`surprise-me.html`** — "surprise me" random-text dialog: the shared
+  `shared/surprise-me` form, the same as the sidebar's Experimental card.
 - **`linker-results.html`** — the Link Texts review dialog. A template
   (`createTemplateFromFile`, not a plain file) so its "Customize this
   insertion" panel can include the shared insertion options below.
@@ -91,7 +93,11 @@ controls inline.
   - `menu.gs`, `menu-layout.gs` — the add-on menu (customizable from
     Preferences → Menu Bar), sidebar bootstrap, and dialog launchers.
   - `first-run.gs` — first-run setup and the Simple / Full interface mode
-    (`ui_mode`), including the Simple menu and switching between modes.
+    (`ui_mode`), including the Simple menu and switching between modes, and
+    Reset To Defaults (which resets the menu to the one for the mode).
+  - `settings-file.gs` — Preferences → Advanced's settings file: export the
+    settings as JSON, preview and apply an import (only `SETTINGS` keys with
+    valid values; a file's interface mode goes through `applyUiModeSwitch_`).
   - `preferences.gs` — the `SETTINGS` list, `getDefaultPreferences()`,
     account preferences (`UserProperties`) and sidebar session state
     (`CacheService`).
@@ -169,7 +175,7 @@ too and know nothing about their host:
 
 - `shared/composition-card/*` — linked title, then a Source section
   (vowels, cantillation, Hebrew punctuation, font, transliteration) and a
-  Translation section (punctuation, B&I, font), each a `<details>` that folds
+  Translation section (punctuation, Commentary, font), each a `<details>` that folds
   to a summary line; `openSections` in `data-cc-features` opens them
   (Preferences). `initCompositionCard` also drives the Line #s and Citation
   pills, which sit in the insertion options' row by id. Sidebar, Preferences
@@ -185,6 +191,10 @@ too and know nothing about their host:
   `hideInapplicable: false` (every default stays editable).
   `test/ui/insertion-options.test.js` fails if a page grows its own copy of
   the cards, their CSS, or their wiring.
+- `shared/surprise-me/*` — the Surprise Me form (`initSurpriseMeForm`), in
+  the sidebar's Experimental section and the Surprise Me dialog, which adds
+  Cancel. `test/ui/surprise-me-shared.test.js` fails if either grows fields
+  of its own.
 - `shared/ui/busy-overlay` — `modalBusyShow` / `modalBusyHide`: the dialogs'
   spinner overlay while a save runs (Preferences, Link Texts, first-run
   setup), in the sidebar busy overlay's colours.

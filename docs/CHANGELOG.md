@@ -9,6 +9,92 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Settings files; one Interface switch; Voices transliteration; Surprise Me
+
+No new preference and no migration: no stored value changes meaning.
+
+- **"Bold & italics" is now "Commentary": Default / Combine / Drop.** The
+  Translation section's row says what it is for: the commentary Sefaria sets
+  in plain text around its bold direct translation (the Steinsaltz Talmud).
+  **Default** (was *Keep*) inserts the translation as Sefaria marks it.
+  **Combine** (was *Drop*) drops the bold, so the translation and its
+  commentary look the same. **Drop** (was *Bold only*) leaves the commentary
+  out and keeps the bold translation. **Note: "Drop" now means what "Bold
+  only" meant.** Stored choices are unchanged (`keep`, `discard`, `only`).
+  "Corpuses" is now "corpora" throughout.
+- **Setup: "I've used Sefaria for Google Docs".** Screen 1's last answer was
+  "I've used Torah Library before — Keep my settings as they are", which
+  nobody installing can truthfully pick. It is replaced by an answer for
+  people coming from Sefaria for Google Docs, which starts screens 2 and 3 on
+  that add-on's look (both languages, Hebrew on the right, Simple) and
+  explains under *God's name* that it is now replaced as sources go in. "Keep
+  my settings" is kept for people who have settings of their own (setup run
+  before, or a stored setting changed): it appears for them, so a later
+  upgrade that shows setup again offers it. No new preference.
+- **Help: *Coming from Sefaria for Google Docs*.** A new Help topic (in the
+  navigation and on Quick start) for people arriving from Sefaria's own
+  add-on: where *Add Sources with Sefaria*, *Transform Divine Names* and *Link
+  Texts with Sefaria* went, what stays the same, what's new, and what works
+  differently (divine names replaced on insert, the credit line, reviewed
+  linking, fewer permissions). Walkthrough 4, the README and the stress test's
+  account C now describe that add-on; they described an older one, and said
+  settings from it were kept, which can't happen: it stores none.
+- **Italics is never treated as commentary, and is always kept.** Sefaria
+  italicizes foreign and transliterated words (*Shema*, *teruma*) in the
+  translation and its commentary alike, so only bold decides what is
+  commentary, and italics stays on whatever text is inserted, in all three
+  modes. **Combine changes for anyone who chose it (as *Drop*): it used to
+  remove the italics too; it now keeps them.** Default and Drop insert what
+  they did. The sidebar preview shows the same.
+
+- **Settings file (Preferences → Advanced, a new tab).** *Export settings
+  file* saves the settings shown in Preferences (unsaved changes included) to
+  a `.json` file, optionally named ("Grade 7 Chumash"); *Import* reads one,
+  shows what each part would change (Text and layout; Fonts, colours and
+  titles; Search and linking; Menu and interface) and applies only the parts
+  you tick. A teacher can give a class the same vowels, layout and
+  transliteration; an organization can hand out its fonts, colours and title
+  styles. A file holds settings only, never searches, documents or account
+  details; an import writes only real settings with valid values and skips
+  the rest. Where a browser blocks the download, the text can be copied, and
+  pasted into Import. Everything happens in the browser: no new permission.
+- **One Interface switch.** *Show advanced settings* did in Preferences
+  exactly what switching to *Everything* does, beside it, and switching
+  looked as if it might reset settings or keep two sets. It is gone:
+  *Interface: Simple / Everything* is the one switch. Switching never changes
+  a setting, keeps values you have not saved yet (and unsaved Menu Bar
+  edits), and reaches an open sidebar at once, so the sidebar no longer has
+  to be refreshed (which cleared its Insertion Options for the session).
+  *Reset To Defaults* keeps the interface and resets the menu to the one for
+  it: in Simple mode it used to put the full menu under the Simple interface
+  and keep a second, older menu for leaving Simple.
+- **Name the edition, visible.** *Name the edition in the title* (Source) and
+  *Name the translation in the title* (Translation) are rows under each *Link
+  title to Sefaria* in Preferences → Insertion, shown while that title is
+  linked. They were inside each title's font editor, behind the *Title font*
+  button.
+- **Cantillation without vowels shows in the preview.** With Vowels off, the
+  Insertion card's sample showed bare letters whatever Cantillation said, so
+  the two looked tied; the insert always kept them apart. The sample now
+  shows each combination.
+- **Voices transliteration.** Choosing a transliteration in the Voices tab
+  silently changed the Texts transliteration instead (the two menus shared
+  a class the composition card listened to) and left the Voices button on
+  *None*. It now selects, says what it will insert, and shows a sample. In
+  the inserted sheet each Hebrew passage is followed by its transliteration
+  in parentheses, and only Hebrew is transliterated (the Hebrew of sources
+  and of the author's own Hebrew text; never the English or comments).
+  Choosing one no longer resets *What to insert* to its saved default.
+- **Menu Bar: moving items is labelled.** Each item has *Move to Quick
+  Actions ▸* or *◂ Move to main menu* instead of a bare arrow beside ↑ ↓; an
+  item moved out lands just below Quick Actions, and moving one into a hidden
+  or empty Quick Actions shows the submenu again.
+- **Surprise Me is one form.** The sidebar's Experimental card and the
+  Surprise Me dialog (Quick Actions 🎲, the menu) had drifted apart: a topic
+  hint, 3 sources and five fixed corpora in one; a search term, 5 sources and
+  a choice of fourteen corpora in the other. Both now show the same form,
+  and report what the server actually inserted.
+
 - The English divine-name replacement now also catches "GOD" (keyed on the capital G; lowercase "god"/"gods" are untouched), on insert and in Transform Divine Names. An all-caps match gets an all-caps substitute (G-D). No new preference.
 
 > **Preference migration (schemas 21 and 22). No new preference.** Borrowing
@@ -103,14 +189,15 @@ the next one, 2.2.0, which the preference changes above already require.
 
 #### Fixed
 
-- **The preview shows Drop and Bold only as they will be inserted.** With
-  *Bold & italics → Bold only* the preview still showed the whole
+- **The preview shows Combine and Drop as they will be inserted.** With
+  *Commentary → Drop* (then *Bold only*) the preview still showed the whole
   translation, explanation included, and the insert then kept only the bold.
-  The preview now applies the same rules as the insert: bold (bold italics
-  included) is kept, italics alone and plain text go, a line with no bold
-  goes, and a translation with no bold at all is shown whole. *Drop* shows
-  every word without the source's bold and italics. The preview still leaves
-  out line numbers and chapter headings.
+  The preview now applies the same rules as the insert: only bold decides,
+  so the bold text is kept and the rest goes, a line with no bold goes, and
+  a translation with no bold at all is shown whole; italics stays on
+  whatever is kept. *Combine* shows every word without the source's bold,
+  italics kept. The preview still leaves out line numbers and chapter
+  headings.
 - **Two translations with the Hebrew on top now credit the Hebrew edition.**
   With *Citation* on, each translation was credited but the Hebrew edition's
   license was left out, though a one-translation insert of the same edition
@@ -229,20 +316,19 @@ the next one, 2.2.0, which the preference changes above already require.
   (*yehva֥h*, *'ekhaֽd*): only the first cantillation mark in a passage was
   removed. They are all dropped now.
 
-### "Bold only": the translation's bold, without its commentary
+### Drop (once "Bold only"): the translation's bold, without its commentary
 
 #### Changed
 
-- **Bold & italics → *Only* is now *Bold only*, and keeps the bold alone.**
-  Sefaria sets its direct translation in bold and the commentary around it in
-  plain text (the Steinsaltz Talmud), and italicizes a transliterated word
-  (*Shema*, *teruma*) wherever it falls. *Only* used to keep italics too, so
-  an italicized word from the commentary came along with the translation. Now
-  words in italics alone are left out like any other commentary; words in
-  bold italics are bold, and are kept in italics. The stored value
-  (`source_emphasis_mode = "only"`) is unchanged, so no migration: users who
-  chose *Only* get *Bold only*. Preferences → Fonts → ✒️ Source Emphasis calls
-  it *Bold only* too.
+- **Commentary → *Drop* (then *Bold only*, before that *Only*) keeps the
+  bold alone.** Sefaria sets its direct translation in bold and the
+  commentary around it in plain text (the Steinsaltz Talmud), and italicizes
+  a foreign or transliterated word (*Shema*, *teruma*) wherever it falls.
+  *Only* chose by bold or italics, so an italicized word from the commentary
+  came along with the translation. Now only bold decides: an italic word goes
+  or stays with the text it is in, and keeps its italics when it stays. The
+  stored value (`source_emphasis_mode = "only"`) is unchanged, so no
+  migration.
 
 ### Link Texts: which citations didn't match, and why
 
@@ -629,11 +715,13 @@ the next one, 2.2.0, which the preference changes above already require.
 - **B&I button in the sidebar's Layout tray**, next to Lines and Sources. It
   cycles through **Keep** the source's bold and italics (highlighted),
   **Discard** them (faded), and **Keep only** (inverted). Keep only inserts
-  just the emphasized words. For example, from Sefaria's English Talmud
+  just the bold words. For example, from Sefaria's English Talmud
   (Steinsaltz) it keeps the bold translation of the Talmud's own words and
   leaves out Steinsaltz's explanation. Line markers are kept. Lines with no
-  emphasis are left out. A passage with no emphasis anywhere (the Aramaic
-  original) is inserted whole.
+  bold are left out. A passage with no bold anywhere (the Aramaic original)
+  is inserted whole. *(Now Commentary: Default / Combine / Drop; Combine
+  drops only the bold, and italics is kept in every mode. See the top of
+  this section.)*
 
 #### Changed
 
@@ -659,7 +747,7 @@ the next one, 2.2.0, which the preference changes above already require.
   numbers on, Genesis 1:31–2:3 read "(31) … (1) … (2) … (3)", with nothing to
   say the numbers had restarted. Each chapter now gets a heading line in the
   text's own terms ("Chapter 2" / "פרק ב", "Daf 2b" / "דף ב ע״ב"), in the
-  Hebrew and the translation alike. *Keep only* bold and italics keeps the
+  Hebrew and the translation alike. Commentary → *Drop* keeps the
   headings, and a transliteration's verse numbers restart with the chapter
   too. Inserting several translations of such a range no longer fails.
 - **Several translations at once are all formatted alike.** Inserting more

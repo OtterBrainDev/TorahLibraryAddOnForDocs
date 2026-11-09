@@ -167,8 +167,9 @@ function getDefaultPreferences() {
     // Sefaria marks up its own emphasis (the Steinsaltz Talmud bolds the Talmud's
     // words against Steinsaltz's interpolation). "keep" by default: the source
     // knows what it meant, and the font-style preference still sets the
-    // baseline. "discard" flattens it; "only" keeps the emphasized words and
-    // drops the rest. See normalizeSourceEmphasisMode_. Replaced the boolean
+    // baseline. "discard" drops the bold; "only" keeps the bold words and
+    // drops the rest. Italics stays in all three. See
+    // normalizeSourceEmphasisMode_. Replaced the boolean
     // `preserve_source_emphasis` in schema v14.
     source_emphasis_mode: "keep",
     // Colour and background are intentionally EMPTY by default: an empty
@@ -508,11 +509,16 @@ function readEmphasisMapping_(userProperties, prefix, fallbackStyle) {
 }
 
 /**
- * What happens to the bold and italics in Sefaria's own markup:
- *   "keep"    — re-applied on top of the user's font style (the default).
- *   "discard" — dropped; the user's font style applies uniformly.
- *   "only"    — only the emphasized words are kept, e.g. just the Talmud's
- *               own words (bold) out of the Steinsaltz translation.
+ * The translation's Commentary choice: what happens to Sefaria's own markup,
+ * which sets a direct translation in bold and its commentary in plain text
+ * (italics marks foreign and transliterated words in either, and is kept
+ * wherever its text is kept):
+ *   "keep"    — Default: bold and italics re-applied on top of the user's
+ *               font style.
+ *   "discard" — Combine: the bold is dropped, so the translation and its
+ *               commentary look the same; the italics stays.
+ *   "only"    — Drop: only the bold text is kept, e.g. just the Talmud's own
+ *               words out of the Steinsaltz translation, with its italics.
  * Also accepts the boolean `preserve_source_emphasis` values ("true"/"false")
  * it replaced, so a value that was never migrated still means what it meant.
  * Anything unrecognised is "keep", the default.

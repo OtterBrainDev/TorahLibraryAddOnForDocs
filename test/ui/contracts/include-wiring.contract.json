@@ -25,7 +25,10 @@
     "<?!= include('sidebar/js/event-bindings'); ?>",
     "<?!= include('sidebar/js/bootstrap'); ?>",
     "<?!= include('shared/insertion-options/markup') ?>",
-    "<?!= include('shared/composition-card/markup') ?>"
+    "<?!= include('shared/composition-card/markup') ?>",
+    "<?!= include('shared/surprise-me/css'); ?>",
+    "<?!= include('shared/surprise-me/markup') ?>",
+    "<?!= include('shared/surprise-me/js'); ?>"
   ],
   "preferences.html": [
     "<?!= include('shared/ui/head'); ?>",
@@ -41,11 +44,16 @@
     "<?!= include('shared/ui/state'); ?>",
     "<?!= include('shared/insertion-options/js'); ?>",
     "<?!= include('preferences/js'); ?>",
+    "<?!= include('preferences/settings-file-js'); ?>",
     "<?!= include('shared/insertion-options/markup') ?>"
   ],
   "surprise-me.html": [
     "<?!= include('shared/ui/head'); ?>",
     "<?!= include('shared/css/native-controls'); ?>",
+    "<?!= include('css/tokens'); ?>",
+    "<?!= include('shared/surprise-me/css'); ?>",
+    "<?!= include('shared/surprise-me/markup') ?>",
+    "<?!= include('shared/surprise-me/js'); ?>",
     "<?!= include('surprise-me/css'); ?>",
     "<?!= include('shared/ui/core-shared'); ?>",
     "<?!= include('shared/ui/api'); ?>",

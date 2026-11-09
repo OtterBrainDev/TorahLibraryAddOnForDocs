@@ -576,7 +576,7 @@ function formatDataForPesukim(data, pesukim) {
   // With line markers on, a range across chapters gets a heading line before
   // each chapter's verses: the numbers restart at 1, and "(31) ... (1) ..."
   // alone doesn't say where chapter 2 begins. The headings are ours, not the
-  // source's: "keep only bold and italics" must not remove them.
+  // source's: Commentary → Drop (keep only the bold) must not remove them.
   const sectionHeadingLines = [];
   function addSectionHeading(wrapper, perekNum, lang) {
     const heading = spanningSectionHeading_(data, perekNum, lang);

@@ -1,16 +1,18 @@
 // Pins that the sidebar preview shows the translation as the insert will write
-// it under Bold & italics: Keep, Drop and Bold only (BUG-001).
+// it under each Commentary choice: Default (`keep`), Combine (`discard`) and
+// Drop (`only`) (BUG-001; then called Keep, Drop and Bold only).
 //
-// Observed: with "Bold only", Berakhot 2a:1 (William Davidson) previewed the
+// Observed: with `only` ("Bold only"), Berakhot 2a:1 (William Davidson) previewed the
 // full English, explanatory commentary included, and the insert then kept only
 // the bold. The insert filters after the text is in the document
 // (insertRichTextFromHTML, then applyTypographyToParagraph in
-// server/insertion.gs); the preview never applied the mode at all. For Drop and
-// Bold only the preview now reads and filters the markup with mirrors of those
+// server/insertion.gs); the preview never applied the mode at all. For
+// `discard` and `only` the preview now reads and filters the markup with mirrors of those
 // server functions (sidebar/js/preview-core.html). This runs the real server
-// pipeline and the preview on the same markup and requires the same words and
-// the same bold — including bold italics, italics alone, footnotes, line
-// numbers on and off, and a translation with no bold.
+// pipeline and the preview on the same markup and requires the same words,
+// bold and italics — italics inside the bold and outside it (kept on whatever
+// text is kept: it never marks commentary), footnotes, line numbers on and
+// off, and a translation with no bold.
 //
 // Loaded with vm.runInContext; see AGENTS.md hard rule #3.
 
@@ -158,7 +160,7 @@ const BERAKHOT = '<b>MISHNA:</b> From when may one recite <i>Shema</i> in the ev
 
 const CASES = {
   'bold text with explanatory commentary (Berakhot 2a:1, William Davidson)': [BERAKHOT],
-  'bold italics are kept, italics alone are not': ['<b>Rabbi <i>Eliezer</i> says</b> — <i>this is the view of</i> <b>until the end</b>.'],
+  'italics in the bold and in the commentary': ['<b>Rabbi <i>Eliezer</i> says</b> — <i>this is the view of</i> <b>until the end</b>.'],
   'a translation with no bold is kept whole, italics too': ['In the beginning <i>Elohim</i> created the heaven and the earth.'],
   'a footnote is skipped, as at insert': ['<b>He said</b> it plainly<sup>1</sup><i class="footnote">A gloss.</i> and <b>went on</b>.'],
   'entities, a line break and strong': ['<strong>One&nbsp;who</strong> says&thinsp;so,<br><b>&quot;Amen&quot;</b> &amp;c.'],
@@ -212,7 +214,7 @@ test('the preview decodes entities as the insert does', () => {
 
 // ---- renderPreviewHTML -------------------------------------------------
 
-test('Bold only: the preview\'s translation is the bold alone, and the Hebrew is untouched', () => {
+test('Drop (only): the preview\'s translation is the bold alone, and the Hebrew is untouched', () => {
   const ctx = loadPreview({ mode: 'only' });
   const html = ctx.renderPreviewHTML({ ref: 'Berakhot 2a:1', heRef: 'ברכות ב א:א', text: BERAKHOT, he: 'מֵאֵימָתַי' }, 'Berakhot 2a:1');
   assert.match(html, /\[sanitized:מֵאֵימָתַי\]/, 'Hebrew rendered as before');
@@ -221,10 +223,10 @@ test('Bold only: the preview\'s translation is the bold alone, and the Hebrew is
   assert.doesNotMatch(html, /Until when/);
 });
 
-test('Drop: every word, no bold or italics; Keep: the sanitized markup as before', () => {
-  const drop = loadPreview({ mode: 'discard' }).renderPreviewHTML({ ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
-  assert.match(drop, /MISHNA: From when may one recite Shema in the evening\?/);
-  assert.doesNotMatch(drop.split('[sanitized:x]').join(''), /<b>|<i>/);
+test('Combine (discard): every word, no bold, italics kept; Default (keep): the sanitized markup as before', () => {
+  const combined = loadPreview({ mode: 'discard' }).renderPreviewHTML({ ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
+  assert.match(combined, /MISHNA: From when may one recite <i>Shema<\/i> in the evening\?/);
+  assert.doesNotMatch(combined.split('[sanitized:x]').join(''), /<b>/);
 
   const keep = loadPreview({ mode: 'keep' }).renderPreviewHTML({ ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
   assert.ok(keep.includes(`[sanitized:${BERAKHOT}]`));

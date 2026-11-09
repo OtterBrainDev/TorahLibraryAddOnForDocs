@@ -17,8 +17,7 @@ your Google account and apply in every document.
 
 At the top, **Interface** should be **Everything**. **Simple** hides the result
 sort, Restore Corpus and the Texts / Voices / Lexicon tabs, plus the Search,
-Linking and Experimental tabs here (**Show advanced settings** brings those
-back). This tour uses Everything.
+Linking, Advanced and Experimental tabs here. This tour uses Everything.
 
 **Insertion tab: fonts and titles**
 
@@ -45,7 +44,9 @@ the same for the citation.
   own font, size, colour and highlight.
   **Hyperlink formatting override** there (on by default) gives a title a
   separate look while it's linked; off, a linked title keeps its title font.
-  **Name the edition** (on by default) writes a linked title as
+  Under each **Link title to Sefaria**, **Name the edition in the title**
+  (Source) and **Name the translation in the title** (Translation), on by
+  default, write a linked title as
   *Genesis 1:1 (Translation • The Koren Jerusalem Bible)*; off, just
   *Genesis 1:1*, still linked.
 - **Citation style:** the editions-and-licenses line under each source has
@@ -53,10 +54,13 @@ the same for the citation.
   it. *Same as the text above* and a blank size follow the passage.
 - **Colour and highlight** default to *Auto / None* (your document decides).
   Set a colour on the translation to set it apart from your own commentary.
-- **Bold & italics** (Translation section): **Keep / Drop / Bold only.**
+- **Commentary** (Translation section): **Default / Combine / Drop.**
   Sefaria's own bold and italics are kept by default. In the Steinsaltz
   Talmud the bold marks the Talmud's own words and the plain text is
-  Steinsaltz's explanation, so **Bold only** inserts just the Talmud's words.
+  Steinsaltz's explanation: **Combine** drops the bold so the two read as one
+  text, and **Drop** leaves the explanation out, inserting just the Talmud's
+  words. Italics marks foreign and transliterated words (*Shema*), not
+  commentary, so it is kept in all three.
   **Advanced** under it maps bold to something else, such as blue text
   without bold. The sidebar's Insertion Options has the same control for one
   session. It applies to the translation only; the Hebrew always keeps its
@@ -135,7 +139,7 @@ Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
      Israeli, IPA…) under it while it's on. It's read from the fully
      vowelled text, so it's complete even with Vowels off.
 
-   Open **Translation** for its own **Punctuation** and **Bold & italics**.
+   Open **Translation** for its own **Punctuation** and **Commentary**.
    Each section has its own **Link title to Sefaria** switch, so you can link
    the Hebrew title and leave the translation title plain, and its own
    **Title font** and **Text font** buttons (font and size; *Colour, style
@@ -201,7 +205,7 @@ This works on a document you wrote yourself, full of citations you typed.
 5. Want these sources different from your usual? Open **📰 Customize this
    insertion** under the table: the same controls as Insertion Options
    (Display, Arrangement, Citation, Line numbers, both Link title switches,
-   Vowels, Cantillation, Punctuation, Transliteration, Bold & italics) plus
+   Vowels, Cantillation, Punctuation, Transliteration, Commentary) plus
    **Replace a citation on its own line**, for this pass only. It says *Your
    defaults* until you change something, then *Customized for this pass*. Try
    **א** with Vowels **Off** for a handout. **💾 Save as defaults** if you want

@@ -188,6 +188,27 @@
     cursor: pointer;
   }
 
+  /* A file picker (Preferences → Advanced → Import): its button looks like
+     ours. Pages usually hide the input behind a label styled as a button. */
+  input[type="file"] {
+    max-width: 100%;
+    color: var(--control-text);
+    font-family: inherit;
+    font-size: var(--control-font-size);
+  }
+
+  input[type="file"]::file-selector-button {
+    margin-right: 8px;
+    padding: var(--control-padding-y) 12px;
+    color: var(--control-text);
+    background-color: var(--control-bg-subtle);
+    border: 1px solid var(--control-border);
+    border-radius: var(--control-radius);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
   /* ---- Buttons ---- */
   button,
   input[type="button"],

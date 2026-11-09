@@ -50,7 +50,8 @@ function fakeBody() {
   };
 }
 
-function insert(sheetPayload, insertMode) {
+function insert(sheetPayload, insertMode, options) {
+  const opts = options || {};
   const body = fakeBody();
   const context = {
     DocumentApp: {
@@ -58,18 +59,19 @@ function insert(sheetPayload, insertMode) {
       ParagraphHeading: { HEADING2: 'HEADING2' },
     },
     UrlFetchApp: {
-      fetch: () => ({ getResponseCode: () => 200, getContentText: () => JSON.stringify(FULL_SHEET) }),
+      fetch: () => ({ getResponseCode: () => 200, getContentText: () => JSON.stringify(opts.sheet || FULL_SHEET) }),
     },
     getTypographySettings: () => ({}),
     resolveInsertionTarget_: () => ({ container: body, index: 0 }),
     applyTitleTypography: () => {},
-    applyRoleTypography_: () => {},
+    applyRoleTypography_: (paragraph, typography, role) => { paragraph.role = role; },
     decodeHTMLEntities: (s) => s,
-    transliterateHebrewHtmlPreservingBasicBreaks: (s) => s,
+    // Stands in for the engine (transliteration.gs): marks what it was given.
+    transliterateHebrewHtmlPreservingBasicBreaks: (s, scheme) => `[${scheme}:${s}]`,
   };
   vm.createContext(context);
   vm.runInContext(fs.readFileSync('apps-script/server/sheets.gs', 'utf8'), context);
-  context.insertSheet(sheetPayload, { insertMode });
+  context.insertSheet(sheetPayload, { insertMode, transliterationScheme: opts.transliterationScheme || null });
   return body.paragraphs;
 }
 
@@ -118,4 +120,47 @@ test('Citation keeps a summary that says something the title does not', () => {
 test('a sheet URL that is not http(s) never becomes the title link', () => {
   const paragraphs = insert(payload({ url: 'javascript:alert(1)' }), 'both');
   assert.equal(paragraphs[0].link, null);
+});
+
+// The Voices transliteration: in parentheses right after the Hebrew it
+// transliterates, never a block after the English or at the end, and only
+// ever of the Hebrew.
+const BILINGUAL_SHEET = {
+  title: 'Shabbat',
+  ownerName: '',
+  sources: [
+    { ref: 'Genesis 2:1', heRef: 'בראשית ב:א', text: { he: ['וַיְכֻלּוּ הַשָּׁמַיִם', '2', 'וְהָאָרֶץ'], en: ['The heaven was finished'] } },
+    { outsideBiText: { he: 'שַׁבָּת שָׁלוֹם', en: 'Shabbat shalom' } },
+    { comment: 'A note by the author.' },
+  ],
+};
+
+test('Voices transliteration follows each Hebrew passage, in parentheses', () => {
+  const paragraphs = insert(payload(), 'contents', { sheet: BILINGUAL_SHEET, transliterationScheme: 'simple_english' });
+  assert.deepEqual(texts(paragraphs), [
+    'Shabbat',
+    'By Talya Sandor',
+    '1. Genesis 2:1 / בראשית ב:א',
+    'וַיְכֻלּוּ הַשָּׁמַיִם',
+    '2',
+    'וְהָאָרֶץ',
+    '([simple_english:וַיְכֻלּוּ הַשָּׁמַיִם]',
+    '[simple_english:וְהָאָרֶץ])',
+    'The heaven was finished',
+    'שַׁבָּת שָׁלוֹם',
+    '([simple_english:שַׁבָּת שָׁלוֹם])',
+    'Shabbat shalom',
+    'A note by the author.',
+  ]);
+  const translit = paragraphs.filter((p) => p.role === 'transliteration').map((p) => p.text);
+  assert.equal(translit.length, 3, 'only the Hebrew lines are transliterated');
+  assert.ok(translit.every((t) => !/heaven|Shabbat shalom|note/.test(t)), 'English and comments are never transliterated');
+});
+
+test('no transliteration without a scheme, or for "none"', () => {
+  for (const scheme of [null, 'none']) {
+    const paragraphs = insert(payload(), 'contents', { sheet: BILINGUAL_SHEET, transliterationScheme: scheme });
+    assert.equal(paragraphs.filter((p) => p.role === 'transliteration').length, 0, String(scheme));
+    assert.ok(!texts(paragraphs).some((t) => t.startsWith('(')), String(scheme));
+  }
 });

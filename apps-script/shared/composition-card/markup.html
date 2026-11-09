@@ -20,12 +20,15 @@
         <div class="cc-hebrew" id="cc-hebrew-preview" dir="rtl" lang="he" aria-label="Hebrew preview">
           <span class="cc-hebrew-text cc-hebrew-text--full">הַסֵּ֙פֶר֙ כָל־הָעָ֔ם</span>
           <span class="cc-hebrew-text cc-hebrew-text--no-cantillation" hidden>הַסֵּפֶר כָל־הָעָם</span>
+          <span class="cc-hebrew-text cc-hebrew-text--cantillation-only" hidden>הס֙פר֙ כל־הע֔ם</span>
           <span class="cc-hebrew-text cc-hebrew-text--consonants" hidden>הספר כל־העם</span>
         </div>
       </div>
 
       <div class="cc-rows cc-pill-row">
         <button type="button" class="cc-row cc-toggle" id="cc-he-title-toggle" data-cc-feature="linkedTitle" aria-pressed="true" title="Link the source title to the passage on sefaria.org"><span class="cc-row-label">Link title to Sefaria</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <!-- Preferences only ("editionLabel"): shown while the title is linked. -->
+        <button type="button" class="cc-row cc-toggle cc-edition-toggle" id="cc-he-edition-toggle" data-cc-feature="editionLabel" aria-pressed="true" title="Add the source edition after the linked title: בראשית א:א (Hebrew • Miqra according to the Masorah). Off, the linked title is the reference alone."><span class="cc-row-label cc-row-label--sub">Name the edition in the title</span><span class="cc-switch" aria-hidden="true"></span></button>
         <div class="cc-row cc-font-row" data-cc-feature="titleFonts">
           <span class="cc-row-label">Title font</span>
           <button type="button" class="cc-font-chip" id="cc-hebrew-title-font-chip" data-font-role="hebrewTitle" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Source title font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
@@ -87,6 +90,8 @@
       </div>
       <div class="cc-rows cc-pill-row">
         <button type="button" class="cc-row cc-toggle" id="cc-title-toggle" data-cc-feature="linkedTitle" aria-pressed="false" title="Link the translation title to the passage on sefaria.org"><span class="cc-row-label">Link title to Sefaria</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <!-- Preferences only ("editionLabel"): shown while the title is linked. -->
+        <button type="button" class="cc-row cc-toggle cc-edition-toggle" id="cc-edition-toggle" data-cc-feature="editionLabel" aria-pressed="true" title="Add the translation after the linked title: Genesis 1:1 (Translation • The Koren Jerusalem Bible). Off, the linked title is the reference alone."><span class="cc-row-label cc-row-label--sub">Name the translation in the title</span><span class="cc-switch" aria-hidden="true"></span></button>
         <div class="cc-row cc-font-row" data-cc-feature="titleFonts">
           <span class="cc-row-label">Title font</span>
           <button type="button" class="cc-font-chip" id="cc-translation-title-font-chip" data-font-role="translationTitle" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Translation title font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>

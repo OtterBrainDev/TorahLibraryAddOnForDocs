@@ -1,0 +1,101 @@
+<script>
+  // The Surprise Me form (shared/surprise-me/markup): one controller for the
+  // sidebar's Experimental section and the Surprise Me dialog. The server
+  // (insertSurpriseMe, surprise-me-feature.gs) says what it inserted, and
+  // that is what the status line shows.
+  //
+  // options.onCancel: shows Cancel and runs it (the dialog closes itself).
+  function initSurpriseMeForm(options) {
+    var opts = options || {};
+    var root = document.getElementById('surprise-form');
+    if (!root || root.getAttribute('data-sm-ready') === 'true') return;
+    root.setAttribute('data-sm-ready', 'true');
+
+    var term = document.getElementById('surprise-term');
+    var count = document.getElementById('surprise-count');
+    var submit = document.getElementById('surprise-submit');
+    var cancel = document.getElementById('surprise-cancel');
+    var toggleAll = document.getElementById('toggle-all-corpuses');
+    var status = document.getElementById('surprise-status');
+    var boxes = Array.prototype.slice.call(root.querySelectorAll('.corpus-grid input[type="checkbox"]'));
+    var SUBMIT_LABEL = submit.textContent;
+
+    function setStatus(message, kind) {
+      status.textContent = message || '';
+      status.classList.toggle('is-error', kind === 'error');
+      status.classList.toggle('is-success', kind === 'success');
+    }
+
+    function clampCount() {
+      var n = parseInt(count.value, 10);
+      n = Math.max(1, Math.min(10, isNaN(n) ? 5 : n));
+      count.value = String(n);
+      root.querySelector('[data-sm-step="-1"]').disabled = n <= 1;
+      root.querySelector('[data-sm-step="1"]').disabled = n >= 10;
+      return n;
+    }
+
+    function selectedCorpuses() {
+      return boxes.filter(function (box) { return box.checked; }).map(function (box) { return box.value; });
+    }
+
+    function syncToggleAll() {
+      toggleAll.textContent = selectedCorpuses().length ? 'Clear all' : 'Select all';
+    }
+
+    function setBusy(busy) {
+      root.classList.toggle('is-busy', !!busy);
+      submit.disabled = !!busy;
+      cancel.disabled = !!busy;
+      submit.textContent = busy ? 'Finding sources…' : SUBMIT_LABEL;
+    }
+
+    Array.prototype.forEach.call(root.querySelectorAll('[data-sm-step]'), function (button) {
+      button.addEventListener('click', function () {
+        count.value = String((parseInt(count.value, 10) || 5) + Number(button.getAttribute('data-sm-step')));
+        clampCount();
+      });
+    });
+    count.addEventListener('change', clampCount);
+
+    toggleAll.addEventListener('click', function () {
+      var selectAll = selectedCorpuses().length === 0;
+      boxes.forEach(function (box) { box.checked = selectAll; });
+      syncToggleAll();
+      setStatus(selectAll ? '' : 'Choose at least one corpus before inserting.');
+    });
+    boxes.forEach(function (box) { box.addEventListener('change', syncToggleAll); });
+
+    if (typeof opts.onCancel === 'function') {
+      cancel.hidden = false;
+      cancel.addEventListener('click', opts.onCancel);
+    }
+
+    submit.addEventListener('click', function () {
+      var payload = {
+        term: (term.value || '').trim(),
+        count: clampCount(),
+        corpuses: selectedCorpuses()
+      };
+      if (!payload.corpuses.length) {
+        setStatus('Choose at least one corpus.', 'error');
+        return;
+      }
+      setBusy(true);
+      setStatus(payload.term ? 'Searching and shuffling sources…' : 'Picking a Hebrew word from Tanakh, then searching…');
+      google.script.run
+        .withSuccessHandler(function (result) {
+          setBusy(false);
+          setStatus((result && result.message) || 'Done.', 'success');
+        })
+        .withFailureHandler(function (error) {
+          setBusy(false);
+          setStatus((error && error.message) || 'Something went wrong while finding sources.', 'error');
+        })
+        .insertSurpriseMe(payload);
+    });
+
+    clampCount();
+    syncToggleAll();
+  }
+</script>

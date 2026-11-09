@@ -1163,10 +1163,10 @@
   /* top is minus the shell's padding-top: sticky offsets are measured from
      the scroll container's padding edge, so top: 0 left a 16px strip above
      the bar where scrolled content showed through.                        */
-  /* Interface mode (Simple / Everything) and, in Simple mode, the switch
-     that shows the advanced tabs and sections hidden below. */
-  .interface-mode-row,
-  .show-advanced-row {
+  /* Interface mode (Simple / Everything): the one switch for what is shown.
+     Simple hides the advanced tabs and sections below; .show-advanced is
+     set only by a link straight to one of those tabs (preferences/js.html). */
+  .interface-mode-row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1174,18 +1174,19 @@
     margin-top: 10px;
     font-size: 13px;
   }
-  .interface-mode-row label,
-  .show-advanced-row {
+  .interface-mode-row label {
     display: inline-flex;
     align-items: center;
     gap: 4px;
   }
   .interface-mode-label { font-weight: 600; }
-  .interface-mode-status { color: var(--muted); font-size: 12px; }
-  .preferences-dialog:not([data-ui-mode="simple"]) .show-advanced-row { display: none; }
+  .interface-mode-note { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+  .interface-mode-status { margin: 4px 0 0; color: var(--muted); font-size: 12px; font-weight: 600; }
+  .interface-mode-status:empty { display: none; }
 
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-search-btn,
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-linking-btn,
+  .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-advanced-btn,
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-experimental-btn,
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #translation-language-typography,
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #emphasis-mapping {
@@ -1360,7 +1361,7 @@
     margin-top: 0;
   }
 
-  /* The emphasis mapping, under Bold & italics in the card. */
+  /* The emphasis mapping, under Commentary in the card. */
   .cc-card .pref-card-details {
     margin: 4px 0 0;
     padding: 10px 12px;
@@ -1518,6 +1519,15 @@
     cursor: pointer;
   }
 
+  /* Moves an item into or out of Quick Actions: says so in words. */
+  .menu-layout-btn--move {
+    width: auto;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
   .menu-layout-btn:hover:not([disabled]) {
     background: #f1ece3;
   }
@@ -1547,6 +1557,111 @@
     font-weight: 600;
     cursor: pointer;
   }
+
+  /* ── Advanced tab: settings file (preferences/settings-file-js) ───────── */
+
+  .settings-file-heading {
+    margin: 0 0 6px;
+    color: #253858;
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .settings-file-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    margin: 0 0 10px;
+  }
+
+  .settings-file-label { font-size: 13px; font-weight: 600; }
+  .settings-file-optional { color: #5b6472; font-weight: 400; }
+  .settings-file-row input[type="text"] { flex: 1 1 220px; min-width: 0; }
+
+  .settings-file-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  /* The file input is hidden behind this label, drawn as a button. */
+  .settings-file-pick {
+    display: inline-block;
+    padding: 6px 12px;
+    color: var(--control-text, #202124);
+    background: var(--control-bg-subtle, #fbfbfa);
+    border: 1px solid var(--control-border, #d9d8d3);
+    border-radius: var(--control-radius, 6px);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .settings-file-pick:hover { background: var(--control-bg-hover, #f1ece3); }
+
+  /* The hidden file input takes the focus; its label shows it. */
+  .settings-file-actions:focus-within .settings-file-pick {
+    outline: 2px solid #1f3b68;
+    outline-offset: 1px;
+  }
+
+  .settings-file-status { margin: 8px 0 0; font-size: 13px; color: #253858; }
+  .settings-file-status:empty { display: none; }
+  .settings-file-status.is-error { color: #a50e0e; }
+
+  .settings-file-fallback { margin-top: 10px; font-size: 13px; }
+  .settings-file-fallback[hidden] { display: none; }
+  .settings-file-fallback > summary { cursor: pointer; color: #1f3b68; font-weight: 600; }
+  .settings-file-fallback textarea {
+    display: block;
+    width: 100%;
+    margin: 8px 0;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px;
+  }
+
+  .settings-import-preview {
+    margin-top: 12px;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #e3dfd8;
+    border-radius: 10px;
+  }
+
+  .settings-import-preview[hidden] { display: none; }
+  .settings-import-from { margin: 0 0 8px; font-size: 13px; }
+
+  .settings-import-groups {
+    margin: 0 0 10px;
+    padding: 0;
+    border: 0;
+  }
+
+  .settings-import-groups legend {
+    margin-bottom: 6px;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .settings-import-group {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-top: 1px solid #efece6;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .settings-import-group:first-child { border-top: 0; }
+  .settings-import-group input { margin-top: 2px; }
+  .settings-import-group-label { font-weight: 600; }
+  .settings-import-group-count { color: #5b6472; }
+  .settings-import-group-help { display: block; color: #5b6472; font-size: 12px; }
+  .settings-import-group.is-unchanged { color: #888; }
 
   /* ── Search tab: translation languages ────────────────────────────────── */
 
