@@ -44,7 +44,8 @@ the right. Text and links the other add-on inserted stay as they are, and
 Torah Library's Transform Divine Names, Link Texts and Unlink Sources work on
 them like any other text.
 
-**New:** saved defaults (a short setup the first time; Help → Quick start →
+**New:** saved defaults (a short setup the first time, where **I've used
+Sefaria for Google Docs** starts from the look you know; Help → Quick start →
 **Run setup again**); arrangement, vowels, cantillation, punctuation,
 transliteration, fonts and heading titles; **Commentary** for translations
 that weave commentary in; Insert Source from Selection; Voices, Lexicon and the

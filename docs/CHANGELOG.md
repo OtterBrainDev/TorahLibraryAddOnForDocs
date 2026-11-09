@@ -22,6 +22,15 @@ No new preference and no migration: no stored value changes meaning.
   out and keeps the bold translation. **Note: "Drop" now means what "Bold
   only" meant.** Stored choices are unchanged (`keep`, `discard`, `only`).
   "Corpuses" is now "corpora" throughout.
+- **Setup: "I've used Sefaria for Google Docs".** Screen 1's last answer was
+  "I've used Torah Library before — Keep my settings as they are", which
+  nobody installing can truthfully pick. It is replaced by an answer for
+  people coming from Sefaria for Google Docs, which starts screens 2 and 3 on
+  that add-on's look (both languages, Hebrew on the right, Simple) and
+  explains under *God's name* that it is now replaced as sources go in. "Keep
+  my settings" is kept for people who have settings of their own (setup run
+  before, or a stored setting changed): it appears for them, so a later
+  upgrade that shows setup again offers it. No new preference.
 - **Help: *Coming from Sefaria for Google Docs*.** A new Help topic (in the
   navigation and on Quick start) for people arriving from Sefaria's own
   add-on: where *Add Sources with Sefaria*, *Transform Divine Names* and *Link

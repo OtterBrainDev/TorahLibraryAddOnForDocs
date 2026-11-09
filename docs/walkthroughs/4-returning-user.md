@@ -56,9 +56,12 @@ also offers **Left–Right** and **Stacked** (Hebrew above English), and **Line 
 line** puts each verse in its own row beside its translation.
 
 The first time the add-on opens, a short setup asks three things (what you'll
-use it for, how sources should look, Simple or Everything). Pick the answers
-that match how you've been working; every answer can be changed later in
-Preferences, or by **Help → Quick start → Run setup again**.
+use it for, how sources should look, Simple or Everything). Choose **I've used
+Sefaria for Google Docs**: it starts the next screens on that add-on's look
+(both languages, Hebrew on the right, a simple menu), and a note under *God's
+name* explains that the name is now replaced as sources go in. Every answer
+can be changed there, later in Preferences, or by **Help → Quick start → Run
+setup again**.
 
 ---
 

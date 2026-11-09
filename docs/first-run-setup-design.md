@@ -70,8 +70,8 @@ stored flag, checked on first use.
 | New, installed from inside a document | `onInstall` fires; no schema stored | Yes, straight after install (replaces the Release Notes dialog) | Chosen in setup |
 | New, installed from the Marketplace website or by an admin | No schema stored at first open | Yes, the first time they open the sidebar | Chosen in setup |
 | Upgrader from the current add-on (schema 1–19) | Schema stored | **No** | Full, set by migration |
-| Someone coming from Sefaria for Google Docs | A separate add-on with separate storage, which stores no preferences anyway: no schema stored, so a new user here | Yes; screen 1's other answers fit them (its "I've used Torah Library before" is for this add-on's own users) | Chosen in setup; dismissing keeps Full |
-| Legacy user of the original published add-on | No schema stored (that add-on stored no preferences), so indistinguishable from a new user | Yes; screen 1 offers "I've used Torah Library before: keep everything" | Chosen in setup; dismissing keeps Full |
+| Someone coming from Sefaria for Google Docs | A separate add-on with separate storage, which stores no preferences anyway: no schema stored, so a new user here | Yes; screen 1 has "I've used Sefaria for Google Docs" | Chosen in setup; dismissing keeps Full |
+| Legacy user of the original published add-on | No schema stored (that add-on stored no preferences), so indistinguishable from a new user | Yes; as a new user (no settings to keep, so no "Keep my settings") | Chosen in setup; dismissing keeps Full |
 
 Help's *Coming from Sefaria for Google Docs* topic and walkthrough 4 are for
 the first of those two rows: where that add-on's three commands went, and what
@@ -123,9 +123,19 @@ One choice, large cards with an icon and one line each:
 | **Quoting sources in my writing** | Divrei Torah, sermons, newsletters, emails |
 | **Preparing source sheets** | Classes, shiurim, study partners |
 | **Academic writing** | Papers, articles, books with citations |
-| **I've used Torah Library before** | Keep everything as it is |
+| **I've used Sefaria for Google Docs** | Start from what you know: Hebrew on the right, a simple menu |
+| **Keep my settings** *(only with settings to keep)* | I've set up Torah Library before; change nothing |
 
-The last card skips to the done screen with Full mode and no changes.
+**Keep my settings** skips to the done screen with no changes. It is hidden
+unless the person has settings of their own (`hasSavedSettings`, from
+`firstRunHasSavedSettings_` in `server/first-run.gs`): setup was finished or
+dismissed before (Help → Run setup again), or a stored setting differs from
+its default. At install nobody has any (onInstall seeds the defaults, and
+Sefaria for Google Docs stores none), so a first run never offers it. It
+replaced "I've used Torah Library before" on screen 1 (2026-11), which no one
+installing could truthfully pick. A future upgrade that wants to show setup
+to existing users again sets `first_run_setup` back to `pending` in a
+migration; their own settings make the card appear.
 
 The other answers only change which answers are **preselected** on screens 2
 and 3 (see §5). They write nothing on their own.
@@ -191,7 +201,8 @@ and can change every one of them before anything is saved.
 | Quoting sources in my writing | Current defaults, except **Arrangement: Hebrew above** (`he-top`), which pastes more cleanly into prose and email | Simple |
 | Preparing source sheets | Current defaults (side by side, Hebrew on the right) | Simple |
 | Academic writing | Current defaults | Everything |
-| I've used Torah Library before | (screens skipped) | Full, no changes |
+| I've used Sefaria for Google Docs | Current defaults, with **Show: Hebrew and translation** and **Arrangement: Hebrew on the right** (that add-on's look); a note under *God's name* says it is now replaced as sources go in, and how to keep the old behaviour | Simple |
+| Keep my settings (only with settings to keep) | (screens skipped) | No changes |
 
 The "quoting" preset's move to `he-top` is the only place a preset differs
 from today's defaults. A preset never overrides a field the user already
@@ -425,7 +436,10 @@ New tests in `test/tests/`:
     unknown keys and invalid values.
   - Clicking through with the preselected answers writes no content key whose
     value differs from what is stored.
-  - "I've used Torah Library before" writes only `first_run_setup = done`.
+  - "Keep my settings" writes only `first_run_setup = done`, and is offered
+    only to someone with settings to keep (`firstRunHasSavedSettings_`);
+    "I've used Sefaria for Google Docs" presets both languages, Hebrew on
+    the right, and Simple.
   - Showing setup marks it done; it is never shown to an upgrader.
   - The preview's client-side vowel, trope and divine-name rules give the same
     text as `text-processing.gs` for the Deuteronomy 6:4 sample.

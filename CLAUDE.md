@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **641 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **646 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -247,6 +247,9 @@ and fix it before touching the feature you came to change.
   values the dialog can produce are stored, switching to Simple and back
   returns the user's own menu, setup is shown once (never to an upgrader), and
   the dialog's preview transforms its sample exactly as an insert would.
+  Screen 1 has "I've used Sefaria for Google Docs" (that add-on's look);
+  "Keep my settings" is offered only to someone with settings of their own,
+  never at install.
 - `title-link-and-fonts.test.js` — the source (Hebrew) title and the
   translation title each have their own link switch and font, linked or not;
   the linked style applies only with that title's "Hyperlink formatting

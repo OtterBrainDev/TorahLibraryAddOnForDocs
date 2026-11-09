@@ -227,10 +227,22 @@ function setupPreviewText_(answers) {
   }
 
   // Screen 1 only changes what screens 2 and 3 start on (design §5).
+  // "sefaria" (coming from Sefaria for Google Docs) starts from that add-on's
+  // look: both languages, Hebrew on the right, and a short menu; screen 2
+  // explains that God's name is now replaced as sources go in.
   function applyPurpose(value) {
     if (value === 'quoting' && !touched.arrangement) setRadio('arrangement', 'he-top');
-    if (value !== 'quoting' && !touched.arrangement) setRadio('arrangement', initial.arrangement || 'he-right');
+    if (value === 'sefaria' && !touched.arrangement) setRadio('arrangement', 'he-right');
+    if (value !== 'quoting' && value !== 'sefaria' && !touched.arrangement) setRadio('arrangement', initial.arrangement || 'he-right');
+    if (value === 'sefaria' && !touched.show) setRadio('show', 'both');
     if (!touched.uiMode) setRadio('uiMode', value === 'academic' ? 'full' : 'simple');
+    $one('#setup-divine-sefaria-note').hidden = value !== 'sefaria';
+  }
+
+  // "Keep my settings" is only for someone who has settings to keep
+  // (server/first-run.gs firstRunHasSavedSettings_); never at install.
+  function applyKeepOffer() {
+    $one('#setup-purpose-keep').hidden = config.hasSavedSettings !== true;
   }
 
   function renderPreview() {
@@ -331,7 +343,7 @@ function setupPreviewText_(answers) {
       render(false);
     });
   });
-  ['arrangement', 'uiMode'].forEach(function (name) {
+  ['show', 'arrangement', 'uiMode'].forEach(function (name) {
     $all('input[name="' + name + '"]').forEach(function (input) {
       input.addEventListener('change', function () { touched[name] = true; });
     });
@@ -344,6 +356,7 @@ function setupPreviewText_(answers) {
   $one('#setup-skip').addEventListener('click', function () { google.script.host.close(); });
 
   applyInitialAnswers();
+  applyKeepOffer();
   render(true);
 })();
 </script>

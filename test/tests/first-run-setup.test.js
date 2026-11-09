@@ -116,7 +116,7 @@ test('the same holds for a user whose settings are far from the defaults', () =>
   assert.deepEqual(plain(context.planFirstRunPreferences_(answers, prefs).changes), {});
 });
 
-test('"I\'ve used Torah Library before" sends nothing, so nothing changes', () => {
+test('"Keep my settings" sends nothing, so nothing changes', () => {
   const { context } = load();
   const plan = plain(context.planFirstRunPreferences_({}, seededDefaults()));
   assert.deepEqual(plan, { changes: {}, uiMode: null });
@@ -360,4 +360,72 @@ test('the preview sample really shows the choices: the Name, vowels and "God" al
   assert.match(named.en, /our G-d,/);
   assert.notEqual(preview.setupPreviewText_({ vowels: 'never', teamim: true, divine: {} }).he, base.he);
   assert.notEqual(preview.setupPreviewText_({ vowels: 'always', teamim: false, divine: {} }).he, base.he);
+});
+
+
+// ── Screen 1: "I've used Sefaria for Google Docs", and "Keep my settings" ──
+// "I've used Torah Library before — Keep my settings as they are" was on
+// screen 1 for everyone, though nobody installing has settings to keep (the
+// add-on people come from, Sefaria for Google Docs, stores none). It is now
+// "Keep my settings", shown only to someone with settings of their own, and
+// screen 1 has an answer for Sefaria for Google Docs users instead.
+
+const SETUP_HTML = read('first-run-setup.html');
+
+function settingsContext() {
+  const context = { console };
+  vm.createContext(context);
+  [MENU_LAYOUT, PREFERENCES, FIRST_RUN].forEach((src) => vm.runInContext(src, context));
+  return {
+    has: (stored) => context.firstRunHasSavedSettings_(stored, vm.runInContext('getDefaultPreferences()', context), vm.runInContext('SETTINGS', context)),
+  };
+}
+
+test('at install nobody is offered "Keep my settings": the seeded defaults are not settings of one\'s own', () => {
+  const { has } = settingsContext();
+  assert.equal(has(Object.assign(seededDefaults(), { first_run_setup: 'pending' })), false);
+  assert.equal(has({ first_run_setup: 'pending' }), false, 'nothing stored at all');
+  // What the sidebar records by itself is not a choice.
+  assert.equal(has(Object.assign(seededDefaults(), { first_run_setup: 'pending', search_mode: 'voices', last_search_sort_mode: 'chronological' })), false);
+});
+
+test('"Keep my settings" is offered after setup ran before, or to anyone with a setting of their own', () => {
+  const { has } = settingsContext();
+  assert.equal(has(Object.assign(seededDefaults(), { first_run_setup: 'done' })), true, 'Help → Run setup again');
+  // A future upgrade that shows setup again (first_run_setup back to "pending").
+  assert.equal(has(Object.assign(seededDefaults(), { first_run_setup: 'pending', nekudot_filter: 'tanakh' })), true);
+});
+
+test('the setup page is told whether to offer it, and setup still opens if that can\'t be worked out', () => {
+  const extra = {};
+  const { context, calls } = load({ first_run_setup: 'pending' }, {
+    getUiAppConfig_: (pageId, mode, extraFields) => { extra.fields = extraFields; return Object.assign({ pageId, mode }, extraFields); },
+  });
+  // This harness has no preferences.gs: the comparison fails, and only a
+  // finished setup would count.
+  assert.equal(context.maybeShowFirstRunSetup_(), true);
+  assert.ok(calls.includes('dialog:Welcome to Torah Library'));
+  assert.equal(extra.fields.hasSavedSettings, false);
+  context.openFirstRunSetup();
+  assert.equal(extra.fields.hasSavedSettings, true, 'marked done once shown');
+});
+
+test('screen 1: "I\'ve used Sefaria for Google Docs" for everyone, "Keep my settings" hidden unless offered', () => {
+  const purposes = [...SETUP_HTML.matchAll(/name="purpose" value="([^"]+)"/g)].map((m) => m[1]);
+  assert.deepEqual(purposes, ['quoting', 'sheets', 'academic', 'sefaria', 'returning']);
+  assert.match(SETUP_HTML, /value="sefaria">\s*<span class="setup-card-title">I've used Sefaria for Google Docs</);
+  assert.match(SETUP_HTML, /<label class="setup-card" id="setup-purpose-keep" hidden>\s*<input type="radio" name="purpose" value="returning">/);
+  assert.ok(!/used Torah Library before|Keep my settings as they are/.test(SETUP_HTML));
+  assert.match(SETUP_JS, /\$one\('#setup-purpose-keep'\)\.hidden = config\.hasSavedSettings !== true;/);
+});
+
+test('"I\'ve used Sefaria for Google Docs" presets that add-on\'s look and explains God\'s name', () => {
+  const fn = SETUP_JS.match(/function applyPurpose\(value\) \{[\s\S]*?\n  \}/)[0];
+  assert.match(fn, /value === 'sefaria' && !touched\.arrangement\) setRadio\('arrangement', 'he-right'\)/);
+  assert.match(fn, /value === 'sefaria' && !touched\.show\) setRadio\('show', 'both'\)/);
+  assert.match(fn, /setRadio\('uiMode', value === 'academic' \? 'full' : 'simple'\)/);
+  assert.match(fn, /#setup-divine-sefaria-note'\)\.hidden = value !== 'sefaria'/);
+  assert.match(SETUP_HTML, /id="setup-divine-sefaria-note" hidden>/);
+  // Only the answers reach the server: the purpose is never stored.
+  assert.doesNotMatch(SETUP_JS.match(/function collectAnswers\(\) \{[\s\S]*?\n  \}/)[0], /purpose/);
 });
