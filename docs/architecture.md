@@ -175,7 +175,7 @@ too and know nothing about their host:
 
 - `shared/composition-card/*` — linked title, then a Source section
   (vowels, cantillation, Hebrew punctuation, font, transliteration) and a
-  Translation section (punctuation, B&I, font), each a `<details>` that folds
+  Translation section (punctuation, Commentary, font), each a `<details>` that folds
   to a summary line; `openSections` in `data-cc-features` opens them
   (Preferences). `initCompositionCard` also drives the Line #s and Citation
   pills, which sit in the insertion options' row by id. Sidebar, Preferences

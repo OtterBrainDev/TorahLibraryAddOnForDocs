@@ -186,10 +186,12 @@ and fix it before touching the feature you came to change.
   Transform Divine Names.
 - `typography-defaults.test.js` — "Match the document" fonts, the title
   heading style, and reading the style at the insertion point.
-- `source-emphasis-mode.test.js` — the source's bold and italics: keep,
-  discard, or "Bold only" (what it removes — plain text and italics alone —
-  and what it keeps: bold italics, line markers, punctuation, paragraphs with
-  no bold, and the whole Hebrew — it applies to the translation only).
+- `source-emphasis-mode.test.js` — the translation's Commentary choice:
+  Default (`keep`), Combine (`discard`) or Drop (`only`, once "Bold only"; what
+  it removes — plain text and italics alone — and what it keeps: bold
+  italics, line markers, punctuation, paragraphs with no bold, and the whole
+  Hebrew — it applies to the translation only); each card label is pinned to
+  its value, since "Drop" used to mean `discard`.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped, every block
   formatted like the first; HTML-entity decoding (`&thinsp;` and friends). With
@@ -275,7 +277,7 @@ and fix it before touching the feature you came to change.
 - `transform-scope.test.js` — Transform Divine Names asks first, naming its
   scope (the open tab's body, not the selection; not headers, footers,
   footnotes or other tabs) and the rules, and says how many it replaced.
-- `preview-emphasis.test.js` — the sidebar preview shows Drop and Bold only as
+- `preview-emphasis.test.js` — the sidebar preview shows Combine and Drop as
   the insert writes them: the real server pipeline and the preview's mirrors
   give the same words and bold.
 - `lexicon-stale-response.test.js` — a Lexicon or Voices answer to an earlier

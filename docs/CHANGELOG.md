@@ -13,6 +13,16 @@ heading until the next release consolidates it.
 
 No new preference and no migration: no stored value changes meaning.
 
+- **"Bold & italics" is now "Commentary": Default / Combine / Drop.** The
+  Translation section's row says what it is for: the commentary Sefaria sets
+  in plain text around its bold direct translation (the Steinsaltz Talmud).
+  **Default** (was *Keep*) inserts the translation as Sefaria marks it.
+  **Combine** (was *Drop*) drops that bold and italics, so translation and
+  commentary read as one text. **Drop** (was *Bold only*) leaves the
+  commentary out. **Note: "Drop" now means what "Bold only" meant.** Stored
+  choices are unchanged and keep doing what they did (`keep`, `discard`,
+  `only`); only the labels moved. "Corpuses" is now "corpora" throughout.
+
 - **Settings file (Preferences → Advanced, a new tab).** *Export settings
   file* saves the settings shown in Preferences (unsaved changes included) to
   a `.json` file, optionally named ("Grade 7 Chumash"); *Import* reads one,
@@ -57,8 +67,8 @@ No new preference and no migration: no stored value changes meaning.
   or empty Quick Actions shows the submenu again.
 - **Surprise Me is one form.** The sidebar's Experimental card and the
   Surprise Me dialog (Quick Actions 🎲, the menu) had drifted apart: a topic
-  hint, 3 sources and five fixed corpuses in one; a search term, 5 sources and
-  a choice of fourteen corpuses in the other. Both now show the same form,
+  hint, 3 sources and five fixed corpora in one; a search term, 5 sources and
+  a choice of fourteen corpora in the other. Both now show the same form,
   and report what the server actually inserted.
 
 - The English divine-name replacement now also catches "GOD" (keyed on the capital G; lowercase "god"/"gods" are untouched), on insert and in Transform Divine Names. An all-caps match gets an all-caps substitute (G-D). No new preference.

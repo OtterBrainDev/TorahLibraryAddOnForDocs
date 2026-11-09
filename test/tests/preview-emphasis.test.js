@@ -1,12 +1,13 @@
 // Pins that the sidebar preview shows the translation as the insert will write
-// it under Bold & italics: Keep, Drop and Bold only (BUG-001).
+// it under each Commentary choice: Default (`keep`), Combine (`discard`) and
+// Drop (`only`) (BUG-001; then called Keep, Drop and Bold only).
 //
-// Observed: with "Bold only", Berakhot 2a:1 (William Davidson) previewed the
+// Observed: with `only` ("Bold only"), Berakhot 2a:1 (William Davidson) previewed the
 // full English, explanatory commentary included, and the insert then kept only
 // the bold. The insert filters after the text is in the document
 // (insertRichTextFromHTML, then applyTypographyToParagraph in
-// server/insertion.gs); the preview never applied the mode at all. For Drop and
-// Bold only the preview now reads and filters the markup with mirrors of those
+// server/insertion.gs); the preview never applied the mode at all. For
+// `discard` and `only` the preview now reads and filters the markup with mirrors of those
 // server functions (sidebar/js/preview-core.html). This runs the real server
 // pipeline and the preview on the same markup and requires the same words and
 // the same bold — including bold italics, italics alone, footnotes, line
@@ -212,7 +213,7 @@ test('the preview decodes entities as the insert does', () => {
 
 // ---- renderPreviewHTML -------------------------------------------------
 
-test('Bold only: the preview\'s translation is the bold alone, and the Hebrew is untouched', () => {
+test('Drop (only): the preview\'s translation is the bold alone, and the Hebrew is untouched', () => {
   const ctx = loadPreview({ mode: 'only' });
   const html = ctx.renderPreviewHTML({ ref: 'Berakhot 2a:1', heRef: 'ברכות ב א:א', text: BERAKHOT, he: 'מֵאֵימָתַי' }, 'Berakhot 2a:1');
   assert.match(html, /\[sanitized:מֵאֵימָתַי\]/, 'Hebrew rendered as before');
@@ -221,7 +222,7 @@ test('Bold only: the preview\'s translation is the bold alone, and the Hebrew is
   assert.doesNotMatch(html, /Until when/);
 });
 
-test('Drop: every word, no bold or italics; Keep: the sanitized markup as before', () => {
+test('Combine (discard): every word, no bold or italics; Default (keep): the sanitized markup as before', () => {
   const drop = loadPreview({ mode: 'discard' }).renderPreviewHTML({ ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
   assert.match(drop, /MISHNA: From when may one recite Shema in the evening\?/);
   assert.doesNotMatch(drop.split('[sanitized:x]').join(''), /<b>|<i>/);

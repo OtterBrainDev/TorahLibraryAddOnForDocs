@@ -150,7 +150,7 @@ hidden, and with the Hebrew alone the Translation section.
 | **Cantillation** | Source | **Off** / **Tanakh** / **Torah** (the Five Books only). |
 | **Punctuation** | both | Keep the punctuation. Off removes sof pasuq, paseq, {פ}/{ס}, commas and the like; a maqaf becomes a space. |
 | **Transliteration** | Source | Add a transliteration; **Style** under it picks the scheme while it is on. Read from the fully vowelled text, so it is complete with Vowels off; with the Hebrew's Punctuation off it drops the same punctuation. |
-| **Bold & italics** | Translation | **Keep** / **Drop** / **Only** the translation's own bold and italics. The Hebrew is always inserted whole, with its own. |
+| **Commentary** | Translation | Sefaria sets some translations' direct translation in bold and their commentary in plain text. **Default** keeps that bold and italics; **Combine** drops it, so translation and commentary read as one; **Drop** leaves the commentary out (only the bold is inserted). The Hebrew is always inserted whole, with its own. |
 
 Vowels, Cantillation, Punctuation and Transliteration change what is fetched:
 the sidebar fetches the passage again, the Preview says *Updating preview…*
@@ -180,11 +180,12 @@ Insertion** (each opens its font's settings in place), and default to
 **Match the document** — the font and size of the text where you insert.
 Titles can be set to Heading 1–6 (Layout → **Title style**) so they appear in
 the outline and table of contents. Sefaria's own bold and italics are kept;
-change how they look under **Bold & italics → Advanced** in Insertion Defaults.
+change how they look under **Commentary → Advanced** in Insertion Defaults.
 
-**Bold & italics: Only** inserts just the words the translation puts in bold
-or italics. For example, Sefaria's English Talmud (Steinsaltz) bolds the
-Talmud's own words and leaves Steinsaltz's explanation plain. With **Only**, the
+**Commentary: Drop** inserts just the words the translation puts in bold
+(bold italics included; italics alone are commentary). For example, Sefaria's
+English Talmud (Steinsaltz) bolds the Talmud's own words and leaves
+Steinsaltz's explanation plain. With **Drop**, the
 Berakhot 2a passage *"**From when does one recite Shema in the evening? From
 the time when the priests enter** to immerse and purify themselves in order
 **to partake of their teruma.**"* is inserted as *"From when does one recite

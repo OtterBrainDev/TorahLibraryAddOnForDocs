@@ -261,18 +261,20 @@ function languagePriorityKey(label) {
   return 2;
 }
 
-// ---- Bold & italics in the preview ------------------------------------------
+// ---- Commentary (bold and italics) in the preview ----------------------------
 //
-// Keep / Drop / Bold only are applied by the insert, to the translation only,
-// once it is in the document (applyTypographyToParagraph, server/insertion.gs).
-// The preview showed Sefaria's markup as fetched, so with "Bold only" it showed
-// commentary that the insert then removed (BUG-001). For Drop and Bold only the
-// preview's translation is now read the way the insert reads it (the segments
-// joined as formatDataForPesukim joins them, then insertRichTextFromHTML's
-// rules) and Bold only applies the insert's own plan. Each mirror below names
+// The Commentary choice — Default (`keep`), Combine (`discard`), Drop
+// (`only`; "Bold only" until 2026-11) — is applied by the insert, to the
+// translation only, once it is in the document (applyTypographyToParagraph,
+// server/insertion.gs). The preview showed Sefaria's markup as fetched, so
+// with `only` it showed commentary that the insert then removed (BUG-001). For
+// `discard` and `only` the preview's translation is now read the way the
+// insert reads it (the segments joined as formatDataForPesukim joins them,
+// then insertRichTextFromHTML's rules) and `only` applies the insert's own
+// plan. Each mirror below names
 // the server function it follows; preview-emphasis.test.js runs both on the
 // same input. Like the rest of the preview, it shows no line numbers or
-// chapter headings. Keep still renders the sanitized markup as before.
+// chapter headings. Default (`keep`) still renders the sanitized markup as before.
 
 var PREVIEW_HTML_ENTITIES = {
   amp: '&', lt: '<', gt: '>', quot: '"', apos: "'",
@@ -457,10 +459,11 @@ function planPreviewEmphasisOnlyEdits(fullText, runs, keepLines) {
 }
 
 /**
- * The preview's translation for Drop and Bold only, as escaped HTML with only
- * our own <b>, <i> and <br>; null for Keep (the caller renders the sanitized
- * markup). Bold only keeps the bold runs (bold italics included) and drops the
- * rest by the insert's plan; a translation with no bold is kept whole.
+ * The preview's translation for Combine (`discard`) and Drop (`only`), as
+ * escaped HTML with only our own <b>, <i> and <br>; null for Default (`keep`:
+ * the caller renders the sanitized markup). `only` keeps the bold runs (bold
+ * italics included) and drops the rest by the insert's plan; a translation
+ * with no bold is kept whole.
  */
 function previewTranslationEmphasisHtml(text, mode, lineMarkers, extendedGemara) {
   if (mode !== 'discard' && mode !== 'only') return null;
@@ -509,7 +512,7 @@ function renderPreviewHTML(dataIn, inputTitle) {
   // point of the preview — but it is stripped of anything that would load a
   // subresource or execute first. See sanitizeSourceHtml in shared/ui/dom.
   var heHtml = sanitizeSourceHtml(dataIn.he) || '<p class="preview-state-message">No source text available.</p>';
-  // Drop and Bold only are previewed as the insert will write them (above).
+  // Combine and Drop are previewed as the insert will write them (above).
   var emphasisHtml = previewTranslationEmphasisHtml(
     dataIn.text,
     ccNormalizeEmphasisMode($('.source-emphasis-mode').val()),

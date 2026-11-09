@@ -3,7 +3,7 @@
 // Layout's Citation style) opens that font's full editor in place — font,
 // size, style, colours, preview, and for a title its linked style — instead of
 // the small font-and-size panel the sidebar and Link Texts keep. The settings
-// the Fonts tab held twice (transliteration scheme, Bold & italics) have only
+// the Fonts tab held twice (transliteration scheme, Commentary) have only
 // the card's control. See shared/composition-card (fontEditor).
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -72,7 +72,7 @@ test('Preferences opens the editors in place; the sidebar and Link Texts keep th
 });
 
 test('settings the Fonts tab duplicated have only the card\'s control', () => {
-  // Transliteration scheme: the card's Style. Bold & italics: the card's.
+  // Transliteration scheme: the card's Style. Commentary: the card's.
   assert.match(PREFS, /<div class="composition-state-inputs" hidden>[\s\S]*?id="transliteration_scheme"[\s\S]*?id="source_emphasis_mode"[\s\S]*?<\/div>/);
   assert.doesNotMatch(PREFS_JS, /'select#transliteration_scheme'/);
   assert.doesNotMatch(PREFS, /data-pref-group="source_emphasis_mode"/);

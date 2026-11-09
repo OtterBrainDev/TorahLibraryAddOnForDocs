@@ -62,7 +62,8 @@ const EMPHASIS_ONLY_WORD_CHAR_ = /[\p{L}\p{N}]/u;
 const EMPHASIS_ONLY_SPACE_ = /[ \t\u00a0]/;
 
 /**
- * Plan the edits for "Bold only": delete the text the source did not
+ * Plan the edits for Commentary → Drop (`only`; "Bold only" until 2026-11):
+ * delete the text the source did not
  * emphasize, keep what it did. The caller passes the bold runs alone
  * (applyTypographyToParagraph): Sefaria's bold is its direct translation, and
  * text in italics alone is the commentary's. Pure, so the rules are
@@ -244,7 +245,7 @@ function applyEmphasisMapping_(text, start, end, mapping) {
  *        preference must stay authoritative there.
  * @param {string} [opts.sourceEmphasisMode="keep"]  The user's choice for an
  *        opted-in paragraph (normalizeSourceEmphasisMode_): "keep" as above;
- *        "discard" applies the baseline only; "only" ("Bold only") first
+ *        "discard" (Combine) applies the baseline only; "only" (Drop) first
  *        removes the text the source did not set in bold
  *        (planEmphasisOnlyEdits_; bold italics is bold), then keeps the
  *        emphasis on what is left.
@@ -365,11 +366,11 @@ function documentFontOf_(typography) {
  * @param {Object} [overrides] {size, style, preserveSourceEmphasis}
  */
 /**
- * The source-emphasis mode for one role's paragraph. The B&I setting is the
- * translation's: "Bold only" picks its bold words (the Talmud's own
- * words in Steinsaltz) and "Discard" drops its bold and italics. The Hebrew's
- * bold is a different thing (the Mishnah's opening word, the Gemara's
- * "גמ׳"), so every other role always keeps its own: "Bold only" applied
+ * The source-emphasis mode for one role's paragraph. The Commentary setting
+ * is the translation's: Drop (`only`) picks its bold words (the Talmud's own
+ * words in Steinsaltz) and Combine (`discard`) drops its bold and italics.
+ * The Hebrew's bold is a different thing (the Mishnah's opening word, the
+ * Gemara's "גמ׳"), so every other role always keeps its own: `only` applied
  * there deleted nearly all of the Hebrew.
  */
 function sourceEmphasisModeForRole_(typography, roleName) {
@@ -815,7 +816,7 @@ function insertReference(data, opts) {
     shouldIncludeHebrewAttribution ? getHebrewAttributionLines_(data) : []
   );
   const typography = getTypographySettings(typographyPropertiesFor_(options));
-  // The sidebar's B&I button can override the stored choice for this insert.
+  // The sidebar's Commentary choice can override the stored one for this insert.
   if (options.sourceEmphasisMode) {
     typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
   }

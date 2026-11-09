@@ -1,8 +1,8 @@
 // Pins Surprise Me to one form: the sidebar's Experimental section and the
 // Surprise Me dialog (Quick Actions 🎲, the menu) both include
 // shared/surprise-me. They had drifted: the sidebar asked for a "topic hint"
-// and 1–10 sources (3 by default) from five fixed corpuses, the dialog for a
-// search term and 5 sources from the corpuses you tick; and the sidebar read
+// and 1–10 sources (3 by default) from five fixed corpora, the dialog for a
+// search term and 5 sources from the corpora you tick; and the sidebar read
 // `result.success` and `result.seedWord`, which the server never sends, so it
 // reported the count asked for rather than what was inserted.
 
@@ -38,14 +38,14 @@ test('both start the same controller; only the dialog has Cancel', () => {
   assert.match(SHARED_JS, /if \(typeof opts\.onCancel === 'function'\) \{\s*cancel\.hidden = false;/);
 });
 
-test('the form sends the term, the count and the ticked corpuses, and shows what the server says it inserted', () => {
+test('the form sends the term, the count and the ticked corpora, and shows what the server says it inserted', () => {
   assert.match(SHARED_JS, /term: \(term\.value \|\| ''\)\.trim\(\),\s*count: clampCount\(\),\s*corpuses: selectedCorpuses\(\)/);
   assert.match(SHARED_JS, /\.insertSurpriseMe\(payload\)/);
   assert.match(SHARED_JS, /setStatus\(\(result && result\.message\) \|\| 'Done\.', 'success'\)/);
   assert.doesNotMatch(SHARED_JS, /result\.success|seedWord/);
   // The server's answer has that message.
   assert.match(SERVER, /return \{\s*term: term,\s*inserted: inserted,\s*message:/);
-  // The fourteen corpuses the dialog has always offered, once each.
+  // The fourteen corpora the dialog has always offered, once each.
   const offered = [...SHARED_MARKUP.matchAll(/<input type="checkbox" value="([^"]+)"/g)].map((m) => m[1]);
   assert.equal(offered.length, 14);
   assert.equal(new Set(offered).size, offered.length);

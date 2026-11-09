@@ -296,7 +296,8 @@ test('discard applies to the translation only: the Hebrew keeps its own bold', (
   assert.equal(en.bolded(), '');
 });
 
-// "Bold only": Sefaria sets its direct translation in bold and the commentary
+// Commentary → Drop (`only`; "Bold only" until 2026-11): Sefaria sets its
+// direct translation in bold and the commentary
 // around it in plain text, italicizing a transliterated word anywhere. So the
 // bold alone is kept: bold italics is bold, italics alone is commentary.
 const onlyMode = (html) => {
@@ -305,30 +306,37 @@ const onlyMode = (html) => {
   return p;
 };
 
-test('bold only: words in italics alone are left out like plain text', () => {
+test('Drop (only): words in italics alone are left out like plain text', () => {
   const p = onlyMode('<b>From when</b> does one recite <i>Shema</i>, <b>in the evening?</b>');
   assert.equal(p.text(), 'From when in the evening?');
   assert.equal(p.italicized(), '');
 });
 
-test('bold only: bold italics is kept, still in italics', () => {
+test('Drop (only): bold italics is kept, still in italics', () => {
   const p = onlyMode('<b>one may recite <i>Shema</i> in the evening</b> as the priests eat <i>teruma</i>');
   assert.equal(p.text(), 'one may recite Shema in the evening');
   assert.equal(p.bolded(), 'one may recite Shema in the evening');
   assert.equal(p.italicized(), 'Shema');
 });
 
-test('bold only: a line with italics but no bold goes; a passage with no bold stays whole', () => {
+test('Drop (only): a line with italics but no bold goes; a passage with no bold stays whole', () => {
   assert.equal(onlyMode('(1) <b>MISHNA:</b> text\n(2) An <i>aside</i>.\n').text(), '(1) MISHNA:\n');
   const p = onlyMode('No bold, but <i>Shema</i> in italics.');
   assert.equal(p.text(), 'No bold, but Shema in italics.');
   assert.equal(p.italicized(), 'Shema');
 });
 
-test('the composition card calls the third choice "Bold only"', () => {
+// The card's row is "Commentary": Default / Combine / Drop. "Drop" once named
+// `discard`; it names `only` now, so each label is pinned to its value.
+test('the composition card\'s Commentary row: Default keeps, Combine discards, Drop keeps only the bold', () => {
   const markup = fs.readFileSync('apps-script/shared/composition-card/markup.html', 'utf8');
-  assert.match(markup, /data-value="only"[^>]*>Bold only</);
-  assert.equal(loadCardScript().CC_EMPHASIS_SUMMARY.only, 'Bold only');
+  assert.match(markup, /id="cc-emphasis-label">Commentary</);
+  assert.match(markup, /data-value="keep"[^>]*>Default</);
+  assert.match(markup, /data-value="discard"[^>]*>Combine</);
+  assert.match(markup, /data-value="only"[^>]*>Drop</);
+  assert.deepEqual({ ...loadCardScript().CC_EMPHASIS_SUMMARY }, {
+    keep: 'Commentary as marked', discard: 'Commentary combined', only: 'Commentary dropped',
+  });
   // Preferences sets it with the card's own control, and has no second copy.
   const prefs = fs.readFileSync('apps-script/preferences.html', 'utf8');
   assert.match(prefs, /<input type="hidden" id="source_emphasis_mode" name="source_emphasis_mode"/);
