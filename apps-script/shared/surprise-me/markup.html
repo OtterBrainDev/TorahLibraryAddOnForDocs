@@ -2,13 +2,13 @@
   The Surprise Me form: one partial for the sidebar's Experimental section and
   the Surprise Me dialog (Quick Actions 🎲 and the menu), so the two can never
   drift apart again (they had: the sidebar asked for a "topic hint" and up to
-  3 sources from five fixed corpuses, the dialog for a search term, 5 sources
-  and your choice of corpuses). Each host gives it its own title.
+  3 sources from five fixed corpora, the dialog for a search term, 5 sources
+  and your choice of corpora). Each host gives it its own title.
   Behaviour: shared/surprise-me/js.html (initSurpriseMeForm);
   styles: shared/surprise-me/css.html. Needs css/tokens.
 -->
 <div class="sm-form" id="surprise-form">
-  <p class="sm-intro">Searches a word or theme across the corpuses you choose, then inserts a random set of the sources it finds. Leave the word blank and a Hebrew word from Tanakh is picked for you.</p>
+  <p class="sm-intro">Searches a word or theme across the corpora you choose, then inserts a random set of the sources it finds. Leave the word blank and a Hebrew word from Tanakh is picked for you.</p>
 
   <div class="sm-field">
     <label class="sm-label" for="surprise-term">Word or theme <span class="sm-optional">(optional)</span></label>
@@ -27,7 +27,7 @@
 
   <div class="sm-field" role="group" aria-labelledby="surprise-corpus-label">
     <div class="sm-label-row">
-      <span class="sm-label" id="surprise-corpus-label">Corpuses</span>
+      <span class="sm-label" id="surprise-corpus-label">Corpora</span>
       <button type="button" class="sm-link" id="toggle-all-corpuses">Clear all</button>
     </div>
     <div class="corpus-grid">
@@ -52,7 +52,7 @@
     <summary>How it works</summary>
     <ol>
       <li>Uses your word, or picks a Hebrew word from Tanakh.</li>
-      <li>Searches Sefaria in the corpuses you chose.</li>
+      <li>Searches Sefaria in the corpora you chose.</li>
       <li>Shuffles the sources it can insert.</li>
       <li>Inserts as many as you asked for at the cursor, with your insertion settings.</li>
     </ol>
