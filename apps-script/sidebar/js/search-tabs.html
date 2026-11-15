@@ -22,9 +22,9 @@
 //   that text come back as they were, with what was selected. A tab with no
 //   results for the text offers "Search Voices for “…”" instead.
 // - Typing searches the shown tab. Enter, the search button or that offer
-//   also search, in the background, each other tab that suits the text and
-//   has no results for it yet (prefetchOtherSearchTabs): switching to it then
-//   shows them at once.
+//   also search, in the background, each other tab that suits the text, is
+//   switched on and has no results for it yet (prefetchOtherSearchTabs):
+//   switching to it then shows them at once.
 // - A tab's badge counts its results for the text in the box.
 // - A pinned or inserted result (the Session Library) reopens in its own tab,
 //   selected once that tab's search for it has answered (openSessionEntry).
@@ -368,12 +368,14 @@ function runUnifiedQuery(options) {
 var SEARCH_PREFETCH_MIN_LENGTH = 2;
 
 // The other tabs searched in the background for an explicit search, each
-// only if the text suits it ("Genesis 1:1" is no dictionary word) and it has
-// no results for that text already.
+// only if the text suits it ("Genesis 1:1" is no dictionary word), it has no
+// results for that text already, and it is switched on (Preferences →
+// Sidebar): a hidden tab's search would be a request nobody can see.
 function prefetchOtherSearchTabs(query) {
   if (String(query || '').length < SEARCH_PREFETCH_MIN_LENGTH) return;
   SEARCH_TAB_MODES.forEach(function (mode) {
     if (mode === appMode) return;
+    if (!sidebarTabIsOn(mode)) return;
     var run = searchTabState[mode].run;
     if (run && run.query === query && !run.failed) return;
     if (!SEARCH_TABS[mode].suits(query)) return;

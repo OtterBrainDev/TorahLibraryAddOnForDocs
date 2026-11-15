@@ -131,7 +131,9 @@ test('the two keys: defaults "[]", writable from Preferences, in the settings fi
 test('schema 28 gives an upgrader both keys as "[]" (every topic, the built-in order) and keeps a stored value', () => {
   const upgrader = loadServer({ prefs_schema_version: '27', nekudot: 'false' });
   upgrader.ctx.runUserPreferenceMigrationsIfNeeded_();
-  assert.equal(upgrader.store.prefs_schema_version, '28');
+  // The schema the code targets (docs/VERSION.json), never a literal: one broke
+  // on every bump (docs/regression-log.md, the migrations-test row).
+  assert.equal(upgrader.store.prefs_schema_version, JSON.parse(read('docs/VERSION.json')).prefsSchemaVersion);
   KEYS.forEach((key) => assert.equal(upgrader.store[key], '[]', key));
   assert.equal(upgrader.store.nekudot, 'false');
 

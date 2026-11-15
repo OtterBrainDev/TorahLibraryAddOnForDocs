@@ -61,7 +61,7 @@ function loadBootstrap() {
     clonePlainObject: (v) => JSON.parse(JSON.stringify(v || {})),
     setSidebarMode() {}, applyEffectivePreferencesToUI() {},
     bindSidebarCompositionCard: () => bound.push(true),
-    updateSidebarCompositionCard() {}, loadSessionLibrary() {}, setFooterButtonStates() {},
+    updateSidebarCompositionCard() {}, loadSessionLibrary() {}, setFooterButtonStates() {}, loadSettingsProfiles() {},
     adoptSidebarSession: () => false,
   };
   vm.createContext(context);
@@ -175,7 +175,7 @@ test('a layout picked before the bootstrap answers survives it', () => {
     setTimeout() {},
     showSidebarNotice() {}, showSidebarToast() {},
     setSidebarMode() {}, bindSidebarCompositionCard() {}, updateSidebarCompositionCard() {},
-    loadSessionLibrary() {}, setFooterButtonStates() {},
+    loadSessionLibrary() {}, setFooterButtonStates() {}, loadSettingsProfiles() {},
   };
   vm.createContext(context);
   vm.runInContext(scriptBody(read('apps-script/shared/ui/core-shared.html')), context);

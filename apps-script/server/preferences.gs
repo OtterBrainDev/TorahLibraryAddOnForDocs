@@ -113,6 +113,10 @@ const SETTINGS = [
   "citation_font_color",
   "citation_font_background",
   "search_mode",
+  "show_voices_tab",
+  "show_lexicon_tab",
+  "sidebar_quick_actions_hidden",
+  "sidebar_options_hidden",
   "menu_layout",
   "insert_from_selection_replace"
 ];
@@ -309,6 +313,19 @@ function getDefaultPreferences() {
     citation_font_color: "",
     citation_font_background: "",
     search_mode: "texts",
+    // Preferences → Sidebar (schema v29). The sidebar's Voices and Lexicon
+    // tabs, beside Texts under the search box: on, since every user has had
+    // them (Simple mode hid them until v29). Off hides the tab with CSS only;
+    // a menu item can still open that search, and its tab shows while it is
+    // open. Texts has no switch.
+    show_voices_tab: true,
+    show_lexicon_tab: true,
+    // The sidebar's Quick Actions buttons and Insertion Options controls the
+    // user has hidden, as JSON arrays of ids (SIDEBAR_QUICK_ACTIONS_,
+    // SIDEBAR_OPTION_CONTROLS_). "[]": every one shows, as it always has. A
+    // hidden Insertion Options control uses the saved default.
+    sidebar_quick_actions_hidden: "[]",
+    sidebar_options_hidden: "[]",
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
     // server/menu-layout.gs for the shape. Replaced `insert_from_selection_at_top`
     // in schema v10; the migration carries a pinned item over.
@@ -330,8 +347,94 @@ function getDefaultPreferences() {
     first_run_setup: "pending",
     // The menu_layout a user had before switching to Simple, restored when they
     // switch back ("" = they had none, i.e. the code default).
-    menu_layout_before_simple: ""
+    menu_layout_before_simple: "",
+    // Settings profiles (server/settings-profiles.gs): the index of the user's
+    // named profiles and which one is in use, as JSON. "" = none made yet: the
+    // settings in use are the only set. Not in SETTINGS: written only by the
+    // profile functions, never by setPreferences or a settings file.
+    settings_profiles: ""
   };
+}
+
+// ── Sidebar controls (Preferences → Sidebar) ──────────────────────────────
+// What the sidebar shows, apart from what Simple mode hides:
+//   - its result tabs: "texts", always, then "voices" and "lexicon" unless
+//     switched off (show_voices_tab, show_lexicon_tab). A missing value counts
+//     as on, since every user has had both tabs (migrateToV29_);
+//   - the Quick Actions (🏃) buttons and the Insertion Options controls the
+//     user hid (sidebar_quick_actions_hidden, sidebar_options_hidden: JSON
+//     arrays of the ids below; unknown ids are dropped).
+// The sidebar prints these into its root's data-sidebar-tabs,
+// data-quick-actions-hidden and data-options-hidden attributes
+// (openSharedSidebar_), and its CSS hides by them, never removing anything
+// (css/components/sidebar-controls). sidebar/js/mode-controller keeps a copy
+// of these rules (sidebarControlsFromPreferences) for a save made while it is
+// open, and Preferences' Sidebar tab lists the same ids; tests keep the three
+// in step.
+var SIDEBAR_TAB_SWITCHES_ = { voices: 'show_voices_tab', lexicon: 'show_lexicon_tab' };
+var SIDEBAR_QUICK_ACTIONS_ = ['insert_from_selection', 'transform_divine_names', 'link_texts'];
+var SIDEBAR_OPTION_CONTROLS_ = [
+  'display', 'arrangement', 'citation', 'line_by_line', 'line_numbers',
+  'source_link', 'vowels', 'cantillation', 'hebrew_punctuation', 'transliteration',
+  'translation_link', 'translation_punctuation', 'commentary',
+  'title_fonts', 'text_fonts'
+];
+
+function sidebarTabsFromPreferences_(prefs) {
+  var p = prefs || {};
+  var tabs = ['texts'];
+  Object.keys(SIDEBAR_TAB_SWITCHES_).forEach(function (tab) {
+    if (String(p[SIDEBAR_TAB_SWITCHES_[tab]]) !== 'false') tabs.push(tab);
+  });
+  return tabs;
+}
+
+/** The known ids in a stored JSON list, in catalog order; junk hides nothing. */
+function sidebarHiddenIds_(raw, known) {
+  var list = [];
+  try { list = JSON.parse(String(raw == null || raw === '' ? '[]' : raw)); } catch (error) { list = []; }
+  if (!Array.isArray(list)) list = [];
+  return known.filter(function (id) { return list.indexOf(id) >= 0; });
+}
+
+function sidebarControlsFromPreferences_(prefs) {
+  var p = prefs || {};
+  return {
+    tabs: sidebarTabsFromPreferences_(p),
+    quickActionsHidden: sidebarHiddenIds_(p.sidebar_quick_actions_hidden, SIDEBAR_QUICK_ACTIONS_),
+    optionsHidden: sidebarHiddenIds_(p.sidebar_options_hidden, SIDEBAR_OPTION_CONTROLS_)
+  };
+}
+
+/**
+ * The mode the sidebar opens in. A mode asked for by name (the Voices or
+ * Lexicon menu item) is honoured even with its tab switched off: the menu is
+ * the user's own (Menu Bar), and the tab shows while its search is open.
+ * Otherwise the last mode used comes back only while its tab is on, so
+ * switching a tab off never reopens the sidebar on it.
+ *
+ * @param {?string} requested  the mode a menu item named, or null
+ * @param {string} last        the stored search_mode
+ * @param {string[]} tabs      sidebarTabsFromPreferences_()
+ */
+function resolveSidebarOpenMode_(requested, last, tabs) {
+  if (requested) return requested;
+  var switchable = Object.prototype.hasOwnProperty.call(SIDEBAR_TAB_SWITCHES_, last);
+  return switchable && (tabs || []).indexOf(last) < 0 ? 'texts' : last;
+}
+
+var SIDEBAR_CONTROL_KEYS_ = ['show_voices_tab', 'show_lexicon_tab', 'sidebar_quick_actions_hidden', 'sidebar_options_hidden'];
+
+/** The sidebar's controls from storage, read once; everything shows if it can't be read. */
+function getSidebarControls_() {
+  try {
+    var stored = snapshotProperties_();
+    var prefs = {};
+    SIDEBAR_CONTROL_KEYS_.forEach(function (key) { prefs[key] = stored.getProperty(key); });
+    return sidebarControlsFromPreferences_(prefs);
+  } catch (error) {
+    return sidebarControlsFromPreferences_({});
+  }
 }
 
 /**

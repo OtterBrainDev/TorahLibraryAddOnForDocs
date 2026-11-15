@@ -1,0 +1,66 @@
+<style>
+/*
+ * components/sidebar-controls.css — Preferences → Sidebar, in the sidebar.
+ *
+ * Three attributes on the sidebar root say what the person switched off, in
+ * either interface: data-sidebar-tabs (the result tabs that are on),
+ * data-quick-actions-hidden and data-options-hidden (ids the person hid).
+ * The server prints all three (openSharedSidebar_), so nothing switched off is
+ * ever painted, and mode-controller keeps them in step with Preferences
+ * (syncSidebarControls). Everything here hides with CSS only: nothing leaves
+ * the DOM, so selector contracts, RPC wiring and event bindings are the same
+ * whatever is hidden. The ids are listed in server/preferences.gs
+ * (SIDEBAR_QUICK_ACTIONS_, SIDEBAR_OPTION_CONTROLS_); tests keep the lists,
+ * these rules and Preferences' Sidebar tab in step.
+ */
+
+/* Result tabs. A tab switched off is hidden except while it is the open one:
+   a menu item can still open its search, and the tab then shows where you are
+   and leads back to Texts. With Texts alone left the bar goes too, unless the
+   🧪 tab is in it (.has-experimental-tab, set by syncExperimentalAvailability;
+   Simple mode hides 🧪 itself, css/components/simple-mode). */
+.unified-sidebar:not([data-sidebar-tabs~="voices"]):not([data-mode="voices"]) .mode-switch-button[data-sidebar-mode="voices"],
+.unified-sidebar:not([data-sidebar-tabs~="lexicon"]):not([data-mode="lexicon"]) .mode-switch-button[data-sidebar-mode="lexicon"],
+.unified-sidebar[data-sidebar-tabs="texts"][data-mode="texts"]:not(.has-experimental-tab) .mode-switch-section {
+  display: none !important;
+}
+
+/* Quick Actions (🏃). With all three hidden the 🏃 button and its panel go,
+   unless Surprise Me (experimental) is in it (.has-surprise-action). The
+   menu's Quick Actions are separate: the Menu Bar tab arranges them. */
+.unified-sidebar[data-quick-actions-hidden~="insert_from_selection"] #footer-actions-panel .insert-from-selection-tool,
+.unified-sidebar[data-quick-actions-hidden~="transform_divine_names"] #footer-actions-panel .open-divine-names-tool,
+.unified-sidebar[data-quick-actions-hidden~="link_texts"] #footer-actions-panel .open-linker-tool,
+.unified-sidebar[data-quick-actions-hidden~="insert_from_selection"][data-quick-actions-hidden~="transform_divine_names"][data-quick-actions-hidden~="link_texts"]:not(.has-surprise-action) .open-actions-panel,
+.unified-sidebar[data-quick-actions-hidden~="insert_from_selection"][data-quick-actions-hidden~="transform_divine_names"][data-quick-actions-hidden~="link_texts"]:not(.has-surprise-action) #footer-actions-panel {
+  display: none !important;
+}
+/* …and the row closes up to Session Library and Preferences. */
+.unified-sidebar[data-quick-actions-hidden~="insert_from_selection"][data-quick-actions-hidden~="transform_divine_names"][data-quick-actions-hidden~="link_texts"]:not(.has-surprise-action) .sidebar-footer .standard-quick-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Insertion Options (📰), set in Everything. A hidden control's setting is
+   the saved default, and the session can't change it. Every control carries
+   data-sidebar-control in the shared markup (shared/insertion-options,
+   shared/composition-card); with the whole Layout section hidden its heading
+   goes too. */
+.unified-sidebar[data-options-hidden~="display"] [data-sidebar-control~="display"],
+.unified-sidebar[data-options-hidden~="arrangement"] [data-sidebar-control~="arrangement"],
+.unified-sidebar[data-options-hidden~="citation"] [data-sidebar-control~="citation"],
+.unified-sidebar[data-options-hidden~="line_by_line"] [data-sidebar-control~="line_by_line"],
+.unified-sidebar[data-options-hidden~="line_numbers"] [data-sidebar-control~="line_numbers"],
+.unified-sidebar[data-options-hidden~="source_link"] [data-sidebar-control~="source_link"],
+.unified-sidebar[data-options-hidden~="vowels"] [data-sidebar-control~="vowels"],
+.unified-sidebar[data-options-hidden~="cantillation"] [data-sidebar-control~="cantillation"],
+.unified-sidebar[data-options-hidden~="hebrew_punctuation"] [data-sidebar-control~="hebrew_punctuation"],
+.unified-sidebar[data-options-hidden~="transliteration"] [data-sidebar-control~="transliteration"],
+.unified-sidebar[data-options-hidden~="translation_link"] [data-sidebar-control~="translation_link"],
+.unified-sidebar[data-options-hidden~="translation_punctuation"] [data-sidebar-control~="translation_punctuation"],
+.unified-sidebar[data-options-hidden~="commentary"] [data-sidebar-control~="commentary"],
+.unified-sidebar[data-options-hidden~="title_fonts"] [data-sidebar-control~="title_fonts"],
+.unified-sidebar[data-options-hidden~="text_fonts"] [data-sidebar-control~="text_fonts"],
+.unified-sidebar[data-options-hidden~="display"][data-options-hidden~="arrangement"][data-options-hidden~="citation"][data-options-hidden~="line_by_line"][data-options-hidden~="line_numbers"] .tray-display-layout-section {
+  display: none !important;
+}
+</style>

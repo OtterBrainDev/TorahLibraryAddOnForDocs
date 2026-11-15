@@ -41,9 +41,16 @@ test('every Preferences save tells an open sidebar, which re-reads them and refr
   // Every server write: Save, Save & Close, Reset To Defaults.
   const saves = prefs.match(/\.(setPreferences|resetPreferencesToDefaults)\(/g) || [];
   assert.ok(saves.length >= 3);
-  // The helper's definition, plus one call per save.
+  // The helper's definition, plus one call per save, plus one in
+  // profileAnswer_, the success handler every settings-profile change uses
+  // (a switch, a new profile or a delete rewrites the saved settings).
   const marks = prefs.match(/markPreferencesSaved\(\)/g) || [];
-  assert.equal(marks.length, saves.length + 1, 'each save\'s success marks the save');
+  assert.equal(marks.length, saves.length + 2, 'each save\'s success marks the save');
+  const answer = prefs.match(/function profileAnswer_\([\s\S]*?\n    \}/)[0];
+  assert.match(answer, /ok: function \(result\) \{[\s\S]*?markPreferencesSaved\(\);/);
+  for (const rpc of ['switchSettingsProfile', 'createSettingsProfile', 'renameSettingsProfile', 'deleteSettingsProfile']) {
+    assert.match(prefs, new RegExp(`withSuccessHandler\\((answer|created|renamed)\\.ok\\)\\.withFailureHandler\\(\\1\\.fail\\)\\.${rpc}\\(`), rpc);
+  }
   // A settings-file import writes too (preferences/settings-file-js).
   const importJs = readAppScriptFile('preferences/settings-file-js.html');
   assert.match(importJs, /withSuccessHandler\(function \(result\) \{[\s\S]*?dialog\.markSaved\(\);[\s\S]*?\.applySettingsImport\(/);

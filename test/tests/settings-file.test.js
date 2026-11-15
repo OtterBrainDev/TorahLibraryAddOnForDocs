@@ -219,6 +219,10 @@ test('every setting belongs to exactly one part, and the excluded keys are real 
   assert.equal(ctx.settingsFileGroupOf_('search_corpus_order'), 'search');
   assert.equal(ctx.settingsFileGroupOf_('linker_review_mode'), 'search');
   assert.equal(ctx.settingsFileGroupOf_('menu_layout'), 'menu');
+  assert.equal(ctx.settingsFileGroupOf_('show_voices_tab'), 'menu');
+  assert.equal(ctx.settingsFileGroupOf_('show_lexicon_tab'), 'menu');
+  assert.equal(ctx.settingsFileGroupOf_('sidebar_quick_actions_hidden'), 'menu');
+  assert.equal(ctx.settingsFileGroupOf_('sidebar_options_hidden'), 'menu');
 });
 
 test('the Advanced tab: nothing Save collects, nothing drawn as HTML, a download that stays in the dialog', () => {

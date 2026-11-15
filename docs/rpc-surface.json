@@ -236,6 +236,31 @@
       "name": "releaseNotesPopup",
       "arity": 0,
       "definedIn": "apps-script/server/menu.gs"
+    },
+    {
+      "name": "createSettingsProfile",
+      "arity": 1,
+      "definedIn": "apps-script/server/settings-profiles.gs"
+    },
+    {
+      "name": "deleteSettingsProfile",
+      "arity": 1,
+      "definedIn": "apps-script/server/settings-profiles.gs"
+    },
+    {
+      "name": "getSettingsProfiles",
+      "arity": 0,
+      "definedIn": "apps-script/server/settings-profiles.gs"
+    },
+    {
+      "name": "renameSettingsProfile",
+      "arity": 2,
+      "definedIn": "apps-script/server/settings-profiles.gs"
+    },
+    {
+      "name": "switchSettingsProfile",
+      "arity": 1,
+      "definedIn": "apps-script/server/settings-profiles.gs"
     }
   ]
 }

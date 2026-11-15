@@ -76,6 +76,36 @@ test('Enter searches the shown tab, then in the background every other tab the t
   assert.equal(ref.ctx.lexiconSuitsQuery('the laws of shabbat candles'), false);
 });
 
+// Preferences → Sidebar: a switched-off tab is never searched in the
+// background. Its search would be a Sefaria request nobody can see.
+test('Enter leaves out a tab switched off in Preferences → Sidebar', () => {
+  const env = loadSidebarSearch({ mode: 'texts' });
+  env.ctx.setSidebarMode('texts', true);
+  env.dom.attr['.unified-sidebar'] = { 'data-sidebar-tabs': 'texts lexicon' };
+  env.type('shalom');
+  env.ctx.runUnifiedQuery();
+  assert.equal(env.pending('searchVoices').length, 0, 'Voices is off');
+  assert.equal(env.last('searchLexicon').args[0], 'shalom');
+
+  const none = loadSidebarSearch({ mode: 'texts' });
+  none.ctx.setSidebarMode('texts', true);
+  none.dom.attr['.unified-sidebar'] = { 'data-sidebar-tabs': 'texts' };
+  none.type('shalom');
+  none.ctx.runUnifiedQuery();
+  assert.equal(none.pending('searchVoices').length + none.pending('searchLexicon').length, 0);
+  assert.equal(none.ctx.sidebarTabIsOn('texts'), true, 'Texts has no switch');
+
+  // Opened from the Voices menu item with Voices off: Enter there searches
+  // Voices (the tab shows while it is open) and leaves Lexicon out if it's off too.
+  const opened = loadSidebarSearch({ mode: 'voices' });
+  opened.ctx.setSidebarMode('voices', true);
+  opened.dom.attr['.unified-sidebar'] = { 'data-sidebar-tabs': 'texts' };
+  opened.type('shalom');
+  opened.ctx.runUnifiedQuery();
+  assert.equal(opened.last('searchVoices').args[0], 'shalom');
+  assert.equal(opened.pending('searchLexicon').length, 0);
+});
+
 test('an answer lands in its own tab, never the one shown, and its badge counts it', () => {
   const env = inVoices();
   env.type('shalom');

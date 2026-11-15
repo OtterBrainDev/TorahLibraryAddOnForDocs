@@ -106,9 +106,9 @@ retype.
 Two interfaces; switch at the top of Preferences, under **Interface** (it
 takes effect at once, without Save). Simple hides, and never removes:
 
-- **Sidebar:** the result sort, **⤦ Restore Corpus**, and the Texts / Voices /
-  Lexicon control while in Texts. Add Source, Insertion Options and the footer
-  buttons stay in both modes.
+- **Sidebar:** the result sort and **⤦ Restore Corpus**. The Texts / Voices /
+  Lexicon tabs, Add Source, Insertion Options and the footer buttons stay in
+  both modes.
 - **Menu:** a shorter menu — Texts, Insert Source from Selection, Transform
   Divine Names, Link Texts with Sefaria, then Preferences and Help & Support.
   Switching back to Everything restores the menu you had.
@@ -116,6 +116,16 @@ takes effect at once, without Save). Simple hides, and never removes:
   the advanced formatting sections (formatting for specific languages, how
   kept bold and italics look). Switch to **Everything** to see them; the switch
   never changes a setting.
+
+In either interface, **Preferences → Sidebar** leaves out what you don't use:
+the Voices and Lexicon tabs, Quick Actions buttons, and (in Everything)
+Insertion Options controls; a hidden control uses your saved default. Anything
+switched off is hidden, not removed: a tab's menu item still opens it.
+
+Everything also has **profiles**, in a column beside the Preferences tabs: a
+named set of how sources look for each class (say transliteration for
+beginners, no vowels for adults). Click one to switch; with two or more, the
+sidebar's Insertion Options names the profile in use and switches too.
 
 Existing users keep Everything and never see the setup.
 

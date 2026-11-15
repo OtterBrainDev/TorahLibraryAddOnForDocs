@@ -46,13 +46,22 @@ test('Simple mode hides only the search tools, and every one it hides exists', (
   assert.ok(!/is-more-open/.test(SIMPLE_CSS + readAppScriptFile('sidebar/js/footer-actions.html') + readAppScriptFile('sidebar/js/bootstrap.html')));
 });
 
-test('the Texts tab bar is hidden only in Texts mode, so Voices and Lexicon can always get back', () => {
-  assert.match(SIMPLE_CSS, /\[data-ui-mode="simple"\]\[data-mode="texts"\] \.mode-switch-section/);
-  assert.ok(!/\[data-ui-mode="simple"\] \.mode-switch-section/.test(SIMPLE_CSS));
+// The Texts / Voices / Lexicon tabs show in Simple mode (until schema v29 it
+// hid them while in Texts); Preferences → Sidebar tabs switches Voices and
+// Lexicon off in either interface (test/ui/sidebar-tabs-controls.test.js).
+// Simple hides only the 🧪 tab, and the bar only when Texts is left alone.
+test('Simple mode keeps the Texts / Voices / Lexicon tabs and hides only the 🧪 one', () => {
+  const rules = SIMPLE_CSS.split('}').filter((block) => /display:\s*none\s*!important/.test(block))
+    .flatMap((block) => block.split('{')[0].split(',').map((s) => s.trim()));
+  rules.filter((s) => /\.mode-switch-section\s*$/.test(s)).forEach((selector) => {
+    assert.match(selector, /\[data-sidebar-tabs="texts"\]\[data-mode="texts"\]/, `the bar is hidden only with Texts alone: ${selector}`);
+  });
+  assert.ok(!rules.some((s) => /data-sidebar-mode="(texts|voices|lexicon)"/.test(s)), 'Simple mode hides no Texts, Voices or Lexicon tab');
+  assert.ok(rules.includes('.unified-sidebar[data-ui-mode="simple"]:not([data-mode="experimental"]) .experimental-menu-button'));
 });
 
 test('Preferences hides only advanced tabs and sections, and Everything shows them', () => {
-  assert.match(PREFS, /<div class="preferences-dialog" data-ui-mode="<\?= uiMode \?>">/);
+  assert.match(PREFS, /<div class="preferences-dialog" data-ui-mode="<\?= uiMode \?>"[^>]*>/);
   const ids = hiddenIds(PREFS_CSS, /data-ui-mode="simple"\]:not\(\.show-advanced\)/);
   assert.deepEqual(ids.sort(), [
     'emphasis-mapping',
@@ -60,12 +69,13 @@ test('Preferences hides only advanced tabs and sections, and Everything shows th
     'pref-tab-experimental-btn',
     'pref-tab-linking-btn',
     'pref-tab-search-btn',
+    'sidebar-insertion-options',
     'translation-language-typography',
   ]);
   ids.filter((id) => id !== 'pref-tab-experimental-btn').forEach((id) => {
     assert.ok(PREFS.includes(`id="${id}"`), `preferences/css.html hides #${id}, which preferences.html does not have`);
   });
-  ['insertion', 'menu'].forEach((tab) => {
+  ['insertion', 'sidebar', 'menu'].forEach((tab) => {
     assert.ok(!ids.includes(`pref-tab-${tab}-btn`), `the ${tab} tab must stay visible in Simple mode`);
   });
 });

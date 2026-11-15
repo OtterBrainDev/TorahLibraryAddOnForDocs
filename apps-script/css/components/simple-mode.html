@@ -5,9 +5,11 @@
  *
  * Simple mode hides the search tools with CSS only; nothing leaves the DOM,
  * so selector contracts, RPC wiring and event bindings are identical in both
- * modes. Add Source, Insertion Options and the footer's Session Library,
- * Quick Actions and Preferences buttons show in both modes. Preferences →
- * Interface → Everything shows what Simple mode hides.
+ * modes. Add Source, Insertion Options, the Texts / Voices / Lexicon tabs and
+ * the footer's Session Library, Quick Actions and Preferences buttons show in
+ * both modes. Preferences → Interface → Everything shows what Simple mode
+ * hides; Preferences → Sidebar tabs, beside it, switches Voices and Lexicon
+ * off in either mode (css/layout).
  */
 
 .unified-sidebar[data-ui-mode="simple"] #search-sort-mode,
@@ -15,10 +17,11 @@
   display: none !important;
 }
 
-/* The Texts / Voices / Lexicon tabs. Shown when the sidebar was opened in
-   Voices or Lexicon (a menu item the user switched back on), so they can get
-   back to Texts. */
-.unified-sidebar[data-ui-mode="simple"][data-mode="texts"] .mode-switch-section {
+/* The 🧪 tab is an Everything tool: its settings are on Preferences'
+   Experimental tab, which Simple hides. With it hidden, Texts alone is not a
+   tab bar, so the bar goes when Voices and Lexicon are both switched off. */
+.unified-sidebar[data-ui-mode="simple"]:not([data-mode="experimental"]) .experimental-menu-button,
+.unified-sidebar[data-ui-mode="simple"][data-sidebar-tabs="texts"][data-mode="texts"] .mode-switch-section {
   display: none !important;
 }
 </style>

@@ -256,7 +256,7 @@ The customizable menu already has this limitation; Simple mode inherits it.
 | Search box, Hebrew keyboard, recent sources, results, source card | Shown | Shown |
 | **Insert** button | Shown | Shown |
 | Translation language filter (`#translation-language-dropdown`) | Shown | Shown |
-| Texts / Voices / Lexicon tabs (under the search box) | Hidden; sidebar opens in Texts | Shown |
+| Texts / Voices / Lexicon tabs (under the search box) | Shown (Voices and Lexicon each switchable in Preferences → Sidebar; see below) | Shown (same switches) |
 | Sort (`#search-sort-mode`), Restore corpus menu | Hidden | Shown |
 | **Insertion Options** button (under Add Source) and its panel | Shown | Shown |
 | Footer: Session Library, Quick Actions panel, Preferences | Shown | Shown |
@@ -264,10 +264,30 @@ The customizable menu already has this limitation; Simple mode inherits it.
 | Experimental (🧪) | Hidden | As today (off unless enabled) |
 
 There is no "More options" disclosure (removed in 2026-10 at the owner's
-request): what Simple mode hides (the result sort, Restore Corpus, and the
-tabs while in Texts) comes back with Preferences → Interface → Everything. If
-a search is run from Voices or Lexicon through a menu item a Simple user
-re-enabled, the sidebar opens in that mode and shows the tabs.
+request): what Simple mode hides (the result sort and Restore Corpus) comes
+back with Preferences → Interface → Everything.
+
+**Preferences → Sidebar (schema v29, 2026-11).** Simple mode first hid the
+Texts / Voices / Lexicon tabs while in Texts (decision 3 in §12). At the
+owner's request they now show in both interfaces, and a *Sidebar* tab in
+Preferences (both interfaces, saved with Save) chooses what the sidebar
+shows: the Voices and Lexicon tabs (`show_voices_tab`, `show_lexicon_tab`;
+Texts has none), the Quick Actions buttons (`sidebar_quick_actions_hidden`)
+and, in Everything, the Insertion Options controls (`sidebar_options_hidden`;
+a hidden one uses the saved default). Everything defaults to shown, and
+`migrateToV29_` stores that for every upgrader (hard rule 2). The sidebar
+hides by CSS only (`css/components/sidebar-controls`), from attributes on its
+root that `openSharedSidebar_` prints, so nothing switched off is painted,
+and `syncSidebarControls` updates after a save. A switched-off tab still
+shows while it is the open one (its menu item can open it); the sidebar
+never reopens on one by itself (`resolveSidebarOpenMode_`). With both tabs
+off the bar goes, unless 🧪 sits beside Texts (Everything only); with all
+three Quick Actions off, 🏃 goes and its row closes up. A switched-off tab
+also takes its *Insertion Defaults* sub-tab in Preferences with it. The
+menu is separate: Menu Bar arranges it.
+
+Everything also has **settings profiles** beside the Preferences tabs
+(`server/settings-profiles.gs`; see `docs/architecture.md`, Storage layers).
 
 Implementation: a `data-ui-mode="simple"` attribute on the sidebar root, with CSS
 in the sidebar's own stylesheet. **Hidden by CSS only**, never removed from the
@@ -501,8 +521,9 @@ approved:
 1. **The `he-top` preset for the "quoting" answer** (§5): kept.
 2. **A new user who dismisses setup** keeps Full: a legacy user of the original
    add-on cannot be told apart from a new one. Revisit with feedback.
-3. **Voices and Lexicon in Simple mode:** the tabs are hidden in Texts for
-   every Simple user.
+3. **Voices and Lexicon in Simple mode:** the tabs were hidden in Texts for
+   every Simple user. Superseded in schema v29: they show in both interfaces,
+   each with its own switch (§6, *Sidebar tabs*).
 4. **The graduation tip** (§11): deferred to a later release.
 
 ---

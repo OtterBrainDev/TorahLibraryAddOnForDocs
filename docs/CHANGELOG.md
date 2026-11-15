@@ -9,6 +9,55 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Profiles; Preferences → Sidebar; Voices and Lexicon in Simple mode (schema 29)
+
+**Migration (schema 28 → 29): every existing user, Simple or Everything, keeps
+every sidebar tab, Quick Actions button and Insertion Options control, and has
+no profile until they make one, so nothing an upgrader sees changes except
+that Simple mode gains the Voices and Lexicon tabs.** New preferences, all in
+the settings file's *Menu and interface* part: `show_voices_tab` and
+`show_lexicon_tab` (default `true`), `sidebar_quick_actions_hidden` and
+`sidebar_options_hidden` (default `[]`, nothing hidden). New stored state, not
+a setting: `settings_profiles` (default `""`, no profiles) and one
+`settings_profile_<id>` per profile not in use.
+
+- **Profiles (Everything).** A column beside the Preferences tabs keeps named
+  sets of how sources look (the settings file's *Text and layout* and *Fonts,
+  colours and titles*), so a teacher can keep transliteration on for a
+  primary class and vowels, punctuation and commentary off for adults, and
+  switch in a click. The tabs edit the profile in use; clicking another
+  switches to it, asking first about unsaved changes. *+ New profile* copies
+  the one in use (the first turns your settings into *My settings*); *Rename*
+  and *Delete* act on the one in use; up to ten. In the sidebar, with two or
+  more, *📰 Insertion Options* names the profile in use and has a *Profile*
+  list; a switch drops the session's Insertion Options changes. The menu, the
+  interface, what the sidebar shows, search and linking stay the same in
+  every profile. A profile kept aside is migrated when it comes back, like
+  stored preferences. Everything's Preferences is wider (860 px) for the
+  column.
+- **Preferences → Sidebar**, a new tab in both interfaces, saved with Save:
+  switches for the **Voices** and **Lexicon** tabs, for each **Quick Actions**
+  button (with all three off, 🏃 goes and the row closes up), and, in
+  Everything, for each **Insertion Options** control (Display, Arrangement,
+  Citation, Line by line, Line numbers; the source's link, vowels,
+  cantillation, punctuation, transliteration; the translation's link,
+  punctuation, commentary; title and text fonts). A hidden control uses the
+  saved default. Everything is hidden, never removed: a menu item still
+  opens a switched-off tab (which shows while it is open), the sidebar never
+  reopens on one by itself, and a switched-off tab takes its *Insertion
+  Defaults* sub-tab with it. The menu is unchanged: Menu Bar arranges it.
+- **The Texts / Voices / Lexicon tabs show in Simple mode.** Simple now hides
+  only the result sort, Restore Corpus and 🧪 in the sidebar.
+- Enter's background search of the other tabs leaves out a tab that is
+  switched off: a request nobody could see.
+- **Fixed:** in Preferences, scrolled content painted over the pinned tab
+  bar (an open section's layer was above it); the tabs now stay on top.
+- Help has two new topics, *What the sidebar shows* and *Profiles*; the
+  setup screen's *Everything* card, the walkthrough and the design doc say so.
+- New RPCs (`docs/rpc-surface.json`): `getSettingsProfiles`,
+  `createSettingsProfile`, `switchSettingsProfile`, `renameSettingsProfile`,
+  `deleteSettingsProfile`. No new OAuth scope.
+
 ### One search for the three tabs; Voices topics; pins in every tab
 
 **Two new preferences, schema 28 (migration):** `voices_topic_order` and

@@ -9,6 +9,8 @@
     "function setSidebarMode",
     "function normalizeSidebarMode",
     "function syncExperimentalAvailability",
+    "function syncSidebarControls",
+    "function sidebarControlsFromPreferences",
     "function updateModeDependentSections",
     ".voices-insert-options"
   ],
