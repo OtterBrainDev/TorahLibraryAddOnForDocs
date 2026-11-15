@@ -342,6 +342,47 @@
   background: var(--selected-soft);
 }
 
+/* Dictionaries, filtered like corpora: a chip each over the word list. */
+.lexicon-dict-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  background: var(--selected-soft);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--sefaria-blue);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.lexicon-dict-chip:hover {
+  border-color: var(--sefaria-blue);
+}
+
+.lexicon-dict-chip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.lexicon-dict-chip-count {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.lexicon-dict-chip.removed {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.lexicon-dict-chip.removed .lexicon-dict-chip-count {
+  text-decoration: none;
+}
+
 /* =============================================================
    A WORD'S ENTRIES — picked like translations
    ============================================================= */

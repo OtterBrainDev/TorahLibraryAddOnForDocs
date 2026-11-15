@@ -45,56 +45,99 @@ function fetchLexiconEntries_(word, strict) {
   return Array.isArray(entries) ? entries : [];
 }
 
-// Search lexicon definitions by English keyword; the headwords found are
+// An English word is looked up in the dictionaries' definitions with
+// Sefaria's text search, and the headwords whose definitions match are then
 // looked up with /api/words/. That lookup also answers with the words each
 // headword is close to; only the headword the search found is kept (by its
 // letters), unless none of the answer matches it, in which case all of it is.
-function searchLexiconByEnglish_(query) {
-  const LEXICON_PATHS = ['Klein Dictionary', 'Jastrow', 'BDB Dictionary', 'BDB Augmented Strong'];
+//
+// The search is filtered by category path, matched from its start ("Tanakh"
+// reaches "Tanakh/Torah/Genesis"). Until 2026-11 the filters were the
+// dictionaries' titles ("Klein Dictionary", "Jastrow"), which no path starts
+// with, so every English lookup found nothing. The dictionaries are under
+// Reference/Dictionary; if that finds nothing, all of Reference is searched
+// and only the dictionaries' hits kept.
+const LEXICON_ENGLISH_SEARCHES_ = [
+  { filters: ['Reference/Dictionary'], keep: function () { return true; } },
+  { filters: ['Reference'], keep: function (hit) { return lexiconIsDictionaryHit_(hit); } }
+];
+const LEXICON_ENGLISH_HEADWORDS_ = 6;
 
-  var payload = {
+function lexiconEnglishSearchPayload_(query, filters) {
+  return {
     aggs: [],
     field: 'exact',
-    filters: LEXICON_PATHS,
-    filter_fields: LEXICON_PATHS.map(function() { return 'path'; }),
+    filters: filters,
+    filter_fields: filters.map(function () { return 'path'; }),
     query: query,
-    size: 20,
+    size: 40,
     slop: 0,
     type: 'text',
     source_proj: true
   };
+}
 
-  var data;
-  try {
-    data = searchWrapperRequest_(payload);
-  } catch (e) {
-    return [];
-  }
+// A hit from a dictionary: by its categories or path, else by its title.
+function lexiconIsDictionaryHit_(hit) {
+  const source = (hit && hit._source) || {};
+  const categories = Array.isArray(source.categories) ? source.categories.join('/') : '';
+  const pathText = Array.isArray(source.path) ? source.path.join('/') : String(source.path || '');
+  if (/dictionar/i.test(categories) || /dictionar/i.test(pathText)) return true;
+  const title = String(source.ref || '').split(',')[0];
+  return /dictionary|jastrow|lexicon/i.test(title);
+}
 
-  var hits = (((data || {}).hits || {}).hits || []);
-  if (!hits.length) return [];
+// "Jastrow, שֵׁם I 1" / "Klein Dictionary, שֵׁם 1" → "שֵׁם": the first Hebrew
+// word after the title, without the entry's ordinal or segment number.
+function lexiconHeadwordFromRef_(ref) {
+  const text = String(ref || '');
+  const comma = text.indexOf(',');
+  if (comma < 0) return '';
+  const match = /[\u05B0-\u05EA\u05F0-\u05F4]+(?:[\s\u05BE-][\u05B0-\u05EA\u05F0-\u05F4]+)*/.exec(text.slice(comma + 1));
+  return match ? match[0].trim() : '';
+}
 
-  var seenHw = {};
-  var headwords = [];
-  hits.forEach(function(hit) {
-    var ref = (hit._source && hit._source.ref) || '';
-    var commaIdx = ref.lastIndexOf(',');
-    if (commaIdx < 0) return;
-    var hw = ref.slice(commaIdx + 1).replace(/\s+\d+\s*$/, '').trim();
-    if (!hw || seenHw[hw]) return;
-    seenHw[hw] = true;
-    headwords.push(hw);
-  });
-
-  var results = [];
-  headwords.slice(0, 5).forEach(function(hw) {
+function searchLexiconByEnglish_(query) {
+  let hits = [];
+  let answered = false;
+  for (let i = 0; i < LEXICON_ENGLISH_SEARCHES_.length && !hits.length; i++) {
+    const search = LEXICON_ENGLISH_SEARCHES_[i];
+    let data;
     try {
-      results = results.concat(keepLexiconHeadword_(fetchLexiconEntries_(hw, false), hw));
+      data = searchWrapperRequest_(lexiconEnglishSearchPayload_(query, search.filters));
+    } catch (e) {
+      Logger.log('Lexicon English search failed: ' + e.message);
+      continue;
+    }
+    answered = true;
+    hits = ((((data || {}).hits || {}).hits) || []).filter(search.keep);
+  }
+  // Not one answer: say so, rather than "no entries found".
+  if (!answered) throw new Error('Lexicon search is temporarily unavailable.');
+
+  const seen = {};
+  const headwords = [];
+  hits.forEach(function (hit) {
+    const headWord = lexiconHeadwordFromRef_((hit && hit._source && hit._source.ref) || '');
+    if (!headWord || seen[headWord] || headwords.length >= LEXICON_ENGLISH_HEADWORDS_) return;
+    seen[headWord] = true;
+    headwords.push(headWord);
+  });
+  if (!headwords.length) return [];
+
+  const responses = UrlFetchApp.fetchAll(headwords.map(function (headWord) {
+    return { url: 'https://www.sefaria.org/api/words/' + encodeURIComponent(headWord), muteHttpExceptions: true };
+  }));
+  let results = [];
+  responses.forEach(function (response, i) {
+    try {
+      if (!response || response.getResponseCode() !== 200) return;
+      const entries = JSON.parse(response.getContentText() || '[]');
+      if (Array.isArray(entries)) results = results.concat(keepLexiconHeadword_(entries, headwords[i]));
     } catch (e) {
       Logger.log('Lexicon reverse lookup failed: ' + e.message);
     }
   });
-
   return results;
 }
 

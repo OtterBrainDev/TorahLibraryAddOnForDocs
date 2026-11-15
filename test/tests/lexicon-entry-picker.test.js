@@ -166,3 +166,107 @@ test('What to insert is described for the entries picked, in order', () => {
   assert.equal(sidebar.lexiconInsertSummary([klein, bdb1], 'definition'), 'Will insert: the definitions from Klein I, then BDB I');
   assert.equal(sidebar.lexiconInsertSummary([klein, bdb1], 'headword'), 'Will insert: the word and the dictionaries’ names (Klein I, BDB I)');
 });
+
+// Dictionaries are filtered like corpora: the real result pipeline
+// (results-render: toggleCorpusVisibility → applyResultPostProcessing) with
+// each dictionary as a corpus.
+function loadPipeline(words) {
+  const html = {};
+  const text = {};
+  const hints = [];
+  const chain = (selector) => {
+    const api = new Proxy(function () {}, {
+      get(_, prop) {
+        if (prop === 'html') return (value) => { if (value === undefined) return html[selector] || ''; html[selector] = value; return api; };
+        if (prop === 'text') return (value) => { if (value === undefined) return text[selector] || ''; text[selector] = value; return api; };
+        if (prop === 'length') return 1;
+        if (prop === 'val') return () => '';
+        return () => api;
+      },
+      apply: () => api,
+    });
+    return api;
+  };
+  const context = {
+    console, $: chain, document: {}, window: {},
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+    google: { script: { run: {} } }, setTimeout() {},
+  };
+  vm.createContext(context);
+  ['apps-script/shared/ui/core-shared.html', 'apps-script/shared/ui/dom.html', 'apps-script/shared/ui/state.html',
+    'apps-script/sidebar/js/preferences-state.html', 'apps-script/sidebar/js/results-render.html',
+    'apps-script/sidebar/js/preview-core.html', 'apps-script/sidebar/js/lexicon.html',
+  ].forEach((file) => vm.runInContext(scriptBody(file), context, { filename: file }));
+  Object.assign(context, {
+    appMode: 'lexicon',
+    effectivePreferences: {},
+    selectedLexiconItem: null,
+    selectedResultKey: null,
+    resultsLoading: false,
+    sanitizeSourceHtml: (value) => value,
+    getSearchParameters: () => ({ sortMode: 'relevance', translationLanguages: [] }),
+    setResultsLoading() {}, setFooterButtonStates() {}, updateModeDependentSections() {}, updateLexiconTabBadge() {},
+    setInsertButtonState() {}, updatePesukimAvailability() {}, updateActionabilityUI() {}, clearVersionSelectors() {},
+    renderResults() {}, syncRestoreCorpusButton() {},
+    setResultsHint: (message) => hints.push(message),
+  });
+  context.resetResultPostProcessState();
+  context.queryState = { rawLibraryMatches: [], rawSearchResults: words, libraryMatches: [], searchResults: [] };
+  context.applyResultPostProcessing();
+  return { sidebar: context, html, text, hints };
+}
+
+const visible = (sidebar) => Array.from(sidebar.queryState.searchResults, (w) => w.headWord + ': ' + w.entries.map((e) => sidebar.lexiconEntryLabel(e)).join(', '));
+
+test('a chip per dictionary, with its entry count, over the word list', () => {
+  const { words } = serverWords('שם');
+  const { sidebar, html } = loadPipeline(words);
+  assert.deepEqual(Array.from(sidebar.resultPostProcessState.availableCorpora, (c) => c.label + ' ' + c.count),
+    ['Klein 1', 'BDB 7', 'BDB Aramaic 1']);
+  const strip = html['.result-filter-strip'];
+  assert.match(strip, /Dictionaries:/);
+  assert.deepEqual([...strip.matchAll(/data-corpus-key='([^']+)'/g)].map((m) => m[1]),
+    ['dictionary-klein', 'dictionary-bdb', 'dictionary-bdb-aramaic']);
+  assert.doesNotMatch(strip, /removed/);
+});
+
+test('hiding a dictionary takes its entries out of every word; a word left with none drops out', () => {
+  const { words } = serverWords('שם');
+  const { sidebar, html } = loadPipeline(words);
+  sidebar.toggleCorpusVisibility('dictionary-bdb');
+  assert.deepEqual(visible(sidebar), ['שֵׁם: Klein I', 'שׂוּם: BDB Aramaic']);
+  assert.equal(sidebar.lexiconCountLabel(words), '2 of 9 entries shown');
+  assert.match(html['.result-filter-strip'], /lexicon-dict-chip removed' data-corpus-key='dictionary-bdb' aria-pressed='false'/);
+  // The answer itself is untouched: showing BDB again brings every entry back.
+  assert.equal(words[0].entries.length, 3);
+  sidebar.toggleCorpusVisibility('dictionary-bdb');
+  assert.equal(visible(sidebar).length, 5);
+  assert.equal(sidebar.lexiconCountLabel(words), '9 entries found');
+});
+
+test('the selected word keeps its picks that are still shown, or starts again from its first entry', () => {
+  const { words } = serverWords('שם');
+  const { sidebar } = loadPipeline(words);
+  sidebar.selectLexiconWord(sidebar.findLexiconWord(words[0].ref));
+  sidebar.toggleLexiconEntry(words[0].entries[1].id);            // Klein I, BDB I
+  sidebar.toggleCorpusVisibility('dictionary-bdb');
+  assert.deepEqual(picked(sidebar), ['Klein I']);
+  sidebar.toggleCorpusVisibility('dictionary-bdb');
+  sidebar.toggleCorpusVisibility('dictionary-klein');
+  assert.deepEqual(picked(sidebar), ['BDB I']);                    // nothing picked was left
+  assert.equal(sidebar.buildLexiconInsertPayload().entries.length, 1);
+});
+
+test('a word whose dictionaries are all hidden is unselected; with every dictionary hidden, the sidebar says so', () => {
+  const { words } = serverWords('שם');
+  const { sidebar, hints } = loadPipeline(words);
+  sidebar.selectLexiconWord(sidebar.findLexiconWord(words[2].ref));   // שׂוּמָה: BDB only
+  sidebar.toggleCorpusVisibility('dictionary-bdb');
+  assert.equal(sidebar.selectedLexiconItem, null);
+  sidebar.toggleCorpusVisibility('dictionary-klein');
+  sidebar.toggleCorpusVisibility('dictionary-bdb-aramaic');
+  assert.equal(sidebar.queryState.searchResults.length, 0);
+  assert.match(hints[hints.length - 1], /Every dictionary is hidden/);
+  sidebar.toggleCorpusVisibility('dictionary-klein');
+  assert.equal(hints[hints.length - 1], '');
+});

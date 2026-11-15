@@ -99,7 +99,9 @@ function getResultCorpusKey(item, fallbackLabel) {
 
 function syncAvailableCorpusFilters() {
   var seen = {};
-  resultPostProcessState.availableCorpora = getAllRawResults().map(function (item) {
+  // Lexicon: the "corpora" are the dictionaries the words' entries come from
+  // (sidebar/js/lexicon). Hiding one takes its entries out of every word.
+  resultPostProcessState.availableCorpora = appMode === 'lexicon' ? lexiconDictionaryCorpora(getAllRawResults()) : getAllRawResults().map(function (item) {
     return {
       key: getResultCorpusKey(item, 'Results'),
       label: getResultCorpusLabel(item, 'Results')
@@ -127,6 +129,10 @@ function renderResultFilterStrip() {
   $strip.hide().empty();
   syncRestoreCorpusButton();
 
+  if (appMode === 'lexicon') {
+    renderLexiconDictionaryStrip($strip);
+    return;
+  }
   if (appMode !== 'texts') return;
 
   var params = getSearchParameters();
@@ -207,9 +213,11 @@ function applyResultPostProcessing() {
     dedupeResultItems(filterItems(queryState.rawSearchResults, 'Search results')),
     searchParameters.sortMode
   );
+  if (appMode === 'lexicon') queryState.searchResults = filterLexiconWordsByDictionary(queryState.searchResults, removedLookup);
   ensureSelectedResultStillVisible();
   renderResultFilterStrip();
   setResultsLoading(false);
+  if (appMode === 'lexicon') syncLexiconAfterFiltering();
 }
 
 

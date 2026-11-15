@@ -22,7 +22,20 @@ No new preference and no migration. **What Add Entry inserts looks different**
   each says it means: the words spelled as typed under **Matches**, then the
   words it is a form of or close to under **Related words** (for שם, שׂוּם
   *put* and שָׁמֵם *be desolated*), or **Closest words** when nothing is
-  spelled as typed. An English search lists only the headwords it found.
+  spelled as typed.
+- **Dictionaries are filtered like corpora.** A chip for each dictionary that
+  answered (Klein 1, BDB 7, BDB Aramaic 1) sits over the word list, as the
+  corpora do in Texts. A click hides that dictionary's entries from every
+  word for this search (a word left with none drops out) and another click
+  brings them back; the count says how many are shown. A new search shows
+  every dictionary again.
+- **Fixed: an English word never found anything.** The lookup in the
+  dictionaries' definitions was filtered by their titles ("Klein Dictionary",
+  "Jastrow"), and Sefaria matches a filter against the start of a category
+  path ("Reference/Dictionary/…"), so nothing ever matched. It now searches
+  Reference/Dictionary (all of Reference, keeping only the dictionaries, if
+  that finds nothing), lists only the headwords it found, and says the lookup
+  is unavailable when Sefaria doesn't answer instead of "no entries".
 - **A word's entries are picked like translations.** Picking a word lists its
   entries (Klein I, BDB I, BDB II…) with each one's part of speech and
   meaning. The first is selected; a click adds or removes one; *Select all*

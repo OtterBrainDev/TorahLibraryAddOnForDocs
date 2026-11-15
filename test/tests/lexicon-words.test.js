@@ -141,14 +141,16 @@ test('dictionary names: BDB\'s Aramaic and Strong\'s editions are not plain BDB'
 });
 
 function fetchStub(answers, calls) {
+  const answer = (url) => {
+    const word = decodeURIComponent(url.split('/api/words/')[1]);
+    calls.push(word);
+    const value = answers[word];
+    if (typeof value === 'number') return { getResponseCode: () => value, getContentText: () => '' };
+    return { getResponseCode: () => 200, getContentText: () => JSON.stringify(value || []) };
+  };
   return {
-    fetch(url) {
-      const word = decodeURIComponent(url.split('/api/words/')[1]);
-      calls.push(word);
-      const answer = answers[word];
-      if (typeof answer === 'number') return { getResponseCode: () => answer, getContentText: () => '' };
-      return { getResponseCode: () => 200, getContentText: () => JSON.stringify(answer || []) };
-    },
+    fetch: (url) => answer(url),
+    fetchAll: (requests) => requests.map((request) => answer(request.url)),
   };
 }
 
@@ -161,18 +163,69 @@ test('searchLexicon answers with words; a 404 is no entries, a server error says
   assert.deepEqual(plain(lex.searchLexicon('   ')), []);
 });
 
-test('an English search keeps the headwords the search found, not the words they are close to', () => {
+// Reported: an English word never found anything. The search was filtered by
+// the dictionaries' titles; Sefaria matches a path filter from the start of
+// the category path ("Tanakh" reaches "Tanakh/Torah/Genesis"), and every
+// dictionary's path starts "Reference/".
+const hit = (ref, path) => ({ _source: Object.assign({ ref }, path ? { path, categories: path.split('/').slice(0, -1) } : {}) });
+
+test('an English search is filtered to the dictionaries\' category path, not their titles', () => {
   const calls = [];
+  const payloads = [];
   const lex = load({
     UrlFetchApp: fetchStub({ 'שֵׁם': SHEM }, calls),
-    searchWrapperRequest_: () => ({ hits: { hits: [
-      { _source: { ref: 'Klein Dictionary, שֵׁם 1' } },
-      { _source: { ref: 'BDB Dictionary, שֵׁם 2' } },
-    ] } }),
+    searchWrapperRequest_: (payload) => {
+      payloads.push(plain(payload));
+      return { hits: { hits: [hit('Klein Dictionary, שֵׁם 1'), hit('Jastrow, שֵׁם I 1')] } };
+    },
   });
   const words = plain(lex.searchLexicon('name'));
+  assert.deepEqual(payloads.map((p) => p.filters), [['Reference/Dictionary']]);
+  assert.deepEqual(payloads[0].filter_fields, ['path']);
+  payloads[0].filters.forEach((filter) => assert.match(filter, /^Reference\//));
+  // One lookup per headword; the words it is close to are left out.
   assert.deepEqual(calls, ['שֵׁם']);
   assert.deepEqual(summary(words), [{ word: 'שֵׁם', match: 'direct', entries: ['Klein I', 'BDB I', 'BDB II'] }]);
   // If nothing in the answer has the headword's letters, all of it is kept.
   assert.equal(plain(lex.keepLexiconHeadword_([{ headword: 'שׂוּם' }], 'שֵׁם')).length, 1);
+});
+
+test('if the dictionaries\' path finds nothing, all of Reference is searched and only dictionary hits kept', () => {
+  const calls = [];
+  const payloads = [];
+  const lex = load({
+    UrlFetchApp: fetchStub({ 'שֵׁם': SHEM, 'שָׁמֵם': SHEM }, calls),
+    searchWrapperRequest_: (payload) => {
+      payloads.push(payload.filters[0]);
+      if (payload.filters[0] !== 'Reference') return { hits: { hits: [] } };
+      return { hits: { hits: [
+        hit('Encyclopedia Judaica, Names 3', 'Reference/Encyclopedic Works/Encyclopedia Judaica'),
+        hit('BDB Dictionary, שָׁמֵם 2', 'Reference/Dictionary/BDB Dictionary'),
+        hit('Jastrow, שֵׁם I 1'),
+      ] } };
+    },
+  });
+  plain(lex.searchLexicon('desolate'));
+  assert.deepEqual(payloads, ['Reference/Dictionary', 'Reference']);
+  assert.deepEqual(calls, ['שָׁמֵם', 'שֵׁם']);
+});
+
+test('an English search that Sefaria never answers says the lookup is unavailable, not "no entries"', () => {
+  const lex = load({
+    UrlFetchApp: fetchStub({}, []),
+    searchWrapperRequest_: () => { throw new Error('Search request failed with status 502.'); },
+  });
+  assert.throws(() => lex.searchLexicon('name'), /temporarily unavailable/);
+  // Answered, with nothing: no entries.
+  const empty = load({ UrlFetchApp: fetchStub({}, []), searchWrapperRequest_: () => ({ hits: { hits: [] } }) });
+  assert.deepEqual(plain(empty.searchLexicon('zzzz')), []);
+});
+
+test('a headword is read from a dictionary ref without its ordinal or segment number', () => {
+  const lex = load();
+  assert.equal(lex.lexiconHeadwordFromRef_('Jastrow, שֵׁם I 1'), 'שֵׁם');
+  assert.equal(lex.lexiconHeadwordFromRef_('Klein Dictionary, שֵׁם 1'), 'שֵׁם');
+  assert.equal(lex.lexiconHeadwordFromRef_('BDB Dictionary, שׂוּם, שִׂים 2'), 'שׂוּם');
+  assert.equal(lex.lexiconHeadwordFromRef_('Klein Dictionary, אַ◌ 1'), 'אַ');
+  assert.equal(lex.lexiconHeadwordFromRef_('Genesis 1:1'), '');
 });

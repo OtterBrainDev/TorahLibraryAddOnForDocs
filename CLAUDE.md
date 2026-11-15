@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **671 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **678 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -291,8 +291,11 @@ and fix it before touching the feature you came to change.
   list of entries: grouped by headword spelling (cantillation and mark order
   don't split one), the words spelled as typed first ("direct", by headword or
   alternate; with vowels typed, that exact spelling first), then related
-  words; each entry's dictionary, part of speech, gloss, senses and credit; an
-  English search keeps only the headwords it found. Fixture: `fixtures/lexicon-shem.json`
+  words; each entry's dictionary, part of speech, gloss, senses and credit. An
+  English search is filtered to the path `Reference/Dictionary` (a title such
+  as "Jastrow" is no path's start: it found nothing), falls back to Reference
+  keeping only dictionary hits, keeps only the headwords it found, and says
+  "unavailable" when Sefaria never answers. Fixture: `fixtures/lexicon-shem.json`
   (rebuilt by hand, see its `_note`).
 - `lexicon-insert.test.js` — Add Entry inserts one word's picked entries in
   the order picked: the word once, each entry's dictionary line, a paragraph
@@ -303,7 +306,10 @@ and fix it before touching the feature you came to change.
 - `lexicon-entry-picker.test.js` — a word's entries are picked like
   translations (first selected, a click toggles, pick order kept, the last one
   stays, Select all appends); Matches / Related words / Closest words; Copy
-  gives exactly the lines Add Entry writes, in every mode.
+  gives exactly the lines Add Entry writes, in every mode. Dictionaries are
+  filtered like corpora, through the real results pipeline
+  (`toggleCorpusVisibility`): a chip each with its count, a hidden one's
+  entries leave every word, the selected word keeps the picks still shown.
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
   cantillation) are set in Noto Serif / Sans Hebrew at insert, and only those:
   letters and the marks it has stay; "Match the document" judges the
