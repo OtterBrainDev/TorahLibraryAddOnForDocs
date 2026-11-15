@@ -67,23 +67,31 @@ function loadSidebar() {
 
 // Arrays made inside the VM are compared by value, not realm.
 const picked = (sidebar) => Array.from(sidebar.selectedLexiconEntries(), (e) => sidebar.lexiconEntryLabel(e));
+const label = (e) => [e.dictionary, e.ordinal || e.strongNumber].filter(Boolean).join(' ');
+const wordOf = (words, headWord) => words.find((w) => w.headWord === headWord);
+const entryOf = (w, wanted) => w.entries.find((e) => label(e) === wanted);
+// שֵׁם: Strong's 8034, 8035, Jastrow I, II, Jastrow (Aramaic), Klein I, II,
+// BDB I, II, Ben-Yehuda (fixtures/lexicon-shem.json, Sefaria's order).
 
 test('a word opens with its first entry picked; clicks add and remove, in the order clicked', () => {
   const { words } = serverWords('שם');
   const { sidebar, html } = loadSidebar();
-  sidebar.selectLexiconWord(words[0]);
-  assert.deepEqual(picked(sidebar), ['Klein I']);
-  const [klein, bdb1, bdb2] = words[0].entries;
+  const shem = wordOf(words, 'שֵׁם');
+  sidebar.selectLexiconWord(shem);
+  assert.deepEqual(picked(sidebar), ["Strong's 8034"]);
+  const first = entryOf(shem, "Strong's 8034");
+  const bdb1 = entryOf(shem, 'BDB I');
+  const bdb2 = entryOf(shem, 'BDB II');
 
   sidebar.toggleLexiconEntry(bdb2.id);
   sidebar.toggleLexiconEntry(bdb1.id);
-  assert.deepEqual(picked(sidebar), ['Klein I', 'BDB II', 'BDB I']);
+  assert.deepEqual(picked(sidebar), ["Strong's 8034", 'BDB II', 'BDB I']);
   // The list shows each one's place in that order.
   const list = html['#lexicon-entry-list'];
   const checks = [...list.matchAll(/lexicon-entry-check' aria-hidden='true'>([^<]*)</g)].map((m) => m[1]);
-  assert.deepEqual(checks, ['1', '3', '2']);
+  assert.deepEqual(checks, ['1', '', '', '', '', '', '', '3', '2', '']);
 
-  sidebar.toggleLexiconEntry(klein.id);
+  sidebar.toggleLexiconEntry(first.id);
   assert.deepEqual(picked(sidebar), ['BDB II', 'BDB I']);
 
   const payload = JSON.parse(JSON.stringify(sidebar.buildLexiconInsertPayload()));
@@ -95,28 +103,31 @@ test('a word opens with its first entry picked; clicks add and remove, in the or
 test('the last picked entry stays picked, and the sidebar says why', () => {
   const { words } = serverWords('שם');
   const { sidebar, text } = loadSidebar();
-  sidebar.selectLexiconWord(words[0]);
-  sidebar.toggleLexiconEntry(words[0].entries[0].id);
-  assert.deepEqual(picked(sidebar), ['Klein I']);
+  const shem = wordOf(words, 'שֵׁם');
+  sidebar.selectLexiconWord(shem);
+  sidebar.toggleLexiconEntry(shem.entries[0].id);
+  assert.deepEqual(picked(sidebar), ["Strong's 8034"]);
   assert.match(text['#lexicon-selected-display'], /At least one entry stays selected/);
 });
 
 test('Select all adds the rest after what was already picked', () => {
   const { words } = serverWords('שם');
   const { sidebar } = loadSidebar();
-  sidebar.selectLexiconWord(words[0]);
-  sidebar.toggleLexiconEntry(words[0].entries[2].id);
+  const shem = wordOf(words, 'שֵׁם');
+  sidebar.selectLexiconWord(shem);
+  sidebar.toggleLexiconEntry(entryOf(shem, 'BDB II').id);
   sidebar.selectAllLexiconEntries();
-  assert.deepEqual(picked(sidebar), ['Klein I', 'BDB II', 'BDB I']);
+  assert.deepEqual(picked(sidebar), ["Strong's 8034", 'BDB II', "Strong's 8035", 'Jastrow I', 'Jastrow II', 'Jastrow',
+    'Klein I', 'Klein II', 'BDB I', 'Ben-Yehuda']);
 });
 
 test('picking another word starts over from its first entry', () => {
   const { words } = serverWords('שם');
   const { sidebar } = loadSidebar();
-  sidebar.selectLexiconWord(words[0]);
-  sidebar.toggleLexiconEntry(words[0].entries[1].id);
-  sidebar.selectLexiconWord(words[1]);
-  assert.deepEqual(picked(sidebar), ['BDB I']);
+  sidebar.selectLexiconWord(wordOf(words, 'שֵׁם'));
+  sidebar.toggleLexiconEntry(wordOf(words, 'שֵׁם').entries[1].id);
+  sidebar.selectLexiconWord(wordOf(words, 'שׂוּם'));
+  assert.deepEqual(picked(sidebar), ["Strong's 7760"]);
   assert.equal(sidebar.buildLexiconInsertPayload().headWord, 'שׂוּם');
 });
 
@@ -129,10 +140,10 @@ test('the word list: Matches, then Related words; Closest words when nothing is 
   const list = capture();
   sidebar.renderLexiconWordList(list, serverWords('שם').words);
   assert.deepEqual(labels(list.out), ['Matches', 'Related words']);
-  assert.deepEqual(rows(list.out), ['שֵׁם', 'שׂוּם', 'שׂוּמָה', 'שִׂים', 'שָׁמֵם']);
-  // A row names its dictionaries and its entries' glosses.
-  assert.match(list.out, /Klein · BDB ×2/);
-  assert.match(list.out, /name, designation; reputation, renown, fame; name, as designation of God · name · first son of Noah/);
+  assert.deepEqual(rows(list.out), ['שָׁם', 'שֵׁם', 'שֻׁם', 'שׂוּם', 'שׁום', 'שׂים', 'שׂוּמָה', 'שִׂים']);
+  // A row names its dictionaries and its entries' glosses, each once.
+  assert.match(list.out, /Strong&#39;s ×2 · Jastrow ×3 · Klein ×2 · BDB ×2 · Ben-Yehuda/);
+  assert.match(list.out, /there, thither; existing, in existence · there, thither · תה&quot;פ/);
 
   const inflected = capture();
   sidebar.renderLexiconWordList(inflected, serverWords('וישם').words);
@@ -146,9 +157,10 @@ test('the word list: Matches, then Related words; Closest words when nothing is 
 test('Copy gives the lines Add Entry writes, in every mode', () => {
   const { server, words } = serverWords('שם');
   const { sidebar } = loadSidebar();
-  const sum = words[1].entries[0];
-  const [klein, bdb1, bdb2] = words[0].entries;
-  [[bdb1, klein], [sum], [klein, bdb2]].forEach((entries) => {
+  const shem = wordOf(words, 'שֵׁם');
+  const [klein, bdb1, bdb2, strongs, by] = ['Klein I', 'BDB I', 'BDB II', "Strong's 8034", 'Ben-Yehuda'].map((l) => entryOf(shem, l));
+  const sum = entryOf(wordOf(words, 'שׂוּם'), 'BDB I');
+  [[bdb1, klein], [sum], [klein, bdb2], [strongs, by]].forEach((entries) => {
     ['entry', 'headword', 'definition'].forEach((mode) => {
       const plan = JSON.parse(JSON.stringify(server.planLexiconInsertion_(entries, mode)));
       const expected = plan.map((p) => '    '.repeat(p.depth || 0) + (p.text !== undefined ? p.text : p.runs.map((r) => r.text).join('')));
@@ -160,7 +172,9 @@ test('Copy gives the lines Add Entry writes, in every mode', () => {
 test('What to insert is described for the entries picked, in order', () => {
   const { words } = serverWords('שם');
   const { sidebar } = loadSidebar();
-  const [klein, bdb1] = words[0].entries;
+  const shem = wordOf(words, 'שֵׁם');
+  const klein = entryOf(shem, 'Klein I');
+  const bdb1 = entryOf(shem, 'BDB I');
   assert.equal(sidebar.lexiconInsertSummary([klein], 'entry'), 'Will insert: the full entry');
   assert.equal(sidebar.lexiconInsertSummary([klein, bdb1], 'entry'), 'Will insert: 2 full entries — Klein I, then BDB I');
   assert.equal(sidebar.lexiconInsertSummary([klein, bdb1], 'definition'), 'Will insert: the definitions from Klein I, then BDB I');
@@ -222,11 +236,11 @@ test('a chip per dictionary, with its entry count, over the word list', () => {
   const { words } = serverWords('שם');
   const { sidebar, html } = loadPipeline(words);
   assert.deepEqual(Array.from(sidebar.resultPostProcessState.availableCorpora, (c) => c.label + ' ' + c.count),
-    ['Klein 1', 'BDB 7', 'BDB Aramaic 1']);
+    ['Klein 5', "Strong's 6", 'Jastrow 4', 'BDB 6', 'Ben-Yehuda 2', 'BDB Aramaic 2']);
   const strip = html['.result-filter-strip'];
   assert.match(strip, /Dictionaries:/);
   assert.deepEqual([...strip.matchAll(/data-corpus-key='([^']+)'/g)].map((m) => m[1]),
-    ['dictionary-klein', 'dictionary-bdb', 'dictionary-bdb-aramaic']);
+    ['dictionary-klein', 'dictionary-strong-s', 'dictionary-jastrow', 'dictionary-bdb', 'dictionary-ben-yehuda', 'dictionary-bdb-aramaic']);
   assert.doesNotMatch(strip, /removed/);
 });
 
@@ -234,37 +248,45 @@ test('hiding a dictionary takes its entries out of every word; a word left with 
   const { words } = serverWords('שם');
   const { sidebar, html } = loadPipeline(words);
   sidebar.toggleCorpusVisibility('dictionary-bdb');
-  assert.deepEqual(visible(sidebar), ['שֵׁם: Klein I', 'שׂוּם: BDB Aramaic']);
-  assert.equal(sidebar.lexiconCountLabel(words), '2 of 9 entries shown');
+  assert.deepEqual(visible(sidebar), [
+    "שָׁם: Klein, Strong's 8033, Jastrow, Ben-Yehuda",
+    "שֵׁם: Strong's 8034, Strong's 8035, Jastrow I, Jastrow II, Jastrow, Klein I, Klein II, Ben-Yehuda",
+    "שֻׁם: Strong's 8036, BDB Aramaic",
+    "שׂוּם: Strong's 7760, Strong's 7761, BDB Aramaic",
+    'שׁום: Klein',
+    'שׂים: Klein',
+  ]);   // שׂוּמָה and שִׂים are BDB's alone
+  assert.equal(sidebar.lexiconCountLabel(words), '19 of 25 entries shown');
   assert.match(html['.result-filter-strip'], /lexicon-dict-chip removed' data-corpus-key='dictionary-bdb' aria-pressed='false'/);
   // The answer itself is untouched: showing BDB again brings every entry back.
-  assert.equal(words[0].entries.length, 3);
+  assert.equal(wordOf(words, 'שֵׁם').entries.length, 10);
   sidebar.toggleCorpusVisibility('dictionary-bdb');
-  assert.equal(visible(sidebar).length, 5);
-  assert.equal(sidebar.lexiconCountLabel(words), '9 entries found');
+  assert.equal(visible(sidebar).length, 8);
+  assert.equal(sidebar.lexiconCountLabel(words), '25 entries found');
 });
 
 test('the selected word keeps its picks that are still shown, or starts again from its first entry', () => {
   const { words } = serverWords('שם');
   const { sidebar } = loadPipeline(words);
-  sidebar.selectLexiconWord(sidebar.findLexiconWord(words[0].ref));
-  sidebar.toggleLexiconEntry(words[0].entries[1].id);            // Klein I, BDB I
+  const shem = wordOf(words, 'שֵׁם');
+  sidebar.selectLexiconWord(sidebar.findLexiconWord(shem.ref));
+  sidebar.toggleLexiconEntry(entryOf(shem, 'BDB I').id);           // Strong's 8034, BDB I
   sidebar.toggleCorpusVisibility('dictionary-bdb');
-  assert.deepEqual(picked(sidebar), ['Klein I']);
+  assert.deepEqual(picked(sidebar), ["Strong's 8034"]);
   sidebar.toggleCorpusVisibility('dictionary-bdb');
-  sidebar.toggleCorpusVisibility('dictionary-klein');
-  assert.deepEqual(picked(sidebar), ['BDB I']);                    // nothing picked was left
+  sidebar.toggleCorpusVisibility('dictionary-strong-s');
+  assert.deepEqual(picked(sidebar), ['Jastrow I']);                // nothing picked was left
   assert.equal(sidebar.buildLexiconInsertPayload().entries.length, 1);
 });
 
 test('a word whose dictionaries are all hidden is unselected; with every dictionary hidden, the sidebar says so', () => {
   const { words } = serverWords('שם');
   const { sidebar, hints } = loadPipeline(words);
-  sidebar.selectLexiconWord(sidebar.findLexiconWord(words[2].ref));   // שׂוּמָה: BDB only
+  sidebar.selectLexiconWord(sidebar.findLexiconWord(wordOf(words, 'שׂוּמָה').ref));   // BDB only
   sidebar.toggleCorpusVisibility('dictionary-bdb');
   assert.equal(sidebar.selectedLexiconItem, null);
-  sidebar.toggleCorpusVisibility('dictionary-klein');
-  sidebar.toggleCorpusVisibility('dictionary-bdb-aramaic');
+  ['dictionary-klein', 'dictionary-strong-s', 'dictionary-jastrow', 'dictionary-ben-yehuda', 'dictionary-bdb-aramaic']
+    .forEach((key) => sidebar.toggleCorpusVisibility(key));
   assert.equal(sidebar.queryState.searchResults.length, 0);
   assert.match(hints[hints.length - 1], /Every dictionary is hidden/);
   sidebar.toggleCorpusVisibility('dictionary-klein');

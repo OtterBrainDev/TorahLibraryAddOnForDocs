@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **678 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **680 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -295,8 +295,12 @@ and fix it before touching the feature you came to change.
   English search is filtered to the path `Reference/Dictionary` (a title such
   as "Jastrow" is no path's start: it found nothing), falls back to Reference
   keeping only dictionary hits, keeps only the headwords it found, and says
-  "unavailable" when Sefaria never answers. Fixture: `fixtures/lexicon-shem.json`
-  (rebuilt by hand, see its `_note`).
+  "unavailable" when Sefaria never answers. A headword's number is not part of
+  the word ("שֵׁם ᴵ" Klein, "שֵׁם²" BDB, "שֵׁם I" Jastrow); glosses are read per
+  dictionary (Jastrow's italics, BDB after its part of speech, Ben-Yehuda's
+  first Hebrew sense without footnotes); BDB's number and stem wrappers take
+  their only text. Fixtures: `fixtures/lexicon-shem.json`, `lexicon-shalom.json`,
+  Sefaria's own answers, shortened (see their `_note`).
 - `lexicon-insert.test.js` — Add Entry inserts one word's picked entries in
   the order picked: the word once, each entry's dictionary line, a paragraph
   per sense with the dictionary's numbers (sub-senses indented), notes in Full

@@ -37,8 +37,9 @@ No new preference and no migration. **What Add Entry inserts looks different**
   that finds nothing), lists only the headwords it found, and says the lookup
   is unavailable when Sefaria doesn't answer instead of "no entries".
 - **A word's entries are picked like translations.** Picking a word lists its
-  entries (Klein I, BDB I, BDB II…) with each one's part of speech and
-  meaning. The first is selected; a click adds or removes one; *Select all*
+  entries (Klein I, BDB I, BDB II, Jastrow I, Strong's 8034, Ben-Yehuda…) with
+  each one's part of speech and meaning (Ben-Yehuda's in Hebrew, right to
+  left; its footnotes are left out). The first is selected; a click adds or removes one; *Select all*
   takes the rest; one always stays selected. Add Entry inserts them in the
   order picked, which the list and the preview number.
 - **The preview is an outline.** Each picked entry is a card: dictionary, part

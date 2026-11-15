@@ -141,13 +141,24 @@ function searchLexiconByEnglish_(query) {
   return results;
 }
 
+// The entries spelled as the search's headword: by its vowels when it has
+// them (שֵׁם, not שָׁם or שֻׁם), else by its letters; all of them if none is.
 function keepLexiconHeadword_(entries, headWord) {
-  const wanted = lexiconConsonantKey_(headWord);
-  if (!wanted) return entries;
-  const kept = entries.filter(function (entry) {
-    return lexiconRawHeadwords_(entry).some(function (hw) { return lexiconConsonantKey_(hw) === wanted; });
-  });
-  return kept.length ? kept : entries;
+  const spellings = function (entry) {
+    return lexiconRawHeadwords_(entry).map(function (hw) { return lexiconSplitHeadword_(hw).word; });
+  };
+  const tiers = [];
+  if (lexiconHasVowels_(headWord)) {
+    const pointed = lexiconPointedKey_(headWord);
+    tiers.push(function (hw) { return lexiconPointedKey_(hw) === pointed; });
+  }
+  const letters = lexiconConsonantKey_(headWord);
+  if (letters) tiers.push(function (hw) { return lexiconConsonantKey_(hw) === letters; });
+  for (let i = 0; i < tiers.length; i++) {
+    const kept = entries.filter(function (entry) { return spellings(entry).some(tiers[i]); });
+    if (kept.length) return kept;
+  }
+  return entries;
 }
 
 function lexiconRawHeadwords_(entry) {
@@ -191,15 +202,27 @@ function lexiconHasVowels_(word) {
 }
 
 // ---- One entry -----------------------------------------------------------------
+//
+// Field names as Sefaria's /api/words/ gives them (checked against its answers
+// for שם and שלום, 2026-11; test/tests/fixtures/lexicon-*.json):
+// headword ("שֵׁם ᴵ" Klein, "שֵׁם²" BDB, "שֵׁם I" Jastrow: the number is in the
+// headword), ordinal ("I." BDB), all_cited, alt_headwords (strings or
+// { word }), content.morphology, content.senses[] (definition, num / number,
+// grammar { verbal_stem, binyan_form }, form (BDB's stem), plural_form, all_cited,
+// senses), content.definition (Ben-Yehuda: one HTML block with footnotes),
+// notes, derivatives, strong_number, language_code ("arc"; Jastrow " ch. ")
+// and parent_lexicon_details { name, attribution, to_language }.
 
 // Sefaria's dictionaries, as a reader knows them. Checked in order: "BDB
-// Aramaic Dictionary" must meet the Aramaic row before the BDB one.
+// Aramaic Dictionary" must meet the Aramaic row, and "BDB Augmented Strong"
+// the Strong's row, before the BDB one.
 const LEXICON_SHORT_NAMES_ = [
   [/aramaic/i, /bdb|brown/i, 'BDB Aramaic'],
-  [/strong/i, null, "BDB (Strong's)"],
+  [/strong/i, null, "Strong's"],
   [/bdb|brown.driver.briggs/i, null, 'BDB'],
   [/klein/i, null, 'Klein'],
   [/jastrow/i, null, 'Jastrow'],
+  [/ben.?yehuda/i, null, 'Ben-Yehuda'],
   [/sefer hashorashim/i, null, 'Sefer HaShorashim'],
   [/rashi/i, null, 'Rashi’s Foreign Words']
 ];
@@ -214,6 +237,29 @@ function lexiconShortName_(lexiconName) {
   return name.replace(/\s+(dictionary|lexicon)$/i, '').trim() || name;
 }
 
+// The number a dictionary writes after a headword it has more than one of.
+const LEXICON_SUPERSCRIPT_ORDINALS_ = { 'ᴵ': 'I', 'ⱽ': 'V', 'ˣ': 'X' };
+const LEXICON_SUPERSCRIPT_DIGITS_ = { '¹': 1, '²': 2, '³': 3, '⁴': 4, '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9 };
+const LEXICON_ROMAN_ = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+
+// "שֵׁם ᴵ" → { word: "שֵׁם", ordinal: "I" }; "שֵׁם²" → "II"; "שֵׁם I" → "I".
+function lexiconSplitHeadword_(headword) {
+  const text = String(headword || '').trim();
+  let match = /\s*([ᴵⱽˣ]+)\s*$/.exec(text);
+  if (match) {
+    return { word: text.slice(0, match.index).trim(), ordinal: match[1].split('').map(function (ch) { return LEXICON_SUPERSCRIPT_ORDINALS_[ch]; }).join('') };
+  }
+  match = /\s*([¹²³⁴-⁹])\s*$/.exec(text);
+  if (match) return { word: text.slice(0, match.index).trim(), ordinal: LEXICON_ROMAN_[LEXICON_SUPERSCRIPT_DIGITS_[match[1]]] || '' };
+  match = /\s+([IVX]{1,4})\.?\s*$/.exec(text);
+  if (match) return { word: text.slice(0, match.index).trim(), ordinal: match[1] };
+  return { word: text, ordinal: '' };
+}
+
+function lexiconCleanOrdinal_(ordinal) {
+  return String(ordinal || '').trim().replace(/\.$/, '').trim();
+}
+
 // A line break or block is a space; an inline tag is nothing ("Nö<sup>ZMG").
 function lexiconPlainText_(html) {
   const stripped = String(html || '')
@@ -222,37 +268,85 @@ function lexiconPlainText_(html) {
   return String(decodeHTMLEntities(stripped) || '').replace(/\s+/g, ' ').trim();
 }
 
+// Sefaria's footnotes (Ben-Yehuda's: <sup class="footnote-marker">1</sup>
+// <i class="footnote">…</i>, the note's own <i> nested inside) are left out:
+// read inline, a note runs into the definition it annotates.
+function lexiconStripFootnotes_(html) {
+  let text = String(html || '').replace(/<sup class="footnote-marker">[^<]*<\/sup>/g, '');
+  const open = /<i class="footnote">/;
+  let at = text.search(open);
+  while (at >= 0) {
+    const tags = /<(\/?)i\b[^>]*>/g;
+    tags.lastIndex = at;
+    let depth = 0;
+    let end = -1;
+    let tag;
+    while ((tag = tags.exec(text))) {
+      depth += tag[1] ? -1 : 1;
+      if (depth === 0) { end = tags.lastIndex; break; }
+    }
+    text = end < 0 ? text.slice(0, at) : text.slice(0, at) + text.slice(end);
+    at = text.search(open);
+  }
+  return text;
+}
+
 function lexiconHtmlString_(value) {
   if (Array.isArray(value)) return value.map(lexiconHtmlString_).filter(Boolean).join(' ');
-  if (typeof value === 'string') return value.replace(/\s+/g, ' ').trim();
+  if (typeof value === 'string') return lexiconStripFootnotes_(value).replace(/\s+/g, ' ').trim();
   return '';
 }
 
+// "— Qal" (Klein) → "Qal"; a stem BDB marks as fully cited keeps its †.
+function lexiconStemLabel_(sense) {
+  const grammar = sense.grammar;
+  let label = '';
+  if (typeof grammar === 'string') label = grammar;
+  else if (grammar && typeof grammar === 'object') label = String(grammar.verbal_stem || grammar.binyan || '');
+  if (!label && typeof sense.form === 'string') label = sense.form;
+  if (!label && typeof sense.binyan === 'string') label = sense.binyan;
+  label = String(label || '').replace(/^[\s—–-]+/, '').trim();
+  const forms = grammar && typeof grammar === 'object' && Array.isArray(grammar.binyan_form)
+    ? grammar.binyan_form.map(String).filter(Boolean) : [];
+  if (label && forms.length) label += ' ' + forms.join(', ');
+  if (label && sense.all_cited === true && label.charAt(0) !== '†') label = '†' + label;
+  return label;
+}
+
 // A sense as the sidebar and the insert read it. Sefaria nests them (BDB:
-// 1 › a, b, c; a verb's Qal, Niph. …) and names their parts differently per
+// 1. › a., b.; a verb's Qal, Hiph. …) and names their parts differently per
 // dictionary; unknown fields are ignored.
 function normalizeLexiconSense_(sense, depth) {
   if (typeof sense === 'string') return { num: '', label: '', html: lexiconHtmlString_(sense), notes: '', senses: [] };
   const safe = sense || {};
-  const grammar = safe.grammar;
-  let label = '';
-  if (typeof grammar === 'string') label = grammar;
-  else if (grammar && typeof grammar === 'object') label = String(grammar.verbal_stem || grammar.binyan || '');
-  if (!label && typeof safe.binyan === 'string') label = safe.binyan;
-  const children = depth < 6 && Array.isArray(safe.senses)
+  let children = depth < 6 && Array.isArray(safe.senses)
     ? safe.senses.map(function (child) { return normalizeLexiconSense_(child, depth + 1); }).filter(lexiconSenseHasText_)
     : [];
+  const plural = lexiconHtmlString_(safe.plural_form);
+  let html = [plural, lexiconHtmlString_(safe.definition)].filter(Boolean).join(' ');
+  // BDB wraps a definition in its number ({ num: "a.", senses: [{ definition }] })
+  // and a stem's conjugation in the stem ({ form: "Qal", senses: [{ definition:
+  // "Pf. 3 ms. …" }, { num: "1." …}] }): the unnumbered first child is the
+  // number's or the stem's own text. A list of unnumbered children (Strong's
+  // meanings under Qal) stays a list.
+  const lead = children[0];
+  if (!html && lead && !lead.num && !lead.label && lead.html &&
+      children.slice(1).every(function (child) { return child.num || child.label; })) {
+    html = lead.html;
+    children = lead.senses.concat(children.slice(1));
+  }
   return {
-    num: String(safe.num || safe.number || '').trim(),
-    label: String(label || '').trim(),
-    html: lexiconHtmlString_(safe.definition),
+    // Jastrow numbers its second sense "—2)".
+    num: String(safe.num || safe.number || '').replace(/^[\s—–-]+/, '').trim(),
+    label: lexiconStemLabel_(safe),
+    html: html,
     notes: lexiconHtmlString_(safe.notes || safe.note),
     senses: children
   };
 }
 
 function lexiconSenseHasText_(sense) {
-  return !!(sense && (sense.html || sense.notes || (sense.senses && sense.senses.length)));
+  return !!(sense && (sense.html || sense.notes || sense.label || (sense.senses && sense.senses.length)));
 }
 
 function lexiconSensesOf_(content) {
@@ -262,13 +356,13 @@ function lexiconSensesOf_(content) {
   if (Array.isArray(content.senses)) {
     return content.senses.map(function (s) { return normalizeLexiconSense_(s, 0); }).filter(lexiconSenseHasText_);
   }
-  if (content.definition) return [normalizeLexiconSense_({ definition: content.definition }, 0)];
+  if (content.definition) return [normalizeLexiconSense_({ definition: content.definition }, 0)].filter(lexiconSenseHasText_);
   return [];
 }
 
 // A part of speech at the start of a definition (BDB and Jastrow put it there;
-// Klein has content.morphology).
-const LEXICON_LEADING_POS_ = /^(n\.\s?pr\.\s?(?:m|f|loc|gent|dei)\.|n\.\s?[mf]\.(?:\s?(?:pl|du)\.)?|vb\.|adj\.|adv\.|prep\.|conj\.|interj\.|pron\.|subst\.)(?=\s|$)/;
+// Klein, Jastrow and Strong's also have content.morphology).
+const LEXICON_LEADING_POS_ = /^(n\.\s?pr\.\s?(?:m|f|loc|gent|dei)\.|pr\.\s?n\.\s?(?:m|f|pl)\.|n\.\s?[mf]\.(?:\s?(?:pl|du)\.)?|vb\.|adj\.|adv\.|prep\.|conj\.|interj\.|pron\.|subst\.)(?=\s|$)/;
 // A citation before the gloss: "2 S 7:9 name".
 const LEXICON_LEADING_CITATION_ = /^(?:\d\s)?[A-Z][a-z]{0,3}\.?\s\d+:\d+(?:[,;]\s?\d+(?::\d+)?)*\s+/;
 
@@ -281,17 +375,44 @@ function firstLexiconDefinition_(senses) {
   return '';
 }
 
+// Jastrow sets its English glosses in italics, among citations, abbreviations
+// and Hebrew: "(b. h.) <i>there, thither</i>. Macc. II, 7 …". The gloss runs
+// from the first italics to the end of that sentence ("<i>Imma</i>
+// (<i>Mother</i>) <i>Shalom</i>, wife of R. Eliezer. Y. Shebi. …"); a single
+// capital before a period ("R.") doesn't end it.
+function lexiconFirstItalicSentence_(html) {
+  const source = String(html || '');
+  const at = source.search(/<(i|em)\b[^>]*>/i);
+  if (at < 0) return '';
+  const text = lexiconPlainText_(source.slice(at));
+  const end = /[a-z)\u05D0-\u05EA]{2,}\.(\s|$)/.exec(text);
+  const sentence = end ? text.slice(0, end.index + end[0].trimEnd().length - 1) : text;
+  return sentence.replace(/[\s,.;:]+$/, '').trim();
+}
+
 // "vb. put, place, set (cf. NöZMG …" → { pos: "vb.", gloss: "put, place, set" }
-function lexiconGlossOf_(html) {
-  let text = lexiconPlainText_(html).replace(/^†\s*/, '');
+function lexiconGlossOf_(html, dictionary) {
+  let text = lexiconPlainText_(html).replace(/^[†,\s]+/, '');
   let pos = '';
+  text = text.replace(/^\([^)]*\)\s*/, '');
   const posMatch = LEXICON_LEADING_POS_.exec(text);
   if (posMatch) {
     pos = posMatch[1];
     text = text.slice(posMatch[0].length).trim();
   }
+  if (dictionary === 'Jastrow') {
+    // No italics: a cross-reference or a list of citations, not a gloss.
+    return { pos: pos, gloss: lexiconFirstItalicSentence_(html) };
+  }
+  if (dictionary === 'Ben-Yehuda') {
+    // Hebrew: "ש"ז, … — א) מלה המשמשת ציון לסוג …: …"; the first sense.
+    const first = /א\)\s*([^:;(]+)/.exec(text);
+    if (first) text = first[1];
+    // …and without the German, French and English equivalents after it.
+    text = text.split(/[;:]/)[0].split(',').filter(function (part) { return /[\u05D0-\u05EA]/.test(part); }).join(',');
+  }
   text = text.replace(/^\([^)]*\)\s*/, '').replace(LEXICON_LEADING_CITATION_, '');
-  const cut = text.search(/\s?[(\[;—]|\scf\.\s/);
+  const cut = text.search(/\s?[(\[;—:]|\scf\.\s/);
   if (cut > 0) text = text.slice(0, cut);
   text = text.replace(/[\s,.;:—-]+$/, '').trim();
   return { pos: pos, gloss: text };
@@ -301,19 +422,24 @@ function lexiconGlossOf_(html) {
 // senses (Klein's "1. name, designation." "2. reputation, renown, fame.") is
 // joined; otherwise (BDB's long first paragraph) the first sense's opening
 // words.
-function lexiconSummaryGloss_(senses) {
+function lexiconSummaryGloss_(senses, dictionary) {
   const LIMIT = 80;
   const isShortNumbered = function (sense) {
     return !!(sense && sense.num && !sense.label && sense.html && lexiconPlainText_(sense.html).length <= LIMIT);
   };
-  const first = senses.length ? (senses[0].html || firstLexiconDefinition_(senses[0].senses || [])) : '';
-  const parts = [];
-  const firstGloss = lexiconGlossOf_(first).gloss;
-  if (firstGloss) parts.push(firstGloss);
-  if (isShortNumbered(senses[0])) {
-    let length = firstGloss.length;
-    for (let i = 1; i < senses.length && parts.length < 3 && isShortNumbered(senses[i]); i++) {
-      const gloss = lexiconGlossOf_(senses[i].html).gloss;
+  const glossOf = function (sense) {
+    return lexiconGlossOf_(sense.html || firstLexiconDefinition_(sense.senses || []), dictionary).gloss;
+  };
+  // The first sense that has a gloss: Klein's שָׁם opens with a remark in
+  // parentheses ("(after verbs of motion שָֽׁמָּה)") before "1. there, thither."
+  let i = 0;
+  while (i < senses.length && i < 3 && !glossOf(senses[i])) i++;
+  if (i >= senses.length || !glossOf(senses[i] || {})) return '';
+  const parts = [glossOf(senses[i])];
+  if (isShortNumbered(senses[i])) {
+    let length = parts[0].length;
+    for (let j = i + 1; j < senses.length && parts.length < 3 && isShortNumbered(senses[j]); j++) {
+      const gloss = glossOf(senses[j]);
       if (!gloss || length + gloss.length + 2 > LIMIT) break;
       parts.push(gloss);
       length += gloss.length + 2;
@@ -323,9 +449,22 @@ function lexiconSummaryGloss_(senses) {
   return joined.length > LIMIT ? joined.slice(0, LIMIT - 1).replace(/\s+\S*$/, '') + '…' : joined;
 }
 
+// A verb's part of speech, where Klein gives it on its stem ("tr. v.").
+function lexiconStemMorphology_(content) {
+  const senses = (content && Array.isArray(content.senses)) ? content.senses : [];
+  for (let i = 0; i < senses.length; i++) {
+    const grammar = senses[i] && senses[i].grammar;
+    if (grammar && typeof grammar === 'object' && grammar.morphology) return String(grammar.morphology).trim();
+  }
+  return '';
+}
+
+// Aramaic by its code ("arc"), its dictionary (BDB Aramaic), or Jastrow's
+// "ch." (Chaldaic, Jastrow's word for Aramaic).
 function lexiconLanguageOf_(entry, lexiconName) {
-  const code = String((entry && entry.language_code) || '').toLowerCase();
+  const code = String((entry && entry.language_code) || '').toLowerCase().trim();
   if (/^(arc|aram)/.test(code) || /aramaic/i.test(lexiconName)) return 'Aramaic';
+  if (/jastrow/i.test(lexiconName) && /(^|\W)ch\.(\W|$)/.test(code)) return 'Aramaic';
   return '';
 }
 
@@ -333,23 +472,27 @@ function normalizeLexiconEntry_(entry, index) {
   const safe = entry || {};
   const details = (safe.parent_lexicon_details && typeof safe.parent_lexicon_details === 'object') ? safe.parent_lexicon_details : {};
   const content = safe.content || {};
-  const headWord = String(safe.headword || safe.headWord || '').trim();
+  const split = lexiconSplitHeadword_(safe.headword || safe.headWord || '');
+  const headWord = split.word;
   const lexiconName = String(safe.parent_lexicon || safe.lexiconName || details.name || '').trim();
+  const dictionary = lexiconShortName_(lexiconName);
   const senses = lexiconSensesOf_(content);
-  const first = lexiconGlossOf_(firstLexiconDefinition_(senses));
-  const statedMorphology = String(content.morphology || safe.morphology || '').trim();
+  const first = lexiconGlossOf_(firstLexiconDefinition_(senses), dictionary);
+  const statedMorphology = String(content.morphology || safe.morphology || '').trim() || lexiconStemMorphology_(content);
   const morphology = statedMorphology || first.pos;
-  const alternates = lexiconRawHeadwords_(safe).slice(1);
-  const ordinal = String(safe.ordinal || '').trim();
+  const alternates = lexiconRawHeadwords_(safe).slice(1).map(function (alt) { return lexiconSplitHeadword_(alt).word; }).filter(Boolean);
+  const ordinal = lexiconCleanOrdinal_(safe.ordinal) || split.ordinal;
+  const strongNumber = String(safe.strong_number || '').trim();
 
   return {
-    id: [lexiconName, headWord, ordinal, safe.rid || index].join('|'),
+    id: [lexiconName, headWord, ordinal || strongNumber, safe.rid || index].join('|'),
     rid: safe.rid || null,
     lexiconName: lexiconName,
-    dictionary: lexiconShortName_(lexiconName),
+    dictionary: dictionary,
     credit: String(details.attribution || '').trim(),
     headWord: headWord,
     ordinal: ordinal,
+    strongNumber: strongNumber,
     allCited: safe.all_cited === true,
     alternateHeadWords: alternates,
     morphology: morphology,
@@ -357,7 +500,9 @@ function normalizeLexiconEntry_(entry, index) {
     // label, it isn't repeated before the definition in the document.
     morphologyInDefinition: !statedMorphology && !!first.pos,
     language: lexiconLanguageOf_(safe, lexiconName),
-    gloss: lexiconSummaryGloss_(senses),
+    // Ben-Yehuda defines in Hebrew: its definitions read right to left.
+    definitionsRtl: /^he/i.test(String(details.to_language || '')),
+    gloss: lexiconSummaryGloss_(senses, dictionary),
     senses: senses,
     notes: lexiconHtmlString_(safe.notes),
     derivatives: lexiconHtmlString_(safe.derivatives)
@@ -492,7 +637,7 @@ function lexiconRichRuns_(html) {
 }
 
 function lexiconEntryLabel_(entry) {
-  return [entry.lexiconName || entry.dictionary || 'Dictionary', entry.ordinal].filter(Boolean).join(' ');
+  return [entry.lexiconName || entry.dictionary || 'Dictionary', entry.ordinal || entry.strongNumber].filter(Boolean).join(' ');
 }
 
 function lexiconSenseNumber_(num) {
@@ -557,7 +702,9 @@ function planLexiconInsertion_(entries, mode) {
     if (insertMode === 'entry') {
       if (entry.notes) paragraphs.push({ kind: 'notes', runs: lexiconRichRuns_(entry.notes) });
       if (entry.derivatives) {
-        paragraphs.push({ kind: 'notes', runs: [{ text: 'Derivatives: ', bold: true, italic: false, sup: false }].concat(lexiconRichRuns_(entry.derivatives)) });
+        // Klein's own text starts "Derivatives:" (or "Derivative:").
+        const labelled = /^derivatives?:/i.test(lexiconPlainText_(entry.derivatives));
+        paragraphs.push({ kind: 'notes', runs: (labelled ? [] : [{ text: 'Derivatives: ', bold: true, italic: false, sup: false }]).concat(lexiconRichRuns_(entry.derivatives)) });
       }
     }
   });
@@ -592,6 +739,7 @@ function lexiconEntriesFromPayload_(payload) {
         lexiconName: String(value.lexiconName || '').trim(),
         dictionary: String(value.dictionary || '').trim(),
         ordinal: String(value.ordinal || '').trim(),
+        strongNumber: String(value.strongNumber || '').trim(),
         morphology: String(value.morphology || '').trim(),
         morphologyInDefinition: value.morphologyInDefinition === true,
         alternateHeadWords: Array.isArray(value.alternateHeadWords) ? value.alternateHeadWords.map(String) : [],

@@ -1,145 +1,30 @@
 {
-  "_note": "Sefaria's /api/words/שם answer, rebuilt by hand from the entries Sefaria shows for שם (2026-11), in the field names Sefaria's lexicon model uses (headword, parent_lexicon, content.morphology, content.senses[].definition / num / grammar.verbal_stem / senses, ordinal, all_cited, alt_headwords, notes, derivatives, parent_lexicon_details). Definitions are shortened. Not captured from the live API: check against it when the API can be reached, and replace this file with a capture if they differ.",
+  "_note": "Sefaria's /api/words/שם (https://www.sefaria.org/api/words/%D7%A9%D7%9D), captured 2026-11-15. Every entry, in Sefaria's order, with its own field names and structure. Shortened to keep the file small: long definitions are cut where they end in ' …', long sense lists keep their first members, refs lists and the GK/TWOT/quotes/prev_hw/next_hw fields are left out. Nothing else is changed.",
   "entries": [
-    {
-      "headword": "שֵׁם",
-      "parent_lexicon": "Klein Dictionary",
-      "ordinal": "I",
-      "rid": "kl-shem-1",
-      "language_code": "heb",
-      "content": {
-        "morphology": "m.n.",
-        "senses": [
-          { "number": "1", "definition": "name, designation." },
-          { "number": "2", "definition": "reputation, renown, fame." },
-          { "number": "3", "definition": "name, as designation of God." }
-        ]
-      },
-      "notes": "[Related to BAram. <span dir=\"rtl\">שֻׁם</span>, Aram. <span dir=\"rtl\">שֵׁם, שְׁמָא, שׁוּם</span>, Ugar. <i>shm</i>, Arab. <i>ism, usm, sim</i>, Akka. <i>shumu</i> (= name).]",
-      "derivatives": "<span dir=\"rtl\">הַשֵּׁם, בְּשֵׁם, כְּשֵׁם, לְשֵׁם, שֵׁמוֹן</span>",
-      "parent_lexicon_details": { "name": "Klein Dictionary", "source": "Klein Dictionary", "attribution": "Ezra Klein" }
-    },
-    {
-      "headword": "שׂוּם",
-      "alt_headwords": ["שִׂים"],
-      "parent_lexicon": "BDB Dictionary",
-      "ordinal": "I",
-      "rid": "bdb-sum-1",
-      "content": {
-        "senses": [
-          { "definition": "<strong>vb.</strong> <em>put, place, set</em> (cf. Nö<sup>ZMG xxxvii (1883), 532</sup>; NH <span dir=\"rtl\">סוּם</span> Pi. <em>designate, fix</em>);—" },
-          { "grammar": { "verbal_stem": "Qal" }, "definition": "Pf. 3 ms. <span dir=\"rtl\">שָׂם</span> <a class=\"refLink\" href=\"/Genesis.21.14\" data-ref=\"Genesis 21:14\">Gn 21:14</a> +;—<em>put, set</em> (often ‖ <span dir=\"rtl\">נָתַן</span>):",
-            "senses": [
-              { "num": "1", "senses": [
-                { "num": "a", "definition": "<em>put, set,</em> in a place, + <span dir=\"rtl\">שָׁם</span> <a class=\"refLink\" href=\"/Genesis.2.8\" data-ref=\"Genesis 2:8\">Gn 2:8</a> (J)." },
-                { "num": "b", "definition": "<em>put</em> something <em>upon</em> (<span dir=\"rtl\">עַל</span>) Nu 21:8, 9 (E)." }
-              ] },
-              { "num": "2", "definition": "<em>set, direct:</em>", "senses": [
-                { "num": "a", "definition": "sword against (<span dir=\"rtl\">ב</span>) Ju 7:22." }
-              ] }
-            ] },
-          { "grammar": { "verbal_stem": "†Hiph." }, "definition": "Pf. 1 s. consec. <span dir=\"rtl\">וַהֲשִׂמֹתִיהוּ</span> Ez 14:8." }
-        ]
-      },
-      "parent_lexicon_details": { "name": "BDB Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs" }
-    },
-    {
-      "headword": "שׂוּמָה",
-      "parent_lexicon": "BDB Dictionary",
-      "all_cited": true,
-      "rid": "bdb-sumah",
-      "content": { "senses": [ { "definition": "(van d. H. <span dir=\"rtl\">שׂימה</span> Kt) perhaps <strong>n.f.</strong> <em>token of unluckiness, scowl</em>;—2 S 13:32." } ] },
-      "parent_lexicon_details": { "name": "BDB Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs" }
-    },
-    {
-      "headword": "שִׂים",
-      "alt_headwords": ["שִׂימָה"],
-      "parent_lexicon": "BDB Dictionary",
-      "ordinal": "I, II",
-      "rid": "bdb-sim-xref",
-      "content": { "senses": [ { "definition": "etc., v. I, II. <span dir=\"rtl\">שׂום</span>." } ] },
-      "parent_lexicon_details": { "name": "BDB Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs" }
-    },
-    {
-      "headword": "שֵׁם",
-      "parent_lexicon": "BDB Dictionary",
-      "ordinal": "I",
-      "rid": "bdb-shem-1",
-      "content": {
-        "senses": [
-          { "definition": "<strong>n.m.</strong> 2 S 7:9 <em>name</em> (√ unknown; Assyrian <em>šumu</em>);—abs. <span dir=\"rtl\">שׁ׳</span> Gn 6:4 +;—<em>name</em>:" },
-          { "num": "1", "definition": "of river Gn 2:11, 13, 14, beasts v 19, 20, city 26:33 (all J) +." },
-          { "num": "2", "senses": [
-            { "num": "a", "definition": "usually of pers.: Gn 4:17, 19(×2) (J) +." },
-            { "num": "b", "definition": "= <em>reputation</em>; (1) <span dir=\"rtl\">וַאֲגַדְּלָה שְׁמֶ֑ךָ</span> Gn 12:2 (J)." }
-          ] },
-          { "num": "3", "definition": "<em>name</em>, as designation of God, specif. of <span dir=\"rtl\">י׳</span>." }
-        ]
-      },
-      "parent_lexicon_details": { "name": "BDB Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs" }
-    },
-    {
-      "headword": "שֵׁם",
-      "parent_lexicon": "BDB Dictionary",
-      "ordinal": "II",
-      "all_cited": true,
-      "rid": "bdb-shem-2",
-      "content": { "senses": [ { "definition": "<strong>n.pr.m.</strong> <em>first son of Noah</em>;—Gn 5:32; 6:10; 7:13; <span dir=\"rtl\">Σημ</span>." } ] },
-      "parent_lexicon_details": { "name": "BDB Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs" }
-    },
-    {
-      "headword": "שָׁמֵם",
-      "parent_lexicon": "BDB Dictionary",
-      "all_cited": true,
-      "rid": "bdb-shamem-vb",
-      "content": {
-        "senses": [
-          { "definition": "<strong>vb.</strong> <em>be desolated, appalled</em> (connex. of meanings not clear);—" },
-          { "grammar": { "verbal_stem": "Qal" }, "definition": "Pf. 3 fs. <span dir=\"rtl\">שָׁמֵ֑מָה</span> Ez 35:15.", "senses": [
-            { "num": "1", "definition": "<em>be desolated</em>, of Tamar 2 S 13:20." },
-            { "num": "2", "definition": "<em>be appalled, awestruck</em>, Lv 26:32 (H)." }
-          ] }
-        ]
-      },
-      "parent_lexicon_details": { "name": "BDB Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs" }
-    },
-    {
-      "headword": "שָׁמֵם",
-      "parent_lexicon": "BDB Dictionary",
-      "all_cited": true,
-      "rid": "bdb-shamem-adj",
-      "content": { "senses": [ { "definition": "<strong>adj.</strong> <em>devastated</em>;—<span dir=\"rtl\">שׁ׳</span> of sanctuary Dn 9:17." } ] },
-      "parent_lexicon_details": { "name": "BDB Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs" }
-    },
-    {
-      "headword": "שׂוּם",
-      "alt_headwords": ["שִׂים"],
-      "parent_lexicon": "BDB Aramaic Dictionary",
-      "language_code": "arc",
-      "rid": "bdb-arc-sum",
-      "content": {
-        "senses": [
-          { "definition": "<strong>vb.</strong> <em>set, make</em> (v. BH);—" },
-          { "grammar": { "verbal_stem": "Pe." }, "definition": "Pf. 3 ms. <span dir=\"rtl\">שָׂם</span> Ezr 5:3 +." }
-        ]
-      },
-      "parent_lexicon_details": { "name": "BDB Aramaic Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs" }
-    },
-    {
-      "headword": "שֵׁם",
-      "parent_lexicon": "Klein Dictionary",
-      "ordinal": "I",
-      "rid": "kl-shem-1",
-      "language_code": "heb",
-      "content": {
-        "morphology": "m.n.",
-        "senses": [
-          { "number": "1", "definition": "name, designation." },
-          { "number": "2", "definition": "reputation, renown, fame." },
-          { "number": "3", "definition": "name, as designation of God." }
-        ]
-      },
-      "parent_lexicon_details": { "name": "Klein Dictionary", "source": "Klein Dictionary", "attribution": "Ezra Klein" }
-    }
+    {"headword": "שָׁם", "parent_lexicon": "Klein Dictionary", "content": {"morphology": "adv.", "senses": [{"definition": "(after verbs of motion <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_שָֽׁמָּה.1\" data-ref=\"Klein Dictionary, שָֽׁמָּה 1\">שָֽׁמָּה</a>)"}, {"definition": "there, thither.", "number": "1"}, {"definition": "existing, in existence (under the influence of Arabic).", "number": "2"}]}, "rid": "U01216", "notes": "[Related to OSAram. <span dir=\"rtl\">אשם</span>, BAram. <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_תֻּמָּה.1\" data-ref=\"Klein Dictionary, תֻּמָּה 1\">תַּמָּה</a>, Ugar. <i>tm</i>, Arab. <i>thamma</i> (= there, thither). …]", "parent_lexicon_details": {"name": "Klein Dictionary", "language": "heb.modern", "to_language": "eng", "text_categories": [], "source": "Klein Dictionary", "attribution": "Ezra Klein", "index_title": "Klein Dictionary", "version_title": "Carta Jerusalem; 1st edition, 1987", "version_lang": "en", "should_autocomplete": true}},
+    {"headword": "שׂוּם", "parent_lexicon": "BDB Augmented Strong", "content": {"morphology": "v", "senses": [{"definition": "to put,  place,  set,  appoint,  make", "senses": [{"senses": [{"definition": "to put,  set,  lay,  put or lay upon,  lay (violent) hands on"}, {"definition": "to set,  direct,  direct toward", "senses": [{"definition": "to extend (compassion) (fig)"}]}, {"definition": "to set,  ordain,  establish,  found,  appoint,  constitute, make,  determine,  fix"}], "grammar": {"verbal_stem": "Qal"}}, {"definition": " to set or make for a sign", "grammar": {"verbal_stem": "Hiphil"}}, {"definition": " to be set", "grammar": {"verbal_stem": "Hophal"}}]}]}, "strong_number": "7760", "transliteration": "sûwm", "pronunciation": "soom", "language_code": "heb", "parent_lexicon_details": {"name": "BDB Augmented Strong", "language": "heb.biblical", "to_language": "eng", "text_categories": ["Tanakh, Torah", "Tanakh, Prophets", "Tanakh, Writings"], "source": "Open Scriptures on GitHub", "source_url": "https://github.com/openscriptures/strongs", "attribution": "Based on the work of Larry Pierce at the Online Bible"}},
+    {"headword": "שׂוּם", "parent_lexicon": "BDB Augmented Strong", "content": {"morphology": "v", "senses": [{"definition": "to set,  make,  appoint", "senses": [{"senses": [{"definition": "to make,  make decree,  setout (decree)"}, {"definition": "to make,  appoint"}, {"definition": "to set,  fix"}], "grammar": {"verbal_stem": "P'al"}}, {"definition": "(Ithp'al) to be made,  be set,  be laid"}]}]}, "strong_number": "7761", "transliteration": "sûwm", "pronunciation": "soom", "language_code": "arc", "parent_lexicon_details": {"name": "BDB Augmented Strong", "language": "heb.biblical", "to_language": "eng", "attribution": "Based on the work of Larry Pierce at the Online Bible"}},
+    {"headword": "שָׁם", "parent_lexicon": "BDB Augmented Strong", "content": {"morphology": "adv", "senses": [{"definition": "there,  thither", "senses": [{"definition": "there"}, {"definition": "thither (after verbs of motion)"}, {"definition": "from there,  thence"}, {"definition": "then (as an adverb of time)"}]}]}, "strong_number": "8033", "transliteration": "shâm", "pronunciation": "shawm", "language_code": "heb", "parent_lexicon_details": {"name": "BDB Augmented Strong", "language": "heb.biblical", "to_language": "eng", "attribution": "Based on the work of Larry Pierce at the Online Bible"}},
+    {"headword": "שֵׁם", "parent_lexicon": "BDB Augmented Strong", "content": {"morphology": "n-m", "senses": [{"definition": "name", "senses": [{"definition": "name"}, {"definition": "reputation,  fame,  glory"}, {"definition": "the Name (as designation of God)"}, {"definition": "memorial,  monument"}]}]}, "strong_number": "8034", "transliteration": "shêm", "pronunciation": "shame", "language_code": "heb", "parent_lexicon_details": {"name": "BDB Augmented Strong", "language": "heb.biblical", "to_language": "eng", "attribution": "Based on the work of Larry Pierce at the Online Bible"}},
+    {"headword": "שֵׁם", "parent_lexicon": "BDB Augmented Strong", "content": {"morphology": "n-pr-m", "senses": [{"definition": "Shem = \"name\""}, {"definition": "the eldest son of Noah and progenitor of the Semitic tribes"}]}, "strong_number": "8035", "transliteration": "Shêm", "pronunciation": "shame", "language_code": "x-pn", "parent_lexicon_details": {"name": "BDB Augmented Strong", "language": "heb.biblical", "to_language": "eng", "attribution": "Based on the work of Larry Pierce at the Online Bible"}},
+    {"headword": "שֻׁם", "parent_lexicon": "BDB Augmented Strong", "content": {"morphology": "n-m", "senses": [{"definition": "name"}]}, "strong_number": "8036", "transliteration": "shum", "pronunciation": "shoom", "language_code": "arc", "parent_lexicon_details": {"name": "BDB Augmented Strong", "language": "heb.biblical", "to_language": "eng", "attribution": "Based on the work of Larry Pierce at the Online Bible"}},
+    {"headword": "שָׁם", "parent_lexicon": "Jastrow Dictionary", "rid": "U01405", "content": {"senses": [{"definition": " (b. h.) <i>there, thither</i>. <a class=\"refLink\" href=\"/Mishnah_Makkot.2.7\" data-ref=\"Mishnah Makkot 2:7\">Macc. II, 7</a> <span dir=\"rtl\">אינו יוצא מִשָּׁם לעולם</span> he dare not go away from there (the city of refuge) all his life time; …—לְשָׁם <i>thither</i>. <a class=\"refLink\" href=\"/Shemot_Rabbah.18.6\" data-ref=\"Shemot Rabbah 18:6\">Ex. R. s. 18</a>; a. fr."}]}, "plural_form": [], "alt_headwords": [], "parent_lexicon_details": {"name": "Jastrow Dictionary", "language": "heb.talmudic", "to_language": "eng", "text_categories": [], "source": "Jastrow Dictionary", "attribution": "Rabbi Marcus Jastrow", "index_title": "Jastrow", "version_title": "London, Luzac, 1903", "version_lang": "en", "should_autocomplete": true}},
+    {"headword": "שֵׁם I", "parent_lexicon": "Jastrow Dictionary", "rid": "U01406", "content": {"senses": [{"definition": " (b. h.) pr. n. m. <i>Shem</i>, son of Noah. <a class=\"refLink\" href=\"/Megillah.9b.4\" data-ref=\"Megillah 9b:4\">Meg. 9ᵇ</a> (ref. to <a class=\"refLink\" href=\"/Genesis.9.27\" data-ref=\"Genesis 9:27\">Gen. IX, 27</a>) <span dir=\"rtl\">דבריו … באהלי שם</span> let the speech of Japheth (Greek) dwell in the tents of Shem; …"}]}, "plural_form": [], "alt_headwords": [], "parent_lexicon_details": {"name": "Jastrow Dictionary", "to_language": "eng", "attribution": "Rabbi Marcus Jastrow"}},
+    {"headword": "שֵׁם II", "parent_lexicon": "Jastrow Dictionary", "rid": "U01407", "language_code": "(b. h.;", "content": {"senses": [{"definition": " v. <a dir=\"rtl\" class=\"refLink\" href=\"/Jastrow,_שׁוּם.1\" data-ref=\"Jastrow, שׁוּם 1\">שׁוּם</a> a. <i>mark, name, title, nature, denomination</i>. <a class=\"refLink\" href=\"/Mishnah_Pesachim.3.3\" data-ref=\"Mishnah Pesachim 3:3\">Pes. III, 3</a> <span dir=\"rtl\">לא תקרא לה שם וכ׳</span> she must not name it (declare it to be Ḥallah) until it is baked. …—Esp. <a dir=\"rtl\" class=\"refLink\" href=\"/Jastrow,_שָׁמֵם.1\" data-ref=\"Jastrow, שָׁמֵם 1\">הַשֵּׁם</a> or <a dir=\"rtl\" class=\"refLink\" href=\"/Jastrow,_שֵׁם.1\" data-ref=\"Jastrow, שֵׁם 1\">שֵׁם</a> <i>the Divine Name, the Tetragrammaton</i>, contradist. to <a dir=\"rtl\" class=\"refLink\" href=\"/Jastrow,_כִּינּוּי.1\" data-ref=\"Jastrow, כִּינּוּי 1\">כינוי</a> attribute; in gen. <i>the Lord</i>. …"}], "morphology": "m."}, "plural_form": ["שֵׁמוֹת", ""], "alt_headwords": [], "parent_lexicon_details": {"name": "Jastrow Dictionary", "to_language": "eng", "attribution": "Rabbi Marcus Jastrow"}},
+    {"headword": "שֵׁם", "parent_lexicon": "Jastrow Dictionary", "rid": "U01408", "language_code": " ch. ", "language_reference": "<a class=\"refLink\" href=\"/Jastrow,_שֵׁם II.1\" data-ref=\"Jastrow, שֵׁם II 1\">same</a>.", "content": {"senses": [{"definition": " <a class=\"refLink\" href=\"/Targum_Jerusalem,_Exodus.31.2\" data-ref=\"Targum Jerusalem, Exodus 31:2\">Targ. Y. II, Ex. XXXI, 2</a>. <a class=\"refLink\" href=\"/Aramaic_Targum_to_Psalms.147.4\" data-ref=\"Aramaic Targum to Psalms 147:4\">Targ. Ps. CXLVII, 4</a>. …—<a class=\"refLink\" href=\"/Sotah.49a.8\" data-ref=\"Sotah 49a:8\">Sot. 49ᵃ</a> <span dir=\"rtl\">יהא שְׁמֵיה רבא</span> (abbrev. <span dir=\"rtl\">יה\"ש\"ר</span>), v. <a dir=\"rtl\" class=\"refLink\" href=\"/Jastrow,_אֲגַדְתָּא.1\" data-ref=\"Jastrow, אֲגַדְתָּא 1\">אֲגַדְתָּא</a>. …"}]}, "plural_form": ["שְׁמָהָן", "שְׁמָהָתָא", "שְׁמַיָּיא", "שְׁמֵי"], "alt_headwords": ["שְׁמָא"], "parent_lexicon_details": {"name": "Jastrow Dictionary", "to_language": "eng", "attribution": "Rabbi Marcus Jastrow"}},
+    {"headword": "שׁום", "parent_lexicon": "Klein Dictionary", "content": {"senses": [{"definition": "to assess, value, evaluate, estimate, appraise."}, {"senses": [{"definition": "he assessed, valued, evaluated, estimated."}], "grammar": {"morphology": "tr. v.", "binyan_form": ["שָׁם"], "verbal_stem": "— Qal", "language_code": "PBH"}}, {"senses": [{"definition": "was assessed, was valued, was evaluated, estimated."}], "grammar": {"binyan_form": ["נִשּׁוֹם"], "verbal_stem": "— Niph.", "language_code": "PBH"}}]}, "rid": "U00454", "derivatives": "Derivatives: <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_שׁוּם ᴵᴵᴵ.1\" data-ref=\"Klein Dictionary, שׁוּם ᴵᴵᴵ 1\">שׁוּם ᴵᴵᴵ</a>, <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_שׁוֹם.1\" data-ref=\"Klein Dictionary, שׁוֹם 1\">שׁוֹם</a>, …", "notes": "[JAram. <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_שׁוּם ᴵ.1\" data-ref=\"Klein Dictionary, שׁוּם ᴵ 1\">שׁוּם</a> (= to assess, value, evaluate, estimate), Arab. <i>sāma</i> (= he offered for sale; he bargained, haggled). …]", "parent_lexicon_details": {"name": "Klein Dictionary", "to_language": "eng", "attribution": "Ezra Klein"}},
+    {"headword": "שׂים", "parent_lexicon": "Klein Dictionary", "content": {"senses": [{"definition": "to put, place, set."}, {"senses": [{"definition": "he put, placed, set, set up;", "number": "1"}, {"definition": "he established, appointed;", "number": "2"}, {"definition": "he settled, fixed;", "number": "3"}], "grammar": {"morphology": "tr. v.", "binyan_form": ["שָׂם"], "verbal_stem": "— Qal"}}, {"senses": [{"definition": "he put, placed."}], "grammar": {"binyan_form": ["הֵשִׂים"], "verbal_stem": "— Hiph."}}, {"senses": [{"definition": "was put, was placed."}], "grammar": {"binyan_form": ["הוּשַׂם"], "verbal_stem": "— Hoph."}}]}, "rid": "U00847", "alt_headwords": ["שׂום"], "derivatives": "Derivatives: <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_שׂום.1\" data-ref=\"Klein Dictionary, שׂום 1\">שׂום</a>, …", "notes": "[Phoen. <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_שֵׁם ᴵ.1\" data-ref=\"Klein Dictionary, שֵׁם ᴵ 1\">שם</a> (= to put, place, set), OAram. … Akka. <i>shamu</i> (= to fix, determine). …]", "parent_lexicon_details": {"name": "Klein Dictionary", "to_language": "eng", "attribution": "Ezra Klein"}},
+    {"headword": "שֵׁם ᴵ", "parent_lexicon": "Klein Dictionary", "content": {"morphology": "m.n.", "senses": [{"plural_form": "(pl. <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_שְׁמוֹת.1\" data-ref=\"Klein Dictionary, שְׁמוֹת 1\">שֵׁמוֹת</a>)", "definition": "name, designation.", "number": "1"}, {"definition": "reputation, renown, fame.", "number": "2"}, {"definition": "name, as designation of God.", "number": "3"}]}, "rid": "U01214", "derivatives": "Derivatives: <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_הַשֵּׁם.1\" data-ref=\"Klein Dictionary, הַשֵּׁם 1\">הַשֵּׁם</a>, <span dir=\"rtl\">בְּשֵׁם</span>, …", "notes": "[Related to BAram. <a dir=\"rtl\" class=\"refLink\" href=\"/Klein Dictionary,_שֵׁם ᴵ.1\" data-ref=\"Klein Dictionary, שֵׁם ᴵ 1\">שֻׁם</a>, … Ugar. <i>shm</i>, Arab. <i>ism, usm, sim</i>, Ethiop. <i>sem</i>, Akka. <i>shumu</i> (= name). …]", "parent_lexicon_details": {"name": "Klein Dictionary", "to_language": "eng", "attribution": "Ezra Klein"}},
+    {"headword": "שֵׁם ᴵᴵ", "parent_lexicon": "Klein Dictionary", "content": {"senses": [{"definition": "PN Shem — the name of one of Noah’s sons (<a class=\"refLink\" href=\"/Genesis.10.21-30\" data-ref=\"Genesis 10:21-30\">Gen. 10:21–30</a>)."}]}, "rid": "U01215", "parent_lexicon_details": {"name": "Klein Dictionary", "to_language": "eng", "attribution": "Ezra Klein"}},
+    {"headword": "שׂוּם", "parent_lexicon": "BDB Dictionary", "content": {"senses": [{"definition": "<strong>vb.</strong> put, place, set <strong>(</strong>cf. Nö<sup>ZMG xxxvii (1883), 532</sup>; NH <span dir=\"rtl\">סוּם</span> Pi. <em>designate, fix</em>, … Old Aramaic <span dir=\"rtl\">שים</span><strong>)</strong>;—"}, {"senses": [{"definition": "Pf. 3 ms. <span dir=\"rtl\">שָׂם</span> <a data-ref=\"Genesis 21:14\" href=\"/Genesis.21.14\">Gn 21:14</a> + …;—<em>put, set</em> (often ‖ <span dir=\"rtl\">נָתָן</span> <strong>2</strong>, q.v.), c. acc. pers. vel rei (expr. or impl.):"}, {"senses": [{"senses": [{"definition": "<em>put, set</em>, in a place, + <span dir=\"rtl\">שָׁם</span> <a data-ref=\"Genesis 2:8\" href=\"/Genesis.2.8\">Gn 2:8</a> (J), + acc. loc. <a data-ref=\"Genesis 28:11\" href=\"/Genesis.28.11\">28:11</a> (E) …"}], "num": "a."}, {"senses": [{"definition": "<em>put</em> something <em>upon</em> <span dir=\"rtl\">(עַל)</span> <a data-ref=\"Numbers 21:8\" href=\"/Numbers.21.8\">Nu 21:8</a>, <a data-ref=\"Numbers 21:9\" href=\"/Numbers.21.9\">9</a> (E) + often; … turban <a data-ref=\"Zechariah 3:5\" href=\"/Zechariah.3.5\">Zc 3:5</a><sup>(×2)</sup>; …"}], "num": "b."}], "num": "1."}, {"senses": [{"definition": "<em>set, direct:</em>"}, {"senses": [{"definition": "sword against <span dir=\"rtl\">(ב)</span> <a data-ref=\"Judges 7:22\" href=\"/Judges.7.22\">Ju 7:22</a>; fig. <em>extend</em> compassion, ל pers. <a data-ref=\"Isaiah 47:6\" href=\"/Isaiah.47.6\">Is 47:6</a>"}], "num": "a."}], "num": "2."}], "form": "Qal"}, {"senses": [{"definition": "Pf. 1 s. consec. <span dir=\"rtl\">וַהֲשִׂמֹתִיהוּ</span> <a data-ref=\"Ezekiel 14:8\" href=\"/Ezekiel.14.8\">Ez 14:8</a>, acc. pers. + ל, <em>I will make him for a sign</em> …"}], "all_cited": true, "form": "Hiph."}, {"senses": [{"definition": "Impf. 3 ms. <span dir=\"rtl\">וַיּוּשַׂם</span> <a data-ref=\"Genesis 24:33\" href=\"/Genesis.24.33\">Gn 24:33</a> Qr … <em>there was set before him</em> <span dir=\"rtl\">(לְפָנָיו)</span> <em>to eat</em> …"}], "all_cited": true, "form": "Hoph."}]}, "rid": "BDB09640", "strong_numbers": ["7760", "7760", "7761", "7787"], "ordinal": "I.", "alt_headwords": [{"word": "שִׂים"}, {"word": "", "occurences": "582"}], "root": true, "parent_lexicon_details": {"name": "BDB Dictionary", "language": "heb.biblical", "to_language": "eng", "text_categories": [], "source": "BDB Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs", "index_title": "BDB", "version_lang": "en", "should_autocomplete": true}},
+    {"headword": "שׂוּמָה", "parent_lexicon": "BDB Dictionary", "content": {"senses": [{"definition": "(van d. H. <span dir=\"rtl\">שׂימה</span> Kt) perhaps <strong>n.f. token of unluckiness, scowl</strong>;—<a data-ref=\"II Samuel 13:32\" href=\"/II_Samuel.13.32\">2 S 13:82</a>, so Ew<sup>G iii. 234, H. 172</sup> (abbrev. from <span dir=\"rtl\">שׂמאל</span>; or emend. <span dir=\"rtl\">שִׂטְמָה</span>) We RS<sup>Ency. Brit. (9) DAVID</sup> Kit, cf. Dr HPS."}]}, "rid": "BDB09644", "strong_numbers": ["7760"], "all_cited": true, "parent_lexicon_details": {"name": "BDB Dictionary", "to_language": "eng", "attribution": "F. Brown, S. Driver & C. Briggs"}},
+    {"headword": "שִׂים", "parent_lexicon": "BDB Dictionary", "content": {"senses": [{"definition": "etc., v. <a data-ref=\"BDB, שׂוּם\" href=\"/BDB,_שׂוּם\", dir=\"rtl\">I</a>, <a data-ref=\"BDB, שׂום\" href=\"/BDB,_שׂום\", dir=\"rtl\">II. שׂום</a>."}]}, "rid": "BDB09684", "strong_numbers": ["7760", "7761", "7787"], "ordinal": "I, II.", "alt_headwords": [{"word": "שִׂימָה"}], "parent_lexicon_details": {"name": "BDB Dictionary", "to_language": "eng", "attribution": "F. Brown, S. Driver & C. Briggs"}},
+    {"headword": "שָׁם", "parent_lexicon": "BDB Dictionary", "content": {"senses": [{"definition": "<strong>adv. there, thither (</strong>Arabic <span dir=\"rtl\">ثَمَّ</span> <em>there</em>, cf. <span dir=\"rtl\">ثُمَّ</span> <em>then;</em> Biblical Aramaic <span dir=\"rtl\">תַּמָּה</span>, …<strong>)</strong>;—"}, {"senses": [{"senses": [{"definition": "<em>there</em> <a data-ref=\"Genesis 2:8\" href=\"/Genesis.2.8\">Gn 2:8</a>, <a data-ref=\"Genesis 2:12\" href=\"/Genesis.2.12\">12</a>; … + often; …"}], "num": "a."}, {"senses": [{"definition": "preceded by the rel., <span dir=\"rtl\">אֲשֶׁר שָׁם</span> <em>where</em>, <a data-ref=\"Genesis 2:11\" href=\"/Genesis.2.11\">Gn 2:11</a>; …"}], "num": "b."}], "num": "1."}, {"senses": [{"definition": "<em>thither</em>, after vbs. of motion (= <span dir=\"rtl\">שָׁ֫מָּה</span>, v. <strong>3</strong>) <a data-ref=\"Deuteronomy 1:37\" href=\"/Deuteronomy.1.37\">Dt 1:37</a> <span dir=\"rtl\">לֹא תָבֹא שָׁם</span>, …"}], "num": "2."}]}, "rid": "BDB10311", "strong_numbers": ["3074", "8033"], "root": true, "parent_lexicon_details": {"name": "BDB Dictionary", "to_language": "eng", "attribution": "F. Brown, S. Driver & C. Briggs"}},
+    {"headword": "שֵׁם", "parent_lexicon": "BDB Dictionary", "content": {"senses": [{"definition": "<strong>n.m.</strong> <a data-ref=\"II Samuel 7:9\" href=\"/II_Samuel.7.9\">2 S 7:9</a> <strong>name (</strong>√ unknown; Thes <span dir=\"rtl\">שׁמה</span>, cf. Ba<sup>ZMG xii (1887), 635</sup>; … Assyrian <em>šumu;</em> …<strong>)</strong>;—abs. <span dir=\"rtl\">שׁ׳</span> <a data-ref=\"Genesis 6:4\" href=\"/Genesis.6.4\">Gn 6:4</a> +; …;—<em>name:</em>"}, {"senses": [{"definition": "of river <a data-ref=\"Genesis 2:11\" href=\"/Genesis.2.11\">Gn 2:11</a>, <a data-ref=\"Genesis 2:13\" href=\"/Genesis.2.13\">13</a>, <a data-ref=\"Genesis 2:14\" href=\"/Genesis.2.14\">14</a>, beasts v <a data-ref=\"Genesis 2:19\" href=\"/Genesis.2.19\">19</a>, <a data-ref=\"Genesis 2:20\" href=\"/Genesis.2.20\">20</a>, city <a data-ref=\"Genesis 26:33\" href=\"/Genesis.26.33\">26:33</a> (all J) +; …"}], "num": "1."}, {"senses": [{"senses": [{"definition": "usually of pers.: <a data-ref=\"Genesis 4:17\" href=\"/Genesis.4.17\">Gn 4:17</a>, <a data-ref=\"Genesis 4:19\" href=\"/Genesis.4.19\">19</a><sup>(×2)</sup> (J) +; …"}], "num": "a."}, {"senses": [{"definition": "= <em>reputation;</em> (1) <span dir=\"rtl\">וַאֲגַדְּלָה שְׁמֶ֑ךָ</span> <a data-ref=\"Genesis 12:2\" href=\"/Genesis.12.2\">Gn 12:2</a> (J), …"}], "num": "b."}], "num": "2."}, {"senses": [{"definition": "<em>name</em>, as designation of God, specif. of <span dir=\"rtl\">י׳</span> (especially Je Ez <a data-ref=\"Isaiah 2\" href=\"/Isaiah.2\">Is 2</a>, <a data-ref=\"Isaiah 3\" href=\"/Isaiah.3\">3</a> ψψ):— …"}], "num": "3."}]}, "rid": "BDB10312", "strong_numbers": ["8034", "8035"], "ordinal": "I.", "occurrences": "864", "parent_lexicon_details": {"name": "BDB Dictionary", "to_language": "eng", "attribution": "F. Brown, S. Driver & C. Briggs"}},
+    {"headword": "שֵׁם²", "parent_lexicon": "BDB Dictionary", "content": {"senses": [{"definition": "<strong>n.pr.m.</strong> first son of Noah;—<a data-ref=\"Genesis 5:32\" href=\"/Genesis.5.32\">Gn 5:32</a>; <a data-ref=\"Genesis 6:10\" href=\"/Genesis.6.10\">6:10</a>; <a data-ref=\"Genesis 7:13\" href=\"/Genesis.7.13\">7:13</a>; …; Σημ."}]}, "rid": "BDB10313", "strong_numbers": ["8034", "8035"], "all_cited": true, "ordinal": "II.", "parent_lexicon_details": {"name": "BDB Dictionary", "to_language": "eng", "attribution": "F. Brown, S. Driver & C. Briggs"}},
+    {"headword": "שׂוּם", "parent_lexicon": "BDB Aramaic Dictionary", "content": {"senses": [{"definition": "<strong>vb. set, make (</strong>v. BH; for Pers. infl. on usage cf. Scheft<sup>65</sup><strong>)</strong>;—"}, {"senses": [{"definition": "Pf. 3 ms. <span dir=\"rtl\">שָׂם</span> <a data-ref=\"Ezra 5:3\" href=\"/Ezra.5.3\">Ezr 5:3</a> +, …;—"}, {"senses": [{"definition": "<em>make</em>, acc. <span dir=\"rtl\">טְעֵם</span> = <em>make decree</em> <a data-ref=\"Daniel 3:10\" href=\"/Daniel.3.10\">Dn 3:10</a>; …"}], "num": "1."}, {"senses": [{"definition": "<em>make, appoint</em>, one’s name <a data-ref=\"Daniel 5:12\" href=\"/Daniel.5.12\">Dn 5:12</a> (2 acc.), one to office <a data-ref=\"Ezra 5:14\" href=\"/Ezra.5.14\">Ezr 5:14</a> (2 acc.)."}], "num": "2."}], "form": "Pe."}, {"senses": [{"definition": "<em>be made:</em> Impf. 3 ms. <span dir=\"rtl\">יִתְּשָׂם</span> <a data-ref=\"Ezra 4:21\" href=\"/Ezra.4.21\">Ezr 4:21</a> …"}], "form": "Hithpe."}]}, "rid": "BDBA0748", "strong_numbers": ["7760", "7760", "7761", "7787"], "brackets": "first_word", "alt_headwords": [{"word": "שִׂים"}], "root": true, "parent_lexicon_details": {"name": "BDB Aramaic Dictionary", "language": "ara.biblical", "to_language": "eng", "source": "BDB Dictionary", "attribution": "F. Brown, S. Driver & C. Briggs", "index_title": "BDB Aramaic"}},
+    {"headword": "שֻׁם", "parent_lexicon": "BDB Aramaic Dictionary", "content": {"senses": [{"definition": "<strong>n.m. name (</strong>v. BH <span dir=\"rtl\">שֵׁם</span><strong>)</strong>;—cstr. <span dir=\"rtl\">שׁ׳</span> <a data-ref=\"Ezra 5:1\" href=\"/Ezra.5.1\">Ezr 5:1</a> +; …;—<em>name</em>, dei: <a data-ref=\"Daniel 2:20\" href=\"/Daniel.2.20\">Dn 2:20</a>; …"}]}, "rid": "BDBA0797", "strong_numbers": ["8036"], "all_cited": true, "brackets": "first_word", "parent_lexicon_details": {"name": "BDB Aramaic Dictionary", "language": "ara.biblical", "to_language": "eng", "attribution": "F. Brown, S. Driver & C. Briggs"}},
+    {"headword": "שֵׁם", "parent_lexicon": "Ben Yehuda Dictionary", "content": {"definition": ["<p><sup class=\"footnote-marker\">1</sup><i class=\"footnote\">[המלה משֻתפת לכל השפות השמיות. וכן בכנענ' שם, ארמ' שם, … ערב' אשְׂמ اسم, … כגון אֶסְמַ (יען) בכוש', <i>ועוד</i> …]</i>, ש\"ז, סמ' שֵׁם, שֶׁם, כנ' שְׁמִי, שְׁמֵנוּ, … — א) מלה המשמשת ציון לסוג מסוגי הדברים והמֻשגים, Benennung; dénomination: ויצר יי' אלהים מן האדמה כל חית השדה … (<span class=\"by-source\">בראש' ב יט</span>). — וביחוד ב) מלה המשמשת ציון לפרט שבבני אדם, … Name; nom; name: …</p>"]}, "rid": "BY-20364", "page_num": 7201, "parent_lexicon_details": {"name": "Ben Yehuda Dictionary", "language": "heb", "to_language": "heb", "text_categories": [], "source": "Project Ben-Yehuda", "source_url": "https://www.benyehuda.org/", "attribution": "Eliezer Ben-Yehuda", "index_title": "Ben Yehuda Dictionary", "version_title": "Ben Yehuda Dictionary", "version_lang": "he", "should_autocomplete": true}},
+    {"headword": "שָׁם", "parent_lexicon": "Ben Yehuda Dictionary", "content": {"definition": ["<p><sup class=\"footnote-marker\">1</sup><i class=\"footnote\">[גם בכתבות כנעניות ובכתבת משע מלך מואב וכן בכתבות ארמיות קדומות שם, … ובערב' על יד מלה זו גם תֻ'מַּ ثم במשמ' הזמן, אז, אחר כך. …]</i>, תה\"פ המורה על מקום מרֻחק, במקום ההוא, dort; là bas; there: ויטע יי' אלהים גן בעדן מקדם וישם שָׁם את האדם אשר יצר <span class=\"by-source\">בראש' ב ח</span>. …</p>"]}, "rid": "BY-20365", "page_num": 7213, "parent_lexicon_details": {"name": "Ben Yehuda Dictionary", "language": "heb", "to_language": "heb", "attribution": "Eliezer Ben-Yehuda"}}
   ]
 }

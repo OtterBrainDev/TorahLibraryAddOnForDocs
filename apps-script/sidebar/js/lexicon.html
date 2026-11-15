@@ -21,8 +21,15 @@ function lexiconWordEntries(word) {
   return word && Array.isArray(word.entries) ? word.entries : [];
 }
 
+// "Klein I", "BDB II", "Strong's 8034".
 function lexiconEntryLabel(entry) {
-  return [entry && entry.dictionary || 'Dictionary', entry && entry.ordinal].filter(Boolean).join(' ');
+  return [entry && entry.dictionary || 'Dictionary', entry && (entry.ordinal || entry.strongNumber)].filter(Boolean).join(' ');
+}
+
+// The same with the dictionary's full name, as the document credits it
+// (lexiconEntryLabel_ in server/lexicon.gs).
+function lexiconEntryCredit(entry) {
+  return [entry.lexiconName || entry.dictionary, entry.ordinal || entry.strongNumber].filter(Boolean).join(' ');
 }
 
 // "Klein · BDB ×2"
@@ -87,7 +94,7 @@ function renderLexiconWordRow(word, selectedClass) {
         " aria-label='" + starTitle + "' title='" + starTitle + "'>" + (bookmarked ? '⭐' : '☆') + "</button>" +
     "</div>" +
     (gloss
-      ? "<div class='lexicon-row-gloss'>" + escapeHTML(gloss) + "</div>"
+      ? "<div class='lexicon-row-gloss' dir='auto'>" + escapeHTML(gloss) + "</div>"
       : "<div class='lexicon-row-gloss lexicon-row-gloss--unavailable'>No definition to preview</div>") +
     "<div class='lexicon-row-chips'>" + chips + "</div>" +
     "</li>";
@@ -275,7 +282,7 @@ function renderLexiconEntryPicker(focusId) {
           (entry.morphology ? "<span class='lexicon-entry-morph'>" + escapeHTML(entry.morphology) + "</span>" : '') +
           (entry.language ? "<span class='lexicon-chip'>" + escapeHTML(entry.language) + "</span>" : '') +
         "</span>" +
-        (entry.gloss ? "<span class='lexicon-entry-gloss'>" + escapeHTML(entry.gloss) + "</span>" : '') +
+        (entry.gloss ? "<span class='lexicon-entry-gloss' dir='auto'>" + escapeHTML(entry.gloss) + "</span>" : '') +
       "</span>" +
       "</li>";
   });
@@ -415,13 +422,16 @@ function renderLexiconSenses(senses, depth) {
 function renderLexiconEntryCard(entry, index, count) {
   var alternates = (entry.alternateHeadWords || []).filter(Boolean);
   var notes = entry.notes ? "<div class='lexicon-card-note'>" + sanitizeSourceHtml(entry.notes) + "</div>" : '';
+  // Klein's own text starts "Derivatives:" (or "Derivative:").
+  var derivativesLabelled = /^derivatives?:/i.test(lexiconPlainText(entry.derivatives));
   var derivatives = entry.derivatives
-    ? "<div class='lexicon-card-note'><span class='lexicon-card-note-label'>Derivatives:</span> " + sanitizeSourceHtml(entry.derivatives) + "</div>"
+    ? "<div class='lexicon-card-note'>" + (derivativesLabelled ? '' : "<span class='lexicon-card-note-label'>Derivatives:</span> ") + sanitizeSourceHtml(entry.derivatives) + "</div>"
     : '';
   var isLong = lexiconEntryIsLong(entry);
   var credit = [entry.lexiconName || entry.dictionary, entry.credit].filter(Boolean).join(' · ');
 
-  return "<article class='lexicon-card" + (isLong ? ' is-long' : '') + "' data-entry-id='" + escapeHTML(entry.id) + "'>" +
+  // Ben-Yehuda defines in Hebrew: its senses read right to left.
+  return "<article class='lexicon-card" + (isLong ? ' is-long' : '') + (entry.definitionsRtl ? ' is-rtl' : '') + "' data-entry-id='" + escapeHTML(entry.id) + "'>" +
     "<header class='lexicon-card-head'>" +
       (count > 1 ? "<span class='lexicon-card-order' aria-label='Inserted " + (index + 1) + " of " + count + "'>" + (index + 1) + "</span>" : '') +
       "<span class='lexicon-card-dict'>" + escapeHTML(lexiconEntryLabel(entry)) + "</span>" +
@@ -505,14 +515,14 @@ function lexiconPlainTextForCopy(entries, mode) {
   var lines = [];
   if (mode !== 'definition') lines.push(entries[0].headWord || '');
   if (mode === 'headword') {
-    lines.push(entries.map(function (entry) { return [entry.lexiconName || entry.dictionary, entry.ordinal].filter(Boolean).join(' '); }).join('; '));
+    lines.push(entries.map(lexiconEntryCredit).join('; '));
     return lines.join('\n');
   }
   entries.forEach(function (entry, i) {
     if (i > 0) lines.push('');
     if (mode === 'entry') {
       var alternates = (entry.alternateHeadWords || []).filter(Boolean);
-      lines.push([[entry.lexiconName || entry.dictionary, entry.ordinal].filter(Boolean).join(' '),
+      lines.push([lexiconEntryCredit(entry),
         entry.morphologyInDefinition ? '' : entry.morphology,
         alternates.length ? 'also ' + alternates.join(', ') : ''].filter(Boolean).join(' · '));
     }
@@ -525,7 +535,10 @@ function lexiconPlainTextForCopy(entries, mode) {
     })(entry.senses, 0);
     if (mode === 'entry') {
       if (entry.notes) lines.push(lexiconPlainText(entry.notes));
-      if (entry.derivatives) lines.push('Derivatives: ' + lexiconPlainText(entry.derivatives));
+      if (entry.derivatives) {
+        var derivativesText = lexiconPlainText(entry.derivatives);
+        lines.push(/^derivatives?:/i.test(derivativesText) ? derivativesText : 'Derivatives: ' + derivativesText);
+      }
     }
   });
   return lines.join('\n');

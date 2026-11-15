@@ -108,9 +108,12 @@ function load({ typography, fetched } = {}) {
 const plain = (value) => JSON.parse(JSON.stringify(value));
 const lineOf = (item) => (item.text !== undefined ? item.text : item.runs.map((r) => r.text).join(''));
 
+const label = (e) => [e.dictionary, e.ordinal || e.strongNumber].filter(Boolean).join(' ');
 function shemEntries(lex) {
-  const [klein, bdb1, bdb2] = plain(lex.groupLexiconEntries_(SHEM, 'שם'))[0].entries;
-  return { klein, bdb1, bdb2 };
+  const words = plain(lex.groupLexiconEntries_(SHEM, 'שם'));
+  const pick = (headWord, wanted) => words.find((w) => w.headWord === headWord).entries.find((e) => label(e) === wanted);
+  return { klein: pick('שֵׁם', 'Klein I'), bdb1: pick('שֵׁם', 'BDB I'), bdb2: pick('שֵׁם', 'BDB II'),
+    strongs: pick('שֵׁם', "Strong's 8034"), sum: pick('שׂוּם', 'BDB I') };
 }
 
 test('Full entry: the word once, then each picked entry in the order picked', () => {
@@ -121,35 +124,36 @@ test('Full entry: the word once, then each picked entry in the order picked', ()
     ['headword', 0, 'שֵׁם'],
     // BDB's part of speech opens its definition: not repeated on this line.
     ['meta', 0, 'BDB Dictionary I'],
-    ['sense', 0, 'n.m. 2 S 7:9 name (√ unknown; Assyrian šumu);—abs. שׁ׳ Gn 6:4 +;—name:'],
-    ['sense', 0, '1. of river Gn 2:11, 13, 14, beasts v 19, 20, city 26:33 (all J) +.'],
+    ['sense', 0, 'n.m. 2 S 7:9 name (√ unknown; Thes שׁמה, cf. BaZMG xii (1887), 635; … Assyrian šumu; …);—abs. שׁ׳ Gn 6:4 +; …;—name:'],
+    ['sense', 0, '1. of river Gn 2:11, 13, 14, beasts v 19, 20, city 26:33 (all J) +; …'],
     ['sense', 0, '2.'],
-    ['sense', 1, 'a. usually of pers.: Gn 4:17, 19(×2) (J) +.'],
-    ['sense', 1, 'b. = reputation; (1) וַאֲגַדְּלָה שְׁמֶ֑ךָ Gn 12:2 (J).'],
-    ['sense', 0, '3. name, as designation of God, specif. of י׳.'],
+    ['sense', 1, 'a. usually of pers.: Gn 4:17, 19(×2) (J) +; …'],
+    ['sense', 1, 'b. = reputation; (1) וַאֲגַדְּלָה שְׁמֶ֑ךָ Gn 12:2 (J), …'],
+    ['sense', 0, '3. name, as designation of God, specif. of י׳ (especially Je Ez Is 2, 3 ψψ):— …'],
     ['blank', 0, ''],
     ['meta', 0, 'Klein Dictionary I · m.n.'],
-    ['sense', 0, '1. name, designation.'],
+    ['sense', 0, '1. (pl. שֵׁמוֹת) name, designation.'],
     ['sense', 0, '2. reputation, renown, fame.'],
     ['sense', 0, '3. name, as designation of God.'],
-    ['notes', 0, '[Related to BAram. שֻׁם, Aram. שֵׁם, שְׁמָא, שׁוּם, Ugar. shm, Arab. ism, usm, sim, Akka. shumu (= name).]'],
-    ['notes', 0, 'Derivatives: הַשֵּׁם, בְּשֵׁם, כְּשֵׁם, לְשֵׁם, שֵׁמוֹן'],
+    ['notes', 0, '[Related to BAram. שֻׁם, … Ugar. shm, Arab. ism, usm, sim, Ethiop. sem, Akka. shumu (= name). …]'],
+    // Klein's text says "Derivatives:" itself.
+    ['notes', 0, 'Derivatives: הַשֵּׁם, בְּשֵׁם, …'],
   ]);
 });
 
 test('Word + ref is the word and the dictionaries; Definition is the senses alone', () => {
   const { lex } = load();
-  const { klein, bdb2 } = shemEntries(lex);
-  assert.deepEqual(plain(lex.planLexiconInsertion_([klein, bdb2], 'headword')).map(lineOf),
-    ['שֵׁם', 'Klein Dictionary I; BDB Dictionary II']);
+  const { klein, bdb2, strongs } = shemEntries(lex);
+  assert.deepEqual(plain(lex.planLexiconInsertion_([klein, bdb2, strongs], 'headword')).map(lineOf),
+    ['שֵׁם', 'Klein Dictionary I; BDB Dictionary II; BDB Augmented Strong 8034']);
   const definition = plain(lex.planLexiconInsertion_([klein, bdb2], 'definition'));
   assert.deepEqual(definition.map((p) => p.kind), ['sense', 'sense', 'sense', 'blank', 'sense']);
-  assert.equal(lineOf(definition[4]), 'n.pr.m. first son of Noah;—Gn 5:32; 6:10; 7:13; Σημ.');
+  assert.equal(lineOf(definition[4]), 'n.pr.m. first son of Noah;—Gn 5:32; 6:10; 7:13; …; Σημ.');
 });
 
 test('a stem heads its sub-senses, which are indented under it', () => {
   const { lex } = load();
-  const sum = plain(lex.groupLexiconEntries_(SHEM, 'שם'))[1].entries[0];
+  const { sum } = shemEntries(lex);
   const plan = plain(lex.planLexiconInsertion_([sum], 'entry'));
   assert.deepEqual(plan.map((p) => [p.depth || 0, lineOf(p).slice(0, 14)]), [
     [0, 'שׂוּם'],
@@ -162,6 +166,7 @@ test('a stem heads its sub-senses, which are indented under it', () => {
     [1, '2. set, direct'],
     [2, 'a. sword again'],
     [0, '†Hiph. Pf. 1 s'],
+    [0, '†Hoph. Impf. 3'],
   ]);
   assert.equal(lineOf(plan[1]), 'BDB Dictionary I · also שִׂים');
   // The stem is bold, as in the printed dictionary.
@@ -182,8 +187,7 @@ test('Sefaria\'s markup becomes bold, italic and superscript runs; other tags ke
 
 test('Add Entry writes the plan: heading, indents, and the entry\'s own emphasis', () => {
   const { lex, paragraphs } = load({ typography: { roles: { hebrew: { font: '', size: 14, style: 'normal' }, translation: { font: 'Georgia', size: 11, style: 'normal' } } } });
-  const { klein, bdb1 } = shemEntries(lex);
-  const sum = plain(lex.groupLexiconEntries_(SHEM, 'שם'))[1].entries[0];
+  const { klein, bdb1, sum } = shemEntries(lex);
   const result = plain(lex.insertLexiconEntry({ insertMode: 'entry', headWord: 'שֵׁם', entries: [klein, bdb1] }));
   assert.deepEqual(result, { ok: true, inserted: 2 });
 
@@ -194,7 +198,7 @@ test('Add Entry writes the plan: heading, indents, and the entry\'s own emphasis
   assert.ok(written.slice(1).every((p) => p.heading === 'NORMAL'));
   const reputation = written.find((p) => p.text.startsWith('b. = reputation'));
   assert.equal(reputation.indentStart, 18);
-  assert.ok(reputation.italic.includes('reputation'));
+  assert.ok(reputation.italic.includes('reputation;'));
   assert.ok(written.find((p) => p.text.startsWith('n.m.')).bold.includes('n.m.'));
 
   // Superscript and the stem label, in a second insert.
@@ -202,6 +206,7 @@ test('Add Entry writes the plan: heading, indents, and the entry\'s own emphasis
   again.lex.insertLexiconEntry({ insertMode: 'entry', entries: [sum] });
   const lines = again.paragraphs();
   assert.ok(lines.find((p) => p.text.startsWith('vb.')).sup.includes('ZMG xxxvii (1883), 532'));
+  assert.ok(lines.find((p) => p.text.startsWith('vb.')).bold.includes('vb.'));
   assert.ok(lines.find((p) => p.text.startsWith('Qal')).bold.includes('Qal '));
 });
 
@@ -214,9 +219,8 @@ test('the translation\'s Commentary "Drop" never deletes a definition\'s plain w
   const { bdb2 } = shemEntries(lex);
   // "n.pr.m." is bold; the rest is not.
   lex.insertLexiconEntry({ insertMode: 'definition', entries: [bdb2] });
-  assert.deepEqual(paragraphs().map((p) => p.text), ['n.pr.m. first son of Noah;—Gn 5:32; 6:10; 7:13; Σημ.']);
+  assert.deepEqual(paragraphs().map((p) => p.text), ['n.pr.m. first son of Noah;—Gn 5:32; 6:10; 7:13; …; Σημ.']);
   assert.deepEqual(paragraphs()[0].bold, ['n.pr.m.']);
-  assert.deepEqual(paragraphs()[0].italic, ['first son of Noah']);
 });
 
 test('an older sidebar\'s one Sefaria-shaped entry still inserts', () => {
