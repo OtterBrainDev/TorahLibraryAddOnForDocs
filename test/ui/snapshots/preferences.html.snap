@@ -985,6 +985,22 @@
             </div>
           </details>
 
+          <details class="section-card section-accordion" id="lexicon-dictionary-order" name="lexicon-dictionary-order" open>
+            <summary class="section-card-summary"><span>Lexicon Dictionaries</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Choose the order a word's entries are listed in the Lexicon tab, and hide the dictionaries you don't use. A hidden dictionary can still be shown for a single search from its chip over the Lexicon's results.</p>
+              <div class="subsection-card">
+                <ol class="corpus-order-list" id="lexicon-dictionary-order-list" aria-label="Dictionary order for the Lexicon"></ol>
+                <div class="corpus-order-footer">
+                  <div class="mini-help">Drag a row, or use its arrows, to reorder. A dictionary not listed here comes last.</div>
+                  <button type="button" class="small-button" id="lexicon-dictionary-order-reset">Reset order &amp; visibility</button>
+                </div>
+                <input type="hidden" id="lexicon_dictionary_order" name="lexicon_dictionary_order" value="[]">
+                <input type="hidden" id="lexicon_dictionary_excluded" name="lexicon_dictionary_excluded" value="[]">
+              </div>
+            </div>
+          </details>
+
           <details class="section-card section-accordion" id="search-translation-languages" name="search-translation-languages" open>
             <summary class="section-card-summary"><span>Translation Languages</span></summary>
             <div class="section-card-body">

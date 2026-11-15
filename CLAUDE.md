@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **680 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **686 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -314,6 +314,12 @@ and fix it before touching the feature you came to change.
   filtered like corpora, through the real results pipeline
   (`toggleCorpusVisibility`): a chip each with its count, a hidden one's
   entries leave every word, the selected word keeps the picks still shown.
+- `lexicon-dictionary-preferences.test.js` — the saved dictionary order and
+  hidden dictionaries (Preferences → Search → Lexicon Dictionaries;
+  `lexicon_dictionary_order` / `_excluded`, schema 27): defaults "[]", in
+  SETTINGS and the settings file's Search part, migrated without overwriting;
+  a word's entries and the chips follow the saved order; a hidden dictionary
+  is left out, its chip shows it for one search, a new search hides it again.
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
   cantillation) are set in Noto Serif / Sans Hebrew at insert, and only those:
   letters and the marks it has stay; "Match the document" judges the

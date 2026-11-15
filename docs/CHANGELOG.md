@@ -11,24 +11,35 @@ heading until the next release consolidates it.
 
 ### Lexicon: words, and several dictionaries' entries at once
 
-No new preference and no migration. **What Add Entry inserts looks different**
-(the fourth point).
+**Two new preferences, schema 27 (migration):** `lexicon_dictionary_order`
+and `lexicon_dictionary_excluded`, both set to `[]` for everyone upgrading:
+the built-in dictionary order, no dictionary hidden, so nobody loses a
+dictionary they had. **What Add Entry inserts looks different** (see
+*Inserted entries keep their structure*).
 
 - **A Lexicon search lists words, not entries.** Sefaria answers a lookup
   with every dictionary entry the word could belong to, and the sidebar listed
-  each as a result of its own (for שם, nine rows, three of them שֵׁם), so
+  each as a result of its own (for שם, 25 rows, ten of them שֵׁם), so
   taking Klein's and BDB's entries meant picking, inserting, going back and
   picking again. Now each headword is one row, with its dictionaries and what
   each says it means: the words spelled as typed under **Matches**, then the
-  words it is a form of or close to under **Related words** (for שם, שׂוּם
-  *put* and שָׁמֵם *be desolated*), or **Closest words** when nothing is
-  spelled as typed.
+  words it is a form of or close to under **Related words** (for שם: שָׁם,
+  שֵׁם and שֻׁם match; שׂוּם *put* and Klein's שׁום *assess* are related), or
+  **Closest words** when nothing is spelled as typed.
 - **Dictionaries are filtered like corpora.** A chip for each dictionary that
-  answered (Klein 1, BDB 7, BDB Aramaic 1) sits over the word list, as the
+  answered, with its count (for שם: Klein 5, BDB 6, BDB Aramaic 2, Jastrow 4,
+  Strong's 6, Ben-Yehuda 2), sits over the word list, as the
   corpora do in Texts. A click hides that dictionary's entries from every
   word for this search (a word left with none drops out) and another click
   brings them back; the count says how many are shown. A new search shows
   every dictionary again.
+- **Saved dictionary order and hidden dictionaries.** *Preferences → Search →
+  Lexicon Dictionaries* lists them like the corpora above it: drag or use the
+  arrows to set the order a word's entries are listed in (built in: Klein,
+  BDB, BDB Aramaic, Jastrow, Strong's, Ben-Yehuda; the first is the one
+  picked when a word opens), and hide the ones you don't use. A hidden
+  dictionary's chip stays over the results, crossed out, and shows it for
+  that search; settings files carry both choices (Search and linking).
 - **Fixed: an English word never found anything.** The lookup in the
   dictionaries' definitions was filtered by their titles ("Klein Dictionary",
   "Jastrow"), and Sefaria matches a filter against the start of a category

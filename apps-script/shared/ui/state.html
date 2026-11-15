@@ -95,6 +95,54 @@
     });
   }
 
+  // ── Lexicon dictionaries ─────────────────────────────────────────────────
+  // The Lexicon's counterpart of the corpora: the order a word's entries are
+  // listed in, and the dictionaries left out (lexicon_dictionary_order /
+  // lexicon_dictionary_excluded; Preferences → Search edits them, the
+  // sidebar's dictionary chips show or hide one for a single search). Labels
+  // are the names server/lexicon.gs gives the dictionaries (lexiconShortName_).
+  // A dictionary missing from this list still shows, after every listed one.
+  var LEXICON_DICTIONARY_CATALOG = [
+    { key: 'dictionary-klein', label: 'Klein', note: 'Modern Hebrew, with etymologies' },
+    { key: 'dictionary-bdb', label: 'BDB', note: 'Biblical Hebrew (Brown, Driver & Briggs)' },
+    { key: 'dictionary-bdb-aramaic', label: 'BDB Aramaic', note: 'Biblical Aramaic' },
+    { key: 'dictionary-jastrow', label: 'Jastrow', note: 'Talmud, Midrash and Targum' },
+    { key: 'dictionary-strongs', label: "Strong's", note: 'Short biblical definitions, by Strong’s number' },
+    { key: 'dictionary-ben-yehuda', label: 'Ben-Yehuda', note: 'In Hebrew' }
+  ];
+
+  function isKnownLexiconDictionaryKey(key) {
+    return LEXICON_DICTIONARY_CATALOG.some(function (entry) { return entry.key === key; });
+  }
+
+  // Stored order → the full catalog order, as normalizeSearchCorpusOrder.
+  function normalizeLexiconDictionaryOrder(value) {
+    var seen = {};
+    var out = [];
+    parseStoredArrayPreference(value, []).forEach(function (key) {
+      key = String(key || '').trim();
+      if (!isKnownLexiconDictionaryKey(key) || seen[key]) return;
+      seen[key] = true;
+      out.push(key);
+    });
+    LEXICON_DICTIONARY_CATALOG.forEach(function (entry) {
+      if (!seen[entry.key]) out.push(entry.key);
+    });
+    return out;
+  }
+
+  // Stored exclusions → the dictionary keys hidden from the Lexicon.
+  function normalizeLexiconDictionaryExcluded(value) {
+    var seen = {};
+    return parseStoredArrayPreference(value, []).map(function (key) {
+      return String(key || '').trim();
+    }).filter(function (key) {
+      if (!key || key.indexOf('dictionary-') !== 0 || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
   // ── Translation languages ────────────────────────────────────────────────
   // The languages the sidebar's search language filter offers (its static
   // rows in sidebar.html use these codes). The hidden_translation_languages

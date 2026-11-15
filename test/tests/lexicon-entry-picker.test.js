@@ -236,11 +236,11 @@ test('a chip per dictionary, with its entry count, over the word list', () => {
   const { words } = serverWords('שם');
   const { sidebar, html } = loadPipeline(words);
   assert.deepEqual(Array.from(sidebar.resultPostProcessState.availableCorpora, (c) => c.label + ' ' + c.count),
-    ['Klein 5', "Strong's 6", 'Jastrow 4', 'BDB 6', 'Ben-Yehuda 2', 'BDB Aramaic 2']);
+    ['Klein 5', 'BDB 6', 'BDB Aramaic 2', 'Jastrow 4', "Strong's 6", 'Ben-Yehuda 2']);   // the built-in order
   const strip = html['.result-filter-strip'];
   assert.match(strip, /Dictionaries:/);
   assert.deepEqual([...strip.matchAll(/data-corpus-key='([^']+)'/g)].map((m) => m[1]),
-    ['dictionary-klein', 'dictionary-strong-s', 'dictionary-jastrow', 'dictionary-bdb', 'dictionary-ben-yehuda', 'dictionary-bdb-aramaic']);
+    ['dictionary-klein', 'dictionary-bdb', 'dictionary-bdb-aramaic', 'dictionary-jastrow', 'dictionary-strongs', 'dictionary-ben-yehuda']);
   assert.doesNotMatch(strip, /removed/);
 });
 
@@ -249,10 +249,10 @@ test('hiding a dictionary takes its entries out of every word; a word left with 
   const { sidebar, html } = loadPipeline(words);
   sidebar.toggleCorpusVisibility('dictionary-bdb');
   assert.deepEqual(visible(sidebar), [
-    "שָׁם: Klein, Strong's 8033, Jastrow, Ben-Yehuda",
-    "שֵׁם: Strong's 8034, Strong's 8035, Jastrow I, Jastrow II, Jastrow, Klein I, Klein II, Ben-Yehuda",
-    "שֻׁם: Strong's 8036, BDB Aramaic",
-    "שׂוּם: Strong's 7760, Strong's 7761, BDB Aramaic",
+    "שָׁם: Klein, Jastrow, Strong's 8033, Ben-Yehuda",
+    "שֵׁם: Klein I, Klein II, Jastrow I, Jastrow II, Jastrow, Strong's 8034, Strong's 8035, Ben-Yehuda",
+    "שֻׁם: BDB Aramaic, Strong's 8036",
+    "שׂוּם: BDB Aramaic, Strong's 7760, Strong's 7761",
     'שׁום: Klein',
     'שׂים: Klein',
   ]);   // שׂוּמָה and שִׂים are BDB's alone
@@ -269,13 +269,13 @@ test('the selected word keeps its picks that are still shown, or starts again fr
   const { words } = serverWords('שם');
   const { sidebar } = loadPipeline(words);
   const shem = wordOf(words, 'שֵׁם');
-  sidebar.selectLexiconWord(sidebar.findLexiconWord(shem.ref));
-  sidebar.toggleLexiconEntry(entryOf(shem, 'BDB I').id);           // Strong's 8034, BDB I
+  sidebar.selectLexiconWord(sidebar.findLexiconWord(shem.ref));   // Klein I first: the built-in order
+  sidebar.toggleLexiconEntry(entryOf(shem, 'BDB I').id);           // Klein I, BDB I
   sidebar.toggleCorpusVisibility('dictionary-bdb');
-  assert.deepEqual(picked(sidebar), ["Strong's 8034"]);
+  assert.deepEqual(picked(sidebar), ['Klein I']);
   sidebar.toggleCorpusVisibility('dictionary-bdb');
-  sidebar.toggleCorpusVisibility('dictionary-strong-s');
-  assert.deepEqual(picked(sidebar), ['Jastrow I']);                // nothing picked was left
+  sidebar.toggleCorpusVisibility('dictionary-klein');
+  assert.deepEqual(picked(sidebar), ['BDB I']);                    // nothing picked was left
   assert.equal(sidebar.buildLexiconInsertPayload().entries.length, 1);
 });
 
@@ -285,7 +285,7 @@ test('a word whose dictionaries are all hidden is unselected; with every diction
   sidebar.selectLexiconWord(sidebar.findLexiconWord(wordOf(words, 'שׂוּמָה').ref));   // BDB only
   sidebar.toggleCorpusVisibility('dictionary-bdb');
   assert.equal(sidebar.selectedLexiconItem, null);
-  ['dictionary-klein', 'dictionary-strong-s', 'dictionary-jastrow', 'dictionary-ben-yehuda', 'dictionary-bdb-aramaic']
+  ['dictionary-klein', 'dictionary-strongs', 'dictionary-jastrow', 'dictionary-ben-yehuda', 'dictionary-bdb-aramaic']
     .forEach((key) => sidebar.toggleCorpusVisibility(key));
   assert.equal(sidebar.queryState.searchResults.length, 0);
   assert.match(hints[hints.length - 1], /Every dictionary is hidden/);

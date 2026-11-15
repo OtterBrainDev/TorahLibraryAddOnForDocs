@@ -121,19 +121,47 @@ function renderLexiconWordList($list, items) {
 /* ── Dictionaries, filtered like corpora ────────────────────────────────────── */
 //
 // In Texts a search's results can be narrowed by corpus; here by dictionary.
-// It is the same state (resultPostProcessState.availableCorpora and
-// removedCorpora, toggled by toggleCorpusVisibility in results-render): a
-// chip per dictionary over the word list, a click hides that dictionary's
-// entries from every word for this search, and a word left with none drops
-// out. A new search shows every dictionary again.
+// It is the same state (resultPostProcessState.availableCorpora,
+// removedCorpora and restoredExcluded, toggled by toggleCorpusVisibility in
+// results-render): a chip per dictionary over the word list, a click hides
+// that dictionary's entries from every word for this search, and a word left
+// with none drops out. Preferences → Search saves an order (a word's entries
+// follow it) and dictionaries to leave out (lexicon_dictionary_order /
+// _excluded); a chip shows a left-out one for a single search, as Restore
+// Corpus does. A new search starts from the saved choice again.
 
+// A dictionary's key: its catalog key (shared/ui/state), else one made from
+// its name.
 function lexiconDictionaryKey(entry) {
-  var name = String((entry && entry.dictionary) || 'Dictionary').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  return 'dictionary-' + (name || 'other');
+  var label = String((entry && entry.dictionary) || 'Dictionary');
+  var known = LEXICON_DICTIONARY_CATALOG.filter(function (item) { return item.label === label; })[0];
+  if (known) return known.key;
+  var slug = label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return 'dictionary-' + (slug || 'other');
 }
 
-// The dictionaries in these words, in the order they first appear, with how
-// many entries each has.
+// The saved dictionary order (Preferences → Search); a dictionary it doesn't
+// list comes after every one it does, in Sefaria's order.
+function lexiconDictionaryRanks() {
+  var order = normalizeLexiconDictionaryOrder((typeof effectivePreferences !== 'undefined' && effectivePreferences || {}).lexicon_dictionary_order);
+  var ranks = {};
+  order.forEach(function (key, index) { ranks[key] = index; });
+  return ranks;
+}
+
+function sortByLexiconDictionary(items, keyOf) {
+  var ranks = lexiconDictionaryRanks();
+  var rank = function (item) {
+    var key = keyOf(item);
+    return Object.prototype.hasOwnProperty.call(ranks, key) ? ranks[key] : 1000;
+  };
+  return items.map(function (item, index) { return { item: item, index: index }; })
+    .sort(function (a, b) { return (rank(a.item) - rank(b.item)) || (a.index - b.index); })
+    .map(function (pair) { return pair.item; });
+}
+
+// The dictionaries in these words, in the saved order, with how many entries
+// each has.
 function lexiconDictionaryCorpora(words) {
   var corpora = [];
   var byKey = {};
@@ -147,25 +175,30 @@ function lexiconDictionaryCorpora(words) {
       byKey[key].count++;
     });
   });
-  return corpora;
+  return sortByLexiconDictionary(corpora, function (corpus) { return corpus.key; });
 }
 
-// The words with the hidden dictionaries' entries taken out; a word left with
-// none is dropped. Words are copied, never changed: the raw answer stays whole.
-function filterLexiconWordsByDictionary(words, removedLookup) {
+// Each word's entries in the saved dictionary order, without the hidden
+// dictionaries'; a word left with none is dropped. Words are copied, never
+// changed: the raw answer stays whole.
+function arrangeLexiconWords(words, removedLookup) {
   var hidden = removedLookup || {};
-  if (!Object.keys(hidden).some(function (key) { return key.indexOf('dictionary-') === 0; })) return words;
   return (words || []).map(function (word) {
-    var entries = lexiconWordEntries(word).filter(function (entry) { return !hidden[lexiconDictionaryKey(entry)]; });
-    if (!entries.length) return null;
-    if (entries.length === lexiconWordEntries(word).length) return word;
-    return Object.assign({}, word, { entries: entries });
+    if (!word || !Array.isArray(word.entries)) return word;
+    var all = word.entries;
+    var shown = sortByLexiconDictionary(all.filter(function (entry) { return !hidden[lexiconDictionaryKey(entry)]; }), lexiconDictionaryKey);
+    if (!shown.length) return null;
+    var same = shown.length === all.length && shown.every(function (entry, i) { return entry === all[i]; });
+    return same ? word : Object.assign({}, word, { entries: shown });
   }).filter(Boolean);
 }
 
+// Hidden for this search: by a chip, or in Preferences and not shown again.
 function lexiconHiddenDictionaries() {
   var state = typeof resultPostProcessState !== 'undefined' && resultPostProcessState ? resultPostProcessState : {};
-  return (state.removedCorpora || []).filter(function (key) { return String(key).indexOf('dictionary-') === 0; });
+  var removed = (state.removedCorpora || []).filter(function (key) { return String(key).indexOf('dictionary-') === 0; });
+  var saved = typeof getActivePreferenceExcludedCorpora === 'function' && appMode === 'lexicon' ? getActivePreferenceExcludedCorpora() : [];
+  return removed.concat(saved.filter(function (key) { return removed.indexOf(key) < 0; }));
 }
 
 // Called by renderResultFilterStrip (results-render) in Lexicon mode.
@@ -173,10 +206,14 @@ function renderLexiconDictionaryStrip($strip) {
   var corpora = resultPostProcessState.availableCorpora || [];
   if (!corpora.length) return;
   var hidden = lexiconHiddenDictionaries();
+  var saved = typeof getActivePreferenceExcludedCorpora === 'function' ? getActivePreferenceExcludedCorpora() : [];
   var html = "<span class='lang-filter-strip-label'>Dictionaries:</span>";
   corpora.forEach(function (corpus) {
     var isHidden = hidden.indexOf(corpus.key) >= 0;
-    var action = (isHidden ? 'Show ' : 'Hide ') + corpus.label + (corpus.count === 1 ? ' (1 entry)' : ' (' + corpus.count + ' entries)');
+    var count = corpus.count === 1 ? ' (1 entry)' : ' (' + corpus.count + ' entries)';
+    var action = saved.indexOf(corpus.key) >= 0
+      ? 'Hidden in Preferences. Show ' + corpus.label + count + ' for this search'
+      : (isHidden ? 'Show ' : 'Hide ') + corpus.label + count;
     html += "<button type='button' class='result-filter-chip lexicon-dict-chip" + (isHidden ? ' removed' : '') + "'" +
       " data-corpus-key='" + escapeHTML(corpus.key) + "'" +
       " aria-pressed='" + (isHidden ? 'false' : 'true') + "'" +
@@ -199,7 +236,7 @@ function lexiconCountLabel(words) {
   var total = lexiconEntryCount(words);
   var hidden = {};
   lexiconHiddenDictionaries().forEach(function (key) { hidden[key] = true; });
-  var shown = lexiconEntryCount(filterLexiconWordsByDictionary(words, hidden));
+  var shown = Object.keys(hidden).length ? lexiconEntryCount(arrangeLexiconWords(words, hidden)) : total;
   if (shown < total) return shown + ' of ' + total + ' entries shown';
   return total === 1 ? '1 entry found' : total + ' entries found';
 }
@@ -788,13 +825,12 @@ function runLexiconQuery(fromTyping) {
     .withSuccessHandler(function (response) {
       if (requestId !== latestQueryRequestId) return;
       var items = Array.isArray(response) ? response : [];
+      // Cleared first: the results may say every dictionary is hidden.
+      setResultsHint('');
+      lexiconAllHiddenHintShown = false;
       queryState.rawLibraryMatches = [];
       queryState.rawSearchResults = items;
       reprocessAndRenderResults();
-
-      updateLexiconTabBadge(items.length);
-      setResultsHint('');
-      lexiconAllHiddenHintShown = false;
 
       if (!items.length) {
         pendingLexiconWordRef = '';
