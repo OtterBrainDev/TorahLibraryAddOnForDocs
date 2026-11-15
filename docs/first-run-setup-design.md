@@ -267,7 +267,7 @@ There is no "More options" disclosure (removed in 2026-10 at the owner's
 request): what Simple mode hides (the result sort and Restore Corpus) comes
 back with Preferences → Interface → Everything.
 
-**Preferences → Sidebar (schema v27, 2026-11).** Simple mode first hid the
+**Preferences → Sidebar (schema v29, 2026-11).** Simple mode first hid the
 Texts / Voices / Lexicon tabs while in Texts (decision 3 in §12). At the
 owner's request they now show in both interfaces, and a *Sidebar* tab in
 Preferences (both interfaces, saved with Save) chooses what the sidebar
@@ -275,7 +275,7 @@ shows: the Voices and Lexicon tabs (`show_voices_tab`, `show_lexicon_tab`;
 Texts has none), the Quick Actions buttons (`sidebar_quick_actions_hidden`)
 and, in Everything, the Insertion Options controls (`sidebar_options_hidden`;
 a hidden one uses the saved default). Everything defaults to shown, and
-`migrateToV27_` stores that for every upgrader (hard rule 2). The sidebar
+`migrateToV29_` stores that for every upgrader (hard rule 2). The sidebar
 hides by CSS only (`css/components/sidebar-controls`), from attributes on its
 root that `openSharedSidebar_` prints, so nothing switched off is painted,
 and `syncSidebarControls` updates after a save. A switched-off tab still
@@ -522,7 +522,7 @@ approved:
 2. **A new user who dismisses setup** keeps Full: a legacy user of the original
    add-on cannot be told apart from a new one. Revisit with feedback.
 3. **Voices and Lexicon in Simple mode:** the tabs were hidden in Texts for
-   every Simple user. Superseded in schema v27: they show in both interfaces,
+   every Simple user. Superseded in schema v29: they show in both interfaces,
    each with its own switch (§6, *Sidebar tabs*).
 4. **The graduation tip** (§11): deferred to a later release.
 

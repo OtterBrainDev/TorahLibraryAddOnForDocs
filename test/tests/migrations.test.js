@@ -575,13 +575,13 @@ test('v26 turns "Name the edition" on for both titles, never overwriting a store
   assert.equal(userProperties.getProperty('hebrew_link_edition_label'), 'false');
 });
 
-// v27: Preferences → Sidebar and settings profiles. Every user has had the
+// v29: Preferences → Sidebar and settings profiles. Every user has had the
 // Voices and Lexicon tabs, every Quick Actions button and every Insertion
 // Options control, so an upgrader (Simple or Everything) gets them all: a
 // missing value must never hide one (hard rule 2). Nobody has a profile.
-test('v27 shows every tab, button and control, makes no profile, and never overwrites a stored value', () => {
+test('v29 shows every tab, button and control, makes no profile, and never overwrites a stored value', () => {
   for (const ui of ['simple', 'full']) {
-    const { context, userProperties } = loadMigrations({ prefs_schema_version: '26', ui_mode: ui, show_lexicon_tab: 'false' });
+    const { context, userProperties } = loadMigrations({ prefs_schema_version: '28', ui_mode: ui, show_lexicon_tab: 'false' });
     context.runUserPreferenceMigrationsIfNeeded_();
     assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
     assert.equal(userProperties.getProperty('show_voices_tab'), 'true', ui);

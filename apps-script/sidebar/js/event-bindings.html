@@ -68,14 +68,7 @@ $('.results-panel').on('click keydown', '.result-item', function (event) {
   var key = $(this).attr('data-key');
   var item = queryState.libraryMatches.concat(queryState.searchResults).find(function (result) { return result.key === key; });
   if (!item) return;
-
-  selectedResultKey = item.key;
-  selectedResultSummary = { label: item.label || item.ref, subtitle: item.subtitle || '' };
-  resultsCollapsed = true;
-  $('.result-item').removeClass('selected').attr('aria-pressed', 'false');
-  $(this).addClass('selected').attr('aria-pressed', 'true');
-  updateResultsVisibility();
-  resolveSelectedResult(item.ref, item.label || item.ref);
+  selectResultItem(item);
 });
 
 $('.results-panel').on('click', '.result-group-remove', function (event) {
@@ -91,6 +84,9 @@ $('.results-panel').on('click', '.result-filter-chip', function (event) {
   var corpusKey = $(this).attr('data-corpus-key');
   if (!corpusKey) return;
   toggleCorpusVisibility(corpusKey);
+  // The strip was redrawn: keep the keyboard on the chip pressed.
+  var chip = $('.corpus-chip').filter(function () { return $(this).attr('data-corpus-key') === corpusKey; }).get(0);
+  if (chip) chip.focus();
 });
 
 $('.results-toggle-button').on('click', function () {
@@ -361,20 +357,9 @@ function _handleSlDialogResult(action) {
       setFooterButtonStates();
     } catch (e) {}
   }
+  // Opened in its own tab, selected once found (openSessionEntry).
   if (action.selectedRef) {
-    var ref = action.selectedRef;
-    $('.input').val(ref);
-    runUnifiedQuery();
-    setTimeout(function () {
-      var match = (queryState.libraryMatches || []).concat(queryState.searchResults || [])
-        .find(function (item) { return item && item.ref === ref; });
-      if (match && match.key) {
-        selectedResultKey = match.key;
-        selectedResultSummary = { label: match.ref || match.label, subtitle: match.subtitle || '' };
-        updateResultsVisibility();
-        resolveSelectedResult(match.ref, match.ref || match.label);
-      }
-    }, 250);
+    openSessionEntry(findSessionEntry(action.selectedRef) || buildSessionEntry(action.selectedRef, action.selectedRef, 'Other'));
   }
 }
 
@@ -493,19 +478,8 @@ $(document).on('click keydown', '.sl-item', function (event) {
   event.preventDefault();
   var ref = $(this).attr('data-ref');
   if (!ref) return;
-  $('.input').val(ref);
   closeSessionLibraryModal();
-  runUnifiedQuery();
-  setTimeout(function () {
-    var match = queryState.libraryMatches.concat(queryState.searchResults)
-      .find(function (item) { return item && item.ref === ref; });
-    if (match && match.key) {
-      selectedResultKey = match.key;
-      selectedResultSummary = { label: match.ref || match.label, subtitle: match.subtitle || '' };
-      updateResultsVisibility();
-      resolveSelectedResult(match.ref, match.ref || match.label);
-    }
-  }, 250);
+  openSessionEntry(findSessionEntry(ref) || buildSessionEntry(ref, ref, 'Other'));
 });
 
 // Remove button
@@ -530,7 +504,7 @@ $(document).on('click', '.sl-item-pin-btn', function (event) {
     if (pinnedEntry) {
       var ins = (sessionLibrary.inserted || []).filter(function (it) { return it && it.ref !== ref; });
       ins.unshift(pinnedEntry);
-      sessionLibrary.inserted = ins.slice(0, 12);
+      sessionLibrary.inserted = ins.slice(0, SESSION_LIBRARY_MAX.inserted);
     }
   } else {
     // Pin → move to pinned
@@ -539,7 +513,7 @@ $(document).on('click', '.sl-item-pin-btn', function (event) {
     sessionLibrary.inserted = (sessionLibrary.inserted || []).filter(function (it) { return it && it.ref !== ref; });
     var pins = (sessionLibrary.pinned || []).filter(function (it) { return it && it.ref !== ref; });
     pins.unshift(insEntry);
-    sessionLibrary.pinned = pins.slice(0, 12);
+    sessionLibrary.pinned = pins.slice(0, SESSION_LIBRARY_MAX.pinned);
   }
   saveSessionLibrary();
   renderSessionLibrary();

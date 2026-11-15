@@ -419,6 +419,9 @@ function clearVersionSelectors() {
 function setResultsHint(message, allowHtml) {
   var text = String(message || '').trim();
   var $hint = $('.results-hint');
+  // Kept with the shown tab's search, so it is there again when the tab is
+  // (sidebar/js/search-tabs).
+  if (typeof noteShownSearchRunHint === 'function') noteShownSearchRunHint(message, allowHtml);
   if (!text) {
     $hint.hide().empty();
     return;
@@ -958,8 +961,14 @@ function describeResultLanguages(item) {
   return unique.map(function (lang) { return labelMap[lang] || lang.toUpperCase(); }).join(', ');
 }
 
+// A Voices topic category borrows its corpus colour (VOICES_TOPIC_CATALOG).
 function getCorpusAccentClass(corpusKey) {
-  return corpusColorClassMap[String(corpusKey || '').toLowerCase()] || 'corpus-accent-default';
+  var key = String(corpusKey || '').toLowerCase();
+  if (key.indexOf('topic-') === 0 && typeof VOICES_TOPIC_CATALOG !== 'undefined') {
+    var topic = VOICES_TOPIC_CATALOG.filter(function (entry) { return entry.key === key; })[0];
+    key = topic && topic.accent ? topic.accent : '';
+  }
+  return corpusColorClassMap[key] || 'corpus-accent-default';
 }
 
 

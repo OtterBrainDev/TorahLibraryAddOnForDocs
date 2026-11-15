@@ -66,7 +66,8 @@ test('a profile holds how sources look, and nothing that belongs to the person',
   for (const key of ['menu_layout', 'ui_mode', 'show_voices_tab', 'show_lexicon_tab', 'sidebar_quick_actions_hidden',
     'sidebar_options_hidden', 'experimental_features_enabled', 'surprise_me_enabled', 'search_corpus_order',
     'hidden_translation_languages', 'linker_review_mode', 'link_texts_default', 'insert_from_selection_replace',
-    'search_mode', 'last_translation_languages', 'settings_profiles', 'first_run_setup']) {
+    'search_mode', 'last_translation_languages', 'settings_profiles', 'first_run_setup',
+    'lexicon_dictionary_order', 'lexicon_dictionary_excluded', 'voices_topic_order', 'voices_topic_excluded']) {
     assert.ok(!keys.includes(key), `not in a profile: ${key}`);
   }
 });

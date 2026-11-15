@@ -55,7 +55,6 @@ function updateSourceCardSefariaState() {
 var _RECENT_ICONS = {
   Tanakh: '&#x1F4D6;', Talmud: '&#x1F4DA;', Midrash: '&#x1F4DC;',
   Halakhah: '&#x2696;&#xFE0F;', Kabbalah: '✡️', Mishnah: '&#x1F4D8;',
-  Dictionary: '&#x1F4D3;', voices: '&#x1F5E3;&#xFE0F;',
   _default: '&#x1F4C4;'
 };
 
@@ -71,13 +70,14 @@ function renderRecentSources() {
   var inserted = Array.isArray(sessionLibrary.inserted) ? sessionLibrary.inserted : [];
   var seen = {};
   var items = [];
+  // Texts' own: a pinned sheet or word is in its tab's Session Library list.
   pinned.forEach(function (item) {
-    if (!item || !item.ref || seen[item.ref]) return;
+    if (!item || !item.ref || seen[item.ref] || sessionEntryMode(item) !== 'texts') return;
     seen[item.ref] = true;
     items.push({ data: item, listName: 'pinned' });
   });
   inserted.forEach(function (item) {
-    if (!item || !item.ref || seen[item.ref]) return;
+    if (!item || !item.ref || seen[item.ref] || sessionEntryMode(item) !== 'texts') return;
     seen[item.ref] = true;
     items.push({ data: item, listName: 'inserted' });
   });
@@ -89,7 +89,7 @@ function renderRecentSources() {
     var item     = entry.data;
     var listName = entry.listName;
     var label    = item.label || item.ref || '';
-    var category = item.category || '';
+    var category = item.corpusLabel && item.corpusLabel !== 'Other' ? item.corpusLabel : '';
     var icon     = _RECENT_ICONS[category] || _RECENT_ICONS._default;
     return '<li class="recent-source-item" role="button" tabindex="0"' +
       ' data-ref="'    + escapeHTML(item.ref || '') + '"' +
@@ -128,21 +128,9 @@ $(document).on('click keydown', '.recent-source-item', function (event) {
   var ref   = $(this).attr('data-ref');
   var label = $(this).attr('data-label') || ref;
   if (!ref) return;
-  $('.input').val(ref);
   $('.recent-sources-section').hide();
-  runUnifiedQuery();
-  // auto-select matching result once query completes
-  setTimeout(function () {
-    var match = queryState.libraryMatches.concat(queryState.searchResults)
-      .find(function (item) { return item && item.ref === ref; });
-    if (match && match.key) {
-      selectedResultKey = match.key;
-      selectedResultSummary = { label: match.label || match.ref || label, subtitle: match.subtitle || '' };
-      resultsCollapsed = true;
-      renderResults();
-      resolveSelectedResult(match.ref, match.label || match.ref);
-    }
-  }, 280);
+  // Selected once its search has answered (openSessionEntry).
+  openSessionEntry(findSessionEntry(ref) || buildSessionEntry(ref, label, 'Other'));
 });
 
 // =====================================================================

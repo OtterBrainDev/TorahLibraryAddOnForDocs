@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **682 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **759 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -291,7 +291,7 @@ and fix it before touching the feature you came to change.
   nothing); the sidebar is told all of it before it paints (data attributes,
   one storage read, Simple mode too); it never reopens on a switched-off tab
   by itself but a menu item that names one opens it; the sidebar's copy of
-  the rules agrees; schema v27 shows everything (`migrations.test.js`).
+  the rules agrees; schema v29 shows everything (`migrations.test.js`).
 - `settings-profiles.test.js` — settings profiles: a profile holds the Text
   and layout and Fonts parts only (never the menu, interface, sidebar
   controls, search or linking); with none, nothing is stored; the first new
@@ -302,7 +302,69 @@ and fix it before touching the feature you came to change.
   unique, ten at most, the last stays; too large is refused; the index is not
   a setting; failures log the message only.
 - `lexicon-stale-response.test.js` — a Lexicon or Voices answer to an earlier
-  search is dropped (the stale "No lexicon entries found for 'Genesis 1:1'").
+  search is dropped (the stale "No lexicon entries found for 'Genesis 1:1'"),
+  and switching to the Lexicon looks nothing up.
+- `search-tabs.test.js` — the three tabs share one search workflow
+  (`sidebar/js/search-tabs`): typing searches the shown tab; Enter also
+  searches, in the background, each other tab the text suits (no Lexicon
+  lookup for "Genesis 1:1", no link in Voices) and that has no results for it;
+  the pause after Enter searches nothing again; an answer lands in its own tab
+  and its badge counts it; switching never searches and brings back a tab's
+  results and selection (a sheet, a word with its picked entries, a Texts
+  preview without a fetch, or with one if its answer came while away), the box
+  keeping its text; a tab with nothing for the text offers "Search Lexicon for
+  “…”"; a hint stays with its tab; Enter never searches a tab switched off in
+  Preferences → Sidebar. Runs the real partials through
+  `helpers/sidebar-search-harness.js`.
+- `voices-topics.test.js` — Voices' topic categories are its corpora: a sheet
+  is filed under the first of its topics that fits (the longest keyword wins:
+  "Torah Study" is Values, "Laws of Shabbat" Halakhah; whole words only; no
+  topics: its title; else Other); groups in the built-in or saved order, a ❌
+  hides one, one left out in Preferences stays out unless its chip shows it, a
+  hidden sheet is deselected; `voices_topic_order` / `_excluded` (schema 28):
+  defaults "[]", in SETTINGS and the settings file's Search part, migrated
+  without overwriting, edited in Preferences → Search → Voices Topics.
+- `session-pins.test.js` — pins in every tab: a pinned sheet keeps its tab,
+  the search that found it and what shows it again (its title whole); a word
+  its headword; a text as before. Reopening (the Library window, its sidebar
+  list, Recent) shows the entry's tab, runs that search and selects the entry
+  when it answers, never after a delay; a sheet the search no longer lists is
+  shown from the pin; older word entries open by headword or rid. Starred
+  words become pins once, after the pins there; the sidebar and the Library
+  window keep lists of the same length; Recent lists Texts' own entries.
+- `lexicon-words.test.js` — a Lexicon search answers with words, not a flat
+  list of entries: grouped by headword spelling (cantillation and mark order
+  don't split one), the words spelled as typed first ("direct", by headword or
+  alternate; with vowels typed, that exact spelling first), then related
+  words; each entry's dictionary, part of speech, gloss, senses and credit. An
+  English search is filtered to the path `Reference/Dictionary` (a title such
+  as "Jastrow" is no path's start: it found nothing), falls back to Reference
+  keeping only dictionary hits, keeps only the headwords it found, and says
+  "unavailable" when Sefaria never answers. A headword's number is not part of
+  the word ("שֵׁם ᴵ" Klein, "שֵׁם²" BDB, "שֵׁם I" Jastrow); glosses are read per
+  dictionary (Jastrow's italics, BDB after its part of speech, Ben-Yehuda's
+  first Hebrew sense without footnotes); BDB's number and stem wrappers take
+  their only text. Fixtures: `fixtures/lexicon-shem.json`, `lexicon-shalom.json`,
+  Sefaria's own answers, shortened (see their `_note`).
+- `lexicon-insert.test.js` — Add Entry inserts one word's picked entries in
+  the order picked: the word once, each entry's dictionary line, a paragraph
+  per sense with the dictionary's numbers (sub-senses indented), notes in Full
+  entry only; bold, italics and superscript kept; the translation's Commentary
+  "Drop" never applies to a definition; an older sidebar's one-entry payload
+  still inserts.
+- `lexicon-entry-picker.test.js` — a word's entries are picked like
+  translations (first selected, a click toggles, pick order kept, the last one
+  stays, Select all appends); Matches / Related words / Closest words; Copy
+  gives exactly the lines Add Entry writes, in every mode. Dictionaries are
+  filtered like corpora, through the real results pipeline
+  (`toggleCorpusVisibility`): a chip each with its count, a hidden one's
+  entries leave every word, the selected word keeps the picks still shown.
+- `lexicon-dictionary-preferences.test.js` — the saved dictionary order and
+  hidden dictionaries (Preferences → Search → Lexicon Dictionaries;
+  `lexicon_dictionary_order` / `_excluded`, schema 27): defaults "[]", in
+  SETTINGS and the settings file's Search part, migrated without overwriting;
+  a word's entries and the chips follow the saved order; a hidden dictionary
+  is left out, its chip shows it for one search, a new search hides it again.
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
   cantillation) are set in Noto Serif / Sans Hebrew at insert, and only those:
   letters and the marks it has stay; "Match the document" judges the
@@ -404,6 +466,9 @@ and in `test/ui/`:
   every change reloads and tells an open sidebar; the sidebar's picker shows
   with two or more and names the profile in use, and a switch there or in
   Preferences drops the session's Insertion Options changes.
+- `preferences-layers.test.js` — the Preferences tab bar, pinned while the
+  panel scrolls, paints over every open section (it went under them), and an
+  open menu, the overlays and the dialogs still cover it.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

@@ -46,7 +46,7 @@ test('Simple mode hides only the search tools, and every one it hides exists', (
   assert.ok(!/is-more-open/.test(SIMPLE_CSS + readAppScriptFile('sidebar/js/footer-actions.html') + readAppScriptFile('sidebar/js/bootstrap.html')));
 });
 
-// The Texts / Voices / Lexicon tabs show in Simple mode (until schema v27 it
+// The Texts / Voices / Lexicon tabs show in Simple mode (until schema v29 it
 // hid them while in Texts); Preferences → Sidebar tabs switches Voices and
 // Lexicon off in either interface (test/ui/sidebar-tabs-controls.test.js).
 // Simple hides only the 🧪 tab, and the bar only when Texts is left alone.

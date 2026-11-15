@@ -737,6 +737,8 @@
               renderOverrideGrid();
               renderOverrideList();
               loadCorpusOrderFromFields();
+              voicesTopicOrderEditor.load();
+              dictionaryOrderEditor.load();
               loadLanguageTypographyFromField();
               loadTranslationLanguagesFromField();
               syncExperimentalChildToggles();
@@ -1177,6 +1179,211 @@
 
       renderCorpusOrderList();
     }
+
+    // ── Lexicon dictionary order (Search tab) ───────────────────────────────
+    // The corpus list's counterpart for the Lexicon's dictionaries, in the
+    // same rows: lexicon_dictionary_order / lexicon_dictionary_excluded, kept
+    // in two hidden inputs so collectPreferenceObject() saves them. The
+    // catalog and normalizers are in shared/ui/state.
+
+    function createOrderVisibilityEditor(config) {
+      let order = config.normalizeOrder('[]');
+      let excluded = [];
+      let draggedKey = null;
+
+      function labelOf(key) {
+        const entry = config.catalog.find(function(item) { return item.key === key; });
+        return entry || { label: key, note: '' };
+      }
+
+      function sync() {
+        byId(config.orderInput).value = JSON.stringify(order);
+        byId(config.excludedInput).value = JSON.stringify(excluded);
+      }
+
+      function moveTo(key, targetIndex) {
+        const from = order.indexOf(key);
+        if (from < 0) return;
+        targetIndex = Math.max(0, Math.min(order.length - 1, targetIndex));
+        if (from === targetIndex) return;
+        order.splice(from, 1);
+        order.splice(targetIndex, 0, key);
+        sync();
+        render();
+      }
+
+      function toggleExcluded(key) {
+        const index = excluded.indexOf(key);
+        if (index >= 0) excluded.splice(index, 1);
+        else excluded.push(key);
+        sync();
+        render();
+      }
+
+      function button(action, text, label, disabled) {
+        const element = document.createElement('button');
+        element.type = 'button';
+        element.className = 'corpus-order-button corpus-order-button--' + action;
+        element.setAttribute('data-order-action', action);
+        element.setAttribute('aria-label', label);
+        element.title = label;
+        element.textContent = text;
+        element.disabled = !!disabled;
+        return element;
+      }
+
+      function render() {
+        const list = byId(config.list);
+        if (!list) return;
+        list.replaceChildren();
+        order.forEach(function(key, index) {
+          const entry = labelOf(key);
+          const isHidden = excluded.indexOf(key) >= 0;
+          const row = document.createElement('li');
+          row.className = 'corpus-order-row' + (isHidden ? ' is-excluded' : '');
+          row.setAttribute('data-order-key', key);
+          row.draggable = true;
+          row.tabIndex = -1;
+
+          const handle = document.createElement('span');
+          handle.className = 'corpus-order-handle';
+          handle.setAttribute('aria-hidden', 'true');
+          handle.textContent = '⠿';
+
+          const position = document.createElement('span');
+          position.className = 'corpus-order-position';
+          position.textContent = String(index + 1);
+
+          const text = document.createElement('span');
+          text.className = 'corpus-order-label';
+          text.textContent = entry.label;
+          if (entry.note) {
+            const note = document.createElement('span');
+            note.className = 'corpus-order-note';
+            note.textContent = entry.note;
+            text.appendChild(note);
+          }
+
+          const actions = document.createElement('span');
+          actions.className = 'corpus-order-actions';
+          actions.appendChild(button('up', '↑', 'Move ' + entry.label + ' up', index === 0));
+          actions.appendChild(button('down', '↓', 'Move ' + entry.label + ' down', index === order.length - 1));
+          const visibility = button('visibility', isHidden ? 'Hidden' : 'Shown', (isHidden ? 'Show ' : 'Hide ') + entry.label + ' ' + config.where, false);
+          visibility.setAttribute('aria-pressed', isHidden ? 'false' : 'true');
+          actions.appendChild(visibility);
+
+          row.appendChild(handle);
+          row.appendChild(position);
+          row.appendChild(text);
+          row.appendChild(actions);
+          list.appendChild(row);
+        });
+      }
+
+      function focusControl(key, action) {
+        const row = Array.prototype.find.call(byId(config.list).children, function(li) { return li.getAttribute('data-order-key') === key; });
+        if (!row) return;
+        const control = row.querySelector('[data-order-action="' + action + '"]');
+        if (control && !control.disabled) control.focus();
+        else row.focus();
+      }
+
+      function init() {
+        const list = byId(config.list);
+        if (!list) return;
+        list.addEventListener('click', function(event) {
+          const control = event.target.closest('[data-order-action]');
+          const row = control && control.closest('[data-order-key]');
+          if (!row) return;
+          const key = row.getAttribute('data-order-key');
+          const action = control.getAttribute('data-order-action');
+          if (action === 'up') moveTo(key, order.indexOf(key) - 1);
+          else if (action === 'down') moveTo(key, order.indexOf(key) + 1);
+          else if (action === 'visibility') toggleExcluded(key);
+          focusControl(key, action);
+        });
+        list.addEventListener('dragstart', function(event) {
+          const row = event.target.closest('[data-order-key]');
+          if (!row) return;
+          draggedKey = row.getAttribute('data-order-key');
+          row.classList.add('is-dragging');
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', draggedKey);
+          }
+        });
+        list.addEventListener('dragover', function(event) {
+          if (!draggedKey) return;
+          const row = event.target.closest('[data-order-key]');
+          if (!row) return;
+          event.preventDefault();
+          const rect = row.getBoundingClientRect();
+          const after = event.clientY > rect.top + rect.height / 2;
+          list.querySelectorAll('.drop-before, .drop-after').forEach(function(el) {
+            el.classList.remove('drop-before', 'drop-after');
+          });
+          row.classList.add(after ? 'drop-after' : 'drop-before');
+        });
+        list.addEventListener('drop', function(event) {
+          if (!draggedKey) return;
+          const row = event.target.closest('[data-order-key]');
+          event.preventDefault();
+          if (!row) return;
+          const targetKey = row.getAttribute('data-order-key');
+          const after = row.classList.contains('drop-after');
+          const key = draggedKey;
+          if (targetKey === key) return;
+          const remaining = order.filter(function(k) { return k !== key; });
+          moveTo(key, remaining.indexOf(targetKey) + (after ? 1 : 0));
+        });
+        list.addEventListener('dragend', function() {
+          draggedKey = null;
+          list.querySelectorAll('.is-dragging, .drop-before, .drop-after').forEach(function(el) {
+            el.classList.remove('is-dragging', 'drop-before', 'drop-after');
+          });
+        });
+        byId(config.reset).addEventListener('click', function() {
+          order = config.normalizeOrder('[]');
+          excluded = [];
+          sync();
+          render();
+        });
+        render();
+      }
+
+      return {
+        init: init,
+        // The stored values, from the hidden inputs (after the form is filled).
+        load: function() {
+          order = config.normalizeOrder(byId(config.orderInput).value);
+          excluded = config.normalizeExcluded(byId(config.excludedInput).value);
+          sync();
+          render();
+        }
+      };
+    }
+
+    const dictionaryOrderEditor = createOrderVisibilityEditor({
+      list: 'lexicon-dictionary-order-list',
+      orderInput: 'lexicon_dictionary_order',
+      excludedInput: 'lexicon_dictionary_excluded',
+      reset: 'lexicon-dictionary-order-reset',
+      catalog: LEXICON_DICTIONARY_CATALOG,
+      normalizeOrder: normalizeLexiconDictionaryOrder,
+      normalizeExcluded: normalizeLexiconDictionaryExcluded,
+      where: 'in the Lexicon'
+    });
+
+    const voicesTopicOrderEditor = createOrderVisibilityEditor({
+      list: 'voices-topic-order-list',
+      orderInput: 'voices_topic_order',
+      excludedInput: 'voices_topic_excluded',
+      reset: 'voices-topic-order-reset',
+      catalog: VOICES_TOPIC_CATALOG,
+      normalizeOrder: normalizeVoicesTopicOrder,
+      normalizeExcluded: normalizeVoicesTopicExcluded,
+      where: 'in Voices'
+    });
 
     // ── Per-language translation formatting (translation Text font → Advanced) ─
     // The entries live in one hidden input (translation_language_typography),
@@ -2366,6 +2573,8 @@
     initMenuLayoutEditor();
     bindColorControls();
     initCorpusOrderList();
+    voicesTopicOrderEditor.init();
+    dictionaryOrderEditor.init();
     initLanguageTypographyEditor();
     initTranslationLanguageGrid();
     _initPreferencesCompositionCard();

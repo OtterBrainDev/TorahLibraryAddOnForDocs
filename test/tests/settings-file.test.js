@@ -21,9 +21,6 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const APPS_SCRIPT = path.resolve(__dirname, '../../apps-script');
-// The schema the code targets, read from the source: a literal here broke
-// on every schema bump (docs/regression-log.md, the migrations-test row).
-const CURRENT = /var PREFS_SCHEMA_CURRENT_ = '(\d+)';/.exec(fs.readFileSync(path.join(APPS_SCRIPT, 'migrations.gs'), 'utf8'))[1];
 const FILES = ['server/menu-layout.gs', 'server/preferences.gs', 'migrations.gs', 'server/first-run.gs', 'server/settings-file.gs'];
 
 function makeProps(initial = {}) {
@@ -67,7 +64,9 @@ test('an export holds the settings, the dialog\'s unsaved values, and none of on
   );
   assert.equal(file.format, 'torah-library-settings');
   assert.equal(file.formatVersion, 1);
-  assert.equal(file.prefsSchemaVersion, CURRENT);
+  // The schema the file was written at: the current one (docs/VERSION.json).
+  const schema = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'docs', 'VERSION.json'), 'utf8')).prefsSchemaVersion;
+  assert.equal(file.prefsSchemaVersion, schema);
   assert.equal(file.name, 'Grade 7 Chumash');
   assert.equal(file.interfaceMode, 'simple');
   assert.equal(result.fileName, 'torah-library-settings-grade-7-chumash.json');

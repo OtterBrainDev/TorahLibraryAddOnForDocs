@@ -53,7 +53,9 @@ QC check (see `pre_clasp_qc.sh` step 6).
 
 - **`sidebar.html`** — the main sidebar; most functionality lives here.
   Composes most of `sidebar/js/*.html`, the `shared/ui/*` partials,
-  and the `css/` tokens and components.
+  and the `css/` tokens and components. Its three search tabs share one
+  workflow, `sidebar/js/search-tabs` (see *The search tabs* below); each tab's
+  own code is in `search-controller` (Texts), `voices` and `lexicon`.
 - **`preferences.html`** — preferences dialog. Composes `preferences/css`,
   `preferences/js` and `preferences/settings-file-js` (the Advanced tab's
   settings file, which reaches the dialog through `window.PreferencesDialog`).
@@ -130,6 +132,43 @@ controls inline.
 - `apps-script/ui_core.gs` — shared UI-side helpers.
 - `apps-script/migrations.gs` — (added Stage 2) preferences schema
   migration on `onOpen`.
+
+## The search tabs
+
+Texts, Voices and Lexicon declare themselves in `SEARCH_TABS`
+(`sidebar/js/search-tabs`): how the tab searches, which text it suits, how
+many results a search found, what its selection holds, what a pin of one of
+its results keeps (the Session Library entry, with its `mode`) and how that
+result is found again. The shared part:
+
+- A search is a **run** (`createSearchRun`) with its own results
+  (`queryState`), corpus filter state (`resultPostProcessState`), hint and
+  loading flag. A tab has one current run; an answer for a run its tab has
+  replaced is dropped (`isCurrentSearchRun`, BUG-005).
+- Only the **shown** tab's run is drawn: its two objects *are* the globals
+  `queryState` and `resultPostProcessState`. A run in a hidden tab is processed
+  by the same `computeResultPostProcessing(mode, …)` (no DOM), with that tab's
+  preferences, so its badge count is right.
+- **Switching tabs never searches.** `setSidebarMode` calls `stashSearchTab`
+  (keeps the selection with the run) and `showSearchTab` (draws the tab's run
+  if it is for the text in the box, else offers to search it). The Texts
+  preview, versions and source card are left in the DOM while another tab is
+  shown (`resetSelectedResultView` clears them only in Texts), and fetched
+  again on return only if something changed meanwhile (`textsPreviewStale`).
+- **Enter** searches the shown tab and, in the background, every other tab
+  that suits the text and has no run for it (`prefetchOtherSearchTabs`);
+  typing searches the shown tab only.
+- A tab's "corpora" are Texts' corpora, Voices' topic categories
+  (`VOICES_TOPIC_CATALOG`) and the Lexicon's dictionaries
+  (`LEXICON_DICTIONARY_CATALOG`), each with a saved order and exclusions;
+  `getPreferenceCorpusOrder` / `getPreferenceExcludedCorpora` take the tab.
+- A Session Library entry reopens in its own tab (`openSessionEntry`): the
+  search that finds it runs there, and the entry is selected when that run
+  answers (`run.openEntry`), never after a delay.
+
+`test/tests/search-tabs.test.js`, `voices-topics.test.js` and
+`session-pins.test.js` run the real partials through
+`test/tests/helpers/sidebar-search-harness.js`.
 
 ## Storage layers
 

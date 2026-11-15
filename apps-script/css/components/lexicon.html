@@ -2,8 +2,9 @@
 /*
  * components/lexicon.css — Redesigned Lexicon sidebar styles
  *
- * Covers: tab badge, search history, result rows, duplicate groups,
- * insert format chips, preview card, bookmarks, show-more, fallback states.
+ * Covers: tab badge, search history, word rows, a word's entries (chosen
+ * like translations), insert format chips, the entry cards of the preview,
+ * starred words. Markup: sidebar.html; behaviour: sidebar/js/lexicon.
  */
 
 /* =============================================================
@@ -155,13 +156,17 @@
 }
 
 /* Suppress the generic result-row-main, result-meta, result-snippet
-   in lexicon mode — we render our own layout inside the li */
+   in lexicon mode — we render our own layout inside the li (its pin is in
+   the row header, .lexicon-row-pin) */
 .mode-lexicon .result-item .result-row-main,
 .mode-lexicon .result-item .result-meta,
 .mode-lexicon .result-item .result-snippet,
-.mode-lexicon .result-item .result-subtitle,
-.mode-lexicon .result-item .result-pin-button {
+.mode-lexicon .result-item .result-subtitle {
   display: none;
+}
+
+.lexicon-row-pin {
+  align-self: center;
 }
 
 /* ---- Lexicon row anatomy ---- */
@@ -200,13 +205,15 @@
   flex-shrink: 0;
 }
 
+/* A word's glosses, one per entry: two lines at most. */
 .lexicon-row-gloss {
   font-size: 12px;
   color: #3c3c3c;
   direction: ltr;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 100%;
   line-height: 1.4;
 }
@@ -232,59 +239,6 @@
   font-size: 10px;
   color: #666;
   line-height: 1.4;
-}
-
-/* ---- Duplicate group ---- */
-
-.lexicon-dup-group {
-  margin-bottom: 4px;
-}
-
-.lexicon-dup-header {
-  font-size: 10px;
-  font-style: italic;
-  color: var(--muted);
-  padding: 2px 3px 3px;
-}
-
-.lexicon-dup-expand-btn {
-  background: none;
-  border: none;
-  font-size: 10px;
-  color: var(--sefaria-blue);
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-  margin-left: 4px;
-}
-
-.lexicon-dup-expand-btn:hover {
-  opacity: 0.75;
-}
-
-.lexicon-dup-secondary-items .result-item.result-row {
-  opacity: 0.8;
-}
-
-/* ---- Bookmark star on result row ---- */
-
-.lexicon-row-bookmark-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 0;
-  opacity: 0.4;
-  flex-shrink: 0;
-  line-height: 1;
-  transition: opacity 0.1s;
-  color: var(--muted);
-}
-
-.lexicon-row-bookmark-btn:hover,
-.lexicon-row-bookmark-btn.is-bookmarked {
-  opacity: 1;
-  color: #c8a000;
 }
 
 /* =============================================================
@@ -314,96 +268,8 @@
 }
 
 /* =============================================================
-   PREVIEW SECTION — lexicon mode: strip generic accordion chrome
+   PREVIEW — footer (Copy)
    ============================================================= */
-
-.mode-lexicon .preview-section {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-}
-
-.mode-lexicon .preview-accordion > summary.accordion-summary {
-  display: none;
-}
-
-.mode-lexicon .preview-panel {
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-}
-
-/* The suggestions container in lexicon mode */
-.mode-lexicon .suggestions {
-  text-align: left;
-}
-
-/* =============================================================
-   LEXICON PREVIEW CARD
-   ============================================================= */
-
-.lexicon-preview-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 12px;
-  line-height: 1.55;
-  color: var(--text);
-}
-
-.lexicon-preview-header {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-.lexicon-preview-headword {
-  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--sefaria-blue);
-  direction: rtl;
-  flex-shrink: 0;
-}
-
-.lexicon-preview-sep {
-  color: var(--muted);
-  flex-shrink: 0;
-}
-
-.lexicon-preview-source-label {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.lexicon-preview-morphology {
-  font-size: 11px;
-  font-style: italic;
-  color: var(--muted);
-  margin-bottom: 5px;
-}
-
-.lexicon-preview-body {
-  direction: ltr;
-  font-size: 12px;
-  line-height: 1.55;
-  color: var(--text);
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-.lexicon-preview-unavailable {
-  font-style: italic;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.5;
-}
 
 .lexicon-preview-footer {
   display: flex;
@@ -411,21 +277,6 @@
   align-items: center;
   margin-top: 7px;
   gap: 8px;
-}
-
-.lexicon-preview-show-more-btn {
-  background: none;
-  border: none;
-  font-size: 11px;
-  color: var(--sefaria-blue);
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-  white-space: nowrap;
-}
-
-.lexicon-preview-show-more-btn:hover {
-  opacity: 0.75;
 }
 
 .lexicon-preview-copy-btn {
@@ -448,51 +299,12 @@
 }
 
 /* =============================================================
-   FALLBACK / EMPTY / ERROR STATES
+   WORD LIST — Matches / Related words
    ============================================================= */
 
-.lexicon-empty-state,
-.lexicon-error-state {
-  padding: 10px 8px;
-  font-size: 12px;
-  color: var(--muted);
-  text-align: center;
-}
-
-.lexicon-error-state {
-  color: #c0392b;
-}
-
-.lexicon-error-retry {
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 11px;
-  color: var(--sefaria-blue);
-  cursor: pointer;
-  text-decoration: underline;
-  background: none;
-  border: none;
-  padding: 0;
-}
-
-/* =============================================================
-   BOOKMARKS SECTION
-   ============================================================= */
-
-.lexicon-bookmarks-section {
-  margin-top: 10px;
-}
-
-.lexicon-bookmarks-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 4px 2px;
-  user-select: none;
-}
-
-.lexicon-bookmarks-title {
+.lexicon-word-group-label {
+  list-style: none;
+  margin: 8px 2px 4px;
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
@@ -500,78 +312,370 @@
   color: var(--muted);
 }
 
-.lexicon-bookmarks-toggle {
-  font-size: 10px;
-  color: var(--muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
+.lexicon-word-group-label:first-child {
+  margin-top: 0;
 }
 
-.lexicon-bookmarks-list {
+.mode-lexicon .search-results .lexicon-word-row + .lexicon-word-row {
+  margin-top: 4px;
+}
+
+.lexicon-chip--dict {
+  color: var(--sefaria-blue);
+  background: var(--selected-soft);
+}
+
+/* =============================================================
+   A WORD'S ENTRIES — picked like translations
+   ============================================================= */
+
+.lexicon-entries-section {
+  margin-top: 8px;
+}
+
+.lexicon-entries-section .version-control-header {
+  margin-bottom: 4px;
+}
+
+.lexicon-entries-section .lexicon-section-label {
+  margin: 0;
+}
+
+.lexicon-entries-word {
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+
+.lexicon-entry-list {
+  margin: 0;
+  padding: 3px;
+  list-style: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 232px;
+  overflow-y: auto;
+}
+
+.lexicon-entry-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 6px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.lexicon-entry-option + .lexicon-entry-option {
+  margin-top: 1px;
+}
+
+.lexicon-entry-option:hover {
+  background: var(--row-hover);
+}
+
+.lexicon-entry-option.is-selected {
+  background: var(--selected-soft);
+}
+
+.lexicon-entry-option:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 0;
+}
+
+/* The tick (one entry) or its place in the insert order (several). */
+.lexicon-entry-check {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border: 1.5px solid var(--switch-off);
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 13px;
+  text-align: center;
+  color: #fff;
+  background: var(--panel);
+}
+
+.lexicon-entry-option.is-selected .lexicon-entry-check {
+  border-color: var(--sefaria-blue);
+  background: var(--sefaria-blue);
+}
+
+.lexicon-entry-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.lexicon-entry-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.lexicon-entry-dict {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.lexicon-entry-morph {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.lexicon-entry-gloss {
+  font-size: 12px;
+  color: #3c3c3c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lexicon-entries-tools {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lexicon-select-all {
+  flex: 0 0 auto;
+  margin-top: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--sefaria-blue);
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lexicon-selected-display {
+  font-size: 11px;
+}
+
+.lexicon-selected-display.is-warning {
+  color: var(--halakhah-red);
+  border-color: var(--halakhah-red);
+}
+
+.lexicon-insert-summary {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* =============================================================
+   PREVIEW — the picked entries, an outline each
+   ============================================================= */
+
+.lexicon-preview-section {
+  margin-top: 4px;
+}
+
+.lexicon-card {
+  margin-bottom: 8px;
+  padding: 9px 10px 8px;
+  background: var(--preview-well-bg);
+  border: 1px solid var(--preview-well-border);
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text);
+  text-align: left;
+}
+
+.lexicon-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid var(--row-divider);
+}
+
+.lexicon-card-order {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--sefaria-blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  align-self: center;
+}
+
+.lexicon-card-dict {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--sefaria-blue);
+}
+
+.lexicon-card-morph {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.lexicon-card-headword {
+  margin-left: auto;
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.lexicon-card-alts {
+  margin: -2px 0 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.lexicon-card-alts bdi {
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.lexicon-card-empty {
+  margin: 2px 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Senses: the dictionary's own numbering (1., a.), not a running count. */
+.lexicon-senses {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.lexicon-bookmark-row {
+.lexicon-sense {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 4px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.1s;
+  gap: 5px;
+  margin: 3px 0;
 }
 
-.lexicon-bookmark-row:hover {
-  background: var(--lighter-grey);
+.lexicon-senses--depth-1,
+.lexicon-senses--depth-2,
+.lexicon-senses--depth-3 {
+  margin-top: 2px;
 }
 
-.lexicon-bookmark-headword {
-  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
-  font-size: 13px;
+/* Ben-Yehuda defines in Hebrew. */
+.lexicon-card.is-rtl .lexicon-senses,
+.lexicon-card.is-rtl .lexicon-card-notes {
   direction: rtl;
+  text-align: right;
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+  font-size: 13.5px;
+}
+
+/* Sub-senses under an unnumbered heading (BDB's "Qal") sit in from it. */
+.lexicon-sense--unnumbered > .lexicon-sense-body > .lexicon-senses {
+  padding-left: 10px;
+}
+
+.lexicon-sense-num {
+  flex: 0 0 auto;
+  min-width: 14px;
+  font-weight: 600;
+  color: var(--sefaria-blue);
+}
+
+.lexicon-sense-body {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: right;
-  color: var(--text);
 }
 
-.lexicon-bookmark-source {
-  font-size: 10px;
+.lexicon-sense-label {
+  display: inline-block;
+  padding: 0 4px;
+  margin-right: 2px;
+  border-radius: 3px;
+  background: var(--card);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--row-label);
+}
+
+.lexicon-sense-notes {
   color: var(--muted);
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
-.lexicon-bookmark-remove {
+.lexicon-card [dir="rtl"] {
+  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
+  font-size: 1.08em;
+}
+
+/* Collapsed (the default for a long entry): each definition two lines, the
+   first senses and their first sub-senses. "Show the whole entry" opens it. */
+.lexicon-card.is-long:not(.is-expanded) .lexicon-sense-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.lexicon-card.is-long:not(.is-expanded) > .lexicon-senses > .lexicon-sense:nth-child(n+5),
+.lexicon-card.is-long:not(.is-expanded) .lexicon-senses .lexicon-senses > .lexicon-sense:nth-child(n+3) {
+  display: none;
+}
+
+.lexicon-card-expand {
+  margin-top: 4px;
+  padding: 0;
   background: none;
   border: none;
-  font-size: 13px;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 0 2px;
-  opacity: 0.5;
-  line-height: 1;
-  flex-shrink: 0;
-  transition: opacity 0.1s, color 0.1s;
-}
-
-.lexicon-bookmark-remove:hover {
-  opacity: 1;
-  color: #c0392b;
-}
-
-.lexicon-bookmarks-empty {
+  color: var(--sefaria-blue);
   font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.lexicon-card-notes {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.lexicon-card-notes > summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--sefaria-blue);
+}
+
+.lexicon-card-note {
+  margin-top: 4px;
+  color: #3c3c3c;
+}
+
+.lexicon-card-note-label {
+  font-weight: 600;
+}
+
+.lexicon-card-credit {
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--row-divider);
+  font-size: 10.5px;
   color: var(--muted);
-  font-style: italic;
-  padding: 3px 4px;
 }
 
 /* =============================================================
@@ -583,12 +687,4 @@
   border-color: #1e7e34 !important;
 }
 
-/* No-preview caveat line under insert button */
-.lexicon-no-preview-note {
-  font-size: 10px;
-  color: var(--muted);
-  font-style: italic;
-  text-align: center;
-  margin: 2px 0 0;
-}
 </style>

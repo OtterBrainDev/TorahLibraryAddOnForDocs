@@ -51,6 +51,10 @@ const SETTINGS = [
   "last_search_relevance_sort",
   "search_corpus_order",
   "search_corpus_excluded",
+  "lexicon_dictionary_order",
+  "lexicon_dictionary_excluded",
+  "voices_topic_order",
+  "voices_topic_excluded",
   "hidden_translation_languages",
   "show_unavailable_translations",
   "meforash_replace",
@@ -217,6 +221,16 @@ function getDefaultPreferences() {
     // then Sefaria's library order); "[]" exclusions hides nothing.
     search_corpus_order: "[]",
     search_corpus_excluded: "[]",
+    // Lexicon dictionaries, ordered and hidden like corpora (JSON arrays of
+    // dictionary keys, LEXICON_DICTIONARY_CATALOG in shared/ui/state). "[]"
+    // order is the built-in one; "[]" exclusions hides nothing.
+    lexicon_dictionary_order: "[]",
+    lexicon_dictionary_excluded: "[]",
+    // Voices topic categories, ordered and hidden like corpora (JSON arrays
+    // of topic keys, VOICES_TOPIC_CATALOG in shared/ui/state). "[]" order is
+    // the built-in one; "[]" exclusions hides nothing.
+    voices_topic_order: "[]",
+    voices_topic_excluded: "[]",
     // Translation languages left out of the search language filter and the
     // translation version list (JSON array of codes). "[]" shows them all.
     hidden_translation_languages: "[]",
@@ -299,9 +313,9 @@ function getDefaultPreferences() {
     citation_font_color: "",
     citation_font_background: "",
     search_mode: "texts",
-    // Preferences → Sidebar (schema v27). The sidebar's Voices and Lexicon
+    // Preferences → Sidebar (schema v29). The sidebar's Voices and Lexicon
     // tabs, beside Texts under the search box: on, since every user has had
-    // them (Simple mode hid them until v27). Off hides the tab with CSS only;
+    // them (Simple mode hid them until v29). Off hides the tab with CSS only;
     // a menu item can still open that search, and its tab shows while it is
     // open. Texts has no switch.
     show_voices_tab: true,
@@ -346,7 +360,7 @@ function getDefaultPreferences() {
 // What the sidebar shows, apart from what Simple mode hides:
 //   - its result tabs: "texts", always, then "voices" and "lexicon" unless
 //     switched off (show_voices_tab, show_lexicon_tab). A missing value counts
-//     as on, since every user has had both tabs (migrateToV27_);
+//     as on, since every user has had both tabs (migrateToV29_);
 //   - the Quick Actions (🏃) buttons and the Insertion Options controls the
 //     user hid (sidebar_quick_actions_hidden, sidebar_options_hidden: JSON
 //     arrays of the ids below; unknown ids are dropped).

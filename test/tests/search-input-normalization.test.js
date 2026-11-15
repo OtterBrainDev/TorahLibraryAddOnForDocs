@@ -430,16 +430,23 @@ test('close matches stay behind the exact results and never duplicate them', () 
 
 test('the as-you-type search does not write the normalized query back into the field', () => {
   const bindings = fs.readFileSync(path.join(ROOT, 'apps-script/sidebar/js/event-bindings.html'), 'utf8');
-  const controller = fs.readFileSync(path.join(ROOT, 'apps-script/sidebar/js/search-controller.html'), 'utf8');
+  // Every tab searches through runUnifiedQuery (search-tabs); the tabs' own
+  // searches take the query from their run and never touch the field.
+  const read = (name) => fs.readFileSync(path.join(ROOT, 'apps-script/sidebar/js/' + name + '.html'), 'utf8');
+  const tabs = read('search-tabs');
 
   // The debounced input handler marks its query as typing-driven...
   assert.match(bindings, /setTimeout\(function \(\) \{\s*if \(\(value \|\| ''\)\.trim\(\)\.length >= 2\) runUnifiedQuery\(\{ fromTyping: true \}\);/);
-  // ...and every mode's query function skips the write-back for it. An
-  // unconditional $('.input').val(input) trimmed the space the reader had just
-  // typed and moved the caret to the end mid-edit.
-  const writeBacks = controller.match(/^\s*(?:if \([^)]*\) )?\$\('\.input'\)\.val\(input\);/gm) || [];
-  assert.equal(writeBacks.length, 3, JSON.stringify(writeBacks));
-  writeBacks.forEach((line) => assert.match(line, /if \((?:!fromTyping|fromTyping !== true)\)/, line));
+  // ...and the one write-back is skipped for it. An unconditional
+  // $('.input').val(query) trimmed the space the reader had just typed and
+  // moved the caret to the end mid-edit.
+  const writeBacks = tabs.match(/^\s*(?:if \([^)]*\) )?\$\('\.input'\)\.val\(query\);/gm) || [];
+  assert.equal(writeBacks.length, 1, JSON.stringify(writeBacks));
+  assert.match(writeBacks[0], /if \(!fromTyping\)/);
+  [['search-controller', 'searchTextsRun'], ['voices', 'searchVoicesRun'], ['lexicon', 'searchLexiconRun']].forEach(([file, name]) => {
+    const body = read(file).match(new RegExp('function ' + name + '\\(run\\) \\{[\\s\\S]*?\\n\\}'))[0];
+    assert.doesNotMatch(body, /\$\('\.input'\)\.val\(/, name + ' must not rewrite the field');
+  });
 });
 
 test('the bounded edit distance and the histogram bound agree with the full distance', () => {
