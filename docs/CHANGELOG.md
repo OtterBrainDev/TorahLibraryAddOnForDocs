@@ -9,6 +9,46 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Lexicon: words, and several dictionaries' entries at once
+
+No new preference and no migration. **What Add Entry inserts looks different**
+(the fourth point).
+
+- **A Lexicon search lists words, not entries.** Sefaria answers a lookup
+  with every dictionary entry the word could belong to, and the sidebar listed
+  each as a result of its own (for שם, nine rows, three of them שֵׁם), so
+  taking Klein's and BDB's entries meant picking, inserting, going back and
+  picking again. Now each headword is one row, with its dictionaries and what
+  each says it means: the words spelled as typed under **Matches**, then the
+  words it is a form of or close to under **Related words** (for שם, שׂוּם
+  *put* and שָׁמֵם *be desolated*), or **Closest words** when nothing is
+  spelled as typed. An English search lists only the headwords it found.
+- **A word's entries are picked like translations.** Picking a word lists its
+  entries (Klein I, BDB I, BDB II…) with each one's part of speech and
+  meaning. The first is selected; a click adds or removes one; *Select all*
+  takes the rest; one always stays selected. Add Entry inserts them in the
+  order picked, which the list and the preview number.
+- **The preview is an outline.** Each picked entry is a card: dictionary, part
+  of speech and headword on top; the senses with the dictionary's own numbers
+  (1., a.) and stems (Qal, Hiph.), not a running count to 27; each cut to two
+  lines, with *Show the whole entry* for a long one; notes and derivatives
+  folded away; the dictionary's credit at the foot. *Copy* copies what Add
+  Entry inserts.
+- **Inserted entries keep their structure.** *Full entry* is the word as a
+  heading, once, then for each entry a line naming the dictionary (and part
+  of speech), each sense as a paragraph of its own with sub-senses indented,
+  and Klein's notes and derivatives. Bold, italics and superscript are kept.
+  Before, an entry went in as one paragraph of plain text, cut at 2,000
+  characters. *Definition* leaves out the word and the dictionary lines;
+  *Word + ref* is the word and the dictionaries' names. The translation's
+  *Commentary* setting never applies to a definition.
+- **Stars are per word.** *⭐ Starred words* lists words, and clicking one
+  looks it up again and opens it; a starred entry used to do nothing unless
+  it was among the current results. Entries starred before keep their place
+  and open by looking up their headword.
+- An inserted word goes into the Session Library as the word and its
+  dictionaries; clicking it while in the Lexicon tab looks the word up again.
+
 ### Settings files; one Interface switch; Voices transliteration; Surprise Me
 
 No new preference and no migration: no stored value changes meaning.

@@ -19,6 +19,7 @@
     "<?!= include('sidebar/js/footer-actions'); ?>",
     "<?!= include('sidebar/js/preview-core'); ?>",
     "<?!= include('sidebar/js/search-controller'); ?>",
+    "<?!= include('sidebar/js/lexicon'); ?>",
     "<?!= include('sidebar/js/mode-controller'); ?>",
     "<?!= include('shared/insertion-options/js'); ?>",
     "<?!= include('sidebar/js/display-controls'); ?>",

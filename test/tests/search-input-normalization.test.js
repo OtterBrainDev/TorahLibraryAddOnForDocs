@@ -430,7 +430,10 @@ test('close matches stay behind the exact results and never duplicate them', () 
 
 test('the as-you-type search does not write the normalized query back into the field', () => {
   const bindings = fs.readFileSync(path.join(ROOT, 'apps-script/sidebar/js/event-bindings.html'), 'utf8');
-  const controller = fs.readFileSync(path.join(ROOT, 'apps-script/sidebar/js/search-controller.html'), 'utf8');
+  // Texts and Voices query from search-controller, Lexicon from its own partial.
+  const controller = ['search-controller', 'lexicon']
+    .map((name) => fs.readFileSync(path.join(ROOT, 'apps-script/sidebar/js/' + name + '.html'), 'utf8'))
+    .join('\n');
 
   // The debounced input handler marks its query as typing-driven...
   assert.match(bindings, /setTimeout\(function \(\) \{\s*if \(\(value \|\| ''\)\.trim\(\)\.length >= 2\) runUnifiedQuery\(\{ fromTyping: true \}\);/);

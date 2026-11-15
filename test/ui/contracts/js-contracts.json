@@ -17,8 +17,16 @@
     "function resolveSelectedResult",
     "function buildVoicesPreviewHtml",
     "function runVoicesQuery",
-    "google.script.run",
-    "insertMode"
+    "google.script.run"
+  ],
+  "apps-script/sidebar/js/lexicon.html": [
+    "function runLexiconQuery",
+    "function renderLexiconWordList",
+    "function selectLexiconWord",
+    "function selectedLexiconEntries",
+    "function buildLexiconInsertPayload",
+    "insertMode",
+    "google.script.run"
   ],
   "apps-script/sidebar/js/footer-actions.html": [
     "google.script.run",

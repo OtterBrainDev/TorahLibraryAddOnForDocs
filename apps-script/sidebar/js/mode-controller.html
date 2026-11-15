@@ -205,7 +205,7 @@ function setSidebarMode(mode, skipPreferenceSave) {
   $('.advanced-version-details').toggle(appMode === 'texts' && $('.output-mode-selection').val() !== 'en');
   var placeholders = { texts: 'Search texts…', voices: 'Search voices…', lexicon: 'Search dictionary…' };
   $('.input').attr('placeholder', placeholders[appMode] || 'Search texts…');
-  var searchLabels = { voices: 'Source Sheets', lexicon: 'Lexicon entries' };
+  var searchLabels = { voices: 'Source Sheets' };
   $('.search-results-label').text(searchLabels[appMode] || 'Search results');
   var insertLabels = { voices: 'Add Sheet', lexicon: 'Add Entry' };
   $('#insert-source').text(insertLabels[appMode] || 'Add Source');
@@ -242,7 +242,7 @@ function updateModeDependentSections() {
   $('.versions-section').toggle(hasSelectedTextResult && !hideTranslations);
   // Show source card when a text result is selected
   $('.preview-section').toggle(hasSelectedTextResult);
-  $('.voices-preview-section').toggle(hasSelectedVoiceResult || hasSelectedLexiconResult);
+  $('.voices-preview-section').toggle(hasSelectedVoiceResult);
   // New redesign sections
   $('.source-card').toggle(hasSelectedTextResult);
   $('.unified-sidebar').toggleClass('has-selected-result', hasSelectedTextResult);
@@ -250,8 +250,8 @@ function updateModeDependentSections() {
   $('.inline-session-settings').toggle(hasSelectedTextResult);
   // Show Voices insert-mode selector only when a source sheet has been selected.
   $('.voices-insert-options').toggle(hasSelectedVoiceResult);
-  // Show Lexicon insert-mode selector only when a lexicon entry has been selected.
-  $('.lexicon-insert-options').toggle(hasSelectedLexiconResult);
+  // A word's entries, What to insert and the preview, while a word is selected.
+  $('.lexicon-word-section').toggle(hasSelectedLexiconResult);
   renderSessionLibrary();
 
   // Render lexicon enhancement sections when in lexicon mode

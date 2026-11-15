@@ -65,7 +65,7 @@ function load() {
   context.window = context;
   vm.createContext(context);
   ['apps-script/shared/ui/core-shared.html', 'apps-script/shared/ui/state.html',
-    'apps-script/sidebar/js/search-controller.html',
+    'apps-script/sidebar/js/search-controller.html', 'apps-script/sidebar/js/lexicon.html',
   ].forEach((file) => vm.runInContext(scriptBody(file), context, { filename: file }));
   Object.assign(context, {
     normalizeUnifiedReferenceInput: (v) => v,

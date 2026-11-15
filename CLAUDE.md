@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **646 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **671 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -287,6 +287,23 @@ and fix it before touching the feature you came to change.
   give the same words, bold and italics.
 - `lexicon-stale-response.test.js` — a Lexicon or Voices answer to an earlier
   search is dropped (the stale "No lexicon entries found for 'Genesis 1:1'").
+- `lexicon-words.test.js` — a Lexicon search answers with words, not a flat
+  list of entries: grouped by headword spelling (cantillation and mark order
+  don't split one), the words spelled as typed first ("direct", by headword or
+  alternate; with vowels typed, that exact spelling first), then related
+  words; each entry's dictionary, part of speech, gloss, senses and credit; an
+  English search keeps only the headwords it found. Fixture: `fixtures/lexicon-shem.json`
+  (rebuilt by hand, see its `_note`).
+- `lexicon-insert.test.js` — Add Entry inserts one word's picked entries in
+  the order picked: the word once, each entry's dictionary line, a paragraph
+  per sense with the dictionary's numbers (sub-senses indented), notes in Full
+  entry only; bold, italics and superscript kept; the translation's Commentary
+  "Drop" never applies to a definition; an older sidebar's one-entry payload
+  still inserts.
+- `lexicon-entry-picker.test.js` — a word's entries are picked like
+  translations (first selected, a click toggles, pick order kept, the last one
+  stays, Select all appends); Matches / Related words / Closest words; Copy
+  gives exactly the lines Add Entry writes, in every mode.
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
   cantillation) are set in Noto Serif / Sans Hebrew at insert, and only those:
   letters and the marks it has stay; "Match the document" judges the

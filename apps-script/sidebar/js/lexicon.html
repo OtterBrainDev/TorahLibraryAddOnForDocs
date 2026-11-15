@@ -1,0 +1,701 @@
+<script>
+// The Lexicon tab (server/lexicon.gs gives it words, each with its entries).
+//
+// A search lists words: the ones spelled as typed under "Matches", then the
+// words it is a form of or close to under "Related words". Picking a word
+// lists its dictionary entries the way a text lists its translations: the
+// first is selected, a click adds or removes one, at least one stays
+// selected, and several are inserted in the order they were picked. The
+// preview shows the picked entries as an outline: numbered senses, each a
+// couple of lines until the entry is opened in full.
+
+// The picked entries of selectedLexiconItem (mode-controller), by id, in the
+// order they were picked.
+var lexiconSelectedEntryIds = [];
+// A starred word to open once the search for it answers.
+var pendingLexiconWordRef = '';
+
+var LEXICON_FORMAT_LABELS = { entry: 'Full entry', headword: 'Word + ref', definition: 'Definition' };
+
+function lexiconWordEntries(word) {
+  return word && Array.isArray(word.entries) ? word.entries : [];
+}
+
+function lexiconEntryLabel(entry) {
+  return [entry && entry.dictionary || 'Dictionary', entry && entry.ordinal].filter(Boolean).join(' ');
+}
+
+// "Klein · BDB ×2"
+function lexiconWordDictionaries(word) {
+  var order = [];
+  var counts = {};
+  lexiconWordEntries(word).forEach(function (entry) {
+    var name = entry.dictionary || 'Dictionary';
+    if (!counts[name]) { counts[name] = 0; order.push(name); }
+    counts[name]++;
+  });
+  return order.map(function (name) { return counts[name] > 1 ? name + ' ×' + counts[name] : name; }).join(' · ');
+}
+
+// Each entry's gloss once: "name, designation; … · first son of Noah".
+function lexiconWordGloss(word) {
+  var seen = {};
+  return lexiconWordEntries(word).map(function (entry) { return String(entry.gloss || '').trim(); })
+    .filter(function (gloss) {
+      var key = gloss.toLowerCase();
+      if (!gloss || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    }).join(' · ');
+}
+
+function lexiconEntryCount(items) {
+  return (items || []).reduce(function (sum, item) {
+    var entries = lexiconWordEntries(item);
+    return sum + (entries.length || 1);
+  }, 0);
+}
+
+/* ── Result list: words ─────────────────────────────────────────────────────── */
+
+function isLexiconBookmarked(ref) {
+  return getLexiconBookmarks().some(function (b) { return b.ref === ref; });
+}
+
+function renderLexiconWordRow(word, selectedClass) {
+  var entries = lexiconWordEntries(word);
+  var bookmarked = isLexiconBookmarked(word.ref);
+  var starTitle = bookmarked ? 'Remove star' : 'Star this word';
+  var gloss = lexiconWordGloss(word);
+  var languages = [];
+  entries.forEach(function (entry) {
+    if (entry.language && languages.indexOf(entry.language) < 0) languages.push(entry.language);
+  });
+  var chips = "<span class='lexicon-chip lexicon-chip--dict'>" + escapeHTML(lexiconWordDictionaries(word)) + "</span>" +
+    languages.map(function (language) { return "<span class='lexicon-chip'>" + escapeHTML(language) + "</span>"; }).join('');
+
+  return "<li class='result-item result-row lexicon-word-row " + selectedClass + "'" +
+    " data-key='" + escapeHTML(word.key) + "'" +
+    " data-ref='" + escapeHTML(word.ref) + "'" +
+    " role='option' tabindex='-1'" +
+    " aria-selected='" + (selectedClass === 'selected' ? 'true' : 'false') + "'>" +
+    "<div class='lexicon-row-header'>" +
+      "<span class='lexicon-row-headword' lang='he' dir='rtl'>" + escapeHTML(word.headWord || word.label || '') + "</span>" +
+      "<span class='lexicon-row-source'>" + escapeHTML(entries.length === 1 ? '1 entry' : entries.length + ' entries') + "</span>" +
+      "<button type='button' class='lexicon-row-bookmark-btn" + (bookmarked ? ' is-bookmarked' : '') + "'" +
+        " data-ref='" + escapeHTML(word.ref) + "'" +
+        " aria-label='" + starTitle + "' title='" + starTitle + "'>" + (bookmarked ? '⭐' : '☆') + "</button>" +
+    "</div>" +
+    (gloss
+      ? "<div class='lexicon-row-gloss'>" + escapeHTML(gloss) + "</div>"
+      : "<div class='lexicon-row-gloss lexicon-row-gloss--unavailable'>No definition to preview</div>") +
+    "<div class='lexicon-row-chips'>" + chips + "</div>" +
+    "</li>";
+}
+
+// Called by renderResultGroup (results-render) in Lexicon mode.
+function renderLexiconWordList($list, items) {
+  var direct = items.filter(function (item) { return item.match !== 'related'; });
+  var related = items.filter(function (item) { return item.match === 'related'; });
+  var html = '';
+  function section(label, words) {
+    if (!words.length) return;
+    html += "<li class='lexicon-word-group-label' role='presentation'>" + escapeHTML(label) + "</li>";
+    words.forEach(function (word) {
+      html += renderLexiconWordRow(word, word.key === selectedResultKey ? 'selected' : '');
+    });
+  }
+  section('Matches', direct);
+  section(direct.length ? 'Related words' : 'Closest words', related);
+  // Every interpolated value above goes through escapeHTML.
+  $list.html(html);
+}
+
+/* ── A word's entries, chosen like translations ─────────────────────────────── */
+
+function selectedLexiconEntries() {
+  var entries = lexiconWordEntries(selectedLexiconItem);
+  return lexiconSelectedEntryIds.map(function (id) {
+    return entries.filter(function (entry) { return entry.id === id; })[0];
+  }).filter(Boolean);
+}
+
+// Called by resolveSelectedResult (search-controller) when a word is picked.
+function selectLexiconWord(word) {
+  selectedLexiconItem = word || null;
+  var entries = lexiconWordEntries(word);
+  lexiconSelectedEntryIds = entries.length ? [entries[0].id] : [];
+  renderLexiconEntryPicker();
+  renderLexiconPreview();
+}
+
+function renderLexiconEntryPicker(focusId) {
+  var word = selectedLexiconItem;
+  var entries = lexiconWordEntries(word);
+  $('#lexicon-entries-word').text(word ? (word.headWord || word.label || '') : '');
+  $('#lexicon-entries-count').text(entries.length === 1 ? '1 entry' : entries.length + ' entries');
+
+  var multi = lexiconSelectedEntryIds.length > 1;
+  var html = '';
+  entries.forEach(function (entry, index) {
+    var order = lexiconSelectedEntryIds.indexOf(entry.id);
+    var selected = order >= 0;
+    var focusable = focusId ? entry.id === focusId : index === 0;
+    html += "<li class='lexicon-entry-option" + (selected ? ' is-selected' : '') + "'" +
+      " role='option' aria-selected='" + (selected ? 'true' : 'false') + "'" +
+      " tabindex='" + (focusable ? '0' : '-1') + "'" +
+      " data-entry-id='" + escapeHTML(entry.id) + "'>" +
+      "<span class='lexicon-entry-check' aria-hidden='true'>" + (selected ? (multi ? String(order + 1) : '✓') : '') + "</span>" +
+      "<span class='lexicon-entry-text'>" +
+        "<span class='lexicon-entry-line'>" +
+          "<span class='lexicon-entry-dict'>" + escapeHTML(lexiconEntryLabel(entry)) + "</span>" +
+          (entry.morphology ? "<span class='lexicon-entry-morph'>" + escapeHTML(entry.morphology) + "</span>" : '') +
+          (entry.language ? "<span class='lexicon-chip'>" + escapeHTML(entry.language) + "</span>" : '') +
+        "</span>" +
+        (entry.gloss ? "<span class='lexicon-entry-gloss'>" + escapeHTML(entry.gloss) + "</span>" : '') +
+      "</span>" +
+      "</li>";
+  });
+  // Every interpolated value above goes through escapeHTML.
+  $('#lexicon-entry-list').html(html);
+
+  var allPicked = entries.length > 1 && lexiconSelectedEntryIds.length === entries.length;
+  $('#lexicon-entries-hint').toggle(entries.length > 1);
+  $('#lexicon-select-all').toggle(entries.length > 1 && !allPicked);
+  syncLexiconSelectedDisplay();
+
+  if (focusId) {
+    var option = $('#lexicon-entry-list .lexicon-entry-option').filter(function () {
+      return $(this).attr('data-entry-id') === focusId;
+    }).get(0);
+    if (option) option.focus();
+  }
+}
+
+// The list's numbers and "Will insert" already say what is picked and in
+// what order; this line only says why a click didn't take the last one away.
+function syncLexiconSelectedDisplay(warning) {
+  var $display = $('#lexicon-selected-display');
+  $display.toggleClass('is-warning', !!warning).text(warning || '').toggle(!!warning);
+}
+
+function toggleLexiconEntry(id) {
+  if (!id) return;
+  var at = lexiconSelectedEntryIds.indexOf(id);
+  if (at >= 0) {
+    // Never end with nothing selected: Add Entry would have nothing to insert.
+    if (lexiconSelectedEntryIds.length === 1) {
+      syncLexiconSelectedDisplay('At least one entry stays selected: it is the one inserted.');
+      return;
+    }
+    lexiconSelectedEntryIds.splice(at, 1);
+  } else {
+    lexiconSelectedEntryIds.push(id);
+  }
+  renderLexiconEntryPicker(id);
+  renderLexiconPreview();
+  setFooterButtonStates();
+}
+
+$(document).on('click', '#lexicon-entry-list .lexicon-entry-option', function () {
+  toggleLexiconEntry($(this).attr('data-entry-id'));
+});
+
+$(document).on('keydown', '#lexicon-entry-list .lexicon-entry-option', function (event) {
+  var $options = $('#lexicon-entry-list .lexicon-entry-option');
+  var index = $options.index(this);
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    toggleLexiconEntry($(this).attr('data-entry-id'));
+  } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    var next = $options.get(index + (event.key === 'ArrowDown' ? 1 : -1));
+    if (!next) return;
+    $options.attr('tabindex', '-1');
+    next.setAttribute('tabindex', '0');
+    next.focus();
+  }
+});
+
+// The rest of the word's entries, after the ones already picked.
+function selectAllLexiconEntries() {
+  lexiconWordEntries(selectedLexiconItem).forEach(function (entry) {
+    if (lexiconSelectedEntryIds.indexOf(entry.id) < 0) lexiconSelectedEntryIds.push(entry.id);
+  });
+  renderLexiconEntryPicker();
+  renderLexiconPreview();
+  setFooterButtonStates();
+}
+
+$(document).on('click', '#lexicon-select-all', selectAllLexiconEntries);
+
+/* ── Preview: the picked entries as an outline ──────────────────────────────── */
+
+var LEXICON_PREVIEW_TOP_SENSES = 4;
+var LEXICON_PREVIEW_SUB_SENSES = 2;
+var LEXICON_PREVIEW_CLAMP_CHARS = 140;
+
+// A line break or block is a space; an inline tag (<i>, <sup>, <span>) is
+// nothing, so "Nö<sup>ZMG</sup>" stays "NöZMG".
+function lexiconPlainText(html) {
+  var text = String(html || '')
+    .replace(/<\/?(?:br|p|div|li|ol|ul)\b[^>]*>/gi, ' ')
+    .replace(/<[^>]*>/g, '');
+  // decodePreviewEntities: sidebar/js/preview-core (decodeHTMLEntities' mirror).
+  return String(decodePreviewEntities(text) || '').replace(/\s+/g, ' ').trim();
+}
+
+function lexiconSenseNumber(num) {
+  var value = String(num || '').trim();
+  if (!value) return '';
+  return /[.)]$/.test(value) ? value : value + '.';
+}
+
+// More than the collapsed card shows: senses past the first few, or a
+// definition long enough to be cut to two lines.
+function lexiconEntryIsLong(entry) {
+  var senses = entry.senses || [];
+  if (senses.length > LEXICON_PREVIEW_TOP_SENSES) return true;
+  var long = false;
+  (function walk(list, depth) {
+    if (depth > 0 && list.length > LEXICON_PREVIEW_SUB_SENSES) long = true;
+    list.forEach(function (sense) {
+      if (lexiconPlainText(sense.html).length > LEXICON_PREVIEW_CLAMP_CHARS) long = true;
+      walk(sense.senses || [], depth + 1);
+    });
+  })(senses, 0);
+  return long;
+}
+
+function renderLexiconSenses(senses, depth) {
+  if (!senses || !senses.length) return '';
+  return "<ol class='lexicon-senses lexicon-senses--depth-" + Math.min(depth, 3) + "'>" +
+    senses.map(function (sense) {
+      var number = lexiconSenseNumber(sense.num);
+      return "<li class='lexicon-sense" + (number ? '' : ' lexicon-sense--unnumbered') + "'>" +
+        (number ? "<span class='lexicon-sense-num'>" + escapeHTML(number) + "</span>" : '') +
+        "<div class='lexicon-sense-body'>" +
+          ((sense.label || sense.html || sense.notes)
+            ? "<div class='lexicon-sense-text'>" +
+                (sense.label ? "<span class='lexicon-sense-label'>" + escapeHTML(sense.label) + "</span> " : '') +
+                (sense.html ? "<span class='lexicon-sense-def'>" + sanitizeSourceHtml(sense.html) + "</span>" : '') +
+                (sense.notes ? " <span class='lexicon-sense-notes'>" + sanitizeSourceHtml(sense.notes) + "</span>" : '') +
+              "</div>"
+            : '') +
+          renderLexiconSenses(sense.senses, depth + 1) +
+        "</div>" +
+      "</li>";
+    }).join('') +
+    "</ol>";
+}
+
+function renderLexiconEntryCard(entry, index, count) {
+  var alternates = (entry.alternateHeadWords || []).filter(Boolean);
+  var notes = entry.notes ? "<div class='lexicon-card-note'>" + sanitizeSourceHtml(entry.notes) + "</div>" : '';
+  var derivatives = entry.derivatives
+    ? "<div class='lexicon-card-note'><span class='lexicon-card-note-label'>Derivatives:</span> " + sanitizeSourceHtml(entry.derivatives) + "</div>"
+    : '';
+  var isLong = lexiconEntryIsLong(entry);
+  var credit = [entry.lexiconName || entry.dictionary, entry.credit].filter(Boolean).join(' · ');
+
+  return "<article class='lexicon-card" + (isLong ? ' is-long' : '') + "' data-entry-id='" + escapeHTML(entry.id) + "'>" +
+    "<header class='lexicon-card-head'>" +
+      (count > 1 ? "<span class='lexicon-card-order' aria-label='Inserted " + (index + 1) + " of " + count + "'>" + (index + 1) + "</span>" : '') +
+      "<span class='lexicon-card-dict'>" + escapeHTML(lexiconEntryLabel(entry)) + "</span>" +
+      (entry.morphology ? "<span class='lexicon-card-morph'>" + escapeHTML(entry.morphology) + "</span>" : '') +
+      "<bdi class='lexicon-card-headword' lang='he' dir='rtl'>" + (entry.allCited ? '† ' : '') + escapeHTML(entry.headWord || '') + "</bdi>" +
+    "</header>" +
+    (alternates.length
+      ? "<div class='lexicon-card-alts'>also <bdi lang='he' dir='rtl'>" + escapeHTML(alternates.join(', ')) + "</bdi></div>"
+      : '') +
+    (entry.senses && entry.senses.length
+      ? renderLexiconSenses(entry.senses, 0)
+      : "<p class='lexicon-card-empty'>Sefaria has no definition text for this entry.</p>") +
+    ((notes || derivatives)
+      ? "<details class='lexicon-card-notes'><summary>" + (notes && derivatives ? 'Notes and derivatives' : (notes ? 'Notes' : 'Derivatives')) + "</summary>" + notes + derivatives + "</details>"
+      : '') +
+    (isLong ? "<button type='button' class='lexicon-card-expand' aria-expanded='false'>Show the whole entry</button>" : '') +
+    (credit ? "<footer class='lexicon-card-credit'>" + escapeHTML(credit) + "</footer>" : '') +
+    "</article>";
+}
+
+function lexiconInsertSummary(entries, mode) {
+  var labels = entries.map(lexiconEntryLabel);
+  var list = labels.join(', then ');
+  if (mode === 'headword') return 'Will insert: the word and ' + (labels.length > 1 ? 'the dictionaries’ names (' + labels.join(', ') + ')' : 'the dictionary’s name');
+  if (mode === 'definition') return 'Will insert: ' + (labels.length > 1 ? 'the definitions from ' + list : 'the definition only');
+  return 'Will insert: ' + (labels.length > 1 ? labels.length + ' full entries — ' + list : 'the full entry');
+}
+
+function renderLexiconPreview() {
+  var entries = selectedLexiconEntries();
+  if (!selectedLexiconItem || !entries.length) {
+    $('#lexicon-preview').empty();
+    $('#lexicon-insert-summary').text('');
+    return;
+  }
+  $('#lexicon-insert-summary').text(lexiconInsertSummary(entries, getLexiconFormat()));
+  var html = entries.map(function (entry, i) { return renderLexiconEntryCard(entry, i, entries.length); }).join('') +
+    "<div class='lexicon-preview-footer'><span></span>" +
+    "<button type='button' class='lexicon-preview-copy-btn' id='lexicon-copy-btn' title='Copy what Add Entry inserts'>Copy</button></div>";
+  // renderLexiconEntryCard escapes every label and runs Sefaria's definition
+  // markup through sanitizeSourceHtml (the allowlist in shared/ui/dom).
+  $('#lexicon-preview').html(html);
+}
+
+$(document).on('click', '.lexicon-card-expand', function () {
+  var $card = $(this).closest('.lexicon-card');
+  var expanded = !$card.hasClass('is-expanded');
+  $card.toggleClass('is-expanded', expanded);
+  $(this).attr('aria-expanded', expanded ? 'true' : 'false').text(expanded ? 'Show less' : 'Show the whole entry');
+});
+
+/* ── What to insert ─────────────────────────────────────────────────────────── */
+
+function getLexiconFormat() {
+  return $('.lexicon-format-btn[aria-checked="true"]').data('value') || 'entry';
+}
+
+$(document).on('click', '.lexicon-format-btn', function () {
+  if (appMode !== 'lexicon') return;
+  var $group = $(this).closest('[role="radiogroup"]');
+  $group.find('.lexicon-format-btn').removeClass('is-active').attr('aria-checked', 'false');
+  $(this).addClass('is-active').attr('aria-checked', 'true');
+  saveAccountPreference({ lexicon_insert_mode_default: $(this).data('value') || 'entry' });
+  if (selectedLexiconItem) $('#lexicon-insert-summary').text(lexiconInsertSummary(selectedLexiconEntries(), getLexiconFormat()));
+});
+
+// What Add Entry sends (footer-actions): the picked entries, in order.
+function buildLexiconInsertPayload() {
+  var word = selectedLexiconItem || {};
+  return {
+    insertMode: getLexiconFormat(),
+    headWord: word.headWord || '',
+    entries: selectedLexiconEntries()
+  };
+}
+
+// The same paragraphs as planLexiconInsertion_ (server/lexicon.gs), as plain
+// text: for Copy.
+function lexiconPlainTextForCopy(entries, mode) {
+  if (!entries.length) return '';
+  var lines = [];
+  if (mode !== 'definition') lines.push(entries[0].headWord || '');
+  if (mode === 'headword') {
+    lines.push(entries.map(function (entry) { return [entry.lexiconName || entry.dictionary, entry.ordinal].filter(Boolean).join(' '); }).join('; '));
+    return lines.join('\n');
+  }
+  entries.forEach(function (entry, i) {
+    if (i > 0) lines.push('');
+    if (mode === 'entry') {
+      var alternates = (entry.alternateHeadWords || []).filter(Boolean);
+      lines.push([[entry.lexiconName || entry.dictionary, entry.ordinal].filter(Boolean).join(' '),
+        entry.morphologyInDefinition ? '' : entry.morphology,
+        alternates.length ? 'also ' + alternates.join(', ') : ''].filter(Boolean).join(' · '));
+    }
+    (function walk(senses, depth) {
+      (senses || []).forEach(function (sense) {
+        var text = [lexiconSenseNumber(sense.num), sense.label, lexiconPlainText(sense.html), lexiconPlainText(sense.notes)].filter(Boolean).join(' ');
+        if (text) lines.push(new Array(depth + 1).join('    ') + text);
+        walk(sense.senses, text ? depth + 1 : depth);
+      });
+    })(entry.senses, 0);
+    if (mode === 'entry') {
+      if (entry.notes) lines.push(lexiconPlainText(entry.notes));
+      if (entry.derivatives) lines.push('Derivatives: ' + lexiconPlainText(entry.derivatives));
+    }
+  });
+  return lines.join('\n');
+}
+
+$(document).on('click', '#lexicon-copy-btn', function () {
+  var text = lexiconPlainTextForCopy(selectedLexiconEntries(), getLexiconFormat());
+  var $btn = $(this);
+  var done = function (label) {
+    $btn.text(label).toggleClass('copy-success', label === 'Copied!');
+    setTimeout(function () { $btn.text('Copy').removeClass('copy-success'); }, 2000);
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done('Copied!'); }, function () { done('Copy failed'); });
+      return;
+    }
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    done('Copied!');
+  } catch (err) {
+    done('Copy failed');
+  }
+});
+
+/* ── Search history ─────────────────────────────────────────────────────────── */
+
+var LEXICON_HISTORY_KEY = 'lexicon_search_history';
+var LEXICON_HISTORY_MAX = 5;
+
+function getLexiconHistory() {
+  try { return JSON.parse(localStorage.getItem(LEXICON_HISTORY_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+
+function saveLexiconHistory(query) {
+  if (!query) return;
+  try {
+    var list = getLexiconHistory().filter(function (q) { return q !== query; });
+    list.unshift(query);
+    localStorage.setItem(LEXICON_HISTORY_KEY, JSON.stringify(list.slice(0, LEXICON_HISTORY_MAX)));
+  } catch (e) {}
+  renderLexiconHistory();
+}
+
+function clearLexiconHistory() {
+  try { localStorage.removeItem(LEXICON_HISTORY_KEY); } catch (e) {}
+  renderLexiconHistory();
+}
+
+function renderLexiconHistory() {
+  var $container = $('#lexicon-history-section');
+  var $chips     = $('#lexicon-history-chips');
+  if (!$container.length || !$chips.length) return;
+
+  var history = getLexiconHistory();
+  if (!history.length || appMode !== 'lexicon') {
+    $container.hide();
+    return;
+  }
+
+  var html = '';
+  history.forEach(function (q) {
+    html += "<button type='button' class='lexicon-history-chip' data-query='" + escapeHTML(q) + "' aria-label='Search again: " + escapeHTML(q) + "'>" +
+      "<span class='lexicon-history-chip-text'>" + escapeHTML(q) + "</span>" +
+      "</button>";
+  });
+  html += "<button type='button' class='lexicon-history-clear' aria-label='Clear search history'>Clear</button>";
+  // Every interpolated query goes through escapeHTML.
+  $chips.html(html);
+  $container.show();
+}
+
+$(document).on('click', '.lexicon-history-chip', function () {
+  var query = $(this).data('query');
+  if (!query) return;
+  $('.input').val(query);
+  runLexiconQuery();
+});
+
+$(document).on('click', '.lexicon-history-clear', function () {
+  clearLexiconHistory();
+});
+
+/* ── Starred words ──────────────────────────────────────────────────────────── */
+
+// Stars were per entry until 2026-11 ({ ref: 'lexicon:<rid>', headWord, … });
+// those still list, and open by searching their headword.
+var LEXICON_BOOKMARKS_KEY = 'lexicon_bookmarks';
+
+function getLexiconBookmarks() {
+  try { return JSON.parse(localStorage.getItem(LEXICON_BOOKMARKS_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+
+function writeLexiconBookmarks(bookmarks) {
+  try { localStorage.setItem(LEXICON_BOOKMARKS_KEY, JSON.stringify(bookmarks.slice(0, 20))); }
+  catch (e) {}
+  renderLexiconBookmarks();
+}
+
+function toggleLexiconBookmark(word) {
+  if (!word || !word.ref) return;
+  var others = getLexiconBookmarks().filter(function (b) { return b.ref !== word.ref; });
+  var starring = others.length === getLexiconBookmarks().length;
+  if (starring) {
+    others.unshift({
+      ref: word.ref,
+      headWord: word.headWord || word.label || '',
+      sourceLabel: lexiconWordDictionaries(word)
+    });
+  }
+  writeLexiconBookmarks(others);
+  var label = starring ? 'Remove star' : 'Star this word';
+  $('.lexicon-row-bookmark-btn').filter(function () { return $(this).attr('data-ref') === word.ref; })
+    .toggleClass('is-bookmarked', starring)
+    .attr('aria-label', label)
+    .attr('title', label)
+    .text(starring ? '⭐' : '☆');
+}
+
+function renderLexiconBookmarks() {
+  var $section = $('#lexicon-bookmarks-section');
+  var $list    = $('#lexicon-bookmarks-list');
+  if (!$section.length || !$list.length) return;
+
+  var bookmarks = getLexiconBookmarks();
+  if (!bookmarks.length || appMode !== 'lexicon') {
+    $section.hide();
+    return;
+  }
+
+  var html = '';
+  bookmarks.forEach(function (b) {
+    html += "<li class='lexicon-bookmark-row' data-ref='" + escapeHTML(b.ref) + "' data-headword='" + escapeHTML(b.headWord || '') + "' role='option' tabindex='0'>" +
+      "<span class='lexicon-bookmark-headword' lang='he' dir='rtl'>" + escapeHTML(b.headWord) + "</span>" +
+      "<span class='lexicon-bookmark-source'>" + escapeHTML(b.sourceLabel || b.lexiconName || '') + "</span>" +
+      "<button type='button' class='lexicon-bookmark-remove' data-ref='" + escapeHTML(b.ref) + "' aria-label='Remove " + escapeHTML(b.headWord) + " from starred words' title='Remove star'>✕</button>" +
+      "</li>";
+  });
+  // Every interpolated value goes through escapeHTML.
+  $list.html(html);
+  $section.show();
+}
+
+function findLexiconWord(ref) {
+  return queryState.searchResults.concat(queryState.libraryMatches)
+    .filter(function (item) { return item && item.ref === ref; })[0] || null;
+}
+
+// Pick a word as a click on its row does (event-bindings).
+function openLexiconWord(word) {
+  if (!word) return;
+  selectedResultKey = word.key;
+  selectedResultSummary = { label: word.headWord || word.label || word.ref, subtitle: '' };
+  resultsCollapsed = true;
+  renderResults();
+  resolveSelectedResult(word.ref, word.label || word.ref);
+}
+
+$(document).on('click keydown', '.lexicon-bookmark-row', function (e) {
+  if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+  if ($(e.target).hasClass('lexicon-bookmark-remove')) return;
+  e.preventDefault();
+  var ref = $(this).attr('data-ref');
+  var word = findLexiconWord(ref);
+  if (word) {
+    openLexiconWord(word);
+    return;
+  }
+  var headWord = $(this).attr('data-headword');
+  if (!headWord) return;
+  pendingLexiconWordRef = ref;
+  $('.input').val(headWord);
+  runLexiconQuery();
+});
+
+$(document).on('click', '.lexicon-bookmark-remove', function (e) {
+  e.stopPropagation();
+  var ref = $(this).attr('data-ref');
+  if (!ref) return;
+  writeLexiconBookmarks(getLexiconBookmarks().filter(function (b) { return b.ref !== ref; }));
+});
+
+$(document).on('click keydown', '#lexicon-bookmarks-header', function (e) {
+  if (e.type === 'keydown' && e.which !== 13 && e.which !== 32) return;
+  var $list     = $('#lexicon-bookmarks-list');
+  var $btn      = $('#lexicon-bookmarks-toggle');
+  var expanded  = $(this).attr('aria-expanded') === 'true';
+  $(this).attr('aria-expanded', !expanded ? 'true' : 'false');
+  $btn.text(expanded ? '▸' : '▾');
+  $list.toggle(!expanded);
+});
+
+// The star on a word row.
+$(document).on('click', '.lexicon-row-bookmark-btn', function (e) {
+  e.stopPropagation();
+  toggleLexiconBookmark(findLexiconWord($(this).attr('data-ref')));
+});
+
+/* ── Search ─────────────────────────────────────────────────────────────────── */
+
+function announceLexiconStatus(msg) {
+  var $live = $('#lexicon-sr-live');
+  if ($live.length) $live.text(msg);
+}
+
+function runLexiconQuery(fromTyping) {
+  // An answer to an earlier query is dropped. Without this, switching to
+  // Lexicon looked up what was still in the box ("Genesis 1:1"); that empty
+  // answer landed while שלום was being looked up, and its "No lexicon entries
+  // found for 'Genesis 1:1'" stayed above שלום's 14 entries (BUG-005).
+  var requestId = ++latestQueryRequestId;
+  var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
+  if (fromTyping !== true) $('.input').val(input);
+  clearSelectedResult();
+  selectedLexiconItem = null;
+  lexiconSelectedEntryIds = [];
+  setResultsHint('');
+  $('.lexicon-result-count').remove();
+  updateModeDependentSections();
+
+  if (!input) {
+    pendingLexiconWordRef = '';
+    queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
+    reprocessAndRenderResults();
+    setInsertButtonState(false);
+    $('#open-on-sefaria').prop('disabled', true);
+    updateLexiconTabBadge(0);
+    renderLexiconHistory();
+    renderLexiconBookmarks();
+    return;
+  }
+
+  announceLexiconStatus('Searching…');
+  setResultsLoading(true);
+  renderLexiconHistory();
+  renderLexiconBookmarks();
+
+  google.script.run
+    .withSuccessHandler(function (response) {
+      if (requestId !== latestQueryRequestId) return;
+      var items = Array.isArray(response) ? response : [];
+      queryState.rawLibraryMatches = [];
+      queryState.rawSearchResults = items;
+      reprocessAndRenderResults();
+
+      var count = lexiconEntryCount(items);
+      updateLexiconTabBadge(items.length);
+      setResultsHint('');
+
+      if (!items.length) {
+        pendingLexiconWordRef = '';
+        setResultsHint('No lexicon entries found for “' + input + '”. Try a different spelling or root form.');
+        announceLexiconStatus('No entries found for ' + input);
+      } else {
+        var countLabel = count === 1 ? '1 entry found' : count + ' entries found';
+        announceLexiconStatus(countLabel);
+        // Show count line inside results panel
+        if (!$('.lexicon-result-count').length) {
+          $('.results-header').after("<p class='lexicon-result-count'></p>");
+        }
+        $('.lexicon-result-count').text(countLabel);
+        // Save to history on successful search
+        saveLexiconHistory(input);
+      }
+
+      updateModeDependentSections();
+      setResultsLoading(false);
+
+      if (pendingLexiconWordRef) {
+        var starred = findLexiconWord(pendingLexiconWordRef);
+        pendingLexiconWordRef = '';
+        if (starred) openLexiconWord(starred);
+      }
+    })
+    .withFailureHandler(function (error) {
+      if (requestId !== latestQueryRequestId) return;
+      pendingLexiconWordRef = '';
+      queryState.rawLibraryMatches = [];
+      queryState.rawSearchResults = [];
+      reprocessAndRenderResults();
+      updateLexiconTabBadge(0);
+      setResultsHint((error && error.message) || 'Lexicon search is temporarily unavailable. Check your connection and try again.');
+      announceLexiconStatus('Search failed.');
+      setResultsLoading(false);
+    })
+    .searchLexicon(input);
+}
+</script>
