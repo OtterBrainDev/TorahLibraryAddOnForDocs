@@ -741,8 +741,9 @@
               loadTranslationLanguagesFromField();
               syncExperimentalChildToggles();
               syncLinkerInsertToggle();
-              syncSidebarTabsUi_();
+              loadSidebarControlsFromFields_();
               loadMenuLayoutEditor(preferences.menu_layout);
+              markFormClean_();
       } catch (error) {
         console.error('Preferences modal apply failed:', error);
         setResultsMessage('Preferences loaded with an error: ' + (error && error.message ? error.message : error));
@@ -959,6 +960,7 @@
       google.script.run.withSuccessHandler(function() {
         markPreferencesSaved();
         markMenuLayoutSaved(preferenceObject.menu_layout);
+        markFormClean_(preferenceObject);
         google.script.run.withSuccessHandler(function() {
           modalBusyHide();
           setResultsMessage('Successfully updated preferences.');
@@ -1937,6 +1939,8 @@
             current = (result && result.uiMode) || input.value;
             setInterfaceModeUi_(current);
             announceUiModeToSidebar_(current);
+            // Everything is wider, for the profiles column (preferencesPopup).
+            try { google.script.host.setWidth(current === 'full' ? 860 : 600); } catch (e) {}
             // setUiMode may have moved the stored menu. Show it in the Menu
             // Bar editor, unless the editor holds changes not saved yet:
             // those stay, and Save stores them.
@@ -1954,15 +1958,17 @@
       });
     }
 
-    // ── Sidebar tabs (Voices, Lexicon) ───────────────────────────────────
-    // Beside the Interface switch and, like it, saved at once: each switch
-    // writes its own key and tells an open sidebar (markPreferencesSaved),
-    // which shows or hides the tab without a refresh (syncSidebarTabs in
-    // sidebar/js/mode-controller). They are ordinary named checkboxes, so
-    // loading, Reset To Defaults, a settings file and Save treat them like any
-    // other setting. A switch waits for its own save before it can be clicked
-    // again, so two saves of one key never cross. A tab switched off takes its
-    // Insertion Defaults sub-tab with it (data-sidebar-tabs, preferences/css).
+    // ── Sidebar tab (Preferences → Sidebar) ──────────────────────────────
+    // Saved with Save, like every other tab, and an open sidebar follows
+    // (markPreferencesSaved → syncSidebarControls in sidebar/js/mode-controller).
+    // The Voices and Lexicon switches are settings of their own; the Quick
+    // Actions and Insertion Options switches are helpers without a name that
+    // write two hidden lists (sidebar_quick_actions_hidden,
+    // sidebar_options_hidden), so Save, Reset To Defaults and a settings file
+    // treat them like any other setting. applyPreferencesToForm unticks every
+    // nameless checkbox, so loadSidebarControlsFromFields_ redraws them after.
+    // A switched-off tab takes its Insertion Defaults sub-tab with it
+    // (data-sidebar-tabs, preferences/css), as soon as it is switched.
     function sidebarTabsFromSwitches_() {
       var tabs = ['texts'];
       document.querySelectorAll('.sidebar-tab-switch').forEach(function (box) {
@@ -1983,34 +1989,278 @@
       }
     }
 
-    function sidebarTabsMessage_(tabs) {
-      if (tabs.length < 2) return 'Saved: the sidebar shows Texts alone, with no tabs.';
-      var names = tabs.map(function (tab) { return tab.charAt(0).toUpperCase() + tab.slice(1); });
-      return 'Saved: the sidebar shows ' + names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] + '.';
+    var SIDEBAR_HIDDEN_LISTS_ = [
+      { field: 'sidebar_quick_actions_hidden', selector: '.sidebar-quick-action-switch', attr: 'data-sidebar-quick-action' },
+      { field: 'sidebar_options_hidden', selector: '.sidebar-option-switch', attr: 'data-sidebar-option' }
+    ];
+
+    function writeSidebarHiddenList_(list) {
+      var hidden = [];
+      document.querySelectorAll(list.selector).forEach(function (box) {
+        if (!box.checked) hidden.push(box.getAttribute(list.attr));
+      });
+      var field = byId(list.field);
+      if (field) field.value = JSON.stringify(hidden);
     }
 
-    function initSidebarTabSwitches() {
-      var status = byId('interface-mode-status');
+    function loadSidebarControlsFromFields_() {
+      SIDEBAR_HIDDEN_LISTS_.forEach(function (list) {
+        var hidden = [];
+        try { hidden = JSON.parse((byId(list.field) || {}).value || '[]'); } catch (e) { hidden = []; }
+        if (!Array.isArray(hidden)) hidden = [];
+        document.querySelectorAll(list.selector).forEach(function (box) {
+          box.checked = hidden.indexOf(box.getAttribute(list.attr)) < 0;
+        });
+        writeSidebarHiddenList_(list);
+      });
+      syncSidebarTabsUi_();
+    }
+
+    function initSidebarControls() {
       document.querySelectorAll('.sidebar-tab-switch').forEach(function (box) {
-        box.addEventListener('change', function () {
-          var on = box.checked;
-          var change = {};
-          change[box.name] = on;
-          box.disabled = true;
-          syncSidebarTabsUi_();
-          if (status) status.textContent = '';
-          google.script.run.withSuccessHandler(function () {
-            box.disabled = false;
-            markPreferencesSaved();
-            if (status) status.textContent = sidebarTabsMessage_(sidebarTabsFromSwitches_());
-          }).withFailureHandler(function () {
-            box.disabled = false;
-            box.checked = !on;
-            syncSidebarTabsUi_();
-            if (status) status.textContent = 'Could not change the sidebar tabs. Nothing was changed.';
-          }).setPreferences(change);
+        box.addEventListener('change', syncSidebarTabsUi_);
+      });
+      SIDEBAR_HIDDEN_LISTS_.forEach(function (list) {
+        document.querySelectorAll(list.selector).forEach(function (box) {
+          box.addEventListener('change', function () { writeSidebarHiddenList_(list); });
         });
       });
+      var showAll = byId('sidebar-options-show-all');
+      if (showAll) {
+        showAll.addEventListener('click', function () {
+          document.querySelectorAll('.sidebar-option-switch').forEach(function (box) { box.checked = true; });
+          writeSidebarHiddenList_(SIDEBAR_HIDDEN_LISTS_[1]);
+        });
+      }
+    }
+
+    // ── Settings profiles (Everything) ───────────────────────────────────
+    // The column beside the tabs (server/settings-profiles.gs). The tabs always
+    // edit the profile in use; clicking another switches to it: its settings
+    // become the saved ones and are loaded here. A switch, a new profile and
+    // deleting the one in use reload the form, so unsaved changes are asked
+    // about first (Save and continue / Don't save / Cancel). Renaming changes
+    // no setting. Each change tells an open sidebar (markPreferencesSaved),
+    // whose Insertion Options names the profile in use and can switch too.
+    // Everything here is drawn with textContent: a name is the person's text.
+    var settingsProfiles_ = null;
+    var preferencesBaseline_ = null;
+    var profileNameMode_ = null;
+
+    function markFormClean_(saved) {
+      preferencesBaseline_ = JSON.stringify(saved || collectPreferenceObject());
+    }
+
+    function formHasUnsavedChanges_() {
+      return preferencesBaseline_ !== null && JSON.stringify(collectPreferenceObject()) !== preferencesBaseline_;
+    }
+
+    function profileIndex_() {
+      return settingsProfiles_ || { active: 'p1', implicit: true, max: 10, profiles: [{ id: 'p1', name: 'My settings' }] };
+    }
+
+    function profileById_(id) {
+      return profileIndex_().profiles.filter(function (p) { return p.id === id; })[0] || null;
+    }
+
+    function activeProfile_() {
+      return profileById_(profileIndex_().active) || profileIndex_().profiles[0];
+    }
+
+    function quoted_(name) {
+      return '“' + name + '”';
+    }
+
+    function renderSettingsProfiles_() {
+      var list = byId('pref-profile-list');
+      if (!list) return;
+      var index = profileIndex_();
+      list.textContent = '';
+      index.profiles.forEach(function (profile) {
+        var current = profile.id === index.active;
+        var item = document.createElement('li');
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'pref-profile-item';
+        button.setAttribute('data-profile-id', profile.id);
+        button.setAttribute('aria-current', current ? 'true' : 'false');
+        button.title = current ? 'In use: the tabs edit this profile' : 'Switch to this profile';
+        var dot = document.createElement('span');
+        dot.className = 'pref-profile-item-dot';
+        dot.setAttribute('aria-hidden', 'true');
+        var name = document.createElement('span');
+        name.className = 'pref-profile-item-name';
+        name.textContent = profile.name;
+        button.appendChild(dot);
+        button.appendChild(name);
+        item.appendChild(button);
+        list.appendChild(item);
+      });
+      byId('pref-profile-delete').disabled = index.profiles.length < 2;
+      byId('pref-profile-new').hidden = !!profileNameMode_ || index.profiles.length >= (index.max || 10);
+    }
+
+    function closeProfileNameField_() {
+      profileNameMode_ = null;
+      byId('pref-profile-name-field').hidden = true;
+      renderSettingsProfiles_();
+    }
+
+    function openProfileNameField_(mode) {
+      profileNameMode_ = mode;
+      var field = byId('pref-profile-name-field');
+      var input = byId('pref-profile-name');
+      byId('pref-profile-name-label').textContent = mode === 'rename' ? 'Rename ' + quoted_(activeProfile_().name) : 'New profile';
+      byId('pref-profile-name-ok').textContent = mode === 'rename' ? 'Rename' : 'Create';
+      input.value = mode === 'rename' ? activeProfile_().name : '';
+      field.hidden = false;
+      renderSettingsProfiles_();
+      input.focus();
+      input.select();
+    }
+
+    // The dialog's one question: three buttons at most; Cancel closes it.
+    function askProfileQuestion_(question) {
+      var modal = byId('profile_modal');
+      byId('profile_modal_title').textContent = question.title;
+      byId('profile_modal_message').textContent = question.message;
+      var ok = byId('profile_modal_ok');
+      var alt = byId('profile_modal_alt');
+      ok.textContent = question.ok;
+      alt.hidden = !question.alt;
+      alt.textContent = question.alt || '';
+      function close() { modal.hidden = true; }
+      ok.onclick = function () { close(); question.onOk(); };
+      alt.onclick = function () { close(); if (question.onAlt) question.onAlt(); };
+      byId('profile_modal_cancel').onclick = close;
+      modal.hidden = false;
+      ok.focus();
+    }
+
+    function saveFormThen_(next) {
+      setResultsMessage('');
+      modalBusyShow('Saving preferences…');
+      var preferenceObject = collectPreferenceObject();
+      google.script.run.withSuccessHandler(function () {
+        markPreferencesSaved();
+        markMenuLayoutSaved(preferenceObject.menu_layout);
+        markFormClean_(preferenceObject);
+        google.script.run.withSuccessHandler(function () {
+          modalBusyHide();
+          next();
+        }).withFailureHandler(function () {
+          modalBusyHide();
+          next();
+        }).buildAndInstallMenu();
+      }).withFailureHandler(function () {
+        modalBusyHide();
+        setResultsMessage('Could not save preferences. Nothing else was changed.');
+      }).setPreferences(preferenceObject);
+    }
+
+    // Unsaved changes belong to the profile in use: save them to it, drop
+    // them, or stay.
+    function withUnsavedChangesHandled_(doing, proceed) {
+      if (!formHasUnsavedChanges_()) { proceed(); return; }
+      askProfileQuestion_({
+        title: 'Save your changes first?',
+        message: 'Your changes to ' + quoted_(activeProfile_().name) + ' aren’t saved. ' + doing,
+        ok: 'Save and continue',
+        alt: 'Don’t save',
+        onOk: function () { saveFormThen_(proceed); },
+        onAlt: proceed
+      });
+    }
+
+    // What every profile change does with the server's answer.
+    function profileAnswer_(busy, reload, describe) {
+      setResultsMessage('');
+      modalBusyShow(busy);
+      return {
+        ok: function (result) {
+          modalBusyHide();
+          var before = activeProfile_();
+          settingsProfiles_ = (result && result.profiles) || settingsProfiles_;
+          if (reload && result && result.preferences) applyPreferencesToForm(result.preferences);
+          markPreferencesSaved();
+          closeProfileNameField_();
+          setResultsMessage(describe(before, activeProfile_()));
+        },
+        fail: function (error) {
+          modalBusyHide();
+          setResultsMessage((error && error.message) || 'Could not change profiles. Nothing was changed.');
+        }
+      };
+    }
+
+    function switchToProfile_(id) {
+      var target = profileById_(id);
+      if (!target || id === profileIndex_().active) return;
+      withUnsavedChangesHandled_('Switching to ' + quoted_(target.name) + ' loads its settings here.', function () {
+        var answer = profileAnswer_('Switching profile…', true, function (before, now) {
+          return 'Now using ' + quoted_(now.name) + '. Inserts use its settings, and the sidebar follows.';
+        });
+        google.script.run.withSuccessHandler(answer.ok).withFailureHandler(answer.fail).switchSettingsProfile(id);
+      });
+    }
+
+    function submitProfileName_() {
+      var name = byId('pref-profile-name').value;
+      if (profileNameMode_ === 'rename') {
+        var id = activeProfile_().id;
+        var renamed = profileAnswer_('Renaming…', false, function (before, now) {
+          return 'Renamed to ' + quoted_(now.name) + '.';
+        });
+        google.script.run.withSuccessHandler(renamed.ok).withFailureHandler(renamed.fail).renameSettingsProfile(id, name);
+        return;
+      }
+      withUnsavedChangesHandled_('A new profile starts as a copy of the saved settings.', function () {
+        var created = profileAnswer_('Making the profile…', true, function (before, now) {
+          return quoted_(now.name) + ' is ready and in use, a copy of ' + quoted_(before.name) + '. Change what you like, then Save.';
+        });
+        google.script.run.withSuccessHandler(created.ok).withFailureHandler(created.fail).createSettingsProfile(name);
+      });
+    }
+
+    function deleteActiveProfile_() {
+      var index = profileIndex_();
+      var doomed = activeProfile_();
+      var next = index.profiles.filter(function (p) { return p.id !== doomed.id; })[0];
+      if (!next) return;
+      askProfileQuestion_({
+        title: 'Delete ' + quoted_(doomed.name) + '?',
+        message: 'Its settings are deleted, and Preferences switches to ' + quoted_(next.name) + '. Changes not saved here are dropped.',
+        ok: 'Delete',
+        onOk: function () {
+          var answer = profileAnswer_('Deleting the profile…', true, function (before, now) {
+            return quoted_(doomed.name) + ' deleted. Now using ' + quoted_(now.name) + '.';
+          });
+          google.script.run.withSuccessHandler(answer.ok).withFailureHandler(answer.fail).deleteSettingsProfile(doomed.id);
+        }
+      });
+    }
+
+    function initSettingsProfiles() {
+      var list = byId('pref-profile-list');
+      if (!list) return;
+      list.addEventListener('click', function (event) {
+        var button = event.target.closest('.pref-profile-item');
+        if (button) switchToProfile_(button.getAttribute('data-profile-id'));
+      });
+      byId('pref-profile-new').addEventListener('click', function () { openProfileNameField_('create'); });
+      byId('pref-profile-rename').addEventListener('click', function () { openProfileNameField_('rename'); });
+      byId('pref-profile-delete').addEventListener('click', deleteActiveProfile_);
+      byId('pref-profile-name-ok').addEventListener('click', submitProfileName_);
+      byId('pref-profile-name-cancel').addEventListener('click', closeProfileNameField_);
+      byId('pref-profile-name').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') { event.preventDefault(); submitProfileName_(); }
+        if (event.key === 'Escape') { event.preventDefault(); closeProfileNameField_(); }
+      });
+      renderSettingsProfiles_();
+      google.script.run.withSuccessHandler(function (index) {
+        settingsProfiles_ = index || null;
+        renderSettingsProfiles_();
+      }).withFailureHandler(function () { /* the column shows the settings in use */ }).getSettingsProfiles();
     }
 
     function _initPreferencesTabs() {
@@ -2108,7 +2358,8 @@
 
     _initPreferencesTabs();
     initInterfaceMode();
-    initSidebarTabSwitches();
+    initSidebarControls();
+    initSettingsProfiles();
     initPrefButtonGroups();
     initPrefTranslitDropdown();
     initWorkflowTabs();

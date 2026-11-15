@@ -17,6 +17,7 @@
     <?!= include('shared/css/icon-mode-card'); ?>
     <?!= include('css/components/redesign'); ?>
     <?!= include('css/components/simple-mode'); ?>
+    <?!= include('css/components/sidebar-controls'); ?>
     <?!= include('shared/surprise-me/css'); ?>
     <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
     <script>
@@ -25,7 +26,7 @@
     </script>
   </head>
   <body>
-    <main class="unified-sidebar" data-mode="<?= initialMode ?>" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="<?= sidebarTabs ?>">
+    <main class="unified-sidebar" data-mode="<?= initialMode ?>" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="<?= sidebarTabs ?>" data-quick-actions-hidden="<?= quickActionsHidden ?>" data-options-hidden="<?= optionsHidden ?>">
       <aside class="busy-overlay" data-kind="insert" role="status" aria-live="polite">
         <div class="busy-card">
           <div class="busy-emblem" aria-hidden="true">
@@ -507,7 +508,7 @@
       <footer class="sidebar-footer">
       <section class="primary-actions" aria-label="Primary actions">
         <button class="submit primary-action-button" id="insert-source" disabled title="Add Source (Ctrl+Enter)">Add Source</button>
-        <button class="submit secondary-action-button text-mode-only" id="open-layout-settings" title="Insertion Options" aria-label="Insertion Options">&#x1F4F0; Insertion Options</button>
+        <button class="submit secondary-action-button text-mode-only" id="open-layout-settings" title="Insertion Options" aria-label="Insertion Options">&#x1F4F0; Insertion Options<span class="layout-settings-profile" id="layout-settings-profile" hidden></span></button>
       </section>
       <section class="sidebar-footer-tools footer-tool-row standard-quick-actions" aria-label="Quick actions">
         <button type="button" class="footer-tool-button sl-footer-btn" id="open-session-library" title="Session Library" aria-label="Session Library"><span class="footer-icon" aria-hidden="true">📜</span><span class="sl-footer-count" id="sl-footer-count" hidden></span></button>
@@ -536,6 +537,14 @@
           <div class="tray-header">
             <span class="tray-title">Insertion Options</span>
             <button type="button" class="tray-close" id="layout-tray-close" aria-label="Close Insertion Options">&times;</button>
+          </div>
+          <!-- Settings profiles (server/settings-profiles.gs), with two or
+               more: switching makes that profile's settings the saved
+               defaults and drops this session's changes (preferences-state:
+               switchProfileFromSidebar). Made and named in Preferences. -->
+          <div class="tray-profile-bar" id="tray-profile-bar" hidden>
+            <label class="tray-section-label" for="tray-profile-select">Profile</label>
+            <select class="tray-profile-select" id="tray-profile-select"></select>
           </div>
           <!-- Session override actions: at the top, under the title, so they
                are in view whatever the tray is scrolled to. Shown only while

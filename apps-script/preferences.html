@@ -30,23 +30,44 @@
             <label><input type="radio" name="interface_mode_choice" value="simple"> Simple</label>
             <label><input type="radio" name="interface_mode_choice" value="full"> Everything</label>
           </div>
-          <!-- Sidebar tabs (show_voices_tab, show_lexicon_tab): which searches
-               sit beside Texts in the sidebar, in either interface. Saved at
-               once, like the Interface switch above (initSidebarTabSwitches in
-               preferences/js.html); Save sends the same values again. -->
-          <div class="interface-mode-row sidebar-tabs-row" role="group" aria-labelledby="sidebar-tabs-label" aria-describedby="interface-mode-note">
-            <span class="interface-mode-label" id="sidebar-tabs-label">Sidebar tabs</span>
-            <label><input type="checkbox" name="show_voices_tab" id="show_voices_tab" class="sidebar-tab-switch" data-sidebar-tab="voices" checked> Voices</label>
-            <label><input type="checkbox" name="show_lexicon_tab" id="show_lexicon_tab" class="sidebar-tab-switch" data-sidebar-tab="lexicon" checked> Lexicon</label>
-          </div>
-          <p class="interface-mode-note" id="interface-mode-note">Simple shows the essentials; Everything adds the Search, Linking, Advanced and Experimental tabs here, and every tool in the sidebar and menu. Sidebar tabs sets what sits beside Texts, in either. Both apply at once and change no other setting.</p>
+          <p class="interface-mode-note" id="interface-mode-note">Simple shows the essentials; Everything adds profiles, the Search, Linking, Advanced and Experimental tabs, and every tool in the sidebar and menu. It applies at once and never changes your settings.</p>
           <p class="interface-mode-status" id="interface-mode-status" role="status" aria-live="polite"></p>
         </section>
 
+        <!-- Settings profiles (server/settings-profiles.gs), Everything only:
+             named sets of how sources look, beside the tabs that edit the one
+             in use. Clicking a profile switches to it (asking first about
+             unsaved changes); the sidebar's Insertion Options switches too.
+             Filled by initSettingsProfiles in preferences/js.html, with
+             textContent only. -->
+        <nav class="pref-profile-rail" id="pref-profile-rail" aria-labelledby="pref-profile-rail-title">
+          <div class="pref-profile-rail-title" id="pref-profile-rail-title">Profiles</div>
+          <ul class="pref-profile-list" id="pref-profile-list"></ul>
+          <div class="pref-profile-actions">
+            <button type="button" class="pref-profile-action" id="pref-profile-rename">Rename</button>
+            <button type="button" class="pref-profile-action" id="pref-profile-delete">Delete</button>
+          </div>
+          <div class="pref-profile-name-field" id="pref-profile-name-field" hidden>
+            <label class="pref-profile-name-label" for="pref-profile-name" id="pref-profile-name-label">New profile</label>
+            <input type="text" id="pref-profile-name" maxlength="40" autocomplete="off" spellcheck="false" placeholder="e.g. Grade 3">
+            <div class="pref-profile-name-actions">
+              <button type="button" class="blue submit" id="pref-profile-name-ok">Create</button>
+              <button type="button" class="submit" id="pref-profile-name-cancel">Cancel</button>
+            </div>
+          </div>
+          <button type="button" class="pref-profile-new" id="pref-profile-new">+ New profile</button>
+          <p class="pref-profile-hint">Keep a setup for each class, say transliteration for beginners and no vowels for adults, and switch here or in the sidebar&rsquo;s Insertion Options. A profile holds how sources look; the menu, the sidebar&rsquo;s controls, search and linking are shared.</p>
+        </nav>
+
+        <!-- The tabs and their panels: one column beside the profiles in
+             Everything (preferences/css). Not indented, to keep the panels'
+             markup as it was. -->
+        <div class="pref-main">
         <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
           <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="true">Insertion</button>
           <button type="button" id="pref-tab-search-btn" class="pref-tab" role="tab" data-pref-tab="search" aria-controls="pref-tab-search" aria-selected="false">Search</button>
           <button type="button" id="pref-tab-linking-btn" class="pref-tab" role="tab" data-pref-tab="linking" aria-controls="pref-tab-linking" aria-selected="false">Linking</button>
+          <button type="button" id="pref-tab-sidebar-btn" class="pref-tab" role="tab" data-pref-tab="sidebar" aria-controls="pref-tab-sidebar" aria-selected="false">Sidebar</button>
           <button type="button" id="pref-tab-menu-btn" class="pref-tab" role="tab" data-pref-tab="menu" aria-controls="pref-tab-menu" aria-selected="false">Menu Bar</button>
           <button type="button" id="pref-tab-advanced-btn" class="pref-tab" role="tab" data-pref-tab="advanced" aria-controls="pref-tab-advanced" aria-selected="false">Advanced</button>
 <? if (devFlags.SURPRISE_ME) { ?>
@@ -882,6 +903,133 @@
           </details>
         </div>
 
+        <!-- Preferences → Sidebar: what the sidebar shows, in either interface
+             (Insertion Options only in Everything). The Voices and Lexicon
+             switches are settings of their own; the Quick Actions and
+             Insertion Options switches are helpers (no name) that write the
+             two hidden lists, so Save collects them like any other setting.
+             The sidebar hides by them with CSS only
+             (css/components/sidebar-controls); the ids are
+             SIDEBAR_QUICK_ACTIONS_ and SIDEBAR_OPTION_CONTROLS_ in
+             server/preferences.gs. -->
+        <div class="pref-tab-panel" id="pref-tab-sidebar" role="tabpanel" aria-labelledby="pref-tab-sidebar-btn" hidden>
+          <p class="section-note pref-tab-intro">What the sidebar shows. Anything you switch off is hidden, not removed: its menu item still opens it, and your settings still apply.</p>
+
+          <details class="section-card section-accordion" id="sidebar-search-tabs" name="sidebar-search-tabs" open>
+            <summary class="section-card-summary"><span>Search tabs</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">The tabs beside <strong>Texts</strong>, under the search box. Texts is always there; with both of these off, the tabs go.</p>
+              <div class="toggle-row">
+                <div class="toggle-copy">
+                  <div class="toggle-title">Voices</div>
+                  <div class="toggle-help">Search Sefaria&rsquo;s source sheets and insert from them.</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" name="show_voices_tab" id="show_voices_tab" class="sidebar-tab-switch" data-sidebar-tab="voices" checked aria-label="Show the Voices tab">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-copy">
+                  <div class="toggle-title">Lexicon</div>
+                  <div class="toggle-help">Look up a Hebrew or Aramaic word in Sefaria&rsquo;s dictionaries.</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" name="show_lexicon_tab" id="show_lexicon_tab" class="sidebar-tab-switch" data-sidebar-tab="lexicon" checked aria-label="Show the Lexicon tab">
+                  <span class="slider"></span>
+                </label>
+              </div>
+            </div>
+          </details>
+
+          <details class="section-card section-accordion" id="sidebar-quick-actions" name="sidebar-quick-actions" open>
+            <summary class="section-card-summary"><span>Quick Actions</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">The buttons under &#x1F3C3; in the sidebar&rsquo;s footer. With all three off, &#x1F3C3; goes too. The menu&rsquo;s Quick Actions are arranged in Menu Bar.</p>
+              <div class="toggle-row">
+                <div class="toggle-copy">
+                  <div class="toggle-title">Insert from Selection</div>
+                  <div class="toggle-help">Replace or follow a highlighted citation with its source.</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" class="sidebar-quick-action-switch" data-sidebar-quick-action="insert_from_selection" checked aria-label="Show Insert from Selection">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-copy">
+                  <div class="toggle-title">Transform Divine Names</div>
+                  <div class="toggle-help">Apply your divine-name rules to text already in the document.</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" class="sidebar-quick-action-switch" data-sidebar-quick-action="transform_divine_names" checked aria-label="Show Transform Divine Names">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-copy">
+                  <div class="toggle-title">Link Texts with Sefaria</div>
+                  <div class="toggle-help">Find the citations in the document and link them to Sefaria.</div>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" class="sidebar-quick-action-switch" data-sidebar-quick-action="link_texts" checked aria-label="Show Link Texts with Sefaria">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <input type="hidden" id="sidebar_quick_actions_hidden" name="sidebar_quick_actions_hidden" value="[]">
+            </div>
+          </details>
+
+          <details class="section-card section-accordion" id="sidebar-insertion-options" name="sidebar-insertion-options" open>
+            <summary class="section-card-summary"><span>Insertion Options</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Which controls the sidebar&rsquo;s &#x1F4F0; Insertion Options offers. A control you hide always uses the default saved here, so a class can&rsquo;t change it by accident.</p>
+              <div class="subsection-card sidebar-option-groups">
+                <div class="sidebar-option-group" role="group" aria-label="Layout">
+                  <div class="sidebar-option-group-title">Layout</div>
+                  <div class="sidebar-option-grid">
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="display" checked> <span>Display</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="arrangement" checked> <span>Arrangement</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="citation" checked> <span>Citation</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="line_by_line" checked> <span>Line by line</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="line_numbers" checked> <span>Line numbers</span></label>
+                  </div>
+                </div>
+                <div class="sidebar-option-group" role="group" aria-label="Source">
+                  <div class="sidebar-option-group-title">Source</div>
+                  <div class="sidebar-option-grid">
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="source_link" checked> <span>Link title</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="vowels" checked> <span>Vowels</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="cantillation" checked> <span>Cantillation</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="hebrew_punctuation" checked> <span>Punctuation</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="transliteration" checked> <span>Transliteration</span></label>
+                  </div>
+                </div>
+                <div class="sidebar-option-group" role="group" aria-label="Translation">
+                  <div class="sidebar-option-group-title">Translation</div>
+                  <div class="sidebar-option-grid">
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="translation_link" checked> <span>Link title</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="translation_punctuation" checked> <span>Punctuation</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="commentary" checked> <span>Commentary</span></label>
+                  </div>
+                </div>
+                <div class="sidebar-option-group" role="group" aria-label="Fonts">
+                  <div class="sidebar-option-group-title">Fonts</div>
+                  <div class="sidebar-option-grid">
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="title_fonts" checked> <span>Title fonts</span></label>
+                    <label class="sidebar-option-chip"><input type="checkbox" class="sidebar-option-switch" data-sidebar-option="text_fonts" checked> <span>Text fonts</span></label>
+                  </div>
+                </div>
+                <div class="sidebar-option-footer">
+                  <div class="mini-help"><em>Link title</em> includes naming the edition; <em>Text fonts</em> includes the transliteration&rsquo;s.</div>
+                  <button type="button" class="small-button" id="sidebar-options-show-all">Show all</button>
+                </div>
+              </div>
+              <input type="hidden" id="sidebar_options_hidden" name="sidebar_options_hidden" value="[]">
+            </div>
+          </details>
+        </div>
+
         <div class="pref-tab-panel" id="pref-tab-menu" role="tabpanel" aria-labelledby="pref-tab-menu-btn" hidden>
           <div class="section-card">
             <div class="section-card-body">
@@ -1064,6 +1212,7 @@
         </div>
 <? } ?>
 
+        </div>
       </div>
 
       <section class="save-bar" name="actions">
@@ -1089,6 +1238,20 @@
           <div class="modal-actions">
             <button type="button" class="submit reset-cancel-button">Cancel</button>
             <button type="button" class="blue submit reset-confirm-button">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings profiles: the one question before a switch, a new profile or
+           a delete (askProfileQuestion_ in preferences/js.html; textContent only). -->
+      <div class="modal-backdrop" id="profile_modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="profile_modal_title">
+          <h2 id="profile_modal_title"></h2>
+          <p id="profile_modal_message"></p>
+          <div class="modal-actions">
+            <button type="button" class="submit" id="profile_modal_cancel">Cancel</button>
+            <button type="button" class="submit" id="profile_modal_alt" hidden></button>
+            <button type="button" class="blue submit" id="profile_modal_ok"></button>
           </div>
         </div>
       </div>

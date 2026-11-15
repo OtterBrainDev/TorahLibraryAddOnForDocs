@@ -1,13 +1,15 @@
-// Pins the sidebar's Voices and Lexicon tabs (Preferences → Sidebar tabs:
-// `show_voices_tab`, `show_lexicon_tab`) on the server side:
-//   - the tabs show in Simple mode too, and a missing switch counts as on;
-//   - the sidebar is told which tabs are on before it paints
-//     (data-sidebar-tabs), so a switched-off tab never flashes;
+// Pins Preferences → Sidebar on the server side: the result tabs
+// (`show_voices_tab`, `show_lexicon_tab`), and the Quick Actions buttons and
+// Insertion Options controls the person hid (`sidebar_quick_actions_hidden`,
+// `sidebar_options_hidden`):
+//   - the tabs show in Simple mode too, a missing switch counts as on, and
+//     nothing is hidden until the person hides it; junk hides nothing;
+//   - the sidebar is told all of it before it paints (data attributes), so
+//     nothing switched off ever flashes;
 //   - a switched-off tab is never where the sidebar reopens on its own, but a
 //     menu item that names it still opens it (the menu is the user's own);
-//   - the sidebar's copy of the rule (mode-controller) agrees with the server's.
-// The CSS and the Preferences switches are pinned in
-// test/ui/sidebar-tabs-controls.test.js.
+//   - the sidebar's copy of the rules (mode-controller) agrees with the server's.
+// The CSS and the Preferences tab are pinned in test/ui/sidebar-controls-ui.test.js.
 //
 // Loaded with vm against stubs; see AGENTS.md hard rule #3.
 
@@ -64,20 +66,46 @@ test('both tabs are on by default and a missing or unreadable switch counts as o
   assert.ok(!/show_texts_tab/.test(read('apps-script/server/preferences.gs')));
 });
 
-test('the sidebar is told which tabs are on, in Simple mode too, with one storage read for both', () => {
+test('hidden Quick Actions and Insertion Options are known ids, in catalog order; anything else hides nothing', () => {
+  const { context } = loadServer();
+  const none = context.sidebarControlsFromPreferences_({});
+  assert.deepEqual([...none.quickActionsHidden], []);
+  assert.deepEqual([...none.optionsHidden], []);
+  const some = context.sidebarControlsFromPreferences_({
+    sidebar_quick_actions_hidden: '["link_texts","nonsense","insert_from_selection"]',
+    sidebar_options_hidden: '["text_fonts","vowels","vowels","<b>"]',
+  });
+  assert.deepEqual([...some.quickActionsHidden], ['insert_from_selection', 'link_texts']);
+  assert.deepEqual([...some.optionsHidden], ['vowels', 'text_fonts']);
+  for (const junk of ['', 'not json', '{"a":1}', '"vowels"', null]) {
+    const parsed = context.sidebarControlsFromPreferences_({ sidebar_options_hidden: junk, sidebar_quick_actions_hidden: junk });
+    assert.deepEqual([...parsed.optionsHidden], [], String(junk));
+    assert.deepEqual([...parsed.quickActionsHidden], [], String(junk));
+  }
+});
+
+test('the sidebar is told all of it before it paints, in Simple mode too, with one storage read', () => {
   for (const ui of ['simple', 'full']) {
-    const { context, templates, reads } = loadServer({ ui_mode: ui, show_voices_tab: 'false', show_lexicon_tab: 'true' });
+    const { context, templates, reads } = loadServer({
+      ui_mode: ui, show_voices_tab: 'false', show_lexicon_tab: 'true',
+      sidebar_quick_actions_hidden: '["link_texts"]', sidebar_options_hidden: '["cantillation","title_fonts"]',
+    });
     const before = reads();
-    assert.deepEqual([...context.getSidebarTabs_()], ['texts', 'lexicon']);
-    assert.equal(reads() - before, 1, 'getSidebarTabs_ reads UserProperties once');
+    const controls = context.getSidebarControls_();
+    assert.equal(reads() - before, 1, 'getSidebarControls_ reads UserProperties once');
+    assert.deepEqual([...controls.tabs], ['texts', 'lexicon']);
     context.openSharedSidebar_('texts');
     assert.equal(templates[0].name, 'sidebar');
     assert.equal(templates[0].sidebarTabs, 'texts lexicon', ui);
+    assert.equal(templates[0].quickActionsHidden, 'link_texts', ui);
+    assert.equal(templates[0].optionsHidden, 'cantillation title_fonts', ui);
     assert.equal(templates[0].uiMode, ui);
   }
   const all = loadServer({ ui_mode: 'simple' });
   all.context.openSharedSidebar_('texts');
   assert.equal(all.templates[0].sidebarTabs, 'texts voices lexicon', 'an upgrader with no stored switch sees both tabs');
+  assert.equal(all.templates[0].quickActionsHidden, '');
+  assert.equal(all.templates[0].optionsHidden, '');
 });
 
 test('the sidebar never reopens on a switched-off tab by itself, but a menu item that names one opens it', () => {
@@ -106,27 +134,36 @@ test('the sidebar never reopens on a switched-off tab by itself, but a menu item
   assert.equal(off.context.resolveSidebarOpenMode_('voices', 'texts', ['texts']), 'voices');
 });
 
-test("the sidebar's copy of the rule agrees with the server's", () => {
+test("the sidebar's copy of the rules agrees with the server's", () => {
   const js = read('apps-script/sidebar/js/mode-controller.html');
-  const switches = js.match(/var SIDEBAR_TAB_SWITCHES = [^\n]*/)[0];
-  const fn = js.match(/function sidebarTabsFromPreferences\(prefs\) \{[\s\S]*?\n\}/)[0];
+  const from = js.indexOf('var SIDEBAR_TAB_SWITCHES = ');
+  const to = js.indexOf('function syncSidebarControls()');
   const client = vm.createContext({});
-  vm.runInContext(`${switches}\n${fn}`, client);
+  vm.runInContext(js.slice(from, to), client);
   const { context } = loadServer();
-  assert.deepEqual(
-    JSON.parse(JSON.stringify(vm.runInContext('SIDEBAR_TAB_SWITCHES', client))),
-    JSON.parse(JSON.stringify(vm.runInContext('SIDEBAR_TAB_SWITCHES_', context)))
-  );
-  const cases = [{}, { show_voices_tab: 'false' }, { show_lexicon_tab: 'false' }, { show_voices_tab: false, show_lexicon_tab: 'false' }, { show_voices_tab: 'true' }];
+  const same = (clientName, serverName) => assert.deepEqual(
+    JSON.parse(JSON.stringify(vm.runInContext(clientName, client))),
+    JSON.parse(JSON.stringify(vm.runInContext(serverName, context))), clientName);
+  same('SIDEBAR_TAB_SWITCHES', 'SIDEBAR_TAB_SWITCHES_');
+  same('SIDEBAR_QUICK_ACTIONS', 'SIDEBAR_QUICK_ACTIONS_');
+  same('SIDEBAR_OPTION_CONTROLS', 'SIDEBAR_OPTION_CONTROLS_');
+  same('SIDEBAR_CONTROL_KEYS', 'SIDEBAR_CONTROL_KEYS_');
+  const cases = [{}, { show_voices_tab: 'false' }, { show_lexicon_tab: 'false' }, { show_voices_tab: false, show_lexicon_tab: 'false' },
+    { sidebar_quick_actions_hidden: '["link_texts","x"]', sidebar_options_hidden: '["commentary","display"]' }, { sidebar_options_hidden: 'junk' }];
   cases.forEach((prefs) => {
-    assert.deepEqual([...client.sidebarTabsFromPreferences(prefs)], [...context.sidebarTabsFromPreferences_(prefs)], JSON.stringify(prefs));
+    assert.deepEqual(JSON.parse(JSON.stringify(client.sidebarControlsFromPreferences(prefs))),
+      JSON.parse(JSON.stringify(context.sidebarControlsFromPreferences_(prefs))), JSON.stringify(prefs));
   });
 });
 
-test('the switches are settings: in SETTINGS, defaulted on, and handed out in the "Menu and interface" part of a settings file', () => {
+test('they are settings: in SETTINGS, defaulted to show everything, and in the "Menu and interface" part of a settings file, never a profile', () => {
   const { context } = loadServer();
   const settings = vm.runInContext('SETTINGS', context);
-  assert.ok(settings.includes('show_voices_tab'));
-  assert.ok(settings.includes('show_lexicon_tab'));
-  assert.match(read('apps-script/server/settings-file.gs'), /Simple or Everything, the sidebar tabs/);
+  const defaults = context.getDefaultPreferences();
+  for (const key of vm.runInContext('SIDEBAR_CONTROL_KEYS_', context)) assert.ok(settings.includes(key), key);
+  assert.equal(defaults.show_voices_tab, true);
+  assert.equal(defaults.show_lexicon_tab, true);
+  assert.equal(defaults.sidebar_quick_actions_hidden, '[]');
+  assert.equal(defaults.sidebar_options_hidden, '[]');
+  // Their settings-file part, and that no profile holds them: settings-file and settings-profiles tests.
 });

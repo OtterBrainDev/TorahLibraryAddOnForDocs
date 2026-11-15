@@ -98,6 +98,9 @@ controls inline.
   - `settings-file.gs` — Preferences → Advanced's settings file: export the
     settings as JSON, preview and apply an import (only `SETTINGS` keys with
     valid values; a file's interface mode goes through `applyUiModeSwitch_`).
+  - `settings-profiles.gs` — settings profiles: named sets of the Text and
+    layout / Fonts settings, switched from Everything's Preferences or the
+    sidebar (see Storage layers).
   - `preferences.gs` — the `SETTINGS` list, `getDefaultPreferences()`,
     account preferences (`UserProperties`) and sidebar session state
     (`CacheService`).
@@ -136,6 +139,14 @@ controls inline.
    filters, divine-name replacement choices, display mode defaults.
    Migrations live in `apps-script/migrations.gs` and run on `onOpen`
    and first sidebar load, keyed by `prefs_schema_version`.
+   Settings profiles (`server/settings-profiles.gs`) live here too, outside
+   `SETTINGS`: `settings_profiles` is the index (names, and which is in
+   use), and `settings_profile_<id>` a snapshot of each profile *not* in use.
+   The profile in use is the ordinary stored preferences, which every reader
+   reads as before; a switch keeps the outgoing values and writes the incoming
+   ones in one `setProperties`. A snapshot records its schema and is brought
+   forward through `applyMigrationsFrom_` when it comes back, so a migration
+   must work on any getProperty / setProperty / deleteProperty store.
 2. **`CacheService.getUserCache()`** (ephemeral, 6h max TTL). Holds
    per-session sidebar state — the in-progress selected result,
    temporary preference overrides, session-library entries. Accessed

@@ -52,11 +52,11 @@ var SETTINGS_FILE_GROUPS_ = [
   { id: 'text', label: 'Text and layout', help: 'Vowels, cantillation, punctuation, display and arrangement, citation, transliteration, translation language, divine names' },
   { id: 'look', label: 'Fonts, colours and titles', help: 'Every font, size, style, colour and highlight; title and citation styles; linked-title look' },
   { id: 'search', label: 'Search and linking', help: 'Corpus order, hidden languages, Link Texts and Insert from Selection' },
-  { id: 'menu', label: 'Menu and interface', help: 'The add-on menu, Simple or Everything, the sidebar tabs, experimental features' }
+  { id: 'menu', label: 'Menu and interface', help: 'The add-on menu, Simple or Everything, the sidebar\'s tabs, Quick Actions and Insertion Options, experimental features' }
 ];
 
 function settingsFileGroupOf_(key) {
-  if (key === 'menu_layout' || key === 'experimental_features_enabled' || key === 'surprise_me_enabled' || /^show_(voices|lexicon)_tab$/.test(key)) return 'menu';
+  if (key === 'menu_layout' || key === 'experimental_features_enabled' || key === 'surprise_me_enabled' || /^show_(voices|lexicon)_tab$|^sidebar_/.test(key)) return 'menu';
   if (/^search_corpus_|^hidden_translation_languages$|^show_unavailable_translations$|^link_texts_default$|^link_sources_insert_after_linking$|^linker_|^insert_from_selection_replace$/.test(key)) return 'search';
   if (/_font(_size|_style|_color|_background)?$|^emphasis_(bold|italic)_|_format_override$|_edition_label$|^source_title_heading$|^translation_language_typography$/.test(key)) return 'look';
   return 'text';

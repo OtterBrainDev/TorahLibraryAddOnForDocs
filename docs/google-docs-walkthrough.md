@@ -117,10 +117,15 @@ takes effect at once, without Save). Simple hides, and never removes:
   kept bold and italics look). Switch to **Everything** to see them; the switch
   never changes a setting.
 
-Just below **Interface**, **Sidebar tabs** turns the Voices and Lexicon tabs
-off or on, in either interface; it also takes effect at once. A tab you turn
-off is hidden, not removed: its menu item still opens it, and its Insertion
-Defaults in Preferences come back when you turn it on.
+In either interface, **Preferences → Sidebar** leaves out what you don't use:
+the Voices and Lexicon tabs, Quick Actions buttons, and (in Everything)
+Insertion Options controls; a hidden control uses your saved default. Anything
+switched off is hidden, not removed: a tab's menu item still opens it.
+
+Everything also has **profiles**, in a column beside the Preferences tabs: a
+named set of how sources look for each class (say transliteration for
+beginners, no vowels for adults). Click one to switch; with two or more, the
+sidebar's Insertion Options names the profile in use and switches too.
 
 Existing users keep Everything and never see the setup.
 

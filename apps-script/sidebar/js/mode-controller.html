@@ -96,6 +96,8 @@ var preferencesMayHaveChanged = false;
 
 function reloadAccountPreferences() {
   preferencesMayHaveChanged = false;
+  // A profile made, renamed or switched in Preferences (preferences-state).
+  loadSettingsProfiles();
   google.script.run.withSuccessHandler(function (stored) {
     var updated = clonePlainObject(stored || {});
     if (JSON.stringify(updated) === JSON.stringify(accountPreferences)) return;
@@ -168,8 +170,11 @@ function syncExperimentalAvailability() {
   var hasExperimental = hasExperimentalFeaturesEnabled();
   var surpriseEnabled = isSurpriseEnabled();
   $('.experimental-menu-button').toggle(hasExperimental);
-  // Keeps the tab bar when 🧪 is all that sits beside Texts (css/layout).
-  $('.unified-sidebar').toggleClass('has-experimental-tab', hasExperimental);
+  // Keep the tab bar when 🧪 is all that sits beside Texts, and the 🏃 button
+  // when Surprise Me is all that is in it (css/components/sidebar-controls).
+  $('.unified-sidebar')
+    .toggleClass('has-experimental-tab', hasExperimental)
+    .toggleClass('has-surprise-action', surpriseEnabled);
   $('#exp-card-surprise').toggle(surpriseEnabled);
   $('#footer-actions-panel .open-surprise-tool').toggle(surpriseEnabled);
   if (!hasExperimental && appMode === 'experimental') {
@@ -177,13 +182,24 @@ function syncExperimentalAvailability() {
   }
 }
 
-// Preferences → Sidebar tabs (show_voices_tab, show_lexicon_tab). The server
-// prints data-sidebar-tabs for the first paint (openSharedSidebar_, by the
-// same rule: sidebarTabsFromPreferences_ in server/preferences.gs); this keeps
-// it in step when Preferences saves while the sidebar is open, without a
-// refresh. CSS does the hiding (css/layout) and keeps a switched-off tab shown
-// while it is the open one, so nobody is moved out of a search they are in.
+// Preferences → Sidebar: the result tabs that are on, and the Quick Actions
+// buttons and Insertion Options controls the person hid. The server prints
+// the sidebar root's data-sidebar-tabs, data-quick-actions-hidden and
+// data-options-hidden for the first paint (openSharedSidebar_, by the same
+// rules: sidebarControlsFromPreferences_ in server/preferences.gs); this keeps
+// them in step when Preferences saves while the sidebar is open, without a
+// refresh. CSS does the hiding (css/components/sidebar-controls) and keeps a
+// switched-off tab shown while it is the open one, so nobody is moved out of a
+// search they are in.
 var SIDEBAR_TAB_SWITCHES = { voices: 'show_voices_tab', lexicon: 'show_lexicon_tab' };
+var SIDEBAR_QUICK_ACTIONS = ['insert_from_selection', 'transform_divine_names', 'link_texts'];
+var SIDEBAR_OPTION_CONTROLS = [
+  'display', 'arrangement', 'citation', 'line_by_line', 'line_numbers',
+  'source_link', 'vowels', 'cantillation', 'hebrew_punctuation', 'transliteration',
+  'translation_link', 'translation_punctuation', 'commentary',
+  'title_fonts', 'text_fonts'
+];
+var SIDEBAR_CONTROL_KEYS = ['show_voices_tab', 'show_lexicon_tab', 'sidebar_quick_actions_hidden', 'sidebar_options_hidden'];
 
 function sidebarTabsFromPreferences(prefs) {
   var p = prefs || {};
@@ -194,14 +210,34 @@ function sidebarTabsFromPreferences(prefs) {
   return tabs;
 }
 
-function syncSidebarTabs() {
+function sidebarHiddenIds(raw, known) {
+  var list = [];
+  try { list = JSON.parse(String(raw == null || raw === '' ? '[]' : raw)); } catch (e) { list = []; }
+  if (!Array.isArray(list)) list = [];
+  return known.filter(function (id) { return list.indexOf(id) >= 0; });
+}
+
+function sidebarControlsFromPreferences(prefs) {
+  var p = prefs || {};
+  return {
+    tabs: sidebarTabsFromPreferences(p),
+    quickActionsHidden: sidebarHiddenIds(p.sidebar_quick_actions_hidden, SIDEBAR_QUICK_ACTIONS),
+    optionsHidden: sidebarHiddenIds(p.sidebar_options_hidden, SIDEBAR_OPTION_CONTROLS)
+  };
+}
+
+function syncSidebarControls() {
   var prefs = effectivePreferences || {};
-  var loaded = Object.keys(SIDEBAR_TAB_SWITCHES).some(function (tab) {
-    return Object.prototype.hasOwnProperty.call(prefs, SIDEBAR_TAB_SWITCHES[tab]);
+  var loaded = SIDEBAR_CONTROL_KEYS.some(function (key) {
+    return Object.prototype.hasOwnProperty.call(prefs, key);
   });
   // Before the settings arrive, keep what the server printed.
   if (!loaded) return;
-  $('.unified-sidebar').attr('data-sidebar-tabs', sidebarTabsFromPreferences(prefs).join(' '));
+  var controls = sidebarControlsFromPreferences(prefs);
+  $('.unified-sidebar')
+    .attr('data-sidebar-tabs', controls.tabs.join(' '))
+    .attr('data-quick-actions-hidden', controls.quickActionsHidden.join(' '))
+    .attr('data-options-hidden', controls.optionsHidden.join(' '));
 }
 
 function updateQuickActionsForMode() {

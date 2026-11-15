@@ -16,8 +16,13 @@ must land with a migration here AND a row in the regression log.
 
 Contract: each `migrateToV<N>_` function takes a `UserProperties`
 handle and returns true if it wrote anything, false otherwise. The
-driver function `runUserPreferenceMigrationsIfNeeded_()` is the only
-public entry point; it is safe to call from any event handler.
+driver function `runUserPreferenceMigrationsIfNeeded_()` is the entry
+point for the stored preferences; it is safe to call from any event
+handler. The steps themselves are `applyMigrationsFrom_`, which also
+brings a stored settings profile forward when it comes back into use
+(server/settings-profiles.gs): a migration must work on any object with
+getProperty / setProperty / deleteProperty, and on a store that holds
+only a profile's keys.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
@@ -49,6 +54,20 @@ function runUserPreferenceMigrationsIfNeeded_() {
     from = 0;
   }
 
+  applyMigrationsFrom_(userProperties, from);
+  userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
+  return true;
+}
+
+/**
+ * Every migration after schema `from`, in order, on `userProperties` (any
+ * object with getProperty / setProperty / deleteProperty). The driver above
+ * runs it on the stored preferences; a stored settings profile is brought
+ * forward through it too when it comes back into use
+ * (migrateProfileValues_ in server/settings-profiles.gs), so a value whose
+ * meaning a later schema changes is migrated wherever it is kept.
+ */
+function applyMigrationsFrom_(userProperties, from) {
   // v1 -> v2: cover opt-in gates added by the rewrite that turned existing
   // behavior off for upgraders.
   if (from < 2) {
@@ -231,15 +250,14 @@ function runUserPreferenceMigrationsIfNeeded_() {
   if (from < 26) {
     migrateToV26_(userProperties);
   }
-  // v26 -> v27: introduces `show_voices_tab` and `show_lexicon_tab` (the
-  // sidebar's Voices and Lexicon tabs), set on: every user has the tabs, and
-  // Simple mode now shows them too.
+  // v26 -> v27: Preferences → Sidebar and settings profiles. Introduces
+  // `show_voices_tab` and `show_lexicon_tab` (set on: every user has the
+  // tabs, and Simple mode now shows them too), `sidebar_quick_actions_hidden`
+  // and `sidebar_options_hidden` ("[]": every button and control shows), and
+  // `settings_profiles` ("": no profiles yet).
   if (from < 27) {
     migrateToV27_(userProperties);
   }
-
-  userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
-  return true;
 }
 
 /**
@@ -646,14 +664,24 @@ function migrateToV26_(userProperties) {
 }
 
 /**
- * V27: the sidebar's Voices and Lexicon tabs get a switch each, set on. Every
- * user has had the tabs (Full mode always showed them; Simple mode hid them
- * while in Texts and now shows them), so a missing value never hides one. A
- * stored switch is never overwritten.
+ * V27: Preferences → Sidebar, and settings profiles. The sidebar's Voices and
+ * Lexicon tabs get a switch each, set on: every user has had the tabs (Full
+ * mode always showed them; Simple mode hid them while in Texts and now shows
+ * them), so a missing value never hides one. Nothing is hidden among the
+ * Quick Actions buttons or the Insertion Options controls, as before, and no
+ * profile exists. A stored value is never overwritten.
  */
+var V27_DEFAULTS_ = {
+  show_voices_tab: 'true',
+  show_lexicon_tab: 'true',
+  sidebar_quick_actions_hidden: '[]',
+  sidebar_options_hidden: '[]',
+  settings_profiles: ''
+};
+
 function migrateToV27_(userProperties) {
-  ['show_voices_tab', 'show_lexicon_tab'].forEach(function(key) {
-    if (userProperties.getProperty(key) == null) userProperties.setProperty(key, 'true');
+  Object.keys(V27_DEFAULTS_).forEach(function(key) {
+    if (userProperties.getProperty(key) == null) userProperties.setProperty(key, V27_DEFAULTS_[key]);
   });
   return true;
 }

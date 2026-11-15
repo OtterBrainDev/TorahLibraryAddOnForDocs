@@ -69,12 +69,13 @@ test('Preferences hides only advanced tabs and sections, and Everything shows th
     'pref-tab-experimental-btn',
     'pref-tab-linking-btn',
     'pref-tab-search-btn',
+    'sidebar-insertion-options',
     'translation-language-typography',
   ]);
   ids.filter((id) => id !== 'pref-tab-experimental-btn').forEach((id) => {
     assert.ok(PREFS.includes(`id="${id}"`), `preferences/css.html hides #${id}, which preferences.html does not have`);
   });
-  ['insertion', 'menu'].forEach((tab) => {
+  ['insertion', 'sidebar', 'menu'].forEach((tab) => {
     assert.ok(!ids.includes(`pref-tab-${tab}-btn`), `the ${tab} tab must stay visible in Simple mode`);
   });
 });

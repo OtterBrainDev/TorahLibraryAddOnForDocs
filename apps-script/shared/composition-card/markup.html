@@ -12,7 +12,11 @@
        switch and font ("linkedTitle", "titleFonts" in data-cc-features); the
        font is the title's whether or not it is linked. Where the host has
        a full editor for a font (Preferences: fontEditor), its button opens
-       that editor in place, under the row, instead of the font panel. -->
+       that editor in place, under the row, instead of the font panel.
+       data-sidebar-control names each control for Preferences → Sidebar →
+       Insertion Options: only the sidebar's CSS reads it
+       (css/components/sidebar-controls), so a control hidden there is still
+       here in Preferences and the Link Texts dialog. -->
   <details class="cc-section cc-section--source">
     <summary class="cc-section-summary"><span class="cc-section-label">Source</span><span class="cc-section-state" id="cc-source-state"></span></summary>
     <div class="cc-section-body">
@@ -26,19 +30,19 @@
       </div>
 
       <div class="cc-rows cc-pill-row">
-        <button type="button" class="cc-row cc-toggle" id="cc-he-title-toggle" data-cc-feature="linkedTitle" aria-pressed="true" title="Link the source title to the passage on sefaria.org"><span class="cc-row-label">Link title to Sefaria</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <button type="button" class="cc-row cc-toggle" id="cc-he-title-toggle" data-cc-feature="linkedTitle" data-sidebar-control="source_link" aria-pressed="true" title="Link the source title to the passage on sefaria.org"><span class="cc-row-label">Link title to Sefaria</span><span class="cc-switch" aria-hidden="true"></span></button>
         <!-- Preferences only ("editionLabel"): shown while the title is linked. -->
-        <button type="button" class="cc-row cc-toggle cc-edition-toggle" id="cc-he-edition-toggle" data-cc-feature="editionLabel" aria-pressed="true" title="Add the source edition after the linked title: בראשית א:א (Hebrew • Miqra according to the Masorah). Off, the linked title is the reference alone."><span class="cc-row-label cc-row-label--sub">Name the edition in the title</span><span class="cc-switch" aria-hidden="true"></span></button>
-        <div class="cc-row cc-font-row" data-cc-feature="titleFonts">
+        <button type="button" class="cc-row cc-toggle cc-edition-toggle" id="cc-he-edition-toggle" data-cc-feature="editionLabel" data-sidebar-control="source_link" aria-pressed="true" title="Add the source edition after the linked title: בראשית א:א (Hebrew • Miqra according to the Masorah). Off, the linked title is the reference alone."><span class="cc-row-label cc-row-label--sub">Name the edition in the title</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <div class="cc-row cc-font-row" data-cc-feature="titleFonts" data-sidebar-control="title_fonts">
           <span class="cc-row-label">Title font</span>
           <button type="button" class="cc-font-chip" id="cc-hebrew-title-font-chip" data-font-role="hebrewTitle" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Source title font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
         </div>
-        <div class="cc-row cc-font-row cc-hebrew-font-row" data-cc-feature="fonts">
+        <div class="cc-row cc-font-row cc-hebrew-font-row" data-cc-feature="fonts" data-sidebar-control="text_fonts">
           <span class="cc-row-label">Text font</span>
           <button type="button" class="cc-font-chip" id="cc-hebrew-font-chip" data-font-role="hebrew" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Hebrew font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
         </div>
-        <p class="cc-font-note" id="cc-hebrew-font-note" data-cc-feature="fonts" aria-live="polite" hidden></p>
-        <div class="cc-row">
+        <p class="cc-font-note" id="cc-hebrew-font-note" data-cc-feature="fonts" data-sidebar-control="text_fonts" aria-live="polite" hidden></p>
+        <div class="cc-row" data-sidebar-control="vowels">
           <span class="cc-row-label" id="cc-vowels-label">Vowels</span>
           <div class="cc-seg" id="cc-vowels-toggle" role="radiogroup" aria-labelledby="cc-vowels-label" data-cc-choice="vowels">
             <button type="button" class="cc-seg-option" role="radio" data-value="never" aria-checked="false" title="No vowels (niqqud)">Off</button>
@@ -46,7 +50,7 @@
             <button type="button" class="cc-seg-option" role="radio" data-value="always" aria-checked="true" title="Vowels wherever Sefaria has them">On</button>
           </div>
         </div>
-        <div class="cc-row">
+        <div class="cc-row" data-sidebar-control="cantillation">
           <span class="cc-row-label" id="cc-cantillation-label">Cantillation</span>
           <div class="cc-seg" id="cc-cantillation-toggle" role="radiogroup" aria-labelledby="cc-cantillation-label" data-cc-choice="cantillation">
             <button type="button" class="cc-seg-option" role="radio" data-value="never" aria-checked="false" title="No cantillation (ta’amim)">Off</button>
@@ -54,15 +58,15 @@
             <button type="button" class="cc-seg-option" role="radio" data-value="torah" aria-checked="false" title="Cantillation in the Torah (the Five Books) only">Torah</button>
           </div>
         </div>
-        <button type="button" class="cc-row cc-toggle" id="cc-hebrew-punct-toggle" aria-pressed="true" title="Toggle punctuation in the Hebrew"><span class="cc-row-label">Punctuation</span><span class="cc-switch" aria-hidden="true"></span></button>
-        <div class="cc-translit-wrap">
+        <button type="button" class="cc-row cc-toggle" id="cc-hebrew-punct-toggle" data-sidebar-control="hebrew_punctuation" aria-pressed="true" title="Toggle punctuation in the Hebrew"><span class="cc-row-label">Punctuation</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <div class="cc-translit-wrap" data-sidebar-control="transliteration">
           <button type="button" class="cc-row cc-toggle cc-translit-pill" id="cc-translit-pill" aria-pressed="false" title="Toggle transliteration"><span class="cc-row-label">Transliteration</span><span class="cc-switch" aria-hidden="true"></span></button>
           <div class="cc-row cc-translit-scheme-row" id="cc-translit-scheme-row">
             <span class="cc-row-label cc-row-label--sub">Style</span>
             <button type="button" class="cc-translit-button" id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
           </div>
           <!-- Preferences only ("translitFont"): the transliteration's font. -->
-          <div class="cc-row cc-font-row cc-translit-font-row" id="cc-translit-font-row" data-cc-feature="translitFont">
+          <div class="cc-row cc-font-row cc-translit-font-row" id="cc-translit-font-row" data-cc-feature="translitFont" data-sidebar-control="text_fonts">
             <span class="cc-row-label cc-row-label--sub">Font</span>
             <button type="button" class="cc-font-chip" id="cc-transliteration-font-chip" data-font-role="transliteration" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Transliteration font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
           </div>
@@ -89,19 +93,19 @@
         <div class="cc-translation-text" id="cc-translation-preview" lang="en">the scroll, before all the people;</div>
       </div>
       <div class="cc-rows cc-pill-row">
-        <button type="button" class="cc-row cc-toggle" id="cc-title-toggle" data-cc-feature="linkedTitle" aria-pressed="false" title="Link the translation title to the passage on sefaria.org"><span class="cc-row-label">Link title to Sefaria</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <button type="button" class="cc-row cc-toggle" id="cc-title-toggle" data-cc-feature="linkedTitle" data-sidebar-control="translation_link" aria-pressed="false" title="Link the translation title to the passage on sefaria.org"><span class="cc-row-label">Link title to Sefaria</span><span class="cc-switch" aria-hidden="true"></span></button>
         <!-- Preferences only ("editionLabel"): shown while the title is linked. -->
-        <button type="button" class="cc-row cc-toggle cc-edition-toggle" id="cc-edition-toggle" data-cc-feature="editionLabel" aria-pressed="true" title="Add the translation after the linked title: Genesis 1:1 (Translation • The Koren Jerusalem Bible). Off, the linked title is the reference alone."><span class="cc-row-label cc-row-label--sub">Name the translation in the title</span><span class="cc-switch" aria-hidden="true"></span></button>
-        <div class="cc-row cc-font-row" data-cc-feature="titleFonts">
+        <button type="button" class="cc-row cc-toggle cc-edition-toggle" id="cc-edition-toggle" data-cc-feature="editionLabel" data-sidebar-control="translation_link" aria-pressed="true" title="Add the translation after the linked title: Genesis 1:1 (Translation • The Koren Jerusalem Bible). Off, the linked title is the reference alone."><span class="cc-row-label cc-row-label--sub">Name the translation in the title</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <div class="cc-row cc-font-row" data-cc-feature="titleFonts" data-sidebar-control="title_fonts">
           <span class="cc-row-label">Title font</span>
           <button type="button" class="cc-font-chip" id="cc-translation-title-font-chip" data-font-role="translationTitle" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Translation title font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
         </div>
-        <div class="cc-row cc-font-row" data-cc-feature="fonts">
+        <div class="cc-row cc-font-row" data-cc-feature="fonts" data-sidebar-control="text_fonts">
           <span class="cc-row-label">Text font</span>
           <button type="button" class="cc-font-chip" id="cc-translation-font-chip" data-font-role="translation" aria-haspopup="dialog" aria-expanded="false" aria-controls="cc-font-panel" title="Translation font"><span class="cc-font-chip-name">Match the document</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
         </div>
-        <button type="button" class="cc-row cc-toggle" id="cc-translation-punct-toggle" aria-pressed="true" title="Toggle punctuation in the translation"><span class="cc-row-label">Punctuation</span><span class="cc-switch" aria-hidden="true"></span></button>
-        <div class="cc-row">
+        <button type="button" class="cc-row cc-toggle" id="cc-translation-punct-toggle" data-sidebar-control="translation_punctuation" aria-pressed="true" title="Toggle punctuation in the translation"><span class="cc-row-label">Punctuation</span><span class="cc-switch" aria-hidden="true"></span></button>
+        <div class="cc-row" data-sidebar-control="commentary">
           <span class="cc-row-label" id="cc-emphasis-label">Commentary</span>
           <div class="cc-seg cc-emphasis-seg" id="cc-emphasis-toggle" role="radiogroup" aria-labelledby="cc-emphasis-label" data-cc-choice="emphasis">
             <button type="button" class="cc-seg-option" role="radio" data-value="keep" aria-checked="true" title="Keep the translation’s bold and italics">Default</button>

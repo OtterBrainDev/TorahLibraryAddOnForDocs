@@ -575,17 +575,38 @@ test('v26 turns "Name the edition" on for both titles, never overwriting a store
   assert.equal(userProperties.getProperty('hebrew_link_edition_label'), 'false');
 });
 
-// v27: the sidebar's Voices and Lexicon tabs get a switch each. Every user has
-// had the tabs, so an upgrader (Simple or Everything) gets both on: a missing
-// switch must never hide a tab (hard rule 2).
-test('v27 turns both sidebar tab switches on, never overwriting a stored switch', () => {
+// v27: Preferences → Sidebar and settings profiles. Every user has had the
+// Voices and Lexicon tabs, every Quick Actions button and every Insertion
+// Options control, so an upgrader (Simple or Everything) gets them all: a
+// missing value must never hide one (hard rule 2). Nobody has a profile.
+test('v27 shows every tab, button and control, makes no profile, and never overwrites a stored value', () => {
   for (const ui of ['simple', 'full']) {
     const { context, userProperties } = loadMigrations({ prefs_schema_version: '26', ui_mode: ui, show_lexicon_tab: 'false' });
     context.runUserPreferenceMigrationsIfNeeded_();
     assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
     assert.equal(userProperties.getProperty('show_voices_tab'), 'true', ui);
     assert.equal(userProperties.getProperty('show_lexicon_tab'), 'false', `${ui}: a stored switch is kept`);
+    assert.equal(userProperties.getProperty('sidebar_quick_actions_hidden'), '[]', ui);
+    assert.equal(userProperties.getProperty('sidebar_options_hidden'), '[]', ui);
+    assert.equal(userProperties.getProperty('settings_profiles'), '', ui);
   }
+});
+
+// A stored settings profile is migrated through the same steps when it comes
+// back into use (server/settings-profiles.gs), so the driver and the steps
+// must stay apart: the driver stamps the schema; the steps never do.
+test('the migration steps run on any store, from any schema, without stamping it', () => {
+  const { context } = loadMigrations({});
+  const store = { teamim_filter: 'torah' };
+  const props = {
+    getProperty: (k) => (Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null),
+    setProperty(k, v) { store[k] = String(v); return this; },
+    deleteProperty(k) { delete store[k]; return this; },
+  };
+  context.applyMigrationsFrom_(props, 23);
+  assert.equal(store.teamim_filter, 'tanakh');
+  assert.ok(!('prefs_schema_version' in store));
+  assert.match(MIGRATIONS_SOURCE, /applyMigrationsFrom_\(userProperties, from\);\s*userProperties\.setProperty\(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_\);/);
 });
 
 test('a new user is seeded with both sidebar tabs on', () => {

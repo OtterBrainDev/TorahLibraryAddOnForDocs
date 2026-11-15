@@ -54,13 +54,16 @@ function getSearchMode_() {
 }
 
 function openSharedSidebar_(mode, options) {
-  var sidebarTabs = getSidebarTabs_();
-  var resolvedMode = setSearchMode_(resolveSidebarOpenMode_(mode || null, getSearchMode_(), sidebarTabs));
+  var controls = getSidebarControls_();
+  var resolvedMode = setSearchMode_(resolveSidebarOpenMode_(mode || null, getSearchMode_(), controls.tabs));
   var template = HtmlService.createTemplateFromFile('sidebar');
   template.initialMode = resolvedMode;
   template.uiMode = getUiMode_();
-  // Printed into data-sidebar-tabs, so a tab switched off is never painted.
-  template.sidebarTabs = sidebarTabs.join(' ');
+  // Preferences → Sidebar, printed into the root's data attributes, so a
+  // switched-off tab or hidden button is never painted.
+  template.sidebarTabs = controls.tabs.join(' ');
+  template.quickActionsHidden = controls.quickActionsHidden.join(' ');
+  template.optionsHidden = controls.optionsHidden.join(' ');
   var extra = (options && typeof options === 'object') ? options : {};
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode, extra));
   var output = template.evaluate()
@@ -270,7 +273,8 @@ function preferencesPopup() {
   template.devFlagsJson = JSON.stringify(DEV_FLAGS);
   const output = template.evaluate()
     .setTitle('Preferences')
-    .setWidth(600)
+    // Everything is wider, for the settings profiles column beside the tabs.
+    .setWidth(template.uiMode === 'full' ? 860 : 600)
     .setHeight(760);
   DocumentApp.getUi().showModalDialog(output, 'Preferences');
 }

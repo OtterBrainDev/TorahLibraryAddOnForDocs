@@ -203,6 +203,44 @@
   flex: 0 0 auto;
 }
 
+/* Settings profiles: the picker under the tray title, and the profile in use
+   after "Insertion Options" on its button (preferences-state:
+   renderProfilePicker). Shown with two or more profiles. */
+.tray-profile-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border, #d9d8d3);
+}
+.tray-profile-bar[hidden] { display: none; }
+.tray-profile-bar .tray-section-label { flex: 0 0 auto; margin: 0; }
+.tray-profile-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sefaria-blue, #18345d);
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #d9d8d3);
+  border-radius: 8px;
+}
+.layout-settings-profile {
+  display: inline-block;
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  font-weight: 500;
+  color: var(--row-sublabel, #6b6b6b);
+}
+.layout-settings-profile::before { content: " \00B7  "; white-space: pre; }
+.layout-settings-profile[hidden] { display: none; }
+
 .tray-session-bar .tray-action-pills {
   flex: 1 1 auto;
   flex-wrap: nowrap;

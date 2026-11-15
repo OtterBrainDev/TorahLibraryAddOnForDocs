@@ -278,6 +278,11 @@ $(document).on('click', '.reset-session-overrides-button', function () {
   });
 });
 
+// Settings profiles: the Insertion Options tray's picker (preferences-state).
+$(document).on('change', '#tray-profile-select', function () {
+  switchProfileFromSidebar($(this).val());
+});
+
 $(document).on('click', '.save-session-defaults-button', function () {
   if ($(this).prop('disabled')) return;
   saveSessionAsDefaults(function () {

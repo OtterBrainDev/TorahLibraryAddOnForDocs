@@ -62,7 +62,7 @@ function applyEffectivePreferencesToUI() {
   updateTranslationLanguageVisibility();
   syncSessionOverrideButtons();
   syncExperimentalAvailability();
-  syncSidebarTabs();
+  syncSidebarControls();
   updateQuickActionsForMode();
   if (typeof updateCompositionCard === 'function') updateCompositionCard();
   // Hidden languages / "Show unavailable translations" shape the version list.
@@ -159,6 +159,83 @@ function resetSessionOverrides(onDone) {
     updateModeDependentSections();
     if (typeof onDone === 'function') onDone();
   }).clearSidebarSessionState(sidebarSessionId);
+}
+
+// ── Settings profiles (server/settings-profiles.gs) ─────────────────────────
+// With two or more profiles, the Insertion Options tray offers a picker and
+// its button names the profile in use. Switching makes that profile's
+// settings the saved defaults; this session's Insertion Options changes go
+// with the old profile (resetSessionOverrides), so what you see is the profile
+// you picked. Profiles are made, named and deleted in Preferences; a switch
+// there reaches the sidebar through the same storage event as a save
+// (reloadAccountPreferences), and drops the session's changes the same way.
+var settingsProfiles = null;
+
+function activeSettingsProfile() {
+  var index = settingsProfiles;
+  if (!index || !index.profiles) return null;
+  return index.profiles.filter(function (p) { return p.id === index.active; })[0] || null;
+}
+
+function renderProfilePicker() {
+  var index = settingsProfiles;
+  var several = !!(index && index.profiles && index.profiles.length > 1);
+  var active = several ? activeSettingsProfile() : null;
+  $('#tray-profile-bar').prop('hidden', !several);
+  $('#layout-settings-profile').text(active ? active.name : '').prop('hidden', !active);
+  $('#open-layout-settings').attr('aria-label', active ? 'Insertion Options, profile ' + active.name : 'Insertion Options');
+  var $select = $('#tray-profile-select').empty();
+  if (!several) return;
+  index.profiles.forEach(function (profile) {
+    $('<option>').val(profile.id).text(profile.name).prop('selected', profile.id === index.active).appendTo($select);
+  });
+}
+
+function adoptSettingsProfiles(index) {
+  var before = settingsProfiles && settingsProfiles.active;
+  settingsProfiles = index || null;
+  renderProfilePicker();
+  // Switched elsewhere (Preferences): this session's changes were made to the
+  // old profile.
+  if (before && settingsProfiles && settingsProfiles.active !== before && hasSessionOverrides()) {
+    resetSessionOverrides();
+  }
+}
+
+function loadSettingsProfiles() {
+  google.script.run
+    .withSuccessHandler(adoptSettingsProfiles)
+    .withFailureHandler(function () { /* the picker stays as it was */ })
+    .getSettingsProfiles();
+}
+
+function switchProfileFromSidebar(id) {
+  var current = activeSettingsProfile();
+  if (!id || (current && current.id === id)) return;
+  var $select = $('#tray-profile-select').prop('disabled', true);
+  showBusyOverlay('profile');
+  google.script.run.withSuccessHandler(function (result) {
+    hideBusyOverlay();
+    $select.prop('disabled', false);
+    settingsProfiles = (result && result.profiles) || settingsProfiles;
+    accountPreferences = clonePlainObject((result && result.preferences) || accountPreferences);
+    renderProfilePicker();
+    var name = (activeSettingsProfile() || {}).name || '';
+    var announce = function () { showSidebarToast('Using \u201c' + name + '\u201d.'); };
+    if (sidebarSessionId) {
+      resetSessionOverrides(announce);
+    } else {
+      sessionPreferences = {};
+      effectivePreferences = mergePreferenceLayers(accountPreferences, {});
+      applyEffectivePreferencesToUI();
+      announce();
+    }
+  }).withFailureHandler(function (error) {
+    hideBusyOverlay();
+    $select.prop('disabled', false);
+    renderProfilePicker();
+    showSidebarToast((error && error.message) || 'Could not switch profiles. Nothing was changed.', 6000);
+  }).switchSettingsProfile(id);
 }
 
 function saveSessionAsDefaults(onDone) {
