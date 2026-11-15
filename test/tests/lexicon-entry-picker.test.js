@@ -58,6 +58,7 @@ function loadSidebar() {
   context.window = context;
   vm.createContext(context);
   ['apps-script/shared/ui/core-shared.html', 'apps-script/shared/ui/dom.html',
+    'apps-script/sidebar/js/session-library.html',
     'apps-script/sidebar/js/preview-core.html', 'apps-script/sidebar/js/lexicon.html']
     .forEach((file) => vm.runInContext(scriptBody(file), context, { filename: file }));
   // Node has no DOMParser; sanitize-source-html.test.js covers the sanitizer.
@@ -209,6 +210,7 @@ function loadPipeline(words) {
   vm.createContext(context);
   ['apps-script/shared/ui/core-shared.html', 'apps-script/shared/ui/dom.html', 'apps-script/shared/ui/state.html',
     'apps-script/sidebar/js/preferences-state.html', 'apps-script/sidebar/js/results-render.html',
+    'apps-script/sidebar/js/session-library.html',
     'apps-script/sidebar/js/preview-core.html', 'apps-script/sidebar/js/lexicon.html',
   ].forEach((file) => vm.runInContext(scriptBody(file), context, { filename: file }));
   Object.assign(context, {

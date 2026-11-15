@@ -1,53 +1,75 @@
 <script>
+// A search's results (raw, then filtered and sorted). Each search run owns one
+// (sidebar/js/search-tabs); the shown tab's is the global queryState.
+function emptySearchQueryState() {
+  return { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
+}
+
+// A search's corpus filter state; each search run owns one, and the shown
+// tab's is the global resultPostProcessState.
+// removedCorpora: hidden this search via a group's ❌ button (or a chip).
+// restoredExcluded: hidden by the tab's excluded-corpora preference but
+// brought back for this search via the Restore Corpus menu (or a chip).
+// nonInsertableRefs: refs this search found to be a whole book or section
+// heading (no text of their own). They are dropped from the results so the
+// reader isn't offered the same dead end twice.
+function newResultPostProcessState() {
+  return { availableCorpora: [], removedCorpora: [], restoredExcluded: [], nonInsertableRefs: [] };
+}
+
 function resetResultPostProcessState() {
-  // removedCorpora: hidden this search via a group's ❌ button.
-  // restoredExcluded: hidden by the search_corpus_excluded preference but
-  // brought back for this search via the Restore Corpus menu.
-  // nonInsertableRefs: refs this search found to be a whole book or section
-  // heading (no text of their own). They are dropped from the results so the
-  // reader isn't offered the same dead end twice.
-  resultPostProcessState = { availableCorpora: [], removedCorpora: [], restoredExcluded: [], nonInsertableRefs: [] };
+  resultPostProcessState = newResultPostProcessState();
 }
 
 function normalizeResultRefKey(ref) {
   return String(ref || '').trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
-function markResultRefNonInsertable(ref) {
+// `state` is a search run's post-process state; the shown one by default.
+function markResultRefNonInsertable(ref, state) {
+  state = state || resultPostProcessState;
   var key = normalizeResultRefKey(ref);
   if (!key) return;
-  var refs = resultPostProcessState.nonInsertableRefs || (resultPostProcessState.nonInsertableRefs = []);
+  var refs = state.nonInsertableRefs || (state.nonInsertableRefs = []);
   if (refs.indexOf(key) < 0) refs.push(key);
 }
 
-function isNonInsertableResultRef(ref) {
-  return (resultPostProcessState.nonInsertableRefs || []).indexOf(normalizeResultRefKey(ref)) >= 0;
+function isNonInsertableResultRef(ref, state) {
+  return ((state || resultPostProcessState).nonInsertableRefs || []).indexOf(normalizeResultRefKey(ref)) >= 0;
 }
 
-/* ── Corpus order / exclusion preferences (Texts; Lexicon's dictionaries) ── */
+/* ── Corpus order / exclusion preferences ───────────────────────────────── */
+//
+// Each tab has its "corpora": Texts' corpora, Voices' topic categories
+// (sidebar/js/voices) and the Lexicon's dictionaries (sidebar/js/lexicon),
+// each with a saved order and a saved list to leave out (Preferences →
+// Search). `mode` is the tab, the shown one by default: a search running in a
+// tab that isn't shown is filtered by that tab's preferences.
 
-function getPreferenceCorpusOrder() {
-  return normalizeSearchCorpusOrder((effectivePreferences || {}).search_corpus_order);
-}
-
-// The corpora hidden in Preferences for this tab: Texts' corpora, or the
-// Lexicon's dictionaries (sidebar/js/lexicon). Voices has none.
-function getPreferenceExcludedCorpora() {
+function getPreferenceCorpusOrder(mode) {
   var prefs = effectivePreferences || {};
-  if (appMode === 'texts') return normalizeSearchCorpusExcluded(prefs.search_corpus_excluded);
-  if (appMode === 'lexicon') return normalizeLexiconDictionaryExcluded(prefs.lexicon_dictionary_excluded);
+  if ((mode || appMode) === 'voices') return normalizeVoicesTopicOrder(prefs.voices_topic_order);
+  return normalizeSearchCorpusOrder(prefs.search_corpus_order);
+}
+
+function getPreferenceExcludedCorpora(mode) {
+  var prefs = effectivePreferences || {};
+  mode = mode || appMode;
+  if (mode === 'texts') return normalizeSearchCorpusExcluded(prefs.search_corpus_excluded);
+  if (mode === 'voices') return normalizeVoicesTopicExcluded(prefs.voices_topic_excluded);
+  if (mode === 'lexicon') return normalizeLexiconDictionaryExcluded(prefs.lexicon_dictionary_excluded);
   return [];
 }
 
-function isPreferenceExcludedCorpus(corpusKey) {
-  return getPreferenceExcludedCorpora().indexOf(corpusKey) >= 0;
+function isPreferenceExcludedCorpus(corpusKey, mode) {
+  return getPreferenceExcludedCorpora(mode).indexOf(corpusKey) >= 0;
 }
 
 // Corpus keys currently hidden by the preference (i.e. not restored for
 // this search).
-function getActivePreferenceExcludedCorpora() {
-  var restored = resultPostProcessState.restoredExcluded || [];
-  return getPreferenceExcludedCorpora().filter(function (key) {
+function getActivePreferenceExcludedCorpora(mode, state) {
+  var restored = (state || resultPostProcessState).restoredExcluded || [];
+  return getPreferenceExcludedCorpora(mode).filter(function (key) {
     return restored.indexOf(key) < 0;
   });
 }
@@ -85,41 +107,54 @@ function sortClustersByCorpusPreference(clusterOrder, clusterBuckets, groupName)
   });
 }
 
-function getAllProcessedResults() {
-  return queryState.libraryMatches.concat(queryState.searchResults).filter(function (item) { return item && item.ref; });
+// `qs` is a search run's results; the shown tab's by default.
+function getAllProcessedResults(qs) {
+  qs = qs || queryState;
+  return qs.libraryMatches.concat(qs.searchResults).filter(function (item) { return item && item.ref; });
 }
 
-function getAllRawResults() {
-  return queryState.rawLibraryMatches.concat(queryState.rawSearchResults).filter(function (item) { return item && item.ref; });
+function getAllRawResults(qs) {
+  qs = qs || queryState;
+  return qs.rawLibraryMatches.concat(qs.rawSearchResults).filter(function (item) { return item && item.ref; });
 }
 
 function getResultCorpusLabel(item, fallbackLabel) {
   return String((item && (item.clusterLabel || item.typeLabel || fallbackLabel)) || 'Other').trim() || 'Other';
 }
 
+// A result that names its corpus (a Voices sheet's topic category) is filed
+// under that key; any other under its cluster label, slugged.
 function getResultCorpusKey(item, fallbackLabel) {
+  if (item && item.corpusKey) return String(item.corpusKey);
   return getResultCorpusLabel(item, fallbackLabel)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'other';
 }
 
-function syncAvailableCorpusFilters() {
-  var seen = {};
+function syncAvailableCorpusFilters(mode, qs, ps) {
+  mode = mode || appMode;
+  ps = ps || resultPostProcessState;
+  var byKey = {};
+  var raw = getAllRawResults(qs);
   // Lexicon: the "corpora" are the dictionaries the words' entries come from
   // (sidebar/js/lexicon). Hiding one takes its entries out of every word.
-  resultPostProcessState.availableCorpora = appMode === 'lexicon' ? lexiconDictionaryCorpora(getAllRawResults()) : getAllRawResults().map(function (item) {
+  // Elsewhere each corpus counts its results (the Voices topic chips show it).
+  ps.availableCorpora = mode === 'lexicon' ? lexiconDictionaryCorpora(raw) : raw.map(function (item) {
     return {
       key: getResultCorpusKey(item, 'Results'),
-      label: getResultCorpusLabel(item, 'Results')
+      label: getResultCorpusLabel(item, 'Results'),
+      count: 1
     };
   }).filter(function (entry) {
-    if (!entry.key || seen[entry.key]) return false;
-    seen[entry.key] = true;
+    if (!entry.key) return false;
+    if (byKey[entry.key]) { byKey[entry.key].count++; return false; }
+    byKey[entry.key] = entry;
     return true;
   });
-  resultPostProcessState.removedCorpora = resultPostProcessState.removedCorpora.filter(function (key) {
-    return resultPostProcessState.availableCorpora.some(function (entry) { return entry.key === key; });
+  if (mode === 'voices') ps.availableCorpora = sortVoicesTopicCorpora(ps.availableCorpora);
+  ps.removedCorpora = ps.removedCorpora.filter(function (key) {
+    return ps.availableCorpora.some(function (entry) { return entry.key === key; });
   });
 }
 
@@ -137,7 +172,11 @@ function renderResultFilterStrip() {
   syncRestoreCorpusButton();
 
   if (appMode === 'lexicon') {
-    renderLexiconDictionaryStrip($strip);
+    renderCorpusChipStrip($strip, { label: 'Dictionaries:', one: 'entry', many: 'entries', chipClass: 'lexicon-dict-chip' });
+    return;
+  }
+  if (appMode === 'voices') {
+    renderCorpusChipStrip($strip, { label: 'Topics:', one: 'sheet', many: 'sheets', chipClass: 'voices-topic-chip' });
     return;
   }
   if (appMode !== 'texts') return;
@@ -169,6 +208,43 @@ function renderResultFilterStrip() {
   $strip.html(html).show();
 }
 
+// Nothing selected in the shown tab. The Texts preview (the fetched text,
+// its versions, the source card) is cleared only in Texts: another tab's
+// reset must leave it as it was, since switching back to Texts shows it
+// again (sidebar/js/search-tabs).
+// The shown tab's corpora as chips over its results (the Lexicon's
+// dictionaries, Voices' topic categories): one per corpus with its count; a
+// click hides or shows it for this search (toggleCorpusVisibility, bound in
+// event-bindings), and one left out in Preferences says so, as Restore Corpus
+// does in Texts.
+function getHiddenCorpora() {
+  var removed = resultPostProcessState.removedCorpora || [];
+  var saved = getActivePreferenceExcludedCorpora();
+  return removed.concat(saved.filter(function (key) { return removed.indexOf(key) < 0; }));
+}
+
+function renderCorpusChipStrip($strip, options) {
+  var corpora = resultPostProcessState.availableCorpora || [];
+  if (!corpora.length) return;
+  var hidden = getHiddenCorpora();
+  var saved = getActivePreferenceExcludedCorpora();
+  var html = "<span class='lang-filter-strip-label'>" + escapeHTML(options.label) + "</span>";
+  corpora.forEach(function (corpus) {
+    var isHidden = hidden.indexOf(corpus.key) >= 0;
+    var count = ' (' + corpus.count + ' ' + (corpus.count === 1 ? options.one : options.many) + ')';
+    var action = saved.indexOf(corpus.key) >= 0
+      ? 'Hidden in Preferences. Show ' + corpus.label + count + ' for this search'
+      : (isHidden ? 'Show ' : 'Hide ') + corpus.label + count;
+    html += "<button type='button' class='result-filter-chip corpus-chip " + options.chipClass + (isHidden ? ' removed' : '') + "'" +
+      " data-corpus-key='" + escapeHTML(corpus.key) + "'" +
+      " aria-pressed='" + (isHidden ? 'false' : 'true') + "'" +
+      " title='" + escapeHTML(action) + "' aria-label='" + escapeHTML(action) + "'>" +
+      escapeHTML(corpus.label) + " <span class='corpus-chip-count' aria-hidden='true'>" + corpus.count + "</span></button>";
+  });
+  // Every interpolated label goes through escapeHTML; counts are numbers.
+  $strip.html(html).show();
+}
+
 function resetSelectedResultView() {
   selectedResultKey = null;
   selectedResultSummary = null;
@@ -177,10 +253,12 @@ function resetSelectedResultView() {
   hasResolvedReference = false;
   setInsertButtonState(false);
   $('#open-on-sefaria').prop('disabled', true);
+  $('.result-item').removeClass('selected').attr('aria-pressed', 'false');
+  if (appMode === 'voices') selectedVoiceItem = null;
+  if (appMode !== 'texts') return;
   data = {};
   clearVersionSelectors();
   updatePesukimAvailability(null);
-  $('.result-item').removeClass('selected').attr('aria-pressed', 'false');
   $('.suggestions').html("<b>Select a result to preview it.</b>");
   updateActionabilityUI({ isInsertable: false });
   $('.source-card').hide();
@@ -198,33 +276,46 @@ function ensureSelectedResultStillVisible() {
   }
 }
 
-function applyResultPostProcessing() {
-  syncAvailableCorpusFilters();
+// A search's raw results → the lists shown: the tab's hidden corpora and the
+// refs found to be dead ends left out, duplicates dropped, then sorted. No
+// DOM: a search running in a tab that isn't shown is processed the same way
+// (sidebar/js/search-tabs), with that tab's preferences.
+function computeResultPostProcessing(mode, qs, ps) {
+  syncAvailableCorpusFilters(mode, qs, ps);
   var removedLookup = {};
-  resultPostProcessState.removedCorpora.concat(getActivePreferenceExcludedCorpora()).forEach(function (key) {
+  ps.removedCorpora.concat(getActivePreferenceExcludedCorpora(mode, ps)).forEach(function (key) {
     removedLookup[key] = true;
   });
   var searchParameters = getSearchParameters();
+  // The sort menu is a Texts tool; the other tabs keep their own order.
+  var sortMode = mode === 'texts' ? searchParameters.sortMode : 'relevance';
   var filterItems = function (items, fallbackLabel) {
-    return applyClientSideSearchFilters(items, searchParameters).filter(function (item) {
-      if (item && isNonInsertableResultRef(item.ref)) return false;
+    return applyClientSideSearchFilters(items, searchParameters, mode).filter(function (item) {
+      if (item && isNonInsertableResultRef(item.ref, ps)) return false;
       return !removedLookup[getResultCorpusKey(item, fallbackLabel)];
     });
   };
 
-  queryState.libraryMatches = sortLibraryItems(
-    dedupeResultItems(filterItems(queryState.rawLibraryMatches, 'Library matches')),
-    searchParameters.sortMode
+  qs.libraryMatches = sortLibraryItems(
+    dedupeResultItems(filterItems(qs.rawLibraryMatches, 'Library matches')),
+    sortMode
   );
-  queryState.searchResults = sortSearchItems(
-    dedupeResultItems(filterItems(queryState.rawSearchResults, 'Search results')),
-    searchParameters.sortMode
+  qs.searchResults = sortSearchItems(
+    dedupeResultItems(filterItems(qs.rawSearchResults, 'Search results')),
+    sortMode
   );
-  if (appMode === 'lexicon') queryState.searchResults = arrangeLexiconWords(queryState.searchResults, removedLookup);
+  if (mode === 'lexicon') qs.searchResults = arrangeLexiconWords(qs.searchResults, removedLookup);
+  if (mode === 'voices') qs.searchResults = arrangeVoicesSheets(qs.searchResults);
+  return qs;
+}
+
+function applyResultPostProcessing() {
+  computeResultPostProcessing(appMode, queryState, resultPostProcessState);
   ensureSelectedResultStillVisible();
   renderResultFilterStrip();
   setResultsLoading(false);
   if (appMode === 'lexicon') syncLexiconAfterFiltering();
+  if (typeof noteShownSearchRunCount === 'function') noteShownSearchRunCount();
 }
 
 
@@ -238,7 +329,7 @@ function toggleCorpusVisibility(corpusKey) {
   var restoredIndex = resultPostProcessState.restoredExcluded.indexOf(corpusKey);
   if (removedIndex >= 0) {
     resultPostProcessState.removedCorpora.splice(removedIndex, 1);
-  } else if (isPreferenceExcludedCorpus(corpusKey)) {
+  } else if (isPreferenceExcludedCorpus(corpusKey, appMode)) {
     // Excluded in Preferences: restore (or re-hide) for this search only.
     if (restoredIndex >= 0) {
       resultPostProcessState.restoredExcluded.splice(restoredIndex, 1);
@@ -283,7 +374,7 @@ function renderResultGroup(selector, items, groupName) {
     clusterBuckets[cluster].push(item);
   });
 
-  if (appMode === 'texts') {
+  if (appMode === 'texts' || appMode === 'voices') {
     clusterOrder = sortClustersByCorpusPreference(clusterOrder, clusterBuckets, groupName);
   }
 
@@ -295,7 +386,14 @@ function renderResultGroup(selector, items, groupName) {
     }
     clusterBuckets[cluster].forEach(function (item) {
       var selectedClass = item.key === selectedResultKey ? 'selected' : '';
-      var metaLine = "<div class='result-meta'><span>" + escapeHTML(cluster) + "</span><span> • </span><span>" + escapeHTML(describeResultLanguages(item)) + "</span></div>";
+      // A sheet's group is its header: its row says who made it and its own
+      // topics (every sheet is in English and Hebrew alike).
+      var metaParts = appMode === 'voices'
+        ? [item.owner ? 'By ' + item.owner : '', (Array.isArray(item.topics) ? item.topics : []).filter(function (t) { return typeof t === 'string'; }).slice(0, 3).join(', ')]
+        : [cluster, describeResultLanguages(item)];
+      var metaLine = "<div class='result-meta'>" + metaParts.filter(Boolean).map(function (part) {
+        return "<span>" + escapeHTML(part) + "</span>";
+      }).join("<span> • </span>") + "</div>";
       var subtitle = item.subtitle ? "<div class='result-subtitle'>" + escapeHTML(item.subtitle) + "</div>" : '';
       // Highlight fragments come back as Sefaria HTML (<b> around the match),
       // so they are rendered rather than escaped — after the same strip the
@@ -408,6 +506,7 @@ function renderResults() {
   $('.search-results').toggle(appMode === 'voices' || hasSearchResults);
 
   syncRestoreCorpusButton();
+  if (typeof renderSearchTabPrompt === 'function') renderSearchTabPrompt();
   updateResultsVisibility();
 }
 
@@ -450,7 +549,7 @@ function updateSourceCard() {
 
 function clearSelectedResult() {
   resetResultPostProcessState();
-  queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
+  queryState = emptySearchQueryState();
   resetSelectedResultView();
   updateResultsVisibility();
   renderResultFilterStrip();
@@ -553,9 +652,11 @@ function dedupeResultItems(items) {
   return out;
 }
 
-function applyClientSideSearchFilters(items, searchParameters) {
+// The translation-language filter is a Texts tool. `mode` is the tab the
+// results are for; the shown one by default.
+function applyClientSideSearchFilters(items, searchParameters, mode) {
   var filtered = Array.isArray(items) ? items.slice() : [];
-  if (appMode !== 'texts') return filtered;
+  if ((mode || appMode) !== 'texts') return filtered;
   if (searchParameters && searchParameters.translationOnly) {
     filtered = filtered.filter(function (item) { return itemMatchesTranslationLanguages(item, searchParameters.translationLanguages); });
   }
@@ -569,11 +670,22 @@ function maybeAutoSelectSingleResult() {
   if (allResults.length !== 1) return;
   var only = allResults[0];
   if (!only || !only.key || selectedResultKey === only.key) return;
-  selectedResultKey = only.key;
-  selectedResultSummary = { label: only.label || only.ref, subtitle: only.subtitle || '' };
+  selectResultItem(only);
+}
+
+// Select a result of the shown tab, as a click on its row does: the row is
+// marked, the list folds away, and the tab opens it (resolveSelectedResult).
+function selectResultItem(item) {
+  if (!item || !item.key) return;
+  selectedResultKey = item.key;
+  selectedResultSummary = { label: item.headWord || item.label || item.ref, subtitle: item.subtitle || '' };
   resultsCollapsed = true;
-  renderResults();
-  resolveSelectedResult(only.ref, only.label || only.ref);
+  $('.result-item').each(function () {
+    var on = $(this).attr('data-key') === item.key;
+    $(this).toggleClass('selected', on).attr($(this).attr('role') === 'option' ? 'aria-selected' : 'aria-pressed', on ? 'true' : 'false');
+  });
+  updateResultsVisibility();
+  resolveSelectedResult(item.ref, item.label || item.ref);
 }
 
 function formatRefForResult(ref) {

@@ -1,140 +1,93 @@
 // Pins that a Lexicon or Voices answer to an earlier query never fills the
-// sidebar (BUG-005; sidebar/js/search-controller.html).
+// sidebar (BUG-005; sidebar/js/search-tabs.html).
 //
 // Observed: Texts search for Genesis 1:1, then Lexicon, then שלום. The list
 // showed שלום's 14 entries under "No lexicon entries found for 'Genesis 1:1'".
 // Switching to Lexicon looked up what was still in the search box; that empty
 // answer arrived while שלום was being looked up, wrote its hint, and the 14
 // entries arrived after it without clearing it. Lexicon and Voices had no
-// request guard; Texts already dropped stale answers by latestQueryRequestId.
+// request guard; Texts already dropped stale answers.
+//
+// Now a tab switch never searches (search-tabs.test.js), and every search is
+// a run: an answer for a run its tab has replaced is dropped, hint and all.
 //
 // Loaded with vm.runInContext; see AGENTS.md hard rule #3.
 
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { loadSidebarSearch } = require('./helpers/sidebar-search-harness');
 
-const ROOT = path.resolve(__dirname, '..', '..');
-const scriptBody = (relative) => fs.readFileSync(path.join(ROOT, relative), 'utf8')
-  .replace(/^\s*<script>/, '').replace(/<\/script>\s*$/, '');
+const entries = (n) => Array.from({ length: n }, (_, i) => ({
+  key: `w${i}`, ref: `lexicon-word:שָׁלוֹם${i}`, headWord: 'שָׁלוֹם', label: 'שָׁלוֹם', match: 'direct',
+  entries: [{ id: `e${i}`, dictionary: 'Jastrow' }],
+}));
 
-function load() {
-  const calls = [];
-  const hints = [];
-  const counts = [];
-  let input = '';
-  const chain = (selector) => {
-    const api = new Proxy(function () {}, {
-      get(_, prop) {
-        if (prop === 'val') return (value) => { if (value === undefined) return selector === '.input' ? input : ''; return api; };
-        if (prop === 'length') return 0;
-        if (prop === 'text') return (value) => { if (selector === '.lexicon-result-count') counts.push(value); return api; };
-        return () => api;
-      },
-      apply: () => api,
-    });
-    return api;
-  };
-  const run = new Proxy({}, {
-    get(_, first) {
-      const handlers = {};
-      const builder = new Proxy({}, {
-        get(__, name) {
-          if (name === 'withSuccessHandler') return (fn) => { handlers.ok = fn; return builder; };
-          if (name === 'withFailureHandler') return (fn) => { handlers.fail = fn; return builder; };
-          return (...args) => calls.push({ name, args, ok: (v) => handlers.ok(v), fail: (e) => handlers.fail(e || new Error('x')) });
-        },
-      });
-      return builder[first];
-    },
-  });
-  const context = {
-    console,
-    appMode: 'lexicon',
-    effectivePreferences: {},
-    latestQueryRequestId: 0,
-    latestResolveRequestId: 0,
-    queryState: { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] },
-    $: chain,
-    google: { script: { run } },
-    document: {},
-    setTimeout() {},
-  };
-  context.window = context;
-  vm.createContext(context);
-  ['apps-script/shared/ui/core-shared.html', 'apps-script/shared/ui/state.html',
-    'apps-script/sidebar/js/search-controller.html', 'apps-script/sidebar/js/lexicon.html',
-  ].forEach((file) => vm.runInContext(scriptBody(file), context, { filename: file }));
-  Object.assign(context, {
-    normalizeUnifiedReferenceInput: (v) => v,
-    clearSelectedResult() {}, updateModeDependentSections() {}, setInsertButtonState() {},
-    updateLexiconTabBadge() {}, updateVoicesTabBadge() {}, renderLexiconHistory() {}, renderLexiconBookmarks() {},
-    announceLexiconStatus() {}, setResultsLoading() {}, reprocessAndRenderResults() {}, saveLexiconHistory() {},
-    setResultsHint: (message) => hints.push(message),
-  });
-  return {
-    context, calls, hints, counts,
-    type(value) { input = value; },
-    pending: (name) => calls.filter((c) => c.name === name),
-  };
+function inLexicon() {
+  const env = loadSidebarSearch({ mode: 'lexicon' });
+  env.ctx.setSidebarMode('lexicon', true);
+  return env;
 }
 
-const entries = (n) => Array.from({ length: n }, (_, i) => ({ key: `e${i}`, ref: `Jastrow, שָׁלוֹם ${i}` }));
-
-test('an empty answer for the query still in the box when Lexicon opened does not land under שלום', () => {
-  const env = load();
+test('switching to Lexicon with "Genesis 1:1" in the box looks nothing up', () => {
+  const env = loadSidebarSearch({ mode: 'texts' });
   env.type('Genesis 1:1');
-  env.context.runLexiconQuery();          // the mode switch re-runs the box
+  env.ctx.runUnifiedQuery();
+  env.ctx.setSidebarMode('lexicon');
+  assert.equal(env.pending('searchLexicon').length, 0);
+});
+
+test('an empty answer for an earlier query does not land under שלום', () => {
+  const env = inLexicon();
+  env.type('Genesis');
+  env.ctx.runUnifiedQuery();
   env.type('שלום');
-  env.context.runLexiconQuery(true);      // typed
+  env.ctx.runUnifiedQuery({ fromTyping: true });
   const [genesis, shalom] = env.pending('searchLexicon');
-  assert.equal(genesis.args[0], 'Genesis 1:1');
+  assert.equal(genesis.args[0], 'Genesis');
   assert.equal(shalom.args[0], 'שלום');
 
   genesis.ok([]);                         // arrives while שלום is in flight
   shalom.ok(entries(14));
 
-  assert.equal(env.hints.some((h) => /Genesis 1:1/.test(h)), false, JSON.stringify(env.hints));
-  assert.equal(env.context.queryState.rawSearchResults.length, 14);
-  assert.deepEqual(env.counts, ['14 entries found']);
+  assert.doesNotMatch(env.hint(), /Genesis/);
+  assert.equal(env.raw().length, 14);
+  assert.equal(env.dom.text['.lexicon-result-count'], '14 entries found');
 });
 
 test('the newer answer stands when the older one arrives last, and a stale failure says nothing', () => {
-  const env = load();
-  env.type('Genesis 1:1');
-  env.context.runLexiconQuery();
+  const env = inLexicon();
+  env.type('Genesis');
+  env.ctx.runUnifiedQuery();
   env.type('שלום');
-  env.context.runLexiconQuery(true);
+  env.ctx.runUnifiedQuery({ fromTyping: true });
   const [genesis, shalom] = env.pending('searchLexicon');
 
   shalom.ok(entries(14));
   genesis.ok([]);
   genesis.fail(new Error('Lexicon search is temporarily unavailable.'));
 
-  assert.equal(env.context.queryState.rawSearchResults.length, 14);
-  assert.equal(env.hints.some((h) => /Genesis 1:1|unavailable/.test(h)), false, JSON.stringify(env.hints));
+  assert.equal(env.raw().length, 14);
+  assert.doesNotMatch(env.hint(), /Genesis|unavailable/);
 });
 
 test('a current query with no entries still says so, for that query', () => {
-  const env = load();
+  const env = inLexicon();
   env.type('קקקק');
-  env.context.runLexiconQuery();
-  env.pending('searchLexicon')[0].ok([]);
-  assert.match(env.hints[env.hints.length - 1], /No lexicon entries found for “קקקק”/);
+  env.ctx.runUnifiedQuery();
+  env.last('searchLexicon').ok([]);
+  assert.match(env.hint(), /No lexicon entries found for “קקקק”/);
 });
 
 test('Voices drops an answer to an earlier query too', () => {
-  const env = load();
-  env.context.appMode = 'voices';
+  const env = loadSidebarSearch({ mode: 'voices' });
+  env.ctx.setSidebarMode('voices', true);
   env.type('shabbat');
-  env.context.runVoicesQuery();
+  env.ctx.runUnifiedQuery();
   env.type('shabbat candles');
-  env.context.runVoicesQuery(true);
+  env.ctx.runUnifiedQuery({ fromTyping: true });
   const [first, second] = env.pending('searchVoices');
-  second.ok([{ key: 's1', ref: 'Sheet 1' }, { key: 's2', ref: 'Sheet 2' }]);
+  second.ok([{ key: 's1', ref: 'sheet:1', label: 'Sheet 1' }, { key: 's2', ref: 'sheet:2', label: 'Sheet 2' }]);
   first.ok([]);
-  assert.equal(env.context.queryState.rawSearchResults.length, 2);
-  assert.equal(env.hints.some((h) => /No source sheets matched/.test(h)), false);
+  assert.equal(env.raw().length, 2);
+  assert.doesNotMatch(env.hint(), /No source sheets matched/);
 });

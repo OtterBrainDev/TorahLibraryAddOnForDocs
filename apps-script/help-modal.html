@@ -491,6 +491,7 @@
               <a href="#inserting">Inserting</a>
               <a href="#voices">Voices</a>
               <a href="#lexicon">Lexicon</a>
+              <a href="#search-tabs">Switching tabs</a>
               <a href="#session-library">Session Library</a>
               <a href="#quick-actions">Quick Actions</a>
               <a href="#link-texts">Link Texts</a>
@@ -705,11 +706,11 @@
             <p>Sefaria's own bold and italics are kept — for example, the Steinsaltz Talmud bolds the Talmud's words to set them apart from the explanation. For the translation, <span class="ui-label">Commentary</span> can <strong>Combine</strong> (drop the bold, so the translation and its commentary look the same) or <strong>Drop</strong> the commentary and insert only the bold words, Sefaria's direct translation (see <a href="#layout-settings">Insertion Options</a>). Italics, which marks foreign and transliterated words, is kept either way. You can also change how the kept emphasis looks under <span class="ui-label">Preferences → Insertion → Insertion Defaults → Commentary → Advanced</span>.</p>
           </section>
 
-          <section class="card topic-section" id="voices" data-search-title="Voices (source sheets)" data-search-terms="voices source sheet sheets sheet index citation only text only both what to insert transliteration parentheses add sheet">
+          <section class="card topic-section" id="voices" data-search-title="Voices (source sheets)" data-search-terms="voices source sheet sheets sheet index topic topics category categories filter hide pin citation only text only both what to insert transliteration parentheses add sheet">
             <h2>Voices (source sheets)</h2>
             <ol class="steps">
               <li>Open the <span class="ui-label">Voices</span> tab (or <span class="ui-label">Extensions → Torah Library → Voices</span>).</li>
-              <li>Search Sefaria's source sheets by topic, title or text.</li>
+              <li>Search Sefaria's source sheets by topic, title or text. The sheets are grouped by topic (Torah Portions, Shabbat &amp; Holidays, Prayer, Tanakh, People…; a sheet goes under the first of its topics that fits one), and the <strong>topic chips</strong> over the list work like corpora in Texts: click one, or a group's <span class="ui-label">❌</span>, to hide it for this search, and again to bring it back. To change the order of the groups, or hide one for good, use <span class="ui-label">Preferences → Search → Voices Topics</span>.</li>
               <li>Pick a sheet. Under <span class="ui-label">What to insert</span> choose <strong>Citation</strong> (just the reference), <strong>Text</strong> (the sheet's text) or <strong>Both</strong> (the text, its title linked to the sheet on Sefaria), and optionally a <span class="ui-label">Transliteration</span> scheme. A sample shows how it will look, and the line underneath says what will be inserted.</li>
               <li>Click <span class="ui-label">Add Sheet</span>.</li>
             </ol>
@@ -717,7 +718,7 @@
             <p class="small" style="margin-top:10px;">Your usual choices can be saved in <span class="ui-label">Preferences → Insertion → Insertion Defaults → Voices</span>.</p>
           </section>
 
-          <section class="card topic-section" id="lexicon" data-search-title="Lexicon (dictionary)" data-search-terms="lexicon dictionary dictionaries filter hide corpus word lookup definition english hebrew aramaic jastrow bdb klein headword entries several multiple matches related words select all order full entry word ref definition show the whole entry star starred bookmark recent copy">
+          <section class="card topic-section" id="lexicon" data-search-title="Lexicon (dictionary)" data-search-terms="lexicon dictionary dictionaries filter hide corpus word lookup definition english hebrew aramaic jastrow bdb klein headword entries several multiple matches related words select all order full entry word ref definition show the whole entry pin pinned star starred bookmark recent copy">
             <h2>Lexicon (dictionary)</h2>
             <ol class="steps">
               <li>Open the <span class="ui-label">Lexicon</span> tab and type a Hebrew or Aramaic word, or an English one to find the Hebrew words that mean it. The <span class="ui-label">⌨︎</span> keyboard helps if you don't have Hebrew set up.</li>
@@ -726,15 +727,23 @@
               <li>Under <span class="ui-label">What to insert</span> choose <strong>Full entry</strong> (the word, each dictionary's name, its numbered definitions and notes), <strong>Word + ref</strong> (the word and the dictionaries' names), or <strong>Definition</strong> (the definitions alone).</li>
               <li>The preview shows the picked entries as an outline, each definition cut to two lines; <span class="ui-label">Show the whole entry</span> opens a long one. Click <span class="ui-label">Add Entry</span>.</li>
             </ol>
-            <p style="margin-top:10px;">Star a word to keep it under <span class="ui-label">⭐ Starred words</span>; clicking it there looks it up again. Your recent lookups appear as chips under the search box. <span class="ui-label">Copy</span>, under the preview, copies what Add Entry would insert.</p>
+            <p style="margin-top:10px;">Pin a word with its <span class="ui-label">📌</span> to keep it in the <a href="#session-library">Session Library</a>; clicking it there looks it up again and opens it. (Words you starred before are pinned.) Your recent lookups appear as chips under the search box. <span class="ui-label">Copy</span>, under the preview, copies what Add Entry would insert.</p>
+          </section>
+
+          <section class="card topic-section" id="search-tabs" data-search-title="Texts, Voices and Lexicon tabs" data-search-terms="tabs tab switch texts voices lexicon search all three enter badge count prefetch results kept search again">
+            <h2>Texts, Voices and Lexicon tabs</h2>
+            <ul>
+              <li><strong>Typing</strong> searches the tab you're in. <strong>Enter</strong> (or <span class="ui-label">🔍</span>) also searches the other two tabs, when the text suits them: a reference such as <em>Genesis 1:1</em> isn't looked up in the Lexicon. The number on each tab is how many results it has for what's in the search box.</li>
+              <li><strong>Switching tabs never searches.</strong> Each tab keeps its results, its hidden corpora, topics or dictionaries, and what you had selected; the search box keeps its text. A tab with no results for that text shows <span class="ui-label">Search Voices for “…”</span> — click it to search.</li>
+            </ul>
           </section>
 
           <section class="card topic-section" id="session-library" data-search-title="Session Library (📜)" data-search-terms="session library history inserted pinned pin recent copy references bibliography list reset clear undo filter sort compact">
             <h2>Session Library (<span class="icon">📜</span>)</h2>
-            <p>Every source you insert is added to the Session Library (the most recent twelve, plus any you pin), so you can find it again. Open it with <span class="ui-label">📜</span> at the bottom of the sidebar, or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>.</p>
+            <p>Every source, sheet or word you insert is added to the Session Library (the most recent twelve, plus up to thirty you pin), so you can find it again. Open it with <span class="ui-label">📜</span> at the bottom of the sidebar, or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd>.</p>
             <ul>
-              <li>Click a source to open it in the sidebar again.</li>
-              <li><span class="ui-label">📌</span> pins a source so it stays at the top and isn't cleared.</li>
+              <li>Click one to open it again, in its own tab (Texts, Voices or Lexicon), selected and ready to insert.</li>
+              <li><span class="ui-label">📌</span> pins it so it stays at the top and isn't cleared. Every result has a 📌: a text, a source sheet, a word.</li>
               <li>Filter by <strong>Pinned</strong>, <strong>Recent</strong> or a category; search; and sort by category, date added, or A–Z. <span class="ui-label">⊟</span> switches to a compact list.</li>
               <li><span class="ui-label">Copy References</span> copies every reference as plain text — handy for a bibliography.</li>
               <li><span class="ui-label">Clear Recent</span> removes everything except pinned sources; <span class="ui-label">Reset Session</span> removes everything. Both ask first, and removing a single source can be undone.</li>
@@ -815,7 +824,7 @@
               <thead><tr><th>Tab</th><th>What's there</th></tr></thead>
               <tbody>
                 <tr><td><span class="ui-label">Insertion</span></td><td>Default <strong>Layout</strong> (Display, Arrangement, Citation, Line by line, Line numbers, the titles' paragraph style — e.g. Heading 2 — and the citation's style); <strong>Insertion Defaults</strong> for Texts, Voices and Lexicon (for Texts, the same Source and Translation settings as the sidebar's Insertion Format, open, with a live preview, plus the preferred translation language). Every font is set here: a font button opens that font's full settings in place — font, size, bold/italic/underline, text colour and highlight, with a preview, and for a title its <strong>Hyperlink formatting override</strong>. Under <strong>Commentary</strong>, <em>Advanced</em> sets how Sefaria's kept emphasis looks, and the translation's text font has formatting for specific languages. Also here: <strong>Transliteration Mapping</strong> for adjusting individual letters; <strong>Divine Name Mappings</strong>; and <strong>Insert from Selection</strong> (whether a selected or own-line citation is replaced by the source — used by Insert from Selection and Link Texts).</td></tr>
-                <tr><td><span class="ui-label">Search</span></td><td><strong>Text Search Results</strong>: the order of the result groups, and which are hidden (the sidebar's <span class="ui-label">⤦</span> brings one back for a single search). <strong>Lexicon Dictionaries</strong>: the order a word's dictionary entries are listed in, and which dictionaries are hidden (a dictionary's chip in the Lexicon tab brings it back for a single search). <strong>Translation Languages</strong>: which languages the sidebar offers. <strong>Advanced</strong>: <em>Show unavailable translations</em>.</td></tr>
+                <tr><td><span class="ui-label">Search</span></td><td><strong>Text Search Results</strong>: the order of the result groups, and which are hidden (the sidebar's <span class="ui-label">⤦</span> brings one back for a single search). <strong>Voices Topics</strong>: the order of the topic groups in Voices, and which are hidden (a topic's chip in the Voices tab brings it back for a single search). <strong>Lexicon Dictionaries</strong>: the order a word's dictionary entries are listed in, and which dictionaries are hidden (a dictionary's chip in the Lexicon tab brings it back for a single search). <strong>Translation Languages</strong>: which languages the sidebar offers. <strong>Advanced</strong>: <em>Show unavailable translations</em>.</td></tr>
                 <tr><td><span class="ui-label">Linking</span></td><td>How <a href="#link-texts">Link Texts with Sefaria</a> reviews what it finds, and how much of your document it sends.</td></tr>
                 <tr><td><span class="ui-label">Menu Bar</span></td><td>Rearrange the add-on's menu. See <a href="#menu">The menu</a>.</td></tr>
                 <tr><td><span class="ui-label">Advanced</span></td><td><strong>Settings file.</strong> <span class="ui-label">Export settings file</span> saves the settings shown in Preferences (unsaved changes included) to a <code>.json</code> file you can share; give it a name such as <em>Grade 7 Chumash</em>. <span class="ui-label">Choose a settings file…</span> (or paste its text) shows what each part would change — Text and layout; Fonts, colours and titles; Search and linking; Menu and interface — and applies only the parts you tick, saved at once. Teachers can give a class the same settings; organizations their house style. A file holds settings only: never your searches, documents or account. Everything only.</td></tr>

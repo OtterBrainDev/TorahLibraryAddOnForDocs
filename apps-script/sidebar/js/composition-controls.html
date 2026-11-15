@@ -153,7 +153,9 @@ var SELECTED_RESULT_REFRESH_DELAY_MS = 400;
 var selectedResultRefreshTimer = null;
 
 function scheduleSelectedResultRefresh() {
-  if (appMode !== 'texts' || !selectedRefValue) return;
+  // Texts isn't shown: its preview is fetched again when it is (search-tabs).
+  if (appMode !== 'texts') { textsPreviewStale = true; return; }
+  if (!selectedRefValue) return;
   hasResolvedReference = false;
   setInsertButtonState(false);
   // The preview says at once that it is out of date: the save and the fetch

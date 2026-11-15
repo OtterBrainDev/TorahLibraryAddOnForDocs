@@ -13,20 +13,35 @@
     ".voices-insert-options"
   ],
   "apps-script/sidebar/js/search-controller.html": [
-    "function runUnifiedQuery",
+    "function searchTextsRun",
     "function resolveSelectedResult",
+    "google.script.run"
+  ],
+  "apps-script/sidebar/js/voices.html": [
+    "function searchVoicesRun",
     "function buildVoicesPreviewHtml",
-    "function runVoicesQuery",
+    "function fileVoicesSheet",
+    "function voicesSessionEntry",
     "google.script.run"
   ],
   "apps-script/sidebar/js/lexicon.html": [
-    "function runLexiconQuery",
+    "function searchLexiconRun",
     "function renderLexiconWordList",
     "function selectLexiconWord",
     "function selectedLexiconEntries",
     "function buildLexiconInsertPayload",
     "insertMode",
-    "google.script.run"
+    "google.script.run",
+    "function lexiconSessionEntry"
+  ],
+  "apps-script/sidebar/js/search-tabs.html": [
+    "var SEARCH_TABS",
+    "function runUnifiedQuery",
+    "function startSearchRun",
+    "function stashSearchTab",
+    "function showSearchTab",
+    "function prefetchOtherSearchTabs",
+    "function openSessionEntry"
   ],
   "apps-script/sidebar/js/footer-actions.html": [
     "google.script.run",

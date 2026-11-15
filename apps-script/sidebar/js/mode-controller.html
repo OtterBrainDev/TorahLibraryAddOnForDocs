@@ -104,7 +104,7 @@ function reloadAccountPreferences() {
       ? mergePreferenceLayers(accountPreferences, sessionPreferences)
       : mergePreferenceLayers(accountPreferences, {});
     applyEffectivePreferencesToUI();
-    if (appMode === 'texts' && selectedRefValue) scheduleSelectedResultRefresh();
+    if (appMode !== 'texts' || selectedRefValue) scheduleSelectedResultRefresh();
   }).getPreferences();
 }
 
@@ -181,11 +181,17 @@ function updateQuickActionsForMode() {
   if (experimentalMode) { $('#footer-actions-panel').hide(); }
 }
 
+// Switching tabs never searches: the tab left keeps its results and its
+// selection, and the tab shown gets its own back (search-tabs).
 function setSidebarMode(mode, skipPreferenceSave) {
-  appMode = normalizeSidebarMode(mode);
-  if (appMode === 'experimental' && !hasExperimentalFeaturesEnabled()) {
-    appMode = 'texts';
+  var previousMode = appMode;
+  var nextMode = normalizeSidebarMode(mode);
+  if (nextMode === 'experimental' && !hasExperimentalFeaturesEnabled()) {
+    nextMode = 'texts';
   }
+  var changing = nextMode !== previousMode;
+  if (changing) stashSearchTab(previousMode);
+  appMode = nextMode;
 
   $('body').removeClass('mode-texts mode-voices mode-experimental mode-lexicon')
     .addClass('mode-' + appMode);
@@ -211,6 +217,7 @@ function setSidebarMode(mode, skipPreferenceSave) {
   $('#insert-source').text(insertLabels[appMode] || 'Add Source');
   var openLabels = { voices: 'Open Sheet' };
   $('.open-label-text').text(openLabels[appMode] || 'Open');
+  if (changing) showSearchTab(appMode);
 
   if (!skipPreferenceSave && appMode !== 'experimental') {
     saveAccountPreference({ search_mode: appMode });
@@ -254,29 +261,16 @@ function updateModeDependentSections() {
   $('.lexicon-word-section').toggle(hasSelectedLexiconResult);
   renderSessionLibrary();
 
-  // Render lexicon enhancement sections when in lexicon mode
-  if (appMode === 'lexicon') {
-    if (typeof renderLexiconHistory   === 'function') renderLexiconHistory();
-    if (typeof renderLexiconBookmarks === 'function') renderLexiconBookmarks();
-  }
+  // The Lexicon's recent searches, in the Lexicon.
+  if (appMode === 'lexicon' && typeof renderLexiconHistory === 'function') renderLexiconHistory();
 }
 
 
+// A tab: its own results for the text in the box, or the offer to search
+// them; never a search of its own. A search still running in the tab left
+// fills that tab only, and its hint or count stays there (BUG-005).
 $('.mode-switch-button, .experimental-menu-button').off('click').on('click', function () {
-  var nextMode = $(this).attr('data-sidebar-mode');
-  // A search still running in the mode being left must not fill this one, and
-  // its hint or count must not stay (BUG-005).
-  latestQueryRequestId++;
-  setResultsHint('');
-  $('.lexicon-result-count').remove();
-  setSidebarMode(nextMode);
-  clearSelectedResult();
-  selectedVoiceItem = null;
-  selectedLexiconItem = null;
-  setInsertButtonState(false);
-  $('#open-on-sefaria').prop('disabled', true);
-  if (($('.input').val() || '').trim() && appMode !== 'experimental') runUnifiedQuery();
-  else updateModeDependentSections();
+  setSidebarMode($(this).attr('data-sidebar-mode'));
 });
 
 $('#open-session-library').off('click').on('click', function (event) {

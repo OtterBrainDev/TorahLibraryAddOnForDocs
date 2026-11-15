@@ -12,8 +12,6 @@
 // The picked entries of selectedLexiconItem (mode-controller), by id, in the
 // order they were picked.
 var lexiconSelectedEntryIds = [];
-// A starred word to open once the search for it answers.
-var pendingLexiconWordRef = '';
 
 var LEXICON_FORMAT_LABELS = { entry: 'Full entry', headword: 'Word + ref', definition: 'Definition' };
 
@@ -65,14 +63,11 @@ function lexiconEntryCount(items) {
 
 /* ── Result list: words ─────────────────────────────────────────────────────── */
 
-function isLexiconBookmarked(ref) {
-  return getLexiconBookmarks().some(function (b) { return b.ref === ref; });
-}
-
 function renderLexiconWordRow(word, selectedClass) {
   var entries = lexiconWordEntries(word);
-  var bookmarked = isLexiconBookmarked(word.ref);
-  var starTitle = bookmarked ? 'Remove star' : 'Star this word';
+  // Pinned to the Session Library like any result (togglePinnedRef).
+  var pinned = isPinnedRef(word.ref);
+  var pinTitle = pinned ? 'Unpin word' : 'Pin word';
   var gloss = lexiconWordGloss(word);
   var languages = [];
   entries.forEach(function (entry) {
@@ -89,9 +84,9 @@ function renderLexiconWordRow(word, selectedClass) {
     "<div class='lexicon-row-header'>" +
       "<span class='lexicon-row-headword' lang='he' dir='rtl'>" + escapeHTML(word.headWord || word.label || '') + "</span>" +
       "<span class='lexicon-row-source'>" + escapeHTML(entries.length === 1 ? '1 entry' : entries.length + ' entries') + "</span>" +
-      "<button type='button' class='lexicon-row-bookmark-btn" + (bookmarked ? ' is-bookmarked' : '') + "'" +
-        " data-ref='" + escapeHTML(word.ref) + "'" +
-        " aria-label='" + starTitle + "' title='" + starTitle + "'>" + (bookmarked ? '⭐' : '☆') + "</button>" +
+      "<button type='button' class='result-pin-button lexicon-row-pin" + (pinned ? ' is-pinned' : '') + "'" +
+        " data-ref='" + escapeHTML(word.ref) + "' data-label='" + escapeHTML(word.headWord || word.label || '') + "'" +
+        " aria-label='" + pinTitle + "' title='" + pinTitle + "'>📌</button>" +
     "</div>" +
     (gloss
       ? "<div class='lexicon-row-gloss' dir='auto'>" + escapeHTML(gloss) + "</div>"
@@ -197,40 +192,12 @@ function arrangeLexiconWords(words, removedLookup) {
 function lexiconHiddenDictionaries() {
   var state = typeof resultPostProcessState !== 'undefined' && resultPostProcessState ? resultPostProcessState : {};
   var removed = (state.removedCorpora || []).filter(function (key) { return String(key).indexOf('dictionary-') === 0; });
-  var saved = typeof getActivePreferenceExcludedCorpora === 'function' && appMode === 'lexicon' ? getActivePreferenceExcludedCorpora() : [];
+  var saved = getActivePreferenceExcludedCorpora('lexicon', state);
   return removed.concat(saved.filter(function (key) { return removed.indexOf(key) < 0; }));
 }
 
-// Called by renderResultFilterStrip (results-render) in Lexicon mode.
-function renderLexiconDictionaryStrip($strip) {
-  var corpora = resultPostProcessState.availableCorpora || [];
-  if (!corpora.length) return;
-  var hidden = lexiconHiddenDictionaries();
-  var saved = typeof getActivePreferenceExcludedCorpora === 'function' ? getActivePreferenceExcludedCorpora() : [];
-  var html = "<span class='lang-filter-strip-label'>Dictionaries:</span>";
-  corpora.forEach(function (corpus) {
-    var isHidden = hidden.indexOf(corpus.key) >= 0;
-    var count = corpus.count === 1 ? ' (1 entry)' : ' (' + corpus.count + ' entries)';
-    var action = saved.indexOf(corpus.key) >= 0
-      ? 'Hidden in Preferences. Show ' + corpus.label + count + ' for this search'
-      : (isHidden ? 'Show ' : 'Hide ') + corpus.label + count;
-    html += "<button type='button' class='result-filter-chip lexicon-dict-chip" + (isHidden ? ' removed' : '') + "'" +
-      " data-corpus-key='" + escapeHTML(corpus.key) + "'" +
-      " aria-pressed='" + (isHidden ? 'false' : 'true') + "'" +
-      " title='" + escapeHTML(action) + "' aria-label='" + escapeHTML(action) + "'>" +
-      escapeHTML(corpus.label) + " <span class='lexicon-dict-chip-count' aria-hidden='true'>" + corpus.count + "</span></button>";
-  });
-  // Every interpolated label goes through escapeHTML; counts are numbers.
-  $strip.html(html).show();
-}
-
-// The strip is redrawn by the click (toggleCorpusVisibility, bound in
-// event-bindings); keep the keyboard on the chip that was pressed.
-$(document).on('click', '.lexicon-dict-chip', function () {
-  var key = $(this).attr('data-corpus-key');
-  var chip = $('.lexicon-dict-chip').filter(function () { return $(this).attr('data-corpus-key') === key; }).get(0);
-  if (chip && chip !== this) chip.focus();
-});
+// The dictionary chips over the word list: renderCorpusChipStrip
+// (results-render), with Lexicon's words.
 
 function lexiconCountLabel(words) {
   var total = lexiconEntryCount(words);
@@ -250,7 +217,6 @@ var lexiconAllHiddenHintShown = false;
 function syncLexiconAfterFiltering() {
   var raw = getAllRawResults();
   if ($('.lexicon-result-count').length) $('.lexicon-result-count').text(lexiconCountLabel(raw));
-  updateLexiconTabBadge(queryState.searchResults.length);
   if (raw.length && !queryState.searchResults.length) {
     setResultsHint(LEXICON_ALL_HIDDEN_HINT);
     lexiconAllHiddenHintShown = true;
@@ -659,128 +625,73 @@ $(document).on('click', '.lexicon-history-chip', function () {
   var query = $(this).data('query');
   if (!query) return;
   $('.input').val(query);
-  runLexiconQuery();
+  runUnifiedQuery();
 });
 
 $(document).on('click', '.lexicon-history-clear', function () {
   clearLexiconHistory();
 });
 
-/* ── Starred words ──────────────────────────────────────────────────────────── */
-
-// Stars were per entry until 2026-11 ({ ref: 'lexicon:<rid>', headWord, … });
-// those still list, and open by searching their headword.
-var LEXICON_BOOKMARKS_KEY = 'lexicon_bookmarks';
-
-function getLexiconBookmarks() {
-  try { return JSON.parse(localStorage.getItem(LEXICON_BOOKMARKS_KEY) || '[]'); }
-  catch (e) { return []; }
-}
-
-function writeLexiconBookmarks(bookmarks) {
-  try { localStorage.setItem(LEXICON_BOOKMARKS_KEY, JSON.stringify(bookmarks.slice(0, 20))); }
-  catch (e) {}
-  renderLexiconBookmarks();
-}
-
-function toggleLexiconBookmark(word) {
-  if (!word || !word.ref) return;
-  var others = getLexiconBookmarks().filter(function (b) { return b.ref !== word.ref; });
-  var starring = others.length === getLexiconBookmarks().length;
-  if (starring) {
-    others.unshift({
-      ref: word.ref,
-      headWord: word.headWord || word.label || '',
-      sourceLabel: lexiconWordDictionaries(word)
-    });
-  }
-  writeLexiconBookmarks(others);
-  var label = starring ? 'Remove star' : 'Star this word';
-  $('.lexicon-row-bookmark-btn').filter(function () { return $(this).attr('data-ref') === word.ref; })
-    .toggleClass('is-bookmarked', starring)
-    .attr('aria-label', label)
-    .attr('title', label)
-    .text(starring ? '⭐' : '☆');
-}
-
-function renderLexiconBookmarks() {
-  var $section = $('#lexicon-bookmarks-section');
-  var $list    = $('#lexicon-bookmarks-list');
-  if (!$section.length || !$list.length) return;
-
-  var bookmarks = getLexiconBookmarks();
-  if (!bookmarks.length || appMode !== 'lexicon') {
-    $section.hide();
-    return;
-  }
-
-  var html = '';
-  bookmarks.forEach(function (b) {
-    html += "<li class='lexicon-bookmark-row' data-ref='" + escapeHTML(b.ref) + "' data-headword='" + escapeHTML(b.headWord || '') + "' role='option' tabindex='0'>" +
-      "<span class='lexicon-bookmark-headword' lang='he' dir='rtl'>" + escapeHTML(b.headWord) + "</span>" +
-      "<span class='lexicon-bookmark-source'>" + escapeHTML(b.sourceLabel || b.lexiconName || '') + "</span>" +
-      "<button type='button' class='lexicon-bookmark-remove' data-ref='" + escapeHTML(b.ref) + "' aria-label='Remove " + escapeHTML(b.headWord) + " from starred words' title='Remove star'>✕</button>" +
-      "</li>";
-  });
-  // Every interpolated value goes through escapeHTML.
-  $list.html(html);
-  $section.show();
-}
+/* ── Pins ───────────────────────────────────────────────────────────────── */
+//
+// A word is pinned to the Session Library like a text (the 📌 on its row;
+// SEARCH_TABS.lexicon in search-tabs). Its stars, kept here until
+// 2026-11, became pins (migrateLexiconStarsToPins_ in session-library).
 
 function findLexiconWord(ref) {
   return queryState.searchResults.concat(queryState.libraryMatches)
     .filter(function (item) { return item && item.ref === ref; })[0] || null;
 }
 
-// Pick a word as a click on its row does (event-bindings).
-function openLexiconWord(word) {
-  if (!word) return;
-  selectedResultKey = word.key;
-  selectedResultSummary = { label: word.headWord || word.label || word.ref, subtitle: '' };
-  resultsCollapsed = true;
-  renderResults();
-  resolveSelectedResult(word.ref, word.label || word.ref);
+// What a pinned or inserted word keeps. An insert also names the entries it
+// took ("שֵׁם · Klein I · BDB I").
+function lexiconSessionEntry(word, entries) {
+  var headWord = (word && (word.headWord || word.label)) || '';
+  var dictionaries = (entries || []).map(lexiconEntryLabel).join(' · ');
+  return buildSessionEntry(word.ref, headWord + (dictionaries ? ' · ' + dictionaries : ''), 'Dictionary',
+    { mode: 'lexicon', query: headWord, headWord: headWord });
 }
 
-$(document).on('click keydown', '.lexicon-bookmark-row', function (e) {
-  if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
-  if ($(e.target).hasClass('lexicon-bookmark-remove')) return;
-  e.preventDefault();
-  var ref = $(this).attr('data-ref');
-  var word = findLexiconWord(ref);
-  if (word) {
-    openLexiconWord(word);
+// The word a Session Library entry stands for, among a search's words. Older
+// entries name it otherwise: a starred entry by its rid ("lexicon:<rid>"), an
+// inserted word by its headword.
+function findLexiconEntryWord(words, entry) {
+  var ref = String((entry && entry.ref) || '');
+  var byRef = words.filter(function (word) { return word.ref === ref; })[0];
+  if (byRef) return byRef;
+  if (ref.indexOf('lexicon:') === 0) {
+    var rid = ref.slice('lexicon:'.length);
+    var holder = words.filter(function (word) {
+      return lexiconWordEntries(word).some(function (e) { return e.rid === rid || e.id === rid; });
+    })[0];
+    if (holder) return holder;
+  }
+  var headWord = String((entry && (entry.headWord || entry.query)) || '').trim();
+  return words.filter(function (word) { return headWord && (word.headWord === headWord || word.label === headWord); })[0] ||
+    words.filter(function (word) { return word.match !== 'related'; })[0] || null;
+}
+
+// The word that was selected when the tab was left, with the entries picked
+// then that it still lists.
+function restoreLexiconSelection(selection) {
+  var word = findLexiconWord(selection.refValue);
+  if (!word) {
+    selectedLexiconItem = null;
+    lexiconSelectedEntryIds = [];
+    resetSelectedResultView();
+    updateModeDependentSections();
     return;
   }
-  var headWord = $(this).attr('data-headword');
-  if (!headWord) return;
-  pendingLexiconWordRef = ref;
-  $('.input').val(headWord);
-  runLexiconQuery();
-});
-
-$(document).on('click', '.lexicon-bookmark-remove', function (e) {
-  e.stopPropagation();
-  var ref = $(this).attr('data-ref');
-  if (!ref) return;
-  writeLexiconBookmarks(getLexiconBookmarks().filter(function (b) { return b.ref !== ref; }));
-});
-
-$(document).on('click keydown', '#lexicon-bookmarks-header', function (e) {
-  if (e.type === 'keydown' && e.which !== 13 && e.which !== 32) return;
-  var $list     = $('#lexicon-bookmarks-list');
-  var $btn      = $('#lexicon-bookmarks-toggle');
-  var expanded  = $(this).attr('aria-expanded') === 'true';
-  $(this).attr('aria-expanded', !expanded ? 'true' : 'false');
-  $btn.text(expanded ? '▸' : '▾');
-  $list.toggle(!expanded);
-});
-
-// The star on a word row.
-$(document).on('click', '.lexicon-row-bookmark-btn', function (e) {
-  e.stopPropagation();
-  toggleLexiconBookmark(findLexiconWord($(this).attr('data-ref')));
-});
+  var ids = lexiconWordEntries(word).map(function (entry) { return entry.id; });
+  var kept = (selection.entryIds || []).filter(function (id) { return ids.indexOf(id) >= 0; });
+  selectedLexiconItem = word;
+  lexiconSelectedEntryIds = kept.length ? kept : ids.slice(0, 1);
+  renderLexiconEntryPicker();
+  renderLexiconPreview();
+  setInsertButtonState(true);
+  $('#open-on-sefaria').prop('disabled', true);
+  updateModeDependentSections();
+}
 
 /* ── Search ─────────────────────────────────────────────────────────────────── */
 
@@ -789,88 +700,79 @@ function announceLexiconStatus(msg) {
   if ($live.length) $live.text(msg);
 }
 
-function runLexiconQuery(fromTyping) {
-  // An answer to an earlier query is dropped. Without this, switching to
-  // Lexicon looked up what was still in the box ("Genesis 1:1"); that empty
-  // answer landed while שלום was being looked up, and its "No lexicon entries
-  // found for 'Genesis 1:1'" stayed above שלום's 14 entries (BUG-005).
-  var requestId = ++latestQueryRequestId;
-  var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  if (fromTyping !== true) $('.input').val(input);
-  clearSelectedResult();
-  selectedLexiconItem = null;
-  lexiconSelectedEntryIds = [];
-  setResultsHint('');
-  $('.lexicon-result-count').remove();
-  updateModeDependentSections();
+// A Hebrew or English word or two: no digits, no reference, no link.
+function lexiconSuitsQuery(query) {
+  var text = String(query || '').trim();
+  if (text.length < 2 || text.length > 40) return false;
+  if (/[0-9:]/.test(text) || /^https?:\/\//i.test(text) || /sefaria\.org\//i.test(text)) return false;
+  return text.split(/\s+/).length <= 2;
+}
 
+// The Lexicon tab's search (SEARCH_TABS.lexicon in search-tabs). An answer
+// to an earlier search is dropped (isCurrentSearchRun): without that,
+// switching to Lexicon looked up what was still in the box ("Genesis 1:1"),
+// and that empty answer, landing while שלום was being looked up, left its
+// "No lexicon entries found for 'Genesis 1:1'" above שלום's 14 entries
+// (BUG-005).
+function searchLexiconRun(run) {
+  var input = run.query;
   if (!input) {
-    pendingLexiconWordRef = '';
-    queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
-    reprocessAndRenderResults();
-    setInsertButtonState(false);
-    $('#open-on-sefaria').prop('disabled', true);
-    updateLexiconTabBadge(0);
-    renderLexiconHistory();
-    renderLexiconBookmarks();
+    searchRunChanged(run);
+    finishSearchRun(run);
+    if (isShownSearchRun(run)) renderLexiconHistory();
     return;
   }
-
-  announceLexiconStatus('Searching…');
-  setResultsLoading(true);
-  renderLexiconHistory();
-  renderLexiconBookmarks();
+  if (isShownSearchRun(run)) {
+    announceLexiconStatus('Searching…');
+    renderLexiconHistory();
+  }
 
   google.script.run
     .withSuccessHandler(function (response) {
-      if (requestId !== latestQueryRequestId) return;
+      if (!isCurrentSearchRun(run)) return;
       var items = Array.isArray(response) ? response : [];
-      // Cleared first: the results may say every dictionary is hidden.
-      setResultsHint('');
-      lexiconAllHiddenHintShown = false;
-      queryState.rawLibraryMatches = [];
-      queryState.rawSearchResults = items;
-      reprocessAndRenderResults();
-
+      run.queryState.rawLibraryMatches = [];
+      run.queryState.rawSearchResults = items;
+      searchRunChanged(run);
       if (!items.length) {
-        pendingLexiconWordRef = '';
         // An English word is looked for in the definitions; Hebrew by spelling.
-        setResultsHint(/[\u0590-\u05FF]/.test(input) || !/[A-Za-z]/.test(input)
+        setSearchRunHint(run, /[\u0590-\u05FF]/.test(input) || !/[A-Za-z]/.test(input)
           ? 'No lexicon entries found for “' + input + '”. Try a different spelling or root form.'
           : 'No dictionary definition matched “' + input + '”. Try another English word, or type the Hebrew.');
-        announceLexiconStatus('No entries found for ' + input);
-      } else {
-        var countLabel = lexiconCountLabel(items);
-        announceLexiconStatus(countLabel);
-        // Show count line inside results panel
-        if (!$('.lexicon-result-count').length) {
-          $('.results-header').after("<p class='lexicon-result-count'></p>");
-        }
-        $('.lexicon-result-count').text(countLabel);
-        // Save to history on successful search
-        saveLexiconHistory(input);
       }
-
-      updateModeDependentSections();
-      setResultsLoading(false);
-
-      if (pendingLexiconWordRef) {
-        var starred = findLexiconWord(pendingLexiconWordRef);
-        pendingLexiconWordRef = '';
-        if (starred) openLexiconWord(starred);
-      }
+      finishSearchRun(run);
+      if (isShownSearchRun(run)) updateModeDependentSections();
     })
     .withFailureHandler(function (error) {
-      if (requestId !== latestQueryRequestId) return;
-      pendingLexiconWordRef = '';
-      queryState.rawLibraryMatches = [];
-      queryState.rawSearchResults = [];
-      reprocessAndRenderResults();
-      updateLexiconTabBadge(0);
-      setResultsHint((error && error.message) || 'Lexicon search is temporarily unavailable. Check your connection and try again.');
-      announceLexiconStatus('Search failed.');
-      setResultsLoading(false);
+      if (!isCurrentSearchRun(run)) return;
+      run.queryState.rawLibraryMatches = [];
+      run.queryState.rawSearchResults = [];
+      searchRunChanged(run);
+      setSearchRunHint(run, (error && error.message) || 'Lexicon search is temporarily unavailable. Check your connection and try again.');
+      if (isShownSearchRun(run)) announceLexiconStatus('Search failed.');
+      finishSearchRun(run, true);
     })
     .searchLexicon(input);
+}
+
+// Once a search's words are shown: said to a screen reader, and kept in the
+// recent searches.
+function lexiconAfterSearch(run) {
+  var items = getAllRawResults();
+  if (!items.length) {
+    announceLexiconStatus('No entries found for ' + run.query);
+    return;
+  }
+  announceLexiconStatus(lexiconCountLabel(items));
+  saveLexiconHistory(run.query);
+}
+
+// "25 entries found" over the words, whenever they are shown.
+function renderLexiconResultCount(run) {
+  $('.lexicon-result-count').remove();
+  var items = getAllRawResults();
+  if (!run.done || !items.length) return;
+  $('.results-header').after("<p class='lexicon-result-count'></p>");
+  $('.lexicon-result-count').text(lexiconCountLabel(items));
 }
 </script>

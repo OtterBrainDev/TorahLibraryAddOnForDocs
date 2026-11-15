@@ -9,6 +9,58 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### One search for the three tabs; Voices topics; pins in every tab
+
+**Two new preferences, schema 28 (migration):** `voices_topic_order` and
+`voices_topic_excluded`, both set to `[]` for everyone upgrading: the built-in
+topic order, no topic hidden, so every sheet you saw before is still listed.
+**Starred Lexicon words become pins** the first time the sidebar opens (see
+below); the *⭐ Starred words* list is gone.
+
+- **Switching tabs never searches.** Each tab keeps its own search: its
+  results, what you hid, and what you had selected (a text with its preview
+  and versions, a sheet, a word with the entries you picked). The search box
+  keeps its text. Switching used to search the box again in the new tab and
+  lose the selection, and a Texts reference was looked up in the Lexicon
+  ("Genesis 1:1").
+- **Enter searches all three tabs.** Typing searches the tab you're in.
+  Enter, or the search button, also searches the other two in the background
+  when the text suits them (a reference or a Sefaria link isn't looked up in
+  the Lexicon, a link isn't searched in Voices), so their results are there
+  when you switch. Each tab's number counts its results for what's in the box.
+  A tab with none for that text offers **Search Voices for “…”**.
+- **Voices topics are filtered like corpora.** Sheets are grouped by topic:
+  Torah Portions, Shabbat & Holidays, Prayer, Life Cycle, Halakhah, Tanakh,
+  Talmud & Midrash, People, Jewish Thought, Values & Ethics, Israel & History,
+  Other. A sheet goes under the first of its Sefaria topics that fits one (the
+  most specific match decides: *Laws of Shabbat* is Halakhah), or by its title
+  if it has none. Each group has its ❌, and a chip per topic over the list
+  hides or shows it for this search. *Preferences → Search → Voices Topics*
+  saves the order of the groups and the topics to leave out; settings files
+  carry both (Search and linking). A sheet's row now shows its author and its
+  own topics instead of "Source Sheets • EN, HE".
+- **Pins in every tab.** Sheets and words have the 📌 texts have. The Session
+  Library files them under *Source Sheets* and *Dictionary* (an inserted sheet
+  was filed under "voices", a pinned one under "Source Sheets"; old entries
+  are moved), and keeps a sheet's title whole (it was cut at its first comma).
+  Pins hold up to thirty (was twelve).
+- **Fixed: opening a sheet or a word from the Session Library.** Clicking an
+  entry (in the Library window, its sidebar list, or *Recent*) searched its
+  reference in whatever tab was open and looked for it 250 ms later: a sheet
+  searched "sheet:123" in Texts and found nothing, and a slow answer left
+  nothing selected. Now its own tab opens, with the search that found it, and
+  the entry is selected when the answer comes. A pinned sheet that search no
+  longer lists is shown from the pin.
+- **Starred words are pins.** Your ⭐ starred Lexicon words are added to the
+  Session Library's pins, after the pins you have, once; each opens in the
+  Lexicon as a pin does.
+- *Recent* (in Texts, before a search) lists Texts' own entries, with their
+  corpus.
+- The result sort (Rel. ▾) applies to Texts, the only tab that shows it; its
+  choice also re-sorted Voices' sheets and the Lexicon's words.
+- Fixed: the pause after pressing Enter searched the same text a second time.
+- Voices' *Prev* / *Next* mark the sheet they open in the list.
+
 ### Lexicon: words, and several dictionaries' entries at once
 
 **Two new preferences, schema 27 (migration):** `lexicon_dictionary_order`
@@ -67,12 +119,9 @@ dictionary they had. **What Add Entry inserts looks different** (see
   characters. *Definition* leaves out the word and the dictionary lines;
   *Word + ref* is the word and the dictionaries' names. The translation's
   *Commentary* setting never applies to a definition.
-- **Stars are per word.** *⭐ Starred words* lists words, and clicking one
-  looks it up again and opens it; a starred entry used to do nothing unless
-  it was among the current results. Entries starred before keep their place
-  and open by looking up their headword.
 - An inserted word goes into the Session Library as the word and its
-  dictionaries; clicking it while in the Lexicon tab looks the word up again.
+  dictionaries; clicking it opens it in the Lexicon (see *Pins in every tab*
+  above; stars became pins).
 
 ### Settings files; one Interface switch; Voices transliteration; Surprise Me
 

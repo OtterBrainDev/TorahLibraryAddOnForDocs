@@ -52,7 +52,7 @@ test('the two keys: defaults "[]", writable from Preferences, in the settings fi
 test('schema 27 gives an upgrader both keys as "[]" (every dictionary, the built-in order) and keeps a stored value', () => {
   const upgrader = loadServer({ prefs_schema_version: '26', nekudot: 'false' });
   upgrader.ctx.runUserPreferenceMigrationsIfNeeded_();
-  assert.equal(upgrader.store.prefs_schema_version, '27');
+  assert.equal(upgrader.store.prefs_schema_version, JSON.parse(read('docs/VERSION.json')).prefsSchemaVersion);
   KEYS.forEach((key) => assert.equal(upgrader.store[key], '[]', key));
   assert.equal(upgrader.store.nekudot, 'false');
 
@@ -104,6 +104,7 @@ function loadPipeline(preferences) {
   vm.createContext(context);
   ['apps-script/shared/ui/core-shared.html', 'apps-script/shared/ui/dom.html', 'apps-script/shared/ui/state.html',
     'apps-script/sidebar/js/preferences-state.html', 'apps-script/sidebar/js/results-render.html',
+    'apps-script/sidebar/js/session-library.html',
     'apps-script/sidebar/js/preview-core.html', 'apps-script/sidebar/js/lexicon.html',
   ].forEach((file) => vm.runInContext(scriptBody(file), context, { filename: file }));
   Object.assign(context, {
@@ -166,6 +167,6 @@ test('Preferences has the dictionary list, saved through two hidden fields, refr
   KEYS.forEach((key) => assert.match(page, new RegExp(`<input type="hidden" id="${key}" name="${key}" value="\\[\\]">`)));
   assert.match(js, /createOrderVisibilityEditor\(\{[\s\S]*?catalog: LEXICON_DICTIONARY_CATALOG/);
   // Filled when the stored preferences load, as the corpus list is.
-  assert.match(js, /loadCorpusOrderFromFields\(\);\s*dictionaryOrderEditor\.load\(\);/);
+  assert.match(js, /loadCorpusOrderFromFields\(\);\s*voicesTopicOrderEditor\.load\(\);\s*dictionaryOrderEditor\.load\(\);/);
   assert.match(js, /dictionaryOrderEditor\.init\(\);/);
 });

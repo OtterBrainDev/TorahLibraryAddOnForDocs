@@ -237,6 +237,7 @@
       </div>
     </div>
 
+    <div class="search-tab-prompt" hidden></div>
     <ul class="result-list library-results"></ul>
     <div class="result-group-label text-mode-only search-results-label" style="display:none;">Search results</div>
     <ul class="result-list search-results"></ul>
@@ -365,16 +366,6 @@
           <p class="lexicon-section-label">Preview</p>
           <div class="lexicon-preview" id="lexicon-preview"></div>
         </section>
-
-        <!-- Starred words (sidebar/js/lexicon) — shown when there are any -->
-        <section class="lexicon-bookmarks-section lexicon-only" style="display:none;" aria-label="Starred words" id="lexicon-bookmarks-section">
-          <div class="lexicon-bookmarks-header" id="lexicon-bookmarks-header" role="button" tabindex="0" aria-expanded="true" aria-controls="lexicon-bookmarks-list">
-            <span class="lexicon-bookmarks-title">⭐ Starred words</span>
-            <button type="button" class="lexicon-bookmarks-toggle" id="lexicon-bookmarks-toggle" aria-label="Toggle bookmarks">▾</button>
-          </div>
-          <ul class="lexicon-bookmarks-list" id="lexicon-bookmarks-list" aria-label="Starred words"></ul>
-        </section>
-
 
         <section class="versions-section text-mode-only" style="display:none;">
           <details class="sidebar-accordion versions-accordion" open>
@@ -611,7 +602,9 @@
     <?!= include('sidebar/js/footer-actions'); ?>
     <?!= include('sidebar/js/preview-core'); ?>
     <?!= include('sidebar/js/search-controller'); ?>
+    <?!= include('sidebar/js/voices'); ?>
     <?!= include('sidebar/js/lexicon'); ?>
+    <?!= include('sidebar/js/search-tabs'); ?>
     <?!= include('sidebar/js/mode-controller'); ?>
     <?!= include('shared/insertion-options/js'); ?>
     <?!= include('sidebar/js/display-controls'); ?>

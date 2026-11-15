@@ -3,6 +3,10 @@
 // SESSION LIBRARY — global state
 // ============================================================
 var sessionLibrary = { pinned: [], inserted: [] };
+// How many entries each list keeps, newest first. Pins have more room: the
+// Lexicon's starred words (up to 20) became pins (migrateLexiconStarsToPins_).
+// session-library-modal keeps the same numbers.
+var SESSION_LIBRARY_MAX = { pinned: 30, inserted: 12 };
 var sessionLibraryFilter = 'all';
 var sessionLibrarySearch = '';
 var sessionLibrarySortMode = 'category';
@@ -24,6 +28,33 @@ function loadSessionLibrary() {
   } catch (e) {
     sessionLibrary = { pinned: [], inserted: [] };
   }
+  // An inserted sheet was filed under "voices", a pinned one under "Source
+  // Sheets": one group now.
+  sessionLibrary.pinned.concat(sessionLibrary.inserted).forEach(function (item) {
+    if (item && item.corpusLabel === 'voices') item.corpusLabel = 'Source Sheets';
+  });
+  migrateLexiconStarsToPins_();
+}
+
+// The Lexicon's starred words (localStorage 'lexicon_bookmarks', until
+// 2026-11) become pins, after the pins already there, once: the key is then
+// removed. A star kept { ref, headWord, sourceLabel }; per-entry stars
+// ("lexicon:<rid>") still open, by their headword (findLexiconEntryWord).
+var LEXICON_STARS_STORAGE_KEY_ = 'lexicon_bookmarks';
+
+function migrateLexiconStarsToPins_() {
+  var stars = null;
+  try { stars = JSON.parse(localStorage.getItem(LEXICON_STARS_STORAGE_KEY_) || 'null'); } catch (e) { stars = []; }
+  if (stars === null) return;
+  (Array.isArray(stars) ? stars : []).forEach(function (star) {
+    if (!star || !star.ref || isPinnedRef(star.ref)) return;
+    var headWord = String(star.headWord || '').trim();
+    sessionLibrary.pinned.push(buildSessionEntry(star.ref, headWord || star.ref, 'Dictionary',
+      { mode: 'lexicon', query: headWord, headWord: headWord }));
+  });
+  sessionLibrary.pinned = sessionLibrary.pinned.slice(0, SESSION_LIBRARY_MAX.pinned);
+  try { localStorage.setItem('sefariaSidebarSessionLibrary', JSON.stringify(sessionLibrary)); } catch (e) { return; }
+  try { localStorage.removeItem(LEXICON_STARS_STORAGE_KEY_); } catch (e) {}
 }
 
 function saveSessionLibrary() {
@@ -34,17 +65,32 @@ function saveSessionLibrary() {
 // ============================================================
 // ENTRY BUILDERS / MUTATIONS
 // ============================================================
+// `mode` is the tab the entry reopens in ('text', 'voices' or 'lexicon';
+// the shown tab by default). A text's label is cut at its first section
+// ("Genesis 1:1, Rashi" → "Genesis 1:1"); a sheet's title or a word is kept
+// whole. A word keeps its headWord, a sheet what shows it again (`sheet`).
 function buildSessionEntry(ref, label, corpusLabel, extra) {
-  var rawLabel = String(label || ref || '').split(' › ')[0].split(',')[0].trim();
   extra = extra || {};
-  return {
+  var shown = typeof appMode !== 'undefined' ? appMode : 'texts';
+  var mode = extra.mode || (shown === 'voices' || shown === 'lexicon' ? shown : 'text');
+  var text = String(label || ref || '');
+  var rawLabel = (mode === 'text' ? text.split(' › ')[0].split(',')[0] : text).trim();
+  var entry = {
     ref: ref,
     label: rawLabel || ref,
     corpusLabel: String(corpusLabel || 'Other'),
-    mode: extra.mode || (typeof appMode !== 'undefined' && appMode === 'voices' ? 'voices' : 'text'),
+    mode: mode,
     url: extra.url || '',
     query: extra.query || label || ref
   };
+  if (extra.headWord) entry.headWord = extra.headWord;
+  if (extra.sheet) entry.sheet = extra.sheet;
+  return entry;
+}
+
+function findSessionEntry(ref) {
+  return (sessionLibrary.pinned || []).concat(sessionLibrary.inserted || [])
+    .filter(function (item) { return item && item.ref === ref; })[0] || null;
 }
 
 function upsertSessionEntry(listName, entry) {
@@ -52,7 +98,7 @@ function upsertSessionEntry(listName, entry) {
   var list = sessionLibrary[listName] || [];
   list = list.filter(function(item){ return item && item.ref !== entry.ref; });
   list.unshift(entry);
-  sessionLibrary[listName] = list.slice(0, 12);
+  sessionLibrary[listName] = list.slice(0, SESSION_LIBRARY_MAX[listName] || 12);
   saveSessionLibrary();
   renderSessionLibrary();
 }
@@ -99,10 +145,14 @@ function isPinnedRef(ref) {
   return (sessionLibrary.pinned || []).some(function(item){ return item && item.ref === ref; });
 }
 
+// The 📌 on a result row of any tab. What the pin keeps is the tab's
+// (sessionEntryForResult in search-tabs): a text's ref, a sheet, a word.
 function togglePinnedRef(ref, label) {
   if (!ref) return;
   if (isPinnedRef(ref)) removeSessionEntry('pinned', ref, true);
-  else upsertSessionEntry('pinned', buildSessionEntry(ref, label, getCurrentCorpusForRef(ref)));
+  else upsertSessionEntry('pinned', typeof sessionEntryForResult === 'function'
+    ? sessionEntryForResult(ref, label)
+    : buildSessionEntry(ref, label, getCurrentCorpusForRef(ref)));
   renderResults();
 }
 
@@ -522,7 +572,7 @@ function executeSlUndo() {
   $('#sl-undo-region').attr('hidden', true);
   var list = (sessionLibrary[listName] || []).filter(function(item){ return item && item.ref !== entry.ref; });
   list.unshift(entry);
-  sessionLibrary[listName] = list.slice(0, 12);
+  sessionLibrary[listName] = list.slice(0, SESSION_LIBRARY_MAX[listName] || 12);
   saveSessionLibrary();
   renderSessionLibrary();
 }

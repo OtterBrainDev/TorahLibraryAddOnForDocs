@@ -1,0 +1,456 @@
+<script>
+// One search workflow for the sidebar's three search tabs.
+//
+// Each tab declares in SEARCH_TABS how it searches (search), which text it
+// suits (suits: Enter searches the other tabs only with text they can use),
+// how many results its search found (count, for its badge), what its
+// selection holds (captureSelection / restoreSelection / clearSelection),
+// what happens once its search has answered (afterSearch) or it is drawn
+// (onShow / onHide), and what a pin of one of its results keeps and how that
+// result is found again (sessionEntry / reopenQuery / findEntryResult). The
+// tab's own code is in its partial: Texts in search-controller, Voices in
+// voices, the Lexicon in lexicon. The rest is shared, here:
+//
+// - A search is a run (createSearchRun): its own results, corpus filter
+//   state, hint and loading flag. A tab has one current run; an answer for a
+//   run that is no longer current is dropped (BUG-005).
+// - Only the shown tab's run is drawn: its results are the globals queryState
+//   and resultPostProcessState. A run in a tab that isn't shown is processed
+//   the same way (computeResultPostProcessing) and kept, with its count.
+// - Switching tabs never searches (setSidebarMode → stashSearchTab, then
+//   showSearchTab). The search box keeps its text, and the tab's results for
+//   that text come back as they were, with what was selected. A tab with no
+//   results for the text offers "Search Voices for “…”" instead.
+// - Typing searches the shown tab. Enter, the search button or that offer
+//   also search, in the background, each other tab that suits the text and
+//   has no results for it yet (prefetchOtherSearchTabs): switching to it then
+//   shows them at once.
+// - A tab's badge counts its results for the text in the box.
+// - A pinned or inserted result (the Session Library) reopens in its own tab,
+//   selected once that tab's search for it has answered (openSessionEntry).
+
+var SEARCH_TAB_MODES = ['texts', 'voices', 'lexicon'];
+var searchRunCounter = 0;
+var searchTabState = {};
+SEARCH_TAB_MODES.forEach(function (mode) { searchTabState[mode] = { run: null, selection: null }; });
+// The Texts preview is out of date: a preference or session change, or the
+// answer for it, came while another tab was shown. Texts fetches it again
+// when it is shown with that selection.
+var textsPreviewStale = false;
+
+var SEARCH_TABS = {
+  texts: {
+    label: 'Texts',
+    suits: function () { return true; },
+    search: function (run) { searchTextsRun(run); },
+    count: function (qs) { return getAllProcessedResults(qs).length; },
+    afterSearch: function (run) {
+      maybeShowZeroResultsSuggestions(run.query);
+      maybeAutoSelectSingleResult();
+    },
+    clearSelection: function () { pendingPreferredVersions = null; },
+    captureSelection: function () {
+      return { resolved: hasResolvedReference, data: data, preferredVersions: pendingPreferredVersions };
+    },
+    // The preview, its versions and the source card were left as they were
+    // (resetSelectedResultView clears them only in Texts).
+    restoreSelection: function (selection) {
+      hasResolvedReference = !!selection.resolved;
+      data = selection.data || {};
+      pendingPreferredVersions = selection.preferredVersions || null;
+      setInsertButtonState(hasResolvedReference);
+      $('#open-on-sefaria').prop('disabled', !hasResolvedReference);
+      if (textsPreviewStale) {
+        textsPreviewStale = false;
+        refreshSelectedResult();
+      }
+    },
+    sessionEntry: function (item) {
+      return buildSessionEntry(item.ref, item.label || item.ref, getResultCorpusLabel(item, 'Other'), { mode: 'text' });
+    },
+    reopenQuery: function (entry) { return entry.ref; },
+    findEntryResult: function (items, entry) {
+      var key = normalizeResultRefKey(entry.ref);
+      return items.filter(function (item) { return normalizeResultRefKey(item.ref) === key; })[0] ||
+        items.filter(isDirectReferenceItem)[0] || null;
+    }
+  },
+  voices: {
+    label: 'Voices',
+    suits: function (query) { return voicesSuitsQuery(query); },
+    search: function (run) { searchVoicesRun(run); },
+    count: function (qs) { return qs.searchResults.length; },
+    clearSelection: function () { selectedVoiceItem = null; },
+    captureSelection: function () { return {}; },
+    restoreSelection: function (selection) {
+      var item = findShownResult(selection.refValue);
+      if (item) resolveSelectedResult(item.ref, item.label || item.ref);
+    },
+    sessionEntry: function (item, run) { return voicesSessionEntry(item, run); },
+    reopenQuery: function (entry) { return entry.query || entry.label || ''; },
+    findEntryResult: function (items, entry) {
+      return items.filter(function (item) { return item.ref === entry.ref; })[0] || null;
+    },
+    restoreEntryResult: function (entry) { return restorePinnedVoicesSheet(entry); }
+  },
+  lexicon: {
+    label: 'Lexicon',
+    suits: function (query) { return lexiconSuitsQuery(query); },
+    search: function (run) { searchLexiconRun(run); },
+    count: function (qs) { return qs.searchResults.length; },
+    afterSearch: function (run) { lexiconAfterSearch(run); },
+    onShow: function (run) { renderLexiconResultCount(run); },
+    onHide: function () { $('.lexicon-result-count').remove(); },
+    clearSelection: function () {
+      selectedLexiconItem = null;
+      lexiconSelectedEntryIds = [];
+    },
+    captureSelection: function () { return { entryIds: lexiconSelectedEntryIds.slice() }; },
+    restoreSelection: function (selection) { restoreLexiconSelection(selection); },
+    sessionEntry: function (item) { return lexiconSessionEntry(item); },
+    reopenQuery: function (entry) { return entry.headWord || entry.query || entry.label || ''; },
+    findEntryResult: function (items, entry) { return findLexiconEntryWord(items, entry); }
+  }
+};
+
+/* ── Runs ───────────────────────────────────────────────────────────────── */
+
+function createSearchRun(mode, query, options) {
+  options = options || {};
+  return {
+    id: ++searchRunCounter,
+    mode: mode,
+    query: query,
+    queryState: emptySearchQueryState(),
+    postState: newResultPostProcessState(),
+    hint: null,
+    loading: true,
+    done: false,
+    failed: false,
+    count: 0,
+    background: !!options.background,
+    afterSearch: null,
+    hooksPending: false,
+    openEntry: options.openEntry || null
+  };
+}
+
+function isCurrentSearchRun(run) {
+  return !!run && !!searchTabState[run.mode] && searchTabState[run.mode].run === run;
+}
+
+function isShownSearchRun(run) {
+  return isCurrentSearchRun(run) && appMode === run.mode && queryState === run.queryState;
+}
+
+function shownSearchRun() {
+  var state = searchTabState[appMode];
+  return state && isShownSearchRun(state.run) ? state.run : null;
+}
+
+// The text in the search box, tidied as every tab searches it.
+function currentSearchBoxQuery() {
+  return normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
+}
+
+// Starts `mode`'s search for `query`, replacing its current one. Drawn at
+// once if `mode` is shown; otherwise kept for when it is.
+function startSearchRun(mode, query, options) {
+  var tab = SEARCH_TABS[mode];
+  if (!tab) return null;
+  var run = createSearchRun(mode, query, options);
+  searchTabState[mode].run = run;
+  searchTabState[mode].selection = null;
+  if (mode === appMode) showNewSearchRun(run);
+  tab.search(run);
+  syncSearchTabBadges();
+  return run;
+}
+
+function showNewSearchRun(run) {
+  queryState = run.queryState;
+  resultPostProcessState = run.postState;
+  SEARCH_TABS[run.mode].clearSelection();
+  if (SEARCH_TABS[run.mode].onHide) SEARCH_TABS[run.mode].onHide();
+  resetSelectedResultView();
+  setResultsHint('');
+  updateResultsVisibility();
+  renderResultFilterStrip();
+  if (run.query) setResultsLoading(true);
+  updateModeDependentSections();
+}
+
+// A tab's search has new results: drawn if shown, processed either way, so
+// its lists and count are always current. False if the run is stale.
+function searchRunChanged(run) {
+  if (!isCurrentSearchRun(run)) return false;
+  if (isShownSearchRun(run)) reprocessAndRenderResults();
+  else computeResultPostProcessing(run.mode, run.queryState, run.postState);
+  return true;
+}
+
+// A tab's hint (no results, a dead end, a failure), kept with its search.
+function setSearchRunHint(run, message, allowHtml) {
+  if (!isCurrentSearchRun(run)) return;
+  if (isShownSearchRun(run)) setResultsHint(message, allowHtml);
+  else run.hint = String(message || '').trim() ? { message: message, allowHtml: !!allowHtml } : null;
+}
+
+// Called by setResultsHint (search-utils): whatever the shown tab says stays
+// with its search.
+function noteShownSearchRunHint(message, allowHtml) {
+  var run = shownSearchRun();
+  if (run) run.hint = String(message || '').trim() ? { message: message, allowHtml: !!allowHtml } : null;
+}
+
+// Called by applyResultPostProcessing: hiding a corpus changes the count.
+function noteShownSearchRunCount() {
+  var run = shownSearchRun();
+  if (!run) return;
+  run.count = SEARCH_TABS[run.mode].count(queryState);
+  syncSearchTabBadges();
+}
+
+// The search has answered. What follows an answer (afterSearch, a pinned
+// result to open) runs now if the tab is shown, else when it next is.
+function finishSearchRun(run, failed) {
+  if (!isCurrentSearchRun(run)) return;
+  run.loading = false;
+  run.done = true;
+  run.failed = !!failed;
+  if (!isShownSearchRun(run)) computeResultPostProcessing(run.mode, run.queryState, run.postState);
+  run.count = SEARCH_TABS[run.mode].count(run.queryState);
+  if (isShownSearchRun(run)) {
+    setResultsLoading(false);
+    if (SEARCH_TABS[run.mode].onShow) SEARCH_TABS[run.mode].onShow(run);
+    runSearchRunHooks(run);
+  } else {
+    run.hooksPending = true;
+  }
+  syncSearchTabBadges();
+}
+
+function runSearchRunHooks(run) {
+  run.hooksPending = false;
+  var tab = SEARCH_TABS[run.mode];
+  if (typeof run.afterSearch === 'function') run.afterSearch(run);
+  if (tab.afterSearch) tab.afterSearch(run);
+  if (run.openEntry) {
+    var entry = run.openEntry;
+    run.openEntry = null;
+    selectSessionEntryResult(entry);
+  }
+}
+
+/* ── Switching tabs ─────────────────────────────────────────────────────── */
+
+// Called by setSidebarMode before it leaves `mode`: what is selected there is
+// kept with its search.
+function stashSearchTab(mode) {
+  var tab = SEARCH_TABS[mode];
+  if (!tab) return;
+  var state = searchTabState[mode];
+  if (isShownSearchRun(state.run)) {
+    state.selection = selectedResultKey ? Object.assign({
+      runId: state.run.id,
+      key: selectedResultKey,
+      summary: selectedResultSummary,
+      collapsed: resultsCollapsed,
+      refValue: selectedRefValue
+    }, tab.captureSelection()) : null;
+  }
+  if (tab.onHide) tab.onHide();
+  keyboardResultIndex = -1;
+  closeRestoreCorpusMenu();
+}
+
+// Called by setSidebarMode once `mode` is shown: its results for the text in
+// the box, as they were, or the offer to search it.
+function showSearchTab(mode) {
+  var tab = SEARCH_TABS[mode];
+  if (!tab) return;
+  var state = searchTabState[mode];
+  var run = state.run;
+  var query = currentSearchBoxQuery();
+  keyboardResultIndex = -1;
+  if (run && query && run.query === query) {
+    drawSearchRun(run, state.selection && state.selection.runId === run.id ? state.selection : null);
+  } else {
+    queryState = emptySearchQueryState();
+    resultPostProcessState = newResultPostProcessState();
+    tab.clearSelection();
+    resetSelectedResultView();
+    setResultsLoading(false);
+    setResultsHint('');
+    reprocessAndRenderResults();
+  }
+  syncSearchTabBadges();
+}
+
+function drawSearchRun(run, selection) {
+  var tab = SEARCH_TABS[run.mode];
+  queryState = run.queryState;
+  resultPostProcessState = run.postState;
+  if (selection) {
+    selectedResultKey = selection.key;
+    selectedResultSummary = selection.summary;
+    resultsCollapsed = selection.collapsed;
+    selectedRefValue = selection.refValue;
+  } else {
+    tab.clearSelection();
+    resetSelectedResultView();
+  }
+  setResultsHint(run.hint ? run.hint.message : '', !!(run.hint && run.hint.allowHtml));
+  if (run.loading && !getAllRawResults().length) {
+    renderResultFilterStrip();
+    setResultsLoading(true);
+    updateResultsVisibility();
+  } else {
+    // A selection whose result is now hidden is dropped here
+    // (ensureSelectedResultStillVisible).
+    reprocessAndRenderResults();
+  }
+  if (selection && selectedResultKey === selection.key) tab.restoreSelection(selection);
+  else if (selection) tab.clearSelection();
+  if (run.done && tab.onShow) tab.onShow(run);
+  if (run.done && run.hooksPending) runSearchRunHooks(run);
+}
+
+// Shown in place of the results while the shown tab has none for the text in
+// the box (renderResults calls it).
+function renderSearchTabPrompt() {
+  var $prompt = $('.search-tab-prompt');
+  var tab = SEARCH_TABS[appMode];
+  var query = currentSearchBoxQuery();
+  if (!tab || !query || shownSearchRun()) {
+    $prompt.attr('hidden', true).empty();
+    return;
+  }
+  $('.library-results, .search-results').empty();
+  var label = 'Search ' + tab.label + ' for “' + query + '”';
+  // The only interpolated value, the label with the reader's query, is escaped.
+  $prompt.html("<button type='button' class='search-tab-prompt-button'>" + escapeHTML(label) + "</button>").removeAttr('hidden');
+}
+
+$(document).on('click', '.search-tab-prompt-button', function (event) {
+  event.preventDefault();
+  runUnifiedQuery();
+});
+
+/* ── Searching ──────────────────────────────────────────────────────────── */
+
+// Typing (fromTyping), Enter, the search button, a suggestion or the offer
+// above. Also bound directly as a click handler, so `options` may be a jQuery
+// event.
+function runUnifiedQuery(options) {
+  if (!SEARCH_TABS[appMode]) return null;
+  var fromTyping = !!(options && options.fromTyping === true);
+  var query = currentSearchBoxQuery();
+  // A pause in typing searches only text the tab hasn't searched: the pause
+  // after Enter searched the same text a second time.
+  var current = searchTabState[appMode].run;
+  if (fromTyping && isShownSearchRun(current) && current.query === query && !current.failed) return current;
+  if (!fromTyping && searchDebounceHandle) {
+    clearTimeout(searchDebounceHandle);
+    searchDebounceHandle = null;
+  }
+  // Write the tidied query back only on an explicit search (Enter, the search
+  // button, a history or suggestion click). Doing it from the as-you-type
+  // debounce fought the reader for the field: a pause after "Deuteronomy "
+  // trimmed the space they had just typed, and any rewrite moved the caret to
+  // the end mid-edit.
+  if (!fromTyping) $('.input').val(query);
+  var run = startSearchRun(appMode, query, { openEntry: (options && options.openEntry) || null });
+  if (!fromTyping) prefetchOtherSearchTabs(query);
+  return run;
+}
+
+var SEARCH_PREFETCH_MIN_LENGTH = 2;
+
+// The other tabs searched in the background for an explicit search, each
+// only if the text suits it ("Genesis 1:1" is no dictionary word) and it has
+// no results for that text already.
+function prefetchOtherSearchTabs(query) {
+  if (String(query || '').length < SEARCH_PREFETCH_MIN_LENGTH) return;
+  SEARCH_TAB_MODES.forEach(function (mode) {
+    if (mode === appMode) return;
+    var run = searchTabState[mode].run;
+    if (run && run.query === query && !run.failed) return;
+    if (!SEARCH_TABS[mode].suits(query)) return;
+    startSearchRun(mode, query, { background: true });
+  });
+}
+
+/* ── Badges ─────────────────────────────────────────────────────────────── */
+
+var SEARCH_TAB_BADGES = { texts: '#texts-tab-badge', voices: '#voices-tab-badge', lexicon: '#lexicon-tab-badge' };
+
+function syncSearchTabBadges() {
+  var query = currentSearchBoxQuery();
+  SEARCH_TAB_MODES.forEach(function (mode) {
+    var run = searchTabState[mode].run;
+    var count = run && run.done && run.query && run.query === query ? run.count : 0;
+    var $badge = $(SEARCH_TAB_BADGES[mode]);
+    if (!$badge.length) return;
+    if (count > 0) $badge.text(count).removeAttr('hidden');
+    else $badge.attr('hidden', true).text('');
+  });
+}
+
+$(document).on('input', '.input', syncSearchTabBadges);
+
+/* ── Results found again: pins and the Session Library ──────────────────── */
+
+function findShownResult(ref) {
+  return getAllProcessedResults().filter(function (item) { return item.ref === ref; })[0] || null;
+}
+
+// What a pin of the shown tab's result keeps (togglePinnedRef).
+function sessionEntryForResult(ref, label) {
+  var tab = SEARCH_TABS[appMode];
+  var item = getAllProcessedResults().concat(getAllRawResults()).filter(function (result) { return result.ref === ref; })[0];
+  if (tab && item) return tab.sessionEntry(item, shownSearchRun());
+  return buildSessionEntry(ref, label, getCurrentCorpusForRef(ref));
+}
+
+// Which tab a Session Library entry belongs to. Entries kept before the tab
+// was recorded say it in their ref ("sheet:…", "lexicon-word:…").
+function sessionEntryMode(entry) {
+  var mode = String((entry && entry.mode) || '');
+  var ref = String((entry && entry.ref) || '');
+  if (mode === 'voices' || ref.indexOf('sheet:') === 0) return 'voices';
+  if (mode === 'lexicon' || ref.indexOf('lexicon-word:') === 0 || ref.indexOf('lexicon:') === 0) return 'lexicon';
+  return 'texts';
+}
+
+// A pinned or inserted result, reopened from the Session Library: its tab is
+// shown with the search that finds it, and it is selected once that search
+// has answered (it used to be looked for 250 ms after the search started, in
+// whatever tab was open).
+function openSessionEntry(entry) {
+  if (!entry || !entry.ref) return;
+  var mode = sessionEntryMode(entry);
+  var tab = SEARCH_TABS[mode];
+  var query = normalizeUnifiedReferenceInput(String(tab.reopenQuery(entry) || entry.ref).trim());
+  $('.input').val(query).attr('dir', /[֐-׿]/.test(query) ? 'rtl' : 'ltr');
+  var run = searchTabState[mode].run;
+  if (appMode !== mode) setSidebarMode(mode);
+  // Already this tab, which has that search but was showing other text.
+  else if (run && run.query === query && !isShownSearchRun(run)) showSearchTab(mode);
+  if (run && run.query === query && isShownSearchRun(run)) {
+    if (run.done) selectSessionEntryResult(entry);
+    else run.openEntry = entry;
+    return;
+  }
+  runUnifiedQuery({ openEntry: entry });
+}
+
+function selectSessionEntryResult(entry) {
+  var mode = sessionEntryMode(entry);
+  if (appMode !== mode) return;
+  var tab = SEARCH_TABS[mode];
+  var item = tab.findEntryResult(getAllProcessedResults(), entry);
+  if (!item && tab.restoreEntryResult) item = tab.restoreEntryResult(entry);
+  if (item) selectResultItem(item);
+}
+</script>

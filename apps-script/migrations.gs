@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '27';
+var PREFS_SCHEMA_CURRENT_ = '28';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -236,6 +236,11 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // hidden.
   if (from < 27) {
     migrateToV27_(userProperties);
+  }
+  // v27 -> v28: introduces `voices_topic_order` and `voices_topic_excluded`,
+  // both "[]": the built-in order, nothing hidden.
+  if (from < 28) {
+    migrateToV28_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -661,6 +666,26 @@ function migrateToV27_(userProperties) {
   }
   if (userProperties.getProperty('lexicon_dictionary_excluded') == null) {
     userProperties.setProperty('lexicon_dictionary_excluded', '[]');
+  }
+  return true;
+}
+
+/**
+ * V28: introduces the Voices topic preferences: the source sheets' topic
+ * categories, ordered and hidden like V15's corpora and V27's dictionaries.
+ *
+ * - `voices_topic_order`: JSON array of topic keys. "[]" means the built-in
+ *   order (Torah Portions, Shabbat & Holidays, Prayer, … Other).
+ * - `voices_topic_excluded`: JSON array of topic keys whose sheets Voices
+ *   leaves out. "[]" hides nothing, so upgraders see every sheet they saw
+ *   before. A stored value is never overwritten.
+ */
+function migrateToV28_(userProperties) {
+  if (userProperties.getProperty('voices_topic_order') == null) {
+    userProperties.setProperty('voices_topic_order', '[]');
+  }
+  if (userProperties.getProperty('voices_topic_excluded') == null) {
+    userProperties.setProperty('voices_topic_excluded', '[]');
   }
   return true;
 }

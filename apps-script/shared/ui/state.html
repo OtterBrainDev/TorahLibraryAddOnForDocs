@@ -143,6 +143,137 @@
     });
   }
 
+  // ── Voices topic categories ──────────────────────────────────────────────
+  // The Voices tab's counterpart of the corpora: a source sheet is filed under
+  // the first of these its topics fit (Sefaria's topics_en, in their order;
+  // a sheet whose topics fit none is tried by its title), else under Other.
+  // Its results are grouped by category in the saved order, and categories
+  // can be left out (voices_topic_order / voices_topic_excluded; Preferences
+  // → Search edits them, a group's ❌ or the sidebar's topic chips hide or
+  // show one for a single search). A keyword matches whole words, case,
+  // accents and punctuation aside, and its plural too; when a topic fits
+  // several categories the longest keyword decides ("Torah Study" is Values,
+  // not Tanakh; "Laws of Shabbat" is Halakhah), then the catalog order, which
+  // is also the built-in display order. `accent` borrows a corpus colour.
+  var VOICES_OTHER_TOPIC_KEY = 'topic-other';
+  var VOICES_TOPIC_CATALOG = [
+    { key: 'topic-torah-portions', label: 'Torah Portions', accent: 'tanakh', note: 'The weekly parashah',
+      keywords: ['parashah', 'parasha', 'parsha', 'parashat', 'parshat', 'torah portion', 'weekly torah portion',
+        'bereshit', 'bereishit', 'noach', 'lech lecha', 'lekh lekha', 'vayera', 'chayei sara', 'chayei sarah', 'toldot',
+        'vayetzei', 'vayishlach', 'vayeshev', 'miketz', 'vayigash', 'vayechi', 'shemot', 'vaera', 'bo', 'beshalach',
+        'yitro', 'mishpatim', 'terumah', 'tetzaveh', 'ki tisa', 'vayakhel', 'pekudei', 'vayikra', 'tzav', 'shmini',
+        'shemini', 'tazria', 'metzora', 'achrei mot', 'acharei mot', 'kedoshim', 'emor', 'behar', 'bechukotai',
+        'bamidbar', 'nasso', 'naso', 'beha alotcha', 'behaalotecha', 'shelach', 'shlach', 'korach', 'chukat', 'balak',
+        'pinchas', 'matot', 'masei', 'devarim', 'vaetchanan', 'eikev', 'ekev', 're eh', 'reeh', 'shoftim', 'ki teitzei',
+        'ki tetzei', 'ki tavo', 'nitzavim', 'vayeilech', 'vayelech', 'ha azinu', 'haazinu', 'vezot haberakhah',
+        'vezot haberacha'] },
+    { key: 'topic-holidays', label: 'Shabbat & Holidays', accent: 'liturgy', note: 'Shabbat, the festivals and fasts',
+      keywords: ['shabbat', 'sabbath', 'holiday', 'holidays', 'festival', 'festivals', 'high holidays', 'high holy days',
+        'rosh hashanah', 'rosh hashana', 'yom kippur', 'sukkot', 'sukkah', 'shemini atzeret', 'simchat torah',
+        'chanukah', 'hanukkah', 'hanukah', 'purim', 'passover', 'pesach', 'seder', 'haggadah', 'shavuot', 'omer',
+        'lag baomer', 'tisha b av', 'tisha bav', 'three weeks', 'tu bishvat', 'tu b shvat', 'rosh chodesh', 'elul',
+        'yom haatzmaut', 'yom hashoah', 'yom hazikaron', 'fast days', 'fast day', 'havdalah', 'kiddush'] },
+    { key: 'topic-prayer', label: 'Prayer', accent: 'liturgy', note: 'Prayer, blessings and the siddur',
+      keywords: ['prayer', 'prayers', 'tefillah', 'tefila', 'siddur', 'liturgy', 'blessing', 'berakhah', 'berachah',
+        'brachot', 'berakhot', 'shema', 'amidah', 'kaddish', 'hallel', 'piyyut', 'synagogue', 'minyan', 'davening'] },
+    { key: 'topic-life-cycle', label: 'Life Cycle', note: 'Birth, coming of age, marriage, mourning',
+      keywords: ['life cycle', 'lifecycle', 'birth', 'brit milah', 'circumcision', 'naming', 'bar mitzvah',
+        'bat mitzvah', 'bnai mitzvah', 'b nai mitzvah', 'marriage', 'wedding', 'divorce', 'death', 'dying', 'mourning',
+        'funeral', 'shiva', 'burial', 'conversion', 'aging', 'family', 'parents', 'children'] },
+    { key: 'topic-halakhah', label: 'Halakhah', accent: 'halakhah', note: 'Jewish law and the mitzvot',
+      keywords: ['halakhah', 'halakha', 'halacha', 'halachah', 'jewish law', 'laws of', 'law', 'mitzvah', 'mitzvot',
+        'commandment', 'kashrut', 'kosher', 'tzitzit', 'tefillin', 'mezuzah', 'tzedakah laws', 'responsa',
+        'shulchan arukh', 'shulchan aruch', 'mishneh torah'] },
+    { key: 'topic-tanakh', label: 'Tanakh', accent: 'tanakh', note: 'The Torah, Prophets and Writings',
+      keywords: ['tanakh', 'tanach', 'torah', 'bible', 'hebrew bible', 'genesis', 'exodus', 'leviticus', 'numbers',
+        'deuteronomy', 'prophets', 'prophecy', 'writings', 'joshua', 'judges', 'samuel', 'kings', 'isaiah', 'jeremiah',
+        'ezekiel', 'hosea', 'joel', 'amos', 'obadiah', 'jonah', 'micah', 'nahum', 'habakkuk', 'zephaniah', 'haggai',
+        'zechariah', 'malachi', 'psalms', 'psalm', 'tehillim', 'proverbs', 'job', 'song of songs', 'ruth',
+        'lamentations', 'ecclesiastes', 'kohelet', 'esther', 'daniel', 'ezra', 'nehemiah', 'chronicles'] },
+    { key: 'topic-talmud', label: 'Talmud & Midrash', accent: 'talmud', note: 'Mishnah, Talmud and Midrash',
+      keywords: ['talmud', 'gemara', 'mishnah', 'mishna', 'tractate', 'daf yomi', 'midrash', 'aggadah', 'aggada',
+        'rabbinic literature', 'pirkei avot', 'avot', 'tosefta'] },
+    { key: 'topic-people', label: 'People', note: 'Biblical figures, sages and teachers',
+      keywords: ['adam', 'eve', 'cain', 'abel', 'noah', 'abraham', 'sarah', 'isaac', 'rebecca', 'rebekah', 'jacob',
+        'rachel', 'leah', 'joseph', 'judah', 'moses', 'aaron', 'miriam', 'pharaoh', 'yitro jethro', 'jethro',
+        'joshua bin nun', 'deborah', 'samson', 'hannah', 'saul', 'david', 'solomon', 'elijah', 'elisha', 'king david',
+        'hillel', 'shammai', 'rabbi akiva', 'akiva', 'rabbi akiba', 'rashi', 'rambam', 'maimonides', 'ramban',
+        'nachmanides', 'baal shem tov', 'matriarchs', 'patriarchs', 'sages', 'rabbis'] },
+    { key: 'topic-thought', label: 'Jewish Thought', accent: 'kabbalah', note: 'Philosophy, theology, Kabbalah, Chasidut',
+      keywords: ['jewish thought', 'philosophy', 'theology', 'god', 'faith', 'belief', 'free will', 'creation',
+        'revelation', 'redemption', 'messiah', 'soul', 'afterlife', 'olam haba', 'world to come', 'evil', 'suffering',
+        'kabbalah', 'mysticism', 'zohar', 'chasidut', 'hasidut', 'hasidism', 'chassidut', 'musar', 'mussar'] },
+    { key: 'topic-values', label: 'Values & Ethics', accent: 'musar', note: 'Kindness, justice, speech, character',
+      keywords: ['values', 'ethics', 'morality', 'kindness', 'chesed', 'charity', 'tzedakah', 'justice',
+        'social justice', 'tikkun olam', 'peace', 'love', 'truth', 'honesty', 'humility', 'gratitude', 'compassion',
+        'forgiveness', 'repentance', 'teshuvah', 'leadership', 'responsibility', 'speech', 'lashon hara', 'anger',
+        'pride', 'joy', 'happiness', 'environment', 'animals', 'hospitality', 'education', 'learning', 'torah study'] },
+    { key: 'topic-israel', label: 'Israel & History', accent: 'midrash', note: 'The Land of Israel, Jerusalem, Jewish history',
+      keywords: ['israel', 'land of israel', 'eretz yisrael', 'jerusalem', 'temple', 'holy temple', 'beit hamikdash',
+        'zionism', 'exile', 'diaspora', 'history', 'jewish history', 'holocaust', 'shoah', 'antisemitism'] },
+    { key: VOICES_OTHER_TOPIC_KEY, label: 'Other', note: 'Sheets whose topics fit none of the above' }
+  ];
+
+  function voicesTopicMatchText_(value) {
+    return ' ' + String(value || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+  }
+
+  // The catalog entry a sheet is filed under ({ key, label, accent }).
+  function voicesTopicCategoryOf(sheet) {
+    var candidates = (Array.isArray(sheet && sheet.topics) ? sheet.topics : [])
+      .map(function (topic) { return topic && typeof topic === 'object' ? (topic.en || topic.title || '') : topic; })
+      .concat([sheet && (sheet.label || sheet.title) || '']);
+    for (var i = 0; i < candidates.length; i++) {
+      var text = voicesTopicMatchText_(candidates[i]);
+      if (text === '  ') continue;
+      var best = null;
+      var bestScore = 0;
+      VOICES_TOPIC_CATALOG.forEach(function (category) {
+        (category.keywords || []).forEach(function (keyword) {
+          var word = voicesTopicMatchText_(keyword).trim();
+          if (text.indexOf(' ' + word + ' ') < 0 && text.indexOf(' ' + word + 's ') < 0) return;
+          var score = word.split(' ').length * 100 + word.length;
+          if (score > bestScore) { best = category; bestScore = score; }
+        });
+      });
+      if (best) return best;
+    }
+    return VOICES_TOPIC_CATALOG[VOICES_TOPIC_CATALOG.length - 1];
+  }
+
+  function isKnownVoicesTopicKey(key) {
+    return VOICES_TOPIC_CATALOG.some(function (entry) { return entry.key === key; });
+  }
+
+  // Stored order → the full catalog order, as normalizeSearchCorpusOrder.
+  function normalizeVoicesTopicOrder(value) {
+    var seen = {};
+    var out = [];
+    parseStoredArrayPreference(value, []).forEach(function (key) {
+      key = String(key || '').trim();
+      if (!isKnownVoicesTopicKey(key) || seen[key]) return;
+      seen[key] = true;
+      out.push(key);
+    });
+    VOICES_TOPIC_CATALOG.forEach(function (entry) {
+      if (!seen[entry.key]) out.push(entry.key);
+    });
+    return out;
+  }
+
+  // Stored exclusions → the topic categories hidden from Voices.
+  function normalizeVoicesTopicExcluded(value) {
+    var seen = {};
+    return parseStoredArrayPreference(value, []).map(function (key) {
+      return String(key || '').trim();
+    }).filter(function (key) {
+      if (!isKnownVoicesTopicKey(key) || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
   // ── Translation languages ────────────────────────────────────────────────
   // The languages the sidebar's search language filter offers (its static
   // rows in sidebar.html use these codes). The hidden_translation_languages

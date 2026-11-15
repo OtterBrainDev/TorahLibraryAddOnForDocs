@@ -99,6 +99,8 @@ try {
 } catch(e) {
   sessionLibrary = { pinned: [], inserted: [] };
 }
+// As the sidebar's (sidebar/js/session-library).
+var SESSION_LIBRARY_MAX = { pinned: 30, inserted: 12 };
 var sessionLibraryFilter   = 'all';
 var sessionLibrarySearch   = '';
 var sessionLibrarySortMode = 'category';
@@ -134,7 +136,7 @@ function upsertSessionEntry(listName, entry) {
   var list = sessionLibrary[listName] || [];
   list = list.filter(function(item){ return item && item.ref !== entry.ref; });
   list.unshift(entry);
-  sessionLibrary[listName] = list.slice(0, 12);
+  sessionLibrary[listName] = list.slice(0, SESSION_LIBRARY_MAX[listName] || 12);
   saveSessionLibrary();
   renderSessionLibrary();
 }
@@ -494,7 +496,7 @@ function executeSlUndo() {
   $('#sl-undo-region').attr('hidden', true);
   var list = (sessionLibrary[listName] || []).filter(function(item){ return item && item.ref !== entry.ref; });
   list.unshift(entry);
-  sessionLibrary[listName] = list.slice(0, 12);
+  sessionLibrary[listName] = list.slice(0, SESSION_LIBRARY_MAX[listName] || 12);
   saveSessionLibrary();
   renderSessionLibrary();
 }
@@ -689,7 +691,7 @@ $(document).on('click', '.sl-item-pin-btn', function(event) {
     if (pinnedEntry) {
       var ins = (sessionLibrary.inserted || []).filter(function(it){ return it && it.ref !== ref; });
       ins.unshift(pinnedEntry);
-      sessionLibrary.inserted = ins.slice(0, 12);
+      sessionLibrary.inserted = ins.slice(0, SESSION_LIBRARY_MAX.inserted);
     }
   } else {
     var insEntry = (sessionLibrary.inserted || []).find(function(it){ return it && it.ref === ref; });
@@ -697,7 +699,7 @@ $(document).on('click', '.sl-item-pin-btn', function(event) {
     sessionLibrary.inserted = (sessionLibrary.inserted || []).filter(function(it){ return it && it.ref !== ref; });
     var pins = (sessionLibrary.pinned || []).filter(function(it){ return it && it.ref !== ref; });
     pins.unshift(insEntry);
-    sessionLibrary.pinned = pins.slice(0, 12);
+    sessionLibrary.pinned = pins.slice(0, SESSION_LIBRARY_MAX.pinned);
   }
   saveSessionLibrary();
   renderSessionLibrary();

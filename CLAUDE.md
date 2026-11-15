@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **686 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **720 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -286,7 +286,35 @@ and fix it before touching the feature you came to change.
   the insert writes them: the real server pipeline and the preview's mirrors
   give the same words, bold and italics.
 - `lexicon-stale-response.test.js` — a Lexicon or Voices answer to an earlier
-  search is dropped (the stale "No lexicon entries found for 'Genesis 1:1'").
+  search is dropped (the stale "No lexicon entries found for 'Genesis 1:1'"),
+  and switching to the Lexicon looks nothing up.
+- `search-tabs.test.js` — the three tabs share one search workflow
+  (`sidebar/js/search-tabs`): typing searches the shown tab; Enter also
+  searches, in the background, each other tab the text suits (no Lexicon
+  lookup for "Genesis 1:1", no link in Voices) and that has no results for it;
+  the pause after Enter searches nothing again; an answer lands in its own tab
+  and its badge counts it; switching never searches and brings back a tab's
+  results and selection (a sheet, a word with its picked entries, a Texts
+  preview without a fetch, or with one if its answer came while away), the box
+  keeping its text; a tab with nothing for the text offers "Search Lexicon for
+  “…”"; a hint stays with its tab. Runs the real partials through
+  `helpers/sidebar-search-harness.js`.
+- `voices-topics.test.js` — Voices' topic categories are its corpora: a sheet
+  is filed under the first of its topics that fits (the longest keyword wins:
+  "Torah Study" is Values, "Laws of Shabbat" Halakhah; whole words only; no
+  topics: its title; else Other); groups in the built-in or saved order, a ❌
+  hides one, one left out in Preferences stays out unless its chip shows it, a
+  hidden sheet is deselected; `voices_topic_order` / `_excluded` (schema 28):
+  defaults "[]", in SETTINGS and the settings file's Search part, migrated
+  without overwriting, edited in Preferences → Search → Voices Topics.
+- `session-pins.test.js` — pins in every tab: a pinned sheet keeps its tab,
+  the search that found it and what shows it again (its title whole); a word
+  its headword; a text as before. Reopening (the Library window, its sidebar
+  list, Recent) shows the entry's tab, runs that search and selects the entry
+  when it answers, never after a delay; a sheet the search no longer lists is
+  shown from the pin; older word entries open by headword or rid. Starred
+  words become pins once, after the pins there; the sidebar and the Library
+  window keep lists of the same length; Recent lists Texts' own entries.
 - `lexicon-words.test.js` — a Lexicon search answers with words, not a flat
   list of entries: grouped by headword spelling (cantillation and mark order
   don't split one), the words spelled as typed first ("direct", by headword or

@@ -737,6 +737,7 @@
               renderOverrideGrid();
               renderOverrideList();
               loadCorpusOrderFromFields();
+              voicesTopicOrderEditor.load();
               dictionaryOrderEditor.load();
               loadLanguageTypographyFromField();
               loadTranslationLanguagesFromField();
@@ -1368,6 +1369,17 @@
       normalizeOrder: normalizeLexiconDictionaryOrder,
       normalizeExcluded: normalizeLexiconDictionaryExcluded,
       where: 'in the Lexicon'
+    });
+
+    const voicesTopicOrderEditor = createOrderVisibilityEditor({
+      list: 'voices-topic-order-list',
+      orderInput: 'voices_topic_order',
+      excludedInput: 'voices_topic_excluded',
+      reset: 'voices-topic-order-reset',
+      catalog: VOICES_TOPIC_CATALOG,
+      normalizeOrder: normalizeVoicesTopicOrder,
+      normalizeExcluded: normalizeVoicesTopicExcluded,
+      where: 'in Voices'
     });
 
     // ── Per-language translation formatting (translation Text font → Advanced) ─
@@ -2240,6 +2252,7 @@
     initMenuLayoutEditor();
     bindColorControls();
     initCorpusOrderList();
+    voicesTopicOrderEditor.init();
     dictionaryOrderEditor.init();
     initLanguageTypographyEditor();
     initTranslationLanguageGrid();

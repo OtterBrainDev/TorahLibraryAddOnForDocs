@@ -36,13 +36,7 @@ $('#insert-source').click(function () {
         hideBusyOverlay();
         $('.insert-warning').remove();
         // Reopening it from the Session Library looks the word up again.
-        var dictionaries = lexiconPayload.entries.map(lexiconEntryLabel).join(' · ');
-        upsertSessionEntry('inserted', buildSessionEntry(
-          lexiconPayload.headWord,
-          lexiconPayload.headWord + (dictionaries ? ' · ' + dictionaries : ''),
-          'Dictionary',
-          { mode: 'lexicon', query: lexiconPayload.headWord }
-        ));
+        if (insertedWord) upsertSessionEntry('inserted', lexiconSessionEntry(insertedWord, lexiconPayload.entries));
         if (insertedWord !== selectedLexiconItem) return;
         // Brief success feedback on the button
         var originalLabel = $btn.text();
@@ -85,6 +79,8 @@ $('#insert-source').click(function () {
       debugUnknownNodes:   !!selectedVoiceItem.debugUnknownNodes
     };
 
+    var insertedSheet = selectedVoiceItem;
+    var insertedFrom = shownSearchRun();
     if (fetchesSheet) { $('.voices-fetch-loading').show(); }
     showBusyOverlay(fetchesSheet ? 'fetch' : 'insert');
     google.script.run
@@ -92,11 +88,7 @@ $('#insert-source').click(function () {
         $('.voices-fetch-loading').hide();
         hideBusyOverlay();
         $('.insert-warning').remove();
-        upsertSessionEntry('inserted', buildSessionEntry(
-          selectedVoiceItem.ref,
-          selectedVoiceItem.label || selectedVoiceItem.ref,
-          'voices'
-        ));
+        upsertSessionEntry('inserted', voicesSessionEntry(insertedSheet, insertedFrom));
       })
       .withFailureHandler(function (error) {
         $('.voices-fetch-loading').hide();

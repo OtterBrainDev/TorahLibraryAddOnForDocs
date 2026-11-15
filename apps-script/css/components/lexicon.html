@@ -156,13 +156,17 @@
 }
 
 /* Suppress the generic result-row-main, result-meta, result-snippet
-   in lexicon mode — we render our own layout inside the li */
+   in lexicon mode — we render our own layout inside the li (its pin is in
+   the row header, .lexicon-row-pin) */
 .mode-lexicon .result-item .result-row-main,
 .mode-lexicon .result-item .result-meta,
 .mode-lexicon .result-item .result-snippet,
-.mode-lexicon .result-item .result-subtitle,
-.mode-lexicon .result-item .result-pin-button {
+.mode-lexicon .result-item .result-subtitle {
   display: none;
+}
+
+.lexicon-row-pin {
+  align-self: center;
 }
 
 /* ---- Lexicon row anatomy ---- */
@@ -235,27 +239,6 @@
   font-size: 10px;
   color: #666;
   line-height: 1.4;
-}
-
-/* ---- Bookmark star on result row ---- */
-
-.lexicon-row-bookmark-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 0;
-  opacity: 0.4;
-  flex-shrink: 0;
-  line-height: 1;
-  transition: opacity 0.1s;
-  color: var(--muted);
-}
-
-.lexicon-row-bookmark-btn:hover,
-.lexicon-row-bookmark-btn.is-bookmarked {
-  opacity: 1;
-  color: #c8a000;
 }
 
 /* =============================================================
@@ -340,47 +323,6 @@
 .lexicon-chip--dict {
   color: var(--sefaria-blue);
   background: var(--selected-soft);
-}
-
-/* Dictionaries, filtered like corpora: a chip each over the word list. */
-.lexicon-dict-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
-  background: var(--selected-soft);
-  border: 1px solid transparent;
-  border-radius: 999px;
-  color: var(--sefaria-blue);
-  font-family: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.lexicon-dict-chip:hover {
-  border-color: var(--sefaria-blue);
-}
-
-.lexicon-dict-chip:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
-}
-
-.lexicon-dict-chip-count {
-  font-size: 10px;
-  font-weight: 700;
-  opacity: 0.75;
-}
-
-.lexicon-dict-chip.removed {
-  background: var(--panel);
-  border-color: var(--border);
-  color: var(--muted);
-  text-decoration: line-through;
-}
-
-.lexicon-dict-chip.removed .lexicon-dict-chip-count {
-  text-decoration: none;
 }
 
 /* =============================================================
@@ -734,98 +676,6 @@
   border-top: 1px solid var(--row-divider);
   font-size: 10.5px;
   color: var(--muted);
-}
-
-/* =============================================================
-   BOOKMARKS SECTION
-   ============================================================= */
-
-.lexicon-bookmarks-section {
-  margin-top: 10px;
-}
-
-.lexicon-bookmarks-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 4px 2px;
-  user-select: none;
-}
-
-.lexicon-bookmarks-title {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--muted);
-}
-
-.lexicon-bookmarks-toggle {
-  font-size: 10px;
-  color: var(--muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.lexicon-bookmarks-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.lexicon-bookmark-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 4px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.1s;
-}
-
-.lexicon-bookmark-row:hover {
-  background: var(--lighter-grey);
-}
-
-.lexicon-bookmark-headword {
-  font-family: 'Frank Ruhl Libre', 'David', Georgia, serif;
-  font-size: 13px;
-  direction: rtl;
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: right;
-  color: var(--text);
-}
-
-.lexicon-bookmark-source {
-  font-size: 10px;
-  color: var(--muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.lexicon-bookmark-remove {
-  background: none;
-  border: none;
-  font-size: 13px;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 0 2px;
-  opacity: 0.5;
-  line-height: 1;
-  flex-shrink: 0;
-  transition: opacity 0.1s, color 0.1s;
-}
-
-.lexicon-bookmark-remove:hover {
-  opacity: 1;
-  color: #c0392b;
 }
 
 /* =============================================================

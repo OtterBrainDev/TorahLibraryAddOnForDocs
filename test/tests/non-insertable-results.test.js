@@ -144,7 +144,7 @@ test('the return is skipped when the reader has already moved on', () => {
 
 test('the direct lookup lists only refs that can be inserted, and the dead-end notice says it is returning', () => {
   const controller = readScriptBody('apps-script/sidebar/js/search-controller.html');
-  assert.match(controller, /directRefState\.isStructural[\s\S]{0,1000}markResultRefNonInsertable\(directLookupInput\)/);
+  assert.match(controller, /directRefState\.isStructural[\s\S]{0,1000}markResultRefNonInsertable\(directLookupInput, run\.postState\)/);
   assert.match(controller, /else if \(directRefState\.isInsertable\)/);
   assert.match(controller, /buildNonInsertableMessage\(response, true\)\);\s*scheduleReturnToResults\(/);
   const utils = readScriptBody('apps-script/sidebar/js/search-utils.html');
