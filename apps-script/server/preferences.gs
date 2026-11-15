@@ -51,6 +51,10 @@ const SETTINGS = [
   "last_search_relevance_sort",
   "search_corpus_order",
   "search_corpus_excluded",
+  "lexicon_dictionary_order",
+  "lexicon_dictionary_excluded",
+  "voices_topic_order",
+  "voices_topic_excluded",
   "hidden_translation_languages",
   "show_unavailable_translations",
   "meforash_replace",
@@ -213,6 +217,16 @@ function getDefaultPreferences() {
     // then Sefaria's library order); "[]" exclusions hides nothing.
     search_corpus_order: "[]",
     search_corpus_excluded: "[]",
+    // Lexicon dictionaries, ordered and hidden like corpora (JSON arrays of
+    // dictionary keys, LEXICON_DICTIONARY_CATALOG in shared/ui/state). "[]"
+    // order is the built-in one; "[]" exclusions hides nothing.
+    lexicon_dictionary_order: "[]",
+    lexicon_dictionary_excluded: "[]",
+    // Voices topic categories, ordered and hidden like corpora (JSON arrays
+    // of topic keys, VOICES_TOPIC_CATALOG in shared/ui/state). "[]" order is
+    // the built-in one; "[]" exclusions hides nothing.
+    voices_topic_order: "[]",
+    voices_topic_excluded: "[]",
     // Translation languages left out of the search language filter and the
     // translation version list (JSON array of codes). "[]" shows them all.
     hidden_translation_languages: "[]",

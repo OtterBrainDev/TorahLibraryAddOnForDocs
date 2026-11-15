@@ -125,15 +125,17 @@ settings to your `PropertiesService` storage; the file is not kept.
 sidebar session — is stored in Google's `CacheService` and expires
 automatically within 6 hours.
 
-**Your sidebar history** — the Session Library (sources you inserted or
-pinned), recent searches, and recent and starred Lexicon entries — is kept in
-your own browser's local storage, on the computer you used, and is not synced
-to other computers. Recent searches and Lexicon entries never leave that
-browser.
+**Your sidebar history** — the Session Library (sources, source sheets and
+dictionary words you inserted or pinned), recent searches, and recent Lexicon
+searches — is kept in your own browser's local storage, on the computer you
+used, and is not synced to other computers. Recent searches never leave that
+browser. (Lexicon words starred in earlier versions are moved into the Session
+Library's pins, in the same storage, the next time the sidebar opens.)
 
 The Session Library is the one exception: it opens in a separate window,
 which the add-on can only fill, and read back, through Google Apps Script. When you open that window, the list — each source's reference,
-title and link, and the search text that found it — is sent to Google's Apps
+title and link, and the search text that found it; for a source sheet also its
+author, topics and Sefaria's summary of it — is sent to Google's Apps
 Script service to build the window. When you close it, the list as you left
 it is put in Google's per-user `CacheService` storage for this add-on, where
 the sidebar collects it, normally within a few seconds, and then deletes it;

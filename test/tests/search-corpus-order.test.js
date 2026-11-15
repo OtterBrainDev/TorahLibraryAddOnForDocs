@@ -109,6 +109,9 @@ test('excluded corpora are filtered from text results and can be restored for on
 test('corpus preferences do not apply outside texts mode', () => {
   const ctx = loadSidebarResults({ search_corpus_excluded: '["source-sheets"]' });
   ctx.appMode = 'voices';
+  // Voices orders its own topic groups (sidebar/js/voices; voices-topics.test.js).
+  ctx.arrangeVoicesSheets = (items) => items;
+  ctx.sortVoicesTopicCorpora = (corpora) => corpora;
   ctx.queryState.rawSearchResults = [item('sheet:1', 'Source Sheets')];
   ctx.applyResultPostProcessing();
   assert.deepEqual(Array.from(ctx.getAllProcessedResults(), (r) => r.ref), ['sheet:1']);

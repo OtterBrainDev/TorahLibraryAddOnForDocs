@@ -519,6 +519,37 @@
   overflow-wrap: anywhere;
 }
 
+/* A tab with no results for the text in the box offers to search it
+   (renderSearchTabPrompt in sidebar/js/search-tabs). */
+.search-tab-prompt[hidden] {
+  display: none;
+}
+
+.search-tab-prompt-button {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px dashed var(--sefaria-blue);
+  border-radius: 8px;
+  background: var(--selected-soft);
+  color: var(--sefaria-blue);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.search-tab-prompt-button:hover {
+  border-style: solid;
+}
+
+.search-tab-prompt-button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
 /* =============================================================
    RESULT FILTER STRIP (corpus accent chips)
    ============================================================= */
@@ -548,6 +579,48 @@
   color: #777;
   background: #f0f0f0;
   border-left-color: #b6b6b6;
+}
+
+/* A tab's corpora as chips over its results: the Lexicon's dictionaries,
+   Voices' topic categories (renderCorpusChipStrip in results-render). */
+.corpus-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  background: var(--selected-soft);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--sefaria-blue);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.corpus-chip:hover {
+  border-color: var(--sefaria-blue);
+}
+
+.corpus-chip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.corpus-chip-count {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.corpus-chip.removed {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.corpus-chip.removed .corpus-chip-count {
+  text-decoration: none;
 }
 
 /* =============================================================

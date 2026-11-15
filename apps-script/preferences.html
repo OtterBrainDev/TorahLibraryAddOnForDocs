@@ -985,6 +985,38 @@
             </div>
           </details>
 
+          <details class="section-card section-accordion" id="voices-topic-order" name="voices-topic-order" open>
+            <summary class="section-card-summary"><span>Voices Topics</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Source sheets in the Voices tab are grouped by topic. Choose the order of the groups, and hide the topics you don't want. A hidden topic can still be shown for a single search from its chip over the Voices results.</p>
+              <div class="subsection-card">
+                <ol class="corpus-order-list" id="voices-topic-order-list" aria-label="Topic order for Voices"></ol>
+                <div class="corpus-order-footer">
+                  <div class="mini-help">Drag a row, or use its arrows, to reorder. A sheet is filed under the first of its topics that fits a group, else under Other.</div>
+                  <button type="button" class="small-button" id="voices-topic-order-reset">Reset order &amp; visibility</button>
+                </div>
+                <input type="hidden" id="voices_topic_order" name="voices_topic_order" value="[]">
+                <input type="hidden" id="voices_topic_excluded" name="voices_topic_excluded" value="[]">
+              </div>
+            </div>
+          </details>
+
+          <details class="section-card section-accordion" id="lexicon-dictionary-order" name="lexicon-dictionary-order" open>
+            <summary class="section-card-summary"><span>Lexicon Dictionaries</span></summary>
+            <div class="section-card-body">
+              <p class="section-note">Choose the order a word's entries are listed in the Lexicon tab, and hide the dictionaries you don't use. A hidden dictionary can still be shown for a single search from its chip over the Lexicon's results.</p>
+              <div class="subsection-card">
+                <ol class="corpus-order-list" id="lexicon-dictionary-order-list" aria-label="Dictionary order for the Lexicon"></ol>
+                <div class="corpus-order-footer">
+                  <div class="mini-help">Drag a row, or use its arrows, to reorder. A dictionary not listed here comes last.</div>
+                  <button type="button" class="small-button" id="lexicon-dictionary-order-reset">Reset order &amp; visibility</button>
+                </div>
+                <input type="hidden" id="lexicon_dictionary_order" name="lexicon_dictionary_order" value="[]">
+                <input type="hidden" id="lexicon_dictionary_excluded" name="lexicon_dictionary_excluded" value="[]">
+              </div>
+            </div>
+          </details>
+
           <details class="section-card section-accordion" id="search-translation-languages" name="search-translation-languages" open>
             <summary class="section-card-summary"><span>Translation Languages</span></summary>
             <div class="section-card-body">

@@ -15,7 +15,7 @@ const { readAppScriptFile } = require('./test-utils');
 
 const CARD = readAppScriptFile('shared/composition-card/shared.html');
 const SIDEBAR = readAppScriptFile('sidebar.html');
-const CONTROLLER = readAppScriptFile('sidebar/js/search-controller.html');
+const CONTROLLER = readAppScriptFile('sidebar/js/voices.html');
 const PREFS_STATE = readAppScriptFile('sidebar/js/preferences-state.html');
 const FOOTER = readAppScriptFile('sidebar/js/footer-actions.html');
 

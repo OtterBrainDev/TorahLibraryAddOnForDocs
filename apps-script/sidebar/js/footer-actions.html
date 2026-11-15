@@ -8,7 +8,8 @@ function setInsertButtonState(enabled) {
 function setFooterButtonStates() {
   var canInsert = !!((appMode === 'voices' && selectedVoiceItem && selectedVoiceItem.ref) ||
                      (appMode === 'texts' && hasResolvedReference && data && data.ref) ||
-                     (appMode === 'lexicon' && selectedLexiconItem && selectedLexiconItem.headWord));
+                     (appMode === 'lexicon' && selectedLexiconItem && selectedLexiconItem.headWord &&
+                      selectedLexiconEntries().length > 0));
   var canOpen = !!((appMode === 'voices' && selectedVoiceItem && selectedVoiceItem.url) ||
                    (appMode === 'texts' && hasResolvedReference && data && data.ref));
   var hasHistoryItems = !!(((sessionLibrary && sessionLibrary.pinned) || []).length || ((sessionLibrary && sessionLibrary.inserted) || []).length);
@@ -22,28 +23,21 @@ function setFooterButtonStates() {
 
 
 $('#insert-source').click(function () {
-  // --- Lexicon mode: insert a lexicon entry ---
+  // --- Lexicon mode: insert the picked entries of the selected word ---
   if (appMode === 'lexicon') {
-    if (!selectedLexiconItem || !selectedLexiconItem.headWord) return;
-
-    // Read from the new radio chip group (falls back to 'entry')
-    var lexiconInsertMode = (typeof getLexiconFormat === 'function')
-      ? getLexiconFormat()
-      : ($('.lexicon-format-btn[aria-checked="true"]').data('value') || 'entry');
-
-    var lexiconPayload = Object.assign({}, selectedLexiconItem, { insertMode: lexiconInsertMode });
+    var lexiconPayload = buildLexiconInsertPayload();
+    if (!lexiconPayload.headWord || !lexiconPayload.entries.length) return;
     var $btn = $('#insert-source');
+    var insertedWord = selectedLexiconItem;
 
     showBusyOverlay('insert');
     google.script.run
       .withSuccessHandler(function () {
         hideBusyOverlay();
         $('.insert-warning').remove();
-        upsertSessionEntry('inserted', buildSessionEntry(
-          selectedLexiconItem.ref,
-          selectedLexiconItem.headWord || selectedLexiconItem.label,
-          'Dictionary'
-        ));
+        // Reopening it from the Session Library looks the word up again.
+        if (insertedWord) upsertSessionEntry('inserted', lexiconSessionEntry(insertedWord, lexiconPayload.entries));
+        if (insertedWord !== selectedLexiconItem) return;
         // Brief success feedback on the button
         var originalLabel = $btn.text();
         $btn.text('Inserted ✓').addClass('lexicon-insert-success');
@@ -85,6 +79,8 @@ $('#insert-source').click(function () {
       debugUnknownNodes:   !!selectedVoiceItem.debugUnknownNodes
     };
 
+    var insertedSheet = selectedVoiceItem;
+    var insertedFrom = shownSearchRun();
     if (fetchesSheet) { $('.voices-fetch-loading').show(); }
     showBusyOverlay(fetchesSheet ? 'fetch' : 'insert');
     google.script.run
@@ -92,11 +88,7 @@ $('#insert-source').click(function () {
         $('.voices-fetch-loading').hide();
         hideBusyOverlay();
         $('.insert-warning').remove();
-        upsertSessionEntry('inserted', buildSessionEntry(
-          selectedVoiceItem.ref,
-          selectedVoiceItem.label || selectedVoiceItem.ref,
-          'voices'
-        ));
+        upsertSessionEntry('inserted', voicesSessionEntry(insertedSheet, insertedFrom));
       })
       .withFailureHandler(function (error) {
         $('.voices-fetch-loading').hide();

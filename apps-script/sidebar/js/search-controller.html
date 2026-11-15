@@ -46,19 +46,14 @@ function setResultsLoading(isLoading) {
 
 // Session library and results rendering extracted to sidebar_session_library and sidebar_results_render.
 
-function runUnifiedQuery(options) {
-  // Also bound directly as a click handler, so `options` may be a jQuery event.
-  var fromTyping = !!(options && options.fromTyping === true);
-  if (appMode === 'voices') return runVoicesQuery(fromTyping);
-  if (appMode === 'lexicon') return runLexiconQuery(fromTyping);
-  updateModeDependentSections();
-  var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  // Write the tidied query back only on an explicit search (Enter, the search
-  // button, a history or suggestion click). Doing it from the as-you-type
-  // debounce fought the reader for the field: a pause after "Deuteronomy "
-  // trimmed the space they had just typed, and any rewrite moved the caret to
-  // the end mid-edit.
-  if (!fromTyping) $('.input').val(input);
+// The Texts tab's search (SEARCH_TABS.texts in search-tabs): a direct
+// reference lookup, Sefaria's search and its title completions, merged into
+// the run's results as each answers. The run may be for a tab that isn't
+// shown (Enter in Voices searches Texts too), so it writes only to its own
+// results and hint; searchRunChanged draws them if Texts is shown.
+function searchTextsRun(run) {
+  var qs = run.queryState;
+  var input = run.query;
   var inputExpanded = expandShevaApostrophe(input);
   // Canonicalize traditional abbreviations before the title lookup: Sefaria's
   // autocompleter indexes "Hilchot Shabbat", never "Hil. Shabbat".
@@ -72,33 +67,20 @@ function runUnifiedQuery(options) {
   var inputForNameApi = canonicalizeCitationAbbreviation(inputExpanded);
   var inputForNameApiFallback = applyConsonantClusterVoweling(inputForNameApi);
   var useNameApi = isLikelyTitleQuery(inputExpanded);
-  clearSelectedResult();
-  setResultsHint('');
-  setResultsLoading(true);
-  pendingPreferredVersions = null;
 
   if (!input) {
-    queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
-    resetResultPostProcessState();
-    reprocessAndRenderResults();
-    updateActionabilityUI({ isInsertable: false });
-    $('.suggestions').html("<b>Please enter a reference, title, or phrase.</b>");
-    setResultsLoading(false);
-    updateTextsTabBadge(0);
+    searchRunChanged(run);
+    if (isShownSearchRun(run)) {
+      updateActionabilityUI({ isInsertable: false });
+      $('.suggestions').html("<b>Please enter a reference, title, or phrase.</b>");
+    }
+    finishSearchRun(run);
     return;
   }
 
   var sefariaUrlInput = parseSefariaUrlInput(input);
   if (sefariaUrlInput) {
-    $('.output-mode-selection').val(sefariaUrlInput.outputMode);
-    syncDisplayModeCards();
-    updateBilingualLayoutVisibility();
-    updateTranslationDetailsVisibility();
-    updateVersionControlsVisibility();
-
-    pendingPreferredVersions = sefariaUrlInput.preferredVersions;
-    resetResultPostProcessState();
-    queryState.rawLibraryMatches = [{
+    qs.rawLibraryMatches = [{
       key: "library-ref-" + sefariaUrlInput.ref,
       ref: sefariaUrlInput.ref,
       label: sefariaUrlInput.ref,
@@ -107,15 +89,25 @@ function runUnifiedQuery(options) {
       hasTranslation: true,
       availableLangs: []
     }];
-    queryState.rawSearchResults = [];
-    reprocessAndRenderResults();
-
-    selectedResultKey = queryState.libraryMatches[0].key;
-    selectedResultSummary = { label: sefariaUrlInput.ref, subtitle: 'Parsed from Sefaria URL' };
-    resultsCollapsed = true;
-    updateResultsVisibility();
-    setResultsLoading(false);
-    resolveSelectedResult(sefariaUrlInput.ref, sefariaUrlInput.ref);
+    qs.rawSearchResults = [];
+    // The URL's display mode and versions apply when Texts shows it.
+    run.afterSearch = function () {
+      $('.output-mode-selection').val(sefariaUrlInput.outputMode);
+      syncDisplayModeCards();
+      updateBilingualLayoutVisibility();
+      updateTranslationDetailsVisibility();
+      updateVersionControlsVisibility();
+      pendingPreferredVersions = sefariaUrlInput.preferredVersions;
+      var parsed = queryState.libraryMatches[0];
+      if (!parsed) return;
+      selectedResultKey = parsed.key;
+      selectedResultSummary = { label: sefariaUrlInput.ref, subtitle: 'Parsed from Sefaria URL' };
+      resultsCollapsed = true;
+      updateResultsVisibility();
+      resolveSelectedResult(sefariaUrlInput.ref, sefariaUrlInput.ref);
+    };
+    searchRunChanged(run);
+    finishSearchRun(run);
     return;
   }
 
@@ -149,40 +141,32 @@ function runUnifiedQuery(options) {
 
   var fuzzyMatches = buildFuzzyLibraryMatches(inputExpanded);
   function setLibraryMatches(matches) {
-    queryState.rawLibraryMatches = mergeLibraryMatchesWithFuzzy(matches, fuzzyMatches, 10);
+    qs.rawLibraryMatches = mergeLibraryMatchesWithFuzzy(matches, fuzzyMatches, 10);
   }
 
   var isHebrewScript = isLikelyHebrewScriptInput(input);
-  resetResultPostProcessState();
   setLibraryMatches(prefixTitles);
-  queryState.rawSearchResults = [];
-  reprocessAndRenderResults();
+  qs.rawSearchResults = [];
+  searchRunChanged(run);
 
-  var requestId = ++latestQueryRequestId;
-  var validationRequestId = ++latestDirectRefValidationRequestId;
   var pendingAsyncResultGroups = useNameApi ? 3 : 2;
   function finishResultGroup() {
-    if (requestId !== latestQueryRequestId) return;
+    if (!isCurrentSearchRun(run)) return;
     pendingAsyncResultGroups = Math.max(0, pendingAsyncResultGroups - 1);
-    if (pendingAsyncResultGroups === 0) {
-      setResultsLoading(false);
-      maybeShowZeroResultsSuggestions(input);
-      maybeAutoSelectSingleResult();
-      updateTextsTabBadge(getAllProcessedResults().length);
-    }
+    if (pendingAsyncResultGroups === 0) finishSearchRun(run);
   }
 
   google.script.run.withSuccessHandler(function (response) {
-    if (validationRequestId !== latestDirectRefValidationRequestId || requestId !== latestQueryRequestId) return;
+    if (!isCurrentSearchRun(run)) return;
     var directRefState = getResolvedNodeState(response);
     if (directRefState.isStructural) {
       // A real ref with no text of its own (a book or section heading). Listing
       // it would offer a row that can only end in "Choose a more specific ref",
       // so leave it out — along with any title match for the same ref — and
       // say what to add instead.
-      markResultRefNonInsertable(directLookupInput);
-      if (response && response.ref) markResultRefNonInsertable(response.ref);
-      setResultsHint(buildNonInsertableHint(directLookupInput, directRefState.prompt));
+      markResultRefNonInsertable(directLookupInput, run.postState);
+      if (response && response.ref) markResultRefNonInsertable(response.ref, run.postState);
+      setSearchRunHint(run, buildNonInsertableHint(directLookupInput, directRefState.prompt));
     } else if (directRefState.isInsertable) {
       var resolvedLangs = Array.isArray(response && response.availableLangs)
         ? response.availableLangs.map(function(l) { return String(l || '').toLowerCase(); }).filter(Boolean)
@@ -191,25 +175,25 @@ function runUnifiedQuery(options) {
             : []);
       directRefMatch.availableLangs = resolvedLangs;
       directRefMatch.hasTranslation = resolvedLangs.length > 0;
-      setLibraryMatches([directRefMatch].concat(queryState.rawLibraryMatches));
-      setResultsHint('');
+      setLibraryMatches([directRefMatch].concat(qs.rawLibraryMatches));
+      setSearchRunHint(run, '');
     } else if (isHebrewScript) {
-      setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
+      setSearchRunHint(run, 'No direct library match for this Hebrew ref. Check spelling and try again.');
     }
-    reprocessAndRenderResults();
+    searchRunChanged(run);
     finishResultGroup();
   }).withFailureHandler(function (error) {
-    if (validationRequestId !== latestDirectRefValidationRequestId || requestId !== latestQueryRequestId) return;
+    if (!isCurrentSearchRun(run)) return;
     // findReference throws only when Sefaria can't be reached; say that
     // rather than implying the reference doesn't exist.
-    if (error && error.message) setResultsHint(error.message);
-    else if (isHebrewScript) setResultsHint('No direct library match for this Hebrew ref. Check spelling and try again.');
+    if (error && error.message) setSearchRunHint(run, error.message);
+    else if (isHebrewScript) setSearchRunHint(run, 'No direct library match for this Hebrew ref. Check spelling and try again.');
     finishResultGroup();
   }).findReferenceForSidebar(directLookupInput, null, sidebarSessionId);
 
   var searchParameters = getSearchParameters();
   google.script.run.withSuccessHandler(function (response) {
-    if (requestId !== latestQueryRequestId) return;
+    if (!isCurrentSearchRun(run)) return;
     var hits = (Array.isArray(response) ? response : (((response || {}).hits || {}).hits || [])).slice(0, 24);
     var libraryPathHits = [];
     var contentHits = [];
@@ -223,20 +207,20 @@ function runUnifiedQuery(options) {
       }
       contentHits.push(buildResultFromSource(source, source.ref, 'search', index, snippet, 'Content hit'));
     });
-    var filteredLibraryPathHits = applyClientSideSearchFilters(libraryPathHits, searchParameters).slice(0, 10);
-    var filteredContentHits = applyClientSideSearchFilters(contentHits, searchParameters).slice(0, 12);
-    setLibraryMatches(queryState.rawLibraryMatches.concat(filteredLibraryPathHits));
-    queryState.rawSearchResults = filteredContentHits;
-    if (searchParameters.translationOnly && !queryState.libraryMatches.length && !queryState.searchResults.length) {
-      setResultsHint('No results matched the selected translation language filter.');
+    var filteredLibraryPathHits = applyClientSideSearchFilters(libraryPathHits, searchParameters, 'texts').slice(0, 10);
+    var filteredContentHits = applyClientSideSearchFilters(contentHits, searchParameters, 'texts').slice(0, 12);
+    setLibraryMatches(qs.rawLibraryMatches.concat(filteredLibraryPathHits));
+    qs.rawSearchResults = filteredContentHits;
+    searchRunChanged(run);
+    if (searchParameters.translationOnly && !qs.libraryMatches.length && !qs.searchResults.length) {
+      setSearchRunHint(run, 'No results matched the selected translation language filter.');
     }
-    reprocessAndRenderResults();
     finishResultGroup();
   }).withFailureHandler(function (error) {
-    if (requestId !== latestQueryRequestId) return;
-    queryState.rawSearchResults = [];
-    if (error && error.message) setResultsHint(error.message);
-    reprocessAndRenderResults();
+    if (!isCurrentSearchRun(run)) return;
+    qs.rawSearchResults = [];
+    if (error && error.message) setSearchRunHint(run, error.message);
+    searchRunChanged(run);
     finishResultGroup();
   }).findSearchAdvanced(inputExpanded, searchParameters);
 
@@ -255,18 +239,18 @@ function runUnifiedQuery(options) {
   function requestNameCandidates(query, done) {
     google.script.run
       .withSuccessHandler(function (candidates) {
-        if (requestId !== latestQueryRequestId) return;
+        if (!isCurrentSearchRun(run)) return;
         done(Array.isArray(candidates) ? candidates : []);
       })
       .withFailureHandler(function () {
-        if (requestId !== latestQueryRequestId) return;
+        if (!isCurrentSearchRun(run)) return;
         finishResultGroup();
       })
       .getNameCandidates(query);
   }
 
   function applyNameCandidates(candidates) {
-    if (requestId !== latestQueryRequestId) return;
+    if (!isCurrentSearchRun(run)) return;
     var nameMatches = candidates
       .filter(function(c) { return nameCandidatePassesFullQueryGuard(c, inputExpanded); })
       .map(function(c, idx) {
@@ -280,8 +264,8 @@ function runUnifiedQuery(options) {
           availableLangs: []
         };
       });
-    setLibraryMatches(nameMatches.concat(queryState.rawLibraryMatches));
-    reprocessAndRenderResults();
+    setLibraryMatches(nameMatches.concat(qs.rawLibraryMatches));
+    searchRunChanged(run);
     finishResultGroup();
   }
 }
@@ -308,25 +292,23 @@ function resolveSelectedResult(selectedRef, inputLabel) {
   }
 
   if (appMode === 'lexicon') {
+    // A word: its entries are listed to pick from, and the picked ones
+    // previewed (sidebar/js/lexicon).
     var lexItem = queryState.searchResults.concat(queryState.libraryMatches).find(function(result){ return result && result.ref === selectedRef; }) || null;
-    selectedLexiconItem = lexItem;
     selectedRefValue = selectedRef;
     hasResolvedReference = false;
     if (selectedResultSummary) {
       selectedResultSummary.status = lexItem ? 'Ready to insert' : '';
       updateResultsVisibility();
     }
+    selectLexiconWord(lexItem);
     setInsertButtonState(!!lexItem);
     $('#open-on-sefaria').prop('disabled', true);
-    if (lexItem) {
-      // buildLexiconPreviewHtml escapes the headword, source, morphology and body text.
-      $('.suggestions').html(buildLexiconPreviewHtml(lexItem));
-    }
     updateModeDependentSections();
     return;
   }
-  selectedVoiceItem = null;
   selectedRefValue = selectedRef;
+  textsPreviewStale = false;
   var requestId = ++latestResolveRequestId;
   hasResolvedReference = false;
   setInsertButtonState(false);
@@ -337,6 +319,9 @@ function resolveSelectedResult(selectedRef, inputLabel) {
 
   google.script.run.withSuccessHandler(function (response) {
     if (requestId !== latestResolveRequestId) return;
+    // Another tab is shown: its preview and Add Source are not this one's.
+    // Texts fetches it again when it is shown (search-tabs).
+    if (appMode !== 'texts') { textsPreviewStale = true; return; }
     var nodeState = getResolvedNodeState(response);
     if (nodeState.isInsertable) {
       if (selectedResultSummary) {
@@ -368,6 +353,7 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     scheduleReturnToResults(requestId, selectedRef, inputLabel, nodeState.prompt);
   }).withFailureHandler(function (error) {
     if (requestId !== latestResolveRequestId) return;
+    if (appMode !== 'texts') { textsPreviewStale = true; return; }
     hasResolvedReference = false;
     setInsertButtonState(false);
     $('#open-on-sefaria').prop('disabled', true);
@@ -425,693 +411,13 @@ function refreshSelectedResult() {
   resolveSelectedResult(selectedRefValue, fallbackLabel);
 }
 
-var VOICE_TOPIC_ACCENT_MAP = [
-  { accent: 'tanakh',     keys: ['tanakh','torah','parsha','parshat','genesis','bereishit','exodus','leviticus','numbers','deuteronomy','prophets','writings','nevi','ketuvim','pentateuch'] },
-  { accent: 'talmud',     keys: ['talmud','gemara','tractate','masekhet','bavli','yerushalmi','daf'] },
-  { accent: 'mishnah',    keys: ['mishnah','mishneh','mishna'] },
-  { accent: 'midrash',    keys: ['midrash','aggadah','aggada','midrashic'] },
-  { accent: 'halakhah',   keys: ['halakha','halakhah','halacha','law','responsa','shulchan','aruch'] },
-  { accent: 'kabbalah',   keys: ['kabbalah','zohar','mysticism','kabbalistic','sod'] },
-  { accent: 'liturgy',    keys: ['liturgy','prayer','siddur','machzor','piyyut','tefillah'] },
-  { accent: 'philosophy', keys: ['philosophy','rambam','maimonides','medieval','reason'] },
-  { accent: 'chasidut',   keys: ['chasidut','hasidut','hasidism','chasidism','rebbe'] },
-  { accent: 'musar',      keys: ['musar','ethics','mussar','character'] },
-  { accent: 'commentary', keys: ['commentary','rashi','ramban','nachmanides','interpretation'] }
-];
+// The Voices tab's own code is in sidebar/js/voices, the Lexicon's in
+// sidebar/js/lexicon, the workflow they share in sidebar/js/search-tabs.
 
-function getVoiceCardTopicAccent(topics) {
-  if (!Array.isArray(topics) || !topics.length) return '';
-  var joined = topics.join(' ').toLowerCase();
-  for (var i = 0; i < VOICE_TOPIC_ACCENT_MAP.length; i++) {
-    var entry = VOICE_TOPIC_ACCENT_MAP[i];
-    for (var j = 0; j < entry.keys.length; j++) {
-      if (joined.indexOf(entry.keys[j]) !== -1) return entry.accent;
-    }
-  }
-  return '';
-}
 
-/**
- * Build the preview card HTML for a selected Voices / source sheet result.
- * The insertion mode summary is a separate persistent DOM element (.voices-insertion-summary)
- * and is NOT rendered here — it is updated in place by the insert mode click handler.
- */
-function buildVoicesPreviewHtml(item) {
-  if (!item) return '';
+/* Tab badges: syncSearchTabBadges in sidebar/js/search-tabs. */
 
-  var title   = escapeHTML(item.label || item.ref || 'Untitled sheet');
-  var owner   = item.owner ? escapeHTML('By ' + item.owner) : '';
-  var snippet = escapeHTML(normalizeOptionText(item.snippet || item.summary || ''));
-  var accent  = getVoiceCardTopicAccent(item.topics);
-  var accentAttr = accent ? " data-accent='" + accent + "'" : '';
-
-  var openBtn = item.url
-    ? "<a class='voice-preview-open-btn' href='" + escapeHTML(item.url) + "' target='_blank' rel='noopener' aria-label='Open " + title + " on Sefaria'><span class='open-sefaria-icon' aria-hidden='true'></span></a>"
-    : '';
-  var copyBtn = "<button type='button' class='voice-preview-copy-btn' aria-label='Copy citation to clipboard'>📋</button>";
-
-  var html = "<div class='voice-preview voice-preview-card'" + accentAttr + " role='region' aria-label='Selected sheet preview'>";
-  html += "<div class='voice-preview-header'>";
-  html += "<div class='voice-preview-title'>" + title + "</div>";
-  html += "<div class='voice-preview-header-actions'>" + copyBtn + (openBtn || '') + "</div>";
-  html += "</div>";
-  if (owner) html += "<div class='voice-preview-byline preview-meta'>" + owner + "</div>";
-
-  if (snippet) {
-    html += "<hr class='voice-preview-divider'>";
-    html += "<div class='voice-preview-excerpt' dir='auto'>" + snippet + "</div>";
-    html += "<button type='button' class='voice-preview-excerpt-toggle' aria-expanded='false'>See more ▾</button>";
-  }
-
-  if (Array.isArray(item.topics) && item.topics.length) {
-    html += "<hr class='voice-preview-divider'>";
-    html += "<div class='voice-preview-topics'>";
-    item.topics.slice(0, 5).forEach(function(t) {
-      html += "<span class='voice-preview-tag'>" + escapeHTML(t) + "</span>";
-    });
-    html += "</div>";
-  }
-  html += "</div>";
-  return html;
-}
-
-function renderVoicesCard(item) {
-  if (!item) return;
-  var $target = appMode === 'voices' ? $('.voices-suggestions') : $('.suggestions');
-  $target.html(buildVoicesPreviewHtml(item));
-  // Show excerpt toggle if text is clamped
-  setTimeout(function() {
-    var el = document.querySelector('.voice-preview-excerpt');
-    if (el && el.scrollHeight > el.offsetHeight) {
-      var toggle = document.querySelector('.voice-preview-excerpt-toggle');
-      if (toggle) toggle.style.display = 'block';
-    }
-  }, 0);
-  // Sync nav button states
-  updateVoiceNavButtons();
-}
-
-function runVoicesQuery(fromTyping) {
-  // An answer to an earlier query (or another mode's) is dropped, as in Texts.
-  var requestId = ++latestQueryRequestId;
-  var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  if (fromTyping !== true) $('.input').val(input);
-  clearSelectedResult();
-  selectedVoiceItem = null;
-  setResultsHint('');
-  updateModeDependentSections();
-  if (!input) {
-    queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
-    reprocessAndRenderResults();
-    setInsertButtonState(false);
-    $('#open-on-sefaria').prop('disabled', true);
-    updateVoicesTabBadge(0);
-    return;
-  }
-  setResultsLoading(true);
-  google.script.run.withSuccessHandler(function(response) {
-    if (requestId !== latestQueryRequestId) return;
-    var items = Array.isArray(response) ? response : [];
-    queryState.rawLibraryMatches = [];
-    queryState.rawSearchResults = items;
-    reprocessAndRenderResults();
-    if (!items.length) setResultsHint('No source sheets matched this search.');
-    updateModeDependentSections();
-    setResultsLoading(false);
-    updateVoicesTabBadge(items.length);
-  }).withFailureHandler(function(error) {
-    if (requestId !== latestQueryRequestId) return;
-    queryState.rawLibraryMatches = [];
-    queryState.rawSearchResults = [];
-    reprocessAndRenderResults();
-    setResultsHint((error && error.message) || 'Voices search is temporarily unavailable.');
-    setResultsLoading(false);
-    updateVoicesTabBadge(0);
-  }).searchVoices(input, {});
-}
-
-// Insert mode card: update summary line only; do not re-render the card.
-var VOICE_MODE_SUMMARY_LABELS = { reference: 'Citation only', contents: 'Full text', both: 'Citation + text' };
-$(document).on('click', '#voices-insert-mode .icon-mode-card', function () {
-  var $group = $(this).closest('[role="radiogroup"]');
-  $group.find('.icon-mode-card').removeClass('is-active').attr('aria-checked', 'false');
-  $(this).addClass('is-active').attr('aria-checked', 'true');
-  syncVoicesTransliterationUi(selectedVoicesTransliteration());
-});
-
-function selectedVoicesTransliteration() {
-  return $('#voices-translit-menu .voices-translit-option.is-selected').attr('data-value') || 'none';
-}
-
-/**
- * Draw the Voices transliteration choice: the menu's selection, the button,
- * a sample in the form the insert uses (the Hebrew, then its transliteration
- * in parentheses: server/sheets.gs), and the "Will insert" line. A citation
- * alone has no Hebrew to transliterate, so the line says when it applies.
- */
-function syncVoicesTransliterationUi(value) {
-  var scheme = value && value !== 'none' ? value : 'none';
-  var $options = $('#voices-translit-menu .voices-translit-option');
-  $options.each(function () {
-    var selected = $(this).attr('data-value') === scheme;
-    $(this).toggleClass('is-selected', selected).attr('aria-selected', selected ? 'true' : 'false');
-  });
-  var label = $options.filter('[data-value="' + scheme + '"]').text() || 'None';
-  $('#voices-translit-trigger').text(label + ' \u25BE').toggleClass('is-none', scheme === 'none');
-
-  // The card's samples (shared/composition-card/shared, loaded after this file).
-  var samples = typeof CC_TRANSLIT_LABELS === 'object' ? CC_TRANSLIT_LABELS : {};
-  var sample = scheme === 'none' ? '' : (samples[scheme] || samples.simple_english || label);
-  $('#voices-translit-sample-latin').text(sample ? '(' + sample + ')' : '');
-  $('#voices-translit-sample').prop('hidden', !sample);
-
-  var mode = $('#voices-insert-mode .icon-mode-card[aria-checked="true"]').data('value') || 'reference';
-  var summary = 'Will insert: ' + (VOICE_MODE_SUMMARY_LABELS[mode] || 'Citation only');
-  if (sample) {
-    summary += mode === 'reference'
-      ? '. Transliteration (' + label + ') applies to the sheet\u2019s text: choose Text or Both.'
-      : ', each Hebrew passage followed by its transliteration (' + label + ') in parentheses.';
-  }
-  $('.voices-insertion-summary').text(summary);
-}
-
-// Transliteration dropdown: open/close trigger.
-$(document).on('click', '#voices-translit-trigger', function (e) {
-  e.stopPropagation();
-  var $menu = $('#voices-translit-menu');
-  var opening = $menu.hasClass('hidden');
-  $menu.toggleClass('hidden', !opening);
-  $(this).attr('aria-expanded', opening ? 'true' : 'false');
-});
-
-// Transliteration dropdown: an option chosen. It is the Voices default
-// (voices_translit_default), so it is saved; the sample and the summary show
-// the choice at once. Saved without redrawing the sidebar from the answer
-// (saveAccountPreference does): that put "What to insert" back to its saved
-// default, so Both turned into Citation as a transliteration was chosen.
-$(document).on('click', '#voices-translit-menu .voices-translit-option', function () {
-  var value = $(this).attr('data-value') || 'none';
-  syncVoicesTransliterationUi(value);
-  $('#voices-translit-menu').addClass('hidden');
-  $('#voices-translit-trigger').attr('aria-expanded', 'false').trigger('focus');
-  accountPreferences.voices_translit_default = value;
-  effectivePreferences.voices_translit_default = value;
-  google.script.run
-    .withFailureHandler(function () {
-      showSidebarToast('Your transliteration choice could not be saved; it applies to this insert only.');
-    })
-    .setAccountPreferences({ voices_translit_default: value });
-});
-
-// Dismiss voices translit menu when clicking outside the wrap.
-$(document).on('click.voicesTranslitDismiss', function (e) {
-  if ($(e.target).closest('#voices-translit-trigger, #voices-translit-menu').length) return;
-  $('#voices-translit-menu').addClass('hidden');
-  $('#voices-translit-trigger').attr('aria-expanded', 'false');
-});
-
-// Excerpt expand/collapse toggle.
-$(document).on('click', '.voice-preview-excerpt-toggle', function () {
-  var $btn = $(this);
-  var expanded = $btn.attr('aria-expanded') === 'true';
-  $btn.attr('aria-expanded', String(!expanded));
-  $btn.text(expanded ? 'See more ▾' : 'See less ▴');
-  $btn.prev('.voice-preview-excerpt').toggleClass('voice-preview-excerpt--expanded', !expanded);
-});
-
-// Copy citation to clipboard (Enhancement 9.5).
-$(document).on('click', '.voice-preview-copy-btn', function () {
-  if (!selectedVoiceItem) return;
-  var title = selectedVoiceItem.label || selectedVoiceItem.ref || '';
-  var url   = selectedVoiceItem.url || '';
-  var text  = title + (url ? ' — ' + url : '');
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text)
-      .then(function () { if (typeof showSidebarToast === 'function') showSidebarToast('Citation copied to clipboard.'); })
-      .catch(function () { if (typeof showSidebarToast === 'function') showSidebarToast('Could not copy to clipboard.'); });
-  } else {
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;';
-    document.body.appendChild(ta);
-    ta.select();
-    try { document.execCommand('copy'); } catch (e) {}
-    document.body.removeChild(ta);
-    if (typeof showSidebarToast === 'function') showSidebarToast('Citation copied to clipboard.');
-  }
-});
-
-// Prev/next result navigation (Enhancement 9.2).
-function updateVoiceNavButtons() {
-  if (!selectedVoiceItem) { $('.voice-nav-btn').prop('disabled', true); return; }
-  var all = (typeof getAllProcessedResults === 'function') ? getAllProcessedResults() : [];
-  var idx = -1;
-  for (var i = 0; i < all.length; i++) { if (all[i].ref === selectedVoiceItem.ref) { idx = i; break; } }
-  $('.voice-nav-prev').prop('disabled', idx <= 0);
-  $('.voice-nav-next').prop('disabled', idx < 0 || idx >= all.length - 1);
-}
-
-function navigateVoiceResult(delta) {
-  var all = (typeof getAllProcessedResults === 'function') ? getAllProcessedResults() : [];
-  if (!all.length || !selectedVoiceItem) return;
-  var idx = -1;
-  for (var i = 0; i < all.length; i++) { if (all[i].ref === selectedVoiceItem.ref) { idx = i; break; } }
-  var next = idx + delta;
-  if (next < 0 || next >= all.length) return;
-  var item = all[next];
-  resolveSelectedResult(item.ref, item.label || item.ref);
-}
-
-$(document).on('click', '.voice-nav-prev', function () { navigateVoiceResult(-1); });
-$(document).on('click', '.voice-nav-next', function () { navigateVoiceResult(1); });
-
-// ─── Lexicon ─────────────────────────────────────────────────────────────────
-
-/* ── Search history (Enhancement 1) ───────────────────────────────────────── */
-
-var LEXICON_HISTORY_KEY = 'lexicon_search_history';
-var LEXICON_HISTORY_MAX = 5;
-
-function getLexiconHistory() {
-  try { return JSON.parse(localStorage.getItem(LEXICON_HISTORY_KEY) || '[]'); }
-  catch (e) { return []; }
-}
-
-function saveLexiconHistory(query) {
-  if (!query) return;
-  try {
-    var list = getLexiconHistory().filter(function (q) { return q !== query; });
-    list.unshift(query);
-    localStorage.setItem(LEXICON_HISTORY_KEY, JSON.stringify(list.slice(0, LEXICON_HISTORY_MAX)));
-  } catch (e) {}
-  renderLexiconHistory();
-}
-
-function clearLexiconHistory() {
-  try { localStorage.removeItem(LEXICON_HISTORY_KEY); } catch (e) {}
-  renderLexiconHistory();
-}
-
-function renderLexiconHistory() {
-  var $container = $('#lexicon-history-section');
-  var $chips     = $('#lexicon-history-chips');
-  if (!$container.length || !$chips.length) return;
-
-  var history = getLexiconHistory();
-  if (!history.length || appMode !== 'lexicon') {
-    $container.hide();
-    return;
-  }
-
-  var html = '';
-  history.forEach(function (q) {
-    html += "<button type='button' class='lexicon-history-chip' data-query='" + escapeHTML(q) + "' aria-label='Search again: " + escapeHTML(q) + "'>" +
-      "<span class='lexicon-history-chip-text'>" + escapeHTML(q) + "</span>" +
-      "</button>";
-  });
-  html += "<button type='button' class='lexicon-history-clear' aria-label='Clear search history'>Clear</button>";
-  $chips.html(html);
-  $container.show();
-}
-
-$(document).on('click', '.lexicon-history-chip', function () {
-  var query = $(this).data('query');
-  if (!query) return;
-  $('.input').val(query);
-  runLexiconQuery();
-});
-
-$(document).on('click', '.lexicon-history-clear', function () {
-  clearLexiconHistory();
-});
-
-/* ── Bookmarks (Enhancement 4) ─────────────────────────────────────────────── */
-
-var LEXICON_BOOKMARKS_KEY = 'lexicon_bookmarks';
-
-function getLexiconBookmarks() {
-  try { return JSON.parse(localStorage.getItem(LEXICON_BOOKMARKS_KEY) || '[]'); }
-  catch (e) { return []; }
-}
-
-function saveLexiconBookmark(item) {
-  if (!item || !item.ref) return;
-  var bookmarks = getLexiconBookmarks().filter(function (b) { return b.ref !== item.ref; });
-  bookmarks.unshift({
-    ref:        item.ref,
-    key:        item.key,
-    headWord:   item.headWord || item.label || '',
-    lexiconName: item.lexiconName || '',
-    sourceLabel: getLexiconSourceShortLabel(item.lexiconName)
-  });
-  try { localStorage.setItem(LEXICON_BOOKMARKS_KEY, JSON.stringify(bookmarks.slice(0, 20))); }
-  catch (e) {}
-  renderLexiconBookmarks();
-}
-
-function removeLexiconBookmark(ref) {
-  var bookmarks = getLexiconBookmarks().filter(function (b) { return b.ref !== ref; });
-  try { localStorage.setItem(LEXICON_BOOKMARKS_KEY, JSON.stringify(bookmarks)); }
-  catch (e) {}
-  renderLexiconBookmarks();
-}
-
-function toggleLexiconBookmark(item) {
-  if (!item || !item.ref) return;
-  var existing = getLexiconBookmarks().some(function (b) { return b.ref === item.ref; });
-  if (existing) {
-    removeLexiconBookmark(item.ref);
-  } else {
-    saveLexiconBookmark(item);
-  }
-  // Refresh row bookmark buttons
-  var bookmarked = getLexiconBookmarks().some(function (b) { return b.ref === item.ref; });
-  $('[data-ref="' + item.ref.replace(/"/g, '\\"') + '"].lexicon-row-bookmark-btn')
-    .toggleClass('is-bookmarked', bookmarked)
-    .attr('aria-label', bookmarked ? 'Remove star' : 'Star this entry')
-    .attr('title', bookmarked ? 'Remove star' : 'Star this entry')
-    .text(bookmarked ? '⭐' : '☆');
-}
-
-function renderLexiconBookmarks() {
-  var $section = $('#lexicon-bookmarks-section');
-  var $list    = $('#lexicon-bookmarks-list');
-  if (!$section.length || !$list.length) return;
-
-  var bookmarks = getLexiconBookmarks();
-  if (!bookmarks.length || appMode !== 'lexicon') {
-    $section.hide();
-    return;
-  }
-
-  var html = '';
-  bookmarks.forEach(function (b) {
-    html += "<li class='lexicon-bookmark-row' data-ref='" + escapeHTML(b.ref) + "' data-key='" + escapeHTML(b.key || '') + "' role='option' tabindex='0'>" +
-      "<span class='lexicon-bookmark-headword' lang='he' dir='rtl'>" + escapeHTML(b.headWord) + "</span>" +
-      "<span class='lexicon-bookmark-source'>" + escapeHTML(b.sourceLabel || b.lexiconName || '') + "</span>" +
-      "<button type='button' class='lexicon-bookmark-remove' data-ref='" + escapeHTML(b.ref) + "' aria-label='Remove " + escapeHTML(b.headWord) + " from starred entries' title='Remove star'>✕</button>" +
-      "</li>";
-  });
-  $list.html(html);
-  $section.show();
-}
-
-$(document).on('click', '.lexicon-bookmark-row', function (e) {
-  if ($(e.target).hasClass('lexicon-bookmark-remove')) return;
-  var ref = $(this).data('ref');
-  if (!ref) return;
-  // Find the item in current results and select it, or run a new search
-  var allResults = queryState.searchResults.concat(queryState.libraryMatches);
-  var match = allResults.filter(function (item) { return item && item.ref === ref; })[0];
-  if (match) {
-    selectedResultKey = match.key;
-    selectedResultSummary = { label: match.headWord || match.label || ref, subtitle: match.lexiconName || '' };
-    renderResults();
-    resolveSelectedResult(ref, match.label || ref);
-  }
-});
-
-$(document).on('click', '.lexicon-bookmark-remove', function (e) {
-  e.stopPropagation();
-  var ref = $(this).data('ref');
-  if (ref) removeLexiconBookmark(ref);
-});
-
-$(document).on('click keydown', '#lexicon-bookmarks-header', function (e) {
-  if (e.type === 'keydown' && e.which !== 13 && e.which !== 32) return;
-  var $list     = $('#lexicon-bookmarks-list');
-  var $btn      = $('#lexicon-bookmarks-toggle');
-  var expanded  = $(this).attr('aria-expanded') === 'true';
-  $(this).attr('aria-expanded', !expanded ? 'true' : 'false');
-  $btn.text(expanded ? '▸' : '▾');
-  $list.toggle(!expanded);
-});
-
-// Bookmark star on result rows
-$(document).on('click', '.lexicon-row-bookmark-btn', function (e) {
-  e.stopPropagation();
-  var $btn = $(this);
-  var ref  = $btn.data('ref');
-  var item = (queryState.searchResults.concat(queryState.libraryMatches))
-    .filter(function (it) { return it && it.ref === ref; })[0];
-  if (!item) {
-    // Reconstruct minimal item from data attributes
-    item = { ref: ref, headWord: $btn.data('headword'), lexiconName: $btn.data('source'), key: ref };
-  }
-  toggleLexiconBookmark(item);
-});
-
-// Expand/collapse duplicate groups
-$(document).on('click', '.lexicon-dup-expand-btn', function (e) {
-  e.stopPropagation();
-  var $btn      = $(this);
-  var groupKey  = $btn.data('group-key');
-  var $secondary = $('#dup-secondary-' + groupKey);
-  var expanded  = $btn.attr('aria-expanded') === 'true';
-  $btn.attr('aria-expanded', !expanded ? 'true' : 'false');
-  if (expanded) {
-    $secondary.hide();
-    var count = $secondary.find('.result-item').length;
-    $btn.text('(+' + count + ' more)');
-  } else {
-    $secondary.show();
-    $btn.text('(show less)');
-  }
-});
-
-/* ── Tab badges ─────────────────────────────────────────────────────────────── */
-
-function updateLexiconTabBadge(count) {
-  var $badge = $('#lexicon-tab-badge');
-  if (!$badge.length) return;
-  if (count > 0) {
-    $badge.text(count).removeAttr('hidden');
-  } else {
-    $badge.attr('hidden', true).text('');
-  }
-}
-
-function updateTextsTabBadge(count) {
-  var $badge = $('#texts-tab-badge');
-  if (!$badge.length) return;
-  if (count > 0) {
-    $badge.text(count).removeAttr('hidden');
-  } else {
-    $badge.attr('hidden', true).text('');
-  }
-}
-
-function updateVoicesTabBadge(count) {
-  var $badge = $('#voices-tab-badge');
-  if (!$badge.length) return;
-  if (count > 0) {
-    $badge.text(count).removeAttr('hidden');
-  } else {
-    $badge.attr('hidden', true).text('');
-  }
-}
-
-/* ── Announcement helper ────────────────────────────────────────────────────── */
-
-function announceLexiconStatus(msg) {
-  var $live = $('#lexicon-sr-live');
-  if ($live.length) $live.text(msg);
-}
-
-/* ── Build insertion string ─────────────────────────────────────────────────── */
-
-function buildLexiconInsertionString(item, mode) {
-  if (!item) return '';
-  var hw         = (item.headWord || item.label || '').trim();
-  var src        = getLexiconSourceShortLabel(item.lexiconName);
-  var morphology = (item.morphology || '').trim();
-  var definition = (item.snippet || '').trim();
-
-  switch (mode) {
-    case 'headword':
-      return hw + (src ? ' — ' + src : '');
-
-    case 'definition':
-      return definition;
-
-    case 'entry':
-    default:
-      var parts = [hw + (src ? ' — ' + src : '')];
-      if (morphology) parts.push(morphology);
-      if (definition) parts.push(definition);
-      return parts.join('\n');
-  }
-}
-
-/* ── Word truncation ────────────────────────────────────────────────────────── */
-
-function truncateLexiconToWords(text, maxWords) {
-  if (!text) return { text: '', truncated: false };
-  var words = text.trim().split(/\s+/).filter(Boolean);
-  if (words.length <= maxWords) return { text: text.trim(), truncated: false };
-  return { text: words.slice(0, maxWords).join(' ') + '…', truncated: true };
-}
-
-/* ── Get current lexicon format ─────────────────────────────────────────────── */
-
-function getLexiconFormat() {
-  return $('.lexicon-format-btn[aria-checked="true"]').data('value') || 'entry';
-}
-
-/* ── Build and render the live preview ─────────────────────────────────────── */
-
-var lexiconPreviewExpanded = false;
-
-function buildLexiconPreviewHtml(item, insertMode) {
-  if (!item) return '';
-  var mode = insertMode || getLexiconFormat();
-  lexiconPreviewExpanded = false;
-
-  var hw         = escapeHTML(item.headWord || item.label || '');
-  var src        = escapeHTML(getLexiconSourceShortLabel(item.lexiconName));
-  var morphology = (item.morphology || '').trim();
-  var insertionStr = buildLexiconInsertionString(item, mode);
-
-  // Detect missing definition for non-headword modes
-  var hasDef = !!(item.snippet || '').trim();
-  var showNoPreviewNote = !hasDef && mode !== 'headword';
-  $('#lexicon-no-preview-note').toggle(showNoPreviewNote);
-
-  if (!insertionStr) {
-    return "<div class='lexicon-preview-card'>" +
-      "<p class='lexicon-preview-unavailable'>Preview unavailable — definition text could not be loaded for this entry.</p>" +
-      "</div>";
-  }
-
-  var truncated   = truncateLexiconToWords(insertionStr, 50);
-  var previewText = truncated.text;
-  var isTruncated = truncated.truncated;
-
-  // Build header line
-  var headerHtml = "<div class='lexicon-preview-header'>" +
-    "<span class='lexicon-preview-headword' lang='he' dir='rtl'>" + hw + "</span>";
-  if (src) {
-    headerHtml += "<span class='lexicon-preview-sep'>—</span>" +
-      "<span class='lexicon-preview-source-label'>" + src + "</span>";
-  }
-  headerHtml += "</div>";
-
-  // Morphology sub-line for full entry
-  var morphHtml = '';
-  if (morphology && mode === 'entry') {
-    morphHtml = "<div class='lexicon-preview-morphology'>" + escapeHTML(morphology) + "</div>";
-  }
-
-  // For headword-only mode, body is just the formatted headword+source line
-  var bodyContent;
-  if (mode === 'headword') {
-    // insertionStr is already just the short line; no truncation needed
-    bodyContent = escapeHTML(insertionStr);
-  } else {
-    // Show definition/full body, skipping the header line we already rendered
-    var bodyText = mode === 'entry'
-      ? (item.snippet || '').trim()
-      : insertionStr;
-    var bodyTruncated = truncateLexiconToWords(bodyText, 50);
-    bodyContent = escapeHTML(bodyTruncated.text);
-    isTruncated = bodyTruncated.truncated;
-  }
-
-  var bodyHtml = mode !== 'headword'
-    ? "<div class='lexicon-preview-body' dir='ltr' id='lexicon-preview-body'>" + bodyContent + "</div>"
-    : '';
-
-  // Footer with show-more and copy button
-  var footerHtml = "<div class='lexicon-preview-footer'>";
-  if (isTruncated) {
-    footerHtml += "<button type='button' class='lexicon-preview-show-more-btn' id='lexicon-show-more-btn'>Show more</button>";
-  } else {
-    footerHtml += "<span></span>";
-  }
-  footerHtml += "<button type='button' class='lexicon-preview-copy-btn' id='lexicon-copy-btn' title='Copy to clipboard'>Copy</button>";
-  footerHtml += "</div>";
-
-  return "<div class='lexicon-preview-card'>" +
-    headerHtml + morphHtml + bodyHtml + footerHtml +
-    "</div>";
-}
-
-/* ── Show more / less toggle ────────────────────────────────────────────────── */
-
-$(document).on('click', '#lexicon-show-more-btn', function () {
-  if (!selectedLexiconItem) return;
-  var mode = getLexiconFormat();
-  lexiconPreviewExpanded = !lexiconPreviewExpanded;
-
-  var bodyText = mode === 'entry'
-    ? (selectedLexiconItem.snippet || '').trim()
-    : buildLexiconInsertionString(selectedLexiconItem, mode);
-
-  var limit    = lexiconPreviewExpanded ? 300 : 50;
-  var result   = truncateLexiconToWords(bodyText, limit);
-  var $body    = $('#lexicon-preview-body');
-  var $btn     = $('#lexicon-show-more-btn');
-
-  if ($body.length) $body.text(result.text);
-
-  if (lexiconPreviewExpanded) {
-    $btn.text('Show less');
-  } else {
-    $btn.text('Show more');
-  }
-  // Hide button when fully expanded and no truncation remains
-  if (!result.truncated && lexiconPreviewExpanded) $btn.hide();
-});
-
-/* ── Copy to clipboard (Enhancement 2) ─────────────────────────────────────── */
-
-$(document).on('click', '#lexicon-copy-btn', function () {
-  if (!selectedLexiconItem) return;
-  var mode        = getLexiconFormat();
-  var fullString  = buildLexiconInsertionString(selectedLexiconItem, mode);
-  var $btn        = $(this);
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(fullString).then(function () {
-        $btn.text('Copied!').addClass('copy-success');
-        setTimeout(function () { $btn.text('Copy').removeClass('copy-success'); }, 2000);
-      });
-    } else {
-      // Fallback for older environments
-      var ta = document.createElement('textarea');
-      ta.value = fullString;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      $btn.text('Copied!').addClass('copy-success');
-      setTimeout(function () { $btn.text('Copy').removeClass('copy-success'); }, 2000);
-    }
-  } catch (err) {
-    $btn.text('Copy failed');
-    setTimeout(function () { $btn.text('Copy'); }, 2000);
-  }
-});
-
-/* ── Format chip click handler ──────────────────────────────────────────────── */
-
-$(document).on('click', '.lexicon-format-btn', function () {
-  if (appMode !== 'lexicon') return;
-  var $group = $(this).closest('[role="radiogroup"]');
-  $group.find('.lexicon-format-btn').removeClass('is-active').attr('aria-checked', 'false');
-  $(this).addClass('is-active').attr('aria-checked', 'true');
-
-  // Save preference
-  var newMode = $(this).data('value') || 'entry';
-  saveAccountPreference({ lexicon_insert_mode_default: newMode });
-
-  if (!selectedLexiconItem) return;
-  $('.suggestions').html(buildLexiconPreviewHtml(selectedLexiconItem, newMode));
-});
-
-/* ── RTL input detection for lexicon search ─────────────────────────────────── */
+/* ── RTL input detection for the search box ─────────────────────────────────── */
 
 var HEBREW_RANGE_RE = /[֐-׿יִ-ﭏ]/;
 
@@ -1120,82 +426,4 @@ $(document).on('input', '.input', function () {
   $(this).attr('dir', HEBREW_RANGE_RE.test(val) ? 'rtl' : 'ltr');
 });
 
-/* ── Main lexicon query ─────────────────────────────────────────────────────── */
-
-function runLexiconQuery(fromTyping) {
-  // An answer to an earlier query is dropped. Without this, switching to
-  // Lexicon looked up what was still in the box ("Genesis 1:1"); that empty
-  // answer landed while שלום was being looked up, and its "No lexicon entries
-  // found for 'Genesis 1:1'" stayed above שלום's 14 entries (BUG-005).
-  var requestId = ++latestQueryRequestId;
-  var input = normalizeUnifiedReferenceInput(($('.input').val() || '').trim());
-  if (fromTyping !== true) $('.input').val(input);
-  clearSelectedResult();
-  selectedLexiconItem = null;
-  setResultsHint('');
-  $('.lexicon-result-count').remove();
-  updateModeDependentSections();
-
-  if (!input) {
-    queryState = { rawLibraryMatches: [], rawSearchResults: [], libraryMatches: [], searchResults: [] };
-    reprocessAndRenderResults();
-    setInsertButtonState(false);
-    $('#open-on-sefaria').prop('disabled', true);
-    updateLexiconTabBadge(0);
-    renderLexiconHistory();
-    renderLexiconBookmarks();
-    return;
-  }
-
-  announceLexiconStatus('Searching…');
-  setResultsLoading(true);
-  renderLexiconHistory();
-  renderLexiconBookmarks();
-
-  google.script.run
-    .withSuccessHandler(function (response) {
-      if (requestId !== latestQueryRequestId) return;
-      var items = Array.isArray(response) ? response : [];
-      queryState.rawLibraryMatches = [];
-      queryState.rawSearchResults = items;
-      reprocessAndRenderResults();
-
-      var count = items.length;
-      updateLexiconTabBadge(count);
-      setResultsHint('');
-
-      if (!count) {
-        setResultsHint('No lexicon entries found for “' + input + '”. Try a different spelling or root form.');
-        announceLexiconStatus('No entries found for ' + input);
-      } else {
-        var countLabel = count === 1 ? '1 entry found' : count + ' entries found';
-        announceLexiconStatus(countLabel);
-        // Show count line inside results panel
-        if (!$('.lexicon-result-count').length) {
-          $('.results-header').after("<p class='lexicon-result-count'></p>");
-        }
-        $('.lexicon-result-count').text(countLabel);
-        // Save to history on successful search
-        saveLexiconHistory(input);
-      }
-
-      updateModeDependentSections();
-      setResultsLoading(false);
-    })
-    .withFailureHandler(function (error) {
-      if (requestId !== latestQueryRequestId) return;
-      queryState.rawLibraryMatches = [];
-      queryState.rawSearchResults = [];
-      reprocessAndRenderResults();
-      updateLexiconTabBadge(0);
-      setResultsHint((error && error.message) || 'Lexicon search is temporarily unavailable. Check your connection and try again.');
-      announceLexiconStatus('Search failed.');
-      setResultsLoading(false);
-    })
-    .searchLexicon(input);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
 </script>

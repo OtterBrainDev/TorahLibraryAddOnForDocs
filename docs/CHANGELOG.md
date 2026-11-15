@@ -9,6 +9,120 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### One search for the three tabs; Voices topics; pins in every tab
+
+**Two new preferences, schema 28 (migration):** `voices_topic_order` and
+`voices_topic_excluded`, both set to `[]` for everyone upgrading: the built-in
+topic order, no topic hidden, so every sheet you saw before is still listed.
+**Starred Lexicon words become pins** the first time the sidebar opens (see
+below); the *⭐ Starred words* list is gone.
+
+- **Switching tabs never searches.** Each tab keeps its own search: its
+  results, what you hid, and what you had selected (a text with its preview
+  and versions, a sheet, a word with the entries you picked). The search box
+  keeps its text. Switching used to search the box again in the new tab and
+  lose the selection, and a Texts reference was looked up in the Lexicon
+  ("Genesis 1:1").
+- **Enter searches all three tabs.** Typing searches the tab you're in.
+  Enter, or the search button, also searches the other two in the background
+  when the text suits them (a reference or a Sefaria link isn't looked up in
+  the Lexicon, a link isn't searched in Voices), so their results are there
+  when you switch. Each tab's number counts its results for what's in the box.
+  A tab with none for that text offers **Search Voices for “…”**.
+- **Voices topics are filtered like corpora.** Sheets are grouped by topic:
+  Torah Portions, Shabbat & Holidays, Prayer, Life Cycle, Halakhah, Tanakh,
+  Talmud & Midrash, People, Jewish Thought, Values & Ethics, Israel & History,
+  Other. A sheet goes under the first of its Sefaria topics that fits one (the
+  most specific match decides: *Laws of Shabbat* is Halakhah), or by its title
+  if it has none. Each group has its ❌, and a chip per topic over the list
+  hides or shows it for this search. *Preferences → Search → Voices Topics*
+  saves the order of the groups and the topics to leave out; settings files
+  carry both (Search and linking). A sheet's row now shows its author and its
+  own topics instead of "Source Sheets • EN, HE".
+- **Pins in every tab.** Sheets and words have the 📌 texts have. The Session
+  Library files them under *Source Sheets* and *Dictionary* (an inserted sheet
+  was filed under "voices", a pinned one under "Source Sheets"; old entries
+  are moved), and keeps a sheet's title whole (it was cut at its first comma).
+  Pins hold up to thirty (was twelve).
+- **Fixed: opening a sheet or a word from the Session Library.** Clicking an
+  entry (in the Library window, its sidebar list, or *Recent*) searched its
+  reference in whatever tab was open and looked for it 250 ms later: a sheet
+  searched "sheet:123" in Texts and found nothing, and a slow answer left
+  nothing selected. Now its own tab opens, with the search that found it, and
+  the entry is selected when the answer comes. A pinned sheet that search no
+  longer lists is shown from the pin.
+- **Starred words are pins.** Your ⭐ starred Lexicon words are added to the
+  Session Library's pins, after the pins you have, once; each opens in the
+  Lexicon as a pin does.
+- *Recent* (in Texts, before a search) lists Texts' own entries, with their
+  corpus.
+- The result sort (Rel. ▾) applies to Texts, the only tab that shows it; its
+  choice also re-sorted Voices' sheets and the Lexicon's words.
+- Fixed: the pause after pressing Enter searched the same text a second time.
+- Voices' *Prev* / *Next* mark the sheet they open in the list.
+
+### Lexicon: words, and several dictionaries' entries at once
+
+**Two new preferences, schema 27 (migration):** `lexicon_dictionary_order`
+and `lexicon_dictionary_excluded`, both set to `[]` for everyone upgrading:
+the built-in dictionary order, no dictionary hidden, so nobody loses a
+dictionary they had. **What Add Entry inserts looks different** (see
+*Inserted entries keep their structure*).
+
+- **A Lexicon search lists words, not entries.** Sefaria answers a lookup
+  with every dictionary entry the word could belong to, and the sidebar listed
+  each as a result of its own (for שם, 25 rows, ten of them שֵׁם), so
+  taking Klein's and BDB's entries meant picking, inserting, going back and
+  picking again. Now each headword is one row, with its dictionaries and what
+  each says it means: the words spelled as typed under **Matches**, then the
+  words it is a form of or close to under **Related words** (for שם: שָׁם,
+  שֵׁם and שֻׁם match; שׂוּם *put* and Klein's שׁום *assess* are related), or
+  **Closest words** when nothing is spelled as typed.
+- **Dictionaries are filtered like corpora.** A chip for each dictionary that
+  answered, with its count (for שם: Klein 5, BDB 6, BDB Aramaic 2, Jastrow 4,
+  Strong's 6, Ben-Yehuda 2), sits over the word list, as the
+  corpora do in Texts. A click hides that dictionary's entries from every
+  word for this search (a word left with none drops out) and another click
+  brings them back; the count says how many are shown. A new search shows
+  every dictionary again.
+- **Saved dictionary order and hidden dictionaries.** *Preferences → Search →
+  Lexicon Dictionaries* lists them like the corpora above it: drag or use the
+  arrows to set the order a word's entries are listed in (built in: Klein,
+  BDB, BDB Aramaic, Jastrow, Strong's, Ben-Yehuda; the first is the one
+  picked when a word opens), and hide the ones you don't use. A hidden
+  dictionary's chip stays over the results, crossed out, and shows it for
+  that search; settings files carry both choices (Search and linking).
+- **Fixed: an English word never found anything.** The lookup in the
+  dictionaries' definitions was filtered by their titles ("Klein Dictionary",
+  "Jastrow"), and Sefaria matches a filter against the start of a category
+  path ("Reference/Dictionary/…"), so nothing ever matched. It now searches
+  Reference/Dictionary (all of Reference, keeping only the dictionaries, if
+  that finds nothing), lists only the headwords it found, and says the lookup
+  is unavailable when Sefaria doesn't answer instead of "no entries".
+- **A word's entries are picked like translations.** Picking a word lists its
+  entries (Klein I, BDB I, BDB II, Jastrow I, Strong's 8034, Ben-Yehuda…) with
+  each one's part of speech and meaning (Ben-Yehuda's in Hebrew, right to
+  left; its footnotes are left out). The first is selected; a click adds or removes one; *Select all*
+  takes the rest; one always stays selected. Add Entry inserts them in the
+  order picked, which the list and the preview number.
+- **The preview is an outline.** Each picked entry is a card: dictionary, part
+  of speech and headword on top; the senses with the dictionary's own numbers
+  (1., a.) and stems (Qal, Hiph.), not a running count to 27; each cut to two
+  lines, with *Show the whole entry* for a long one; notes and derivatives
+  folded away; the dictionary's credit at the foot. *Copy* copies what Add
+  Entry inserts.
+- **Inserted entries keep their structure.** *Full entry* is the word as a
+  heading, once, then for each entry a line naming the dictionary (and part
+  of speech), each sense as a paragraph of its own with sub-senses indented,
+  and Klein's notes and derivatives. Bold, italics and superscript are kept.
+  Before, an entry went in as one paragraph of plain text, cut at 2,000
+  characters. *Definition* leaves out the word and the dictionary lines;
+  *Word + ref* is the word and the dictionaries' names. The translation's
+  *Commentary* setting never applies to a definition.
+- An inserted word goes into the Session Library as the word and its
+  dictionaries; clicking it opens it in the Lexicon (see *Pins in every tab*
+  above; stars became pins).
+
 ### Settings files; one Interface switch; Voices transliteration; Surprise Me
 
 No new preference and no migration: no stored value changes meaning.
