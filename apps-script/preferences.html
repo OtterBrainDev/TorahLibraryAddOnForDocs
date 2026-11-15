@@ -16,7 +16,7 @@
   <body>
     <aside class="hide" role="status" aria-live="polite"><span class="modal-busy-card"><span class="modal-busy-spinner" aria-hidden="true"></span><span>Loading preferences…</span></span></aside>
 
-    <div class="preferences-dialog" data-ui-mode="<?= uiMode ?>">
+    <div class="preferences-dialog" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="texts voices lexicon">
       <div class="preferences-shell">
         <section class="preferences-toc section-card" aria-label="Preferences sections">
           <h1>Preferences</h1>
@@ -30,7 +30,16 @@
             <label><input type="radio" name="interface_mode_choice" value="simple"> Simple</label>
             <label><input type="radio" name="interface_mode_choice" value="full"> Everything</label>
           </div>
-          <p class="interface-mode-note" id="interface-mode-note">Simple shows the essentials; Everything adds the Search, Linking, Advanced and Experimental tabs here, and every tool in the sidebar and menu. It applies at once and never changes your settings.</p>
+          <!-- Sidebar tabs (show_voices_tab, show_lexicon_tab): which searches
+               sit beside Texts in the sidebar, in either interface. Saved at
+               once, like the Interface switch above (initSidebarTabSwitches in
+               preferences/js.html); Save sends the same values again. -->
+          <div class="interface-mode-row sidebar-tabs-row" role="group" aria-labelledby="sidebar-tabs-label" aria-describedby="interface-mode-note">
+            <span class="interface-mode-label" id="sidebar-tabs-label">Sidebar tabs</span>
+            <label><input type="checkbox" name="show_voices_tab" id="show_voices_tab" class="sidebar-tab-switch" data-sidebar-tab="voices" checked> Voices</label>
+            <label><input type="checkbox" name="show_lexicon_tab" id="show_lexicon_tab" class="sidebar-tab-switch" data-sidebar-tab="lexicon" checked> Lexicon</label>
+          </div>
+          <p class="interface-mode-note" id="interface-mode-note">Simple shows the essentials; Everything adds the Search, Linking, Advanced and Experimental tabs here, and every tool in the sidebar and menu. Sidebar tabs sets what sits beside Texts, in either. Both apply at once and change no other setting.</p>
           <p class="interface-mode-status" id="interface-mode-status" role="status" aria-live="polite"></p>
         </section>
 

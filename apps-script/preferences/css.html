@@ -1166,14 +1166,17 @@
   /* Interface mode (Simple / Everything): the one switch for what is shown.
      Simple hides the advanced tabs and sections below; .show-advanced is
      set only by a link straight to one of those tabs (preferences/js.html). */
+  /* The Interface and Sidebar tabs rows share their columns, so the label
+     and the choices line up across the two. */
   .interface-mode-row {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 7.5em 7em max-content;
     align-items: center;
-    gap: 4px 14px;
+    column-gap: 10px;
     margin-top: 10px;
     font-size: 13px;
   }
+  .interface-mode-row + .interface-mode-row { margin-top: 6px; }
   .interface-mode-row label {
     display: inline-flex;
     align-items: center;
@@ -1183,6 +1186,16 @@
   .interface-mode-note { margin: 4px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
   .interface-mode-status { margin: 4px 0 0; color: var(--muted); font-size: 12px; font-weight: 600; }
   .interface-mode-status:empty { display: none; }
+
+  /* A sidebar tab switched off (Sidebar tabs, above) takes its Insertion
+     Defaults sub-tab with it; with Texts alone the sub-tab bar goes too.
+     preferences/js.html keeps data-sidebar-tabs in step with the switches
+     and moves off a sub-tab that is hidden. */
+  .preferences-dialog:not([data-sidebar-tabs~="voices"]) .pref-workflow-tab[data-workflow="voices"],
+  .preferences-dialog:not([data-sidebar-tabs~="lexicon"]) .pref-workflow-tab[data-workflow="lexicon"],
+  .preferences-dialog[data-sidebar-tabs="texts"] .pref-workflow-tabs {
+    display: none !important;
+  }
 
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-search-btn,
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-linking-btn,

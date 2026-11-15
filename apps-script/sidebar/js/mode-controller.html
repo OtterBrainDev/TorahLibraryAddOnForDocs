@@ -168,11 +168,40 @@ function syncExperimentalAvailability() {
   var hasExperimental = hasExperimentalFeaturesEnabled();
   var surpriseEnabled = isSurpriseEnabled();
   $('.experimental-menu-button').toggle(hasExperimental);
+  // Keeps the tab bar when 🧪 is all that sits beside Texts (css/layout).
+  $('.unified-sidebar').toggleClass('has-experimental-tab', hasExperimental);
   $('#exp-card-surprise').toggle(surpriseEnabled);
   $('#footer-actions-panel .open-surprise-tool').toggle(surpriseEnabled);
   if (!hasExperimental && appMode === 'experimental') {
     appMode = 'texts';
   }
+}
+
+// Preferences → Sidebar tabs (show_voices_tab, show_lexicon_tab). The server
+// prints data-sidebar-tabs for the first paint (openSharedSidebar_, by the
+// same rule: sidebarTabsFromPreferences_ in server/preferences.gs); this keeps
+// it in step when Preferences saves while the sidebar is open, without a
+// refresh. CSS does the hiding (css/layout) and keeps a switched-off tab shown
+// while it is the open one, so nobody is moved out of a search they are in.
+var SIDEBAR_TAB_SWITCHES = { voices: 'show_voices_tab', lexicon: 'show_lexicon_tab' };
+
+function sidebarTabsFromPreferences(prefs) {
+  var p = prefs || {};
+  var tabs = ['texts'];
+  Object.keys(SIDEBAR_TAB_SWITCHES).forEach(function (tab) {
+    if (String(p[SIDEBAR_TAB_SWITCHES[tab]]) !== 'false') tabs.push(tab);
+  });
+  return tabs;
+}
+
+function syncSidebarTabs() {
+  var prefs = effectivePreferences || {};
+  var loaded = Object.keys(SIDEBAR_TAB_SWITCHES).some(function (tab) {
+    return Object.prototype.hasOwnProperty.call(prefs, SIDEBAR_TAB_SWITCHES[tab]);
+  });
+  // Before the settings arrive, keep what the server printed.
+  if (!loaded) return;
+  $('.unified-sidebar').attr('data-sidebar-tabs', sidebarTabsFromPreferences(prefs).join(' '));
 }
 
 function updateQuickActionsForMode() {

@@ -9,6 +9,30 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Voices and Lexicon in Simple mode; Sidebar tabs switches (schema 27)
+
+**Migration (schema 26 → 27): every existing user, Simple or Everything, gets
+both new switches stored *on*. Nobody loses a tab; Simple-mode users gain the
+Voices and Lexicon tabs.** New preferences `show_voices_tab` and
+`show_lexicon_tab`, default `true`, in the settings file's *Menu and
+interface* part.
+
+- **The Texts / Voices / Lexicon tabs show in Simple mode.** Simple mode hid
+  them while in Texts; now it hides only the result sort and Restore Corpus
+  (and 🧪), and the tabs are there in both interfaces.
+- **Preferences → Sidebar tabs.** Right under the Interface switch, in both
+  interfaces: one switch for Voices and one for Lexicon. Like Interface, a
+  switch applies at once, without Save, and an open sidebar follows without a
+  refresh. A tab switched off is hidden, not removed: its menu item still
+  opens it (the tab shows while you are in it, so you can get back to Texts),
+  the sidebar never reopens on it by itself, and its *Insertion Defaults*
+  sub-tab in Preferences comes back when it is switched on. With both off,
+  the sidebar shows Texts alone, with no tab bar. The menu is unchanged: its
+  Voices and Lexicon items stay as the Menu Bar tab has them.
+- Help (*Simple or Everything*, *Preferences*, *Voices*, *Lexicon* and the
+  "missing tab" answer), the setup screen's *Everything* card and the
+  walkthrough say so.
+
 ### Settings files; one Interface switch; Voices transliteration; Surprise Me
 
 No new preference and no migration: no stored value changes meaning.

@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **646 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **661 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -285,6 +285,12 @@ and fix it before touching the feature you came to change.
 - `preview-emphasis.test.js` — the sidebar preview shows Combine and Drop as
   the insert writes them: the real server pipeline and the preview's mirrors
   give the same words, bold and italics.
+- `sidebar-tabs.test.js` — Preferences → Sidebar tabs on the server: Voices
+  and Lexicon are on unless switched off (only `"false"` hides one), the
+  sidebar is told which before it paints (`data-sidebar-tabs`, in Simple
+  mode too), it never reopens on a switched-off tab by itself but a menu item
+  that names one opens it, and the sidebar's copy of the rule agrees; schema
+  v27 stores both on (`migrations.test.js`).
 - `lexicon-stale-response.test.js` — a Lexicon or Voices answer to an earlier
   search is dropped (the stale "No lexicon entries found for 'Genesis 1:1'").
 - `hebrew-fonts.test.js` — Hebrew marks a font has no glyph for (David Libre's
@@ -331,7 +337,8 @@ and in `test/ui/`:
   there. Style a control in its component file or in that file, never by
   relying on Google's sheet.
 - `simple-mode.test.js` — Simple mode hides with CSS only (never removes),
-  hides only the search tools in the sidebar (no "More options"), the footer
+  hides only the search tools in the sidebar (no "More options"; the Texts /
+  Voices / Lexicon tabs stay, only 🧪 goes), the footer
   is Add Source, Insertion Options, then Session Library / Quick Actions /
   Preferences in both modes, and the server tells each page its mode.
   Preferences has one Interface switch (no "Show advanced settings"):
@@ -371,6 +378,13 @@ and in `test/ui/`:
 - `surprise-me-shared.test.js` — the sidebar's Surprise Me card and the
   Surprise Me dialog are one form (`shared/surprise-me`), which shows what
   the server inserted.
+- `sidebar-tabs-controls.test.js` — the tabs show in Simple mode as in
+  Everything; a switched-off tab is hidden by CSS except while it is open, and
+  the bar goes with Texts alone (unless 🧪 is beside it; never in Simple), each
+  checked by matching the real CSS against the real markup in linkedom;
+  Preferences' Sidebar tabs switches sit under Interface in both interfaces,
+  save at once (only their own key), reach an open sidebar and take their
+  Insertion Defaults sub-tab with them.
 - `server-completeness.test.js`, `sidebar-bootstrap-shape.test.js`.
 
 ## How to deploy

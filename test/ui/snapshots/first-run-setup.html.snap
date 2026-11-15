@@ -175,7 +175,7 @@
             <label class="setup-card">
               <input type="radio" name="uiMode" value="full">
               <span class="setup-card-title">Everything</span>
-              <span class="setup-card-note">Every tool and setting, including Voices, Lexicon, result sorting and every Preferences tab.</span>
+              <span class="setup-card-note">Every tool and setting, including result sorting, the full menu and every Preferences tab.</span>
             </label>
           </div>
         </fieldset>

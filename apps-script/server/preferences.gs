@@ -109,6 +109,8 @@ const SETTINGS = [
   "citation_font_color",
   "citation_font_background",
   "search_mode",
+  "show_voices_tab",
+  "show_lexicon_tab",
   "menu_layout",
   "insert_from_selection_replace"
 ];
@@ -295,6 +297,13 @@ function getDefaultPreferences() {
     citation_font_color: "",
     citation_font_background: "",
     search_mode: "texts",
+    // The sidebar's Voices and Lexicon tabs, beside Texts under the search
+    // box (Preferences → Sidebar tabs, at the top of the dialog). On: every
+    // user has had them (Simple mode hid them until schema v27). Off hides the
+    // tab with CSS only; a menu item can still open that search, and its tab
+    // shows while it is open. Texts has no switch. See getSidebarTabs_.
+    show_voices_tab: true,
+    show_lexicon_tab: true,
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
     // server/menu-layout.gs for the shape. Replaced `insert_from_selection_at_top`
     // in schema v10; the migration carries a pinned item over.
@@ -318,6 +327,55 @@ function getDefaultPreferences() {
     // switch back ("" = they had none, i.e. the code default).
     menu_layout_before_simple: ""
   };
+}
+
+// ── Sidebar tabs ──────────────────────────────────────────────────────────
+// Which of the sidebar's result tabs are switched on (Preferences → Sidebar
+// tabs): "texts", always, then "voices" and "lexicon" unless switched off. A
+// missing value counts as on, since every user has had both tabs
+// (migrateToV27_). The sidebar prints this into its root's
+// `data-sidebar-tabs` attribute, and sidebar/js/mode-controller keeps a copy
+// of the rule (sidebarTabsFromPreferences) for a save made while it is open.
+var SIDEBAR_TAB_SWITCHES_ = { voices: 'show_voices_tab', lexicon: 'show_lexicon_tab' };
+
+function sidebarTabsFromPreferences_(prefs) {
+  var p = prefs || {};
+  var tabs = ['texts'];
+  Object.keys(SIDEBAR_TAB_SWITCHES_).forEach(function (tab) {
+    if (String(p[SIDEBAR_TAB_SWITCHES_[tab]]) !== 'false') tabs.push(tab);
+  });
+  return tabs;
+}
+
+/**
+ * The mode the sidebar opens in. A mode asked for by name (the Voices or
+ * Lexicon menu item) is honoured even with its tab switched off: the menu is
+ * the user's own (Menu Bar), and the tab shows while its search is open.
+ * Otherwise the last mode used comes back only while its tab is on, so
+ * switching a tab off never reopens the sidebar on it.
+ *
+ * @param {?string} requested  the mode a menu item named, or null
+ * @param {string} last        the stored search_mode
+ * @param {string[]} tabs      sidebarTabsFromPreferences_()
+ */
+function resolveSidebarOpenMode_(requested, last, tabs) {
+  if (requested) return requested;
+  var switchable = Object.prototype.hasOwnProperty.call(SIDEBAR_TAB_SWITCHES_, last);
+  return switchable && (tabs || []).indexOf(last) < 0 ? 'texts' : last;
+}
+
+function getSidebarTabs_() {
+  try {
+    var stored = snapshotProperties_();
+    var prefs = {};
+    Object.keys(SIDEBAR_TAB_SWITCHES_).forEach(function (tab) {
+      var key = SIDEBAR_TAB_SWITCHES_[tab];
+      prefs[key] = stored.getProperty(key);
+    });
+    return sidebarTabsFromPreferences_(prefs);
+  } catch (error) {
+    return sidebarTabsFromPreferences_({});
+  }
 }
 
 /**

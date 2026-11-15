@@ -62,6 +62,7 @@ function applyEffectivePreferencesToUI() {
   updateTranslationLanguageVisibility();
   syncSessionOverrideButtons();
   syncExperimentalAvailability();
+  syncSidebarTabs();
   updateQuickActionsForMode();
   if (typeof updateCompositionCard === 'function') updateCompositionCard();
   // Hidden languages / "Show unavailable translations" shape the version list.

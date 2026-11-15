@@ -1594,6 +1594,20 @@
   padding: 4px 6px;
 }
 
+/* Preferences → Sidebar tabs (show_voices_tab, show_lexicon_tab), in both
+   interfaces. A tab switched off is hidden, never removed, except while it is
+   the open one: a menu item can still open its search, and the tab then shows
+   where you are and leads back to Texts. With Texts alone left the bar goes
+   too, unless the 🧪 tab is in it (.has-experimental-tab, set by
+   syncExperimentalAvailability). The server prints data-sidebar-tabs
+   (openSharedSidebar_), so a switched-off tab is never painted; the sidebar
+   keeps it in step with Preferences (syncSidebarTabs). */
+.unified-sidebar:not([data-sidebar-tabs~="voices"]):not([data-mode="voices"]) .mode-switch-button[data-sidebar-mode="voices"],
+.unified-sidebar:not([data-sidebar-tabs~="lexicon"]):not([data-mode="lexicon"]) .mode-switch-button[data-sidebar-mode="lexicon"],
+.unified-sidebar[data-sidebar-tabs="texts"][data-mode="texts"]:not(.has-experimental-tab) .mode-switch-section {
+  display: none !important;
+}
+
 /* =============================================================
    SIDEBAR SEARCH REGION — compact field + Hebrew keyboard tray
    ============================================================= */

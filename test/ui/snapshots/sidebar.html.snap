@@ -25,7 +25,7 @@
     </script>
   </head>
   <body>
-    <main class="unified-sidebar" data-mode="<?= initialMode ?>" data-ui-mode="<?= uiMode ?>">
+    <main class="unified-sidebar" data-mode="<?= initialMode ?>" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="<?= sidebarTabs ?>">
       <aside class="busy-overlay" data-kind="insert" role="status" aria-live="polite">
         <div class="busy-card">
           <div class="busy-emblem" aria-hidden="true">

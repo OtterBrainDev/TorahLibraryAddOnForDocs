@@ -54,10 +54,13 @@ function getSearchMode_() {
 }
 
 function openSharedSidebar_(mode, options) {
-  var resolvedMode = setSearchMode_(mode || getSearchMode_());
+  var sidebarTabs = getSidebarTabs_();
+  var resolvedMode = setSearchMode_(resolveSidebarOpenMode_(mode || null, getSearchMode_(), sidebarTabs));
   var template = HtmlService.createTemplateFromFile('sidebar');
   template.initialMode = resolvedMode;
   template.uiMode = getUiMode_();
+  // Printed into data-sidebar-tabs, so a tab switched off is never painted.
+  template.sidebarTabs = sidebarTabs.join(' ');
   var extra = (options && typeof options === 'object') ? options : {};
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode, extra));
   var output = template.evaluate()

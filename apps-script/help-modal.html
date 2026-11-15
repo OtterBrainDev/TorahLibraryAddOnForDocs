@@ -594,17 +594,18 @@
             <p class="small" style="margin-top:10px;">These buttons are the same in Simple and Everything.</p>
           </section>
 
-          <section class="card topic-section" id="interface-mode" data-search-title="Simple or Everything" data-search-terms="simple mode everything full interface hide hidden missing tabs show advanced settings more options menu shorter first run setup welcome run setup again sort restore corpus voices lexicon">
+          <section class="card topic-section" id="interface-mode" data-search-title="Simple or Everything" data-search-terms="simple mode everything full interface hide hidden missing tabs sidebar tabs turn off voices lexicon show advanced settings more options menu shorter first run setup welcome run setup again sort restore corpus">
             <h2>Simple or Everything</h2>
             <p>The add-on has two interfaces. Switch between them at the top of <span class="ui-label">Preferences</span>, under <span class="ui-label">Interface</span>; it takes effect at once, in Preferences, the menu and an open sidebar, without Save and without refreshing anything. It is the one switch for what is shown: it never changes a setting, and there is one set of settings for both. Nothing is removed in Simple — it is hidden, and every setting you made still applies.</p>
             <table class="ref-table">
               <thead><tr><th>Where</th><th>What Simple hides</th></tr></thead>
               <tbody>
-                <tr><td>Sidebar</td><td>The result sort (<span class="ui-label">Rel. ▾</span>), <span class="ui-label">⤦</span> <em>Restore Corpus</em>, and the Texts / Voices / Lexicon buttons while you're in Texts. Add Source, Insertion Options and the footer buttons stay.</td></tr>
+                <tr><td>Sidebar</td><td>The result sort (<span class="ui-label">Rel. ▾</span>) and <span class="ui-label">⤦</span> <em>Restore Corpus</em>. The Texts / Voices / Lexicon tabs, Add Source, Insertion Options and the footer buttons stay.</td></tr>
                 <tr><td>Menu</td><td>A shorter menu: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria, then Preferences and Help. Switching back to Everything brings back the menu you had.</td></tr>
                 <tr><td>Preferences</td><td>The Search, Linking, Advanced and 🧪 Experimental tabs, and a few advanced sections. Switch to Everything to see them.</td></tr>
               </tbody>
             </table>
+            <p style="margin-top:10px;" id="sidebar-tabs-help">Just below it, <span class="ui-label">Sidebar tabs</span> turns the sidebar's <a href="#voices">Voices</a> and <a href="#lexicon">Lexicon</a> tabs off or on, in either interface; it too takes effect at once, in an open sidebar as well. A tab you turn off is hidden, not removed: its menu item still opens it (and the tab shows while you are in it), and its <em>Insertion Defaults</em> in Preferences come back when you turn it on. With both off, the sidebar shows Texts alone, with no tabs.</p>
             <p style="margin-top:10px;">New users choose a mode in the setup shown the first time the add-on opens. To see it again, use <span class="ui-label">Run setup again</span> under <a href="#quick-start">Quick start</a>.</p>
           </section>
 
@@ -708,7 +709,7 @@
           <section class="card topic-section" id="voices" data-search-title="Voices (source sheets)" data-search-terms="voices source sheet sheets sheet index citation only text only both what to insert transliteration parentheses add sheet">
             <h2>Voices (source sheets)</h2>
             <ol class="steps">
-              <li>Open the <span class="ui-label">Voices</span> tab (or <span class="ui-label">Extensions → Torah Library → Voices</span>).</li>
+              <li>Open the <span class="ui-label">Voices</span> tab (or <span class="ui-label">Extensions → Torah Library → Voices</span>). No Voices tab? Turn it on under <a href="#sidebar-tabs-help">Preferences → Sidebar tabs</a>.</li>
               <li>Search Sefaria's source sheets by topic, title or text.</li>
               <li>Pick a sheet. Under <span class="ui-label">What to insert</span> choose <strong>Citation</strong> (just the reference), <strong>Text</strong> (the sheet's text) or <strong>Both</strong> (the text, its title linked to the sheet on Sefaria), and optionally a <span class="ui-label">Transliteration</span> scheme. A sample shows how it will look, and the line underneath says what will be inserted.</li>
               <li>Click <span class="ui-label">Add Sheet</span>.</li>
@@ -720,7 +721,7 @@
           <section class="card topic-section" id="lexicon" data-search-title="Lexicon (dictionary)" data-search-terms="lexicon dictionary word lookup definition hebrew aramaic jastrow bdb headword full entry word ref definition star starred bookmark recent">
             <h2>Lexicon (dictionary)</h2>
             <ol class="steps">
-              <li>Open the <span class="ui-label">Lexicon</span> tab and type a Hebrew or Aramaic word. The <span class="ui-label">⌨︎</span> keyboard helps if you don't have Hebrew set up.</li>
+              <li>Open the <span class="ui-label">Lexicon</span> tab and type a Hebrew or Aramaic word. The <span class="ui-label">⌨︎</span> keyboard helps if you don't have Hebrew set up. No Lexicon tab? Turn it on under <a href="#sidebar-tabs-help">Preferences → Sidebar tabs</a>.</li>
               <li>Pick an entry. Under <span class="ui-label">What to insert</span> choose <strong>Full entry</strong> (word, definition and source), <strong>Word + ref</strong>, or <strong>Definition</strong> only.</li>
               <li>Click <span class="ui-label">Add Entry</span>.</li>
             </ol>
@@ -805,10 +806,10 @@
             <p>To apply the same rules to text that's <em>already</em> in the document, run <span class="ui-label">ה → ש</span> <strong>Transform Divine Names</strong> from Quick Actions. It changes every match in the <em>body of the tab you have open</em>: selecting text does not limit it, and headers, footers, footnotes and other tabs are left alone. It lists the rules that are on and asks before changing anything, then says how many names it replaced; <span class="ui-label">Edit → Undo</span> reverses it. It runs whether or not replacement on insertion is switched on. If no rules are turned on, it tells you so and changes nothing.</p>
           </section>
 
-          <section class="card topic-section" id="preferences" data-search-title="Preferences" data-search-terms="preferences settings defaults save save and close reset refresh fonts insertion linking menu bar advanced settings file export import share class teacher brand kit house style experimental title heading hebrew transliteration translation language source emphasis transliteration mapping insertion defaults current session difference">
+          <section class="card topic-section" id="preferences" data-search-title="Preferences" data-search-terms="preferences settings defaults save save and close reset refresh fonts insertion linking menu bar sidebar tabs voices lexicon advanced settings file export import share class teacher brand kit house style experimental title heading hebrew transliteration translation language source emphasis transliteration mapping insertion defaults current session difference">
             <h2>Preferences</h2>
             <p>Open with <span class="ui-label">⚙︎</span> in the sidebar or <span class="ui-label">Extensions → Torah Library → Preferences</span>. Preferences are your <strong>saved defaults</strong>; they follow your Google account into every document. The sidebar's <span class="ui-label">📰 Insertion Options</span> changes only the current session, and Link Texts' <span class="ui-label">📰 Customize this insertion</span> only one linking pass.</p>
-            <p>At the top, <span class="ui-label">Interface</span> switches between <a href="#interface-mode">Simple and Everything</a> at once, without Save; changes you have not saved yet stay as they are. Simple hides the Search, Linking, Advanced and Experimental tabs; Everything shows them.</p>
+            <p>At the top, <span class="ui-label">Interface</span> switches between <a href="#interface-mode">Simple and Everything</a> at once, without Save; changes you have not saved yet stay as they are. Simple hides the Search, Linking, Advanced and Experimental tabs; Everything shows them. Below it, <a href="#sidebar-tabs-help">Sidebar tabs</a> turns the sidebar's Voices and Lexicon tabs off or on, also at once.</p>
             <table class="ref-table">
               <thead><tr><th>Tab</th><th>What's there</th></tr></thead>
               <tbody>
@@ -876,7 +877,7 @@
             </details>
             <details>
               <summary>A tab, a button or a Preferences tab is missing</summary>
-              <p>You are probably in <a href="#interface-mode">Simple</a> mode, which hides the result sort, Restore Corpus, the Texts / Voices / Lexicon buttons, some menu items, and the Search, Linking, Advanced and Experimental tabs of Preferences. Switch to <strong>Everything</strong> at the top of Preferences.</p>
+              <p>No <span class="ui-label">Voices</span> or <span class="ui-label">Lexicon</span> tab in the sidebar? It is switched off: turn it on under <a href="#sidebar-tabs-help">Sidebar tabs</a> at the top of Preferences. Anything else is probably <a href="#interface-mode">Simple</a> mode, which hides the result sort, Restore Corpus, some menu items, and the Search, Linking, Advanced and Experimental tabs of Preferences. Switch to <strong>Everything</strong> at the top of Preferences.</p>
             </details>
             <details>
               <summary>Cantillation marks look different from the rest of the Hebrew</summary>

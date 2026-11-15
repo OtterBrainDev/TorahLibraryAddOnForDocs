@@ -21,7 +21,7 @@ public entry point; it is safe to call from any event handler.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '26';
+var PREFS_SCHEMA_CURRENT_ = '27';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -230,6 +230,12 @@ function runUserPreferenceMigrationsIfNeeded_() {
   // title keeps naming its edition as it always has.
   if (from < 26) {
     migrateToV26_(userProperties);
+  }
+  // v26 -> v27: introduces `show_voices_tab` and `show_lexicon_tab` (the
+  // sidebar's Voices and Lexicon tabs), set on: every user has the tabs, and
+  // Simple mode now shows them too.
+  if (from < 27) {
+    migrateToV27_(userProperties);
   }
 
   userProperties.setProperty(PREFS_SCHEMA_KEY_, PREFS_SCHEMA_CURRENT_);
@@ -634,6 +640,19 @@ function migrateToV25_(userProperties) {
  */
 function migrateToV26_(userProperties) {
   ['sefaria_link_edition_label', 'hebrew_link_edition_label'].forEach(function(key) {
+    if (userProperties.getProperty(key) == null) userProperties.setProperty(key, 'true');
+  });
+  return true;
+}
+
+/**
+ * V27: the sidebar's Voices and Lexicon tabs get a switch each, set on. Every
+ * user has had the tabs (Full mode always showed them; Simple mode hid them
+ * while in Texts and now shows them), so a missing value never hides one. A
+ * stored switch is never overwritten.
+ */
+function migrateToV27_(userProperties) {
+  ['show_voices_tab', 'show_lexicon_tab'].forEach(function(key) {
     if (userProperties.getProperty(key) == null) userProperties.setProperty(key, 'true');
   });
   return true;

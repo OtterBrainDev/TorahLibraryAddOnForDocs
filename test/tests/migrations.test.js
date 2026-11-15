@@ -574,3 +574,26 @@ test('v26 turns "Name the edition" on for both titles, never overwriting a store
   assert.equal(userProperties.getProperty('sefaria_link_edition_label'), 'true');
   assert.equal(userProperties.getProperty('hebrew_link_edition_label'), 'false');
 });
+
+// v27: the sidebar's Voices and Lexicon tabs get a switch each. Every user has
+// had the tabs, so an upgrader (Simple or Everything) gets both on: a missing
+// switch must never hide a tab (hard rule 2).
+test('v27 turns both sidebar tab switches on, never overwriting a stored switch', () => {
+  for (const ui of ['simple', 'full']) {
+    const { context, userProperties } = loadMigrations({ prefs_schema_version: '26', ui_mode: ui, show_lexicon_tab: 'false' });
+    context.runUserPreferenceMigrationsIfNeeded_();
+    assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+    assert.equal(userProperties.getProperty('show_voices_tab'), 'true', ui);
+    assert.equal(userProperties.getProperty('show_lexicon_tab'), 'false', `${ui}: a stored switch is kept`);
+  }
+});
+
+test('a new user is seeded with both sidebar tabs on', () => {
+  const { context, userProperties } = loadMigrations({});
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('show_voices_tab'), 'true');
+  assert.equal(userProperties.getProperty('show_lexicon_tab'), 'true');
+  const defaults = context.getDefaultPreferences();
+  assert.equal(defaults.show_voices_tab, true);
+  assert.equal(defaults.show_lexicon_tab, true);
+});

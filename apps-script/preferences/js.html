@@ -741,6 +741,7 @@
               loadTranslationLanguagesFromField();
               syncExperimentalChildToggles();
               syncLinkerInsertToggle();
+              syncSidebarTabsUi_();
               loadMenuLayoutEditor(preferences.menu_layout);
       } catch (error) {
         console.error('Preferences modal apply failed:', error);
@@ -1540,25 +1541,34 @@
         });
       }
 
-      tabs.forEach(function(tab, idx) {
+      // A sidebar tab switched off hides its sub-tab (Sidebar tabs, at the
+      // top); the arrow keys skip it.
+      function go(tab) {
+        tab.click();
+        tab.focus();
+      }
+
+      tabs.forEach(function(tab) {
         tab.addEventListener('click', function() { activateWorkflow(tab); });
         tab.addEventListener('keydown', function(ev) {
+          var shown = tabs.filter(function (t) { return window.getComputedStyle(t).display !== 'none'; });
+          var at = Math.max(0, shown.indexOf(tab));
           switch (ev.key) {
             case 'ArrowRight':
               ev.preventDefault();
-              tabs[(idx + 1) % tabs.length].click();
+              go(shown[(at + 1) % shown.length]);
               break;
             case 'ArrowLeft':
               ev.preventDefault();
-              tabs[(idx - 1 + tabs.length) % tabs.length].click();
+              go(shown[(at - 1 + shown.length) % shown.length]);
               break;
             case 'Home':
               ev.preventDefault();
-              tabs[0].click();
+              go(shown[0]);
               break;
             case 'End':
               ev.preventDefault();
-              tabs[tabs.length - 1].click();
+              go(shown[shown.length - 1]);
               break;
           }
         });
@@ -1944,6 +1954,65 @@
       });
     }
 
+    // ── Sidebar tabs (Voices, Lexicon) ───────────────────────────────────
+    // Beside the Interface switch and, like it, saved at once: each switch
+    // writes its own key and tells an open sidebar (markPreferencesSaved),
+    // which shows or hides the tab without a refresh (syncSidebarTabs in
+    // sidebar/js/mode-controller). They are ordinary named checkboxes, so
+    // loading, Reset To Defaults, a settings file and Save treat them like any
+    // other setting. A switch waits for its own save before it can be clicked
+    // again, so two saves of one key never cross. A tab switched off takes its
+    // Insertion Defaults sub-tab with it (data-sidebar-tabs, preferences/css).
+    function sidebarTabsFromSwitches_() {
+      var tabs = ['texts'];
+      document.querySelectorAll('.sidebar-tab-switch').forEach(function (box) {
+        if (box.checked) tabs.push(box.getAttribute('data-sidebar-tab'));
+      });
+      return tabs;
+    }
+
+    function syncSidebarTabsUi_() {
+      var tabs = sidebarTabsFromSwitches_();
+      var dialog = prefDialog_();
+      if (dialog) dialog.setAttribute('data-sidebar-tabs', tabs.join(' '));
+      // An Insertion Defaults sub-tab that is now hidden gives way to Texts.
+      var open = document.querySelector('.pref-workflow-tab[aria-selected="true"]');
+      if (open && tabs.indexOf(open.getAttribute('data-workflow')) < 0) {
+        var texts = document.querySelector('.pref-workflow-tab[data-workflow="texts"]');
+        if (texts) texts.click();
+      }
+    }
+
+    function sidebarTabsMessage_(tabs) {
+      if (tabs.length < 2) return 'Saved: the sidebar shows Texts alone, with no tabs.';
+      var names = tabs.map(function (tab) { return tab.charAt(0).toUpperCase() + tab.slice(1); });
+      return 'Saved: the sidebar shows ' + names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] + '.';
+    }
+
+    function initSidebarTabSwitches() {
+      var status = byId('interface-mode-status');
+      document.querySelectorAll('.sidebar-tab-switch').forEach(function (box) {
+        box.addEventListener('change', function () {
+          var on = box.checked;
+          var change = {};
+          change[box.name] = on;
+          box.disabled = true;
+          syncSidebarTabsUi_();
+          if (status) status.textContent = '';
+          google.script.run.withSuccessHandler(function () {
+            box.disabled = false;
+            markPreferencesSaved();
+            if (status) status.textContent = sidebarTabsMessage_(sidebarTabsFromSwitches_());
+          }).withFailureHandler(function () {
+            box.disabled = false;
+            box.checked = !on;
+            syncSidebarTabsUi_();
+            if (status) status.textContent = 'Could not change the sidebar tabs. Nothing was changed.';
+          }).setPreferences(change);
+        });
+      });
+    }
+
     function _initPreferencesTabs() {
       const tabs = Array.from(document.querySelectorAll('.pref-tab'));
       if (!tabs.length) return;
@@ -2039,6 +2108,7 @@
 
     _initPreferencesTabs();
     initInterfaceMode();
+    initSidebarTabSwitches();
     initPrefButtonGroups();
     initPrefTranslitDropdown();
     initWorkflowTabs();
