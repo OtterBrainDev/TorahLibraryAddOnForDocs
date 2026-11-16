@@ -13,6 +13,7 @@ function _sidebarCompositionGetState() {
     translationPunctuationOn: $('.wants-translation-punctuation').is(':checked'),
     transliterationOn: transliterationOn,
     scheme: scheme,
+    translitPosition: ccNormalizeTranslitPosition(effectivePreferences.transliteration_position),
     linkOn: $('.insert-sefaria-link').is(':checked'),
     hebrewLinkOn: $('.insert-hebrew-sefaria-link').is(':checked'),
     linesOn: $('.wants-pesukim').is(':checked'),
@@ -95,7 +96,8 @@ function _sidebarCompositionOnToggle(key) {
 }
 
 // The three-way choices. Vowels and Cantillation are fetch-time filters, so
-// the selected text is fetched again; Commentary is applied at insert.
+// the selected text is fetched again; Commentary and the transliteration's
+// Position are applied at insert.
 function _sidebarCompositionOnChoice(key, value) {
   var payload;
   if (key === 'vowels') {
@@ -108,6 +110,13 @@ function _sidebarCompositionOnChoice(key, value) {
     $('.source-emphasis-mode').val(ccNormalizeEmphasisMode(value));
     saveSidebarPreference({ source_emphasis_mode: $('.source-emphasis-mode').val() });
     if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
+    return;
+  } else if (key === 'translitPosition') {
+    // Shown at once; the save's answer confirms it.
+    effectivePreferences.transliteration_position = ccNormalizeTranslitPosition(value);
+    saveSidebarPreference({ transliteration_position: effectivePreferences.transliteration_position }, function () {
+      updateCompositionCard();
+    });
     return;
   } else {
     return;

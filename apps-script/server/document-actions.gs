@@ -1014,6 +1014,7 @@ var LINKER_INSERT_OVERRIDE_KEYS_ = {
   bilingual_aligned_rows: 'boolean',
   source_emphasis_mode: ['keep', 'discard', 'only'],
   transliteration_scheme: 'scheme',
+  transliteration_position: ['below', 'left', 'right'],
   nekudot: 'boolean',
   nekudot_filter: ['always', 'tanakh', 'false'],
   teamim: 'boolean',
@@ -1167,6 +1168,7 @@ function buildLinkSourcesInsertOptions_(prefs) {
   return {
     sourceEmphasisMode: prefs.source_emphasis_mode || undefined,
     transliterationScheme: prefs.transliteration_scheme || undefined,
+    transliterationPosition: prefs.transliteration_position || undefined,
     singleLanguage: singleLanguage,
     pasukPreference: pasukPreference,
     bilingualLayout: bilingualLayout,

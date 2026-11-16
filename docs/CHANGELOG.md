@@ -9,6 +9,37 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Line by line for Stacked; the transliteration in a column of its own (schema 30)
+
+**Migration (schema 29 → 30): `transliteration_position` is set to "below",
+where the transliteration has always gone, so no upgrader's side-by-side
+insert changes. Line by line (`bilingual_aligned_rows`) is not migrated, and
+now also applies to Stacked: anyone who has it on and inserts Stacked gets
+each line followed by its translation instead of one block per language.
+Switch it off in 📰 Insertion Options (or Preferences → Insertion → Layout)
+for the blocks.** New preference, in the settings file's *Text and layout*
+part and in profiles: `transliteration_position` (`below` / `left` /
+`right`, default `below`).
+
+- **Line by line, Stacked.** With Hebrew and translation Stacked, *Line by
+  line* puts the two titles at the top, then each line, its transliteration
+  and its translation, one after another down the page. With several
+  translations picked, each Hebrew line is followed by that line of each
+  translation, in the order picked, under one title each. A source with no
+  lines to pair keeps the blocks. The switch now shows in every arrangement
+  of both languages (it showed only side by side).
+- **The transliteration's Position**, side by side. Under *Transliteration*,
+  *Position* puts it **Below** the Hebrew in its column (as before), or in a
+  column of its own **Left** or **Right** of the Hebrew: a three-column
+  table. With *Line by line*, each row's transliteration sits beside its own
+  line. Stacked always puts it under the Hebrew, so *Position* shows side by
+  side only (in Preferences, always, as the default). Link Texts' *Customize
+  this insertion* offers it too.
+- **The Arrangement icons sketch the result**: the transliteration as a
+  strip under the Hebrew or a column of its own, and with *Line by line*, the
+  lines (rows across the columns side by side; two lines in Stacked).
+- No new RPC and no new OAuth scope.
+
 ### Profiles; Preferences → Sidebar; Voices and Lexicon in Simple mode (schema 29)
 
 **Migration (schema 28 → 29): every existing user, Simple or Everything, keeps

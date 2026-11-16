@@ -121,9 +121,12 @@ Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
 
 1. **Display:** **A** (translation), **A + א** (both), **א** (Hebrew).
 2. **Arrangement** (for both languages): **Stacked**, **Right–Left** (a
-   two-column table, Hebrew on the right) or **Left–Right**. With a
-   side-by-side arrangement, **Line by line** gives each verse its own table
-   row beside its translation.
+   two-column table, Hebrew on the right) or **Left–Right**. **Line by line**
+   pairs each verse with its translation: side by side, its own table row;
+   Stacked, the verse and then its translation, down the page. With
+   Transliteration on, its **Position** (side by side) puts it under the
+   Hebrew or in a column of its own, left or right of it; the Arrangement
+   icons sketch the result.
 3. **Citation** (the edition and license credit) and **Line numbers** are
    switches under the pickers.
 4. **Insertion Format:** the **Source** and **Translation** sections are

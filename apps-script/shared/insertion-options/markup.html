@@ -2,7 +2,10 @@
   The Layout section of the insertion options: Display (Translation / Both /
   Original) and Arrangement (Stacked / Right–Left / Left–Right), each a
   labelled segmented control, then the citation and the line options (line
-  numbers, one table row per line) as switch rows. Above the composition card. Shared
+  numbers, line by line) as switch rows. Above the composition card. Each
+  Arrangement icon is a sketch of the page that follows the other settings
+  (shared/insertion-options/js.html): the transliteration (.tr) under the
+  Hebrew or in a column of its own, and with Line by line, the lines. Shared
   by the sidebar's Layout tray, Preferences and the Link Texts dialog's
   "Customize this insertion" panel. Behaviour: shared/insertion-options/js.html
   (initInsertionOptions); styles: shared/insertion-options/css.html.
@@ -24,13 +27,13 @@
     <div class="display-choice-label" id="layout-choice-label">Arrangement</div>
     <div class="layout-option-group" role="radiogroup" aria-labelledby="layout-choice-label">
       <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
-        <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row en"></span></span>
+        <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row tr"></span><span class="layout-row en"></span><span class="layout-row he layout-row--next"></span><span class="layout-row tr layout-row--next"></span><span class="layout-row en layout-row--next"></span></span>
       </button>
       <button type="button" class="layout-option" data-layout="he-right" role="radio" aria-checked="false" title="Right–Left">
-        <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span></span>
+        <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span><span class="layout-col tr"></span></span>
       </button>
       <button type="button" class="layout-option" data-layout="he-left" role="radio" aria-checked="false" title="Left–Right">
-        <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span></span>
+        <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span><span class="layout-col tr"></span></span>
       </button>
     </div>
   </div>
@@ -41,6 +44,6 @@
      can live outside the card), and Line by line (here). -->
 <div class="layout-rows-row cc-rows">
   <button type="button" class="cc-row cc-toggle cc-line-pill" id="cc-details-toggle" data-sidebar-control="citation" aria-pressed="false" aria-label="Toggle source citation" title="Add the source citation (edition and license) under the text"><span class="cc-row-label">Citation</span><span class="cc-switch" aria-hidden="true"></span></button>
-  <button type="button" class="cc-row cc-toggle layout-rows-toggle" id="layout-rows-toggle" data-sidebar-control="line_by_line" aria-pressed="false" title="Right–Left and Left–Right: give each line its own table row, beside its translation" hidden><span class="cc-row-label">Line by line</span><span class="cc-switch" aria-hidden="true"></span></button>
+  <button type="button" class="cc-row cc-toggle layout-rows-toggle" id="layout-rows-toggle" data-sidebar-control="line_by_line" aria-pressed="false" title="Each line with its own translation: side by side, a table row per line; Stacked, each line and then its translation, down the page" hidden><span class="cc-row-label">Line by line</span><span class="cc-switch" aria-hidden="true"></span></button>
   <button type="button" class="cc-row cc-toggle cc-line-pill" id="cc-lines-toggle" data-sidebar-control="line_numbers" aria-pressed="true" title="Number each line (verse numbers)"><span class="cc-row-label">Line numbers</span><span class="cc-switch" aria-hidden="true"></span></button>
 </div>

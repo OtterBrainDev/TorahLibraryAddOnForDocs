@@ -65,6 +65,18 @@
             <span class="cc-row-label cc-row-label--sub">Style</span>
             <button type="button" class="cc-translit-button" id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">ha-sefer kol-ha'am</button>
           </div>
+          <!-- Where it goes in the side-by-side arrangements: under the Hebrew,
+               or a column of its own beside it. Shown while it is on;
+               shared/insertion-options hides it for Stacked (always under the
+               Hebrew) and single-language inserts, except in Preferences. -->
+          <div class="cc-row cc-translit-position-row" id="cc-translit-position-row">
+            <span class="cc-row-label cc-row-label--sub" id="cc-translit-position-label">Position</span>
+            <div class="cc-seg" id="cc-translit-position-toggle" role="radiogroup" aria-labelledby="cc-translit-position-label" data-cc-choice="translitPosition">
+              <button type="button" class="cc-seg-option" role="radio" data-value="below" aria-checked="true" title="Under the Hebrew, in the Hebrew’s column">Below</button>
+              <button type="button" class="cc-seg-option" role="radio" data-value="left" aria-checked="false" title="Side by side: a column of its own, left of the Hebrew">Left</button>
+              <button type="button" class="cc-seg-option" role="radio" data-value="right" aria-checked="false" title="Side by side: a column of its own, right of the Hebrew">Right</button>
+            </div>
+          </div>
           <!-- Preferences only ("translitFont"): the transliteration's font. -->
           <div class="cc-row cc-font-row cc-translit-font-row" id="cc-translit-font-row" data-cc-feature="translitFont" data-sidebar-control="text_fonts">
             <span class="cc-row-label cc-row-label--sub">Font</span>

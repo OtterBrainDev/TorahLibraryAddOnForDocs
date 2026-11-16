@@ -162,17 +162,20 @@ test('overrides from "Customize this insertion" reach the insert and the fetch, 
     show_line_markers_default: false,
     nekudot: false,
     transliteration_scheme: 'ashkenazi',
+    transliteration_position: 'right',
     source_emphasis_mode: 'only',
     // Not overridable, or not a valid value: dropped.
     linker_upload_acknowledged: 'true',
     bilingual_layout_default_typo: 'x',
     teamim: 'sometimes',
-    include_transliteration_default: 'yes'
+    include_transliteration_default: 'yes',
+    bilingual_aligned_rows: 'sometimes'
   });
   assert.equal(calls[0].singleLanguage, 'he');
   assert.equal(calls[0].bilingualLayout, 'he-top');
   assert.equal(calls[0].pasukPreference, false);
   assert.equal(calls[0].transliterationScheme, 'ashkenazi');
+  assert.equal(calls[0].transliterationPosition, 'right');
   assert.equal(calls[0].sourceEmphasisMode, 'only');
   // Vowels are stripped at fetch time, so the override goes to the fetch.
   assert.deepEqual(Object.assign({}, fetched[0]), {
@@ -181,8 +184,12 @@ test('overrides from "Customize this insertion" reach the insert and the fetch, 
     show_line_markers_default: 'false',
     nekudot: 'false',
     transliteration_scheme: 'ashkenazi',
+    transliteration_position: 'right',
     source_emphasis_mode: 'only'
   });
+  // An unknown position is dropped too.
+  context.insertLinkedSourceAtPosition('Genesis 1:1', decisionFor(body, 'Genesis 1:1'), { transliteration_position: 'sideways' });
+  assert.equal(fetched[1].transliteration_position, undefined);
 });
 
 test('an unknown transliteration scheme is dropped', () => {

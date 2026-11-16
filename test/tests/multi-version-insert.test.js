@@ -68,6 +68,8 @@ function loadInsertion({ resolved, typography }) {
     },
     PropertiesService: { getUserProperties() { return { getProperty() { return null; } }; } },
     findReference(ref, versions) { return resolved[versions.en] || null; },
+    // Hebrew on top reads the stored "Line by line" when the caller omits it.
+    getPreferences() { return {}; },
     getTypographySettings() { return typography ? JSON.parse(JSON.stringify(typography)) : { roles: {} }; },
     formatDataForPesukim(d) { return d; },
     normalizeSourceEmphasisMode_(mode) { return mode || 'keep'; },

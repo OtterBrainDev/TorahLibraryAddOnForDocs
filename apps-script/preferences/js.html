@@ -215,10 +215,13 @@
         root: '#pref-tab-insertion',
         hideInapplicable: false,
         getState: function () {
+          var translitCheck = byId('include_transliteration_default');
           return {
             outputMode: byId('output_mode_default').value,
             layout: byId('bilingual_layout_default').value,
-            alignedRows: byId('bilingual_aligned_rows').value === 'true'
+            alignedRows: byId('bilingual_aligned_rows').value === 'true',
+            transliterationOn: translitCheck ? translitCheck.checked : false,
+            transliterationPosition: (byId('transliteration_position') || {}).value
           };
         },
         onSelectDisplay: function (mode) { setPrefButtonGroup('output_mode_default', mode); },
@@ -268,6 +271,7 @@
             translationPunctuationOn: translationPunctuation ? translationPunctuation.value !== 'false' : true,
             transliterationOn: transliterationOn,
             scheme: transliterationOn ? (scheme || 'simple_english') : 'none',
+            translitPosition: ccNormalizeTranslitPosition((byId('transliteration_position') || {}).value),
             linkOn: linkCheck ? linkCheck.checked : false,
             hebrewLinkOn: hebrewLinkCheck ? hebrewLinkCheck.checked : false,
             editionOn: editionCheck ? editionCheck.checked : true,
@@ -320,6 +324,9 @@
           if (key === 'vowels') _prefSetCompositionPair(ccVowelsPrefs(value));
           else if (key === 'cantillation') _prefSetCompositionPair(ccCantillationPrefs(value));
           else if (key === 'emphasis') setPrefButtonGroup('source_emphasis_mode', ccNormalizeEmphasisMode(value));
+          else if (key === 'translitPosition' && byId('transliteration_position')) {
+            byId('transliteration_position').value = ccNormalizeTranslitPosition(value);
+          }
         },
         onSchemeSelect: function (value) {
           _prefSetCompositionTransliteration(value);

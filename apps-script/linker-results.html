@@ -564,7 +564,7 @@
         var custom = null;
         var INSERT_PREF_KEYS = [
           'output_mode_default', 'bilingual_layout_default', 'source_emphasis_mode',
-          'transliteration_scheme', 'nekudot', 'nekudot_filter', 'teamim', 'teamim_filter', 'include_transliteration_default',
+          'transliteration_scheme', 'transliteration_position', 'nekudot', 'nekudot_filter', 'teamim', 'teamim_filter', 'include_transliteration_default',
           'show_line_markers_default', 'include_translation_source_info',
           'insert_sefaria_link_default', 'insert_hebrew_sefaria_link_default', 'insert_from_selection_replace',
           'hebrew_punctuation', 'translation_punctuation', 'bilingual_aligned_rows',
@@ -589,7 +589,8 @@
             output_mode_default: oneOf(text('output_mode_default'), ['both', 'en', 'he']),
             bilingual_layout_default: oneOf(text('bilingual_layout_default'), ['he-right', 'he-left', 'he-top']),
             source_emphasis_mode: ccNormalizeEmphasisMode(text('source_emphasis_mode')),
-            transliteration_scheme: text('transliteration_scheme') || 'traditional'
+            transliteration_scheme: text('transliteration_scheme') || 'traditional',
+            transliteration_position: ccNormalizeTranslitPosition(text('transliteration_position'))
           };
           // The three-way Vowels and Cantillation choices, as the pairs they store.
           Object.assign(out, ccVowelsPrefs(ccVowelsMode(text('nekudot'), text('nekudot_filter'))));
@@ -635,7 +636,9 @@
               return {
                 outputMode: custom.output_mode_default,
                 layout: custom.bilingual_layout_default,
-                alignedRows: custom.bilingual_aligned_rows === 'true'
+                alignedRows: custom.bilingual_aligned_rows === 'true',
+                transliterationOn: custom.include_transliteration_default === 'true',
+                transliterationPosition: custom.transliteration_position
               };
             },
             onToggleAlignedRows: function () { flip('bilingual_aligned_rows'); refreshCustomizeState(); },
@@ -653,6 +656,7 @@
                 translationPunctuationOn: custom.translation_punctuation === 'true',
                 transliterationOn: custom.include_transliteration_default === 'true',
                 scheme: custom.transliteration_scheme,
+                translitPosition: custom.transliteration_position,
                 linkOn: custom.insert_sefaria_link_default === 'true',
                 hebrewLinkOn: custom.insert_hebrew_sefaria_link_default === 'true',
                 linesOn: custom.show_line_markers_default === 'true',
@@ -677,6 +681,7 @@
               if (key === 'vowels') Object.assign(custom, ccVowelsPrefs(value));
               else if (key === 'cantillation') Object.assign(custom, ccCantillationPrefs(value));
               else if (key === 'emphasis') custom.source_emphasis_mode = ccNormalizeEmphasisMode(value);
+              else if (key === 'translitPosition') custom.transliteration_position = ccNormalizeTranslitPosition(value);
             },
             onSchemeSelect: function (value) {
               if (value === 'none') {

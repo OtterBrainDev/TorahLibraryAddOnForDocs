@@ -15,15 +15,18 @@
 // Usage:
 //   initInsertionOptions({
 //     root: '#layout-tray',   // holds this markup and the composition card
-//     getState:        function () { return { outputMode: 'both', layout: 'he-right' }; },
+//     getState:        function () { return { outputMode: 'both', layout: 'he-right',
+//                        // optional, for the Arrangement icons' sketch:
+//                        transliterationOn: false, transliterationPosition: 'below' }; },
 //     onSelectDisplay: function (mode) { /* store it */ },
 //     onSelectLayout:  function (layout) { /* store it */ },
-//     onToggleAlignedRows: function () { /* optional: flip "one row per line";
+//     onToggleAlignedRows: function () { /* optional: flip "Line by line";
 //                              getState().alignedRows reads it. Without it the
 //                              "Line by line" button stays hidden. */ },
 //     hideInapplicable: true   // optional: hide Layout unless both languages,
-//                              // and the card's Hebrew-only parts for a
-//                              // translation-only insert
+//                              // the card's Hebrew-only parts for a
+//                              // translation-only insert, and its
+//                              // transliteration Position unless side by side
 //   });
 //
 // Then call updateInsertionOptions() any time the host's state changes.
@@ -79,14 +82,33 @@ function updateInsertionOptions() {
   var hide = _ioConfig.hideInapplicable !== false;
   $root.find('.bilingual-layout-wrapper').toggle(!hide || mode === 'both');
 
-  // "Line by line" (one table row per line) only applies to the side-by-side
-  // layouts; Preferences shows it whatever the layout, as a default.
+  // "Line by line" pairs each line with its translation, so it needs both
+  // languages: side by side, a table row per line; Stacked, each line and
+  // then its translation, down the page. Preferences shows it whatever the
+  // display, as a default.
   var alignedRows = !!state.alignedRows;
   var sideBySide = layout === 'he-right' || layout === 'he-left';
   $root.find('#layout-rows-toggle')
-    .prop('hidden', !_ioConfig.onToggleAlignedRows || (hide && !(mode === 'both' && sideBySide)))
+    .prop('hidden', !_ioConfig.onToggleAlignedRows || (hide && mode !== 'both'))
     .toggleClass('is-off', !alignedRows)
     .attr('aria-pressed', alignedRows ? 'true' : 'false');
+
+  // The transliteration's Position (in the composition card) is where it goes
+  // side by side: Stacked always puts it under the Hebrew. Preferences shows
+  // it whatever the arrangement, as a default.
+  $root.find('#cc-translit-position-row').toggleClass('is-inapplicable', hide && !(mode === 'both' && sideBySide));
+
+  // The Arrangement icons sketch the page each would give with the other
+  // settings: the transliteration under the Hebrew or in a column of its own
+  // (shared/insertion-options/css), and with Line by line, the lines.
+  var transliteration = state.transliterationOn
+    ? (typeof ccNormalizeTranslitPosition === 'function'
+        ? ccNormalizeTranslitPosition(state.transliterationPosition)
+        : 'below')
+    : 'off';
+  $root.find('.layout-option-group')
+    .attr('data-translit', transliteration)
+    .attr('data-lines', alignedRows ? 'true' : 'false');
   // The card's Source section (Hebrew marks, font, transliteration) means
   // nothing to a translation-only insert, nor its Translation section to a
   // Hebrew-only one.

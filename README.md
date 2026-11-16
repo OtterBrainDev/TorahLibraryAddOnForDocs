@@ -78,8 +78,10 @@ For bilingual insertion, **Arrangement** offers:
 - **Right–Left** (Hebrew on the right)
 - **Left–Right** (Hebrew on the left)
 
-with switches for **Citation**, **Line by line** (one table row per verse, for
-the side-by-side arrangements) and **Line numbers**.
+with switches for **Citation**, **Line by line** (each verse with its
+translation: side by side, a table row per verse; Stacked, each verse and then
+its translation, down the page) and **Line numbers**. Each Arrangement icon
+sketches the page it gives with the other settings.
 
 ### Hebrew and translation formatting controls
 
@@ -89,7 +91,8 @@ The panel's **Insertion Format** card has a **Source** (Hebrew) section and a
 - **Link title to Sefaria**, **Title font** and **Text font** (each section its own),
 - **Vowels** (Off / Tanakh / On) and **Cantillation** (Off / Tanakh / Torah),
 - **Punctuation** (each section its own),
-- **Transliteration**, with its **Style**,
+- **Transliteration**, with its **Style** and, side by side, its **Position**
+  (below the Hebrew, or a column of its own left or right of it),
 - **Commentary** (Default / Combine / Drop) for the translation: keep the
   commentary as Sefaria marks it (translation in bold), run it together with
   the translation, or leave it out. Italics is always kept.

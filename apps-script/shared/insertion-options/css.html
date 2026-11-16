@@ -121,6 +121,12 @@
 
 /* =============================================================
    ARRANGEMENT ICONS (a schematic page per layout)
+
+   Each icon follows the other settings (updateInsertionOptions sets
+   data-translit = off / below / left / right and data-lines on the group):
+   the transliteration (.tr) as a strip under the Hebrew or a column of its
+   own beside it, and with Line by line, the lines: the columns cut into rows
+   side by side, a second line (.layout-row--next) in Stacked.
    ============================================================= */
 
 .layout-icon {
@@ -139,6 +145,7 @@
 
 .layout-icon.stacked {
   flex-direction: column;
+  align-items: stretch;
 }
 
 .layout-col,
@@ -153,38 +160,134 @@
 }
 
 .layout-row {
+  /* Shrinks to fit when Line by line and the transliteration add rows. */
+  flex: 0 1 5px;
   width: 100%;
-  height: 5px;
+  min-height: 1px;
 }
 
-/* The Hebrew dark, the translation light, whichever side each is on. */
+/* The Hebrew dark, the translation light, the transliteration between,
+   whichever side each is on. */
+.layout-option {
+  --io-he: #1f3f75;
+  --io-en: #a9b8d1;
+  --io-tr: #5b7fbd;
+  --io-gap: #fff;
+}
+
+.layout-option:not(.selected) {
+  --io-he: #7c8595;
+  --io-en: #cfd3da;
+  --io-tr: #a4adbb;
+}
+
 .layout-col.he,
 .layout-row.he {
-  background: #1f3f75;
+  background-color: var(--io-he);
 }
 
 .layout-col.en,
 .layout-row.en {
-  background: #a9b8d1;
+  background-color: var(--io-en);
 }
 
-.layout-option:not(.selected) .layout-col.he,
-.layout-option:not(.selected) .layout-row.he {
-  background: #7c8595;
+.layout-col.tr,
+.layout-row.tr {
+  background-color: var(--io-tr);
 }
 
-.layout-option:not(.selected) .layout-col.en,
-.layout-option:not(.selected) .layout-row.en {
-  background: #cfd3da;
+/* Side by side: the translation, then the Hebrew (Right–Left), or the
+   reverse; the transliteration's column left or right of the Hebrew. */
+.side-by-side .layout-col.en { order: 0; }
+.side-by-side.reverse .layout-col.en { order: 4; }
+.side-by-side .layout-col.he { order: 2; }
+.side-by-side .layout-col.tr { order: 1; display: none; }
+.layout-option-group[data-translit="right"] .side-by-side .layout-col.tr { order: 3; }
+
+.layout-option-group[data-translit="left"] .side-by-side .layout-col.tr,
+.layout-option-group[data-translit="right"] .side-by-side .layout-col.tr {
+  display: block;
+}
+
+.layout-option-group[data-translit="left"] .side-by-side,
+.layout-option-group[data-translit="right"] .side-by-side {
+  gap: 2px;
+}
+
+.layout-option-group[data-translit="left"] .side-by-side .layout-col,
+.layout-option-group[data-translit="right"] .side-by-side .layout-col {
+  width: 6px;
+}
+
+/* Under the Hebrew, in its column. */
+.layout-option-group[data-translit="below"] .side-by-side .layout-col.he {
+  background-image: linear-gradient(to bottom, transparent 0 60%, var(--io-gap) 60% 70%, var(--io-tr) 70%);
+}
+
+/* Line by line, side by side: a row per line across the columns. */
+.layout-option-group[data-lines="true"] .side-by-side .layout-col {
+  background-image: repeating-linear-gradient(to bottom, transparent 0 4px, var(--io-gap) 4px 5px);
+}
+
+.layout-option-group[data-lines="true"][data-translit="below"] .side-by-side .layout-col.he {
+  background-image: repeating-linear-gradient(to bottom, transparent 0 2.5px, var(--io-tr) 2.5px 4px, var(--io-gap) 4px 5px);
+}
+
+/* Stacked: the Hebrew, then the translation; the transliteration (always
+   under the Hebrew) and the second line only when they apply. */
+.stacked .layout-row.tr,
+.stacked .layout-row--next {
+  display: none;
+}
+
+.layout-option-group:not([data-translit="off"]) .stacked .layout-row.tr:not(.layout-row--next) {
+  display: block;
+}
+
+.layout-option-group[data-lines="true"] .stacked .layout-row--next.he,
+.layout-option-group[data-lines="true"] .stacked .layout-row--next.en {
+  display: block;
+}
+
+.layout-option-group[data-lines="true"]:not([data-translit="off"]) .stacked .layout-row--next.tr {
+  display: block;
+}
+
+.layout-option-group:not([data-translit="off"]) .stacked,
+.layout-option-group[data-lines="true"] .stacked {
+  gap: 1px;
+}
+
+.layout-option-group:not([data-translit="off"]) .stacked .layout-row.tr {
+  flex-basis: 2px;
+}
+
+.layout-option-group[data-lines="true"] .stacked .layout-row {
+  flex-basis: 2.5px;
+}
+
+.layout-option-group[data-lines="true"]:not([data-translit="off"]) .stacked .layout-row {
+  flex-basis: 1.5px;
+}
+
+.layout-option-group[data-lines="true"] .stacked .layout-row--next.he {
+  margin-top: 1px;
 }
 
 /* =============================================================
-   The line options: "Line by line" (#layout-rows-toggle, one table row per
-   line for the side-by-side layouts), Line numbers and Citation. Switch rows
-   (.cc-row / .cc-toggle in shared/composition-card/css) under the pickers.
+   The line options: "Line by line" (#layout-rows-toggle: a table row per line
+   side by side, each line then its translation in Stacked), Line numbers and
+   Citation. Switch rows (.cc-row / .cc-toggle in shared/composition-card/css)
+   under the pickers.
    ============================================================= */
 
 .layout-rows-row {
   margin-top: 8px;
+}
+
+/* The composition card's transliteration Position, which only the
+   side-by-side arrangements use (updateInsertionOptions). */
+.cc-translit-position-row.is-inapplicable {
+  display: none;
 }
 </style>

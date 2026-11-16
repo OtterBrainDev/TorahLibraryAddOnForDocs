@@ -26,7 +26,7 @@ only a profile's keys.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '29';
+var PREFS_SCHEMA_CURRENT_ = '30';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -268,6 +268,13 @@ function applyMigrationsFrom_(userProperties, from) {
   // `settings_profiles` ("": no profiles yet).
   if (from < 29) {
     migrateToV29_(userProperties);
+  }
+  // v29 -> v30: introduces `transliteration_position` ("below": under the
+  // Hebrew, where the transliteration has always gone). "Line by line"
+  // (`bilingual_aligned_rows`) now also applies to Stacked; its stored value
+  // is left as it is.
+  if (from < 30) {
+    migrateToV30_(userProperties);
   }
 }
 
@@ -734,6 +741,19 @@ function migrateToV29_(userProperties) {
   Object.keys(V29_DEFAULTS_).forEach(function(key) {
     if (userProperties.getProperty(key) == null) userProperties.setProperty(key, V29_DEFAULTS_[key]);
   });
+  return true;
+}
+
+/**
+ * V30: the transliteration can have a column of its own in the side-by-side
+ * layouts. `transliteration_position` is set to "below", under the Hebrew in
+ * its own column, which is where every insert has put it until now. A stored
+ * value is never overwritten.
+ */
+function migrateToV30_(userProperties) {
+  if (userProperties.getProperty('transliteration_position') == null) {
+    userProperties.setProperty('transliteration_position', 'below');
+  }
   return true;
 }
 

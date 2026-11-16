@@ -283,8 +283,12 @@ got inserted. While it runs the sidebar shows its busy overlay
    (regression log).
 3. **Layout:** Stacked is paragraphs. Right–Left and Left–Right are a 2-column
    table with the Hebrew paragraphs set RTL, which is how the original add-on
-   did it. **Line by line** (`bilingual_aligned_rows`) gives each verse its
-   own row instead (`aligned-rows.test.js`).
+   did it; a third column when the transliteration has one of its own
+   (`transliteration_position` "left" / "right", schema 30). **Line by line**
+   (`bilingual_aligned_rows`) gives each verse its own row instead, and in
+   Stacked puts each verse, its transliteration and its translation one
+   after another (`insertInterleavedLines_`, inserted last first so every
+   line follows the titles' formatting; `aligned-rows.test.js`).
 4. **Typography:** `getTypographySettings()` (`server/preferences.gs`)
    resolves each role: `sourceTitle` and `sefariaLink` (the translation
    title, plain and linked), `hebrewTitle` and `hebrewLink` (the source
