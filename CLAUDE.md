@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **784 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **791 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -240,7 +240,12 @@ and fix it before touching the feature you came to change.
   one row, or one block per language. And the side-by-side transliteration's
   `transliteration_position` (schema 30): below the Hebrew (the default, and
   anything unknown), or a column of its own left or right of it, per row with
-  Line by line; Stacked keeps it under the Hebrew.
+  Line by line; Stacked keeps it under the Hebrew, with several translations
+  too. The column's title is the Hebrew title transliterated and linked like
+  it, read in a pointed spelling (Sefaria's `heTitleVariants`, else the
+  Tanakh's book names in `server/transliterated-title.gs`; book numbers
+  Roman, numbers as in the Latin reference), else Sefaria's Latin reference,
+  never bare consonants.
 - `translation-availability.test.js` — a translation with no text for the
   passage is left out of the version list (greyed out with "Show unavailable
   translations"), languages hidden in Preferences → Search are left out, and a

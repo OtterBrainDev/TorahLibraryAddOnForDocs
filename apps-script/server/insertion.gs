@@ -775,6 +775,66 @@ function normalizeTransliterationPosition_(value) {
 }
 
 /**
+ * The transliteration as an insert writes it, for one payload: `scheme`
+ * (the caller's), else the stored `transliteration_scheme`; the stored
+ * dagesh mode and letter overrides; a Tanakh text read as Biblical Hebrew
+ * unless that setting is off.
+ *   read(html)  - any Hebrew.
+ *   whole(segmentedData, formattedData, includeLineMarkers) - the passage,
+ *               read from the Hebrew as fetched (vowels kept, the Hebrew
+ *               punctuation setting applied), with the Hebrew's line markers.
+ *               `segmentedData` is the payload before formatDataForPesukim,
+ *               `formattedData` after.
+ *   line(pair)  - one line of buildAlignedLinePairs_ ("Line by line"), read
+ *               from its own voweled Hebrew, with its line marker; empty for
+ *               a chapter heading.
+ *   title(data) - the transliteration column's title (transliterated-title.gs).
+ */
+function transliteratorFor_(scheme, prefs, data) {
+  const settings = prefs || {};
+  const schemeKey = scheme || settings.transliteration_scheme || "traditional";
+  const isBiblicalHebrewText = settings.transliteration_is_biblical_hebrew !== "false" && !!data && data.type == "Tanakh";
+  let overrideMap = {};
+  try {
+    overrideMap = JSON.parse(settings.transliteration_overrides || '{}') || {};
+  } catch (error) {
+    overrideMap = {};
+  }
+  const read = function (html) {
+    return transliterateHebrewHtmlPreservingBasicBreaks(html, schemeKey, {
+      keepNiqqud: true,
+      isBiblicalHebrew: isBiblicalHebrewText,
+      dageshMode: isBiblicalHebrewText ? (settings.transliteration_biblical_dagesh_mode || "none") : "none",
+      overrideMap: overrideMap
+    });
+  };
+  return {
+    read: read,
+    whole: function (segmentedData, formattedData, includeLineMarkers) {
+      const hebrew = segmentedData.pesukimFormatted === true ? formattedData.he
+        : formatDataForPesukim(Object.assign({}, segmentedData, { he: transliterationSourceOf_(segmentedData) }), includeLineMarkers).he;
+      const raw = hebrew ? read(hebrew) : "";
+      if (!formattedData.lineMarkersApplied || !raw) return raw;
+      return normalizeTransliterationLineMarkersToGematria(raw,
+        (Array.isArray(formattedData.lineMarkerNumbers) && formattedData.lineMarkerNumbers.length)
+          ? formattedData.lineMarkerNumbers
+          : ((formattedData.sections && formattedData.sections[1]) ? formattedData.sections[1] : 1));
+    },
+    line: function (pair) {
+      if (!pair || !pair.heRaw) return "";
+      let lineTransliteration = read(pair.heRaw);
+      if (pair.number != null) {
+        lineTransliteration = "(" + gematriya(pair.number, { punctuate: false }) + ") " + lineTransliteration;
+      }
+      return lineTransliteration;
+    },
+    title: function (titleData) {
+      return transliteratedTitle_(titleData, read);
+    }
+  };
+}
+
+/**
  * Stacked "Line by line" (`bilingual_aligned_rows`): each line of the source,
  * its transliteration, then its translation (each translation's, in order,
  * for a multi-translation insert), going down the page. A part a line lacks
@@ -902,55 +962,16 @@ function insertReference(data, opts) {
   }
   typography.sectionHeadingLines = data.sectionHeadingLines || [];
   const currentPrefs = getPreferences();
-  const transliterationScheme = options.transliterationScheme || currentPrefs.transliteration_scheme || "traditional";
-  const transliterationDageshMode = currentPrefs.transliteration_biblical_dagesh_mode || "none";
-  const transliterationIsBiblical = currentPrefs.transliteration_is_biblical_hebrew !== "false";
-  const isBiblicalHebrewText = transliterationIsBiblical && data.type == "Tanakh";
   const alignedRowsSetting = (options.alignedRows !== undefined) ? options.alignedRows : currentPrefs.bilingual_aligned_rows;
   const alignedRows = alignedRowsSetting === true || alignedRowsSetting === 'true';
   const transliterationPosition = normalizeTransliterationPosition_(
     (options.transliterationPosition !== undefined) ? options.transliterationPosition : currentPrefs.transliteration_position);
-  const transliterationOverrides = (() => {
-    try {
-      return JSON.parse(currentPrefs.transliteration_overrides || '{}') || {};
-    } catch (error) {
-      return {};
-    }
-  })();
-  // Read from the Hebrew as fetched (vowels kept, the Hebrew punctuation
-  // setting applied), joined with the same line markers as the Hebrew.
-  const transliterationHebrew = !includeTransliteration ? ""
-    : (segmentedData.pesukimFormatted === true ? data.he
-      : formatDataForPesukim(Object.assign({}, segmentedData, { he: transliterationSourceOf_(segmentedData) }), includeLineMarkers).he);
-  const transliterationTextRaw = (includeTransliteration && data.he && transliterationHebrew)
-    ? transliterateHebrewHtmlPreservingBasicBreaks(transliterationHebrew, transliterationScheme, {
-        keepNiqqud: true,
-        isBiblicalHebrew: isBiblicalHebrewText,
-        dageshMode: isBiblicalHebrewText ? transliterationDageshMode : "none",
-        overrideMap: transliterationOverrides
-      })
+  const transliterator = transliteratorFor_(options.transliterationScheme, currentPrefs, data);
+  const transliterationText = (includeTransliteration && data.he)
+    ? transliterator.whole(segmentedData, data, includeLineMarkers)
     : "";
-  const transliterationText = (data.lineMarkersApplied && transliterationTextRaw)
-    ? normalizeTransliterationLineMarkersToGematria(transliterationTextRaw,
-        (Array.isArray(data.lineMarkerNumbers) && data.lineMarkerNumbers.length)
-          ? data.lineMarkerNumbers
-          : ((data.sections && data.sections[1]) ? data.sections[1] : 1))
-    : transliterationTextRaw;
-  // "Line by line": one line's transliteration, read from its own voweled
-  // Hebrew, with its line marker. Empty for a chapter heading.
-  const transliterateLine = (pair) => {
-    if (!pair.heRaw) return "";
-    let lineTransliteration = transliterateHebrewHtmlPreservingBasicBreaks(pair.heRaw, transliterationScheme, {
-      keepNiqqud: true,
-      isBiblicalHebrew: isBiblicalHebrewText,
-      dageshMode: isBiblicalHebrewText ? transliterationDageshMode : "none",
-      overrideMap: transliterationOverrides
-    });
-    if (pair.number != null) {
-      lineTransliteration = "(" + gematriya(pair.number, { punctuate: false }) + ") " + lineTransliteration;
-    }
-    return lineTransliteration;
-  };
+  // "Line by line": one line's transliteration (transliteratorFor_).
+  const transliterateLine = transliterator.line;
   const sefariaUrl = `https://www.sefaria.org/${encodeURIComponent(data.ref || '').replace(/%20/g, '_')}`;
 
   const shouldAppendCitation = (insertCitationOnly === true || insertCitationOnly === "true");
@@ -1143,12 +1164,19 @@ function insertReference(data, opts) {
         hebTitle.editAsText().setLinkUrl(sefariaUrl);
       }
 
-      // The transliteration column has no title; its cell is filled like the
-      // others so the clean-up below leaves it one empty paragraph.
+      // The transliteration column's title: the Hebrew title transliterated
+      // (transliterated-title.gs), formatted and linked like the Hebrew title.
       if (transliterationColumn >= 0) {
-        table.getCell(0, transliterationColumn)
+        // Plain text, not HTML: a Latin reference is never markup.
+        let transliterationTitle = table.getCell(0, transliterationColumn)
           .setText("")
-          .insertParagraph(0, "");
+          .insertParagraph(0, transliterator.title(data));
+        transliterationTitle.setLeftToRight(true);
+        transliterationTitle.setAttributes(headerStyle);
+        applyTitleTypography(transliterationTitle, typography, insertHebrewSefariaLink, 'he');
+        if (insertHebrewSefariaLink) {
+          transliterationTitle.editAsText().setLinkUrl(sefariaUrl);
+        }
       }
 
       const fillBodyRow = (row, englishHtml, hebrewHtml, transliteration) => {
@@ -1321,6 +1349,9 @@ function buildSefariaVersionUrl_(ref, enVersionTitle, heVersionTitle) {
  * @param {boolean} [opts.pasukPreference]     Include line markers.
  * @param {boolean} [opts.alignedRows]         he-top: "Line by line" (see insertReference);
  *        omitted means the stored `bilingual_aligned_rows`.
+ * @param {boolean} [opts.includeTransliteration] he-top: the transliteration under the Hebrew
+ *        (with Line by line, under each Hebrew line), as insertReference writes it.
+ * @param {string}  [opts.transliterationScheme] Omitted means the stored `transliteration_scheme`.
  * @param {string}  [opts.preferredTitle]      Override displayed title (e.g. "Bereishit 1:1").
  * @param {boolean} [opts.includeTranslationSourceInfo] Append attribution.
  * @param {boolean} [opts.insertSefariaLink]   Hyperlink the translation titles to sefaria.org.
@@ -1370,14 +1401,23 @@ function insertReferenceVersions(ref, opts) {
   // with the Hebrew's before formatDataForPesukim joins them (it rewrites
   // the payload it is given). Null for any translation with no segments to
   // pair, which keeps the blocks.
+  let storedPrefs = null;
+  const prefs = function () { return storedPrefs || (storedPrefs = getPreferences() || {}); };
   let linePairLists = null;
   if (singleLanguage !== 'en') {
-    const alignedRowsSetting = (options.alignedRows !== undefined) ? options.alignedRows : getPreferences().bilingual_aligned_rows;
+    const alignedRowsSetting = (options.alignedRows !== undefined) ? options.alignedRows : prefs().bilingual_aligned_rows;
     if (alignedRowsSetting === true || alignedRowsSetting === 'true') {
       linePairLists = kept.map(function (entry) { return buildAlignedLinePairs_(entry.data, includeLineMarkers); });
       if (!linePairLists.every(Boolean)) linePairLists = null;
     }
   }
+  // The transliteration (Hebrew on top only), read from the first
+  // translation's payload as fetched, as insertReference reads it: the
+  // Hebrew is the same in every one.
+  const transliterator = (singleLanguage !== 'en' && options.includeTransliteration === true)
+    ? transliteratorFor_(options.transliterationScheme, prefs(), kept[0].data)
+    : null;
+  const firstSegmented = Object.assign({}, kept[0].data);
 
   // Always paragraphs (translation-only or Hebrew on top), so this can go
   // inside a table cell. A selection is kept, as it always was on this path.
@@ -1411,6 +1451,7 @@ function insertReferenceVersions(ref, opts) {
       includeTranslationSourceInfo: includeTranslationSourceInfo,
       insertSefariaLink: insertSefariaLink,
       insertHebrewSefariaLink: insertHebrewSefariaLink,
+      transliterator: transliterator,
       typography: typography,
       skipped: selection.skipped,
       notice: target.notice
@@ -1441,6 +1482,15 @@ function insertReferenceVersions(ref, opts) {
     heTextPara.setAttributes(noUnderline);
     applyRoleTypography_(heTextPara, typography, 'hebrew', { preserveSourceEmphasis: true });
     index += 2;
+
+    // Under the Hebrew, before the translations, as in a one-translation insert.
+    const transliterationText = (transliterator && firstData.he)
+      ? transliterator.whole(firstSegmented, firstData, includeLineMarkers)
+      : '';
+    if (transliterationText) {
+      insertTransliterationParagraphAfter(doc, index, transliterationText, typography, true);
+      index += 1;
+    }
   }
 
   // Each block is inserted at the same position, last block first. A new Docs
@@ -1501,8 +1551,9 @@ function insertReferenceVersions(ref, opts) {
 
 /**
  * insertReferenceVersions with "Line by line" (Hebrew on top): the Hebrew
- * title, each translation's title, then each Hebrew line followed by that
- * line of every translation, in the order picked (insertInterleavedLines_),
+ * title, each translation's title, then each Hebrew line (and its
+ * transliteration, with `settings.transliterator`) followed by that line of
+ * every translation, in the order picked (insertInterleavedLines_),
  * then the credits (the Hebrew edition's, then each translation's) and a
  * blank paragraph, as after the blocks.
  *
@@ -1551,7 +1602,7 @@ function insertReferenceVersionLines_(doc, index, kept, linePairLists, settings)
     const hebrewPair = linePairLists[0][r];
     lines.push({
       he: hebrewPair ? hebrewPair.he : '',
-      transliteration: '',
+      transliteration: (settings.transliterator && hebrewPair) ? settings.transliterator.line(hebrewPair) : '',
       translations: linePairLists.map(function (pairs, v) {
         return { html: pairs[r] ? pairs[r].en : '', typography: translationTypographies[v] };
       })

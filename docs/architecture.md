@@ -110,6 +110,9 @@ controls inline.
     to Sefaria's API (texts, search, dictionary, source sheets).
   - `insertion.gs` — writing sources into the document, including
     typography, attribution and multi-translation inserts.
+  - `transliterated-title.gs` — the title of the transliteration's own
+    column: the Hebrew title in a pointed spelling (Sefaria's, or the
+    Tanakh's built-in book names), through the text's transliteration.
   - `document-actions.gs` — Link Texts with Sefaria, Transform Divine
     Names, Insert Source from Selection, Unlink.
   - `linker-prefilter.gs`, `citation-abbreviations.gs` — the local

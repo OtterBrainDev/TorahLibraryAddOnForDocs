@@ -148,6 +148,9 @@ $('#insert-source').click(function () {
       bilingualLayout: bilingualLayout,
       // Stacked "Line by line": each Hebrew line, then that line of each translation.
       alignedRows: $('.wants-aligned-rows').is(':checked'),
+      // Stacked: under the Hebrew (each Hebrew line, with Line by line).
+      includeTransliteration: $('.include-transliteration').is(':checked'),
+      transliterationScheme: getSidebarTransliterationScheme(),
       pasukPreference: showPesukim,
       includeTranslationSourceInfo: includeTranslationSourceInfo,
       insertSefariaLink: insertSefariaLink,

@@ -225,7 +225,7 @@ Users can reorder, group and hide items in **Preferences → Menu Bar**.
 
 All Google Apps Script source files live under `apps-script/` (clasp rootDir):
 
-- `apps-script/server/*.gs` — server logic, one file per domain: `menu.gs` / `menu-layout.gs` (menu and dialogs), `sefaria-fetch.gs` and `search.gs` (Sefaria API), `insertion.gs` (writing sources into the document), `document-actions.gs` (linking, divine-name transforms, insert from selection), `linker-prefilter.gs` and `citation-abbreviations.gs` (linker support), `preferences.gs`, `text-processing.gs`, `sheets.gs`, `lexicon.gs`, `utils.gs`.
+- `apps-script/server/*.gs` — server logic, one file per domain: `menu.gs` / `menu-layout.gs` (menu and dialogs), `sefaria-fetch.gs` and `search.gs` (Sefaria API), `insertion.gs` (writing sources into the document) and `transliterated-title.gs` (the transliteration column's title), `document-actions.gs` (linking, divine-name transforms, insert from selection), `linker-prefilter.gs` and `citation-abbreviations.gs` (linker support), `preferences.gs`, `text-processing.gs`, `sheets.gs`, `lexicon.gs`, `utils.gs`.
 - `apps-script/triggers.gs` — the `onInstall` / `onOpen` simple triggers (kept at the root on purpose; see the file header).
 - `apps-script/appsscript.json` — Apps Script project manifest.
 - `apps-script/attribution.gs` — dual-mode (Apps Script + Node test) helper for translation/source attribution.

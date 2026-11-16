@@ -35,6 +35,18 @@ part and in profiles: `transliteration_position` (`below` / `left` /
   line. Stacked always puts it under the Hebrew, so *Position* shows side by
   side only (in Preferences, always, as the default). Link Texts' *Customize
   this insertion* offers it too.
+- **The transliteration column's title** is the Hebrew title, transliterated
+  with the text's scheme, and linked (in the linked style) when the Hebrew
+  title is. Sefaria's Hebrew titles have no vowels, and bare consonants
+  transliterate badly (`בראשית א׳:א׳-ב׳` read "Vrʾshyt ʾ:ʾ-v"), so the book's
+  title is read in a pointed spelling, Sefaria's own where it has one and
+  otherwise, for the 39 books of the Tanakh, a built-in list
+  (`server/transliterated-title.gs`), with the chapter and verse in digits
+  ("Bereʾshiyt 1:1-2", "Shemvʾel I 1:1"). A title with a word whose vowels
+  aren't known is shown as Sefaria's Latin reference ("Mishnah Berakhot 1:1").
+- **Fixed: Stacked with several translations dropped the transliteration.**
+  It now goes under the Hebrew, before the translations, as with one
+  translation; with *Line by line*, under each Hebrew line.
 - **The Arrangement icons sketch the result**: the transliteration as a
   strip under the Hebrew or a column of its own, and with *Line by line*, the
   lines (rows across the columns side by side; two lines in Stacked).

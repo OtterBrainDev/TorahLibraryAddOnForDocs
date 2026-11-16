@@ -151,4 +151,6 @@ test('every host reads and writes the position, and the sidebar sends it with ea
   assert.match(single, /transliterationPosition: ccNormalizeTranslitPosition\(effectivePreferences\.transliteration_position\)/);
   const multi = footer.slice(footer.indexOf('.insertReferenceVersions(data.ref, {'), footer.indexOf('.insertReference(data, {'));
   assert.match(multi, /alignedRows: \$\('\.wants-aligned-rows'\)\.is\(':checked'\)/, 'Stacked with several translations reads Line by line too');
+  assert.match(multi, /includeTransliteration: \$\('\.include-transliteration'\)\.is\(':checked'\)/, '...and its transliteration');
+  assert.match(multi, /transliterationScheme: getSidebarTransliterationScheme\(\)/);
 });
