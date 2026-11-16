@@ -348,13 +348,38 @@ test('transliteration column: a chapter heading row has an empty transliteration
   assert.deepEqual(tables[0].texts().map((row) => row[1]), ['Genesis 1:31-2:1', '', '(לא) tr:a', '', '(א) tr:b']);
 });
 
-// The column's title: the Hebrew title, transliterated (transliterated-title.gs).
+// The column's title: the Hebrew title in Latin letters (transliterated-title.gs).
+// TITLED has no Latin title for the Hebrew one, so it is transliterated;
+// LATIN_TITLED has Sefaria's.
 const TITLED = (extra) => Object.assign(VOWELED(), {
   indexTitle: 'Genesis', heIndexTitle: 'בראשית', type: 'Tanakh',
   heTitleVariants: ["ברא'", 'בר׳', 'בְּרֵאשִׁית', 'בראשית'],
 }, extra || {});
 
-test('the transliteration column\'s title is the Hebrew title transliterated, numbers as in the Latin reference', () => {
+const LATIN_TITLED = (extra) => TITLED(Object.assign({
+  // Sefaria's, as the texts API sends them (shortened): abbreviations,
+  // English names and transliterations, unmarked.
+  titleVariants: ['Bereshit', 'Gen', 'Gen.', 'Breishit', 'Bereishit', 'Bereishis', 'Genèse', 'Genesis'],
+}, extra || {}));
+
+test('the transliteration column\'s title is Sefaria\'s Latin title for the Hebrew one, numbers as in the Latin reference', () => {
+  const { context, tables } = loadInsert({});
+  context.insertReference(LATIN_TITLED(), {
+    bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true, transliterationPosition: 'left',
+    insertHebrewSefariaLink: true,
+  });
+  assert.equal(tables[0].texts()[0][1], 'Bereshit 1:1-2');
+  assert.equal(tables[0].links()[0][1], 'https://www.sefaria.org/Genesis_1%3A1-2');
+  // An Ashkenazi transliteration takes Sefaria's Ashkenazi spelling.
+  const ashkenazi = loadInsert({});
+  ashkenazi.context.insertReference(LATIN_TITLED(), {
+    bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true, transliterationPosition: 'left',
+    transliterationScheme: 'ashkenazi',
+  });
+  assert.equal(ashkenazi.tables[0].texts()[0][1], 'Bereishis 1:1-2');
+});
+
+test('without a Latin title from Sefaria, the column\'s title is the Hebrew title transliterated', () => {
   const { context, tables } = loadInsert({});
   context.insertReference(TITLED(), {
     bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true, transliterationPosition: 'left',
@@ -403,6 +428,56 @@ test('the title is read in a pointed spelling: Sefaria\'s, else the Tanakh\'s bo
     { hebrew: 'שִׁיר הַשִּׁירִים', bookNumber: '', address: ' 1:1-2:3' });
   assert.deepEqual(parts({ ref: 'Berakhot 2a:1-5', indexTitle: 'Berakhot', heIndexTitle: 'ברכות', heTitleVariants: ['בְּרָכוֹת', 'ברכות'] }),
     { hebrew: 'בְּרָכוֹת', bookNumber: '', address: ' 2a:1-5' });
+});
+
+// Sefaria's own lists (texts API titleVariants, shortened), in its order.
+const LATIN = {
+  genesis: { ref: 'Genesis 1:1', indexTitle: 'Genesis', heIndexTitle: 'בראשית', type: 'Tanakh',
+    titleVariants: ['Bereshit', 'Gen', 'Gen.', 'Breishit', 'Bereishit', 'Bereishis', 'Genèse', 'Genesis'] },
+  exodus: { ref: 'Exodus 20:2', indexTitle: 'Exodus', heIndexTitle: 'שמות', type: 'Tanakh',
+    titleVariants: ['Exod.', 'Ex.', 'Exo', 'Shmot', 'Shemot', 'Ex', 'Shemoth', 'Shemos', 'Exodus'] },
+  obadiah: { ref: 'Obadiah 1:1', indexTitle: 'Obadiah', heIndexTitle: 'עובדיה', type: 'Tanakh',
+    titleVariants: ['Ovadiah', 'Ob.', 'Oba.', 'Ovadyah', 'Abdias', 'Obad', 'Obadiah'] },
+  micah: { ref: 'Micah 6:8', indexTitle: 'Micah', heIndexTitle: 'מיכה', type: 'Tanakh',
+    titleVariants: ['Mic.', 'Mic', 'Mikha', 'Michah', 'Micha', 'Micah'] },
+  ezra: { ref: 'Ezra 1:1', indexTitle: 'Ezra', heIndexTitle: 'עזרא', type: 'Tanakh',
+    titleVariants: ['Ezr.', 'Ezr', 'Esdras', 'Ezra'] },
+  samuel: { ref: 'I Samuel 1:1', indexTitle: 'I Samuel', heIndexTitle: 'שמואל א', type: 'Tanakh',
+    titleVariants: ['I Sam.', '1Sam.', 'First Samuel', 'Samuel I', 'Shmuel Aleph', 'I Shmuel', 'II Shmuel', '1 Samuel'] },
+  kings: { ref: 'II Kings 2:1', indexTitle: 'II Kings', heIndexTitle: 'מלכים ב', type: 'Tanakh',
+    titleVariants: ['II Kgs.', 'Second Kings', 'I Melachim', 'Melachim Bet', 'II Kings'] },
+  berakhot: { ref: 'Berakhot 2a:1', indexTitle: 'Berakhot', heIndexTitle: 'ברכות', type: 'Talmud',
+    titleVariants: ['Berachoth', 'Berachot', 'Tractate Berakhot', 'Berachos', 'Ber.'] },
+  avot: { ref: 'Pirkei Avot 1:1', indexTitle: 'Pirkei Avot', heIndexTitle: 'משנה אבות', type: 'Mishnah',
+    titleVariants: ['Avot', 'M Avot', '<i>Mishnah Avot</i>', 'Mishnah Avot', 'Ethics of the Fathers'] },
+  rashi: { ref: 'Rashi on Genesis 1:1:1', indexTitle: 'Rashi on Genesis', heIndexTitle: 'רש"י על בראשית', type: 'Commentary',
+    titleVariants: ['Rashi on Bereshit', 'Rashi on Gen.', 'Rashi on Genesis'] },
+};
+
+test('Sefaria\'s Latin title is the one that spells the Hebrew title, read as the scheme reads it', () => {
+  const ctx = loadTitle();
+  const title = (data, scheme) => ctx.transliteratedTitle_(data, (hebrew) => 'tr:' + hebrew, scheme || 'traditional');
+  assert.equal(title(LATIN.genesis), 'Bereshit 1:1', 'not "Gen", "Genèse" or "Genesis"');
+  assert.equal(title(LATIN.genesis, 'ashkenazi'), 'Bereishis 1:1');
+  assert.equal(title(LATIN.exodus), 'Shmot 20:2');
+  assert.equal(title(LATIN.exodus, 'ashkenazi'), 'Shemos 20:2');
+  // A Tanakh book's main title is its English name: the variants come first.
+  assert.equal(title(LATIN.obadiah), 'Ovadiah 1:1');
+  // Abbreviations are not titles: with a period, or cut short of the vowel.
+  assert.equal(title(LATIN.micah), 'Mikha 6:8');
+  assert.equal(title(LATIN.ezra), 'Ezra 1:1');
+  // ש is "sh" before it is "s"; the book number must be this book's.
+  assert.equal(title(LATIN.samuel), 'Shmuel Aleph 1:1', 'not "Samuel I"');
+  assert.equal(title(LATIN.kings), 'Melachim Bet 2:1', 'not "I Melachim"');
+  // Elsewhere the main title is Sefaria's transliteration.
+  assert.equal(title(LATIN.berakhot), 'Berakhot 2a:1');
+  assert.equal(title(LATIN.berakhot, 'ashkenazi'), 'Berachos 2a:1');
+  // The Hebrew title is משנה אבות; marked-up variants are skipped.
+  assert.equal(title(LATIN.avot), 'Mishnah Avot 1:1');
+  // "Rashi on Bereshit" doesn't spell רש"י על בראשית, and not every word has
+  // vowels: the Latin reference.
+  assert.equal(title(LATIN.rashi), 'Rashi on Genesis 1:1:1');
+  assert.equal(ctx.sefariaLatinTitle_(LATIN.rashi, 'traditional'), '');
 });
 
 test('a title with a word whose vowels aren\'t known is Sefaria\'s Latin reference, never bare consonants', () => {

@@ -111,8 +111,9 @@ controls inline.
   - `insertion.gs` — writing sources into the document, including
     typography, attribution and multi-translation inserts.
   - `transliterated-title.gs` — the title of the transliteration's own
-    column: the Hebrew title in a pointed spelling (Sefaria's, or the
-    Tanakh's built-in book names), through the text's transliteration.
+    column: Sefaria's Latin title for the Hebrew one (picked from its
+    unmarked list by matching the Hebrew consonants), else the Hebrew title
+    transliterated from a pointed spelling, else the Latin reference.
   - `document-actions.gs` — Link Texts with Sefaria, Transform Divine
     Names, Insert Source from Selection, Unlink.
   - `linker-prefilter.gs`, `citation-abbreviations.gs` — the local

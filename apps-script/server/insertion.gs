@@ -788,7 +788,9 @@ function normalizeTransliterationPosition_(value) {
  *   line(pair)  - one line of buildAlignedLinePairs_ ("Line by line"), read
  *               from its own voweled Hebrew, with its line marker; empty for
  *               a chapter heading.
- *   title(data) - the transliteration column's title (transliterated-title.gs).
+ *   title(data) - the transliteration column's title (transliterated-title.gs):
+ *               Sefaria's Latin title for the Hebrew one where it has one,
+ *               else the Hebrew title read with this scheme.
  */
 function transliteratorFor_(scheme, prefs, data) {
   const settings = prefs || {};
@@ -829,7 +831,7 @@ function transliteratorFor_(scheme, prefs, data) {
       return lineTransliteration;
     },
     title: function (titleData) {
-      return transliteratedTitle_(titleData, read);
+      return transliteratedTitle_(titleData, read, schemeKey);
     }
   };
 }

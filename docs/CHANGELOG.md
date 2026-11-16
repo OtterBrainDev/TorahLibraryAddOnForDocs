@@ -35,15 +35,24 @@ part and in profiles: `transliteration_position` (`below` / `left` /
   line. Stacked always puts it under the Hebrew, so *Position* shows side by
   side only (in Preferences, always, as the default). Link Texts' *Customize
   this insertion* offers it too.
-- **The transliteration column's title** is the Hebrew title, transliterated
-  with the text's scheme, and linked (in the linked style) when the Hebrew
-  title is. Sefaria's Hebrew titles have no vowels, and bare consonants
-  transliterate badly (`בראשית א׳:א׳-ב׳` read "Vrʾshyt ʾ:ʾ-v"), so the book's
-  title is read in a pointed spelling, Sefaria's own where it has one and
-  otherwise, for the 39 books of the Tanakh, a built-in list
-  (`server/transliterated-title.gs`), with the chapter and verse in digits
-  ("Bereʾshiyt 1:1-2", "Shemvʾel I 1:1"). A title with a word whose vowels
-  aren't known is shown as Sefaria's Latin reference ("Mishnah Berakhot 1:1").
+- **The transliteration column's title** is the Hebrew title in Latin
+  letters, linked (in the linked style) when the Hebrew title is, with the
+  chapter and verse in digits (`server/transliterated-title.gs`):
+  - **Sefaria's own Latin name for the Hebrew title** where it has one:
+    "Bereshit 1:1-2", "Shmuel Aleph 1:1", "Ovadiah 1:1", "Berakhot 2a:1",
+    "Mishneh Torah, Hilchot Shabbos 1:1". Sefaria lists a work's Latin titles
+    without saying which is which ("Gen.", "Genesis", "Bereshit"), so the one
+    chosen is the one that spells the Hebrew title's consonants, read as the
+    transliteration's style reads them (ש as *sh*, ח as *ch*/*kh*, ת as *s*
+    in Ashkenazi: "Bereishis", "Berachos"). For a book of the Tanakh,
+    Sefaria's main title is its English name, so its other names come first;
+    abbreviations and marked-up names are never used. Every book of the
+    Tanakh has one.
+  - Otherwise, the Hebrew title transliterated in the text's style, read in
+    a pointed spelling (Sefaria's, or a built-in list of the Tanakh's book
+    names): Sefaria's Hebrew titles have no vowels, and bare consonants read
+    badly (`בראשית א׳:א׳-ב׳` read "Vrʾshyt ʾ:ʾ-v").
+  - Otherwise, Sefaria's Latin reference ("Rashi on Genesis 1:1:1").
 - **Fixed: Stacked with several translations dropped the transliteration.**
   It now goes under the Hebrew, before the translations, as with one
   translation; with *Line by line*, under each Hebrew line.
