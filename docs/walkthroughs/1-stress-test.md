@@ -55,7 +55,7 @@ Fixed; step 2.6 now depends on it.
 
 | Account | What it is | Why |
 | --- | --- | --- |
-| **A — upgrader** | Had a development build of *this* add-on (one that showed *Current line: 2.1* or earlier) with preferences you changed: a font, a divine-name rule, a layout. | Proves the migrations keep what users chose. |
+| **A — upgrader** | Had a development build of *this* add-on with preferences you changed: a font, a divine-name rule, a layout. | Proves the migrations keep what users chose. |
 | **B — fresh** | Has never installed any version. | Proves `onInstall` seeding and the first-run experience. |
 | **C — Sefaria for Google Docs user** | Has Sefaria's own *Sefaria for Google Docs* installed (menu: *Add Sources with Sefaria / Transform Divine Names / Link Texts with Sefaria*), and documents it inserted sources into. | Proves the path most users will take: a separate add-on, installed beside it. |
 

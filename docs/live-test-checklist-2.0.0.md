@@ -11,8 +11,7 @@ to Sefaria.
 **Version under test:** 2.0.0 · **preference schema:** 30 (both from
 `docs/VERSION.json`)
 Confirm both before starting — *Help & Support → About* should read
-**Current line: 2.0**. If it says 2.1, the push did not land: that was the
-development builds' number.
+**Current line: 2.0**. If it says anything else, the push did not land.
 
 It asks whether each change in the v2.0.0 changelog entry landed.
 [`walkthroughs/1-stress-test.md`](walkthroughs/1-stress-test.md) goes further,
@@ -24,8 +23,7 @@ Three accounts' worth of setup matters, because most of the risk is in what
 a user has before they open 2.0.0:
 
 - **Account A — upgrading tester.** Had a development build of this add-on
-  (one that showed *Current line: 2.1* or earlier) with preferences they
-  changed: a font, a divine-name rule, a layout. Do **not** reset
+  with preferences they changed: a font, a divine-name rule, a layout. Do **not** reset
   preferences. This is the account that proves the migrations (schemas up to
   30) keep what users chose. Take a screenshot of Preferences before the push.
 - **Account B — fresh install.** A Google account that has never had the

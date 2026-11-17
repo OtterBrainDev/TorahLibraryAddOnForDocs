@@ -50,13 +50,10 @@ The test pins the line: `VERSION_LINE` in `test/ui/version-manifest.test.js`
 is `'2.0'`. Starting 2.1 means changing that constant, `VERSION.json` and the
 surfaces in §3 in one commit.
 
-Because the number no longer says how big a change is, the CHANGELOG has to.
+Because the number doesn't say how big a change is, the CHANGELOG has to.
 A build's entry says in its first sentence when it changes a default or
 behaviour a user relied on, and every preference migration in it has a
 *Migration* note saying what existing users get.
-
-Development builds before 2.0.0 carried other numbers (the last was 2.1.0).
-They were never published, and those numbers are retired.
 
 ## 2. The coupling that actually matters
 

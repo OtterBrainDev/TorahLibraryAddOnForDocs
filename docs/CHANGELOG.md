@@ -13,11 +13,7 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 The first release published in the Google Workspace Marketplace, for people
 who use Sefaria's own add-on, *Sefaria for Google Docs* 1.0, and for new users.
 It is the whole add-on as described in this file: every section below, back to
-the 2026-04 cleanup pass, ships in 2.0.0.
-
-Builds tested before this release showed *Current line: 2.1* (and, before
-that, *2.0*) in Help → About. They were development builds, never published;
-the 2.1.0 number they carried is retired, and the next release is 2.0.1.
+the 2026-04 cleanup pass, ships in 2.0.0. The next release is 2.0.1.
 
 **Preference schema 30.** A new install starts at schema 30, and so does
 anyone coming from Sefaria for Google Docs, which stores no settings. A tester
@@ -117,8 +113,8 @@ No code, preference or migration change.
   they and the store listing point to, and the release commands.
   `version-manifest.test.js` checks each like a surface: in its file, with the
   full version (or, marked `line`, the line as About shows it), and with the
-  current schema where it names one. The stress test's reporting line, which
-  still said *2.1.0, schema 25*, now says *2.0.0, schema 30*.
+  current schema where it names one. The stress test's reporting line names
+  *2.0.0, schema 30*.
 - **`AGENTS.md` is `CLAUDE.md` again.** It had drifted (it still expected 248
   passing tests and lacked rules added since); it is now a copy, and
   `test/ui/agent-guides.test.js` fails if the two differ. The developer
@@ -1384,10 +1380,7 @@ Names behaves; they ship in 2.0.0.
 
 ## 2.0 development, August–September 2026: linking you can review, source credit, and Marketplace readiness
 
-> Numbered 2.1.0 during development (test builds showed *Current line: 2.1*,
-> marked "released" on 2026-09-22) and never published. It ships as part of
-> v2.0.0, above. Version numbers in this section are the ones in use at the
-> time.
+> Never published on its own: it ships as part of v2.0.0, above.
 
 Highlights: Link Texts with Sefaria shows its progress, asks about ambiguous
 citations and reports what it could not link, and uploads only likely-citation
@@ -1402,7 +1395,7 @@ Preference schema **13** — upgrading users are migrated on first open.
 > **Default change: source credit is now on.** New installs, and users
 > upgrading from the published add-on, get a small credit block (edition and
 > license) under every inserted source. Many Sefaria texts are CC-BY or
-> CC-BY-NC. Anyone already running this 2.1 build keeps the setting they had.
+> CC-BY-NC. Anyone already running an earlier build keeps the setting they had.
 > Turn it off in Preferences → Insertion.
 
 #### Fixed
@@ -1436,8 +1429,8 @@ Preference schema **13** — upgrading users are migrated on first open.
   on high-density screens.
 - **Help and Release Notes are written for users.** The About tab and the
   Release Notes dialog had developer notes in them ("UX and maintenance fork",
-  "Core 2.0 fork direction", "Deferred backlog"). They now describe what's new
-  in 2.1, what the add-on does, and its version history, and say that the
+  "Core 2.0 fork direction", "Deferred backlog"). They now describe what's new,
+  what the add-on does, and its version history, and say that the
   add-on is independent of Sefaria.
 - **Privacy policy lists every host the add-on's windows load from**
   (§2.2): jQuery and a stylesheet and font from Google, images from Sefaria,
@@ -1562,7 +1555,7 @@ Preference schema **13** — upgrading users are migrated on first open.
   tools, Versions and Preview, the 📰 Layout tray, Session Library, Quick
   Actions, Link Texts with Sefaria, divine names, every Preferences tab, the
   Menu Bar, and keyboard shortcuts — with a troubleshooting FAQ, a bug-report
-  checklist, and a user-facing "New in 2.1". `docs/google-docs-walkthrough.md`
+  checklist, and a user-facing *What's new*. `docs/google-docs-walkthrough.md`
   and the README's menu and layout sections were brought into line.
 - **Privacy policy: the browser-side sidebar history is now disclosed.** The
   Session Library, recent searches, and recent/starred Lexicon entries live in
@@ -1720,15 +1713,10 @@ rather than a bug here.
 - **`docs/versioning.md`** — what bumps what, and the coupling that matters: a
   new preference key needs a default, a migration, a schema bump, a manifest
   bump and a version bump, all in one commit. Includes a section for AI agents.
-- **`docs/live-test-checklist-2.0.0.md`** (named for 2.1.0 at the time) — the manual pass, covering what the
+- **`docs/live-test-checklist-2.0.0.md`** — the manual pass, covering what the
   119 automated tests structurally cannot: sidebar rendering, the CSP, the
   upgrade path, and anything that needs a real `DocumentApp` or a live Sefaria
   request.
-
-#### Changed
-
-- Version set to **2.1.0** (was 2.0). Surfaces updated in `help-modal.html` and
-  `release-notes.html`.
 
 ### Linker: recover clipped matches, separate the two failure kinds (2026-09)
 
