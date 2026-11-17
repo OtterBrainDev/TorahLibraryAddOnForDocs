@@ -194,7 +194,7 @@ side by side"*).
 
 ### Repository
 
-- [ ] `npm ci && npm test` — 281 passing, 0 failing, **0 skipped**
+- [ ] `npm ci && npm test` — 0 failing, **0 skipped** (`CLAUDE.md` has the expected passing count)
 - [ ] `bash pre_clasp_qc.sh apps-script` — exit 0
 - [ ] `grep -rn "getActiveUser\|getEffectiveUser\|getEmail" apps-script/` — empty
 - [ ] Every `UrlFetchApp` call still targets `sefaria.org`:
@@ -210,19 +210,22 @@ side by side"*).
 - [ ] Every external host the add-on's pages load is listed in `PRIVACY.md`
       §2.2 — `grep -rhoE "(src|href)=[\"']https?://[^\"' ]+" apps-script --include=*.html`
       plus any `@import`
-- [x] `docs/VERSION.json` `status: "released"` with a date, and the CHANGELOG's
-      `Unreleased` sections consolidated under one `v2.0.1` heading
-      (`test/ui/version-manifest.test.js` enforces both). The date is
-      2026-09-22; if the release goes out on another day, change it in both
-      files together
-- [ ] Tag the release commit `v2.0.1` and use the same text for the Apps
-      Script version: `clasp version "v2.0.1"`
+- [x] The CHANGELOG's sections consolidated under one `## v2.0.0 — … (release
+      pending)` heading, and `docs/VERSION.json` at `2.0.0`,
+      `status: "pending-release"`
+- [ ] On release day: in `docs/VERSION.json` set `status: "released"` and
+      `released` to the date, and put the same date in place of `(release
+      pending)` in the CHANGELOG heading (`test/ui/version-manifest.test.js`
+      checks that the two agree)
+- [ ] Tag the release commit `v2.0.0` and use the same text for the Apps
+      Script version: `clasp version "v2.0.0"`
 
 ### Live
 
-- [ ] `docs/live-test-checklist-2.0.1.md` passed against a test deployment,
-      including a fresh install (the menu must appear without reloading) and an
-      upgrade from the previous version
+- [ ] `docs/live-test-checklist-2.0.0.md` passed against a test deployment,
+      with all three accounts: a fresh install (the menu must appear without
+      reloading), a user of Sefaria for Google Docs, and an upgrade from a
+      development build
 - [ ] Privacy policy and terms reachable at the console URLs, and current
 - [ ] The in-app privacy link (Preferences, Help → About) opens the same policy
 
@@ -274,7 +277,7 @@ So a release is:
    be matched later:
 
    ```bash
-   clasp version "v2.0.1"      # prints the new version number, e.g. 14
+   clasp version "v2.0.0"      # the add-on version; prints the script version number, e.g. 14
    ```
 
    (Or *Project history → New version* in the Apps Script editor.)

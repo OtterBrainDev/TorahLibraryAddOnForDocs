@@ -309,6 +309,25 @@
       .faq details[open] summary { margin-bottom: 8px; }
       [dir="rtl"], .he { font-family: "Frank Ruhl Libre", "SBL Hebrew", "Times New Roman", serif; }
       .he { font-size: 1.1em; }
+      /* About → New in 2.0: one group per area, folded; a tag on each item. */
+      .tag {
+        display: inline-block;
+        margin-right: 6px;
+        padding: 0 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        line-height: 18px;
+        text-transform: uppercase;
+        vertical-align: 1px;
+      }
+      .tag-new { background: var(--selected); color: #fff; }
+      .tag-improved { background: var(--selected-soft); color: var(--selected); box-shadow: inset 0 0 0 1px var(--selected); }
+      .whats-new summary .teaser { font-weight: 400; color: var(--muted); }
+      .whats-new details ul { list-style: none; padding-left: 0; margin: 10px 0 0; }
+      .whats-new details li + li { margin-top: 10px; }
+      .whats-new .where { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--muted); }
       .hero + .card { margin-top: 12px; }
       ul + p, ol + p, table + p { margin-top: 10px; }
     </style>
@@ -1012,7 +1031,7 @@
             <h2>About</h2>
             <p>Torah Library brings Sefaria's library into Google Docs: find a source, preview it, and insert it formatted the way you want. It is not an official Sefaria project.</p>
             <div class="meta-row" style="margin-top:10px;">
-              <span class="meta-pill">Version 2.0.1</span>
+              <span class="meta-pill">Current line: 2.0</span>
               <button type="button" class="meta-pill" id="open-release-notes" onclick="google.script.run.releaseNotesPopup()">What's new</button>
               <a class="meta-pill" target="_blank" href="https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" rel="noopener noreferrer">Privacy policy</a>
               <a class="meta-pill" target="_blank" href="https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs" rel="noopener noreferrer">GitHub</a>
@@ -1020,19 +1039,131 @@
             </div>
           </section>
 
-          <section class="card">
-            <h2>New in 2.0.1</h2>
-            <ul>
-              <li><strong>Reorganised Preferences.</strong> Fonts are laid out the same way for title, Hebrew, transliteration and translation (now set beside what they style, in <span class="ui-label">Preferences → Insertion</span>), and linking settings have their own <span class="ui-label">Linking</span> tab.</li>
-              <li><strong>Link Texts with Sefaria shows its work.</strong> Progress while it scans, a review table with separate Link and Insert choices, a question when a citation could mean more than one source, and an honest count of what it couldn't link.</li>
-              <li><strong>Less of your document leaves your computer.</strong> Linking sends only passages that look like citations, unless you choose otherwise.</li>
-              <li><strong>Text that fits your document.</strong> Fonts and sizes match the text where you insert; titles can be headings; every role has text colour and highlight; the source's own bold and italics are kept.</li>
-              <li><strong>Several translations in one go</strong>, each in its own block.</li>
-              <li><strong>Sources are credited.</strong> Each inserted source gets a small credit line naming its translation and Hebrew edition and their licenses. It is on by default; turn it off in <span class="ui-label">Preferences</span>.</li>
-              <li><strong>Better search.</strong> Traditional citations like <em>Hil. Shabbat 1:1</em> and Hebrew abbreviations like <span class="he" dir="rtl">רמב״ם</span> work, and a search that finds nothing suggests related titles.</li>
-              <li><strong>Your own menu.</strong> Reorder, hide and group menu items in <span class="ui-label">Preferences → Menu Bar</span>.</li>
-              <li><strong>Divine names:</strong> <span class="he" dir="rtl">יי</span> is now offered for <span class="he" dir="rtl">יהוה</span> and is the default for new users. If you used the add-on before, your existing choices are kept.</li>
-            </ul>
+          <section class="card whats-new" id="whats-new">
+            <h2>New in 2.0</h2>
+            <p>Torah Library 2.0 is the first release in the Google Workspace Marketplace. Below is everything new or improved compared with Sefaria's own add-on, Sefaria for Google Docs 1.0, grouped by where you'll find it. Where that add-on's commands went, and what works differently, is in <a href="#coming-from-sefaria">Coming from Sefaria for Google Docs</a>.</p>
+            <p class="small"><span class="tag tag-new">New</span>not in Sefaria for Google Docs 1.0 &nbsp; <span class="tag tag-improved">Improved</span>in 1.0 in a simpler form</p>
+            <details>
+              <summary>Finding a text <span class="teaser">search as you type, traditional citations, close matches, three tabs</span></summary>
+              <ul>
+                <li><span class="tag tag-improved">Improved</span><strong>Search as you type.</strong> Type a reference in English or Hebrew (<span class="he" lang="he" dir="rtl">בראשית א:א</span>), a title, a phrase or a sefaria.org link. Matching books and passages come first, then full-text results grouped by corpus. <span class="where">Extensions → Torah Library → Texts</span></li>
+                <li><span class="tag tag-new">New</span><strong>Traditional citations.</strong> <em>Hil. Shabbat 1:1</em> finds <em>Mishneh Torah, Hilchot Shabbat 1:1</em>, and Hebrew references work with any style of quotation mark, geresh or gershayim. <span class="where">The search box</span></li>
+                <li><span class="tag tag-new">New</span><strong>Close matches and suggestions.</strong> Near-misses for what you typed (a typo, a missing word, a different spelling) are listed under <em>Close matches</em>, with your chapter and verse kept. A search that finds nothing suggests titles instead of an empty panel, and titles don't need Sefaria's exact punctuation. <span class="where">The search box</span></li>
+                <li><span class="tag tag-new">New</span><strong>Your order of corpora.</strong> Reorder the corpus groups in the results (Tanakh, Mishnah, Talmud and the rest), or hide the ones you don't use. <span class="where">Preferences → Search</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>No dead ends at book headings.</strong> A heading with no text of its own, such as <em>Mishneh Torah</em>, is left out of the matches, and a note says what to add: a chapter, a siman or a verse. <span class="where">The search box</span></li>
+                <li><span class="tag tag-new">New</span><strong>Hebrew keyboard and shortcuts.</strong> An on-screen Hebrew keyboard with a row for vowels. Press <kbd>/</kbd> to jump to the search box, <kbd>↑</kbd> <kbd>↓</kbd> to move through results, and <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> to add the source; see <a href="#shortcuts">Keyboard shortcuts</a>. <span class="where">⌨︎ beside the search box</span></li>
+                <li><span class="tag tag-new">New</span><strong>One search, three tabs.</strong> Typing searches the tab you're in. Enter also searches Voices and the Lexicon in the background, so their results are ready when you switch, and each tab keeps its own results and selection. <span class="where">Texts · Voices · Lexicon, under the search box</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Previewing and inserting <span class="teaser">preview first, saved defaults, several translations, Insert Source from Selection</span></summary>
+              <ul>
+                <li><span class="tag tag-new">New</span><strong>Preview first.</strong> Clicking a result shows exactly what will go in, with your vowel and divine-name settings applied. Nothing enters your document until you click Add Source. <span class="where">The sidebar's Preview</span></li>
+                <li><span class="tag tag-new">New</span><strong>Saved defaults.</strong> Choose once how sources go in: Hebrew, translation or both, the arrangement, vowels and fonts. Sefaria for Google Docs asked for each source and remembered nothing. <span class="where">Preferences → Insertion</span></li>
+                <li><span class="tag tag-new">New</span><strong>Insertion Options for now.</strong> Change the layout and formatting for the sources you're adding now without touching your defaults. <em>Save as defaults</em> keeps them. <span class="where">📰 Insertion Options, under Add Source</span></li>
+                <li><span class="tag tag-new">New</span><strong>Several translations at once.</strong> Pick more than one translation in Versions. Each goes in as its own block under its own title, all formatted alike. The filter box finds a translation by its language's name: <em>French</em>, <em>français</em> or <span class="he" lang="he" dir="rtl">צרפתית</span>. <span class="where">Versions, under the preview</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Only translations that have the text.</strong> Versions lists only the translations that have text for this exact passage, and you can hide translation languages you never use. <span class="where">Preferences → Search → Translation Languages</span></li>
+                <li><span class="tag tag-new">New</span><strong>Insert Source from Selection.</strong> Select a reference you typed, such as <em>Psalms 92:1</em>, and run the command. The citation becomes the source, titled with your words. <span class="where">Extensions → Torah Library → Insert Source from Selection</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Cleaner inserted text.</strong> No stray HTML tags or entity codes. The source's bold and italics are kept, and verse numbers come from Sefaria. <span class="where">Every insert</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Ranges across chapters.</strong> <em>Genesis 1:31–2:3</em> gets a heading where each chapter starts (<em>Chapter 2</em>, <span class="he" lang="he" dir="rtl">פרק ב</span>), and the verse numbers restart with it. <span class="where">Inserts with Line numbers on</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Inserting inside a table.</strong> With the cursor in a table cell, one language or the Stacked layout goes into the cell. Side-by-side layouts go just below the table, and the sidebar says so. Headers, footers and footnotes get a message instead. <span class="where">Cursor in a table cell</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Layout <span class="teaser">three arrangements, line by line, line numbers, credit, headings</span></summary>
+              <ul>
+                <li><span class="tag tag-improved">Improved</span><strong>Three arrangements.</strong> Hebrew on the right (as in Sefaria for Google Docs), Hebrew on the left, or Stacked with the Hebrew above the translation. Or insert the Hebrew or the translation alone. <span class="where">📰 Insertion Options → Display, Arrangement</span></li>
+                <li><span class="tag tag-new">New</span><strong>Line by line.</strong> Each verse beside its translation in its own table row. With Stacked, each verse is followed by its translation down the page. <span class="where">📰 Insertion Options → Line by line</span></li>
+                <li><span class="tag tag-new">New</span><strong>Line numbers.</strong> Number each verse or line, using Sefaria's own numbering. <span class="where">📰 Insertion Options → Line numbers</span></li>
+                <li><span class="tag tag-new">New</span><strong>Source credit.</strong> A small block under each source names the translation, the Hebrew edition and their licenses. Many Sefaria texts are CC-BY or CC-BY-NC, which ask for this credit. <span class="where">📰 Insertion Options → Citation</span></li>
+                <li><span class="tag tag-new">New</span><strong>Titles as headings.</strong> Inserted titles can be Heading 1 to 6, so they show in the document outline and table of contents. <span class="where">Preferences → Insertion → Layout → Title style</span></li>
+                <li><span class="tag tag-new">New</span><strong>Transliteration in its own column.</strong> Side by side, put the transliteration under the Hebrew or in a column of its own to the left or right of it, titled in Latin letters (<em>Bereshit 1:1</em>). <span class="where">📰 Insertion Options → Transliteration → Position</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Hebrew and translation formatting <span class="teaser">vowels, cantillation, punctuation, transliteration, commentary, fonts</span></summary>
+              <ul>
+                <li><span class="tag tag-improved">Improved</span><strong>Vowels: Off, Tanakh or On.</strong> Keep the niqqud everywhere, only in Tanakh, or nowhere. <span class="where">📰 Insertion Options → Source</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Cantillation: Off, Tanakh or Torah.</strong> Keep the ta'amim throughout Tanakh, only in the Five Books of the Torah, or leave them out. <span class="where">📰 Insertion Options → Source</span></li>
+                <li><span class="tag tag-new">New</span><strong>Punctuation on or off.</strong> Set separately for the Hebrew and the translation. Off removes the sof pasuq, paseq, the {<span class="he" lang="he" dir="rtl">פ</span>} and {<span class="he" lang="he" dir="rtl">ס</span>} markers, commas and periods. Abbreviations such as <span class="he" lang="he" dir="rtl">רש"י</span> and numbers stay. <span class="where">📰 Insertion Options → Source, Translation</span></li>
+                <li><span class="tag tag-new">New</span><strong>Transliteration.</strong> Add a Latin-letter transliteration under the Hebrew, in the style you choose. <span class="where">📰 Insertion Options → Source → Transliteration</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Transliteration that reads naturally.</strong> The Name reads <em>HaShem</em>. Sentences, and the names of people and places, start with a capital letter (<em>Mosheh</em>, <em>miMitserayim</em>). <span class="where">📰 Insertion Options → Transliteration → Style</span></li>
+                <li><span class="tag tag-new">New</span><strong>Commentary: Default, Combine or Drop.</strong> For translations that set the direct translation in bold with commentary around it, such as the Steinsaltz Talmud: keep it as Sefaria marks it, run the two together, or leave the commentary out. Italics is always kept. <span class="where">📰 Insertion Options → Translation → Commentary</span></li>
+                <li><span class="tag tag-new">New</span><strong>Fonts that match your document.</strong> Sources take the font and size of the text where you insert. Or choose your own fonts and sizes for the Hebrew, transliteration and translation. <span class="where">Preferences → Insertion, the font buttons</span></li>
+                <li><span class="tag tag-new">New</span><strong>Colour and highlight.</strong> Text colour and highlight for the titles, Hebrew, transliteration and translation, and your own look for the source's bold and italics. <span class="where">Preferences → Insertion, the font buttons</span></li>
+                <li><span class="tag tag-new">New</span><strong>Two titles, set separately.</strong> Link the Hebrew title and the translation title to Sefaria each on its own, give each its own font, and choose whether a linked title names its edition. <span class="where">📰 Insertion Options → Source, Translation</span></li>
+                <li><span class="tag tag-new">New</span><strong>Formatting by translation language.</strong> Give translations in one language, say French, their own font, size and style. <span class="where">Preferences → Insertion → Translation → Text font</span></li>
+                <li><span class="tag tag-new">New</span><strong>Citation style.</strong> The font, size, colour and highlight of the credit line under each source. <span class="where">Preferences → Insertion → Layout → Citation style</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>No more empty boxes for cantillation.</strong> Many Hebrew fonts, such as David Libre, Frank Ruhl Libre and Heebo, have no cantillation marks. The missing marks are set in Noto Hebrew, and your letters stay in your font. <span class="where">Automatic</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Divine names <span class="teaser">your spelling, vowels kept, Transform asks first</span></summary>
+              <ul>
+                <li><span class="tag tag-new">New</span><strong>Your spelling, saved.</strong> Choose <span class="he" lang="he" dir="rtl">יי</span>, <span class="he" lang="he" dir="rtl">ה'</span>, <span class="he" lang="he" dir="rtl">יקוק</span> or <span class="he" lang="he" dir="rtl">השם</span>, or type your own, plus an English form such as <em>G-d</em>. It applies as sources go in and when you run Transform Divine Names. The <span class="he" lang="he" dir="rtl">יה</span> rule matches only the whole word, so <span class="he" lang="he" dir="rtl">יהודה</span> is left alone. <span class="where">Preferences → Insertion → Divine Name Mappings</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Vowels and cantillation kept.</strong> A substitute keeps the Name's marks: <span class="he" lang="he" dir="rtl">יְהוָ֥ה</span> becomes <span class="he" lang="he" dir="rtl">יְיָ֥</span>, and <span class="he" lang="he" dir="rtl">אֱלֹהִ֑ים</span> becomes <span class="he" lang="he" dir="rtl">אֱלוֹקִ֑ים</span>. <span class="where">Every insert, and Transform Divine Names</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Transform Divine Names asks first.</strong> It says what it will change (the body of the tab you have open), lists the rules that are on, asks before changing anything, and reports how many names it replaced. <span class="where">Extensions → Torah Library → Quick Actions → Transform Divine Names</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Link Texts with Sefaria <span class="teaser">progress, a review, Link and Insert, what didn't match</span></summary>
+              <ul>
+                <li><span class="tag tag-improved">Improved</span><strong>Progress and a report.</strong> The command opens a dialog at once, shows progress while it scans, links the citations it is sure of, and tells you what it did. <span class="where">Extensions → Torah Library → Quick Actions → Link Texts with Sefaria</span></li>
+                <li><span class="tag tag-new">New</span><strong>It asks when a citation is ambiguous.</strong> When a citation could mean more than one text, you see each candidate with its Hebrew title and an excerpt, and you choose. <span class="where">The Link Texts review</span></li>
+                <li><span class="tag tag-new">New</span><strong>Link, Insert, or both.</strong> Each citation can be linked, have the source's text inserted below the paragraph that cites it, or both. <span class="where">The Link Texts review, the Link and Insert columns</span></li>
+                <li><span class="tag tag-new">New</span><strong>Choose how it reviews.</strong> Show a summary and ask about ambiguous citations (the default), review every match before linking, or just link and report a count. <span class="where">Preferences → Linking</span></li>
+                <li><span class="tag tag-new">New</span><strong>Why a citation didn't match.</strong> A <em>Not matched</em> list shows each citation in its sentence, the spellings tried and why none matched: <em>Genesis</em> ends at chapter 50, a book name Sefaria doesn't know, or an <em>ibid.</em> Unmatched citations are first retried with the search box's spellings. <span class="where">The Link Texts review, under the table</span></li>
+                <li><span class="tag tag-new">New</span><strong>Customize this insertion.</strong> Set the layout and formatting for one batch of inserts without changing your defaults. <span class="where">The Link Texts review → 📰 Customize this insertion</span></li>
+                <li><span class="tag tag-new">New</span><strong>Unlink Sources.</strong> Removes every sefaria.org link from the document and leaves the words in place. <span class="where">Extensions → Torah Library → Quick Actions → Unlink Sources</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Voices: source sheets <span class="teaser">search sheets, topics, transliteration</span></summary>
+              <ul>
+                <li><span class="tag tag-new">New</span><strong>The Voices tab.</strong> Search Sefaria's source sheets and insert a sheet's citation, its text, or both. <span class="where">The sidebar's Voices tab</span></li>
+                <li><span class="tag tag-new">New</span><strong>Sheets grouped by topic.</strong> Torah Portions, Shabbat &amp; Holidays, Prayer, Halakhah and more. Hide a topic with one click, or save the order you like. Each sheet shows its author and topics. <span class="where">Preferences → Search → Voices Topics</span></li>
+                <li><span class="tag tag-new">New</span><strong>Transliteration for sheets.</strong> Each Hebrew passage of an inserted sheet can be followed by its transliteration in parentheses. <span class="where">Voices → Transliteration</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Lexicon: Sefaria's dictionaries <span class="teaser">look up a word, several dictionaries at once</span></summary>
+              <ul>
+                <li><span class="tag tag-new">New</span><strong>The Lexicon tab.</strong> Look up a Hebrew or Aramaic word in Klein, BDB, Jastrow, Strong's and Ben-Yehuda, and insert the entry. <span class="where">The sidebar's Lexicon tab</span></li>
+                <li><span class="tag tag-new">New</span><strong>Several dictionaries at once.</strong> Each word is one row showing what every dictionary says it means. Pick entries from several dictionaries and insert them together, with each dictionary's own sense numbers. An English word finds the Hebrew words that mean it. <span class="where">The sidebar's Lexicon tab</span></li>
+                <li><span class="tag tag-new">New</span><strong>Your dictionaries, your order.</strong> Show or hide a dictionary's entries with one click, and save the order you want or hide the dictionaries you don't use. <span class="where">Preferences → Search → Lexicon Dictionaries</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Session Library and Quick Actions <span class="teaser">what you've inserted, pins, Gematriya Count, Surprise Me</span></summary>
+              <ul>
+                <li><span class="tag tag-new">New</span><strong>Session Library.</strong> What you've inserted recently, with pins for the sources you come back to and <em>Copy References</em> for a list of everything you used. <span class="where">📜 in the sidebar</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Pins in every tab.</strong> Pin source sheets and dictionary words as well as texts. Opening a pin goes back to its own tab and the search that found it. <span class="where">📌 beside a result</span></li>
+                <li><span class="tag tag-new">New</span><strong>Quick Actions panel.</strong> Insert from Selection, Transform Divine Names and Link Texts, one click away in the sidebar. <span class="where">🏃 in the sidebar</span></li>
+                <li><span class="tag tag-new">New</span><strong>Gematriya Count.</strong> Totals the gematria of the Hebrew you've selected, or of the whole document if nothing is selected. <span class="where">Extensions → Torah Library → Quick Actions → Gematriya Count</span></li>
+                <li><span class="tag tag-new">New</span><strong>Surprise Me.</strong> An optional random source to explore, inserted with your saved Insertion defaults. Turn it on in Preferences → 🧪 Experimental. <span class="where">Extensions → Torah Library → Surprise Me</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Your settings <span class="teaser">first-run setup, Simple or Everything, menu, sidebar, profiles, settings files</span></summary>
+              <ul>
+                <li><span class="tag tag-new">New</span><strong>A short setup the first time.</strong> Three questions, with a live preview: what you'll use it for, how sources should look, and how much to show. Choose <em>I've used Sefaria for Google Docs</em> to start from the look you know. <span class="where">Quick start → Run setup again</span></li>
+                <li><span class="tag tag-new">New</span><strong>Simple or Everything.</strong> Simple shows search, preview and insert with a shorter menu. Everything shows every tool. Switching only hides or shows things and never changes a setting. <span class="where">Preferences → Interface</span></li>
+                <li><span class="tag tag-new">New</span><strong>Arrange the menu.</strong> Reorder the menu, move items into Quick Actions, and hide what you don't use. <span class="where">Preferences → Menu Bar</span></li>
+                <li><span class="tag tag-new">New</span><strong>Choose what the sidebar shows.</strong> Hide the Voices or Lexicon tab, Quick Actions buttons, or Insertion Options controls you don't use. <span class="where">Preferences → Sidebar</span></li>
+                <li><span class="tag tag-new">New</span><strong>Profiles.</strong> Keep named sets of how sources look and switch between them in a click: transliteration on for a primary class, vowels off for adults. <span class="where">Preferences → Profiles (Everything)</span></li>
+                <li><span class="tag tag-new">New</span><strong>Settings files.</strong> Export your settings to a file to hand to a class, or import an organization's house style and choose which parts to apply. <span class="where">Preferences → Advanced</span></li>
+              </ul>
+            </details>
+            <details>
+              <summary>Help, privacy and reliability <span class="teaser">fewer permissions, a privacy policy, searchable Help</span></summary>
+              <ul>
+                <li><span class="tag tag-improved">Improved</span><strong>Fewer permissions.</strong> It doesn't ask for your email address or profile. It uses only the document it's open in, its own windows, its settings and Sefaria. <span class="where">Google's permission screen, at install</span></li>
+                <li><span class="tag tag-new">New</span><strong>A written privacy policy.</strong> No server, no account and no analytics. The policy says exactly what goes to Sefaria, and when. <span class="where">The Privacy policy link above</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Help you can search.</strong> Help, Support and About tabs, with a search box, troubleshooting and the keyboard shortcuts. <span class="where">Extensions → Torah Library → Help &amp; Support</span></li>
+                <li><span class="tag tag-new">New</span><strong>A Help topic for Sefaria for Google Docs users.</strong> Where that add-on's commands went, what stays the same and what works differently: <a href="#coming-from-sefaria">Coming from Sefaria for Google Docs</a>. <span class="where">Help → Quick start</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Clearer messages.</strong> The sidebar says what it's doing (<em>Inserting into your document…</em>, <em>Searching Sefaria…</em>), and says when Sefaria can't be reached instead of reporting no match. <span class="where">The sidebar</span></li>
+              </ul>
+            </details>
             <p class="small">The full technical record is in the project's changelog on GitHub.</p>
           </section>
 

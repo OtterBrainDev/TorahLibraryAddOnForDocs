@@ -89,10 +89,11 @@ AGENTS.md still expected 248 passing tests.)
 
 ## Versions: keep them in sync
 
-The add-on is on the **2.0 line**: every release is the next build, 2.0.1,
-2.0.2, 2.0.3, whatever it contains. Never write a 2.1 or a 3.0 for this
-add-on: leaving the 2.0 line is the maintainers' decision, not a release
-step (`docs/versioning.md` §1).
+Every release is the next **2.0.X** build: 2.0.0 is the first Marketplace
+release, then 2.0.1, 2.0.2 and so on, whatever a build contains. The line moves
+to 2.1, and MAJOR moves at all, only when the owner asks for it in so many
+words; never move it yourself (`docs/versioning.md` §1). `VERSION_LINE` in
+`test/ui/version-manifest.test.js` pins it.
 
 The number is decided in one place, `docs/VERSION.json`. Every other copy
 follows it:
@@ -100,10 +101,10 @@ follows it:
 | Where | What it says | Kept in sync by |
 | --- | --- | --- |
 | `docs/VERSION.json` | `version`, `previous`, `status`, `released`, `prefsSchemaVersion` | — (the source) |
-| Its `surfaces`: Help → About and the release notes | `Version 2.0.1` and *New in 2.0.1*: the full version, build included | `test/ui/version-manifest.test.js` |
-| Its `docs`: the walkthroughs, the Google Docs walkthrough, the store listing's release steps | the version under demo or test (with the schema, where it is named), the current live test checklist, and `v2.0.1` in the release commands | `test/ui/version-manifest.test.js` |
-| `docs/CHANGELOG.md` | `## Unreleased` until release, then a `## v<version> — … (date)` heading | `test/ui/version-manifest.test.js`, once `status` is `released` |
-| `docs/live-test-checklist-<version>.md` | the release's live test checklist, named for it | by hand |
+| Its `surfaces`: Help → About and the release notes | `Current line: 2.0` and `Version 2.0`: the line only, so a 2.0.X build leaves them as they are | `test/ui/version-manifest.test.js` |
+| Its `docs`: the walkthroughs, the Google Docs walkthrough, the store listing's release steps | the version under demo or test (with the schema, where it is named), the live test checklist they point to, and `v2.0.0` in the release commands; a copy marked `line` shows `2.0` | `test/ui/version-manifest.test.js` |
+| `docs/CHANGELOG.md` | `## v<version> — … (release pending)` until release, then its date; later work under `## Unreleased` until the next build | `test/ui/version-manifest.test.js` |
+| `docs/live-test-checklist-<version>.md` | the build's live test checklist, named for it | by hand |
 | Outside the repository | `clasp version "v<version>"` and the git tag `v<version>` | by hand |
 
 - **Change them all in one commit, the release commit** (`docs/versioning.md`
@@ -114,9 +115,10 @@ follows it:
   same commit, or it isn't written.** The test can only protect the copies
   it is told about.
 - **`prefsSchemaVersion` moves on its own clock:** with every migration, in
-  that migration's commit (hard rule 1). The version moves at release. A
-  listed copy that names both (`2.0.1, schema 30`) is checked for both.
-- **Dated records keep their number:** a CHANGELOG heading, a past release's
+  that migration's commit (hard rule 1), and never resets. The version moves
+  at release. A listed copy that names both (`2.0.0, schema 30`) is checked
+  for both.
+- **Dated records keep their number:** a CHANGELOG heading, a past build's
   live test checklist, a design doc's target. Don't list them, and don't
   rewrite them at the next release.
 - **Before committing a version change, look for stragglers:**
@@ -159,7 +161,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **813 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **COUNT_TBD passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -461,14 +463,19 @@ and in `test/ui/`:
   "Customize this insertion" panel is the shared insertion options, sends
   its settings with each insert, and saves only on "Save as defaults".
 - `version-manifest.test.js` — `docs/VERSION.json` against the schema
-  version, the migrations that must exist for it, and every surface and doc
-  it lists: each carries the full version, build included, and the current
-  schema where it names one (see *Versions: keep them in sync*).
+  version, the migrations that must exist for it, the release line (a
+  2.0.X build until the owner asks for 2.1), the CHANGELOG heading and its
+  date, every surface that shows a version string, and every doc that names
+  the version (with the current schema where it names one; see *Versions:
+  keep them in sync*).
 - `agent-guides.test.js` — `CLAUDE.md` and `AGENTS.md` are identical.
 - `embedded-json.test.js` — server data force-printed into an inline
   `<script>` goes through `toEmbeddedJson_`.
 - `csp-coverage.test.js` — every entry page carries the same
   Content-Security-Policy.
+- `help-links.test.js` — every link inside Help & Support lands on a topic
+  that exists (a renamed topic's links did nothing), and About → New in 2.0
+  tags each item New or Improved and says where to find it.
 - `line-by-line-layout.test.js` — Line by line shows for every arrangement
   of both languages (Stacked too); the transliteration's Position (Below /
   Left / Right, in the card's Transliteration group) applies side by side only
@@ -629,10 +636,10 @@ different repo.
 - `docs/VERSION.json` — the single source of truth for the version and
   the preference-schema number. Enforced by
   `test/ui/version-manifest.test.js`.
-- `docs/versioning.md` — the version numbering (every release is the next
-  build of 2.0: 2.0.1, 2.0.2, …) and the one coupling that matters: a new
-  preference key needs a default, a migration, a schema bump and a manifest
-  bump, all in one commit, and ships in the next build.
+- `docs/versioning.md` — every release is the next 2.0.X build until the
+  owner asks for 2.1 (never move the line yourself), and the one coupling
+  that matters: a new preference key needs a default, a migration, a schema
+  bump and a manifest bump, all in one commit.
 - `docs/regression-log.md` — every bug that has regressed more than
   once, with the pinning test that now holds it down.
 - `docs/rpc-surface.json` — frozen server-function surface.
@@ -649,7 +656,7 @@ different repo.
   Profiles column, the sidebar's Profile list): what a profile holds, and how
   a switch stores and restores it.
 - `docs/ai-lesson/DESIGN.md` — design notes for the detached AI
-  feature (not shipped in v1).
+  feature (not shipped in 2.0).
 - `reference/ai-lesson/` — preserved AI source files, excluded from
   `clasp push` via `.claspignore`.
 - `test/tests/` — Node unit tests.

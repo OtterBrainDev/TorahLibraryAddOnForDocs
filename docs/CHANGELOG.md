@@ -3,38 +3,127 @@
 All notable changes to Torah Library are documented here, newest first.
 
 The version and the preference-schema number live in
-[`docs/VERSION.json`](VERSION.json); the policy for bumping them is
-[`docs/versioning.md`](versioning.md). New work goes under an `## Unreleased`
-heading until the next release consolidates it.
+[`docs/VERSION.json`](VERSION.json); the policy for numbering them is
+[`docs/versioning.md`](versioning.md): every release is the next **2.0.X**
+build until the owner asks for 2.1. New work goes under an `## Unreleased`
+heading until the next build consolidates it under its own `## v2.0.X` heading.
 
-## Unreleased
+## v2.0.0 — First Marketplace release (release pending)
 
-Everything under this heading ships as **2.0.2**, the next build.
+The first release published in the Google Workspace Marketplace, for people
+who use Sefaria's own add-on, *Sefaria for Google Docs* 1.0, and for new users.
+It is the whole add-on as described in this file: every section below, back to
+the 2026-04 cleanup pass, ships in 2.0.0.
 
-### Version numbers: builds of 2.0, kept in sync
+Builds tested before this release showed *Current line: 2.1* (and, before
+that, *2.0*) in Help → About. They were development builds, never published;
+the 2.1.0 number they carried is retired, and the next release is 2.0.1.
+
+**Preference schema 30.** A new install starts at schema 30, and so does
+anyone coming from Sefaria for Google Docs, which stores no settings. A tester
+upgrading from a development build is migrated on first open; the sections
+below marked *Migration* say what each schema step changes.
+
+### Highlights, compared with Sefaria for Google Docs 1.0
+
+- **Find a text.** One sidebar with three tabs: **Texts**, **Voices** (Sefaria
+  source sheets) and **Lexicon** (Sefaria's dictionaries). Results appear as
+  you type, from an English or Hebrew reference, a title, a phrase or a
+  sefaria.org link. Traditional citations resolve (*Hil. Shabbat 1:1*),
+  near-misses are listed under *Close matches*, a search that finds nothing
+  suggests titles, and corpora come in the order you choose. An on-screen
+  Hebrew keyboard and keyboard shortcuts.
+- **Preview, then insert.** Clicking a result shows exactly what will go in;
+  **Add Source** (Ctrl / ⌘ + Enter) inserts it. Several translations at once,
+  only translations with text for the passage are offered, and the filter
+  finds a translation by its language's name (*French*, *français*, *צרפתית*). **Insert Source
+  from Selection** turns a typed reference into the source. Inserts work
+  inside a table cell.
+- **Saved defaults.** Preferences → Insertion keeps how sources go in, in every
+  document; **📰 Insertion Options** changes it for this session. A short
+  first-run setup (with *I've used Sefaria for Google Docs* to start from that
+  add-on's look), a **Simple** or **Everything** interface, profiles, and
+  settings files to hand to a class.
+- **Layout.** Hebrew on the right (as in 1.0), on the left, or stacked above
+  the translation; **Line by line**; line numbers; the transliteration under
+  the Hebrew or in its own column; titles as headings; a credit line naming
+  each edition and its license.
+- **Formatting.** Vowels Off / Tanakh / On; Cantillation Off / Tanakh / Torah;
+  Punctuation for each language; transliteration in several styles (*HaShem*,
+  capitalized names); Commentary Default / Combine / Drop for translations
+  such as the Steinsaltz Talmud; fonts that match the document; colour and
+  highlight; separate source and translation titles; a citation style;
+  formatting by translation language; cantillation marks a font lacks are
+  borrowed from Noto Hebrew instead of showing as boxes.
+- **Divine names.** Your spelling (יי, ה', יקוק, השם or your own, and *G-d*),
+  applied as sources go in, keeping the Name's vowels and cantillation.
+  **Transform Divine Names** asks first and says how many it replaced.
+- **Link Texts with Sefaria.** Progress while it scans; a review dialog with
+  Link and Insert columns; a question when a citation could mean more than one
+  text; a *Not matched* list saying why; *Customize this insertion* for one
+  batch. Only passages that look like citations are sent, unless you choose
+  the whole document.
+- **Voices and Lexicon.** Sheets grouped by topic, with transliteration for a
+  sheet's Hebrew; a dictionary search that lists words, with entries from
+  several dictionaries inserted together, in your order.
+- **Session Library and Quick Actions.** What you've inserted, pins in every
+  tab, *Copy References*; **Unlink Sources** and **Gematriya Count**; the menu
+  and the sidebar arranged in Preferences → Menu Bar and → Sidebar.
+- **Privacy.** No permission to see your email address or profile; no server,
+  account or analytics of its own; a written privacy policy (`docs/PRIVACY.md`).
+
+### Works differently from Sefaria for Google Docs 1.0
+
+1. **Divine names are replaced as you insert.** Out of the box יהוה becomes יי
+   in every new source. Preferences → Insertion → Divine Name Mappings.
+2. **Clicking a result only previews it.** Nothing goes into the document until
+   Add Source.
+3. **Each source gets a credit line** naming its editions and their licenses.
+   Turn *Citation* off in 📰 Insertion Options or Preferences → Insertion →
+   Layout.
+4. **Link Texts reviews its work**, and sends Sefaria only the passages that
+   look like citations. Preferences → Linking.
+5. **Insert Source from Selection replaces the selection** with the source,
+   titled with your words. Preferences → Insertion → Insert from Selection.
+6. **Fonts match the document** where you insert. Set your own with the font
+   buttons in Preferences → Insertion.
+
+The rest of this entry is the development record, newest first.
+
+### Help → About: what's new in 2.0
+
+- **About → New in 2.0 lists everything new or improved** compared with
+  Sefaria for Google Docs 1.0: 66 items in eleven folded groups (Finding a
+  text, Previewing and inserting, Layout, Hebrew and translation formatting,
+  Divine names, Link Texts, Voices, Lexicon, Session Library and Quick
+  Actions, Your settings, Help and privacy), each tagged *New* or *Improved*
+  with where to find it. It points to *Coming from Sefaria for Google Docs*
+  for where that add-on's commands went and what works differently. It
+  replaces the nine-line summary.
+- `test/ui/help-links.test.js`: every link inside Help lands on a topic that
+  exists, and every About item has its tag and its place. No new preference,
+  RPC or OAuth scope.
+
+### Keeping version numbers in sync
 
 No code, preference or migration change.
 
-- **Every release is the next build of 2.0** (2.0.1, 2.0.2, 2.0.3, …); MINOR
-  stays 0. `docs/versioning.md` §1 says so: since the number doesn't say how
-  big a release is, the CHANGELOG entry has to (a new preference key still
-  needs its migration named, in bold, first). Leaving the 2.0 line (3.0.0) is
-  a maintainer decision for a change no migration covers.
-- *Help & Support → About* shows the full version, **Version 2.0.1**, build
-  included, and `test/ui/version-manifest.test.js` requires every surface to
-  carry the full version, not MAJOR.MINOR.
-- **Keeping the numbers in sync.** `CLAUDE.md` / `AGENTS.md` have a new
-  section, *Versions: keep them in sync*: the 2.0 line, every place the
-  version is written and what keeps each in step, the release-commit rule,
-  the schema's own clock, and a `git grep` for stragglers. `docs/VERSION.json`
-  gains a `docs` list (the walkthroughs, the Google Docs walkthrough, the
-  store listing's release steps) and a third surface (*New in 2.0.1*);
-  `version-manifest.test.js` checks each listed doc like a surface, and a
-  `schema N` in one against `prefsSchemaVersion`. `docs/versioning.md` §3–4
-  say the same, and its release examples read `v<version>`.
+- **`CLAUDE.md` / `AGENTS.md`: *Versions: keep them in sync*.** The 2.0.X
+  rule, every place the version is written and what keeps each in step, the
+  release-commit rule, the schema's own clock, and a `git grep` for
+  stragglers. `docs/versioning.md` §3–4 say the same.
+- **`docs/VERSION.json` lists the docs that name the version** (`docs`): the
+  version under demo or test in the walkthroughs, the live test checklist
+  they and the store listing point to, and the release commands.
+  `version-manifest.test.js` checks each like a surface: in its file, with the
+  full version (or, marked `line`, the line as About shows it), and with the
+  current schema where it names one. The stress test's reporting line, which
+  still said *2.1.0, schema 25*, now says *2.0.0, schema 30*.
 - **`AGENTS.md` is `CLAUDE.md` again.** It had drifted (it still expected 248
   passing tests and lacked rules added since); it is now a copy, and
-  `test/ui/agent-guides.test.js` fails if the two differ.
+  `test/ui/agent-guides.test.js` fails if the two differ. The developer
+  walkthrough points at `CLAUDE.md` for the passing count instead of
+  repeating it.
 
 ### Help and walkthroughs: caught up with the recent changes
 
@@ -70,16 +159,16 @@ Sidebar. Now:
   profiles and settings files; walkthrough 4 mentions profiles.
 - **Surprise Me** is described as inserting with the saved Insertion defaults,
   and is listed in the menu while it is switched on.
-- **About**: "New in 2.0.1" no longer points at a Fonts tab, and *Your privacy*
-  says the Session Library keeps your pins (there are no starred Lexicon
-  entries) and that profiles are stored with your preferences.
+- **About → Your privacy** says the Session Library keeps your pins (there are
+  no starred Lexicon entries) and that profiles are stored with your
+  preferences.
 - **Stress test**: stale rows fixed (4.1, 4.3, 9.5, 9.6, 10.9) and rows added
   for Line numbers off (3.1a), the language filter (4.8), Lexicon entries and
   dictionaries (9.6a–b), Voices topics (9.7), the tab workflow and pins
   (9.8–9.8b), Surprise Me's defaults (10.9f), Preferences → Sidebar (10.10)
-  and profiles (10.11). The developer walkthrough's schema (30), test count
-  (811) and include count are current, and it covers Preferences → Sidebar,
-  settings files, profiles and `search-tabs`.
+  and profiles (10.11). The developer walkthrough's schema (30) and include
+  count are current, and it covers Preferences → Sidebar, settings files,
+  profiles and `search-tabs`.
 
 ### Translation versions: find a language by its name
 
@@ -508,8 +597,7 @@ styles:
 No new preference, no migration. Found while recording the beta tutorials;
 each one is in `docs/regression-log.md` with the test that pins it. These
 change what an insert writes (the Hebrew credit) and how Transform Divine
-Names behaves, so by `docs/versioning.md` §1 they ship in the next build,
-2.0.2, with the preference changes above.
+Names behaves; they ship in 2.0.0.
 
 #### Fixed
 
@@ -1294,7 +1382,12 @@ Names behaves, so by `docs/versioning.md` §1 they ship in the next build,
   also adds `hidden_translation_languages`, seeded `"[]"`, so every language
   stays listed. A stored value is never overwritten.
 
-## v2.0.1 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
+## 2.0 development, August–September 2026: linking you can review, source credit, and Marketplace readiness
+
+> Numbered 2.1.0 during development (test builds showed *Current line: 2.1*,
+> marked "released" on 2026-09-22) and never published. It ships as part of
+> v2.0.0, above. Version numbers in this section are the ones in use at the
+> time.
 
 Highlights: Link Texts with Sefaria shows its progress, asks about ambiguous
 citations and reports what it could not link, and uploads only likely-citation
@@ -1309,7 +1402,7 @@ Preference schema **13** — upgrading users are migrated on first open.
 > **Default change: source credit is now on.** New installs, and users
 > upgrading from the published add-on, get a small credit block (edition and
 > license) under every inserted source. Many Sefaria texts are CC-BY or
-> CC-BY-NC. Anyone already running this 2.0.1 build keeps the setting they had.
+> CC-BY-NC. Anyone already running this 2.1 build keeps the setting they had.
 > Turn it off in Preferences → Insertion.
 
 #### Fixed
@@ -1344,7 +1437,7 @@ Preference schema **13** — upgrading users are migrated on first open.
 - **Help and Release Notes are written for users.** The About tab and the
   Release Notes dialog had developer notes in them ("UX and maintenance fork",
   "Core 2.0 fork direction", "Deferred backlog"). They now describe what's new
-  in 2.0.1, what the add-on does, and its version history, and say that the
+  in 2.1, what the add-on does, and its version history, and say that the
   add-on is independent of Sefaria.
 - **Privacy policy lists every host the add-on's windows load from**
   (§2.2): jQuery and a stylesheet and font from Google, images from Sefaria,
@@ -1469,7 +1562,7 @@ Preference schema **13** — upgrading users are migrated on first open.
   tools, Versions and Preview, the 📰 Layout tray, Session Library, Quick
   Actions, Link Texts with Sefaria, divine names, every Preferences tab, the
   Menu Bar, and keyboard shortcuts — with a troubleshooting FAQ, a bug-report
-  checklist, and a user-facing "New in 2.0.1". `docs/google-docs-walkthrough.md`
+  checklist, and a user-facing "New in 2.1". `docs/google-docs-walkthrough.md`
   and the README's menu and layout sections were brought into line.
 - **Privacy policy: the browser-side sidebar history is now disclosed.** The
   Session Library, recent searches, and recent/starred Lexicon entries live in
@@ -1627,14 +1720,14 @@ rather than a bug here.
 - **`docs/versioning.md`** — what bumps what, and the coupling that matters: a
   new preference key needs a default, a migration, a schema bump, a manifest
   bump and a version bump, all in one commit. Includes a section for AI agents.
-- **`docs/live-test-checklist-2.0.1.md`** — the manual pass, covering what the
+- **`docs/live-test-checklist-2.0.0.md`** (named for 2.1.0 at the time) — the manual pass, covering what the
   119 automated tests structurally cannot: sidebar rendering, the CSP, the
   upgrade path, and anything that needs a real `DocumentApp` or a live Sefaria
   request.
 
 #### Changed
 
-- Version set to **2.0.1** (was 2.0.0). Surfaces updated in `help-modal.html` and
+- Version set to **2.1.0** (was 2.0). Surfaces updated in `help-modal.html` and
   `release-notes.html`.
 
 ### Linker: recover clipped matches, separate the two failure kinds (2026-09)
@@ -1998,7 +2091,11 @@ summarized in `docs/pre-upstream-review.md`.
   justification-comment standard to dynamic `.html()` writes. It reports at WARN
   (16 pre-existing sites) so CI stays green while the count is burned down.
 
-## v1.0 — cleanup pass (2026-04)
+## Cleanup pass (2026-04)
+
+> Called "v1.0" internally at the time; never a published version. *Version
+> 1.0* now means Sefaria for Google Docs 1.0, the Marketplace add-on this one
+> follows.
 
 Everything below is grouped under the one-shot cleanup that brought the rewrite branch to a shippable state. The eight stages were individually commits; see `git log --grep='^Stage '` for the commit history.
 

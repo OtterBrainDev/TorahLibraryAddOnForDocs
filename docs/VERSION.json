@@ -1,52 +1,47 @@
 {
   "_description": "Single source of truth for the add-on's version. Everything user-facing that shows a version reads from here (see `surfaces`), and `test/ui/version-manifest.test.js` fails if any of them drift. Update this file in the same commit as the release, never separately.",
 
-  "_versioning": "The add-on is on the 2.0 line: every release, whatever it contains, bumps the build (the third number), so MINOR stays 0. docs/versioning.md has the policy; CLAUDE.md / AGENTS.md list every copy of the version and what keeps it in sync.",
+  "_line": "Releases are 2.0.X builds (docs/versioning.md §1): each release takes the next X. The line moves to 2.1 only when the owner explicitly asks for it; `VERSION_LINE` in test/ui/version-manifest.test.js changes in the same commit.",
+  "version": "2.0.0",
+  "status": "pending-release",
+  "released": null,
+  "_previous": "1.0.0 is Sefaria for Google Docs 1.0, the Marketplace add-on this one follows. Development builds before 2.0.0 carried 2.1.0 and earlier numbers; they were never published, and those numbers are retired.",
+  "previous": "1.0.0",
 
-  "version": "2.0.1",
-  "status": "released",
-  "released": "2026-09-22",
-  "previous": "2.0.0",
-
-  "_prefsSchemaVersion": "Must equal PREFS_SCHEMA_CURRENT_ in apps-script/migrations.gs. This is the user-data schema, not the add-on version: it only ever increases, and it increases whenever a new preference key ships. A mismatch means either a migration landed without a version bump or the reverse — both leave upgrading users in a state no migration covers.",
+  "_prefsSchemaVersion": "Must equal PREFS_SCHEMA_CURRENT_ in apps-script/migrations.gs. This is the user-data schema, not the add-on version: it only ever increases, and it increases whenever a new preference key ships. It was not reset with the version numbers and must never be. A mismatch means either a migration landed without a version bump or the reverse — both leave upgrading users in a state no migration covers.",
   "prefsSchemaVersion": "30",
 
   "_surfaces": "Every place the version string is shown to a user. An agent bumping the version must update all of them; the manifest test checks they agree.",
   "surfaces": [
     {
       "file": "apps-script/help-modal.html",
-      "shows": "Version 2.0.1",
-      "note": "About tab meta-pill. Shows the full version, build included: on the 2.0 line the build is the only number that moves."
-    },
-    {
-      "file": "apps-script/help-modal.html",
-      "shows": "<h2>New in 2.0.1</h2>",
-      "note": "About tab: what the current release changed. A release rewrites the list under it."
+      "shows": "Current line: 2.0",
+      "note": "About tab meta-pill. Shows MAJOR.MINOR only — 2.0.X builds do not change it."
     },
     {
       "file": "apps-script/release-notes.html",
-      "shows": "Version 2.0.1",
-      "note": "Shown on install and from the release-notes dialog."
+      "shows": "Version 2.0",
+      "note": "Shown on install and from the release-notes dialog. MAJOR.MINOR only; a 2.0.X build adds its notes under the same heading."
     }
   ],
 
-  "_docs": "Every doc that names the current version (and, where it says so, the preference schema), outside the user-facing surfaces: the version under demo or test, and the release steps. The manifest test checks each one like a surface, and checks a `schema N` in it against prefsSchemaVersion. A doc that is a dated record (a CHANGELOG heading, a past release's live test checklist, a design doc's target) is not listed: it keeps the number it was written for.",
+  "_docs": "Every doc that names the version: the version under demo or test, the live test checklist the walkthroughs and the listing point to, and the release commands. The manifest test checks each like a surface: in its file, carrying the full version (or, marked `line`, the release line as Help → About shows it), and the current schema where it names one. A dated record (a CHANGELOG heading, a past release's live test checklist, a design doc's target) is not listed: it keeps the number it was written for.",
   "docs": [
-    { "file": "docs/walkthroughs/README.md", "shows": "The version under demo is **2.0.1, preference schema 30**" },
-    { "file": "docs/walkthroughs/README.md", "shows": "*Help & Support → About* should read **Version 2.0.1**" },
-    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "Version: **2.0.1, schema 30**" },
-    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "This goes further than [`docs/live-test-checklist-2.0.1.md`](../live-test-checklist-2.0.1.md).\nThat checklist asks whether each 2.0.1 change landed." },
-    { "file": "docs/walkthroughs/2-developer.md", "shows": "`docs/live-test-checklist-2.0.1.md` covers the rest" },
-    { "file": "docs/walkthroughs/2-developer.md", "shows": "`clasp version \"v2.0.1\"`" },
-    { "file": "docs/google-docs-walkthrough.md", "shows": "(v2.0.1, plus the unreleased changes" },
-    { "file": "docs/marketplace-listing.md", "shows": "consolidated under one `v2.0.1` heading" },
-    { "file": "docs/marketplace-listing.md", "shows": "Tag the release commit `v2.0.1`" },
-    { "file": "docs/marketplace-listing.md", "shows": "Script version: `clasp version \"v2.0.1\"`" },
-    { "file": "docs/marketplace-listing.md", "shows": "`docs/live-test-checklist-2.0.1.md` passed" },
-    { "file": "docs/marketplace-listing.md", "shows": "clasp version \"v2.0.1\"      # prints the new version number" }
+    { "file": "docs/walkthroughs/README.md", "shows": "The version under demo is **2.0.0, preference schema 30**" },
+    { "file": "docs/walkthroughs/README.md", "shows": "*Help & Support → About* should read **Current line: 2.0**", "line": true },
+    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "This goes further than [`docs/live-test-checklist-2.0.0.md`](../live-test-checklist-2.0.0.md)." },
+    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "Version: **2.0.0, schema 30**" },
+    { "file": "docs/walkthroughs/2-developer.md", "shows": "`docs/live-test-checklist-2.0.0.md` covers the rest" },
+    { "file": "docs/walkthroughs/2-developer.md", "shows": "`clasp version \"v2.0.0\"`" },
+    { "file": "docs/google-docs-walkthrough.md", "shows": "as it is today (v2.0;", "line": true },
+    { "file": "docs/marketplace-listing.md", "shows": "`docs/VERSION.json` at `2.0.0`" },
+    { "file": "docs/marketplace-listing.md", "shows": "Tag the release commit `v2.0.0`" },
+    { "file": "docs/marketplace-listing.md", "shows": "Script version: `clasp version \"v2.0.0\"`" },
+    { "file": "docs/marketplace-listing.md", "shows": "`docs/live-test-checklist-2.0.0.md` passed" },
+    { "file": "docs/marketplace-listing.md", "shows": "clasp version \"v2.0.0\"      # the add-on version" }
   ],
 
-  "_changelog": "docs/CHANGELOG.md must carry a heading for this version once status is 'released'. While 'pending-release' the entries live under 'Unreleased' headings and get consolidated at release time.",
+  "_changelog": "docs/CHANGELOG.md carries a `## v<version>` heading for this version. While 'pending-release' the heading ends '(release pending)' and `released` is null; at release, set status 'released', the ISO date in `released`, and the same date in place of '(release pending)'. Work after that collects under `## Unreleased` until the next 2.0.X build consolidates it.",
 
   "_deployment": "Apps Script has no manifest version field — appsscript.json carries no version. `clasp push` replaces the script project's HEAD, which only test deployments run. Users run the numbered script version (from `clasp version`) that the Marketplace SDK App Configuration points to, so a release is: live-test HEAD, `clasp version`, set that number in the SDK. Neither Apps Script version numbers nor the SDK record which add-on version a number corresponds to — this file, together with the `clasp version` description (use `v<version>`), is the only record, which is exactly why it must not drift."
 }

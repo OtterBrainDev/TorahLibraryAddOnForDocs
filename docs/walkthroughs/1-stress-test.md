@@ -3,8 +3,8 @@
 **Audience:** the maintainer and anyone doing QA before the add-on goes to
 Sefaria. **Time:** 2–3 hours. **Goal:** find what breaks, not show what works.
 
-This goes further than [`docs/live-test-checklist-2.0.1.md`](../live-test-checklist-2.0.1.md).
-That checklist asks whether each 2.0.1 change landed. This walkthrough
+This goes further than [`docs/live-test-checklist-2.0.0.md`](../live-test-checklist-2.0.0.md).
+That checklist asks whether each change landed. This walkthrough
 deliberately does things a real user will eventually do by accident: odd cursor
 positions, awkward references, editing while a dialog is open, old
 preferences, slow networks. Run the checklist first; start this once it passes.
@@ -55,7 +55,7 @@ Fixed; step 2.6 now depends on it.
 
 | Account | What it is | Why |
 | --- | --- | --- |
-| **A — upgrader** | Had an earlier build of *this* add-on (2.0.0 or an early 2.0.1) with preferences you changed: a font, a divine-name rule, a layout. | Proves the migrations keep what users chose. |
+| **A — upgrader** | Had a development build of *this* add-on (one that showed *Current line: 2.1* or earlier) with preferences you changed: a font, a divine-name rule, a layout. | Proves the migrations keep what users chose. |
 | **B — fresh** | Has never installed any version. | Proves `onInstall` seeding and the first-run experience. |
 | **C — Sefaria for Google Docs user** | Has Sefaria's own *Sefaria for Google Docs* installed (menu: *Add Sources with Sefaria / Transform Divine Names / Link Texts with Sefaria*), and documents it inserted sources into. | Proves the path most users will take: a separate add-on, installed beside it. |
 
@@ -383,7 +383,7 @@ For each failure, record:
 2. What happened versus **Expect**
 3. Browser console output and the Executions entry (duration, error)
 4. Scan mode and After-linking mode, for anything in section 7
-5. Version: **2.0.1, schema 30** (plus the Unreleased changes in `docs/CHANGELOG.md`), and the commit you pushed
+5. Version: **2.0.0, schema 30** (the v2.0.0 entry in `docs/CHANGELOG.md`), and the commit you pushed
 
 Anything under **Known suspects** that reproduces should get a row in
 [`docs/regression-log.md`](../regression-log.md) and a pinning test when it's
