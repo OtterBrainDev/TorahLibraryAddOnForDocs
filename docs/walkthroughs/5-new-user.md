@@ -82,4 +82,4 @@ top and a short credit line underneath naming the translation.
 | **Add Source** is greyed out | You picked a book or section heading with no text of its own. Pick a specific passage, like `Genesis 1:1`. |
 | You picked **Genesis** and the preview says **Genesis 1** | A whole book opens at its first chapter, and that one chapter is what **Add Source** inserts. Add a chapter or verse for a different passage. |
 | Nothing found | Check the spelling, or try the Hebrew name, or a phrase from the text. |
-| No Voices or Lexicon buttons under the search box | You chose **Simple**. Switch to **Everything** at the top of Preferences. |
+| No Voices or Lexicon tab under the search box | It is switched off. Turn it on in **Preferences → Sidebar**, then **Save**. |

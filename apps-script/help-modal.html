@@ -380,7 +380,7 @@
           // safe because the right-hand side is a constant empty string.
           results.innerHTML = '';
           if (!query) {
-            status.textContent = 'Try: layout, translation, Session Library, link, divine names, fonts, shortcuts';
+            status.textContent = 'Try: layout, translation, Session Library, link, divine names, fonts, profiles, shortcuts';
             return;
           }
           if (!matches.length) {
@@ -477,7 +477,7 @@
               <div class="search-row">
                 <input id="helpSearch" type="search" placeholder="Search help topics" aria-label="Search help topics">
               </div>
-              <div class="search-status" id="searchStatus">Try: layout, translation, Session Library, link, divine names, fonts, shortcuts</div>
+              <div class="search-status" id="searchStatus">Try: layout, translation, Session Library, link, divine names, fonts, profiles, shortcuts</div>
               <div class="search-results" id="searchResults"></div>
             </div>
             <div class="section-nav">
@@ -550,7 +550,7 @@
               <li><strong>Layout and formatting.</strong> Hebrew on the right, on the left or on top, or line by line beside its translation; vowels and cantillation (all, Tanakh only, or none); punctuation; transliteration; fonts that match your document; titles as headings, so they appear in the outline. See <a href="#layout-settings">Insertion Options</a>.</li>
               <li><strong>Commentary in translations.</strong> Keep Sefaria's commentary as marked, run it together with the translation, or leave it out (the Steinsaltz Talmud). See <a href="#layout-settings">Insertion Options</a>.</li>
               <li><strong>Insert Source from Selection</strong>, the <strong>Voices</strong> (source sheets) and <strong>Lexicon</strong> (dictionary) tabs, the <strong>Session Library</strong> of what you've inserted, and several translations at once.</li>
-              <li><strong>Settings files</strong>, in <span class="ui-label">Preferences → Advanced</span>, so a teacher can hand a class the same settings.</li>
+              <li><strong>Settings files</strong>, in <span class="ui-label">Preferences → Advanced</span>, so a teacher can hand a class the same settings, and <a href="#profiles">profiles</a>, so you can keep one look for each class and switch in a click.</li>
             </ul>
             <h3>What works differently</h3>
             <ol>
@@ -573,7 +573,7 @@
               </tbody>
             </table>
             <h3>Under the search box</h3>
-            <p>Three buttons choose what kind of result you're looking for. Switching runs the same search again in the other one, so there is nothing to retype.</p>
+            <p>Three tabs choose what kind of result you're looking for. Each keeps its own results, and switching never searches: typing searches the tab you're in, and <kbd>Enter</kbd> searches the others too. See <a href="#search-tabs">Texts, Voices and Lexicon tabs</a>.</p>
             <table class="ref-table">
               <tbody>
                 <tr><td><span class="ui-label">Texts</span></td><td>Search Sefaria's library of texts. This is where most work happens.</td></tr>
@@ -603,7 +603,7 @@
             <table class="ref-table">
               <thead><tr><th>Where</th><th>What Simple hides</th></tr></thead>
               <tbody>
-                <tr><td>Sidebar</td><td>The result sort (<span class="ui-label">Rel. ▾</span>) and <span class="ui-label">⤦</span> <em>Restore Corpus</em>. The Texts / Voices / Lexicon tabs, Add Source, Insertion Options and the footer buttons stay.</td></tr>
+                <tr><td>Sidebar</td><td>The result sort (<span class="ui-label">Rel. ▾</span>), <span class="ui-label">⤦</span> <em>Restore Corpus</em> and the <span class="ui-label">🧪</span> tab. The Texts / Voices / Lexicon tabs, Add Source, Insertion Options and the footer buttons stay.</td></tr>
                 <tr><td>Menu</td><td>A shorter menu: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria, then Preferences and Help. Switching back to Everything brings back the menu you had.</td></tr>
                 <tr><td>Preferences</td><td>The Search, Linking, Advanced and 🧪 Experimental tabs, and a few advanced sections. Switch to Everything to see them.</td></tr>
               </tbody>
@@ -765,7 +765,7 @@
                 <tr><td><span class="ui-label">Sel → ס</span><br><span class="small">Insert Source from Selection</span></td><td>Select a reference you've typed in the document — say <code>Genesis 1:1</code> — and run this. By default the selected words are replaced by the source (titled with the same reference). To keep your words and insert the source below them, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>. <a href="#link-texts">Link Texts with Sefaria</a>'s Insert follows the same setting.</td></tr>
                 <tr><td><span class="ui-label">ה → ש</span><br><span class="small">Transform Divine Names</span></td><td>Applies your divine-name replacements to text already in the document &mdash; every match in the body of the tab you have open, not only selected text. See <a href="#divine-names">Divine names</a>.</td></tr>
                 <tr><td><span class="ui-label">🔗 → ס</span><br><span class="small">Link Texts with Sefaria</span></td><td>Finds citations in your document and links them to Sefaria. See <a href="#link-texts">Link Texts with Sefaria</a>.</td></tr>
-                <tr><td><span class="ui-label">🎲</span><br><span class="small">Surprise Me</span></td><td>Experimental — inserts a random set of sources on a word or theme (or a Hebrew word from Tanakh picked for you), from the corpora you tick, at the cursor. The same form as the sidebar's 🧪 Experimental section. Only shown when switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>.</td></tr>
+                <tr><td><span class="ui-label">🎲</span><br><span class="small">Surprise Me</span></td><td>Experimental — inserts a random set of sources on a word or theme (or a Hebrew word from Tanakh picked for you), from the corpora you tick, at the cursor. Each source goes in the way Insert from Selection inserts one: with your saved <span class="ui-label">Preferences → Insertion</span> defaults (Display, Arrangement, Line numbers, linked titles, Citation, transliteration, Commentary), not the changes made for this session in <span class="ui-label">📰 Insertion Options</span>. The same form as the sidebar's 🧪 Experimental section. Only shown when switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>.</td></tr>
               </tbody>
             </table>
             <p style="margin-top:10px;">Two more are in the menu only:</p>
@@ -789,7 +789,7 @@
             <h3>Where an inserted source goes</h3>
             <p>A citation on a line of its own — <code>Genesis 1:1</code>, or <code>(Genesis 1:1).</code> — is <strong>replaced</strong> by the source, titled with the citation as you wrote it and still linked to Sefaria, the same as <a href="#quick-actions">Insert Source from Selection</a>. A citation inside a sentence stays where it is, and the source goes below its paragraph. To keep every citation, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>, or untick <strong>Replace a citation on its own line</strong> in the panel below for one pass.</p>
             <h3>Customize this insertion</h3>
-            <p>Click <span class="ui-label">📰 Customize this insertion</span> under the review table. It has the same <strong>Layout</strong> and <strong>Insertion Format</strong> controls as the sidebar's <a href="#layout-settings">Insertion Options</a> — Display, Arrangement, Citation, Line numbers, and the folding Source and Translation sections (Link title to Sefaria, fonts, Vowels, Cantillation, Punctuation, Transliteration, Commentary) — plus <strong>Replace a citation on its own line</strong>. It starts on your saved Preferences, marked <em>Your defaults</em>; once you change something it says <em>Customized for this pass</em>.</p>
+            <p>Click <span class="ui-label">📰 Customize this insertion</span> under the review table. It has the same <strong>Layout</strong> and <strong>Insertion Format</strong> controls as the sidebar's <a href="#layout-settings">Insertion Options</a> — Display, Arrangement, Citation, Line by line, Line numbers, and the folding Source and Translation sections (Link title to Sefaria, fonts, Vowels, Cantillation, Punctuation, Transliteration with its Style and Position, Commentary) — plus <strong>Replace a citation on its own line</strong>. It starts on your saved Preferences, marked <em>Your defaults</em>; once you change something it says <em>Customized for this pass</em>.</p>
             <ul>
               <li>Your choices apply only to the sources ticked <strong>Insert</strong> in this run. Linking isn't affected.</li>
               <li><span class="ui-label">↺ Revert to defaults</span> puts the panel back to your Preferences.</li>
@@ -875,7 +875,7 @@
 
           <section class="card topic-section" id="menu" data-search-title="The add-on menu (Menu Bar)" data-search-terms="menu extensions menu bar customize reorder hide items quick actions submenu divider restore default menu reload">
             <h2>The add-on menu</h2>
-            <p>Everything is under <span class="ui-label">Extensions → Torah Library</span>. Out of the box the menu has: <strong>Texts</strong>, <strong>Voices</strong>, <strong>Lexicon</strong>, <strong>Insert Source from Selection</strong>, and a <strong>Quick Actions</strong> submenu (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count) — then <strong>Preferences</strong> and <strong>Help &amp; Support</strong>. In <a href="#interface-mode">Simple</a> mode it is shorter: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria; switching back to Everything restores the menu you had.</p>
+            <p>Everything is under <span class="ui-label">Extensions → Torah Library</span>. Out of the box the menu has: <strong>Texts</strong>, <strong>Voices</strong>, <strong>Lexicon</strong>, <strong>Insert Source from Selection</strong>, and a <strong>Quick Actions</strong> submenu (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count) — then <strong>Surprise Me</strong>, while it is switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>, and <strong>Preferences</strong> and <strong>Help &amp; Support</strong>. In <a href="#interface-mode">Simple</a> mode it is shorter: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria; switching back to Everything restores the menu you had.</p>
             <p>To change it, open <span class="ui-label">Preferences → Menu Bar</span>. Use &uarr; and &darr; to reorder items, an item's <span class="ui-label">Move to Quick Actions ▸</span> or <span class="ui-label">◂ Move to main menu</span> to move it into the Quick Actions submenu or back out (it lands just below Quick Actions), add dividers, or untick an item to hide it (tick it again to bring it back). <strong>Preferences</strong> and <strong>Help &amp; Support</strong> always stay at the bottom, so you can't lose your way back. <span class="ui-label">Restore default menu</span> undoes everything.</p>
             <p class="small">After saving, reload the document if the menu hasn't changed — Google Docs builds the menu when the document opens.</p>
           </section>
@@ -894,11 +894,19 @@
             </table>
           </section>
 
-          <section class="card topic-section faq" id="troubleshooting" data-search-title="Troubleshooting" data-search-terms="simple mode missing tab hidden updating preview old text cantillation boxes noto problem not working bug help nothing found no results can't insert disabled greyed out preview missing wrong font formatting divine name replaced menu not changed old stale after update refresh reopen link texts missed surprise me missing citation disappeared replaced duplicate twice">
+          <section class="card topic-section faq" id="troubleshooting" data-search-title="Troubleshooting" data-search-terms="simple mode missing tab hidden updating preview old text cantillation boxes noto problem not working bug help nothing found no results can't insert disabled greyed out preview missing wrong font formatting divine name replaced menu not changed old stale after update refresh reopen link texts missed surprise me missing citation disappeared replaced duplicate twice switch tab didn't search no search translation missing version list unavailable language">
             <h2>Troubleshooting</h2>
             <details>
               <summary>My search finds nothing, or the wrong book</summary>
               <p>Try the reference the way Sefaria writes it (<code>Mishneh Torah, Repentance 3:4</code>), or click one of the suggested titles. Check that the <span class="ui-label">A א</span> language filter isn't set to a language the work lacks, and that you haven't hidden its group with <span class="ui-label">❌</span> — <span class="ui-label">⤦</span> restores hidden groups.</p>
+            </details>
+            <details>
+              <summary>I switched tabs and it didn't search</summary>
+              <p>That's on purpose: switching between Texts, Voices and Lexicon never searches, so each tab keeps its own results and what you had selected. Press <kbd>Enter</kbd> (or <span class="ui-label">🔍</span>), or click the tab's <span class="ui-label">Search … for “…”</span> button (<em>Search Voices for “shabbat”</em>). <kbd>Enter</kbd> also searches the other tabs in the background, so their results are waiting when you switch. A reference such as <em>Genesis 1:1</em> isn't looked up in the Lexicon. See <a href="#search-tabs">Texts, Voices and Lexicon tabs</a>.</p>
+            </details>
+            <details>
+              <summary>A translation I want isn't in the Versions list</summary>
+              <p>A translation with no text for this passage is left out; some cover only part of a book. Turn on <span class="ui-label">Preferences → Search → Advanced → Show unavailable translations</span> to see those greyed out. A whole language missing? Check that it's ticked in <span class="ui-label">Preferences → Search → Translation Languages</span>. To find one in a long list, type its language in the filter box — <em>French</em>, <em>français</em> or <em>fr</em>. See <a href="#versions-preview">Versions &amp; Preview</a>.</p>
             </details>
             <details>
               <summary><span class="ui-label">Add Source</span> is greyed out</summary>
@@ -946,7 +954,7 @@
             </details>
             <details>
               <summary>Surprise Me is missing</summary>
-              <p>It's experimental. Turn on <strong>Enable Experimental Features</strong> and <strong>Surprise Me</strong> in <span class="ui-label">Preferences → 🧪 Experimental</span>, then reload the document.</p>
+              <p>It's experimental. Turn on <strong>Enable Experimental Features</strong> and <strong>Surprise Me</strong> in <span class="ui-label">Preferences → 🧪 Experimental</span> (in Simple, switch to <strong>Everything</strong> first to see that tab), then reload the document. Its sources use your saved Preferences, not this session's <span class="ui-label">📰 Insertion Options</span>; to change how they look, change <span class="ui-label">Preferences → Insertion</span>.</p>
             </details>
             <details>
               <summary>Things look broken or out of date after an update</summary>
@@ -1015,7 +1023,7 @@
           <section class="card">
             <h2>New in 2.1</h2>
             <ul>
-              <li><strong>Reorganised Preferences.</strong> The Fonts tab is laid out the same way for title, Hebrew, transliteration and translation, and linking settings have their own <span class="ui-label">Linking</span> tab.</li>
+              <li><strong>Reorganised Preferences.</strong> Fonts are laid out the same way for title, Hebrew, transliteration and translation (now set beside what they style, in <span class="ui-label">Preferences → Insertion</span>), and linking settings have their own <span class="ui-label">Linking</span> tab.</li>
               <li><strong>Link Texts with Sefaria shows its work.</strong> Progress while it scans, a review table with separate Link and Insert choices, a question when a citation could mean more than one source, and an honest count of what it couldn't link.</li>
               <li><strong>Less of your document leaves your computer.</strong> Linking sends only passages that look like citations, unless you choose otherwise.</li>
               <li><strong>Text that fits your document.</strong> Fonts and sizes match the text where you insert; titles can be headings; every role has text colour and highlight; the source's own bold and italics are kept.</li>
@@ -1030,7 +1038,7 @@
 
           <section class="card">
             <h2>Your privacy</h2>
-            <p>Your searches and text go only to sefaria.org, and only when you search, insert a source, or run Link Texts with Sefaria. (The add-on&rsquo;s windows also load a script library, a stylesheet and a font from Google, and images from Sefaria, like any web page; those requests carry none of your data.) Your preferences are stored with your Google account; your Session Library, recent searches and starred Lexicon entries stay in your own browser, except that the Session Library's list passes briefly through Google when you open and close its window. The add-on has no account or server of its own and sends your text to no one else. The <a target="_blank" href="https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" rel="noopener noreferrer">privacy policy</a> has the details.</p>
+            <p>Your searches and text go only to sefaria.org, and only when you search, insert a source, or run Link Texts with Sefaria. (The add-on&rsquo;s windows also load a script library, a stylesheet and a font from Google, and images from Sefaria, like any web page; those requests carry none of your data.) Your preferences and profiles are stored with your Google account; your Session Library (with your pinned texts, sheets and words) and recent searches stay in your own browser, except that the Session Library's list passes briefly through Google when you open and close its window. The add-on has no account or server of its own and sends your text to no one else. The <a target="_blank" href="https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md" rel="noopener noreferrer">privacy policy</a> has the details.</p>
           </section>
 
           <section class="card">

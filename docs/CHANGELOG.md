@@ -9,6 +9,51 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Help and walkthroughs: caught up with the recent changes
+
+No code, preference or migration change. Help, the Google Docs walkthrough, the
+five live walkthroughs and the README described the sidebar as it was before
+the one search workflow, the Lexicon's words, profiles and Preferences →
+Sidebar. Now:
+
+- **Switching tabs.** Everywhere that said switching Texts / Voices / Lexicon
+  "runs the same search again" now says it never searches, that typing
+  searches the tab in view and Enter the others too. Help → Troubleshooting
+  has *I switched tabs and it didn't search*.
+- **Several translations** are picked with a click each, not
+  <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click; a translation with no text for the
+  passage is left out of the list (greyed out only with *Show unavailable
+  translations*), not "greyed out and skipped"; the filter box finds a
+  language by its name. Help → Troubleshooting has *A translation I want isn't
+  in the Versions list*.
+- **Lexicon**: words, Matches / Related words, dictionary chips, picking
+  several entries, Add Entry and Copy; ⭐ *Starred entries* is gone (stars are
+  pins). **Voices**: topic groups and chips, the transliteration in
+  parentheses. **Session Library**: up to thirty pins, sheets and words too,
+  each reopening in its own tab.
+- **Simple mode** keeps the Texts / Voices / Lexicon tabs and hides 🧪; a
+  missing Voices or Lexicon tab is Preferences → Sidebar, not Simple (walkthrough
+  5's table said to switch to Everything). *Show advanced settings*, retired,
+  is gone from the Google Docs walkthrough.
+- **New sections** in the Google Docs walkthrough: *Texts, Voices and Lexicon
+  tabs*, *What the sidebar shows*, *Profiles*, the Preferences Sidebar and
+  Advanced tabs, Voices Topics and Lexicon Dictionaries, Link Texts' list of
+  citations that couldn't be matched, Line by line for Stacked and the
+  transliteration's Position. Walkthrough 3 tours the Search and Sidebar tabs,
+  profiles and settings files; walkthrough 4 mentions profiles.
+- **Surprise Me** is described as inserting with the saved Insertion defaults,
+  and is listed in the menu while it is switched on.
+- **About**: "New in 2.1" no longer points at a Fonts tab, and *Your privacy*
+  says the Session Library keeps your pins (there are no starred Lexicon
+  entries) and that profiles are stored with your preferences.
+- **Stress test**: stale rows fixed (4.1, 4.3, 9.5, 9.6, 10.9) and rows added
+  for Line numbers off (3.1a), the language filter (4.8), Lexicon entries and
+  dictionaries (9.6a–b), Voices topics (9.7), the tab workflow and pins
+  (9.8–9.8b), Surprise Me's defaults (10.9f), Preferences → Sidebar (10.10)
+  and profiles (10.11). The developer walkthrough's schema (30), test count
+  (811) and include count are current, and it covers Preferences → Sidebar,
+  settings files, profiles and `search-tabs`.
+
 ### Translation versions: find a language by its name
 
 #### Changed

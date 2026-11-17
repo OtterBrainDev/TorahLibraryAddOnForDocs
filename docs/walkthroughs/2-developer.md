@@ -69,7 +69,7 @@ attribution.gs, gematriya.gs, transliteration.gs   pure, Node-testable helpers
    never overwrites one. `menu_layout` is deliberately left unset, so the user
    keeps tracking the code's default menu.
 2. `runUserPreferenceMigrationsIfNeeded_()` reads `prefs_schema_version` and
-   runs every `migrateToV<N>_` with `from < N`, then stamps `25`
+   runs every `migrateToV<N>_` with `from < N`, then stamps `30`
    (`PREFS_SCHEMA_CURRENT_`). Each migration only fills keys that are absent,
    or rewrites a value whose meaning changed (v24's old `teamim_filter =
    "torah"`, which meant Tanakh only, becomes `"tanakh"`).
@@ -115,7 +115,7 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
 
 1. `textsHTML()` → `openSharedSidebar_('texts')` (`server/menu.gs`).
 2. `HtmlService.createTemplateFromFile('sidebar')` evaluates `sidebar.html`,
-   which `include()`s 41 partials: `shared/ui/head` (CSP, jQuery with
+   which `include()`s 48 partials: `shared/ui/head` (CSP, jQuery with
    SRI), `css/tokens`, `sidebar/js/*`. `template.uiMode = getUiMode_()` lands
    on `<main data-ui-mode="simple|full">`. Server data is embedded as
    `appConfigJson = toEmbeddedJson_(getUiAppConfig_(…))` (`ui_core.gs`). Any
@@ -155,9 +155,16 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
      (section 6). They are never stored unless the user clicks **💾 Save as
      defaults**, which calls `setPreferences`.
 5. **Simple mode is CSS only.** `css/components/simple-mode.html` hides the
-   result sort, Restore Corpus and (in Texts) the Texts / Voices / Lexicon
-   switch under `[data-ui-mode="simple"]`; nothing leaves the DOM, so selector
-   contracts and event bindings are the same in both modes. The menu side is
+   result sort, Restore Corpus and the 🧪 tab under `[data-ui-mode="simple"]`;
+   the Texts / Voices / Lexicon tabs stay. Nothing leaves the DOM, so selector
+   contracts and event bindings are the same in both modes.
+   **Preferences → Sidebar** works the same way, in either mode: the server
+   prints what is switched off onto `<main>` before it paints
+   (`data-sidebar-tabs`, `data-quick-actions-hidden`, `data-options-hidden`,
+   from `show_voices_tab` / `show_lexicon_tab` and the two `*_hidden` lists,
+   schema 29), and CSS hides it. Junk in a stored list hides nothing; a
+   hidden Insertion Options control keeps its saved value
+   (`test/tests/sidebar-controls.test.js`, `test/ui/sidebar-controls-ui.test.js`). The menu side is
    `getSimpleMenuLayout_()` (the default layout with `SIMPLE_MENU_HIDDEN_`
    hidden); `planUiModeSwitch_()` keeps the user's own layout in
    `menu_layout_before_simple` and puts it back on the way to Everything.
@@ -432,6 +439,18 @@ and the offset mapping) and `linker-classify.test.js`.
   until the server answers, so a slow round trip no longer looks like a hang.
   Opening Preferences from the sidebar shows *Opening Preferences…*
   (`showBusyOverlay('preferences')`) and ignores repeat clicks.
+- **Settings files** (`server/settings-file.gs`, Preferences → Advanced): an
+  export is the `SETTINGS` values shown in the dialog, grouped into four parts;
+  an import writes only `SETTINGS` keys with valid values, only the ticked
+  parts and only what differs, and refuses a file from a newer schema
+  (`settings-file.test.js`).
+- **Profiles** (`server/settings-profiles.gs`, Everything): the settings in
+  use are always the ordinary stored preferences, so every reader is
+  unchanged; a profile not in use is a snapshot in `settings_profile_<id>`,
+  with the index in `settings_profiles` (neither in `SETTINGS`, so no client
+  setter can write them). A switch stores the outgoing values and writes the
+  incoming ones in one `setProperties` call, and a snapshot from an older
+  schema is migrated when it comes back (`settings-profiles.test.js`).
 
 ---
 
@@ -439,16 +458,24 @@ and the offset mapping) and `linker-classify.test.js`.
 
 | Feature | Endpoint | Note |
 | --- | --- | --- |
-| Voices search | `POST /api/search/sheet/_search` | Raw Elasticsearch DSL through an nginx allowlist. **Not a documented API**, and the most fragile dependency (`pre-upstream-review.md` §1.4). A good question to raise with Sefaria. |
+| Voices search | `POST /api/search/sheet/_search` | Raw Elasticsearch DSL through an nginx allowlist. **Not a documented API**, and the most fragile dependency (`pre-upstream-review.md` §1.4). A good question to raise with Sefaria. Each sheet is filed client-side under the first of its topics that fits a category (`voices-topics.test.js`). |
 | Sheet contents | `GET /api/sheets/{id}` | Sheets are user-generated. Every URL written into the Doc goes through `safeLinkUrl_` (http, https and mailto only). |
-| Lexicon | `GET /api/words/{word}`, plus the search wrapper for English reverse lookup | `server/lexicon.gs` |
+| Lexicon | `GET /api/words/{word}`, plus the search wrapper filtered to `Reference/Dictionary` for English reverse lookup | `server/lexicon.gs` groups Sefaria's flat entry list into words by headword spelling and reads each dictionary's gloss its own way (`lexicon-words.test.js`, fixtures from Sefaria's real answers). |
+
+The three tabs share one search workflow (`sidebar/js/search-tabs.html`): a
+`SEARCH_TABS` entry per tab (`suits`, `search`, `count`, selection capture and
+restore), one search run per tab and text, and an answer to an earlier run is
+dropped. Typing searches the shown tab; Enter also searches each other tab
+that is switched on and whose `suits(query)` accepts the text; switching tabs
+never searches (`search-tabs.test.js`, which runs the real partials through
+`test/tests/helpers/sidebar-search-harness.js`).
 
 ---
 
 ## 9. Guardrails and shipping (5 min)
 
 ```bash
-npm ci && npm test                 # 466 passing, 0 skipped (skipped > 0 = linkedom missing = red)
+npm ci && npm test                 # 811 passing, 0 skipped (skipped > 0 = linkedom missing = red)
 bash pre_clasp_qc.sh apps-script   # must exit 0
 npx --prefix tools/clasp clasp push  # HEAD only: test deployments, not users
 ```
