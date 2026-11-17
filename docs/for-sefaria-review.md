@@ -1,34 +1,34 @@
-# For Sefaria's review — and what is left if Sefaria publishes this
+# For Sefaria: releasing this as the next version of *Sefaria for Google Docs*
 
 Written 2026-11-17 against the 2.0.0 release candidate (816 tests passing,
 `pre_clasp_qc.sh` clean, preference schema 30).
 
 This add-on grew out of *Sefaria for Google Docs* 1.0 (Shlomi Helfgot's code,
-MIT). As it stands it is set up to be published by The Merkaz as a separate
-add-on called **Torah Library**, installed beside Sefaria's. This file is for
-the other outcome: **Sefaria takes the code and publishes it under its own
-name.** It lists what Sefaria would need to decide, change and check.
+MIT). **The plan this file is written for: Sefaria releases it as version 2.0
+of its own add-on, from the Apps Script project behind the existing
+Marketplace listing, so that today's users are upgraded where they are.**
 
-Nothing here is a change request to the code as it is today. Sections 3 and 4
-are the work; the rest is context for whoever reviews it.
+The code in this repository is not yet in that shape. It still carries the
+name **Torah Library** and The Merkaz's contact details, from when it was to
+be published as a separate add-on. Sections 2 to 4 are what stands between the
+code as it is and that release; section 5 is for whoever reviews the code.
+Publishing it as a separate listing remains possible and is the fallback
+(end of section 1).
 
 ---
 
-## 1. The two ways to publish, and what each means for today's users
+## 1. The upgrade, and what it means for today's users
 
-| | A. As the next version of *Sefaria for Google Docs* | B. As a new listing |
-| --- | --- | --- |
-| How | `clasp push` this code into the **Apps Script project behind the existing listing**, freeze a version, point the listing's Marketplace SDK → App Configuration at it | New script project, new Cloud project, new listing, new review |
-| Today's users | **Upgraded in place.** They get it the next time they open a document. Nothing to install, no prompt, no way to stay on 1.0 | Nothing changes for them until they find and install the new add-on; both then sit side by side under **Extensions** |
-| Their settings | Kept from then on (stored per user, per script project) | Start fresh |
-| Google's review | A new script version normally needs none. Changed scopes or changed listing text do | Full review, including OAuth verification if Google asks for it |
-| Rollback | Point App Configuration back at the previous version number | Unpublish |
+| | |
+| --- | --- |
+| How | `clasp push` this code into the **Apps Script project behind the existing listing**, freeze a version, and point the listing's Marketplace SDK → App Configuration at it |
+| Who can do it | Only the owner of that project, which is Sefaria. It cannot be done from The Merkaz's or OtterBrainDev's accounts |
+| Today's users | **Upgraded in place** the next time they open a document. Nothing to install and no way to stay on 1.0. **They are asked to authorize once**, because the new version saves settings (item 2 below) |
+| Their settings | 1.0 saved none. From the upgrade on, they are kept (stored per user, per script project) |
+| Google's review | A new script version alone normally needs none. This one changes the scopes, and the listing text will change too, so expect a review |
+| Rollback | Point App Configuration back at the previous version number. Settings saved meanwhile stay stored and are simply not read by 1.0 |
 
-**Path A is the only one that upgrades people without a new install**, and it
-is only available to whoever owns the existing listing's script project — that
-is, Sefaria. It cannot be done from The Merkaz's or OtterBrain's accounts.
-
-### What path A needs, specifically
+### What the upgrade needs
 
 1. **The same script project.** Not a copy: user settings and the listing are
    both tied to the project's script ID.
@@ -69,7 +69,7 @@ Read from the Marketplace page on 2026-11-17:
 | | |
 | --- | --- |
 | Listing | *Sefaria for Google Docs*, app ID `849562338091`, a Docs editor add-on |
-| Script project | `1gPEx6tjQrXtEkXkPDplyGINPRlVwLMPj74SHR0_jcnsWe5cfXF_ZnYbU` — path A means pushing into this project |
+| Script project | `1gPEx6tjQrXtEkXkPDplyGINPRlVwLMPj74SHR0_jcnsWe5cfXF_ZnYbU` — the upgrade means pushing into this project |
 | Developer | Sefaria (`hello@sefaria.org`), listed as a non-trader |
 | Installs | 53,000+; individual and admin install both offered |
 | Rating | 4.9 from 11 ratings |
@@ -99,11 +99,18 @@ document text that *Link Texts with Sefaria* sends.
 - Documents written with 1.0 are untouched. Transform Divine Names, Link Texts
   and Unlink Sources work on text 1.0 inserted.
 
-The live test checklist (`docs/live-test-checklist-2.0.0.md`) covers a 1.0
-user who installs Torah Library *beside* 1.0 (its "Account C"). **It has no
-in-place upgrade run.** Before path A goes to users, push this code to a copy
-of the 1.0 project's state, open a document as a user who has only ever had
-1.0, and confirm the bullets above.
+Section N of the live test checklist (`docs/live-test-checklist-2.0.0.md`)
+is the run that confirms these bullets, as a user who has only ever had 1.0.
+It has not been run: it needs the real 1.0 project, which only Sefaria has.
+
+### The fallback: a separate listing
+
+If Sefaria decides not to release it, The Merkaz can publish the code as it
+stands, as **Torah Library**: a new script project, a new listing and a full
+Google review. Nothing then changes for 1.0's users until they find and
+install the new add-on, the two sit side by side under **Extensions**, and
+no one is asked to re-authorize. `docs/marketplace-listing.md` §0 to §3 is
+written for that case.
 
 ---
 
@@ -111,7 +118,7 @@ of the 1.0 project's state, open a document as a user who has only ever had
 
 | # | Decision | Where it lives now |
 | --- | --- | --- |
-| 1 | **Name.** Keep "Sefaria for Google Docs", or adopt "Torah Library" | Section 3 lists every place |
+| 1 | **Name.** An upgrade keeps the listing, so the natural answer is "Sefaria for Google Docs"; "Torah Library" would mean renaming the listing too | Section 3 lists every place |
 | 2 | **Divine-name substitution on insert, on by default.** 1.0 only changed names when asked | `getDefaultPreferences()` in `apps-script/server/preferences.gs`; the first-run dialog also asks |
 | 3 | **Credit line under each source, on by default** | Same; pinned by `test/tests/source-attribution.test.js` |
 | 4 | **First-run setup for upgraded users** — show it (as the code does now), or mark it done for anyone coming from 1.0 so they are not interrupted | `first_run_setup` in `server/first-run.gs`; a change needs a migration and a test |
@@ -127,7 +134,7 @@ already `'Sefaria'` and the footer already shows Sefaria's logo.
 
 ---
 
-## 3. What to change to publish under Sefaria's name
+## 3. What to change in the code and documents before the release
 
 All of it is text and configuration; none of it touches how the add-on works.
 
@@ -170,7 +177,7 @@ links. Finish with `npm ci && npm test` (0 failing, **0 skipped**) and
 
 ---
 
-## 4. Publishing checklist for Sefaria
+## 4. Release checklist for Sefaria
 
 - [ ] Decisions in section 2 made; section 3 applied; tests and QC green
 - [ ] 1.0's `appsscript.json` checked against the scope table in section 1;
@@ -183,7 +190,7 @@ links. Finish with `npm ci && npm test` (0 failing, **0 skipped**) and
       does nothing until both exist
 - [ ] `clasp push` to the project's HEAD, then **Deploy → Test deployments**
 - [ ] `docs/live-test-checklist-2.0.0.md` run against that test deployment,
-      plus the in-place upgrade run described in section 1
+      including section N, the in-place upgrade from 1.0
 - [ ] Privacy policy and terms published at URLs Sefaria controls; the in-app
       links, the OAuth consent screen and the listing all point to the same
       ones

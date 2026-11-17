@@ -631,9 +631,11 @@ different repo.
   links to. `PRIVACY.md` §2.2 lists every host the add-on's pages load from.
 - `docs/marketplace-listing.md` — the store console package: every console
   field, the listing copy, and the release procedure.
-- `docs/for-sefaria-review.md` — what is left for Sefaria to decide, change
-  and check to publish this under its own name, and what an in-place upgrade
-  of *Sefaria for Google Docs* 1.0 needs.
+- `docs/for-sefaria-review.md` — the expected release: Sefaria ships this as
+  version 2.0 of *Sefaria for Google Docs*, upgrading its users in place.
+  What that needs (one new scope, so one authorization prompt), what Sefaria
+  must decide and rename first, and the fallback of a separate Torah Library
+  listing. Section N of the live test checklist is its test run.
 - `docs/architecture.md` — the server/client boundary, the include
   graph, the storage layers, the RPC surface.
 - `docs/VERSION.json` — the single source of truth for the version and

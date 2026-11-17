@@ -20,7 +20,7 @@ with the odd cursor positions, slow networks and accidents a real user will
 eventually hit; run it once this checklist passes. Check ids are a letter and a
 number (C4, J14) so they can't be mistaken for a version.
 
-Three accounts' worth of setup matters, because most of the risk is in what
+Four accounts' worth of setup matters, because most of the risk is in what
 a user has before they open 2.0.0:
 
 - **Account A — upgrading tester.** Had a development build of this add-on
@@ -34,8 +34,15 @@ a user has before they open 2.0.0:
   it does not run `onInstall`.
 - **Account C — Sefaria for Google Docs user.** Has Sefaria's own add-on,
   *Sefaria for Google Docs* 1.0, installed, and a document it inserted sources
-  into. That add-on stores no settings, so C meets this one as a new user. Most
-  Marketplace users will take this path.
+  into, and installs this add-on beside it. That add-on stores no settings, so
+  C meets this one as a new user. This is the path if the add-on is published
+  as a separate listing.
+- **Account D — upgraded in place from Sefaria for Google Docs.** Has used
+  *Sefaria for Google Docs* 1.0 and nothing else, and gets this code as the
+  next version of that same add-on. **This is the path most users will take**
+  if Sefaria releases it from the existing listing's script project, which is
+  the plan (`docs/for-sefaria-review.md`). Only someone with access to that
+  project can run it: see section N.
 
 A test document with a few paragraphs of prose, a two-cell table, a header and
 a footnote serves every section below.
@@ -43,6 +50,9 @@ a footnote serves every section below.
 ---
 
 ## A. Install and first open — accounts B and C
+
+B and C install from a test deployment of this repository's own project.
+Account D's upgrade is section N.
 
 | # | Check | Expected |
 | --- | --- | --- |
@@ -330,6 +340,32 @@ Build one test document containing, in this order:
 
 ---
 
+## N. In-place upgrade from Sefaria for Google Docs 1.0 — account D
+
+Run by Sefaria, in the Apps Script project behind the *Sefaria for Google
+Docs* listing. Push this code to that project's **HEAD** (published users stay
+on the version the Marketplace SDK points to), then use **Deploy → Test
+deployments** as an account that has used 1.0 and has a document 1.0 inserted
+sources into. The expectations below are read from the code and from the 1.0
+listing; none has been observed. Where what happens differs, write down what
+did happen: that is the finding.
+
+| # | Check | Expected |
+| --- | --- | --- |
+| N1 | Before the push, in the Apps Script editor: the published version's `appsscript.json` | Its `oauthScopes` match the 1.0 column of the scope table in `docs/for-sefaria-review.md` §1. If they differ, correct that table before going on |
+| N2 | **D:** open the document under the test deployment; open **Extensions** | One add-on entry, not two. Its menu is present even before authorizing |
+| N3 | **D:** choose the first menu item | Google asks for authorization once. The screen lists storing settings, and no longer lists the email address or profile. Record the screen's wording |
+| N4 | **D:** authorize, then open the sidebar | The first-run setup opens once (*Step 1 of 3*); **I've used Sefaria for Google Docs** is offered on screen 1 |
+| N5 | **D:** choose **I've used Sefaria for Google Docs**; continue to the end | Both languages, Hebrew on the right, the Simple interface; a note under *God's name* says the name is now replaced as sources go in |
+| N6 | **D:** insert `Genesis 1:1` | As A6: two columns, Hebrew on the right, יהוה replaced with יי, a credit line under it. These two defaults are decisions 2 and 3 in `docs/for-sefaria-review.md` |
+| N7 | **D:** reload the document; open the sidebar | Setup does not come back. The choices made in N5 are still in effect |
+| N8 | **D:** in the document 1.0 inserted into, run **Transform Divine Names**, **Link Texts with Sefaria** and **Unlink Sources** | Each works on 1.0's text like any other; nothing 1.0 inserted is changed until asked |
+| N9 | **D:** *Help & Support*, Release Notes, *About* | Read as a new version of the same add-on. No "installed beside", no second add-on, and the name, support address and policy links are Sefaria's |
+| N10 | A second account on a domain where an admin installed 1.0 for everyone | Note whether the user is asked to authorize, or told to contact their admin, and what the admin sees |
+| N11 | Point the test deployment back at the published 1.0 version; reload | 1.0 runs as before. The settings saved in N5 are ignored and cause no error |
+
+---
+
 ## Reporting back
 
 For anything that fails, the useful report is:
@@ -338,7 +374,8 @@ For anything that fails, the useful report is:
 2. What you saw versus what the table says
 3. **Browser console output** — most of the failure modes here (SRI, CSP,
    `google.script.run`) show there and nowhere else
-4. Which account (A upgrading / B fresh / C from Sefaria for Google Docs), the
+4. Which account (A upgrading / B fresh / C beside Sefaria for Google Docs /
+   D upgraded in place from it), the
    interface (Simple / Everything) and the scan mode in effect
 
 State the version too: **2.0.0, schema 30**. "It broke" is not checkable
@@ -351,6 +388,6 @@ later; the version and the check id are.
 Record each run here and commit it with the release, so there is evidence the
 checklist was run against the code that shipped.
 
-| Date | Tester | Account (A/B/C) | Apps Script version / commit | Result | Failures (check ids) |
+| Date | Tester | Account (A/B/C/D) | Apps Script version / commit | Result | Failures (check ids) |
 | --- | --- | --- | --- | --- | --- |
 | | | | | | |

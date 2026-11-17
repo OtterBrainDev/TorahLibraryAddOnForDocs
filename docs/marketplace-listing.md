@@ -17,6 +17,27 @@ classic way to get a submission bounced.
 
 ---
 
+## Which release this file describes
+
+**The expected release is Sefaria's:** version 2.0 of *Sefaria for Google
+Docs*, from the script project behind that listing, which upgrades its users in
+place. [`for-sefaria-review.md`](for-sefaria-review.md) is the plan for it, and
+it changes how to read this file:
+
+| Section | For Sefaria's upgrade | For a separate Torah Library listing (the fallback) |
+| --- | --- | --- |
+| §0 Decide these first | Mostly settled: publisher, project, policies and support are Sefaria's own. The in-app links still have to be changed to match | As written |
+| §1 OAuth consent screen | **Scopes only.** Add `script.storage`; remove `userinfo.email` and `userinfo.profile`. The rest of the screen already exists | As written |
+| §2 App Configuration | Script version and the scope list change. Everything else stays | As written |
+| §3 Store Listing | Sefaria's existing listing, updated for 2.0. The copy here is written for Torah Library and says "It is not made by Sefaria"; do not paste it | As written |
+| §4 Before you submit | The repository checks apply. So does the live checklist, with its section N | As written |
+| §5, §6 | Apply. Because the scopes change, expect a Google review and one authorization prompt per user | As written |
+
+Nobody outside Sefaria can do the upgrade: it needs the project that owns the
+listing.
+
+---
+
 ## 0. Decide these first
 
 Several fields below need a URL or an owner that only the publisher can choose.
@@ -222,17 +243,20 @@ side by side"*).
 
 ### Live
 
-- [ ] `docs/live-test-checklist-2.0.0.md` passed against a test deployment,
-      with all three accounts: a fresh install (the menu must appear without
-      reloading), a user of Sefaria for Google Docs, and an upgrade from a
-      development build
+- [ ] `docs/live-test-checklist-2.0.0.md` passed against a test deployment:
+      a fresh install (the menu must appear without reloading), an upgrade
+      from a development build, and, for Sefaria's upgrade, section N as a
+      user of Sefaria for Google Docs 1.0 in that listing's own project. For
+      a separate listing, a 1.0 user installing this add-on beside it
 - [ ] Privacy policy and terms reachable at the console URLs, and current
 - [ ] The in-app privacy link (Preferences, Help → About) opens the same policy
 
 ### Still open in the code — resolve or accept before submitting
 
 These came out of the 2026-09 pre-publication review and are waiting on a
-decision outside the code.
+decision outside the code. The first two are open only for a separate
+listing: released by Sefaria, its name, logo and feedback form are simply its
+own. The third then becomes Sefaria's project instead of TheMerkazDev's.
 
 - [ ] **Sefaria's name and logo.** The sidebar title is `'Sefaria'`
       (`apps-script/server/menu.gs`) and the footer shows Sefaria's logo

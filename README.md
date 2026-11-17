@@ -153,9 +153,12 @@ Most people arrive from Sefaria's own add-on,
 ([help](https://help.sefaria.org/hc/en-us/sections/20235182393244)): one
 sidebar (**Add Sources with Sefaria**) and two commands (**Transform Divine
 Names**, **Link Texts with Sefaria**), with format, edition and translation
-picked for each source and nothing saved. Torah Library is a separate add-on,
-installed beside it; nothing carries over because there is nothing stored to
-carry. The same commands are under **Extensions → Torah Library** (Texts, and
+picked for each source and nothing saved. The expected release is as version
+2.0 of that add-on, from Sefaria: its users are then upgraded where they are
+and asked to authorize once, because this version saves settings
+([what that takes](./docs/for-sefaria-review.md)). Until then this code is
+called Torah Library and a test build installs beside Sefaria's add-on. Either
+way nothing carries over, because 1.0 stored nothing to carry. The same commands are under **Extensions → Torah Library** (Texts, and
 Quick Actions); what's new is saved defaults, layout and formatting choices,
 reviewed linking, and the Voices, Lexicon and Session Library tools. Two
 things work differently out of the box: divine names are replaced as sources
@@ -253,7 +256,7 @@ All Google Apps Script source files live under `apps-script/` (clasp rootDir):
 - `docs/google-docs-walkthrough.md` - End-user walkthrough for the current unified workflow.
 - `docs/PRIVACY.md`, `docs/TERMS.md` - Privacy policy and terms of service.
 - `docs/marketplace-listing.md` - Google Workspace Marketplace console package and release procedure.
-- `docs/for-sefaria-review.md` - For Sefaria: review notes, and what is left to publish it under Sefaria's name.
+- `docs/for-sefaria-review.md` - For Sefaria: the plan to release this as version 2.0 of Sefaria for Google Docs, and review notes.
 - `docs/architecture.md`, `docs/regression-log.md`, `docs/versioning.md` - For contributors.
 
 ### Tests
