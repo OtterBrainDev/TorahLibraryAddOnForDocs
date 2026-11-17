@@ -631,6 +631,9 @@ different repo.
   links to. `PRIVACY.md` §2.2 lists every host the add-on's pages load from.
 - `docs/marketplace-listing.md` — the store console package: every console
   field, the listing copy, and the release procedure.
+- `docs/for-sefaria-review.md` — what is left for Sefaria to decide, change
+  and check to publish this under its own name, and what an in-place upgrade
+  of *Sefaria for Google Docs* 1.0 needs.
 - `docs/architecture.md` — the server/client boundary, the include
   graph, the storage layers, the RPC surface.
 - `docs/VERSION.json` — the single source of truth for the version and

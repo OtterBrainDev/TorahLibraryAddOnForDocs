@@ -253,6 +253,7 @@ All Google Apps Script source files live under `apps-script/` (clasp rootDir):
 - `docs/google-docs-walkthrough.md` - End-user walkthrough for the current unified workflow.
 - `docs/PRIVACY.md`, `docs/TERMS.md` - Privacy policy and terms of service.
 - `docs/marketplace-listing.md` - Google Workspace Marketplace console package and release procedure.
+- `docs/for-sefaria-review.md` - For Sefaria: review notes, and what is left to publish it under Sefaria's name.
 - `docs/architecture.md`, `docs/regression-log.md`, `docs/versioning.md` - For contributors.
 
 ### Tests
