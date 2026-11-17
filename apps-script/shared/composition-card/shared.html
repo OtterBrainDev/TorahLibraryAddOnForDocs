@@ -6,10 +6,11 @@
 // Usage:
 //   initCompositionCard({
 //     containerId: 'composition-card-container',
-//     getState:       function() { return { vowelsMode, cantillationMode, hebrewPunctuationOn, transliterationOn, scheme, translationPunctuationOn, linkOn, hebrewLinkOn, linesOn, detailsOn, emphasisMode }; },
+//     getState:       function() { return { vowelsMode, cantillationMode, hebrewPunctuationOn, transliterationOn, scheme, translitPosition, translationPunctuationOn, linkOn, hebrewLinkOn, linesOn, detailsOn, emphasisMode }; },
 //                     (vowelsMode: ccVowelsMode(); cantillationMode: ccCantillationMode();
 //                      hebrewPunctuationOn / translationPunctuationOn: undefined reads as on;
 //                      linkOn is the translation title's link, hebrewLinkOn the source title's;
+//                      translitPosition: ccNormalizeTranslitPosition(stored transliteration_position);
 //                      with "editionLabel" in data-cc-features, editionOn / hebrewEditionOn
 //                      say whether each linked title names its edition, undefined reading as on)
 //     onToggle:       function(key) { /* flip underlying state for key: hebrewPunctuation,
@@ -17,7 +18,7 @@
 //                     hebrewEdition, lines, details */ },
 //     onChoice:       function(key, value) { /* a three-way choice: 'vowels' (never / tanakh /
 //                     always), 'cantillation' (never / tanakh / torah), 'emphasis' (keep /
-//                     discard / only) */ },
+//                     discard / only), 'translitPosition' (below / left / right) */ },
 //     onSchemeSelect: function(value) { /* set transliteration scheme */ },
 //     afterUpdate:    function(state) { /* optional host-specific post-update hook */ },
 //     getTranslitLabel: function(on, scheme) { /* optional custom label for translit button */ },
@@ -66,6 +67,17 @@ var CC_TRANSLIT_MAQAF_RE = /(^|\s)(kol|\u02BEet|et|es|\u02BFal)-/gi;
 
 function ccTranslitSample(text, hebrewPunctuationOn) {
   return hebrewPunctuationOn ? text : String(text).replace(CC_TRANSLIT_MAQAF_RE, '$1$2 ');
+}
+
+// Where the transliteration goes in the side-by-side arrangements
+// (`transliteration_position`): "below" the Hebrew, in its cell, or a column of
+// its own "left" or "right" of it. Mirrors normalizeTransliterationPosition_ in
+// server/insertion.gs: anything else is "below", where it has always gone.
+var CC_TRANSLIT_POSITIONS = ['below', 'left', 'right'];
+
+function ccNormalizeTranslitPosition(value) {
+  var v = String(value == null ? '' : value).trim().toLowerCase();
+  return CC_TRANSLIT_POSITIONS.indexOf(v) >= 0 ? v : 'below';
 }
 
 // The translation's commentary, which Sefaria tells apart from its direct
@@ -485,6 +497,8 @@ function updateCompositionCard() {
   ccSetToggle($('#cc-translit-pill'), !!state.transliterationOn);
   $('#cc-translit-scheme-row').prop('hidden', !state.transliterationOn);
   $('#cc-translit-font-row').prop('hidden', !state.transliterationOn);
+  $('#cc-translit-position-row').prop('hidden', !state.transliterationOn);
+  ccSetChoice($('#cc-translit-position-toggle'), ccNormalizeTranslitPosition(state.translitPosition));
   if (!state.transliterationOn && _ccInlineFontRole === 'transliteration') ccCloseInlineFontEditor(false);
 
   // Line numbers and the source citation (in shared/insertion-options)
@@ -547,6 +561,10 @@ function updateCompositionCard() {
 
   // Host-specific post-update hook
   if (_ccConfig.afterUpdate) _ccConfig.afterUpdate(state);
+
+  // The Arrangement icons sketch the transliteration (shared/insertion-options,
+  // which every host of the card pairs with it): redraw them at once.
+  if (typeof updateInsertionOptions === 'function') updateInsertionOptions();
 }
 
 function _bindCompositionCardEvents() {

@@ -110,6 +110,10 @@ controls inline.
     to Sefaria's API (texts, search, dictionary, source sheets).
   - `insertion.gs` — writing sources into the document, including
     typography, attribution and multi-translation inserts.
+  - `transliterated-title.gs` — the title of the transliteration's own
+    column: Sefaria's Latin title for the Hebrew one (picked from its
+    unmarked list by matching the Hebrew consonants), else the Hebrew title
+    transliterated from a pointed spelling, else the Latin reference.
   - `document-actions.gs` — Link Texts with Sefaria, Transform Divine
     Names, Insert Source from Selection, Unlink.
   - `linker-prefilter.gs`, `citation-abbreviations.gs` — the local
@@ -232,7 +236,11 @@ too and know nothing about their host:
   and the Link Texts dialog.
 - `shared/insertion-options/*` — the Display and Layout pickers, and the row
   under them with Line by line, Line #s and Citation
-  (`initInsertionOptions`). The sidebar's Layout tray, the Link Texts
+  (`initInsertionOptions`). It also hides the card's transliteration Position
+  where it doesn't apply, and its Arrangement icons sketch the
+  transliteration's place and Line by line (`getState().transliterationOn` /
+  `transliterationPosition`; the card calls `updateInsertionOptions` after
+  each update). The sidebar's Layout tray, the Link Texts
   dialog's "Customize this insertion" panel, and Preferences. Each host
   passes its own state (`getState`) and decides what a choice does
   (`onSelectDisplay`, `onSelectLayout`): the sidebar saves it, the dialog

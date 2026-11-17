@@ -146,6 +146,11 @@ $('#insert-source').click(function () {
       heVersionTitle: $('.he-version-selection').val() || data.heVersionTitle || '',
       singleLanguage: language,
       bilingualLayout: bilingualLayout,
+      // Stacked "Line by line": each Hebrew line, then that line of each translation.
+      alignedRows: $('.wants-aligned-rows').is(':checked'),
+      // Stacked: under the Hebrew (each Hebrew line, with Line by line).
+      includeTransliteration: $('.include-transliteration').is(':checked'),
+      transliterationScheme: getSidebarTransliterationScheme(),
       pasukPreference: showPesukim,
       includeTranslationSourceInfo: includeTranslationSourceInfo,
       insertSefariaLink: insertSefariaLink,
@@ -176,6 +181,8 @@ $('#insert-source').click(function () {
     includeTransliteration: $('.include-transliteration').is(':checked'),
     // The scheme picked in the Layout tray may be a session override only.
     transliterationScheme: getSidebarTransliterationScheme(),
+    // So may the transliteration's Position (side by side: below, left, right).
+    transliterationPosition: ccNormalizeTranslitPosition(effectivePreferences.transliteration_position),
     insertCitationOnly: false,
     sourceEmphasisMode: sourceEmphasisMode,
     // The Layout tray's fonts may be session overrides only.

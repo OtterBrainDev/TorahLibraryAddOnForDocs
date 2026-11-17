@@ -721,9 +721,11 @@ function linkedTitleText_(baseTitle, data, language, typography) {
  * @param {string|null} [opts.preferredTitle]           Override the title shown (e.g. "Bereishit").
  * @param {boolean} [opts.includeTranslationSourceInfo] Append translation attribution.
  * @param {string} [opts.bilingualLayout="he-right"]    Bilingual layout mode.
- * @param {boolean} [opts.alignedRows]                  Side-by-side layouts: one table row per
- *                                                      line (verse) instead of one for the whole
- *                                                      passage; omitted means the stored
+ * @param {boolean} [opts.alignedRows]                  "Line by line". Side-by-side layouts: one
+ *                                                      table row per line (verse) instead of one
+ *                                                      for the whole passage. Stacked: each line,
+ *                                                      then its translation, down the page.
+ *                                                      Omitted means the stored
  *                                                      `bilingual_aligned_rows`.
  * @param {boolean} [opts.insertSefariaLink]            Hyperlink the (translation) title to sefaria.org.
  * @param {boolean} [opts.insertHebrewSefariaLink]      Hyperlink the source (Hebrew) title; defaults to insertSefariaLink.
@@ -732,6 +734,9 @@ function linkedTitleText_(baseTitle, data, language, typography) {
  * @param {string} [opts.sourceEmphasisMode]            "keep" | "discard" | "only"; omitted
  *                                                      means the stored `source_emphasis_mode`.
  * @param {string} [opts.transliterationScheme]         Omitted means the stored `transliteration_scheme`.
+ * @param {string} [opts.transliterationPosition]       Side-by-side layouts: "below" the Hebrew, or a
+ *                                                      column of its own "left" or "right" of it;
+ *                                                      omitted means the stored `transliteration_position`.
  * @param {boolean} [opts.preserveSelection]            Keep a selection and insert after it (default: replace it).
  * @param {Object}  [opts.insertAfterElement]           Insert after this element instead of at the cursor (server-side callers only).
  * @returns {{notice: string}} notice is non-empty when the insert went somewhere other than the cursor.
@@ -756,6 +761,130 @@ function typographyPropertiesFor_(options) {
 function hebrewTitleLinked_(options) {
   if (options && options.insertHebrewSefariaLink !== undefined) return options.insertHebrewSefariaLink === true;
   return !!(options && options.insertSefariaLink === true);
+}
+
+/**
+ * Where the transliteration goes in the side-by-side layouts
+ * (`transliteration_position`): "below" the Hebrew, in its cell, or a column
+ * of its own "left" or "right" of the Hebrew's. Anything else is "below",
+ * where it has always gone.
+ */
+function normalizeTransliterationPosition_(value) {
+  const position = String(value == null ? "" : value).trim().toLowerCase();
+  return (position === "left" || position === "right") ? position : "below";
+}
+
+/**
+ * The transliteration as an insert writes it, for one payload: `scheme`
+ * (the caller's), else the stored `transliteration_scheme`; the stored
+ * dagesh mode and letter overrides; a Tanakh text read as Biblical Hebrew
+ * unless that setting is off.
+ *   read(html)  - any Hebrew.
+ *   whole(segmentedData, formattedData, includeLineMarkers) - the passage,
+ *               read from the Hebrew as fetched (vowels kept, the Hebrew
+ *               punctuation setting applied), with the Hebrew's line markers.
+ *               `segmentedData` is the payload before formatDataForPesukim,
+ *               `formattedData` after.
+ *   line(pair)  - one line of buildAlignedLinePairs_ ("Line by line"), read
+ *               from its own voweled Hebrew, with its line marker; empty for
+ *               a chapter heading.
+ *   title(data) - the transliteration column's title (transliterated-title.gs):
+ *               Sefaria's Latin title for the Hebrew one where it has one,
+ *               else the Hebrew title read with this scheme.
+ */
+function transliteratorFor_(scheme, prefs, data) {
+  const settings = prefs || {};
+  const schemeKey = scheme || settings.transliteration_scheme || "traditional";
+  const isBiblicalHebrewText = settings.transliteration_is_biblical_hebrew !== "false" && !!data && data.type == "Tanakh";
+  let overrideMap = {};
+  try {
+    overrideMap = JSON.parse(settings.transliteration_overrides || '{}') || {};
+  } catch (error) {
+    overrideMap = {};
+  }
+  const read = function (html) {
+    return transliterateHebrewHtmlPreservingBasicBreaks(html, schemeKey, {
+      keepNiqqud: true,
+      isBiblicalHebrew: isBiblicalHebrewText,
+      dageshMode: isBiblicalHebrewText ? (settings.transliteration_biblical_dagesh_mode || "none") : "none",
+      overrideMap: overrideMap
+    });
+  };
+  return {
+    read: read,
+    whole: function (segmentedData, formattedData, includeLineMarkers) {
+      const hebrew = segmentedData.pesukimFormatted === true ? formattedData.he
+        : formatDataForPesukim(Object.assign({}, segmentedData, { he: transliterationSourceOf_(segmentedData) }), includeLineMarkers).he;
+      const raw = hebrew ? read(hebrew) : "";
+      if (!formattedData.lineMarkersApplied || !raw) return raw;
+      return normalizeTransliterationLineMarkersToGematria(raw,
+        (Array.isArray(formattedData.lineMarkerNumbers) && formattedData.lineMarkerNumbers.length)
+          ? formattedData.lineMarkerNumbers
+          : ((formattedData.sections && formattedData.sections[1]) ? formattedData.sections[1] : 1));
+    },
+    line: function (pair) {
+      if (!pair || !pair.heRaw) return "";
+      let lineTransliteration = read(pair.heRaw);
+      if (pair.number != null) {
+        lineTransliteration = "(" + gematriya(pair.number, { punctuate: false }) + ") " + lineTransliteration;
+      }
+      return lineTransliteration;
+    },
+    title: function (titleData) {
+      return transliteratedTitle_(titleData, read, schemeKey);
+    }
+  };
+}
+
+/**
+ * Stacked "Line by line" (`bilingual_aligned_rows`): each line of the source,
+ * its transliteration, then its translation (each translation's, in order,
+ * for a multi-translation insert), going down the page. A part a line lacks
+ * (a segment one language doesn't have) is left out.
+ *
+ * Inserted last paragraph first, every one at `start`: a new Docs paragraph
+ * takes its font and size from the paragraph before it, so in document order
+ * each Hebrew line would take the font of the translation line above it (and
+ * the reverse) wherever a font is left on "Match the document". This way
+ * every line follows the same paragraph (the last title), as the text of a
+ * one-block Stacked insert follows its title.
+ *
+ * @param {Array<{he: string, transliteration: string,
+ *         translations: Array<{html: string, typography: Object}>}>} lines
+ * @return {number} The index after the last paragraph inserted.
+ */
+function insertInterleavedLines_(doc, start, lines, typography) {
+  const nullStyle = {};
+  nullStyle[DocumentApp.Attribute.BOLD] = false;
+  nullStyle[DocumentApp.Attribute.UNDERLINE] = false;
+  const noUnderline = {};
+  noUnderline[DocumentApp.Attribute.UNDERLINE] = false;
+
+  const paragraphs = [];
+  lines.forEach(function (line) {
+    if (hasInsertableText_(line.he)) paragraphs.push({ role: 'hebrew', html: line.he, typography: typography });
+    if (line.transliteration) paragraphs.push({ role: 'transliteration', text: line.transliteration });
+    (line.translations || []).forEach(function (translation) {
+      if (hasInsertableText_(translation.html)) {
+        paragraphs.push({ role: 'translation', html: translation.html, typography: translation.typography || typography });
+      }
+    });
+  });
+
+  for (let i = paragraphs.length - 1; i >= 0; i--) {
+    const part = paragraphs[i];
+    if (part.role === 'transliteration') {
+      insertTransliterationParagraphAfter(doc, start, part.text, typography, true);
+      continue;
+    }
+    const paragraph = doc.insertParagraph(start, "");
+    paragraph.setLeftToRight(part.role !== 'hebrew');
+    paragraph.setAttributes(nullStyle);
+    insertRichTextFromHTML(paragraph, part.html);
+    paragraph.setAttributes(noUnderline);
+    applyRoleTypography_(paragraph, part.typography, part.role, { preserveSourceEmphasis: true });
+  }
+  return start + paragraphs.length;
 }
 
 function insertReference(data, opts) {
@@ -835,38 +964,16 @@ function insertReference(data, opts) {
   }
   typography.sectionHeadingLines = data.sectionHeadingLines || [];
   const currentPrefs = getPreferences();
-  const transliterationScheme = options.transliterationScheme || currentPrefs.transliteration_scheme || "traditional";
-  const transliterationDageshMode = currentPrefs.transliteration_biblical_dagesh_mode || "none";
-  const transliterationIsBiblical = currentPrefs.transliteration_is_biblical_hebrew !== "false";
-  const isBiblicalHebrewText = transliterationIsBiblical && data.type == "Tanakh";
   const alignedRowsSetting = (options.alignedRows !== undefined) ? options.alignedRows : currentPrefs.bilingual_aligned_rows;
   const alignedRows = alignedRowsSetting === true || alignedRowsSetting === 'true';
-  const transliterationOverrides = (() => {
-    try {
-      return JSON.parse(currentPrefs.transliteration_overrides || '{}') || {};
-    } catch (error) {
-      return {};
-    }
-  })();
-  // Read from the Hebrew as fetched (vowels kept, the Hebrew punctuation
-  // setting applied), joined with the same line markers as the Hebrew.
-  const transliterationHebrew = !includeTransliteration ? ""
-    : (segmentedData.pesukimFormatted === true ? data.he
-      : formatDataForPesukim(Object.assign({}, segmentedData, { he: transliterationSourceOf_(segmentedData) }), includeLineMarkers).he);
-  const transliterationTextRaw = (includeTransliteration && data.he && transliterationHebrew)
-    ? transliterateHebrewHtmlPreservingBasicBreaks(transliterationHebrew, transliterationScheme, {
-        keepNiqqud: true,
-        isBiblicalHebrew: isBiblicalHebrewText,
-        dageshMode: isBiblicalHebrewText ? transliterationDageshMode : "none",
-        overrideMap: transliterationOverrides
-      })
+  const transliterationPosition = normalizeTransliterationPosition_(
+    (options.transliterationPosition !== undefined) ? options.transliterationPosition : currentPrefs.transliteration_position);
+  const transliterator = transliteratorFor_(options.transliterationScheme, currentPrefs, data);
+  const transliterationText = (includeTransliteration && data.he)
+    ? transliterator.whole(segmentedData, data, includeLineMarkers)
     : "";
-  const transliterationText = (data.lineMarkersApplied && transliterationTextRaw)
-    ? normalizeTransliterationLineMarkersToGematria(transliterationTextRaw,
-        (Array.isArray(data.lineMarkerNumbers) && data.lineMarkerNumbers.length)
-          ? data.lineMarkerNumbers
-          : ((data.sections && data.sections[1]) ? data.sections[1] : 1))
-    : transliterationTextRaw;
+  // "Line by line": one line's transliteration (transliteratorFor_).
+  const transliterateLine = transliterator.line;
   const sefariaUrl = `https://www.sefaria.org/${encodeURIComponent(data.ref || '').replace(/%20/g, '_')}`;
 
   const shouldAppendCitation = (insertCitationOnly === true || insertCitationOnly === "true");
@@ -936,15 +1043,52 @@ function insertReference(data, opts) {
     appendCitationParagraph(singleLanguageNextIndex);
   }
   else {
-    if (resolvedBilingualLayout == "he-top") {
-      doc.insertParagraph(index, insertHebrewSefariaLink ? linkedTitleText_(data.heRef, data, 'he', typography) : data.heRef)
+    const insertHebrewTitleAt = (at) => {
+      doc.insertParagraph(at, insertHebrewSefariaLink ? linkedTitleText_(data.heRef, data, 'he', typography) : data.heRef)
         .setAttributes(headerStyle)
         .setLeftToRight(false);
-      let hebTitleParagraph = doc.getChild(index).asParagraph();
+      let hebTitleParagraph = doc.getChild(at).asParagraph();
       applyTitleTypography(hebTitleParagraph, typography, insertHebrewSefariaLink, 'he');
       if (insertHebrewSefariaLink) {
         hebTitleParagraph.editAsText().setLinkUrl(sefariaUrl);
       }
+    };
+    const insertTranslationTitleAt = (at) => {
+      doc.insertParagraph(at, insertSefariaLink ? linkedTitleText_(title, data, 'en', typography) : title)
+        .setAttributes(headerStyle)
+        .setLeftToRight(true);
+      let enTitleParagraph = doc.getChild(at).asParagraph();
+      applyTitleTypography(enTitleParagraph, typography, insertSefariaLink, 'en');
+      if (insertSefariaLink) {
+        enTitleParagraph.editAsText().setLinkUrl(sefariaUrl);
+      }
+    };
+    // Stacked "Line by line": the two titles, then each line, its
+    // transliteration and its translation, going down the page. One block
+    // per language when the source has no segments to pair.
+    const stackedLinePairs = (resolvedBilingualLayout == "he-top" && alignedRows)
+      ? buildAlignedLinePairs_(segmentedData, includeLineMarkers)
+      : null;
+
+    if (stackedLinePairs) {
+      insertHebrewTitleAt(index);
+      insertTranslationTitleAt(index + 1);
+      const translationTypography = typographyForTranslation_(typography, data);
+      let stackedNextIndex = insertInterleavedLines_(doc, index + 2, stackedLinePairs.map((pair) => ({
+        he: pair.he,
+        transliteration: transliterationText ? transliterateLine(pair) : "",
+        translations: [{ html: pair.en, typography: translationTypography }]
+      })), typography);
+
+      if (attributionLines.length > 0) {
+        let attributionParagraph = doc.insertParagraph(stackedNextIndex, "");
+        insertAttributionParagraph(attributionParagraph, attributionLines, typography);
+        stackedNextIndex += 1;
+      }
+
+      appendCitationParagraph(stackedNextIndex);
+    } else if (resolvedBilingualLayout == "he-top") {
+      insertHebrewTitleAt(index);
 
       let hebTextParagraph = doc.insertParagraph(index + 1, "");
       hebTextParagraph.setLeftToRight(false);
@@ -957,14 +1101,7 @@ function insertReference(data, opts) {
         insertTransliterationParagraphAfter(doc, index + 2, transliterationText, typography, true);
       }
 
-      doc.insertParagraph(index + (transliterationText ? 3 : 2), insertSefariaLink ? linkedTitleText_(title, data, 'en', typography) : title)
-        .setAttributes(headerStyle)
-        .setLeftToRight(true);
-      let enTitleParagraph = doc.getChild(index + (transliterationText ? 3 : 2)).asParagraph();
-      applyTitleTypography(enTitleParagraph, typography, insertSefariaLink, 'en');
-      if (insertSefariaLink) {
-        enTitleParagraph.editAsText().setLinkUrl(sefariaUrl);
-      }
+      insertTranslationTitleAt(index + (transliterationText ? 3 : 2));
 
       let engTextParagraph = doc.insertParagraph(index + (transliterationText ? 4 : 3), "");
       engTextParagraph.setLeftToRight(true);
@@ -987,15 +1124,25 @@ function insertReference(data, opts) {
       // translation. Falls back to one row for the whole passage when the
       // source has no segments to pair.
       const linePairs = alignedRows ? buildAlignedLinePairs_(segmentedData, includeLineMarkers) : null;
-      let cells = [["", ""]].concat(linePairs ? linePairs.map(() => ["", ""]) : [["", ""]]);
+      // The columns, left to right: the translation and the Hebrew, and the
+      // transliteration's own column beside the Hebrew when it is set "left"
+      // or "right" of it ("below" keeps it under the Hebrew, in its cell).
+      const columns = (resolvedBilingualLayout == "he-left") ? ["he", "en"] : ["en", "he"];
+      const transliterationColumned = !!transliterationText && transliterationPosition !== "below";
+      if (transliterationColumned) {
+        columns.splice(columns.indexOf("he") + (transliterationPosition === "right" ? 1 : 0), 0, "tr");
+      }
+      const blankRow = () => columns.map(() => "");
+      let cells = [blankRow()].concat(linePairs ? linePairs.map(blankRow) : [blankRow()]);
       let tableStyle = {};
           tableStyle[DocumentApp.Attribute.BOLD] = false;
       let table = doc.insertTable(index, cells)
 
       table.setAttributes(tableStyle);
 
-      let englishColumn = (resolvedBilingualLayout == "he-left") ? 1 : 0;
-      let hebrewColumn = (resolvedBilingualLayout == "he-left") ? 0 : 1;
+      let englishColumn = columns.indexOf("en");
+      let hebrewColumn = columns.indexOf("he");
+      let transliterationColumn = columns.indexOf("tr");
 
       let engTitle = table.getCell(0, englishColumn)
         .setText("")
@@ -1019,7 +1166,22 @@ function insertReference(data, opts) {
         hebTitle.editAsText().setLinkUrl(sefariaUrl);
       }
 
-      const fillBodyRow = (row, englishHtml, hebrewHtml) => {
+      // The transliteration column's title: the Hebrew title transliterated
+      // (transliterated-title.gs), formatted and linked like the Hebrew title.
+      if (transliterationColumn >= 0) {
+        // Plain text, not HTML: a Latin reference is never markup.
+        let transliterationTitle = table.getCell(0, transliterationColumn)
+          .setText("")
+          .insertParagraph(0, transliterator.title(data));
+        transliterationTitle.setLeftToRight(true);
+        transliterationTitle.setAttributes(headerStyle);
+        applyTitleTypography(transliterationTitle, typography, insertHebrewSefariaLink, 'he');
+        if (insertHebrewSefariaLink) {
+          transliterationTitle.editAsText().setLinkUrl(sefariaUrl);
+        }
+      }
+
+      const fillBodyRow = (row, englishHtml, hebrewHtml, transliteration) => {
         let engText = table.getCell(row, englishColumn)
           .setText("")
           .insertParagraph(0, "")
@@ -1037,12 +1199,20 @@ function insertReference(data, opts) {
         insertRichTextFromHTML(hebText, hebrewHtml);
         hebText.setAttributes(noUnderline);
         applyRoleTypography_(hebText, typography, 'hebrew', { preserveSourceEmphasis: true });
+
+        if (transliterationColumn >= 0) {
+          let transliterationParagraph = table.getCell(row, transliterationColumn)
+            .setText("")
+            .insertParagraph(0, transliteration || "");
+          transliterationParagraph.setLeftToRight(true);
+          applyRoleTypography_(transliterationParagraph, typography, 'transliteration');
+        }
       };
 
       if (linePairs) {
-        linePairs.forEach((pair, i) => fillBodyRow(i + 1, pair.en, pair.he));
+        linePairs.forEach((pair, i) => fillBodyRow(i + 1, pair.en, pair.he, transliterationColumned ? transliterateLine(pair) : ""));
       } else {
-        fillBodyRow(1, data.text, data.he);
+        fillBodyRow(1, data.text, data.he, transliterationColumned ? transliterationText : "");
       }
 
       let sideBySideNextIndex = index + 1;
@@ -1064,20 +1234,12 @@ function insertReference(data, opts) {
         }
       }
 
-      if (transliterationText && linePairs) {
+      if (transliterationColumned) {
+        // Already in its own column (fillBodyRow).
+      } else if (transliterationText && linePairs) {
         // Each row's own transliteration, under its Hebrew.
         linePairs.forEach((pair, i) => {
-          if (!pair.heRaw) return;
-          let rowTransliteration = transliterateHebrewHtmlPreservingBasicBreaks(pair.heRaw, transliterationScheme, {
-            keepNiqqud: true,
-            isBiblicalHebrew: isBiblicalHebrewText,
-            dageshMode: isBiblicalHebrewText ? transliterationDageshMode : "none",
-            overrideMap: transliterationOverrides
-          });
-          if (pair.number != null) {
-            rowTransliteration = "(" + gematriya(pair.number, { punctuate: false }) + ") " + rowTransliteration;
-          }
-          insertTransliterationIntoCell(table.getCell(i + 1, hebrewColumn), rowTransliteration, typography);
+          insertTransliterationIntoCell(table.getCell(i + 1, hebrewColumn), transliterateLine(pair), typography);
         });
       } else if (transliterationText) {
         insertTransliterationIntoCell(table.getCell(1, hebrewColumn), transliterationText, typography);
@@ -1174,7 +1336,9 @@ function buildSefariaVersionUrl_(ref, enVersionTitle, heVersionTitle) {
 /**
  * Insert the same reference in multiple translation versions into the active document.
  * Only valid for "translation only" (singleLanguage="en") and "Hebrew on top" (bilingualLayout="he-top") modes.
- * For he-top: inserts the Hebrew block once, then each translation in sequence.
+ * For he-top: inserts the Hebrew block once, then each translation in sequence;
+ * with "Line by line", the titles, then each Hebrew line followed by that line
+ * of each translation, in the order picked.
  * For en: inserts each translation as its own title + body block in sequence.
  * Consecutive translation blocks are separated by an empty paragraph.
  *
@@ -1185,6 +1349,11 @@ function buildSefariaVersionUrl_(ref, enVersionTitle, heVersionTitle) {
  * @param {string}  [opts.singleLanguage]      "en" for translation-only mode; omit for he-top.
  * @param {string}  [opts.bilingualLayout]     Expected "he-top" when not singleLanguage.
  * @param {boolean} [opts.pasukPreference]     Include line markers.
+ * @param {boolean} [opts.alignedRows]         he-top: "Line by line" (see insertReference);
+ *        omitted means the stored `bilingual_aligned_rows`.
+ * @param {boolean} [opts.includeTransliteration] he-top: the transliteration under the Hebrew
+ *        (with Line by line, under each Hebrew line), as insertReference writes it.
+ * @param {string}  [opts.transliterationScheme] Omitted means the stored `transliteration_scheme`.
  * @param {string}  [opts.preferredTitle]      Override displayed title (e.g. "Bereishit 1:1").
  * @param {boolean} [opts.includeTranslationSourceInfo] Append attribution.
  * @param {boolean} [opts.insertSefariaLink]   Hyperlink the translation titles to sefaria.org.
@@ -1230,6 +1399,28 @@ function insertReferenceVersions(ref, opts) {
     typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
   }
 
+  // "Line by line" (Hebrew on top only): each translation's lines, paired
+  // with the Hebrew's before formatDataForPesukim joins them (it rewrites
+  // the payload it is given). Null for any translation with no segments to
+  // pair, which keeps the blocks.
+  let storedPrefs = null;
+  const prefs = function () { return storedPrefs || (storedPrefs = getPreferences() || {}); };
+  let linePairLists = null;
+  if (singleLanguage !== 'en') {
+    const alignedRowsSetting = (options.alignedRows !== undefined) ? options.alignedRows : prefs().bilingual_aligned_rows;
+    if (alignedRowsSetting === true || alignedRowsSetting === 'true') {
+      linePairLists = kept.map(function (entry) { return buildAlignedLinePairs_(entry.data, includeLineMarkers); });
+      if (!linePairLists.every(Boolean)) linePairLists = null;
+    }
+  }
+  // The transliteration (Hebrew on top only), read from the first
+  // translation's payload as fetched, as insertReference reads it: the
+  // Hebrew is the same in every one.
+  const transliterator = (singleLanguage !== 'en' && options.includeTransliteration === true)
+    ? transliteratorFor_(options.transliterationScheme, prefs(), kept[0].data)
+    : null;
+  const firstSegmented = Object.assign({}, kept[0].data);
+
   // Always paragraphs (translation-only or Hebrew on top), so this can go
   // inside a table cell. A selection is kept, as it always was on this path.
   const target = resolveInsertionTarget_({ layout: 'paragraphs', replaceSelection: false });
@@ -1252,6 +1443,22 @@ function insertReferenceVersions(ref, opts) {
     doc.insertParagraph(index, '').setAttributes(separatorStyle).setLeftToRight(true);
     index += 1;
   };
+
+  if (linePairLists) {
+    return insertReferenceVersionLines_(doc, index, kept, linePairLists, {
+      ref: ref,
+      heVersionTitle: heVersionTitle,
+      preferredTitle: preferredTitle,
+      includeLineMarkers: includeLineMarkers,
+      includeTranslationSourceInfo: includeTranslationSourceInfo,
+      insertSefariaLink: insertSefariaLink,
+      insertHebrewSefariaLink: insertHebrewSefariaLink,
+      transliterator: transliterator,
+      typography: typography,
+      skipped: selection.skipped,
+      notice: target.notice
+    });
+  }
 
   // The Hebrew edition's credit, once, under the Hebrew; the translations each
   // credit their own edition below. Only the single-translation insert used to
@@ -1277,6 +1484,15 @@ function insertReferenceVersions(ref, opts) {
     heTextPara.setAttributes(noUnderline);
     applyRoleTypography_(heTextPara, typography, 'hebrew', { preserveSourceEmphasis: true });
     index += 2;
+
+    // Under the Hebrew, before the translations, as in a one-translation insert.
+    const transliterationText = (transliterator && firstData.he)
+      ? transliterator.whole(firstSegmented, firstData, includeLineMarkers)
+      : '';
+    if (transliterationText) {
+      insertTransliterationParagraphAfter(doc, index, transliterationText, typography, true);
+      index += 1;
+    }
   }
 
   // Each block is inserted at the same position, last block first. A new Docs
@@ -1332,6 +1548,87 @@ function insertReferenceVersions(ref, opts) {
     inserted: kept.map(function (entry) { return entry.versionTitle; }),
     skipped: selection.skipped,
     notice: target.notice
+  };
+}
+
+/**
+ * insertReferenceVersions with "Line by line" (Hebrew on top): the Hebrew
+ * title, each translation's title, then each Hebrew line (and its
+ * transliteration, with `settings.transliterator`) followed by that line of
+ * every translation, in the order picked (insertInterleavedLines_),
+ * then the credits (the Hebrew edition's, then each translation's) and a
+ * blank paragraph, as after the blocks.
+ *
+ * @param {Array<{versionTitle: string, data: Object}>} kept
+ * @param {Array<Array<Object>>} linePairLists  buildAlignedLinePairs_ of each kept payload.
+ */
+function insertReferenceVersionLines_(doc, index, kept, linePairLists, settings) {
+  const typography = settings.typography;
+  let headerStyle = {};
+  headerStyle[DocumentApp.Attribute.BOLD] = true;
+  headerStyle[DocumentApp.Attribute.UNDERLINE] = true;
+  let separatorStyle = {};
+  separatorStyle[DocumentApp.Attribute.BOLD] = false;
+  separatorStyle[DocumentApp.Attribute.ITALIC] = false;
+  separatorStyle[DocumentApp.Attribute.UNDERLINE] = false;
+
+  const formatted = kept.map(function (entry) { return formatDataForPesukim(entry.data, settings.includeLineMarkers); });
+  // Ours, not the source's: Commentary → Drop keeps every chapter heading.
+  typography.sectionHeadingLines = formatted.reduce(function (all, d) { return all.concat(d.sectionHeadingLines || []); }, []);
+  const firstData = formatted[0];
+
+  let heTitle = settings.insertHebrewSefariaLink ? linkedTitleText_(firstData.heRef, firstData, 'he', typography) : firstData.heRef;
+  doc.insertParagraph(index, heTitle).setAttributes(headerStyle).setLeftToRight(false);
+  let heTitlePara = doc.getChild(index).asParagraph();
+  applyTitleTypography(heTitlePara, typography, settings.insertHebrewSefariaLink, 'he');
+  if (settings.insertHebrewSefariaLink) {
+    heTitlePara.editAsText().setLinkUrl(buildSefariaVersionUrl_(settings.ref, '', firstData.heVersionTitle || settings.heVersionTitle));
+  }
+  index += 1;
+
+  formatted.forEach(function (d, i) {
+    let displayTitle = buildVersionBlockTitle_(settings.preferredTitle || d.ref, kept[i].versionTitle, d, settings.insertSefariaLink, kept.length, typography);
+    doc.insertParagraph(index, displayTitle).setAttributes(headerStyle).setLeftToRight(true);
+    let titlePara = doc.getChild(index).asParagraph();
+    applyTitleTypography(titlePara, typography, settings.insertSefariaLink, 'en');
+    if (settings.insertSefariaLink) {
+      titlePara.editAsText().setLinkUrl(buildSefariaVersionUrl_(settings.ref, kept[i].versionTitle, ''));
+    }
+    index += 1;
+  });
+
+  const translationTypographies = formatted.map(function (d) { return typographyForTranslation_(typography, d); });
+  const lineCount = linePairLists.reduce(function (most, pairs) { return Math.max(most, pairs.length); }, 0);
+  const lines = [];
+  for (let r = 0; r < lineCount; r++) {
+    const hebrewPair = linePairLists[0][r];
+    lines.push({
+      he: hebrewPair ? hebrewPair.he : '',
+      transliteration: (settings.transliterator && hebrewPair) ? settings.transliterator.line(hebrewPair) : '',
+      translations: linePairLists.map(function (pairs, v) {
+        return { html: pairs[r] ? pairs[r].en : '', typography: translationTypographies[v] };
+      })
+    });
+  }
+  index = insertInterleavedLines_(doc, index, lines, typography);
+
+  if (settings.includeTranslationSourceInfo) {
+    const creditLines = [].concat(
+      getHebrewAttributionLines_(firstData),
+      formatted.reduce(function (all, d) { return all.concat(getEnglishAttributionLines(d)); }, [])
+    );
+    if (creditLines.length) {
+      insertAttributionParagraph(doc.insertParagraph(index, ''), creditLines, typography);
+      index += 1;
+    }
+  }
+
+  doc.insertParagraph(index, '').setAttributes(separatorStyle).setLeftToRight(true);
+
+  return {
+    inserted: kept.map(function (entry) { return entry.versionTitle; }),
+    skipped: settings.skipped,
+    notice: settings.notice
   };
 }
 

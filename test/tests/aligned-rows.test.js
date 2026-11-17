@@ -1,8 +1,12 @@
-// Pins the side-by-side layouts' "Line by line" setting
-// (bilingual_aligned_rows): buildAlignedLinePairs_ in server/text-processing.gs
-// pairs each Hebrew segment with its translation, and insertReference in
-// server/insertion.gs gives each pair its own table row. Off (the default and
-// what upgraders get) keeps the one-row table side-by-side inserts always had.
+// Pins the "Line by line" setting (bilingual_aligned_rows):
+// buildAlignedLinePairs_ in server/text-processing.gs pairs each Hebrew
+// segment with its translation; insertReference in server/insertion.gs gives
+// each pair its own table row in the side-by-side layouts, and in Stacked puts
+// each line, its transliteration and its translation one after another down
+// the page. Off (the default and what upgraders get) keeps the one-row table
+// and the one block per language inserts always had. Also the side-by-side
+// transliteration's place (transliteration_position): under the Hebrew, or a
+// column of its own left or right of it.
 //
 // Loaded with vm.createContext; .gs is not a Node module format.
 
@@ -74,7 +78,7 @@ function fakeTable(cells) {
         insertText(offset, t) { p.text = p.text.slice(0, offset) + t + p.text.slice(offset); return text; },
         getText: () => p.text,
         editAsText: () => text,
-        setLinkUrl: () => text, setBold: () => text, setItalic: () => text, setAttributes: () => text,
+        setLinkUrl(url) { p.link = url; return text; }, setBold: () => text, setItalic: () => text, setAttributes: () => text,
       };
       const api = {
         setLeftToRight: () => api, setAttributes: () => api, asParagraph: () => api,
@@ -96,15 +100,36 @@ function fakeTable(cells) {
     getNumRows: () => rows.length,
     getRow: (r) => ({ getNumCells: () => rows[r].length, getCell: (c) => rows[r][c] }),
     texts: () => plain(rows.map((row) => row.map((cell) => cell.paragraphs.map((p) => p.text).join(' / ')))),
+    links: () => plain(rows.map((row) => row.map((cell) => cell.paragraphs.map((p) => p.link || null).filter(Boolean).join(' / ')))),
   };
 }
 
 function loadInsert(storedPrefs) {
   const tables = [];
+  // Body paragraphs, in order: { text, ltr }. The side-by-side layouts insert
+  // only a table (with no citation or credit); Stacked inserts paragraphs.
+  const paragraphs = [];
+  const fakeParagraph = (p) => {
+    const text = {
+      insertText(offset, t) { p.text = p.text.slice(0, offset) + t + p.text.slice(offset); return text; },
+      getText: () => p.text,
+      editAsText: () => text,
+      setLinkUrl: () => text, setBold: () => text, setItalic: () => text, setAttributes: () => text,
+    };
+    const api = {
+      setLeftToRight(ltr) { p.ltr = ltr; return api; },
+      setAttributes: () => api,
+      setText(t) { p.text = t; return api; },
+      asParagraph: () => api,
+      editAsText: () => text,
+    };
+    return api;
+  };
   const body = {
-    getNumChildren: () => 0,
+    getNumChildren: () => paragraphs.length,
+    getChild: (i) => fakeParagraph(paragraphs[i]),
     insertTable(i, cells) { const t = fakeTable(cells); tables.push(t); return t; },
-    insertParagraph() { throw new Error('no paragraphs expected'); },
+    insertParagraph(i, t) { const p = { text: t || '', ltr: null }; paragraphs.splice(i, 0, p); return fakeParagraph(p); },
   };
   const context = {
     console,
@@ -124,10 +149,11 @@ function loadInsert(storedPrefs) {
   };
   vm.createContext(context);
   ['apps-script/gematriya.gs', 'apps-script/server/text-processing.gs', 'apps-script/server/utils.gs',
-    'apps-script/server/insertion-target.gs', 'apps-script/server/insertion.gs'].forEach((file) => {
+    'apps-script/server/insertion-target.gs', 'apps-script/server/transliterated-title.gs',
+    'apps-script/server/insertion.gs'].forEach((file) => {
     vm.runInContext(read(file), context, { filename: file });
   });
-  return { context, tables };
+  return { context, tables, paragraphs };
 }
 
 const GENESIS = () => ({ ref: 'Genesis 1:1-2', heRef: 'בראשית א:א-ב', sections: [1, 1], he: ['בראשית', 'והארץ'], text: ['In the beginning', 'The earth'] });
@@ -192,4 +218,406 @@ test('line by line: each row\'s transliteration reads its own voweled Hebrew', (
   const { context, tables } = loadInsert({ bilingual_aligned_rows: 'true' });
   context.insertReference(VOWELED(), { bilingualLayout: 'he-right', pasukPreference: false, includeTransliteration: true });
   assert.deepEqual(tables[0].texts().slice(1).map((row) => row[1]), ['בראשית / tr:בְּרֵאשִׁית', 'והארץ / tr:וְהָאָרֶץ']);
+});
+
+// ── Stacked ("Hebrew on top") ───────────────────────────────────────────────
+
+const stackedTexts = (paragraphs) => paragraphs.map((p) => p.text);
+
+test('Stacked, off (the default): one block per language, as before', () => {
+  const { context, paragraphs, tables } = loadInsert({});
+  context.insertReference(GENESIS(), { bilingualLayout: 'he-top', pasukPreference: true });
+  assert.equal(tables.length, 0);
+  assert.deepEqual(stackedTexts(paragraphs), [
+    'בראשית א:א-ב', '(א) בראשית\n(ב) והארץ\n', 'Genesis 1:1-2', '(1) In the beginning\n(2) The earth\n',
+  ]);
+});
+
+test('Stacked, line by line: the titles, then each line and its translation going down the page', () => {
+  const { context, paragraphs, tables } = loadInsert({ bilingual_aligned_rows: 'true' });
+  context.insertReference(GENESIS(), { bilingualLayout: 'he-top', pasukPreference: true });
+  assert.equal(tables.length, 0, 'no table: Stacked is paragraphs');
+  assert.deepEqual(stackedTexts(paragraphs), [
+    'בראשית א:א-ב', 'Genesis 1:1-2',
+    '(א) בראשית', '(1) In the beginning',
+    '(ב) והארץ', '(2) The earth',
+  ]);
+  // The Hebrew right to left, the translation left to right.
+  assert.deepEqual(paragraphs.map((p) => p.ltr), [false, true, false, true, false, true]);
+});
+
+test('Stacked, line by line: the caller can turn it on over the stored setting, and off', () => {
+  const on = loadInsert({ bilingual_aligned_rows: 'false' });
+  on.context.insertReference(GENESIS(), { bilingualLayout: 'he-top', pasukPreference: false, alignedRows: true });
+  assert.deepEqual(stackedTexts(on.paragraphs).slice(2), ['בראשית', 'In the beginning', 'והארץ', 'The earth']);
+  const off = loadInsert({ bilingual_aligned_rows: 'true' });
+  off.context.insertReference(GENESIS(), { bilingualLayout: 'he-top', pasukPreference: false, alignedRows: false });
+  assert.equal(off.paragraphs.length, 4, 'one block per language');
+});
+
+test('Stacked, line by line: each line\'s transliteration follows its Hebrew, before the translation', () => {
+  const { context, paragraphs } = loadInsert({ bilingual_aligned_rows: 'true' });
+  context.insertReference(VOWELED(), { bilingualLayout: 'he-top', pasukPreference: true, includeTransliteration: true });
+  assert.deepEqual(stackedTexts(paragraphs).slice(2), [
+    '(א) בראשית', '(א) tr:בְּרֵאשִׁית', '(1) In the beginning',
+    '(ב) והארץ', '(ב) tr:וְהָאָרֶץ', '(2) The earth',
+  ]);
+  assert.deepEqual(paragraphs.slice(2).map((p) => p.ltr), [false, true, true, false, true, true]);
+});
+
+test('Stacked, line by line: the transliteration position never moves it from under the Hebrew', () => {
+  const { context, paragraphs } = loadInsert({ bilingual_aligned_rows: 'true', transliteration_position: 'left' });
+  context.insertReference(VOWELED(), { bilingualLayout: 'he-top', pasukPreference: false, includeTransliteration: true });
+  assert.deepEqual(stackedTexts(paragraphs).slice(2, 5), ['בראשית', 'tr:בְּרֵאשִׁית', 'In the beginning']);
+});
+
+test('Stacked, line by line: a spanning ref keeps its chapter headings; a missing line is left out', () => {
+  const { context, paragraphs } = loadInsert({ bilingual_aligned_rows: 'true' });
+  context.insertReference({
+    ref: 'Genesis 1:31-2:1', heRef: 'בראשית א:לא-ב:א', isSpanning: true, sections: [1, 31],
+    he: [['a'], ['b']], text: [['A'], []],
+  }, { bilingualLayout: 'he-top', pasukPreference: true });
+  assert.deepEqual(stackedTexts(paragraphs).slice(2), [
+    'פרק א', 'Chapter 1', '(לא) a', '(31) A',
+    'פרק ב', '(א) b',
+  ]);
+});
+
+test('Stacked, line by line: credit and citation follow the last line', () => {
+  const { context, paragraphs } = loadInsert({ bilingual_aligned_rows: 'true' });
+  context.getEnglishAttributionLines = () => ['Translation: Koren'];
+  context.insertReference(GENESIS(), { bilingualLayout: 'he-top', pasukPreference: false, includeTranslationSourceInfo: true });
+  assert.deepEqual(stackedTexts(paragraphs).slice(-3), ['והארץ', 'The earth', 'Translation: Koren']);
+});
+
+test('Stacked, line by line: a source with no lines to pair keeps one block per language', () => {
+  const { context, paragraphs } = loadInsert({ bilingual_aligned_rows: 'true' });
+  context.insertReference({ ref: 'Note 1', heRef: 'הערה א', he: 'whole', text: 'Whole' }, { bilingualLayout: 'he-top', pasukPreference: false });
+  assert.deepEqual(stackedTexts(paragraphs), ['הערה א', 'whole', 'Note 1', 'Whole']);
+});
+
+// ── The side-by-side transliteration column ─────────────────────────────────
+
+test('transliteration left of the Hebrew: a column of its own (Right–Left)', () => {
+  // The same transliteration "below" puts under the Hebrew.
+  const below = loadInsert({});
+  below.context.insertReference(VOWELED(), { bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true });
+  const transliteration = below.tables[0].texts()[1][1].split(' / ')[1];
+  assert.match(transliteration, /^tr:\(א\) בְּרֵאשִׁית/);
+
+  const { context, tables } = loadInsert({});
+  context.insertReference(VOWELED(), {
+    bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true, transliterationPosition: 'left',
+  });
+  // The payload names no index titles, so the column's title is the Latin
+  // reference (see "the transliteration column's title" below).
+  assert.deepEqual(tables[0].texts(), [
+    ['Genesis 1:1-2', 'Genesis 1:1-2', 'בראשית א:א-ב'],
+    ['(1) In the beginning\n(2) The earth\n', transliteration, '(א) בראשית\n(ב) והארץ\n'],
+  ]);
+});
+
+test('transliteration right of the Hebrew, Left–Right: Hebrew, transliteration, translation', () => {
+  const { context, tables } = loadInsert({});
+  context.insertReference(VOWELED(), {
+    bilingualLayout: 'he-left', pasukPreference: false, includeTransliteration: true, transliterationPosition: 'right',
+  });
+  const [titles, row] = tables[0].texts();
+  assert.deepEqual(titles, ['בראשית א:א-ב', 'Genesis 1:1-2', 'Genesis 1:1-2']);
+  assert.equal(row[0], 'בראשית והארץ');
+  assert.match(row[1], /^tr:בְּרֵאשִׁית/);
+  assert.equal(row[2], 'In the beginning The earth');
+});
+
+test('transliteration column, line by line: each row\'s own transliteration, beside its Hebrew', () => {
+  const { context, tables } = loadInsert({ bilingual_aligned_rows: 'true', transliteration_position: 'right' });
+  context.insertReference(VOWELED(), { bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true });
+  assert.deepEqual(tables[0].texts(), [
+    ['Genesis 1:1-2', 'בראשית א:א-ב', 'Genesis 1:1-2'],
+    ['(1) In the beginning', '(א) בראשית', '(א) tr:בְּרֵאשִׁית'],
+    ['(2) The earth', '(ב) והארץ', '(ב) tr:וְהָאָרֶץ'],
+  ]);
+});
+
+test('transliteration column: a chapter heading row has an empty transliteration cell', () => {
+  const { context, tables } = loadInsert({ bilingual_aligned_rows: 'true' });
+  context.insertReference({
+    ref: 'Genesis 1:31-2:1', heRef: 'בראשית א:לא-ב:א', isSpanning: true, sections: [1, 31],
+    he: [['a'], ['b']], text: [['A'], ['B']],
+  }, { bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true, transliterationPosition: 'left' });
+  assert.deepEqual(tables[0].texts().map((row) => row[1]), ['Genesis 1:31-2:1', '', '(לא) tr:a', '', '(א) tr:b']);
+});
+
+// The column's title: the Hebrew title in Latin letters (transliterated-title.gs).
+// TITLED has no Latin title for the Hebrew one, so it is transliterated;
+// LATIN_TITLED has Sefaria's.
+const TITLED = (extra) => Object.assign(VOWELED(), {
+  indexTitle: 'Genesis', heIndexTitle: 'בראשית', type: 'Tanakh',
+  heTitleVariants: ["ברא'", 'בר׳', 'בְּרֵאשִׁית', 'בראשית'],
+}, extra || {});
+
+const LATIN_TITLED = (extra) => TITLED(Object.assign({
+  // Sefaria's, as the texts API sends them (shortened): abbreviations,
+  // English names and transliterations, unmarked.
+  titleVariants: ['Bereshit', 'Gen', 'Gen.', 'Breishit', 'Bereishit', 'Bereishis', 'Genèse', 'Genesis'],
+}, extra || {}));
+
+test('the transliteration column\'s title is Sefaria\'s Latin title for the Hebrew one, numbers as in the Latin reference', () => {
+  const { context, tables } = loadInsert({});
+  context.insertReference(LATIN_TITLED(), {
+    bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true, transliterationPosition: 'left',
+    insertHebrewSefariaLink: true,
+  });
+  assert.equal(tables[0].texts()[0][1], 'Bereshit 1:1-2');
+  assert.equal(tables[0].links()[0][1], 'https://www.sefaria.org/Genesis_1%3A1-2');
+  // An Ashkenazi transliteration takes Sefaria's Ashkenazi spelling.
+  const ashkenazi = loadInsert({});
+  ashkenazi.context.insertReference(LATIN_TITLED(), {
+    bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true, transliterationPosition: 'left',
+    transliterationScheme: 'ashkenazi',
+  });
+  assert.equal(ashkenazi.tables[0].texts()[0][1], 'Bereishis 1:1-2');
+});
+
+test('without a Latin title from Sefaria, the column\'s title is the Hebrew title transliterated', () => {
+  const { context, tables } = loadInsert({});
+  context.insertReference(TITLED(), {
+    bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true, transliterationPosition: 'left',
+  });
+  // Read from Sefaria's pointed spelling, through the same transliteration.
+  assert.equal(tables[0].texts()[0][1], 'tr:בְּרֵאשִׁית 1:1-2');
+});
+
+test('the transliteration column\'s title carries the Hebrew title\'s link, and only when it is linked', () => {
+  const linked = loadInsert({});
+  linked.context.insertReference(TITLED(), {
+    bilingualLayout: 'he-right', pasukPreference: false, includeTransliteration: true, transliterationPosition: 'right',
+    insertSefariaLink: false, insertHebrewSefariaLink: true,
+  });
+  assert.deepEqual(linked.tables[0].links()[0], ['', 'https://www.sefaria.org/Genesis_1%3A1-2', 'https://www.sefaria.org/Genesis_1%3A1-2']);
+  const plainTitles = loadInsert({});
+  plainTitles.context.insertReference(TITLED(), {
+    bilingualLayout: 'he-right', pasukPreference: false, includeTransliteration: true, transliterationPosition: 'right',
+    insertSefariaLink: true, insertHebrewSefariaLink: false,
+  });
+  assert.deepEqual(plainTitles.tables[0].links()[0], ['https://www.sefaria.org/Genesis_1%3A1-2', '', '']);
+});
+
+function loadTitle() {
+  const context = { console, Logger: { log() {} } };
+  vm.createContext(context);
+  ['apps-script/server/utils.gs', 'apps-script/gematriya.gs', 'apps-script/transliteration.gs',
+    'apps-script/server/transliterated-title.gs'].forEach((file) => {
+    vm.runInContext(read(file), context, { filename: file });
+  });
+  return context;
+}
+
+test('the title is read in a pointed spelling: Sefaria\'s, else the Tanakh\'s book names; book numbers as Roman', () => {
+  const ctx = loadTitle();
+  const parts = (data) => plain(ctx.pointedTitleParts_(data));
+  assert.deepEqual(parts(TITLED()), { hebrew: 'בְּרֵאשִׁית', bookNumber: '', address: ' 1:1-2' });
+  // Sefaria has no pointed שמות: the built-in list has.
+  assert.deepEqual(parts({ ref: 'Exodus 20:2', indexTitle: 'Exodus', heIndexTitle: 'שמות', heTitleVariants: ['שמות'] }),
+    { hebrew: 'שְׁמוֹת', bookNumber: '', address: ' 20:2' });
+  assert.deepEqual(parts({ ref: 'I Samuel 1:1', indexTitle: 'I Samuel', heIndexTitle: 'שמואל א' }),
+    { hebrew: 'שְׁמוּאֵל', bookNumber: 'I', address: ' 1:1' });
+  assert.deepEqual(parts({ ref: 'II Chronicles 36:23', indexTitle: 'II Chronicles', heIndexTitle: 'דברי הימים ב' }),
+    { hebrew: 'דִּבְרֵי הַיָּמִים', bookNumber: 'II', address: ' 36:23' });
+  assert.deepEqual(parts({ ref: 'Song of Songs 1:1-2:3', indexTitle: 'Song of Songs', heIndexTitle: 'שיר השירים' }),
+    { hebrew: 'שִׁיר הַשִּׁירִים', bookNumber: '', address: ' 1:1-2:3' });
+  assert.deepEqual(parts({ ref: 'Berakhot 2a:1-5', indexTitle: 'Berakhot', heIndexTitle: 'ברכות', heTitleVariants: ['בְּרָכוֹת', 'ברכות'] }),
+    { hebrew: 'בְּרָכוֹת', bookNumber: '', address: ' 2a:1-5' });
+});
+
+// Sefaria's own lists (texts API titleVariants, shortened), in its order.
+const LATIN = {
+  genesis: { ref: 'Genesis 1:1', indexTitle: 'Genesis', heIndexTitle: 'בראשית', type: 'Tanakh',
+    titleVariants: ['Bereshit', 'Gen', 'Gen.', 'Breishit', 'Bereishit', 'Bereishis', 'Genèse', 'Genesis'] },
+  exodus: { ref: 'Exodus 20:2', indexTitle: 'Exodus', heIndexTitle: 'שמות', type: 'Tanakh',
+    titleVariants: ['Exod.', 'Ex.', 'Exo', 'Shmot', 'Shemot', 'Ex', 'Shemoth', 'Shemos', 'Exodus'] },
+  obadiah: { ref: 'Obadiah 1:1', indexTitle: 'Obadiah', heIndexTitle: 'עובדיה', type: 'Tanakh',
+    titleVariants: ['Ovadiah', 'Ob.', 'Oba.', 'Ovadyah', 'Abdias', 'Obad', 'Obadiah'] },
+  micah: { ref: 'Micah 6:8', indexTitle: 'Micah', heIndexTitle: 'מיכה', type: 'Tanakh',
+    titleVariants: ['Mic.', 'Mic', 'Mikha', 'Michah', 'Micha', 'Micah'] },
+  ezra: { ref: 'Ezra 1:1', indexTitle: 'Ezra', heIndexTitle: 'עזרא', type: 'Tanakh',
+    titleVariants: ['Ezr.', 'Ezr', 'Esdras', 'Ezra'] },
+  samuel: { ref: 'I Samuel 1:1', indexTitle: 'I Samuel', heIndexTitle: 'שמואל א', type: 'Tanakh',
+    titleVariants: ['I Sam.', '1Sam.', 'First Samuel', 'Samuel I', 'Shmuel Aleph', 'I Shmuel', 'II Shmuel', '1 Samuel'] },
+  kings: { ref: 'II Kings 2:1', indexTitle: 'II Kings', heIndexTitle: 'מלכים ב', type: 'Tanakh',
+    titleVariants: ['II Kgs.', 'Second Kings', 'I Melachim', 'Melachim Bet', 'II Kings'] },
+  berakhot: { ref: 'Berakhot 2a:1', indexTitle: 'Berakhot', heIndexTitle: 'ברכות', type: 'Talmud',
+    titleVariants: ['Berachoth', 'Berachot', 'Tractate Berakhot', 'Berachos', 'Ber.'] },
+  avot: { ref: 'Pirkei Avot 1:1', indexTitle: 'Pirkei Avot', heIndexTitle: 'משנה אבות', type: 'Mishnah',
+    titleVariants: ['Avot', 'M Avot', '<i>Mishnah Avot</i>', 'Mishnah Avot', 'Ethics of the Fathers'] },
+  rashi: { ref: 'Rashi on Genesis 1:1:1', indexTitle: 'Rashi on Genesis', heIndexTitle: 'רש"י על בראשית', type: 'Commentary',
+    titleVariants: ['Rashi on Bereshit', 'Rashi on Gen.', 'Rashi on Genesis'] },
+};
+
+test('Sefaria\'s Latin title is the one that spells the Hebrew title, read as the scheme reads it', () => {
+  const ctx = loadTitle();
+  const title = (data, scheme) => ctx.transliteratedTitle_(data, (hebrew) => 'tr:' + hebrew, scheme || 'traditional');
+  assert.equal(title(LATIN.genesis), 'Bereshit 1:1', 'not "Gen", "Genèse" or "Genesis"');
+  assert.equal(title(LATIN.genesis, 'ashkenazi'), 'Bereishis 1:1');
+  assert.equal(title(LATIN.exodus), 'Shmot 20:2');
+  assert.equal(title(LATIN.exodus, 'ashkenazi'), 'Shemos 20:2');
+  // A Tanakh book's main title is its English name: the variants come first.
+  assert.equal(title(LATIN.obadiah), 'Ovadiah 1:1');
+  // Abbreviations are not titles: with a period, or cut short of the vowel.
+  assert.equal(title(LATIN.micah), 'Mikha 6:8');
+  assert.equal(title(LATIN.ezra), 'Ezra 1:1');
+  // ש is "sh" before it is "s"; the book number must be this book's.
+  assert.equal(title(LATIN.samuel), 'Shmuel Aleph 1:1', 'not "Samuel I"');
+  assert.equal(title(LATIN.kings), 'Melachim Bet 2:1', 'not "I Melachim"');
+  // Elsewhere the main title is Sefaria's transliteration.
+  assert.equal(title(LATIN.berakhot), 'Berakhot 2a:1');
+  assert.equal(title(LATIN.berakhot, 'ashkenazi'), 'Berachos 2a:1');
+  // The Hebrew title is משנה אבות; marked-up variants are skipped.
+  assert.equal(title(LATIN.avot), 'Mishnah Avot 1:1');
+  // "Rashi on Bereshit" doesn't spell רש"י על בראשית, and not every word has
+  // vowels: the Latin reference.
+  assert.equal(title(LATIN.rashi), 'Rashi on Genesis 1:1:1');
+  assert.equal(ctx.sefariaLatinTitle_(LATIN.rashi, 'traditional'), '');
+});
+
+test('a title with a word whose vowels aren\'t known is Sefaria\'s Latin reference, never bare consonants', () => {
+  const ctx = loadTitle();
+  const title = (data) => ctx.transliteratedTitle_(data, (hebrew) => 'tr:' + hebrew);
+  assert.equal(title({ ref: 'Mishnah Berakhot 1:1', indexTitle: 'Mishnah Berakhot', heIndexTitle: 'משנה ברכות', heTitleVariants: ['משנה ברכות'] }), 'Mishnah Berakhot 1:1');
+  assert.equal(title({ ref: 'Rashi on Exodus 1:1:1', indexTitle: 'Rashi on Exodus', heIndexTitle: 'רש"י על שמות' }), 'Rashi on Exodus 1:1:1');
+  // Not numbers after the book's title: a section of a complex text.
+  assert.equal(title({ ref: 'Siddur Ashkenaz, Weekday, Shacharit, Modeh Ani 1', indexTitle: 'Siddur Ashkenaz', heIndexTitle: 'סידור אשכנז' }),
+    'Siddur Ashkenaz, Weekday, Shacharit, Modeh Ani 1');
+  assert.equal(title({ ref: 'Genesis 1:1' }), 'Genesis 1:1', 'no index titles');
+  assert.equal(title({ ref: 'Exodus 20:2', indexTitle: 'Exodus', heIndexTitle: 'שמות' }), 'tr:שְׁמוֹת 20:2');
+});
+
+test('with the real transliteration: the title reads like the text, not like its consonants', () => {
+  const ctx = loadTitle();
+  const read = (hebrew) => ctx.transliterateHebrewHtmlPreservingBasicBreaks(hebrew, 'traditional', {
+    keepNiqqud: true, isBiblicalHebrew: true, dageshMode: 'none', overrideMap: {},
+  });
+  const title = ctx.transliteratedTitle_(TITLED(), read);
+  assert.equal(title, read('בְּרֵאשִׁית') + ' 1:1-2');
+  // The bare title, as Sefaria sends it, read "Vrʾshyt ʾ:ʾ-v".
+  assert.notEqual(title.split(' ')[0], read('בראשית'));
+  assert.doesNotMatch(title, /[א-ת]/, 'no Hebrew letters left');
+});
+
+test('"below" (the default), and anything unknown, keeps the transliteration under the Hebrew', () => {
+  for (const position of [undefined, 'below', 'sideways']) {
+    const { context, tables } = loadInsert(position === undefined ? {} : { transliteration_position: position });
+    context.insertReference(GENESIS(), { bilingualLayout: 'he-right', pasukPreference: false, includeTransliteration: true });
+    assert.equal(tables[0].texts()[0].length, 2, String(position));
+    assert.match(tables[0].texts()[1][1], / \/ tr:/, String(position));
+  }
+});
+
+test('no transliteration, no column, whatever the position', () => {
+  const { context, tables } = loadInsert({ transliteration_position: 'left' });
+  context.insertReference(GENESIS(), { bilingualLayout: 'he-right', pasukPreference: false });
+  assert.deepEqual(tables[0].texts()[0], ['Genesis 1:1-2', 'בראשית א:א-ב']);
+});
+
+test('transliteration_position: client-writable, defaults to "below", migrated to "below" for upgraders', () => {
+  const store = { prefs_schema_version: '29', transliteration_scheme: 'ashkenazi' };
+  const props = { getProperty: (k) => (k in store ? store[k] : null), setProperty(k, v) { store[k] = String(v); return this; }, deleteProperty(k) { delete store[k]; return this; } };
+  const context = { console, Logger: { log() {} }, PropertiesService: { getUserProperties: () => props } };
+  vm.createContext(context);
+  ['apps-script/server/menu-layout.gs', 'apps-script/server/preferences.gs', 'apps-script/migrations.gs'].forEach((file) => {
+    vm.runInContext(read(file), context, { filename: file });
+  });
+  assert.ok(vm.runInContext('SETTINGS', context).includes('transliteration_position'));
+  assert.equal(context.getDefaultPreferences().transliteration_position, 'below');
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(store.transliteration_position, 'below');
+  store.transliteration_position = 'left';
+  store.prefs_schema_version = '29';
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(store.transliteration_position, 'left', 'a stored value is never overwritten');
+  assert.match(read('apps-script/server/document-actions.gs'), /transliteration_position: \['below', 'left', 'right'\]/);
+});
+
+// ── Stacked with several translations (insertReferenceVersions) ─────────────
+
+const VERSIONS = {
+  Koren: { ref: 'Genesis 1:1-2', heRef: 'בראשית א:א-ב', versionTitle: 'Koren', heVersionTitle: 'Miqra', sections: [1, 1], he: ['בראשית', 'והארץ'], text: ['In the beginning', 'The earth'] },
+  JPS: { ref: 'Genesis 1:1-2', heRef: 'בראשית א:א-ב', versionTitle: 'JPS', heVersionTitle: 'Miqra', sections: [1, 1], he: ['בראשית', 'והארץ'], text: ['When God began', 'The earth being'] },
+};
+
+function loadVersions(storedPrefs) {
+  const loaded = loadInsert(storedPrefs);
+  loaded.context.findReference = (ref, versions) => JSON.parse(JSON.stringify(VERSIONS[versions.en]));
+  loaded.context.getEnglishAttributionLines = (d) => ['Translation: ' + d.versionTitle];
+  return loaded;
+}
+
+test('Stacked, line by line, two translations: each Hebrew line, then that line of each translation, in the order picked', () => {
+  const { context, paragraphs } = loadVersions({ bilingual_aligned_rows: 'true' });
+  const result = context.insertReferenceVersions('Genesis 1:1-2', {
+    versionTitles: ['JPS', 'Koren'], bilingualLayout: 'he-top', pasukPreference: true, includeTranslationSourceInfo: true,
+  });
+  assert.deepEqual([...result.inserted], ['JPS', 'Koren']);
+  assert.deepEqual(stackedTexts(paragraphs), [
+    'בראשית א:א-ב', 'Genesis 1:1-2 (JPS)', 'Genesis 1:1-2 (Koren)',
+    '(א) בראשית', '(1) When God began', '(1) In the beginning',
+    '(ב) והארץ', '(2) The earth being', '(2) The earth',
+    'Hebrew: Miqra\nTranslation: JPS\nTranslation: Koren',
+    '',
+  ]);
+});
+
+test('Stacked, two translations, line by line off (the default): the blocks, as before', () => {
+  const { context, paragraphs } = loadVersions({});
+  context.insertReferenceVersions('Genesis 1:1-2', { versionTitles: ['JPS', 'Koren'], bilingualLayout: 'he-top', pasukPreference: false });
+  assert.deepEqual(stackedTexts(paragraphs), [
+    'בראשית א:א-ב', 'בראשית והארץ',
+    'Genesis 1:1-2 (JPS)', 'When God began The earth being', '',
+    'Genesis 1:1-2 (Koren)', 'In the beginning The earth', '',
+  ]);
+  // The caller's choice wins over the stored one.
+  const on = loadVersions({ bilingual_aligned_rows: 'false' });
+  on.context.insertReferenceVersions('Genesis 1:1-2', { versionTitles: ['JPS', 'Koren'], bilingualLayout: 'he-top', pasukPreference: false, alignedRows: true });
+  assert.deepEqual(stackedTexts(on.paragraphs).slice(3, 6), ['בראשית', 'When God began', 'In the beginning']);
+});
+
+test('translation only ignores line by line: one block per translation', () => {
+  const { context, paragraphs } = loadVersions({ bilingual_aligned_rows: 'true' });
+  context.insertReferenceVersions('Genesis 1:1-2', { versionTitles: ['JPS', 'Koren'], singleLanguage: 'en', pasukPreference: false });
+  assert.deepEqual(stackedTexts(paragraphs), [
+    'Genesis 1:1-2 (JPS)', 'When God began The earth being', '',
+    'Genesis 1:1-2 (Koren)', 'In the beginning The earth', '',
+  ]);
+});
+
+test('Stacked, two translations: the transliteration under the Hebrew, then the blocks', () => {
+  const { context, paragraphs } = loadVersions({});
+  context.findReference = (ref, versions) => Object.assign(JSON.parse(JSON.stringify(VERSIONS[versions.en])),
+    { heTransliterationSource: ['בְּרֵאשִׁית', 'וְהָאָרֶץ'] });
+  context.insertReferenceVersions('Genesis 1:1-2', {
+    versionTitles: ['JPS', 'Koren'], bilingualLayout: 'he-top', pasukPreference: false, includeTransliteration: true,
+  });
+  assert.deepEqual(stackedTexts(paragraphs), [
+    'בראשית א:א-ב', 'בראשית והארץ', 'tr:בְּרֵאשִׁית וְהָאָרֶץ',
+    'Genesis 1:1-2 (JPS)', 'When God began The earth being', '',
+    'Genesis 1:1-2 (Koren)', 'In the beginning The earth', '',
+  ]);
+  // Translation only has no Hebrew to transliterate.
+  const en = loadVersions({});
+  en.context.insertReferenceVersions('Genesis 1:1-2', { versionTitles: ['JPS', 'Koren'], singleLanguage: 'en', pasukPreference: false, includeTransliteration: true });
+  assert.ok(!stackedTexts(en.paragraphs).some((t) => t.startsWith('tr:')));
+});
+
+test('Stacked, two translations, line by line: each line\'s transliteration under its Hebrew, before the translations', () => {
+  const { context, paragraphs } = loadVersions({ bilingual_aligned_rows: 'true' });
+  context.findReference = (ref, versions) => Object.assign(JSON.parse(JSON.stringify(VERSIONS[versions.en])),
+    { heTransliterationSource: ['בְּרֵאשִׁית', 'וְהָאָרֶץ'] });
+  context.insertReferenceVersions('Genesis 1:1-2', {
+    versionTitles: ['JPS', 'Koren'], bilingualLayout: 'he-top', pasukPreference: true, includeTransliteration: true,
+  });
+  assert.deepEqual(stackedTexts(paragraphs).slice(3), [
+    '(א) בראשית', '(א) tr:בְּרֵאשִׁית', '(1) When God began', '(1) In the beginning',
+    '(ב) והארץ', '(ב) tr:וְהָאָרֶץ', '(2) The earth being', '(2) The earth',
+    '',
+  ]);
 });

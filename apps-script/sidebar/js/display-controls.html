@@ -9,7 +9,9 @@ initInsertionOptions({
     return {
       outputMode: $('.output-mode-selection').val(),
       layout: $('.bilingual-layout-selection').val(),
-      alignedRows: $('.wants-aligned-rows').is(':checked')
+      alignedRows: $('.wants-aligned-rows').is(':checked'),
+      transliterationOn: $('.include-transliteration').is(':checked'),
+      transliterationPosition: effectivePreferences.transliteration_position
     };
   },
   onSelectDisplay: function (mode) {

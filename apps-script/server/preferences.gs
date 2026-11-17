@@ -76,6 +76,7 @@ const SETTINGS = [
   "transliteration_font_size",
   "transliteration_font_style",
   "transliteration_scheme",
+  "transliteration_position",
   "transliteration_overrides",
   "transliteration_is_biblical_hebrew",
   "transliteration_biblical_dagesh_mode",
@@ -208,9 +209,10 @@ function getDefaultPreferences() {
     emphasis_italic_font: "",
     output_mode_default: "both",
     bilingual_layout_default: "he-right",
-    // Right–Left / Left–Right: true gives each line (verse) its own table row,
-    // beside its translation; false keeps the whole passage in one row, as
-    // side-by-side inserts always were.
+    // "Line by line". Right–Left / Left–Right: true gives each line (verse)
+    // its own table row, beside its translation. Stacked (schema 30): each
+    // line, then its translation, going down the page. False keeps the whole
+    // passage in one row, or one block per language, as inserts always were.
     bilingual_aligned_rows: false,
     last_translation_languages: JSON.stringify(["en"]),
     last_translation_only_filter: false,
@@ -261,6 +263,12 @@ function getDefaultPreferences() {
     transliteration_font_size: "",
     transliteration_font_style: "italic",
     transliteration_scheme: "traditional",
+    // Where the transliteration goes in the side-by-side layouts: "below"
+    // the Hebrew, in its column (what it has always done), or a column of
+    // its own "left" or "right" of the Hebrew's. Stacked and Hebrew-only
+    // inserts always put it below the Hebrew. normalizeTransliterationPosition_
+    // in insertion.gs reads anything else as "below".
+    transliteration_position: "below",
     transliteration_overrides: "{}",
     transliteration_is_biblical_hebrew: true,
     transliteration_biblical_dagesh_mode: "none",

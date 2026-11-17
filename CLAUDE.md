@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **759 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **793 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -232,9 +232,24 @@ and fix it before touching the feature you came to change.
   so עֵשָׂו but not עָשׂוּ; two-word names; Talmud sages with their titles and
   prefixes; a name that is also a word only after a title), and the generated
   pointed keys match `pointedKey_`; a maqaf is a plain hyphen.
-- `aligned-rows.test.js` — the side-by-side "Line by line" setting: each
+- `aligned-rows.test.js` — the "Line by line" setting: side by side, each
   verse paired with its translation in its own table row (numbering, spanning
-  refs, missing segments, per-row transliteration); off keeps one row.
+  refs, missing segments, per-row transliteration); Stacked, the two titles
+  then each verse, its transliteration and its translation down the page
+  (with several translations, each one's line in the order picked); off keeps
+  one row, or one block per language. And the side-by-side transliteration's
+  `transliteration_position` (schema 30): below the Hebrew (the default, and
+  anything unknown), or a column of its own left or right of it, per row with
+  Line by line; Stacked keeps it under the Hebrew, with several translations
+  too. The column's title is the Hebrew title in Latin letters, linked like
+  it, numbers as in the Latin reference (`server/transliterated-title.gs`):
+  Sefaria's Latin title for it, the one of `indexTitle` / `titleVariants`
+  that spells the Hebrew consonants, read as the scheme reads them ("Bereshit",
+  Ashkenazi "Bereishis"; a Tanakh book's variants before its English main
+  title; "Shmuel Aleph" not "Samuel I"; no abbreviations or markup); else the
+  Hebrew title transliterated from a pointed spelling (Sefaria's
+  `heTitleVariants`, else the Tanakh's book names); else Sefaria's Latin
+  reference, never bare consonants.
 - `translation-availability.test.js` — a translation with no text for the
   passage is left out of the version list (greyed out with "Show unavailable
   translations"), languages hidden in Preferences → Search are left out, and a
@@ -396,6 +411,12 @@ and in `test/ui/`:
   `<script>` goes through `toEmbeddedJson_`.
 - `csp-coverage.test.js` — every entry page carries the same
   Content-Security-Policy.
+- `line-by-line-layout.test.js` — Line by line shows for every arrangement
+  of both languages (Stacked too); the transliteration's Position (Below /
+  Left / Right, in the card's Transliteration group) applies side by side only
+  (Preferences shows it always); the Arrangement icons are told both and have
+  the parts to sketch them; the card and the server read a stored position
+  alike; every host reads, writes and sends it.
 - `vowels-tanakh-only.test.js` — the composition card's three-way Vowels
   (Off / Tanakh / On) and Cantillation (Off / Tanakh / Torah) controls write
   the stored pairs the server reads, in every host.
