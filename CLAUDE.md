@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **811 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **814 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -419,12 +419,16 @@ and in `test/ui/`:
   "Customize this insertion" panel is the shared insertion options, sends
   its settings with each insert, and saves only on "Save as defaults".
 - `version-manifest.test.js` — `docs/VERSION.json` against the schema
-  version, the migrations that must exist for it, and every surface that
-  shows a version string.
+  version, the migrations that must exist for it, the release line (a
+  2.0.X build until the owner asks for 2.1), the CHANGELOG heading and its
+  date, and every surface that shows a version string.
 - `embedded-json.test.js` — server data force-printed into an inline
   `<script>` goes through `toEmbeddedJson_`.
 - `csp-coverage.test.js` — every entry page carries the same
   Content-Security-Policy.
+- `help-links.test.js` — every link inside Help & Support lands on a topic
+  that exists (a renamed topic's links did nothing), and About → New in 2.0
+  tags each item New or Improved and says where to find it.
 - `line-by-line-layout.test.js` — Line by line shows for every arrangement
   of both languages (Stacked too); the transliteration's Position (Below /
   Left / Right, in the card's Transliteration group) applies side by side only
@@ -585,9 +589,10 @@ different repo.
 - `docs/VERSION.json` — the single source of truth for the version and
   the preference-schema number. Enforced by
   `test/ui/version-manifest.test.js`.
-- `docs/versioning.md` — what bumps what, and the one coupling that
-  matters: a new preference key needs a default, a migration, a schema
-  bump, a manifest bump and a version bump, all in one commit.
+- `docs/versioning.md` — every release is the next 2.0.X build until the
+  owner asks for 2.1 (never move the line yourself), and the one coupling
+  that matters: a new preference key needs a default, a migration, a schema
+  bump and a manifest bump, all in one commit.
 - `docs/regression-log.md` — every bug that has regressed more than
   once, with the pinning test that now holds it down.
 - `docs/rpc-surface.json` — frozen server-function surface.
@@ -604,7 +609,7 @@ different repo.
   Profiles column, the sidebar's Profile list): what a profile holds, and how
   a switch stores and restores it.
 - `docs/ai-lesson/DESIGN.md` — design notes for the detached AI
-  feature (not shipped in v1).
+  feature (not shipped in 2.0).
 - `reference/ai-lesson/` — preserved AI source files, excluded from
   `clasp push` via `.claspignore`.
 - `test/tests/` — Node unit tests.

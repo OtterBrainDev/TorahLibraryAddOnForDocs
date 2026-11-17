@@ -37,46 +37,27 @@
     <h2>Torah Library for Google Docs &mdash; Release Notes</h2>
     <p>Torah Library helps you find texts in Sefaria&rsquo;s library and insert them into your document, formatted the way you want. It is an independent add-on built on Sefaria&rsquo;s public library and API, and is not made by Sefaria.</p>
 
-    <h3>Version 2.1</h3>
-    <p>This release makes the add-on say what it is doing. &ldquo;Link Texts with Sefaria&rdquo; now shows progress while it scans, asks which source you meant when a citation matches more than one, and reports what it could not link instead of staying silent. The review dialog lets you link a citation, insert its text below the paragraph, or both. Linking also stops uploading your whole document by default &mdash; only passages that look like they contain a citation are sent. See the privacy policy for exactly what leaves your document and when.</p>
-    <p>Formatting gained text colour and highlight for every insertion role, and the source&rsquo;s own bold and italics are now preserved rather than flattened &mdash; so the Steinsaltz Talmud keeps the bolding that separates the Talmud&rsquo;s words from Steinsaltz&rsquo;s explanation. Search recovers better too: abbreviated citations like &ldquo;Hil. Shabbat 1:1&rdquo; resolve, and a search that matches nothing now suggests related titles instead of a blank panel.</p>
+    <h3>Version 2.0</h3>
+    <p>Version 2.0 is the first release of Torah Library in the Google Workspace Marketplace. If you have used Sefaria&rsquo;s own add-on, Sefaria for Google Docs 1.0, the basics will feel familiar: the same library, a search-and-insert sidebar, and commands with the same names. <b>Help &amp; Support &rarr; Coming from Sefaria for Google Docs</b> shows where everything went.</p>
     <ul>
-      <li><b>Arrange the menu:</b> Preferences &rarr; Menu Bar lets you reorder the add-on&rsquo;s menu and choose what goes in Quick Actions.</li>
-      <li><b>Several translations at once:</b> each selected translation is inserted as its own block; translations with no text for the passage are skipped and marked.</li>
-      <li><b>Insert Source from Selection</b> replaces the selected citation with the source again. To keep your selection and insert below it instead, change it in Preferences &rarr; Insertion.</li>
-      <li><b>Help, reorganized:</b> Help, Support, and About each have their own tab, with a search box for finding topics.</li>
+      <li><b>Find a text:</b> the Texts, Voices (source sheets) and Lexicon (dictionary) tabs search as you type, from a reference in English or Hebrew, a title, a phrase or a Sefaria link. Traditional citations like &ldquo;Hil. Shabbat 1:1&rdquo; resolve, near-misses are listed under Close matches, and a search that finds nothing suggests titles.</li>
+      <li><b>Preview, then insert:</b> clicking a result shows exactly what will go in. Nothing enters your document until you click Add Source.</li>
+      <li><b>Saved defaults:</b> Preferences remembers how you like sources inserted, in every document, and 📰 Insertion Options changes it for the source in front of you. A short setup the first time you open the add-on picks the basics, and you can choose a Simple or an Everything interface.</li>
+      <li><b>Layout:</b> Hebrew, translation or both; Hebrew on the right, on the left or on top; each verse beside its translation, line by line; line numbers; titles as headings, so they appear in the document outline.</li>
+      <li><b>Hebrew and translation:</b> vowels and cantillation everywhere, in Tanakh only, or not at all; punctuation on or off; transliteration in several styles; a translation&rsquo;s commentary kept, combined or left out; fonts that match your document, with colour and highlight. Cantillation marks your font lacks are borrowed from Noto Hebrew instead of showing as empty boxes.</li>
+      <li><b>Divine names:</b> choose how they are written in Hebrew and English. They are replaced as sources go in, keeping their vowels and cantillation, or across the document with Transform Divine Names.</li>
+      <li><b>Link Texts with Sefaria:</b> shows progress while it scans, asks which source you meant when a citation matches more than one, lets you link a citation, insert its text below the paragraph, or both, and lists what it could not link and why. Only passages that look like they contain a citation are sent to Sefaria. See the privacy policy for exactly what leaves your document and when.</li>
+      <li><b>Sources are credited:</b> each inserted source gets a small credit line naming its translation and Hebrew edition and their licenses.</li>
+      <li><b>More tools:</b> Insert Source from Selection, several translations at once, the Session Library of what you&rsquo;ve inserted, Unlink Sources and Gematriya Count.</li>
+      <li><b>Make it yours:</b> arrange the menu and the sidebar, keep profiles for different classes, and share your settings as a file.</li>
     </ul>
 
-    <h3>What you can do with Torah Library</h3>
+    <h3>What works differently from Sefaria for Google Docs</h3>
     <ul>
-      <li><b>Find and insert:</b> search by reference, title, phrase, or Sefaria link, preview the result, and insert it.</li>
-      <li><b>Choose a translation:</b> pick from the translations Sefaria has for a passage, with clear labels.</li>
-      <li><b>Lay it out:</b> Hebrew, translation, or both &mdash; side by side or stacked.</li>
-      <li><b>Know what can be inserted:</b> sections that can&rsquo;t be inserted directly are flagged before you try.</li>
-      <li><b>Hebrew display:</b> show or hide niqqud and ta&rsquo;amim.</li>
-      <li><b>Link your document:</b> turn citations already in your document into Sefaria links.</li>
-      <li><b>Fonts and sizes:</b> set Hebrew and translation fonts once in Preferences.</li>
-      <li><b>Divine names:</b> choose how divine names are written in Hebrew and English, on insert or across the whole document.</li>
-    </ul>
-
-    <h3>Smaller improvements</h3>
-    <ul>
-      <li>Hebrew references are recognized with any style of quotation mark, geresh or gershayim, colon or dash, and spacing.</li>
-      <li>Cleaner translation names, without stray characters.</li>
-      <li>Preferences is a single scrolling page with the Save button always in reach.</li>
-      <li>Optional features stay out of the way unless you turn them on.</li>
-    </ul>
-
-    <h3>About version 2.0</h3>
-    <p>Version 2.0 rebuilt the add-on from the ground up. Some behavior is stricter and more predictable than in earlier versions:</p>
-    <ul>
-      <li>Inserted text no longer shows stray HTML tags.</li>
-      <li>Bold and italics in the source are kept when you insert.</li>
-      <li>Verse and line numbers come from Sefaria, so they are correct even for unusual references.</li>
-      <li>Stronger divine-name and Hebrew display preferences.</li>
-      <li>Choose a translation while you preview, when there is more than one.</li>
-      <li>Better search ranking and matching.</li>
-      <li>Inserted titles can keep the wording you typed.</li>
+      <li><b>Divine names are replaced as you insert.</b> Out of the box <span lang="he" dir="rtl">יהוה</span> becomes <span lang="he" dir="rtl">יי</span>. Change it in Preferences &rarr; Insertion &rarr; Divine Name Mappings.</li>
+      <li><b>Each source gets a credit line.</b> Turn Citation off in 📰 Insertion Options or Preferences if you credit sources another way.</li>
+      <li><b>Insert Source from Selection replaces the selected citation</b> with the source, titled with your words. To keep your selection and insert below it instead, change it in Preferences &rarr; Insertion.</li>
+      <li><b>Fonts match your document.</b> Sources take the font and size of the text where you insert them, unless you set fonts in Preferences.</li>
     </ul>
 
     <h3>Good to know</h3>

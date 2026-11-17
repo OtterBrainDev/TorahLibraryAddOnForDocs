@@ -19,12 +19,25 @@ const { ROOT, readAppScriptFile } = require('./test-utils');
 
 const manifest = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/VERSION.json'), 'utf8'));
 
+// The release line. Every release is the next 2.0.X build until the owner
+// explicitly asks to start 2.1 (docs/versioning.md §1). Moving the line is a
+// deliberate decision, so it means changing this constant, in the same commit.
+const VERSION_LINE = '2.0';
+
 test('version is a well-formed semver with a known status', () => {
   assert.match(manifest.version, /^\d+\.\d+\.\d+$/, `bad version: ${manifest.version}`);
   assert.match(manifest.previous, /^\d+\.\d+\.\d+$/, `bad previous: ${manifest.previous}`);
   assert.ok(
     ['released', 'pending-release'].includes(manifest.status),
     `unknown status: ${manifest.status}`
+  );
+});
+
+test('the version is a build on the current release line', () => {
+  assert.ok(
+    manifest.version.startsWith(`${VERSION_LINE}.`),
+    `${manifest.version} is not a ${VERSION_LINE}.X build. Releases stay on ` +
+    `${VERSION_LINE} until the owner asks for the next line (docs/versioning.md §1).`
   );
 });
 
@@ -97,17 +110,25 @@ test('every declared surface shows the manifest version', () => {
 });
 
 test('a released version has a date and a changelog heading', () => {
+  const changelog = fs.readFileSync(path.join(ROOT, 'docs/CHANGELOG.md'), 'utf8');
+  const heading = changelog.split('\n').find((line) => line.startsWith(`## v${manifest.version} `));
+
   if (manifest.status !== 'released') {
-    // Still in flight: entries live under "Unreleased" headings until release.
+    // Still in flight: no date yet. A heading for it, if there is one, says so.
     assert.equal(manifest.released, null, 'pending-release must not carry a release date');
+    if (heading) {
+      assert.ok(
+        heading.endsWith('(release pending)'),
+        `"${heading}" is for an unreleased version, so it must end "(release pending)"`
+      );
+    }
     return;
   }
 
   assert.match(manifest.released, /^\d{4}-\d{2}-\d{2}$/, `bad release date: ${manifest.released}`);
-
-  const changelog = fs.readFileSync(path.join(ROOT, 'docs/CHANGELOG.md'), 'utf8');
+  assert.ok(heading, `docs/CHANGELOG.md has no "## v${manifest.version}" heading for a released version`);
   assert.ok(
-    changelog.includes(`## v${manifest.version}`),
-    `docs/CHANGELOG.md has no "## v${manifest.version}" heading for a released version`
+    heading.endsWith(`(${manifest.released})`),
+    `"${heading}" should end with the release date (${manifest.released})`
   );
 });
