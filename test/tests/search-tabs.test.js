@@ -207,7 +207,7 @@ test('a hint stays with its tab', () => {
 });
 
 test('a Texts preview answer that lands while another tab is shown is fetched again on return', () => {
-  const env = loadSidebarSearch({ mode: 'texts', stubs: { updateSuggestion() {}, updatePesukimAvailability() {}, updateActionabilityUI() {}, clearVersionSelectors() {} } });
+  const env = loadSidebarSearch({ mode: 'texts', stubs: { updateSuggestion() {}, updateActionabilityUI() {}, clearVersionSelectors() {} } });
   env.type('Genesis 1:1');
   env.ctx.runUnifiedQuery();
   env.last('findReferenceForSidebar').ok({ ref: 'Genesis 1:1', text: ['In the beginning'], he: ['בְּרֵאשִׁית'], sections: [1], indexTitle: 'Genesis' });
@@ -227,7 +227,7 @@ test('a Texts preview answer that lands while another tab is shown is fetched ag
 });
 
 test('a Texts selection whose preview had loaded comes back without a fetch', () => {
-  const env = loadSidebarSearch({ mode: 'texts', stubs: { updateSuggestion() {}, updatePesukimAvailability() {}, updateActionabilityUI() {}, clearVersionSelectors() {} } });
+  const env = loadSidebarSearch({ mode: 'texts', stubs: { updateSuggestion() {}, updateActionabilityUI() {}, clearVersionSelectors() {} } });
   env.type('Genesis 1:1');
   env.ctx.runUnifiedQuery();
   env.last('findReferenceForSidebar').ok({ ref: 'Genesis 1:1', text: ['x'], he: ['x'], sections: [1], indexTitle: 'Genesis' });

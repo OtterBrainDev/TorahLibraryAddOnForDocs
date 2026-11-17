@@ -9,6 +9,16 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Line numbers: off is respected in the sidebar
+
+- **Fix.** With *Line numbers* off (📰 Insertion Options, or Preferences →
+  Insertion → Layout), Add Source still numbered a passage with verses, a
+  Tanakh verse range such as Genesis 1:1-3, while the card showed the switch
+  off. Previewing a passage reset the choice: on for any verse range, off for
+  a single verse. The preview no longer touches it; a text with no verses to
+  number is still inserted without them. Insert from Selection and Link Texts
+  were not affected. No preference or default changes.
+
 ### Line by line for Stacked; the transliteration in a column of its own (schema 30)
 
 **Migration (schema 29 → 30): `transliteration_position` is set to "below",
