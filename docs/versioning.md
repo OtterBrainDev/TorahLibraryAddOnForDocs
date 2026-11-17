@@ -1,7 +1,8 @@
 # Versioning
 
 For agents (human or AI) changing this add-on. It is short on purpose; the
-whole policy is four rules and one coupling that matters more than the rest.
+whole policy is one numbering rule and one coupling that matters more than the
+rest.
 
 `docs/VERSION.json` is the single source of truth. `test/ui/version-manifest.test.js`
 fails if anything drifts from it.
@@ -19,7 +20,7 @@ the bundle. If a user reports "the linker stopped finding my Rambam citations",
 nothing in the deployed code says which build they are on.
 
 So when you cut a release, describe the Apps Script version with the add-on
-version — `clasp version "v2.1.0"` — so the two can be matched later.
+version — `clasp version "v2.0.2"` — so the two can be matched later.
 
 So the version is a fact the repository asserts and keeps consistent, rather
 than one the platform records. That is fragile by construction, which is why it
@@ -29,23 +30,35 @@ is tested.
 
 ## 1. What the numbers mean
 
-Standard SemVer does not fit — there is no public API and no consumer to break.
-The number answers *"what does a user have to know before they upgrade?"*
+Versions are `MAJOR.MINOR.BUILD`. The add-on is on the **2.0 line**: every
+release bumps the build by one — 2.0.1, 2.0.2, 2.0.3 — whatever it contains,
+and MINOR stays 0. A new capability, a new preference key and a one-line fix
+are all the next build.
 
-| Part | Bump when | Examples |
+2.0.1 was first released as **2.1.0** (2026-09-22), and the release after it
+was planned as 2.2.0. Both were renumbered as builds of 2.0 in November 2026,
+before the move to Sefaria: anything outside this repository that says
+v2.1.0 (an Apps Script version description, an old note) means 2.0.1, and
+2.2.0 means 2.0.2. `docs/VERSION.json` records the same.
+
+Since the number no longer says how big a release is, the CHANGELOG has to.
+It answers *"what does a user have to know before they upgrade?"*:
+
+| A release that… | Its CHANGELOG entry must… | Examples |
 | --- | --- | --- |
-| **MAJOR** | Behaviour a user relied on is gone or works differently in a way no migration can paper over. Requires a CHANGELOG entry that says so in the first sentence. | Removing a menu action. Changing insertion output shape so existing documents look different. Dropping a preference with no successor. |
-| **MINOR** | New capability, or a behaviour change that a migration handles for existing users. **Any new preference key is at least a MINOR.** | The linker review dialog. Source-emphasis preservation. Colour and highlight controls. |
-| **PATCH** | A fix that changes no preference, no output shape, and no user-visible default. | The apostrophe search fix. The htmlToPlainText ordering fix. |
+| Removes behaviour a user relied on, or changes it in a way no migration can paper over | Say so in the first sentence. This is the one change that is not just a build: it means leaving the 2.0 line (3.0.0), which the maintainers decide, not the person cutting the release. | Removing a menu action. Changing insertion output shape so existing documents look different. Dropping a preference with no successor. |
+| Adds a capability, or changes behaviour in a way a migration handles for existing users. **Any new preference key is in this row.** | Name the migration and what an upgrading user will notice, in bold, before the details. | The linker review dialog. Source-emphasis preservation. Colour and highlight controls. |
+| Fixes something without changing a preference, the output shape or a user-visible default | List the fix. | The apostrophe search fix. The htmlToPlainText ordering fix. |
 
-When in doubt, go up. A too-large bump costs nothing; a too-small one hides a
-behaviour change from the person deciding whether to upgrade.
+When in doubt, say more. A loud CHANGELOG entry costs nothing; a quiet one
+hides a behaviour change from the person deciding whether to upgrade.
 
 ## 2. The coupling that actually matters
 
 > **A new preference key requires: a default, a migration, a `PREFS_SCHEMA_CURRENT_`
-> bump, a matching `prefsSchemaVersion` in `VERSION.json`, and at least a MINOR
-> version bump. All five, in one commit.**
+> bump, a matching `prefsSchemaVersion` in `VERSION.json`, and a release (the
+> next build) whose CHANGELOG entry names the migration. The first four in one
+> commit; the build number moves at release (§4).**
 
 This is AGENTS.md hard rule #1 with the version attached. The reason is
 user-data, not bookkeeping: `PREFS_SCHEMA_CURRENT_` is what decides whether an
@@ -62,15 +75,18 @@ compares numerically (`from < N`) and would simply skip everything.
 
 Listed in `VERSION.json` under `surfaces`, and checked by the manifest test:
 
-- `apps-script/help-modal.html` — About tab, MAJOR.MINOR only
+- `apps-script/help-modal.html` — About tab, the full version (`Version 2.0.1`)
 - `apps-script/release-notes.html` — shown on install
+
+Both carry the build: on the 2.0 line it is the only number that moves, so a
+surface without it would read "2.0" for every release.
 
 Do not add a third surface without adding it to `surfaces` at the same time. An
 unlisted copy is one the test cannot protect, and it will drift.
 
 ## 4. Releasing
 
-1. Decide the number using §1.
+1. The number is the next build (§1): after 2.0.1, 2.0.2.
 2. Update `docs/VERSION.json`: `version`, `previous`, `status: "released"`,
    `released` (ISO date), and `prefsSchemaVersion` if a migration shipped.
 3. Update every file in `surfaces`.
@@ -81,13 +97,13 @@ unlisted copy is one the test cannot protect, and it will drift.
    count means `npm ci` did not run and the sanitizer assertions sat out.
 6. `bash pre_clasp_qc.sh apps-script` — exit 0.
 7. Work `docs/marketplace-listing.md` if scopes or data handling changed.
-8. Tag the commit `v2.1.0`. The tag is the only durable record that a given
+8. Tag the commit `v2.0.2`. The tag is the only durable record that a given
    commit is what a given user is running.
 
 ### Which commit is a test deployment running?
 
-Nothing in the add-on can tell you. *About* shows `Current line` from
-`help-modal.html`, which changes only at a release, so every build between two
+Nothing in the add-on can tell you. *About* shows the `Version` from
+`help-modal.html`, which changes only at a release, so every commit between two
 releases shows the same number; its GitHub link is a fixed URL, not where the
 build came from; and the name in the Extensions menu of a **test deployment**
 is the Apps Script project's title, set in the editor, not anything in this
@@ -126,4 +142,4 @@ a test of a fix.
   your summary rather than doing it silently. The person releasing needs to know
   the number moved.
 - **State the version you tested against** when reporting results. "Works on my
-  branch" is not checkable later; "2.1.0, schema 9" is.
+  branch" is not checkable later; "2.0.1, schema 30" is.

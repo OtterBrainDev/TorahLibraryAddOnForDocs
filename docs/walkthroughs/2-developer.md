@@ -341,7 +341,7 @@ simple URL change.)
 **Show:** `test/tests/multi-version-insert.test.js`,
 `typography-defaults.test.js`, `format-data-for-pesukim.test.js`. **Be
 upfront:** nothing here can test `DocumentApp` itself. The Node suite covers
-the pure parts, and `docs/live-test-checklist-2.1.0.md` covers the rest by
+the pure parts, and `docs/live-test-checklist-2.0.1.md` covers the rest by
 hand.
 
 ---
@@ -493,7 +493,7 @@ What guards what:
 
 **Releasing:** `clasp push` updates HEAD, which only test deployments run.
 Users run the numbered version selected in Marketplace SDK → App
-Configuration. So a release means: live-test HEAD, `clasp version "v2.1.0"`,
+Configuration. So a release means: live-test HEAD, `clasp version "v2.0.1"`,
 then set that number in the SDK.
 
 ---

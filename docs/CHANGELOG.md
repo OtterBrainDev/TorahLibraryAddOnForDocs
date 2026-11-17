@@ -9,6 +9,28 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+Everything under this heading ships as **2.0.2**, the next build.
+
+### Version numbers: the 2.0 line, numbered by build
+
+No code, preference or migration change. Before the move to TheMerkaz and then
+to Sefaria, the add-on is renumbered so that every release is a build of 2.0:
+
+- **2.1.0 is now 2.0.1**, and the release in progress, planned as 2.2.0, is
+  **2.0.2**. Every later release bumps the build again (2.0.3, …); MINOR stays
+  0. An Apps Script version described `v2.1.0` is 2.0.1.
+- *Help & Support → About* shows **Version 2.0.1** (the full version; it said
+  *Current line: 2.1*), and the release notes and *New in* headings say 2.0.1.
+- `docs/versioning.md` §1 is rewritten for build numbering: since the number
+  no longer says how big a release is, the CHANGELOG entry has to (a new
+  preference key still needs its migration named, in bold, first). Leaving the
+  2.0 line (3.0.0) is a maintainer decision for a change no migration covers.
+- `test/ui/version-manifest.test.js` now requires each surface to carry the
+  full version, build included, not MAJOR.MINOR.
+- `docs/live-test-checklist-2.1.0.md` is now `docs/live-test-checklist-2.0.1.md`;
+  the walkthroughs, the store listing's release checklist, the regression log
+  and the first-run design doc use the new numbers.
+
 ### Help and walkthroughs: caught up with the recent changes
 
 No code, preference or migration change. Help, the Google Docs walkthrough, the
@@ -43,7 +65,7 @@ Sidebar. Now:
   profiles and settings files; walkthrough 4 mentions profiles.
 - **Surprise Me** is described as inserting with the saved Insertion defaults,
   and is listed in the menu while it is switched on.
-- **About**: "New in 2.1" no longer points at a Fonts tab, and *Your privacy*
+- **About**: "New in 2.0.1" no longer points at a Fonts tab, and *Your privacy*
   says the Session Library keeps your pins (there are no starred Lexicon
   entries) and that profiles are stored with your preferences.
 - **Stress test**: stale rows fixed (4.1, 4.3, 9.5, 9.6, 10.9) and rows added
@@ -481,8 +503,8 @@ styles:
 No new preference, no migration. Found while recording the beta tutorials;
 each one is in `docs/regression-log.md` with the test that pins it. These
 change what an insert writes (the Hebrew credit) and how Transform Divine
-Names behaves, so by `docs/versioning.md` §1 they ship in a MINOR release:
-the next one, 2.2.0, which the preference changes above already require.
+Names behaves, so by `docs/versioning.md` §1 they ship in the next build,
+2.0.2 (planned as 2.2.0), with the preference changes above.
 
 #### Fixed
 
@@ -1267,7 +1289,10 @@ the next one, 2.2.0, which the preference changes above already require.
   also adds `hidden_translation_languages`, seeded `"[]"`, so every language
   stays listed. A stored value is never overwritten.
 
-## v2.1.0 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
+## v2.0.1 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
+
+*Released as 2.1.0 and renumbered 2.0.1 in November 2026 (see* Version
+numbers *under Unreleased).*
 
 Highlights: Link Texts with Sefaria shows its progress, asks about ambiguous
 citations and reports what it could not link, and uploads only likely-citation
@@ -1282,7 +1307,7 @@ Preference schema **13** — upgrading users are migrated on first open.
 > **Default change: source credit is now on.** New installs, and users
 > upgrading from the published add-on, get a small credit block (edition and
 > license) under every inserted source. Many Sefaria texts are CC-BY or
-> CC-BY-NC. Anyone already running this 2.1 build keeps the setting they had.
+> CC-BY-NC. Anyone already running this 2.0.1 build keeps the setting they had.
 > Turn it off in Preferences → Insertion.
 
 #### Fixed
@@ -1317,7 +1342,7 @@ Preference schema **13** — upgrading users are migrated on first open.
 - **Help and Release Notes are written for users.** The About tab and the
   Release Notes dialog had developer notes in them ("UX and maintenance fork",
   "Core 2.0 fork direction", "Deferred backlog"). They now describe what's new
-  in 2.1, what the add-on does, and its version history, and say that the
+  in 2.0.1, what the add-on does, and its version history, and say that the
   add-on is independent of Sefaria.
 - **Privacy policy lists every host the add-on's windows load from**
   (§2.2): jQuery and a stylesheet and font from Google, images from Sefaria,
@@ -1442,7 +1467,7 @@ Preference schema **13** — upgrading users are migrated on first open.
   tools, Versions and Preview, the 📰 Layout tray, Session Library, Quick
   Actions, Link Texts with Sefaria, divine names, every Preferences tab, the
   Menu Bar, and keyboard shortcuts — with a troubleshooting FAQ, a bug-report
-  checklist, and a user-facing "New in 2.1". `docs/google-docs-walkthrough.md`
+  checklist, and a user-facing "New in 2.0.1". `docs/google-docs-walkthrough.md`
   and the README's menu and layout sections were brought into line.
 - **Privacy policy: the browser-side sidebar history is now disclosed.** The
   Session Library, recent searches, and recent/starred Lexicon entries live in
@@ -1600,14 +1625,14 @@ rather than a bug here.
 - **`docs/versioning.md`** — what bumps what, and the coupling that matters: a
   new preference key needs a default, a migration, a schema bump, a manifest
   bump and a version bump, all in one commit. Includes a section for AI agents.
-- **`docs/live-test-checklist-2.1.0.md`** — the manual pass, covering what the
+- **`docs/live-test-checklist-2.0.1.md`** — the manual pass, covering what the
   119 automated tests structurally cannot: sidebar rendering, the CSP, the
   upgrade path, and anything that needs a real `DocumentApp` or a live Sefaria
   request.
 
 #### Changed
 
-- Version set to **2.1.0** (was 2.0). Surfaces updated in `help-modal.html` and
+- Version set to **2.0.1** (was 2.0.0; released as 2.1.0). Surfaces updated in `help-modal.html` and
   `release-notes.html`.
 
 ### Linker: recover clipped matches, separate the two failure kinds (2026-09)

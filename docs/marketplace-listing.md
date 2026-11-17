@@ -211,16 +211,16 @@ side by side"*).
       §2.2 — `grep -rhoE "(src|href)=[\"']https?://[^\"' ]+" apps-script --include=*.html`
       plus any `@import`
 - [x] `docs/VERSION.json` `status: "released"` with a date, and the CHANGELOG's
-      `Unreleased` sections consolidated under one `v2.1.0` heading
+      `Unreleased` sections consolidated under one `v2.0.1` heading
       (`test/ui/version-manifest.test.js` enforces both). The date is
       2026-09-22; if the release goes out on another day, change it in both
       files together
-- [ ] Tag the release commit `v2.1.0` and use the same text for the Apps
-      Script version: `clasp version "v2.1.0"`
+- [ ] Tag the release commit `v2.0.1` and use the same text for the Apps
+      Script version: `clasp version "v2.0.1"`
 
 ### Live
 
-- [ ] `docs/live-test-checklist-2.1.0.md` passed against a test deployment,
+- [ ] `docs/live-test-checklist-2.0.1.md` passed against a test deployment,
       including a fresh install (the menu must appear without reloading) and an
       upgrade from the previous version
 - [ ] Privacy policy and terms reachable at the console URLs, and current
@@ -274,7 +274,7 @@ So a release is:
    be matched later:
 
    ```bash
-   clasp version "v2.1.0"      # prints the new version number, e.g. 14
+   clasp version "v2.0.1"      # prints the new version number, e.g. 14
    ```
 
    (Or *Project history → New version* in the Apps Script editor.)

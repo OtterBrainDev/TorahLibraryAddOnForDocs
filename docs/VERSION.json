@@ -1,7 +1,9 @@
 {
   "_description": "Single source of truth for the add-on's version. Everything user-facing that shows a version reads from here (see `surfaces`), and `test/ui/version-manifest.test.js` fails if any of them drift. Update this file in the same commit as the release, never separately.",
 
-  "version": "2.1.0",
+  "_versioning": "The add-on is on the 2.0 line: every release, whatever it contains, bumps the build (the third number), so MINOR stays 0. 2.0.1 was first released as 2.1.0 on 2026-09-22 and renumbered in November 2026, before the move to Sefaria; an Apps Script version or note that says v2.1.0 is 2.0.1, and the 2.2.0 planned in older notes is 2.0.2. docs/versioning.md has the policy.",
+
+  "version": "2.0.1",
   "status": "released",
   "released": "2026-09-22",
   "previous": "2.0.0",
@@ -13,12 +15,12 @@
   "surfaces": [
     {
       "file": "apps-script/help-modal.html",
-      "shows": "Current line: 2.1",
-      "note": "About tab meta-pill. Shows MAJOR.MINOR only — patch releases do not change it."
+      "shows": "Version 2.0.1",
+      "note": "About tab meta-pill. Shows the full version, build included: on the 2.0 line the build is the only number that moves."
     },
     {
       "file": "apps-script/release-notes.html",
-      "shows": "Version 2.1",
+      "shows": "Version 2.0.1",
       "note": "Shown on install and from the release-notes dialog."
     }
   ],

@@ -282,9 +282,10 @@ different repo.
 - `docs/VERSION.json` — the single source of truth for the version and
   the preference-schema number. Enforced by
   `test/ui/version-manifest.test.js`.
-- `docs/versioning.md` — what bumps what, and the one coupling that
-  matters: a new preference key needs a default, a migration, a schema
-  bump, a manifest bump and a version bump, all in one commit.
+- `docs/versioning.md` — the version numbering (every release is the next
+  build of 2.0: 2.0.1, 2.0.2, …) and the one coupling that matters: a new
+  preference key needs a default, a migration, a schema bump and a manifest
+  bump, all in one commit, and ships in the next build.
 - `docs/regression-log.md` — every bug that has regressed more than
   once, with the pinning test that now holds it down.
 - `docs/rpc-surface.json` — frozen server-function surface.

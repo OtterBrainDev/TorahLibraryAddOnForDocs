@@ -73,11 +73,11 @@ test('every migration up to the current schema version exists', () => {
   }
 });
 
+// Every surface carries the full version, build included. The add-on is on the
+// 2.0 line, where every release bumps only the build (docs/versioning.md §1),
+// so a surface showing MAJOR.MINOR would read "2.0" for every release.
 test('every declared surface shows the manifest version', () => {
   assert.ok(Array.isArray(manifest.surfaces) && manifest.surfaces.length, 'no surfaces declared');
-
-  const [major, minor] = manifest.version.split('.');
-  const majorMinor = `${major}.${minor}`;
 
   manifest.surfaces.forEach((surface) => {
     const relative = surface.file.replace(/^apps-script\//, '');
@@ -89,9 +89,9 @@ test('every declared surface shows the manifest version', () => {
       'Bumping the version means updating every surface listed in VERSION.json.'
     );
     assert.ok(
-      surface.shows.includes(majorMinor),
+      new RegExp(`(^|[^0-9.])${manifest.version.replace(/\./g, '\\.')}([^0-9.]|$)`).test(surface.shows),
       `VERSION.json says ${surface.file} shows "${surface.shows}", which does not ` +
-      `carry the current version ${majorMinor}.`
+      `carry the current version ${manifest.version}.`
     );
   });
 });

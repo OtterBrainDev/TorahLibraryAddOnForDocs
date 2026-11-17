@@ -1,6 +1,6 @@
 # Using the Torah Library Add-On for Google Docs
 
-A walkthrough of the add-on as it is today (v2.1, plus the unreleased changes
+A walkthrough of the add-on as it is today (v2.0.1, plus the unreleased changes
 in the [changelog](./CHANGELOG.md)). The same material is inside
 the add-on under **Extensions → Torah Library → Help & Support**, or the
 **Help** button at the bottom of the sidebar.

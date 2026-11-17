@@ -1,7 +1,7 @@
 # First-Run Setup and Simple Mode: Design
 
 > **Status:** Implemented (steps 1–4 of §13). Release (step 5) pending.
-> **Target release:** 2.2.0 (MINOR: new preference keys, handled by a migration)
+> **Target release:** 2.0.2 (planned as 2.2.0; the next build, with new preference keys handled by a migration)
 >
 > Where the implementation differs from the first draft, the text below says
 > what was built and why; §14 lists the differences in one place.
@@ -385,7 +385,7 @@ Per `docs/versioning.md` §2, in a single commit:
 - a CHANGELOG entry under **Unreleased** that says, first sentence: existing
   users keep the full interface and never see setup.
 
-The add-on version itself (2.2.0, and the surfaces `VERSION.json` lists) moves
+The add-on version itself (2.0.2, and the surfaces `VERSION.json` lists) moves
 at release, as for schemas 17–19: `versioning.md` §5 keeps version bumps out of
 feature commits.
 
@@ -506,7 +506,7 @@ pattern, so its migration test cites that row.
   Sefaria?" with **Show me** (opens Link Texts) and **Don't show tips**. Shown
   once. Counting inserts across sessions needs a stored counter, which means
   another preference key, migration and schema bump. So the tip is out of scope
-  for 2.2.0 and listed in §12.
+  for 2.0.2 and listed in §12.
 
 `docs/marketplace-listing.md` and the store screenshots are updated in the
 release that ships this, not before.
@@ -540,8 +540,8 @@ green.
 3. **Setup dialog:** the entry template, preview and tests.
 4. **Simple mode:** sidebar and Preferences CSS, the Interface switch, menu
    save and restore, snapshots.
-5. **Release:** CHANGELOG, `docs/live-test-checklist-2.2.0.md` (fresh install
-   from inside a document, from the Marketplace website, an upgrade from 2.1.0,
+5. **Release:** CHANGELOG, `docs/live-test-checklist-2.0.2.md` (fresh install
+   from inside a document, from the Marketplace website, an upgrade from 2.0.1,
    and a no-schema legacy user), listing and screenshots.
 
 ---
@@ -556,4 +556,4 @@ green.
   bootstrap field (§8).
 - A menu rearranged in Simple mode is kept on switching back, with a note,
   instead of a question (§6).
-- The version bump to 2.2.0 waits for the release (§7).
+- The version bump to 2.0.2 waits for the release (§7).
