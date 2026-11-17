@@ -1,7 +1,7 @@
 {
   "_description": "Single source of truth for the add-on's version. Everything user-facing that shows a version reads from here (see `surfaces`), and `test/ui/version-manifest.test.js` fails if any of them drift. Update this file in the same commit as the release, never separately.",
 
-  "_versioning": "The add-on is on the 2.0 line: every release, whatever it contains, bumps the build (the third number), so MINOR stays 0. 2.0.1 was first released as 2.1.0 on 2026-09-22 and renumbered in November 2026, before the move to Sefaria; an Apps Script version or note that says v2.1.0 is 2.0.1, and the 2.2.0 planned in older notes is 2.0.2. docs/versioning.md has the policy.",
+  "_versioning": "The add-on is on the 2.0 line: every release, whatever it contains, bumps the build (the third number), so MINOR stays 0. docs/versioning.md has the policy; CLAUDE.md / AGENTS.md list every copy of the version and what keeps it in sync.",
 
   "version": "2.0.1",
   "status": "released",

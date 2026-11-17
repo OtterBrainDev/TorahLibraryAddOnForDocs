@@ -1,7 +1,5 @@
 # Live test checklist — v2.0.1
 
-*Written for the release first numbered 2.1.0; renumbered 2.0.1 (`docs/versioning.md` §1).*
-
 Run this in a real Google Doc against HEAD — after `clasp push`, installed via
 Apps Script → Deploy → Test deployments — before creating the release version
 and pointing the Marketplace SDK at it. Everything here is something the automated suite **cannot** reach:
@@ -12,7 +10,7 @@ holds a `DocumentApp` handle or makes a request to Sefaria.
 **Version under test:** 2.0.1 · **preference schema:** 13 (both from
 `docs/VERSION.json`)
 Confirm both before starting — *Help & Support → About* should read
-**Version 2.0.1**. If it says *Current line: 2.0*, the push did not land.
+**Version 2.0.1**. If it says anything else, the push did not land.
 
 Two accounts' worth of setup matters, because half the risk in this release is
 in the *upgrade* path:

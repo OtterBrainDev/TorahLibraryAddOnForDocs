@@ -36,13 +36,7 @@ release bumps the build by one — 2.0.1, 2.0.2, 2.0.3 — whatever it contains,
 and MINOR stays 0. A new capability, a new preference key and a one-line fix
 are all the next build.
 
-2.0.1 was first released as **2.1.0** (2026-09-22), and the release after it
-was planned as 2.2.0. Both were renumbered as builds of 2.0 in November 2026,
-before the move to Sefaria: anything outside this repository that says
-v2.1.0 (an Apps Script version description, an old note) means 2.0.1, and
-2.2.0 means 2.0.2. `docs/VERSION.json` records the same.
-
-Since the number no longer says how big a release is, the CHANGELOG has to.
+Since the number doesn't say how big a release is, the CHANGELOG has to.
 It answers *"what does a user have to know before they upgrade?"*:
 
 | A release that… | Its CHANGELOG entry must… | Examples |

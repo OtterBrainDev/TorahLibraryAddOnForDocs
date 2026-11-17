@@ -11,25 +11,18 @@ heading until the next release consolidates it.
 
 Everything under this heading ships as **2.0.2**, the next build.
 
-### Version numbers: the 2.0 line, numbered by build
+### Version numbers: builds of 2.0, kept in sync
 
-No code, preference or migration change. Before the move to TheMerkaz and then
-to Sefaria, the add-on is renumbered so that every release is a build of 2.0:
+No code, preference or migration change.
 
-- **2.1.0 is now 2.0.1**, and the release in progress, planned as 2.2.0, is
-  **2.0.2**. Every later release bumps the build again (2.0.3, …); MINOR stays
-  0. An Apps Script version described `v2.1.0` is 2.0.1.
-- *Help & Support → About* shows **Version 2.0.1** (the full version; it said
-  *Current line: 2.1*), and the release notes and *New in* headings say 2.0.1.
-- `docs/versioning.md` §1 is rewritten for build numbering: since the number
-  no longer says how big a release is, the CHANGELOG entry has to (a new
-  preference key still needs its migration named, in bold, first). Leaving the
-  2.0 line (3.0.0) is a maintainer decision for a change no migration covers.
-- `test/ui/version-manifest.test.js` now requires each surface to carry the
-  full version, build included, not MAJOR.MINOR.
-- `docs/live-test-checklist-2.1.0.md` is now `docs/live-test-checklist-2.0.1.md`;
-  the walkthroughs, the store listing's release checklist, the regression log
-  and the first-run design doc use the new numbers.
+- **Every release is the next build of 2.0** (2.0.1, 2.0.2, 2.0.3, …); MINOR
+  stays 0. `docs/versioning.md` §1 says so: since the number doesn't say how
+  big a release is, the CHANGELOG entry has to (a new preference key still
+  needs its migration named, in bold, first). Leaving the 2.0 line (3.0.0) is
+  a maintainer decision for a change no migration covers.
+- *Help & Support → About* shows the full version, **Version 2.0.1**, build
+  included, and `test/ui/version-manifest.test.js` requires every surface to
+  carry the full version, not MAJOR.MINOR.
 - **Keeping the numbers in sync.** `CLAUDE.md` / `AGENTS.md` have a new
   section, *Versions: keep them in sync*: the 2.0 line, every place the
   version is written and what keeps each in step, the release-commit rule,
@@ -516,7 +509,7 @@ No new preference, no migration. Found while recording the beta tutorials;
 each one is in `docs/regression-log.md` with the test that pins it. These
 change what an insert writes (the Hebrew credit) and how Transform Divine
 Names behaves, so by `docs/versioning.md` §1 they ship in the next build,
-2.0.2 (planned as 2.2.0), with the preference changes above.
+2.0.2, with the preference changes above.
 
 #### Fixed
 
@@ -1303,9 +1296,6 @@ Names behaves, so by `docs/versioning.md` §1 they ship in the next build,
 
 ## v2.0.1 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
 
-*Released as 2.1.0 and renumbered 2.0.1 in November 2026 (see* Version
-numbers *under Unreleased).*
-
 Highlights: Link Texts with Sefaria shows its progress, asks about ambiguous
 citations and reports what it could not link, and uploads only likely-citation
 passages by default; inserted sources carry a credit line with their licenses;
@@ -1644,7 +1634,7 @@ rather than a bug here.
 
 #### Changed
 
-- Version set to **2.0.1** (was 2.0.0; released as 2.1.0). Surfaces updated in `help-modal.html` and
+- Version set to **2.0.1** (was 2.0.0). Surfaces updated in `help-modal.html` and
   `release-notes.html`.
 
 ### Linker: recover clipped matches, separate the two failure kinds (2026-09)

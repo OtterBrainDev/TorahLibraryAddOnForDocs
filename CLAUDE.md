@@ -90,10 +90,9 @@ AGENTS.md still expected 248 passing tests.)
 ## Versions: keep them in sync
 
 The add-on is on the **2.0 line**: every release is the next build, 2.0.1,
-2.0.2, 2.0.3, whatever it contains. Never write 2.1, 2.2 or 3.0 for this
+2.0.2, 2.0.3, whatever it contains. Never write a 2.1 or a 3.0 for this
 add-on: leaving the 2.0 line is the maintainers' decision, not a release
-step (`docs/versioning.md` §1). Older notes called 2.0.1 "2.1.0" and 2.0.2
-"2.2.0"; those are the same releases.
+step (`docs/versioning.md` §1).
 
 The number is decided in one place, `docs/VERSION.json`. Every other copy
 follows it:

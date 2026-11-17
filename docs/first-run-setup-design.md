@@ -1,7 +1,7 @@
 # First-Run Setup and Simple Mode: Design
 
 > **Status:** Implemented (steps 1–4 of §13). Release (step 5) pending.
-> **Target release:** 2.0.2 (planned as 2.2.0; the next build, with new preference keys handled by a migration)
+> **Target release:** 2.0.2 (the next build, with new preference keys handled by a migration)
 >
 > Where the implementation differs from the first draft, the text below says
 > what was built and why; §14 lists the differences in one place.
