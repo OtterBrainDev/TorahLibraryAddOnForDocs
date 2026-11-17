@@ -32,21 +32,54 @@ is, Sefaria. It cannot be done from The Merkaz's or OtterBrain's accounts.
 
 1. **The same script project.** Not a copy: user settings and the listing are
    both tied to the project's script ID.
-2. **Scopes compared with 1.0's.** This code asks for exactly four
-   (`apps-script/appsscript.json`):
+2. **One new permission, and so one re-authorization.** The public listing
+   for 1.0 (read 2026-11-17) declares five scopes; this code asks for four:
 
-   - `documents.currentonly`
-   - `script.container.ui`
-   - `script.external_request`
-   - `script.storage`
+   | Scope | 1.0 listing | This code |
+   | --- | --- | --- |
+   | `documents.currentonly` | yes | yes |
+   | `script.container.ui` | yes | yes |
+   | `script.external_request` | yes | yes |
+   | `script.storage` | **no** | **yes** |
+   | `userinfo.email` | yes | no |
+   | `userinfo.profile` | yes | no |
 
-   Any of these that 1.0 does not already have will make every user
-   re-authorize once, and the add-on does not run for them until they do. Any
-   scope 1.0 has that is not in this list can be dropped from the consent
-   screen. **We have not seen 1.0's manifest, so this comparison is not done.**
-   Changing scopes also means updating the OAuth consent screen and the
-   Marketplace SDK scope list, which can trigger Google's verification.
+   - **`script.storage` is new.** It is what lets the add-on keep a user's
+     settings, which 1.0 never did. Every one of the listing's 53,000+ users
+     would be asked to authorize once, and the add-on does not run for them
+     until they do. There is no way to add the scope silently. The only way
+     to avoid the prompt is to ship without saved settings, which removes
+     most of what 2.0 adds.
+   - **`userinfo.email` and `userinfo.profile` can go.** This code never reads
+     the user's address or profile. Dropping them lets the consent screen say
+     less than it does today, which is worth saying in the release notes next
+     to the new prompt.
+   - Adding a scope means updating the OAuth consent screen and the
+     Marketplace SDK scope list, and Google may review the change.
+   - **Still to confirm from the project itself:** the listing shows what the
+     Marketplace SDK declares, which can differ from 1.0's `appsscript.json`.
+     Check the manifest of the published script version before relying on the
+     table.
 3. **A decision about what an upgraded user sees first** (section 2).
+
+### What the public listing says about 1.0 today
+
+Read from the Marketplace page on 2026-11-17:
+
+| | |
+| --- | --- |
+| Listing | *Sefaria for Google Docs*, app ID `849562338091`, a Docs editor add-on |
+| Script project | `1gPEx6tjQrXtEkXkPDplyGINPRlVwLMPj74SHR0_jcnsWe5cfXF_ZnYbU` — path A means pushing into this project |
+| Developer | Sefaria (`hello@sefaria.org`), listed as a non-trader |
+| Installs | 53,000+; individual and admin install both offered |
+| Rating | 4.9 from 11 ratings |
+| Listing last updated | 2 July 2026 |
+| Privacy, terms, support | `sefaria.org/privacy-policy`, `sefaria.org/terms`, Sefaria's Help Center |
+
+Because admins can install it for a whole domain, some users have it without
+having chosen it. A domain admin may need to approve the new scope for those
+users, and Sefaria's privacy policy would need to cover saved settings and the
+document text that *Link Texts with Sefaria* sends.
 
 ### What an upgraded 1.0 user would experience (read from the code, not yet tested live)
 
@@ -140,7 +173,8 @@ links. Finish with `npm ci && npm test` (0 failing, **0 skipped**) and
 ## 4. Publishing checklist for Sefaria
 
 - [ ] Decisions in section 2 made; section 3 applied; tests and QC green
-- [ ] 1.0's scopes compared with the four above (section 1)
+- [ ] 1.0's `appsscript.json` checked against the scope table in section 1;
+      users told in advance that they will be asked to authorize once
 - [ ] Deploy target set. `.clasp.json` holds the OtterBrainDev development
       project's script ID and must not be used. Either run `clasp` by hand
       against Sefaria's project, or set the repository variable
@@ -228,8 +262,9 @@ disabled. Moving to clasp 3 is the fix; `tools/clasp/README.md` explains what
 changes with it.
 
 **Not verified here.** No live call to Sefaria's API or to `the-merkaz.org`
-was possible from the review environment, and nothing in this file has been
-tested against the real 1.0 script project.
+was possible from the review environment. What is said about 1.0 comes from
+its public Marketplace listing, not from its code, and nothing in this file
+has been tested against the real 1.0 script project.
 
 **Where to read more**: `docs/architecture.md` (server/client boundary,
 storage, the RPC surface), `docs/rpc-surface.json` (every function the pages
