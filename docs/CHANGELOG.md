@@ -90,6 +90,20 @@ below marked *Migration* say what each schema step changes.
 
 The rest of this entry is the development record, newest first.
 
+### Help → About: what's new in 2.0
+
+- **About → New in 2.0 lists everything new or improved** compared with
+  Sefaria for Google Docs 1.0: 66 items in eleven folded groups (Finding a
+  text, Previewing and inserting, Layout, Hebrew and translation formatting,
+  Divine names, Link Texts, Voices, Lexicon, Session Library and Quick
+  Actions, Your settings, Help and privacy), each tagged *New* or *Improved*
+  with where to find it. It points to *Coming from Sefaria for Google Docs*
+  for where that add-on's commands went and what works differently. It
+  replaces the nine-line summary.
+- `test/ui/help-links.test.js`: every link inside Help lands on a topic that
+  exists, and every About item has its tag and its place. No new preference,
+  RPC or OAuth scope.
+
 ### Translation versions: find a language by its name
 
 #### Changed

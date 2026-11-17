@@ -113,7 +113,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **248 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **814 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -194,6 +194,9 @@ and in `test/ui/`:
   `<script>` goes through `toEmbeddedJson_`.
 - `csp-coverage.test.js` — every entry page carries the same
   Content-Security-Policy.
+- `help-links.test.js` — every link inside Help & Support lands on a topic
+  that exists (a renamed topic's links did nothing), and About → New in 2.0
+  tags each item New or Improved and says where to find it.
 - `vowels-tanakh-only.test.js` — the Preferences "Vowels only in Tanakh"
   switch, and that turning Vowels back on keeps it.
 - `translation-version-select.test.js` — the sidebar's version lists: the

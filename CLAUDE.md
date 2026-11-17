@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **812 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **814 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -426,6 +426,9 @@ and in `test/ui/`:
   `<script>` goes through `toEmbeddedJson_`.
 - `csp-coverage.test.js` — every entry page carries the same
   Content-Security-Policy.
+- `help-links.test.js` — every link inside Help & Support lands on a topic
+  that exists (a renamed topic's links did nothing), and About → New in 2.0
+  tags each item New or Improved and says where to find it.
 - `line-by-line-layout.test.js` — Line by line shows for every arrangement
   of both languages (Stacked too); the transliteration's Position (Below /
   Left / Right, in the card's Transliteration group) applies side by side only
