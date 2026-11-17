@@ -9,7 +9,7 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
-### Line numbers: off is respected in the sidebar
+### Line numbers: off is respected in the sidebar and Surprise Me
 
 - **Fix.** With *Line numbers* off (📰 Insertion Options, or Preferences →
   Insertion → Layout), Add Source still numbered a passage with verses, a
@@ -18,6 +18,15 @@ heading until the next release consolidates it.
   a single verse. The preview no longer touches it; a text with no verses to
   number is still inserted without them. Insert from Selection and Link Texts
   were not affected. No preference or default changes.
+- **Surprise Me follows your Insertion defaults.** It inserted every source
+  the same way, whatever Preferences said: both languages side by side, lines
+  numbered, titles not linked, no credit, citation or transliteration. Each
+  source is now inserted the way Insert from Selection inserts one: with your
+  output, arrangement, Line numbers, linked titles, credits, citation,
+  transliteration and Commentary. With the default settings that means
+  linked titles and the edition credited, where Surprise Me had neither.
+  From the sidebar's 🧪 tab it uses the saved settings, not changes made only
+  for this session in the Texts tab's Insertion Options.
 
 ### Line by line for Stacked; the transliteration in a column of its own (schema 30)
 
