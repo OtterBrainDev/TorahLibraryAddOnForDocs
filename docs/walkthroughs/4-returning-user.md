@@ -53,7 +53,8 @@ English.
 With both languages the layout is the one Sefaria for Google Docs uses: a
 two-column table, Hebrew on the right. **📰 Insertion Options → Arrangement**
 also offers **Left–Right** and **Stacked** (Hebrew above English), and **Line by
-line** puts each verse in its own row beside its translation.
+line** pairs each verse with its translation: side by side, in its own row;
+Stacked, the verse and then its translation, down the page.
 
 The first time the add-on opens, a short setup asks three things (what you'll
 use it for, how sources should look, Simple or Everything). Choose **I've used
@@ -82,14 +83,18 @@ setup again**.
   insertion** sets the layout for that batch without touching Preferences.
 - **Insert Source from Selection.** Select a reference you typed, e.g.
   `Psalms 92:1`, and run it. The citation becomes the source.
-- **Several translations at once.** In **Versions**, <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click
-  more than one.
-- **Voices** (search Sefaria source sheets) and **Lexicon** (the dictionary)
-  tabs.
-- **Session Library (📜):** what you've inserted recently, with pins and a
-  **Copy References** list.
+- **Several translations at once.** With Translation only or Stacked, each
+  click in **Versions** adds a translation or takes it away. The filter box
+  finds a language by name (*French*, *français*, *צרפתית*).
+- **Voices** (search Sefaria source sheets, grouped by topic) and **Lexicon**
+  (the dictionary: pick a word, then the dictionaries' entries you want)
+  tabs. Each tab keeps its own results; **Enter** searches all three.
+- **Session Library (📜):** what you've inserted recently, with pins (texts,
+  sheets and words) and a **Copy References** list.
 - **Settings files** (**Preferences → Advanced**, in Everything): export your
   settings and hand them to a class, or import an organization's house style.
+- **Profiles** (Everything): a look for each class, switched in a click in
+  Preferences or the sidebar's Insertion Options.
 - **Unlink Sources** and **Gematriya Count** in the Quick Actions menu.
 
 ---

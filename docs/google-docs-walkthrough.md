@@ -50,7 +50,7 @@ Sefaria for Google Docs** starts from the look you know; Help → Quick start �
 transliteration, fonts and heading titles; **Commentary** for translations
 that weave commentary in; Insert Source from Selection; Voices, Lexicon and the
 Session Library; several translations at once; settings files (Preferences →
-Advanced).
+Advanced) and profiles, one look per class.
 
 **Different:**
 
@@ -79,9 +79,9 @@ at [help.sefaria.org](https://help.sefaria.org/hc/en-us/sections/20235182393244)
 | **⌨︎** | On-screen Hebrew keyboard, with a Vowels row. |
 | **🔍** | Run the search. Click into the empty search box to see recent searches. |
 
-**Under the search box**, a segmented control chooses the kind of result.
-Switching runs the same search again in the other one, so there is nothing to
-retype.
+**Under the search box**, three tabs choose the kind of result. Each keeps its
+own results; switching never searches (see *Texts, Voices and Lexicon tabs*
+below).
 
 | Control | What it does |
 | --- | --- |
@@ -106,9 +106,9 @@ retype.
 Two interfaces; switch at the top of Preferences, under **Interface** (it
 takes effect at once, without Save). Simple hides, and never removes:
 
-- **Sidebar:** the result sort and **⤦ Restore Corpus**. The Texts / Voices /
-  Lexicon tabs, Add Source, Insertion Options and the footer buttons stay in
-  both modes.
+- **Sidebar:** the result sort, **⤦ Restore Corpus** and the **🧪** tab. The
+  Texts / Voices / Lexicon tabs, Add Source, Insertion Options and the footer
+  buttons stay in both modes.
 - **Menu:** a shorter menu — Texts, Insert Source from Selection, Transform
   Divine Names, Link Texts with Sefaria, then Preferences and Help & Support.
   Switching back to Everything restores the menu you had.
@@ -122,10 +122,7 @@ the Voices and Lexicon tabs, Quick Actions buttons, and (in Everything)
 Insertion Options controls; a hidden control uses your saved default. Anything
 switched off is hidden, not removed: a tab's menu item still opens it.
 
-Everything also has **profiles**, in a column beside the Preferences tabs: a
-named set of how sources look for each class (say transliteration for
-beginners, no vowels for adults). Click one to switch; with two or more, the
-sidebar's Insertion Options names the profile in use and switches too.
+Everything also has **profiles** (see *Profiles* below).
 
 Existing users keep Everything and never see the setup.
 
@@ -165,10 +162,22 @@ translation language is set in **Preferences → Insertion → Insertion
 Defaults → Translation → Language**.
 
 With **Translation** only, or **Hebrew and translation** in the **Stacked**
-layout, each click on a translation adds or removes it, so several can be
-selected. Each is inserted as its own block, in the order selected. The Preview
-can't show several at once; it lists them in that order. A translation with no text for the passage is greyed out
-as *unavailable for this ref* and skipped.
+layout, each click on a translation adds or removes it (no
+<kbd>Ctrl</kbd>/<kbd>⌘</kbd> needed), so several can be selected. Each is
+inserted as its own block, in the order selected. The Preview can't show
+several at once; it lists them in that order. One always stays selected, and
+typing in the filter box never changes the selection.
+
+The filter box finds a language by its name, in English, in itself or in any
+other language the add-on lists: *French*, *français* and *צרפתית* all list
+the French translations. The first few letters are enough; capitals, accents
+and vowel points don't matter. A code (*fr*) works too, and so does part of a
+version's title.
+
+A translation with no text for the passage is left out of the list. **Preferences
+→ Search → Advanced → Show unavailable translations** lists those greyed out,
+*unavailable for this ref*. Languages unticked in **Preferences → Search →
+Translation Languages** are left out too.
 
 **🔁 Preview** shows what **Add Source** will insert right now.
 
@@ -179,7 +188,9 @@ set your saved defaults in **Preferences → Insertion**, and one linking pass i
 Link Texts' **📰 Customize this insertion**. **↺ Revert** (back to your
 Preferences) and **💾 Save as defaults** (make these your Preferences) are at
 the top of the panel, greyed out until something differs. The panel scrolls;
-<kbd>Esc</kbd> closes it.
+<kbd>Esc</kbd> closes it. With two or more profiles, its **Profile** list
+switches between them; in Everything, **Preferences → Sidebar** can leave
+controls out of it.
 
 **Layout**
 
@@ -188,8 +199,11 @@ the top of the panel, greyed out until something differs. The panel scrolls;
 - **Arrangement** (with both) — **Stacked**, **Right–Left** (Hebrew on the
   right), **Left–Right** (Hebrew on the left).
 - Then a switch each for **Citation** (the editions and their licenses under
-  the text), **Line by line** (Right–Left and Left–Right only: one table row
-  per verse, beside its translation) and **Line numbers**.
+  the text), **Line by line** (with both languages, in every arrangement: side
+  by side, one table row per verse, beside its translation; Stacked, each
+  verse, its transliteration and its translation one after another down the
+  page, with several translations in the order picked) and **Line numbers**.
+  The Arrangement icons sketch the page each gives with your other settings.
 
 **Insertion Format** — two sections, **Source** (the Hebrew) and
 **Translation**. Each folds to one line saying what is set (*Vowels,
@@ -206,7 +220,7 @@ hidden, and with the Hebrew alone the Translation section.
 | **Vowels** | Source | **Off** / **Tanakh** (Tanakh only) / **On**. |
 | **Cantillation** | Source | **Off** / **Tanakh** / **Torah** (the Five Books only). |
 | **Punctuation** | both | Keep the punctuation. Off removes sof pasuq, paseq, {פ}/{ס}, commas and the like; a maqaf becomes a space. |
-| **Transliteration** | Source | Add a transliteration; **Style** under it picks the scheme while it is on. Read from the fully vowelled text, so it is complete with Vowels off; with the Hebrew's Punctuation off it drops the same punctuation. |
+| **Transliteration** | Source | Add a transliteration; **Style** under it picks the scheme while it is on (Simple English, Traditional, Modern Israeli, Ashkenazi, Academic, IPA). Side by side, **Position** puts it **Below** the Hebrew, or in a column of its own **Left** or **Right** of it, headed by the Hebrew title in Latin letters (*Bereshit 1:1*, Ashkenazi *Bereishis 1:1*), linked like the Hebrew title. Stacked always puts it under the Hebrew. Read from the fully vowelled text, so it is complete with Vowels off; with the Hebrew's Punctuation off it drops the same punctuation. The Name, and every substitute for it, is written *HaShem*; sentences and the names of people, places and peoples start with a capital (not in IPA). |
 | **Commentary** | Translation | Sefaria sets some translations' direct translation in bold and their commentary in plain text. **Default** keeps that bold; **Combine** drops it, so translation and commentary look the same; **Drop** leaves the commentary out (only the bold is inserted). Italics marks foreign and transliterated words, not commentary, and is kept in every mode. The Hebrew is always inserted whole, with its own. |
 
 Vowels, Cantillation, Punctuation and Transliteration change what is fetched:
@@ -254,25 +268,64 @@ with no bold anywhere, such as the Aramaic original, is inserted whole.
 
 ## Voices (source sheets)
 
-Open the **Voices** tab, search source sheets, pick one, then under **What to
-insert** choose **Citation**, **Text** or **Both** and optionally a
-transliteration scheme. Defaults live in **Preferences → Insertion → Insertion
-Defaults → Voices**.
+Open the **Voices** tab and search source sheets by topic, title or text. The
+sheets are grouped by topic (Torah Portions, Shabbat & Holidays, Prayer,
+Tanakh, People…), and the **topic chips** over the list work like corpora in
+Texts: click one, or a group's **❌**, to hide it for this search. **Preferences
+→ Search → Voices Topics** saves the order of the groups and the topics to
+leave out.
+
+Pick a sheet, then under **What to insert** choose **Citation** (the
+reference), **Text** (the sheet's text) or **Both** (the text, titled with a
+link to the sheet), and optionally a **Transliteration**: each Hebrew passage
+is then followed by its transliteration in parentheses; the English and
+comments are not transliterated. The Voices transliteration is its own
+setting, separate from Texts'. Click **Add Sheet**. Defaults live in
+**Preferences → Insertion → Insertion Defaults → Voices**.
 
 ## Lexicon (dictionary)
 
-Open the **Lexicon** tab and type a Hebrew or Aramaic word. Choose **Full
-entry**, **Word + ref** or **Definition**, then **Add Source**. Star entries to
-keep them under **⭐ Starred entries**; recent lookups show as chips.
+Open the **Lexicon** tab and type a Hebrew or Aramaic word, or an English one
+to find the Hebrew words that mean it. The results are **words**: under
+**Matches** those spelled as you typed, then **Related words** (the words it
+is a form of or close to), or **Closest words** when nothing is spelled as
+typed. Each shows its dictionaries and what they say it means.
+
+- **Dictionary chips** over the list hide a dictionary's entries for this
+  search, like corpora in Texts. **Preferences → Search → Lexicon
+  Dictionaries** saves their order (Klein, BDB, BDB Aramaic, Jastrow, Strong's,
+  Ben-Yehuda unless you change it) and the ones to leave out.
+- **Pick a word** to list its entries, one per dictionary (and one per meaning
+  where a dictionary has two words spelled alike). The first is selected;
+  click others to add them, or **Select all**. One always stays selected.
+- **What to insert:** **Full entry** (the word, each dictionary's line, its
+  numbered senses and notes), **Word + ref** (the word and the dictionaries'
+  names) or **Definition** (the senses alone). The preview is an outline;
+  **Show the whole entry** opens a long one, and **Copy** copies what will be
+  inserted. Click **Add Entry**.
+
+**📌** pins a word to the Session Library (words starred in earlier versions
+are pins now). Recent lookups show as chips under the search box.
+
+## Texts, Voices and Lexicon tabs
+
+- **Typing** searches the tab you're in. **Enter** (or **🔍**) also searches
+  the other tabs that are switched on, when the text suits them: a reference
+  such as *Genesis 1:1* isn't looked up in the Lexicon. The number on each tab
+  counts its results for what's in the search box.
+- **Switching tabs never searches.** Each tab keeps its results, what you hid
+  and what you had selected, and the search box keeps its text. A tab with no
+  results for that text offers **Search Voices for “…”**.
 
 ## Session Library (📜)
 
-Every inserted source is added (the most recent twelve, plus any you pin).
-Open it with **📜** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> +
-<kbd>L</kbd>. Click a source to reopen it, **📌** to pin it, filter and sort,
-**Copy References** for a plain-text list, **Clear Recent** (keeps pinned) or
-**Reset Session** (clears everything). The Session Library is kept in your
-browser only.
+Every source, sheet or word you insert is added (the most recent twelve, plus
+up to thirty you pin). Open it with **📜** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> +
+<kbd>Shift</kbd> + <kbd>L</kbd>. Click an entry to reopen it in its own tab
+(Texts, Voices or Lexicon), selected and ready to insert; **📌** pins it;
+filter by Pinned, Recent or category, and sort; **Copy References** for a
+plain-text list; **Clear Recent** (keeps pinned) or **Reset Session** (clears
+everything). The Session Library is kept in your browser only.
 
 ## Quick Actions (🏃)
 
@@ -281,7 +334,10 @@ browser only.
 | **Sel → ס** Insert Source from Selection | Select a reference typed in the document and run it. By default the selection is replaced by the source; turn off **Preferences → Insertion → Insert from Selection** to keep it and insert below. Link Texts' Insert follows the same setting. |
 | **ה → ש** Transform Divine Names | Apply your divine-name replacements to text already in the document: every match in the body of the open tab, not only a selection (headers, footers, footnotes and other tabs are left alone). It asks first. |
 | **🔗 → ס** Link Texts with Sefaria | Find citations in the document and link them to Sefaria. |
-| **🎲** Surprise Me | Experimental; shown only when enabled in **Preferences → 🧪 Experimental**. |
+| **🎲** Surprise Me | Experimental; shown only when enabled in **Preferences → 🧪 Experimental**. Inserts a random set of sources on a word or theme, each with your saved **Preferences → Insertion** defaults (not this session's Insertion Options). |
+
+**Preferences → Sidebar** can leave buttons out of the 🏃 panel; with all three
+off, 🏃 goes too.
 
 Menu-only: **Unlink Sources** removes every sefaria.org link from the
 document; **Gematriya Count** totals the gematria of the selection (or the
@@ -316,6 +372,14 @@ only** (default — only passages that look like citations) or **Whole
 document**. If the report says citations *could not be placed*, switch to
 **Whole document** and run it again.
 
+A citation Sefaria's linker can't match is looked up again the way the search
+box does (consistent punctuation, Hebrew numerals without their marks,
+abbreviations such as *Hil.* written out); a hit is linked like any other and
+says which spelling found it. The rest are listed under **▸ Show … citations
+that couldn't be matched**, each with the spellings searched, what Sefaria
+answered and why none matched (a chapter the book doesn't have, an unknown
+book name, *ibid.*). Fix the citation and run it again.
+
 ## Divine names
 
 By default, inserted יהוה becomes יי. The rules are in **Preferences →
@@ -329,28 +393,70 @@ only a selection — after asking.
 
 Open with **⚙︎** or **Extensions → Torah Library → Preferences**. Preferences
 are saved defaults and follow your Google account into every document. At the
-top: **Interface** (Simple / Everything) and, in Simple, **Show advanced
-settings**.
+top, **Interface** (Simple / Everything) switches at once, without Save, and
+keeps any changes you haven't saved yet. Simple hides the Search, Linking,
+Advanced and Experimental tabs; Everything shows them, and the Profiles column
+beside the tabs.
 
 | Tab | Contents |
 | --- | --- |
 | **Insertion** | Default Layout (the sidebar's pickers, plus the titles' **Title style** — e.g. Heading 2 — and **Citation style**, 8 pt italic in the font of the text above unless changed); Insertion Defaults for Texts (the card, plus the translation **Language**), Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). Every font button (each title, the Hebrew, transliteration and translation text, the citation) opens that font's full settings in place: font, size, style, colour, highlight and a preview, and for a title its **Hyperlink formatting override**. Under each **Link title to Sefaria**, while it is on, **Name the edition in the title** (Source) and **Name the translation in the title** (Translation) say whether a linked title names its edition. |
-| **Search** | Text Search Results (group order and hidden groups); Translation Languages; Advanced (Show unavailable translations). |
+| **Search** | Text Search Results (group order and hidden groups); **Voices Topics** (the order of the topic groups, and the topics to leave out); **Lexicon Dictionaries** (the order a word's entries are listed in, and the dictionaries to leave out); Translation Languages; Advanced (Show unavailable translations). A chip in the sidebar brings a hidden topic or dictionary back for one search. |
 | **Linking** | After linking; Insert text after linking; Document scanning. |
-| **Menu Bar** | Reorder, group, hide and divide menu items. |
+| **Sidebar** | What the sidebar shows (see below). |
+| **Menu Bar** | Reorder, group, hide and divide menu items; **Move to Quick Actions ▸** / **◂ Move to main menu** move an item into the submenu or out. |
+| **Advanced** | **Settings file**: **Export settings file** saves the settings shown (unsaved changes included) to a `.json` file, optionally named (*Grade 7 Chumash*); **Choose a settings file…** (or paste its text) shows what each part would change — Text and layout; Fonts, colours and titles; Search and linking; Menu and interface — and applies only the parts you tick. A file holds settings only, never searches, documents or account details. |
 | **🧪 Experimental** | Optional in-progress features such as Surprise Me. |
 
-Buttons: **Reset To Defaults**, **🔁 Refresh** (reload the sidebar from saved
-defaults, dropping its session changes), **Save Defaults** and **Save &
-Close**. While one is working, a spinner covers the dialog and says what is
-happening (*Saving preferences…*).
+Buttons: **Reset To Defaults** (every setting back to the original, and the
+menu to the default for your interface; Simple or Everything stays),
+**🔁 Refresh** (reload the sidebar from saved defaults, dropping its session
+changes), **Save Defaults** and **Save & Close**. While one is working, a
+spinner covers the dialog and says what is happening (*Saving preferences…*).
+
+## What the sidebar shows
+
+**Preferences → Sidebar**, in Simple and Everything, leaves out what you don't
+use. Save applies it, and an open sidebar follows at once.
+
+- **Search tabs:** the Voices and Lexicon tabs. Texts is always there. A tab
+  switched off can still be opened from its menu item, and shows while you're
+  in it.
+- **Quick Actions:** which buttons the 🏃 panel offers. The menu is arranged
+  separately, in Menu Bar.
+- **Insertion Options** (Everything): which controls 📰 Insertion Options
+  offers. A hidden control always uses your saved default, so a class can't
+  change it by accident. **Show all** brings them back.
+
+Anything switched off is hidden, not removed, and your settings still apply.
+
+## Profiles
+
+A profile is a named set of how sources look, so you can keep one per class:
+transliteration for beginners, say, and no vowels or punctuation with the
+commentary dropped for adults. Profiles are in Everything, in a column beside
+the Preferences tabs.
+
+- The tabs always edit the profile in use (the filled dot). Click another to
+  switch; if you have unsaved changes, Preferences asks first.
+- **+ New profile** copies the one in use and switches to it; the first turns
+  your settings into *My settings*. **Rename** and **Delete** act on the one
+  in use. Up to ten.
+- With two or more, the sidebar's **📰 Insertion Options** names the profile
+  in use and has a **Profile** list. A switch, there or in Preferences, drops
+  the session's Insertion Options changes.
+
+A profile holds the *Text and layout* and *Fonts, colours and titles*
+settings. The menu, Simple or Everything, what the sidebar shows, search and
+linking stay the same in every profile.
 
 ## The menu
 
 **Extensions → Torah Library** holds, by default: Texts, Voices, Lexicon,
 Insert Source from Selection, and a Quick Actions submenu (Quick Actions
 Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources,
-Gematriya Count), then Preferences and Help & Support. Customize it in
+Gematriya Count), then Surprise Me (while it is switched on), Preferences and
+Help & Support. Customize it in
 **Preferences → Menu Bar**; Preferences and Help & Support always stay at the
 bottom. Reload the document if a change doesn't appear. Simple mode uses a
 shorter menu (see *Simple or Everything*).

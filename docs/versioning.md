@@ -91,13 +91,24 @@ changes something a user will notice adds a line to the release notes under
 Do not add a third surface without adding it to `surfaces` at the same time. An
 unlisted copy is one the test cannot protect, and it will drift.
 
+Docs that name the version are listed under `docs` and checked the same way:
+the version under demo or test in the walkthroughs, the live test checklist
+they and the store listing point to, and the release commands. Each carries
+the full version (`2.0.0, schema 30`, `v2.0.0`), or, marked `line`, the line
+as About shows it (`Current line: 2.0`); a schema it names must be the current
+one. A dated record (a CHANGELOG heading, a past build's live test checklist, a
+design doc's target) is not listed: it keeps the number it was written for.
+`CLAUDE.md` / `AGENTS.md` (*Versions: keep them in sync*) has the whole table
+and the grep that finds stragglers.
+
 ## 4. Releasing
 
 1. Take the next 2.0.X (§1). `previous` is the version it replaces.
 2. Update `docs/VERSION.json`: `version`, `previous`, `status: "released"`,
    `released` (ISO date), and `prefsSchemaVersion` if a migration shipped.
 3. Check the surfaces (§3): on the 2.0 line they stay as they are; add release
-   notes for anything a user will notice.
+   notes for anything a user will notice. Update every entry in `docs` (§3);
+   they then point at `docs/live-test-checklist-2.0.X.md`, so write it.
 4. Rename `## Unreleased` in `docs/CHANGELOG.md` to
    `## v2.0.X — <summary> (YYYY-MM-DD)`, with the same date as `released`.
    Keep the sub-headings (Added / Fixed / Changed / Security); they are what a

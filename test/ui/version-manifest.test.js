@@ -109,6 +109,43 @@ test('every declared surface shows the manifest version', () => {
   });
 });
 
+// The docs that name the version: the version under demo or test, the release
+// commands and the live test checklist they point to (CLAUDE.md / AGENTS.md:
+// "Versions: keep them in sync"). Each carries the full version or, marked
+// `line`, the release line as Help → About shows it; and the current schema
+// where it names one.
+test('every declared doc names the manifest version', () => {
+  assert.ok(Array.isArray(manifest.docs) && manifest.docs.length, 'no docs declared');
+
+  const [major, minor] = manifest.version.split('.');
+  const majorMinor = `${major}.${minor}`;
+
+  manifest.docs.forEach((doc) => {
+    assert.ok(!doc.file.startsWith('apps-script/'), `${doc.file} is user-facing: list it under surfaces`);
+    const contents = fs.readFileSync(path.join(ROOT, doc.file), 'utf8');
+
+    assert.ok(
+      contents.includes(doc.shows),
+      `${doc.file} does not contain "${doc.shows}". ` +
+      'Bumping the version means updating every doc listed in VERSION.json.'
+    );
+    // Not part of a longer number: 2.0.0 is in "v2.0.0" and
+    // "checklist-2.0.0.md", not in "2.0.00" or "12.0.0"; a line is "2.0", not "2.0.0".
+    const expected = doc.line ? majorMinor : manifest.version;
+    assert.ok(
+      new RegExp(`(?<![0-9.])${expected.replace(/\./g, '\\.')}(?!\\.?[0-9])`).test(doc.shows),
+      `VERSION.json says ${doc.file} shows "${doc.shows}", which does not carry ` +
+      `${doc.line ? 'the current line' : 'the current version'} ${expected}.`
+    );
+    const schema = doc.shows.match(/\bschema (\d+)/);
+    assert.ok(
+      !schema || schema[1] === manifest.prefsSchemaVersion,
+      `${doc.file} names schema ${schema && schema[1]}, but prefsSchemaVersion is ` +
+      `${manifest.prefsSchemaVersion}.`
+    );
+  });
+});
+
 test('a released version has a date and a changelog heading', () => {
   const changelog = fs.readFileSync(path.join(ROOT, 'docs/CHANGELOG.md'), 'utf8');
   const heading = changelog.split('\n').find((line) => line.startsWith(`## v${manifest.version} `));

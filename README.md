@@ -48,7 +48,7 @@ See [docs/CHANGELOG.md](./docs/CHANGELOG.md) for a fuller summary of changes and
 
 ### Unified Find & Insert workflow
 
-The add-on centers on a unified sidebar that combines direct lookup and search into a single workflow; a **Texts** / **Voices** / **Lexicon** control under the search box re-runs the same search for texts, source sheets or dictionary entries:
+The add-on centers on a unified sidebar that combines direct lookup and search into a single workflow. Three tabs under the search box, **Texts** / **Voices** / **Lexicon**, search texts, source sheets or dictionary words; each keeps its own results and selection, typing searches the tab in view, and Enter searches the others too:
 
 1. find a source by reference, title, nested path, phrase, or Sefaria URL,
 2. select a result,
@@ -125,7 +125,11 @@ The add-on supports:
 New users get a short first-run setup and can pick **Simple** (search, preview,
 insert, with fewer tools in view and a shorter menu) or **Everything**.
 Existing users keep Everything. Switch at the top of Preferences; Simple hides
-with CSS only, so nothing is lost.
+with CSS only, so nothing is lost. In either one, **Preferences → Sidebar**
+leaves out the Voices or Lexicon tab, Quick Actions buttons and (Everything)
+Insertion Options controls. Everything also keeps **profiles**, named sets of
+how sources look (one per class), and **settings files** (Preferences →
+Advanced) to hand a class or an organization the same settings.
 
 ### Preferences
 
@@ -180,7 +184,8 @@ See [docs/CHANGELOG.md](./docs/CHANGELOG.md) for a fuller summary of changes and
 ## Source attribution
 
 Each inserted source can carry a small credit block under it, and this is **on
-by default** (Preferences → Insertion, or the sidebar's details toggle). Many
+by default** (the **Citation** switch in 📰 Insertion Options, or Preferences →
+Insertion → Layout). Many
 Sefaria texts are CC-BY or CC-BY-NC, so the credit is what lets a user reuse
 them properly.
 

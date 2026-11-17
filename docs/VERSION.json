@@ -25,6 +25,22 @@
     }
   ],
 
+  "_docs": "Every doc that names the version: the version under demo or test, the live test checklist the walkthroughs and the listing point to, and the release commands. The manifest test checks each like a surface: in its file, carrying the full version (or, marked `line`, the release line as Help → About shows it), and the current schema where it names one. A dated record (a CHANGELOG heading, a past release's live test checklist, a design doc's target) is not listed: it keeps the number it was written for.",
+  "docs": [
+    { "file": "docs/walkthroughs/README.md", "shows": "The version under demo is **2.0.0, preference schema 30**" },
+    { "file": "docs/walkthroughs/README.md", "shows": "*Help & Support → About* should read **Current line: 2.0**", "line": true },
+    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "This goes further than [`docs/live-test-checklist-2.0.0.md`](../live-test-checklist-2.0.0.md)." },
+    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "Version: **2.0.0, schema 30**" },
+    { "file": "docs/walkthroughs/2-developer.md", "shows": "`docs/live-test-checklist-2.0.0.md` covers the rest" },
+    { "file": "docs/walkthroughs/2-developer.md", "shows": "`clasp version \"v2.0.0\"`" },
+    { "file": "docs/google-docs-walkthrough.md", "shows": "as it is today (v2.0;", "line": true },
+    { "file": "docs/marketplace-listing.md", "shows": "`docs/VERSION.json` at `2.0.0`" },
+    { "file": "docs/marketplace-listing.md", "shows": "Tag the release commit `v2.0.0`" },
+    { "file": "docs/marketplace-listing.md", "shows": "Script version: `clasp version \"v2.0.0\"`" },
+    { "file": "docs/marketplace-listing.md", "shows": "`docs/live-test-checklist-2.0.0.md` passed" },
+    { "file": "docs/marketplace-listing.md", "shows": "clasp version \"v2.0.0\"      # the add-on version" }
+  ],
+
   "_changelog": "docs/CHANGELOG.md carries a `## v<version>` heading for this version. While 'pending-release' the heading ends '(release pending)' and `released` is null; at release, set status 'released', the ISO date in `released`, and the same date in place of '(release pending)'. Work after that collects under `## Unreleased` until the next 2.0.X build consolidates it.",
 
   "_deployment": "Apps Script has no manifest version field — appsscript.json carries no version. `clasp push` replaces the script project's HEAD, which only test deployments run. Users run the numbered script version (from `clasp version`) that the Marketplace SDK App Configuration points to, so a release is: live-test HEAD, `clasp version`, set that number in the SDK. Neither Apps Script version numbers nor the SDK record which add-on version a number corresponds to — this file, together with the `clasp version` description (use `v<version>`), is the only record, which is exactly why it must not drift."

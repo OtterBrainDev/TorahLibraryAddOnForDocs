@@ -16,8 +16,8 @@ loads) or **Extensions → Torah Library → Preferences**. These are saved to
 your Google account and apply in every document.
 
 At the top, **Interface** should be **Everything**. **Simple** hides the result
-sort, Restore Corpus and the Texts / Voices / Lexicon tabs, plus the Search,
-Linking, Advanced and Experimental tabs here. This tour uses Everything.
+sort, Restore Corpus and 🧪 in the sidebar, plus the Search, Linking, Advanced
+and Experimental tabs and the Profiles column here. This tour uses Everything.
 
 **Insertion tab: fonts and titles**
 
@@ -81,7 +81,26 @@ the same for the citation.
   Link Texts' **Insert** follows it too (step 5).
 
 **Menu Bar tab:** reorder, group or hide menu items. Put the three you use
-most at the top. Reload the document to see the change.
+most at the top; **Move to Quick Actions ▸** tucks the rest into the submenu.
+Reload the document to see the change.
+
+**Search tab:** the order of the Texts result groups, of the **Voices Topics**
+and of the **Lexicon Dictionaries**, and which of each to leave out (a chip in
+the sidebar brings one back for a single search).
+
+**Sidebar tab:** switch off what you never use: the Voices or Lexicon tab, a
+Quick Actions button, or (handy for a class) an Insertion Options control,
+which then always uses your saved default.
+
+**Profiles** (the column beside the tabs): **+ New profile** copies your
+settings into a second profile, say *Beginners* with transliteration on, and
+your first becomes *My settings*. Click one to switch; with two or more, the
+sidebar's **📰 Insertion Options** has a **Profile** list for switching
+mid-lesson. A profile holds how sources look; the menu, the sidebar, search
+and linking stay the same in each.
+
+**Advanced tab:** **Export settings file** hands your settings to a class or a
+colleague; **Choose a settings file…** applies the parts you tick of theirs.
 
 > Demo tip: set Layout → Title style to Heading 3 now. You'll use it in step 5.
 
@@ -153,12 +172,16 @@ Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
    Cantillation, Punctuation, Transliteration) the preview says *Updating
    preview…* and **Add Source** waits until it's done.
 
-**Several translations side by side.** Open **Versions**, choose Display **A**
-or Stacked layout, and <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click three translations.
-**Add Source** (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd>) inserts one
-block each, in the order you clicked, each titled with its translation. A
-translation that doesn't cover the passage is greyed out *unavailable for this
-ref* and skipped. You're told when that happens.
+**Several translations at once.** Open **Versions**, choose Display **A** or
+Stacked layout, and click three translations: each click adds one or takes it
+away, no <kbd>Ctrl</kbd> needed. **Add Source**
+(<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd>) inserts one block each, in the
+order you clicked, each titled with its translation. With **Line by line** on
+in Stacked, each verse is followed by that verse in each translation instead.
+A translation that doesn't cover the passage isn't listed (Preferences →
+Search → Advanced → *Show unavailable translations* lists it greyed out). To
+find one in a long list, type its language in the filter box: *German*,
+*Deutsch* or *de*.
 
 **A specific Hebrew edition:** **Versions → Original Versions**. The credit
 block under the source names the edition you chose and its license.
@@ -172,20 +195,29 @@ Layout, if you handle attribution yourself.
 
 ## 4. Other tabs (4 min)
 
-**Texts / Voices / Lexicon** sit under the search box. Switching runs the same
-search in the other tab, so there's nothing to retype.
+**Texts / Voices / Lexicon** sit under the search box. Type `shabbat` and
+press <kbd>Enter</kbd>: Texts searches, and Voices and Lexicon search in the
+background, so each tab's number shows its results. Switching tabs never
+searches, and each tab keeps its results and what you'd selected.
 
-- **Voices:** search Sefaria's public source sheets, pick one, and under
-  **What to insert** choose **Citation**, **Text** or **Both**. It's a quick
-  way to borrow someone's sheet structure.
+- **Voices:** Sefaria's public source sheets, grouped by topic (Torah
+  Portions, Shabbat & Holidays, Halakhah…). A topic chip, or a group's **❌**,
+  hides it for this search. Pick a sheet, and under **What to insert** choose
+  **Citation**, **Text** or **Both**; a **Transliteration** puts each Hebrew
+  passage's transliteration after it in parentheses. **Add Sheet**. It's a
+  quick way to borrow someone's sheet structure.
 - **Lexicon:** type a Hebrew or Aramaic word (or an English one for a reverse
-  lookup). Insert as **Full entry**, **Word + ref** or **Definition**. **⭐**
-  keeps entries under *Starred entries*.
+  lookup), say `שם`. The results are words: **Matches**, then **Related
+  words**. A dictionary chip hides that dictionary's entries. Pick a word, then
+  click the entries you want from several dictionaries (Klein *and* BDB), in
+  the order they should go in. Insert as **Full entry**, **Word + ref** or
+  **Definition** with **Add Entry**; **Copy** gives the same text.
 - **⌨︎ Hebrew keyboard** with a vowels row, for when your OS keyboard isn't
   set up for Hebrew.
 - **📜 Session Library** (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>):
-  everything you inserted recently. **📌** pins a source; **Copy References**
-  gives you a plain-text list for a bibliography or an email.
+  everything you inserted recently. **📌** pins a text, a sheet or a word;
+  clicking one reopens it in its own tab. **Copy References** gives you a
+  plain-text list for a bibliography or an email.
 
 ---
 
@@ -252,7 +284,6 @@ alone.
 | <kbd>/</kbd> | Search box |
 | <kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd> | Move through and pick results |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | Add Source |
-| <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click | Select several translations |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> | Session Library |
 | <kbd>Esc</kbd> | Close Insertion Options, the Session Library or the keyboard |
 
