@@ -105,6 +105,10 @@ $('#insert-source').click(function () {
   var outputMode = $('.output-mode-selection').val();
   var language = (outputMode === 'both') ? undefined : outputMode;
   var bilingualLayout = $('.bilingual-layout-selection').val();
+  // The reader's Line numbers choice, as Preferences or the card left it. A
+  // preview never changes it: the server already leaves the markers out of a
+  // text with no lines to number (formatDataForPesukim), and forcing it on
+  // for each verse range ignored "off". See docs/regression-log.md.
   var showPesukim = Boolean($('.wants-pesukim').prop('checked'));
   var includeTranslationSourceInfo = $('.include-translation-source-info').is(':checked');
   var insertSefariaLink = $('.insert-sefaria-link').is(':checked');

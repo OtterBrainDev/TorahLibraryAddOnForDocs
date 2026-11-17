@@ -100,21 +100,6 @@ function markTranslationsUnavailable(ref, versionTitles) {
   updateMultiSelectPreviewNotice();
 }
 
-function updatePesukimAvailability(response) {
-  var supportsLineMarkers = !!(response && (Array.isArray(response.he) || Array.isArray(response.text) || response.lineMarkersAvailable === true));
-  $('.pesukim-wrapper').toggle(supportsLineMarkers);
-  $('.wants-pesukim').prop('disabled', !supportsLineMarkers);
-  if (!supportsLineMarkers) {
-    $('.wants-pesukim').prop('checked', false);
-    $('.pesukim-help').text('Line markers are unavailable for this selection (single-block text).');
-  } else {
-    if (!$('.wants-pesukim').prop('checked')) {
-      $('.wants-pesukim').prop('checked', true);
-    }
-    $('.pesukim-help').text('Applies to segmented refs (e.g., verse/line ranges).');
-  }
-}
-
 function isResolvedReference(response) {
   return !!(response && response.ref && response.indexTitle && !response.error);
 }
@@ -799,7 +784,6 @@ function updateSuggestion(dataIn, inputTitle) {
         setInsertButtonState(false);
         $('#open-on-sefaria').prop('disabled', true);
         clearVersionSelectors();
-        updatePesukimAvailability(null);
         updateActionabilityUI(nodeState);
         // buildNonInsertableMessage escapes the ref (buildPreviewMeta) and the prompt.
         $('.suggestions').html('<br>' + buildNonInsertableMessage(response));
@@ -810,7 +794,6 @@ function updateSuggestion(dataIn, inputTitle) {
       markTranslationAvailability(resolvedTranslation, enVersion);
       if (enVersion && resolvedTranslation && resolvedTranslation !== enVersion) renderTranslationOptions($('#translation-version-filter').val());
       updateSuggestion(response, inputTitle);
-      updatePesukimAvailability(response);
       updateActionabilityUI(nodeState);
       data = response;
       hasResolvedReference = true;
@@ -825,7 +808,6 @@ function updateSuggestion(dataIn, inputTitle) {
       setInsertButtonState(false);
       $('#open-on-sefaria').prop('disabled', true);
       clearVersionSelectors();
-      updatePesukimAvailability(null);
       updateActionabilityUI({ isInsertable: false });
     }).findReferenceForSidebar(resolvedRef, versions, sidebarSessionId);
   }
