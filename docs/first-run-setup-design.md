@@ -1,8 +1,7 @@
 # First-Run Setup and Simple Mode: Design
 
 > **Status:** Implemented (steps 1–4 of §13). Release (step 5) pending.
-> **Target release:** 2.0.0, the first Marketplace release (planned as 2.2.0
-> before the development builds' numbers were retired; see `docs/versioning.md`)
+> **Target release:** 2.0.0, the first Marketplace release
 >
 > Where the implementation differs from the first draft, the text below says
 > what was built and why; §14 lists the differences in one place.
