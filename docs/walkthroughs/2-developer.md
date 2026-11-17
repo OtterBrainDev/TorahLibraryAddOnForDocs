@@ -475,7 +475,7 @@ never searches (`search-tabs.test.js`, which runs the real partials through
 ## 9. Guardrails and shipping (5 min)
 
 ```bash
-npm ci && npm test                 # 811 passing, 0 skipped (skipped > 0 = linkedom missing = red)
+npm ci && npm test                 # 0 failing, 0 skipped; CLAUDE.md has the passing count (skipped > 0 = linkedom missing = red)
 bash pre_clasp_qc.sh apps-script   # must exit 0
 npx --prefix tools/clasp clasp push  # HEAD only: test deployments, not users
 ```

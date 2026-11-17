@@ -30,6 +30,18 @@ to Sefaria, the add-on is renumbered so that every release is a build of 2.0:
 - `docs/live-test-checklist-2.1.0.md` is now `docs/live-test-checklist-2.0.1.md`;
   the walkthroughs, the store listing's release checklist, the regression log
   and the first-run design doc use the new numbers.
+- **Keeping the numbers in sync.** `CLAUDE.md` / `AGENTS.md` have a new
+  section, *Versions: keep them in sync*: the 2.0 line, every place the
+  version is written and what keeps each in step, the release-commit rule,
+  the schema's own clock, and a `git grep` for stragglers. `docs/VERSION.json`
+  gains a `docs` list (the walkthroughs, the Google Docs walkthrough, the
+  store listing's release steps) and a third surface (*New in 2.0.1*);
+  `version-manifest.test.js` checks each listed doc like a surface, and a
+  `schema N` in one against `prefsSchemaVersion`. `docs/versioning.md` §3–4
+  say the same, and its release examples read `v<version>`.
+- **`AGENTS.md` is `CLAUDE.md` again.** It had drifted (it still expected 248
+  passing tests and lacked rules added since); it is now a copy, and
+  `test/ui/agent-guides.test.js` fails if the two differ.
 
 ### Help and walkthroughs: caught up with the recent changes
 

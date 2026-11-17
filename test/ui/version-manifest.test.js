@@ -73,26 +73,49 @@ test('every migration up to the current schema version exists', () => {
   }
 });
 
-// Every surface carries the full version, build included. The add-on is on the
-// 2.0 line, where every release bumps only the build (docs/versioning.md §1),
-// so a surface showing MAJOR.MINOR would read "2.0" for every release.
+// Each listed copy is in its file, carries the full version (build included),
+// and, where it names the preference schema, the current one. The add-on is on
+// the 2.0 line, where every release bumps only the build (docs/versioning.md
+// §1), so a copy showing MAJOR.MINOR would read "2.0" for every release.
+function assertNamesManifestVersion(entry, contents, listName) {
+  assert.ok(
+    contents.includes(entry.shows),
+    `${entry.file} does not contain "${entry.shows}". ` +
+    `Bumping the version means updating every entry in VERSION.json's ${listName}.`
+  );
+  assert.ok(
+    // Not part of a longer number: 2.0.1 is in "v2.0.1" and "checklist-2.0.1.md",
+    // not in "2.0.10" or "12.0.1".
+    new RegExp(`(?<![0-9.])${manifest.version.replace(/\./g, '\\.')}(?!\\.?[0-9])`).test(entry.shows),
+    `VERSION.json says ${entry.file} shows "${entry.shows}", which does not ` +
+    `carry the current version ${manifest.version}.`
+  );
+  const schema = entry.shows.match(/\bschema (\d+)/);
+  assert.ok(
+    !schema || schema[1] === manifest.prefsSchemaVersion,
+    `${entry.file} names schema ${schema && schema[1]}, but prefsSchemaVersion is ` +
+    `${manifest.prefsSchemaVersion}.`
+  );
+}
+
 test('every declared surface shows the manifest version', () => {
   assert.ok(Array.isArray(manifest.surfaces) && manifest.surfaces.length, 'no surfaces declared');
 
   manifest.surfaces.forEach((surface) => {
     const relative = surface.file.replace(/^apps-script\//, '');
-    const contents = readAppScriptFile(relative);
+    assertNamesManifestVersion(surface, readAppScriptFile(relative), 'surfaces');
+  });
+});
 
-    assert.ok(
-      contents.includes(surface.shows),
-      `${surface.file} does not contain "${surface.shows}". ` +
-      'Bumping the version means updating every surface listed in VERSION.json.'
-    );
-    assert.ok(
-      new RegExp(`(^|[^0-9.])${manifest.version.replace(/\./g, '\\.')}([^0-9.]|$)`).test(surface.shows),
-      `VERSION.json says ${surface.file} shows "${surface.shows}", which does not ` +
-      `carry the current version ${manifest.version}.`
-    );
+// The docs that name the version under demo or test, and the release steps
+// (CLAUDE.md / AGENTS.md: "Versions: keep them in sync").
+test('every declared doc names the manifest version', () => {
+  assert.ok(Array.isArray(manifest.docs) && manifest.docs.length, 'no docs declared');
+
+  manifest.docs.forEach((doc) => {
+    assert.ok(!/^apps-script\//.test(doc.file), `${doc.file} is user-facing: list it under surfaces`);
+    const contents = fs.readFileSync(path.join(ROOT, doc.file), 'utf8');
+    assertNamesManifestVersion(doc, contents, 'docs');
   });
 });
 

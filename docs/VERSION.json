@@ -19,10 +19,31 @@
       "note": "About tab meta-pill. Shows the full version, build included: on the 2.0 line the build is the only number that moves."
     },
     {
+      "file": "apps-script/help-modal.html",
+      "shows": "<h2>New in 2.0.1</h2>",
+      "note": "About tab: what the current release changed. A release rewrites the list under it."
+    },
+    {
       "file": "apps-script/release-notes.html",
       "shows": "Version 2.0.1",
       "note": "Shown on install and from the release-notes dialog."
     }
+  ],
+
+  "_docs": "Every doc that names the current version (and, where it says so, the preference schema), outside the user-facing surfaces: the version under demo or test, and the release steps. The manifest test checks each one like a surface, and checks a `schema N` in it against prefsSchemaVersion. A doc that is a dated record (a CHANGELOG heading, a past release's live test checklist, a design doc's target) is not listed: it keeps the number it was written for.",
+  "docs": [
+    { "file": "docs/walkthroughs/README.md", "shows": "The version under demo is **2.0.1, preference schema 30**" },
+    { "file": "docs/walkthroughs/README.md", "shows": "*Help & Support → About* should read **Version 2.0.1**" },
+    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "Version: **2.0.1, schema 30**" },
+    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "This goes further than [`docs/live-test-checklist-2.0.1.md`](../live-test-checklist-2.0.1.md).\nThat checklist asks whether each 2.0.1 change landed." },
+    { "file": "docs/walkthroughs/2-developer.md", "shows": "`docs/live-test-checklist-2.0.1.md` covers the rest" },
+    { "file": "docs/walkthroughs/2-developer.md", "shows": "`clasp version \"v2.0.1\"`" },
+    { "file": "docs/google-docs-walkthrough.md", "shows": "(v2.0.1, plus the unreleased changes" },
+    { "file": "docs/marketplace-listing.md", "shows": "consolidated under one `v2.0.1` heading" },
+    { "file": "docs/marketplace-listing.md", "shows": "Tag the release commit `v2.0.1`" },
+    { "file": "docs/marketplace-listing.md", "shows": "Script version: `clasp version \"v2.0.1\"`" },
+    { "file": "docs/marketplace-listing.md", "shows": "`docs/live-test-checklist-2.0.1.md` passed" },
+    { "file": "docs/marketplace-listing.md", "shows": "clasp version \"v2.0.1\"      # prints the new version number" }
   ],
 
   "_changelog": "docs/CHANGELOG.md must carry a heading for this version once status is 'released'. While 'pending-release' the entries live under 'Unreleased' headings and get consolidated at release time.",

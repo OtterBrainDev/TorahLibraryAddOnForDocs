@@ -8,6 +8,12 @@ large change.** Re-read it before proposing any cross-cutting
 refactor. The rules below are the accumulated cost of bugs that were
 fixed more than once.
 
+This guide exists twice, as `CLAUDE.md` and `AGENTS.md`, so that agents
+reading either file get it. The two are identical: change one, then copy it
+over the other (`cp CLAUDE.md AGENTS.md`) in the same commit.
+`test/ui/agent-guides.test.js` fails if they differ. (They drifted once:
+AGENTS.md still expected 248 passing tests.)
+
 ## What this codebase is
 
 - A **Google Docs add-on** written in Google Apps Script (V8 runtime).
@@ -81,6 +87,43 @@ fixed more than once.
    commit, add a row to `docs/regression-log.md`, and search the
    client HTML to update every caller.
 
+## Versions: keep them in sync
+
+The add-on is on the **2.0 line**: every release is the next build, 2.0.1,
+2.0.2, 2.0.3, whatever it contains. Never write 2.1, 2.2 or 3.0 for this
+add-on: leaving the 2.0 line is the maintainers' decision, not a release
+step (`docs/versioning.md` §1). Older notes called 2.0.1 "2.1.0" and 2.0.2
+"2.2.0"; those are the same releases.
+
+The number is decided in one place, `docs/VERSION.json`. Every other copy
+follows it:
+
+| Where | What it says | Kept in sync by |
+| --- | --- | --- |
+| `docs/VERSION.json` | `version`, `previous`, `status`, `released`, `prefsSchemaVersion` | — (the source) |
+| Its `surfaces`: Help → About and the release notes | `Version 2.0.1` and *New in 2.0.1*: the full version, build included | `test/ui/version-manifest.test.js` |
+| Its `docs`: the walkthroughs, the Google Docs walkthrough, the store listing's release steps | the version under demo or test (with the schema, where it is named), the current live test checklist, and `v2.0.1` in the release commands | `test/ui/version-manifest.test.js` |
+| `docs/CHANGELOG.md` | `## Unreleased` until release, then a `## v<version> — … (date)` heading | `test/ui/version-manifest.test.js`, once `status` is `released` |
+| `docs/live-test-checklist-<version>.md` | the release's live test checklist, named for it | by hand |
+| Outside the repository | `clasp version "v<version>"` and the git tag `v<version>` | by hand |
+
+- **Change them all in one commit, the release commit** (`docs/versioning.md`
+  §4). Never move the version as a side effect of other work; if a change
+  needs a release, say so in your summary instead.
+- **A new place that shows the version goes into `surfaces` (user-facing,
+  under `apps-script/`) or `docs` (anything else) in `VERSION.json`, in the
+  same commit, or it isn't written.** The test can only protect the copies
+  it is told about.
+- **`prefsSchemaVersion` moves on its own clock:** with every migration, in
+  that migration's commit (hard rule 1). The version moves at release. A
+  listed copy that names both (`2.0.1, schema 30`) is checked for both.
+- **Dated records keep their number:** a CHANGELOG heading, a past release's
+  live test checklist, a design doc's target. Don't list them, and don't
+  rewrite them at the next release.
+- **Before committing a version change, look for stragglers:**
+  `git grep -nE "\bv?2\.[0-9]+\.[0-9]+\b" -- ':!*package-lock.json'`. Every
+  hit is the new version, a dated record, or not the add-on's version at all.
+
 ## Known regression traps (anti-pattern catalog)
 
 See [`docs/regression-log.md`](docs/regression-log.md) for the full
@@ -117,7 +160,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **811 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **813 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -419,8 +462,10 @@ and in `test/ui/`:
   "Customize this insertion" panel is the shared insertion options, sends
   its settings with each insert, and saves only on "Save as defaults".
 - `version-manifest.test.js` — `docs/VERSION.json` against the schema
-  version, the migrations that must exist for it, and every surface that
-  shows a version string.
+  version, the migrations that must exist for it, and every surface and doc
+  it lists: each carries the full version, build included, and the current
+  schema where it names one (see *Versions: keep them in sync*).
+- `agent-guides.test.js` — `CLAUDE.md` and `AGENTS.md` are identical.
 - `embedded-json.test.js` — server data force-printed into an inline
   `<script>` goes through `toEmbeddedJson_`.
 - `csp-coverage.test.js` — every entry page carries the same

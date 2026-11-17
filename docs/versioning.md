@@ -20,7 +20,8 @@ the bundle. If a user reports "the linker stopped finding my Rambam citations",
 nothing in the deployed code says which build they are on.
 
 So when you cut a release, describe the Apps Script version with the add-on
-version — `clasp version "v2.0.2"` — so the two can be matched later.
+version — `clasp version "v<version>"`, e.g. `"v2.0.2"` — so the two can be
+matched later.
 
 So the version is a fact the repository asserts and keeps consistent, rather
 than one the platform records. That is fragile by construction, which is why it
@@ -73,23 +74,32 @@ compares numerically (`from < N`) and would simply skip everything.
 
 ## 3. Where the version appears
 
-Listed in `VERSION.json` under `surfaces`, and checked by the manifest test:
+Listed in `VERSION.json`, and checked by the manifest test:
 
-- `apps-script/help-modal.html` — About tab, the full version (`Version 2.0.1`)
-- `apps-script/release-notes.html` — shown on install
+- **`surfaces`**, what users see: Help → About (`Version 2.0.1`, and the
+  *New in 2.0.1* heading) and the release notes (`Version 2.0.1`).
+- **`docs`**, everything else that names the current version: the version
+  under demo or test in the walkthroughs (with the schema, which the test
+  checks too), the current live test checklist they point to, and the release
+  commands in the developer walkthrough and the store listing.
 
-Both carry the build: on the 2.0 line it is the only number that moves, so a
-surface without it would read "2.0" for every release.
+Every listed copy carries the build: on the 2.0 line it is the only number that
+moves, so a copy without it would read "2.0" for every release.
 
-Do not add a third surface without adding it to `surfaces` at the same time. An
-unlisted copy is one the test cannot protect, and it will drift.
+Do not write the version anywhere else without listing it at the same time. An
+unlisted copy is one the test cannot protect, and it will drift. Dated records
+(a CHANGELOG heading, a past release's checklist, a design doc's target) are
+not listed: they keep the number they were written for. `CLAUDE.md` /
+`AGENTS.md` (*Versions: keep them in sync*) has the whole table and the grep
+that finds stragglers.
 
 ## 4. Releasing
 
 1. The number is the next build (§1): after 2.0.1, 2.0.2.
 2. Update `docs/VERSION.json`: `version`, `previous`, `status: "released"`,
    `released` (ISO date), and `prefsSchemaVersion` if a migration shipped.
-3. Update every file in `surfaces`.
+3. Update every entry in `surfaces` and `docs`, and write
+   `docs/live-test-checklist-<version>.md` for the release.
 4. Consolidate the `## Unreleased — …` sections in `docs/CHANGELOG.md` under one
    `## vX.Y.Z — <summary> (YYYY-MM-DD)` heading. Keep the sub-headings (Added /
    Fixed / Changed / Security); they are what a reader scans.
@@ -97,7 +107,7 @@ unlisted copy is one the test cannot protect, and it will drift.
    count means `npm ci` did not run and the sanitizer assertions sat out.
 6. `bash pre_clasp_qc.sh apps-script` — exit 0.
 7. Work `docs/marketplace-listing.md` if scopes or data handling changed.
-8. Tag the commit `v2.0.2`. The tag is the only durable record that a given
+8. Tag the commit `v<version>`. The tag is the only durable record that a given
    commit is what a given user is running.
 
 ### Which commit is a test deployment running?
