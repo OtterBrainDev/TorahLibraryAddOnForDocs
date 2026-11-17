@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **801 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **811 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -262,6 +262,12 @@ and fix it before touching the feature you came to change.
   passage is left out of the version list (greyed out with "Show unavailable
   translations"), languages hidden in Preferences → Search are left out, and a
   failed availability lookup hides nothing.
+- `translation-language-names.test.js` — the version list's filter box finds a
+  language by its name in English, in itself or in another catalog language
+  ("French", "français", "צרפתית"; `names` in `TRANSLATION_LANGUAGE_CATALOG`),
+  as typed (any name that starts with the text), case, accents, vowel points
+  and apostrophes aside; a code typed exactly is that language alone ("es" is
+  not Esperanto too); no name belongs to two languages; titles still match.
 - `rich-text-markup.test.js` — Sefaria markup with any attributes (Shulchan
   Arukh's commentary anchors) inserts without throwing; a source with one
   language inserts that language alone, with its title's entities decoded.

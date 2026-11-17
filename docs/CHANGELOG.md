@@ -9,6 +9,24 @@ heading until the next release consolidates it.
 
 ## Unreleased
 
+### Translation versions: find a language by its name
+
+#### Changed
+
+- **The filter box above *Translation versions* finds a language by its
+  name**, not only by its two-letter code. *French*, *français*, *צרפתית*,
+  *Französisch* and *французский* all list the French translations: each
+  language in Preferences → Search → Translation Languages is known by its
+  name in English, in itself and in each of the others (from CLDR, the
+  Unicode locale data browsers use), plus a few other names in use (*Farsi*,
+  *Judezmo*, *אידיש*). The first letters are enough (*fre*); case, accents,
+  vowel points and apostrophes don't matter (*francais*, *יידיש*, *צ'כית*). A
+  code typed exactly is that language alone, as before (*es* doesn't add
+  Esperanto), and a version's title still matches as it did. Client-side
+  only: no new preference, no request to Sefaria
+  (`TRANSLATION_LANGUAGE_CATALOG` in `shared/ui/state`,
+  `filterTranslationItems` in `sidebar/js/preview-core`).
+
 ### Line numbers: off is respected in the sidebar and Surprise Me
 
 - **Fix.** With *Line numbers* off (📰 Insertion Options, or Preferences →

@@ -279,27 +279,76 @@
   // rows in sidebar.html use these codes). The hidden_translation_languages
   // preference (JSON array of codes) leaves some out of that filter and out
   // of the translation version list. Shared by the sidebar and Preferences.
+  //
+  // `names`: what else a reader might type for the language in the version
+  // list's filter box (translationLanguageCodesMatching): its name in each
+  // catalog language that has one in CLDR, the Unicode locale data browsers
+  // use (Hebrew, Arabic, Czech, Esperanto, Persian, Finnish, French, German,
+  // Hungarian, Italian, Korean, Polish, Portuguese, Russian, Spanish, Yiddish,
+  // in that order), then other names in use (Italkian, Judezmo, אידיש). The
+  // label and the code count too. No name may belong to two languages
+  // (test/tests/translation-language-names.test.js).
   var TRANSLATION_LANGUAGE_CATALOG = [
-    { code: 'en', label: 'English' },
-    { code: 'he', label: 'Hebrew' },
-    { code: 'ar', label: 'Arabic' },
-    { code: 'cs', label: 'Czech' },
-    { code: 'eo', label: 'Esperanto' },
-    { code: 'fa', label: 'Farsi (Persian)' },
-    { code: 'fi', label: 'Finnish' },
-    { code: 'fr', label: 'French' },
-    { code: 'de', label: 'German' },
-    { code: 'hu', label: 'Hungarian' },
-    { code: 'it', label: 'Italian' },
-    { code: 'itk', label: 'Judeo-Italian' },
-    { code: 'jrb', label: 'Judeo-Arabic' },
-    { code: 'ko', label: 'Korean' },
-    { code: 'lad', label: 'Ladino (Judeo-Spanish)' },
-    { code: 'pl', label: 'Polish' },
-    { code: 'pt', label: 'Portuguese' },
-    { code: 'ru', label: 'Russian' },
-    { code: 'es', label: 'Spanish' },
-    { code: 'yi', label: 'Yiddish' }
+    { code: 'en', label: 'English',
+      names: ['אנגלית', 'الإنجليزية', 'angličtina', 'angla', 'انگلیسی', 'englanti', 'anglais', 'Englisch', 'angol',
+        'inglese', '영어', 'angielski', 'inglês', 'английский', 'ענגליש'] },
+    { code: 'he', label: 'Hebrew',
+      names: ['עברית', 'العبرية', 'hebrejština', 'hebrea', 'عبری', 'heprea', 'hébreu', 'Hebräisch', 'héber',
+        'ebraico', '히브리어', 'hebrajski', 'hebraico', 'иврит', 'hebreo', 'העברעאיש'] },
+    { code: 'ar', label: 'Arabic',
+      names: ['ערבית', 'العربية', 'arabština', 'araba', 'عربی', 'arabia', 'arabe', 'Arabisch', 'arab', 'arabo',
+        '아랍어', 'arabski', 'арабский', 'אַראַביש'] },
+    { code: 'cs', label: 'Czech',
+      names: ['צ׳כית', 'التشيكية', 'čeština', 'ĉeĥa', 'چکی', 'tšekki', 'tchèque', 'Tschechisch', 'cseh', 'ceco',
+        '체코어', 'czeski', 'tcheco', 'чешский', 'checo', 'טשעכיש'] },
+    { code: 'eo', label: 'Esperanto',
+      names: ['אספרנטו', 'الإسبرانتو', 'اسپرانتو', 'eszperantó', '에스페란토어', 'эсперанто', 'עספּעראַנטא'] },
+    { code: 'fa', label: 'Farsi (Persian)',
+      names: ['פרסית', 'الفارسية', 'perština', 'persa', 'فارسی', 'persia', 'persan', 'Persisch', 'perzsa',
+        'persiano', '페르시아어', 'perski', 'персидский', 'פּערסיש'] },
+    { code: 'fi', label: 'Finnish',
+      names: ['פינית', 'الفنلندية', 'finština', 'finna', 'فنلاندی', 'suomi', 'finnois', 'Finnisch', 'finn',
+        'finlandese', '핀란드어', 'fiński', 'finlandês', 'финский', 'finés', 'פֿיניש'] },
+    { code: 'fr', label: 'French',
+      names: ['צרפתית', 'الفرنسية', 'francouzština', 'franca', 'فرانسوی', 'ranska', 'français', 'Französisch',
+        'francia', 'francese', '프랑스어', 'francuski', 'francês', 'французский', 'פֿראַנצויזיש'] },
+    { code: 'de', label: 'German',
+      names: ['גרמנית', 'الألمانية', 'němčina', 'germana', 'آلمانی', 'saksa', 'allemand', 'Deutsch', 'német',
+        'tedesco', '독일어', 'niemiecki', 'alemão', 'немецкий', 'alemán', 'דײַטש'] },
+    { code: 'hu', label: 'Hungarian',
+      names: ['הונגרית', 'الهنغارية', 'maďarština', 'hungara', 'مجاری', 'unkari', 'hongrois', 'Ungarisch',
+        'magyar', 'ungherese', '헝가리어', 'węgierski', 'húngaro', 'венгерский', 'אונגעריש'] },
+    { code: 'it', label: 'Italian',
+      names: ['איטלקית', 'الإيطالية', 'italština', 'itala', 'ایتالیایی', 'italia', 'italien', 'Italienisch',
+        'olasz', 'italiano', '이탈리아어', 'włoski', 'итальянский', 'איטאַליעניש'] },
+    { code: 'itk', label: 'Judeo-Italian',
+      names: ['Italkian', 'giudeo-italiano', 'איטלקית יהודית'] },
+    { code: 'jrb', label: 'Judeo-Arabic',
+      names: ['ערבית יהודית', 'العربية اليهودية', 'judeoarabština', 'عربی یهودی', 'juutalaisarabia', 'judéo-arabe',
+        'Jüdisch-Arabisch', 'zsidó-arab', 'giudeo arabo', '유대-아라비아어', 'judeoarabski', 'judaico-arábico',
+        'еврейско-арабский'] },
+    { code: 'ko', label: 'Korean',
+      names: ['קוריאנית', 'الكورية', 'korejština', 'korea', 'کره\u200cای', 'coréen', 'Koreanisch', 'koreai', 'coreano',
+        '한국어', 'koreański', 'корейский', 'קארעאיש'] },
+    { code: 'lad', label: 'Ladino (Judeo-Spanish)',
+      names: ['לדינו', 'اللادينو', 'ladinština', 'judhispana', 'لادینو', 'giudeo-spagnolo', '라디노어', 'ladyński',
+        'ладино', 'לאַדינא', 'Judezmo', 'djudeo-espanyol', 'ספניולית'] },
+    { code: 'pl', label: 'Polish',
+      names: ['פולנית', 'البولندية', 'polština', 'pola', 'لهستانی', 'puola', 'polonais', 'Polnisch', 'lengyel',
+        'polacco', '폴란드어', 'polski', 'polonês', 'польский', 'polaco', 'פּויליש'] },
+    { code: 'pt', label: 'Portuguese',
+      names: ['פורטוגזית', 'البرتغالية', 'portugalština', 'portugala', 'پرتغالی', 'portugali', 'portugais',
+        'Portugiesisch', 'portugál', 'portoghese', '포르투갈어', 'portugalski', 'português', 'португальский',
+        'פּארטוגעזיש'] },
+    { code: 'ru', label: 'Russian',
+      names: ['רוסית', 'الروسية', 'ruština', 'rusa', 'روسی', 'venäjä', 'russe', 'Russisch', 'orosz', 'russo',
+        '러시아어', 'rosyjski', 'русский', 'ruso', 'רוסיש'] },
+    { code: 'es', label: 'Spanish',
+      names: ['ספרדית', 'الإسبانية', 'španělština', 'hispana', 'اسپانیایی', 'espanja', 'espagnol', 'Spanisch',
+        'spanyol', 'spagnolo', '스페인어', 'hiszpański', 'espanhol', 'испанский', 'español', 'שפּאַניש'] },
+    { code: 'yi', label: 'Yiddish',
+      names: ['יידיש', 'اليديشية', 'jidiš', 'judgermana', 'یدی', 'jiddiš', 'Jiddisch', '이디시어', 'jidysz', 'iídiche',
+        'идиш', 'yidis', 'Yidish', 'אידיש'] }
   ];
 
   // Stored value → list of hidden language codes (unknown codes dropped).
@@ -313,5 +362,52 @@
       seen[code] = true;
       return true;
     });
+  }
+
+  // A language name as the filter box compares it: case, accents, vowel points
+  // and apostrophes aside (francais = français, יידיש = ייִדיש, צ'כית = צ׳כית),
+  // any other punctuation a space (judeo spanish = Judeo-Spanish).
+  function foldTranslationLanguageName(value) {
+    return String(value || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+      .replace(/ł/g, 'l').replace(/ײ/g, 'יי').replace(/װ/g, 'וו').replace(/ױ/g, 'וי')
+      .replace(/['‘’ʼ`׳"״\u200c\u200d]/g, '')
+      .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  }
+
+  var translationLanguageNameIndex_ = null;
+
+  // Every catalog name, folded: [{ name, code }]. Built once.
+  function translationLanguageNameIndex() {
+    if (translationLanguageNameIndex_) return translationLanguageNameIndex_;
+    var index = [];
+    TRANSLATION_LANGUAGE_CATALOG.forEach(function (lang) {
+      // 'Farsi (Persian)' is two names.
+      lang.label.split(/[()]/).concat(lang.names || []).forEach(function (name) {
+        var folded = foldTranslationLanguageName(name);
+        if (!folded) return;
+        index.push({ name: folded, code: lang.code });
+        // An Arabic name carries the article: العربية is also typed عربية.
+        if (/^ال./.test(folded)) index.push({ name: folded.slice(2), code: lang.code });
+      });
+    });
+    translationLanguageNameIndex_ = index;
+    return index;
+  }
+
+  // The catalog languages a filter-box query names, as codes. A code typed
+  // exactly is that language alone, as it always was ('es' is not Esperanto
+  // too); anything else is every language with a name that starts with it, in
+  // English, in the language itself or in another catalog language ('fre',
+  // 'français', 'Französisch', 'צרפתית' → ['fr']). [] when it names none.
+  function translationLanguageCodesMatching(query) {
+    var folded = foldTranslationLanguageName(query);
+    if (!folded) return [];
+    var exact = TRANSLATION_LANGUAGE_CATALOG.filter(function (lang) { return lang.code === folded; })[0];
+    if (exact) return [exact.code];
+    var codes = [];
+    translationLanguageNameIndex().forEach(function (entry) {
+      if (entry.name.indexOf(folded) === 0 && codes.indexOf(entry.code) < 0) codes.push(entry.code);
+    });
+    return codes;
   }
 </script>

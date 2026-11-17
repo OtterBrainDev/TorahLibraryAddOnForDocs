@@ -174,6 +174,20 @@ function listTranslationItems(items, ref, preferences) {
   return byLanguage.length ? byLanguage : byAvailability;
 }
 
+// What the filter box leaves of the listed translations: those whose title or
+// language tag contains the text, and those in a language the text names, in
+// any catalog language ("French", "français", "צרפתית"; see
+// translationLanguageCodesMatching in shared/ui/state).
+function filterTranslationItems(items, filterTerm) {
+  var query = String(filterTerm || '').trim().toLowerCase();
+  if (!query) return items.slice();
+  var languages = translationLanguageCodesMatching(query);
+  return items.filter(function (item) {
+    if (String(item.searchable || '').indexOf(query) >= 0) return true;
+    return !!item.languageCode && languages.indexOf(item.languageCode) >= 0;
+  });
+}
+
 // Ask the server which translations have text for this exact ref; Sefaria's
 // version list is the whole book's. A failed or unusable answer changes
 // nothing: no translation is ever hidden on a lookup that didn't work.
@@ -677,7 +691,7 @@ function updateSuggestion(dataIn, inputTitle) {
   function renderTranslationOptions(filterTerm) {
     var query = String(filterTerm || '').trim().toLowerCase();
     var listed = listTranslationItems(translationItems, resolvedRef, effectivePreferences);
-    var filtered = listed.filter(function (item) { return !query || item.searchable.indexOf(query) >= 0; });
+    var filtered = filterTranslationItems(listed, query);
     var optionsHTML = '';
     var hasSelectableOption = false;
     var $select = translationVersionSelect();
