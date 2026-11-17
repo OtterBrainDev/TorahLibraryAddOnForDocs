@@ -223,8 +223,9 @@ side by side"*).
 ### Live
 
 - [ ] `docs/live-test-checklist-2.0.0.md` passed against a test deployment,
-      including a fresh install (the menu must appear without reloading) and an
-      upgrade from the previous version
+      with all three accounts: a fresh install (the menu must appear without
+      reloading), a user of Sefaria for Google Docs, and an upgrade from a
+      development build
 - [ ] Privacy policy and terms reachable at the console URLs, and current
 - [ ] The in-app privacy link (Preferences, Help → About) opens the same policy
 
