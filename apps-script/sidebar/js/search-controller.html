@@ -313,7 +313,6 @@ function resolveSelectedResult(selectedRef, inputLabel) {
   hasResolvedReference = false;
   setInsertButtonState(false);
   $('#open-on-sefaria').prop('disabled', true);
-  updatePesukimAvailability(null);
   // buildPreviewLoadingHTML escapes its message.
   $('.suggestions').html(buildPreviewLoadingHTML('Loading preview…'));
 
@@ -329,7 +328,6 @@ function resolveSelectedResult(selectedRef, inputLabel) {
         updateResultsVisibility();
       }
       updateSuggestion(response, inputLabel);
-      updatePesukimAvailability(response);
       updateActionabilityUI(nodeState);
       data = response;
       hasResolvedReference = true;
@@ -346,7 +344,6 @@ function resolveSelectedResult(selectedRef, inputLabel) {
       updateResultsVisibility();
     }
     clearVersionSelectors();
-    updatePesukimAvailability(null);
     updateActionabilityUI(nodeState);
     // buildNonInsertableMessage escapes the ref (buildPreviewMeta) and the prompt.
     $('.suggestions').html("<br>" + buildNonInsertableMessage(response, true));
@@ -358,7 +355,6 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     setInsertButtonState(false);
     $('#open-on-sefaria').prop('disabled', true);
     clearVersionSelectors();
-    updatePesukimAvailability(null);
     updateActionabilityUI({ isInsertable: false });
     // Static markup; the only interpolated value is the server's error
     // message, escaped with escapeHTML.

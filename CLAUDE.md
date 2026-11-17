@@ -117,7 +117,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **794 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **812 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -204,6 +204,14 @@ and fix it before touching the feature you came to change.
 - `sidebar-session-fetch.test.js` — the Layout tray's Vowels, Cantillation
   and Punctuation pills (sidebar session overrides) reach the fetched, and so
   the inserted, text; every sidebar fetch passes its session.
+- `line-numbers-choice.test.js` — the Line numbers switch reaches Add Source
+  as the reader left it: a preview never turns it on for a verse range (a
+  Tanakh range was numbered with the switch off) or off for a single verse.
+- `surprise-me-insert.test.js` — Surprise Me inserts each source with the
+  saved Insertion defaults, the options Insert from Selection uses (Line
+  numbers, output, arrangement, links, citation, transliteration), reading
+  the preferences once; it once passed none, so every source was numbered
+  and side by side.
 - `insertion-target.test.js` — where an insert goes: after the cursor's
   block, inside a table cell for paragraph layouts, below the table (with a
   notice) for side-by-side layouts, never into a header, footer or footnote.
@@ -254,6 +262,12 @@ and fix it before touching the feature you came to change.
   passage is left out of the version list (greyed out with "Show unavailable
   translations"), languages hidden in Preferences → Search are left out, and a
   failed availability lookup hides nothing.
+- `translation-language-names.test.js` — the version list's filter box finds a
+  language by its name in English, in itself or in another catalog language
+  ("French", "français", "צרפתית"; `names` in `TRANSLATION_LANGUAGE_CATALOG`),
+  as typed (any name that starts with the text), case, accents, vowel points
+  and apostrophes aside; a code typed exactly is that language alone ("es" is
+  not Esperanto too); no name belongs to two languages; titles still match.
 - `rich-text-markup.test.js` — Sefaria markup with any attributes (Shulchan
   Arukh's commentary anchors) inserts without throwing; a source with one
   language inserts that language alone, with its title's entities decoded.

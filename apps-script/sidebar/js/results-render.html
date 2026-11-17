@@ -258,7 +258,6 @@ function resetSelectedResultView() {
   if (appMode !== 'texts') return;
   data = {};
   clearVersionSelectors();
-  updatePesukimAvailability(null);
   $('.suggestions').html("<b>Select a result to preview it.</b>");
   updateActionabilityUI({ isInsertable: false });
   $('.source-card').hide();

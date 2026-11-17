@@ -3,10 +3,12 @@
 // the shared tab workflow (sidebar/js/search-tabs) and the tabs on it.
 //
 // The jQuery stand-in keeps, per selector string, what was written with
-// val / html / text / attr / show / hide, so a test reads back the search box,
-// the results list, the hint and the tab badges. Every other call is a no-op
-// that chains. google.script.run records each call; a test answers it with
-// call.ok(value) or call.fail(error), in any order.
+// val / html / text / attr / prop / show / hide, so a test reads back the
+// search box, the results list, the hint, the tab badges and the hidden
+// option checkboxes; and the handlers bound with click / on, which env.click
+// runs (Add Source). Every other call is a no-op that chains.
+// google.script.run records each call; a test answers it with call.ok(value)
+// or call.fail(error), in any order.
 //
 // Loaded with vm.runInContext; see AGENTS.md hard rule #3.
 
@@ -38,8 +40,18 @@ const FILES = [
 ];
 
 function fakeJQuery() {
-  const dom = { val: {}, html: {}, text: {}, attr: {}, shown: {} };
+  const dom = { val: {}, html: {}, text: {}, attr: {}, prop: {}, shown: {}, handlers: {} };
   const attrs = (selector) => dom.attr[selector] || (dom.attr[selector] = {});
+  const props = (selector) => dom.prop[selector] || (dom.prop[selector] = {});
+  // A handler bound with .click(fn) or .on('click', fn); .click() with no
+  // handler stays a no-op, so code that triggers a click runs nothing.
+  const bind = (selector, events, fn) => {
+    if (typeof fn !== 'function') return;
+    String(events).split(/\s+/).forEach((event) => {
+      const key = selector + ' ' + event.split('.')[0];
+      (dom.handlers[key] || (dom.handlers[key] = [])).push(fn);
+    });
+  };
   function wrap(selector) {
     const self = new Proxy(function () {}, {
       get(_, prop) {
@@ -58,7 +70,12 @@ function fakeJQuery() {
           case 'is': return () => false;
           case 'hasClass': return () => false;
           case 'data': return () => undefined;
-          case 'prop': return (key, v) => (v === undefined ? false : self);
+          // What was written is read back (checked, disabled); unwritten is false.
+          case 'prop': return (key, v) => (v === undefined
+            ? (typeof key === 'string' && props(selector)[key] !== undefined ? props(selector)[key] : false)
+            : ((typeof key === 'string' && (props(selector)[key] = v)), self));
+          case 'click': return (fn) => { bind(selector, 'click', fn); return self; };
+          case 'on': return (events, ...rest) => { bind(selector, events, rest[rest.length - 1]); return self; };
           default: return () => self;
         }
       },
@@ -135,6 +152,8 @@ function loadSidebarSearch(options) {
   return {
     ctx: context, calls, dom, localStorage, get,
     type(value) { dom.val['.input'] = value; },
+    // Runs what the page bound to a click on `selector` ('#insert-source').
+    click(selector) { (dom.handlers[selector + ' click'] || []).forEach((fn) => fn.call(null, {})); },
     box: () => dom.val['.input'] || '',
     pending: (name) => calls.filter((call) => call.name === name),
     last: (name) => calls.filter((call) => call.name === name).slice(-1)[0],

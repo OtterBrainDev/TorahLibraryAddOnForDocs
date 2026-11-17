@@ -222,7 +222,7 @@ function loadPipeline(words) {
     sanitizeSourceHtml: (value) => value,
     getSearchParameters: () => ({ sortMode: 'relevance', translationLanguages: [] }),
     setResultsLoading() {}, setFooterButtonStates() {}, updateModeDependentSections() {}, updateLexiconTabBadge() {},
-    setInsertButtonState() {}, updatePesukimAvailability() {}, updateActionabilityUI() {}, clearVersionSelectors() {},
+    setInsertButtonState() {}, updateActionabilityUI() {}, clearVersionSelectors() {},
     renderResults() {}, syncRestoreCorpusButton() {},
     setResultsHint: (message) => hints.push(message),
   });

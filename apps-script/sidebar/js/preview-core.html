@@ -100,21 +100,6 @@ function markTranslationsUnavailable(ref, versionTitles) {
   updateMultiSelectPreviewNotice();
 }
 
-function updatePesukimAvailability(response) {
-  var supportsLineMarkers = !!(response && (Array.isArray(response.he) || Array.isArray(response.text) || response.lineMarkersAvailable === true));
-  $('.pesukim-wrapper').toggle(supportsLineMarkers);
-  $('.wants-pesukim').prop('disabled', !supportsLineMarkers);
-  if (!supportsLineMarkers) {
-    $('.wants-pesukim').prop('checked', false);
-    $('.pesukim-help').text('Line markers are unavailable for this selection (single-block text).');
-  } else {
-    if (!$('.wants-pesukim').prop('checked')) {
-      $('.wants-pesukim').prop('checked', true);
-    }
-    $('.pesukim-help').text('Applies to segmented refs (e.g., verse/line ranges).');
-  }
-}
-
 function isResolvedReference(response) {
   return !!(response && response.ref && response.indexTitle && !response.error);
 }
@@ -187,6 +172,20 @@ function listTranslationItems(items, ref, preferences) {
     return !item.languageCode || hiddenLanguages.indexOf(item.languageCode) < 0;
   });
   return byLanguage.length ? byLanguage : byAvailability;
+}
+
+// What the filter box leaves of the listed translations: those whose title or
+// language tag contains the text, and those in a language the text names, in
+// any catalog language ("French", "français", "צרפתית"; see
+// translationLanguageCodesMatching in shared/ui/state).
+function filterTranslationItems(items, filterTerm) {
+  var query = String(filterTerm || '').trim().toLowerCase();
+  if (!query) return items.slice();
+  var languages = translationLanguageCodesMatching(query);
+  return items.filter(function (item) {
+    if (String(item.searchable || '').indexOf(query) >= 0) return true;
+    return !!item.languageCode && languages.indexOf(item.languageCode) >= 0;
+  });
 }
 
 // Ask the server which translations have text for this exact ref; Sefaria's
@@ -692,7 +691,7 @@ function updateSuggestion(dataIn, inputTitle) {
   function renderTranslationOptions(filterTerm) {
     var query = String(filterTerm || '').trim().toLowerCase();
     var listed = listTranslationItems(translationItems, resolvedRef, effectivePreferences);
-    var filtered = listed.filter(function (item) { return !query || item.searchable.indexOf(query) >= 0; });
+    var filtered = filterTranslationItems(listed, query);
     var optionsHTML = '';
     var hasSelectableOption = false;
     var $select = translationVersionSelect();
@@ -799,7 +798,6 @@ function updateSuggestion(dataIn, inputTitle) {
         setInsertButtonState(false);
         $('#open-on-sefaria').prop('disabled', true);
         clearVersionSelectors();
-        updatePesukimAvailability(null);
         updateActionabilityUI(nodeState);
         // buildNonInsertableMessage escapes the ref (buildPreviewMeta) and the prompt.
         $('.suggestions').html('<br>' + buildNonInsertableMessage(response));
@@ -810,7 +808,6 @@ function updateSuggestion(dataIn, inputTitle) {
       markTranslationAvailability(resolvedTranslation, enVersion);
       if (enVersion && resolvedTranslation && resolvedTranslation !== enVersion) renderTranslationOptions($('#translation-version-filter').val());
       updateSuggestion(response, inputTitle);
-      updatePesukimAvailability(response);
       updateActionabilityUI(nodeState);
       data = response;
       hasResolvedReference = true;
@@ -825,7 +822,6 @@ function updateSuggestion(dataIn, inputTitle) {
       setInsertButtonState(false);
       $('#open-on-sefaria').prop('disabled', true);
       clearVersionSelectors();
-      updatePesukimAvailability(null);
       updateActionabilityUI({ isInsertable: false });
     }).findReferenceForSidebar(resolvedRef, versions, sidebarSessionId);
   }

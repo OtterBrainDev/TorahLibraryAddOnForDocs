@@ -35,7 +35,8 @@ below marked *Migration* say what each schema step changes.
   Hebrew keyboard and keyboard shortcuts.
 - **Preview, then insert.** Clicking a result shows exactly what will go in;
   **Add Source** (Ctrl / ⌘ + Enter) inserts it. Several translations at once,
-  and only translations with text for the passage are offered. **Insert Source
+  only translations with text for the passage are offered, and the filter
+  finds a translation by its language's name (*French*, *français*, *צרפתית*). **Insert Source
   from Selection** turns a typed reference into the source. Inserts work
   inside a table cell.
 - **Saved defaults.** Preferences → Insertion keeps how sources go in, in every
@@ -88,6 +89,43 @@ below marked *Migration* say what each schema step changes.
    buttons in Preferences → Insertion.
 
 The rest of this entry is the development record, newest first.
+
+### Translation versions: find a language by its name
+
+#### Changed
+
+- **The filter box above *Translation versions* finds a language by its
+  name**, not only by its two-letter code. *French*, *français*, *צרפתית*,
+  *Französisch* and *французский* all list the French translations: each
+  language in Preferences → Search → Translation Languages is known by its
+  name in English, in itself and in each of the others (from CLDR, the
+  Unicode locale data browsers use), plus a few other names in use (*Farsi*,
+  *Judezmo*, *אידיש*). The first letters are enough (*fre*); case, accents,
+  vowel points and apostrophes don't matter (*francais*, *יידיש*, *צ'כית*). A
+  code typed exactly is that language alone, as before (*es* doesn't add
+  Esperanto), and a version's title still matches as it did. Client-side
+  only: no new preference, no request to Sefaria
+  (`TRANSLATION_LANGUAGE_CATALOG` in `shared/ui/state`,
+  `filterTranslationItems` in `sidebar/js/preview-core`).
+
+### Line numbers: off is respected in the sidebar and Surprise Me
+
+- **Fix.** With *Line numbers* off (📰 Insertion Options, or Preferences →
+  Insertion → Layout), Add Source still numbered a passage with verses, a
+  Tanakh verse range such as Genesis 1:1-3, while the card showed the switch
+  off. Previewing a passage reset the choice: on for any verse range, off for
+  a single verse. The preview no longer touches it; a text with no verses to
+  number is still inserted without them. Insert from Selection and Link Texts
+  were not affected. No preference or default changes.
+- **Surprise Me follows your Insertion defaults.** It inserted every source
+  the same way, whatever Preferences said: both languages side by side, lines
+  numbered, titles not linked, no credit, citation or transliteration. Each
+  source is now inserted the way Insert from Selection inserts one: with your
+  output, arrangement, Line numbers, linked titles, credits, citation,
+  transliteration and Commentary. With the default settings that means
+  linked titles and the edition credited, where Surprise Me had neither.
+  From the sidebar's 🧪 tab it uses the saved settings, not changes made only
+  for this session in the Texts tab's Insertion Options.
 
 ### Line by line for Stacked; the transliteration in a column of its own (schema 30)
 

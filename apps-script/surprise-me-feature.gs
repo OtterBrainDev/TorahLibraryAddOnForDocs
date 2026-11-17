@@ -64,12 +64,18 @@ function insertSurpriseMe(options) {
   const pickedRefs = shuffleArray_(candidateRefs).slice(0, count);
   let inserted = 0;
   let notice = '';
+  // Each source is inserted with the saved Insertion defaults, as Insert from
+  // Selection and Link Texts insert: output, arrangement, line numbers, linked
+  // titles, credits, citation, transliteration, Commentary. Called with no
+  // options, insertReference numbered every line and put both languages side
+  // by side whatever Preferences said. See docs/regression-log.md.
+  const insertOptions = buildLinkSourcesInsertOptions_(getPreferences());
 
   pickedRefs.forEach(function (ref) {
     try {
       const data = findReference(ref);
       if (!isInsertableResolvedRef_(data)) return;
-      const outcome = insertReference(data);
+      const outcome = insertReference(data, Object.assign({}, insertOptions));
       if (outcome && outcome.notice) notice = outcome.notice;
       inserted++;
     } catch (err) {
