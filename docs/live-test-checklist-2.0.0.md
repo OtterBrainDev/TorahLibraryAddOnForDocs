@@ -1,4 +1,4 @@
-# Live test checklist — v2.1.0
+# Live test checklist — v2.0.0
 
 Run this in a real Google Doc against HEAD — after `clasp push`, installed via
 Apps Script → Deploy → Test deployments — before creating the release version
@@ -7,10 +7,18 @@ and pointing the Marketplace SDK at it. Everything here is something the automat
 loaded in headless Chromium without script errors, but nothing automated
 holds a `DocumentApp` handle or makes a request to Sefaria.
 
-**Version under test:** 2.1.0 · **preference schema:** 13 (both from
+**Version under test:** 2.0.0 · **preference schema:** 30 (both from
 `docs/VERSION.json`)
 Confirm both before starting — *Help & Support → About* should read
-**Current line: 2.1**. If it says 2.0, the push did not land.
+**Current line: 2.0**. If it says 2.1, the push did not land: that was the
+development builds' number.
+
+This checklist was written for the August–September work (then numbered
+2.1.0, schema 13), and some rows name the Preferences of that time (a Fonts
+tab, since folded into Insertion). The later work in the v2.0.0 changelog
+entry (first-run setup, Simple mode, profiles, Voices and Lexicon, Line by
+line) is covered step by step by
+[`walkthroughs/1-stress-test.md`](walkthroughs/1-stress-test.md); run both.
 
 Two accounts' worth of setup matters, because half the risk in this release is
 in the *upgrade* path:
@@ -216,7 +224,7 @@ For anything that fails, the useful report is:
    `google.script.run`) show there and nowhere else
 4. Which account (A upgrading / B fresh) and the scan mode in effect
 
-State the version too: **2.1.0, schema 13**. "It broke" is not checkable
+State the version too: **2.0.0, schema 30**. "It broke" is not checkable
 later; the version and the check number are.
 
 ---

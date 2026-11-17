@@ -2,7 +2,7 @@
 
 This document records the design of the AI lesson generator that was
 developed on the rewrite branch, why it was detached from the shipped
-v1 of the add-on, and what a future revival would look like. It is
+add-on (2.0, the first release), and what a future revival would look like. It is
 written for two audiences: future maintainers of this repository, and
 Sefaria.org engineers who may be the natural long-term home for a
 Sefaria-grounded AI lesson feature.
@@ -129,7 +129,7 @@ right pattern for any short-lived sensitive data in Apps Script.
 - No central content-safety layer.
 - Three provider adapters to maintain in the client-side code.
 
-## 5. Why neither route shipped in v1
+## 5. Why neither route shipped in 2.0
 
 Route 1 required standing up and operating Merkaz's AI gateway
 infrastructure with production-grade reliability, rate limiting,

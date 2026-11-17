@@ -3,11 +3,91 @@
 All notable changes to Torah Library are documented here, newest first.
 
 The version and the preference-schema number live in
-[`docs/VERSION.json`](VERSION.json); the policy for bumping them is
-[`docs/versioning.md`](versioning.md). New work goes under an `## Unreleased`
-heading until the next release consolidates it.
+[`docs/VERSION.json`](VERSION.json); the policy for numbering them is
+[`docs/versioning.md`](versioning.md): every release is the next **2.0.X**
+build until the owner asks for 2.1. New work goes under an `## Unreleased`
+heading until the next build consolidates it under its own `## v2.0.X` heading.
 
-## Unreleased
+## v2.0.0 — First Marketplace release (release pending)
+
+The first release published in the Google Workspace Marketplace, for people
+who use Sefaria's own add-on, *Sefaria for Google Docs* 1.0, and for new users.
+It is the whole add-on as described in this file: every section below, back to
+the 2026-04 cleanup pass, ships in 2.0.0.
+
+Builds tested before this release showed *Current line: 2.1* (and, before
+that, *2.0*) in Help → About. They were development builds, never published;
+the 2.1.0 number they carried is retired, and the next release is 2.0.1.
+
+**Preference schema 30.** A new install starts at schema 30, and so does
+anyone coming from Sefaria for Google Docs, which stores no settings. A tester
+upgrading from a development build is migrated on first open; the sections
+below marked *Migration* say what each schema step changes.
+
+### Highlights, compared with Sefaria for Google Docs 1.0
+
+- **Find a text.** One sidebar with three tabs: **Texts**, **Voices** (Sefaria
+  source sheets) and **Lexicon** (Sefaria's dictionaries). Results appear as
+  you type, from an English or Hebrew reference, a title, a phrase or a
+  sefaria.org link. Traditional citations resolve (*Hil. Shabbat 1:1*),
+  near-misses are listed under *Close matches*, a search that finds nothing
+  suggests titles, and corpora come in the order you choose. An on-screen
+  Hebrew keyboard and keyboard shortcuts.
+- **Preview, then insert.** Clicking a result shows exactly what will go in;
+  **Add Source** (Ctrl / ⌘ + Enter) inserts it. Several translations at once,
+  and only translations with text for the passage are offered. **Insert Source
+  from Selection** turns a typed reference into the source. Inserts work
+  inside a table cell.
+- **Saved defaults.** Preferences → Insertion keeps how sources go in, in every
+  document; **📰 Insertion Options** changes it for this session. A short
+  first-run setup (with *I've used Sefaria for Google Docs* to start from that
+  add-on's look), a **Simple** or **Everything** interface, profiles, and
+  settings files to hand to a class.
+- **Layout.** Hebrew on the right (as in 1.0), on the left, or stacked above
+  the translation; **Line by line**; line numbers; the transliteration under
+  the Hebrew or in its own column; titles as headings; a credit line naming
+  each edition and its license.
+- **Formatting.** Vowels Off / Tanakh / On; Cantillation Off / Tanakh / Torah;
+  Punctuation for each language; transliteration in several styles (*HaShem*,
+  capitalized names); Commentary Default / Combine / Drop for translations
+  such as the Steinsaltz Talmud; fonts that match the document; colour and
+  highlight; separate source and translation titles; a citation style;
+  formatting by translation language; cantillation marks a font lacks are
+  borrowed from Noto Hebrew instead of showing as boxes.
+- **Divine names.** Your spelling (יי, ה', יקוק, השם or your own, and *G-d*),
+  applied as sources go in, keeping the Name's vowels and cantillation.
+  **Transform Divine Names** asks first and says how many it replaced.
+- **Link Texts with Sefaria.** Progress while it scans; a review dialog with
+  Link and Insert columns; a question when a citation could mean more than one
+  text; a *Not matched* list saying why; *Customize this insertion* for one
+  batch. Only passages that look like citations are sent, unless you choose
+  the whole document.
+- **Voices and Lexicon.** Sheets grouped by topic, with transliteration for a
+  sheet's Hebrew; a dictionary search that lists words, with entries from
+  several dictionaries inserted together, in your order.
+- **Session Library and Quick Actions.** What you've inserted, pins in every
+  tab, *Copy References*; **Unlink Sources** and **Gematriya Count**; the menu
+  and the sidebar arranged in Preferences → Menu Bar and → Sidebar.
+- **Privacy.** No permission to see your email address or profile; no server,
+  account or analytics of its own; a written privacy policy (`docs/PRIVACY.md`).
+
+### Works differently from Sefaria for Google Docs 1.0
+
+1. **Divine names are replaced as you insert.** Out of the box יהוה becomes יי
+   in every new source. Preferences → Insertion → Divine Name Mappings.
+2. **Clicking a result only previews it.** Nothing goes into the document until
+   Add Source.
+3. **Each source gets a credit line** naming its editions and their licenses.
+   Turn *Citation* off in 📰 Insertion Options or Preferences → Insertion →
+   Layout.
+4. **Link Texts reviews its work**, and sends Sefaria only the passages that
+   look like citations. Preferences → Linking.
+5. **Insert Source from Selection replaces the selection** with the source,
+   titled with your words. Preferences → Insertion → Insert from Selection.
+6. **Fonts match the document** where you insert. Set your own with the font
+   buttons in Preferences → Insertion.
+
+The rest of this entry is the development record, newest first.
 
 ### Line by line for Stacked; the transliteration in a column of its own (schema 30)
 
@@ -399,8 +479,7 @@ styles:
 No new preference, no migration. Found while recording the beta tutorials;
 each one is in `docs/regression-log.md` with the test that pins it. These
 change what an insert writes (the Hebrew credit) and how Transform Divine
-Names behaves, so by `docs/versioning.md` §1 they ship in a MINOR release:
-the next one, 2.2.0, which the preference changes above already require.
+Names behaves; they ship in 2.0.0.
 
 #### Fixed
 
@@ -1185,7 +1264,12 @@ the next one, 2.2.0, which the preference changes above already require.
   also adds `hidden_translation_languages`, seeded `"[]"`, so every language
   stays listed. A stored value is never overwritten.
 
-## v2.1.0 — Linking you can review, source credit, and Marketplace readiness (2026-09-22)
+## 2.0 development, August–September 2026: linking you can review, source credit, and Marketplace readiness
+
+> Numbered 2.1.0 during development (test builds showed *Current line: 2.1*,
+> marked "released" on 2026-09-22) and never published. It ships as part of
+> v2.0.0, above. Version numbers in this section are the ones in use at the
+> time.
 
 Highlights: Link Texts with Sefaria shows its progress, asks about ambiguous
 citations and reports what it could not link, and uploads only likely-citation
@@ -1518,7 +1602,7 @@ rather than a bug here.
 - **`docs/versioning.md`** — what bumps what, and the coupling that matters: a
   new preference key needs a default, a migration, a schema bump, a manifest
   bump and a version bump, all in one commit. Includes a section for AI agents.
-- **`docs/live-test-checklist-2.1.0.md`** — the manual pass, covering what the
+- **`docs/live-test-checklist-2.0.0.md`** (named for 2.1.0 at the time) — the manual pass, covering what the
   119 automated tests structurally cannot: sidebar rendering, the CSP, the
   upgrade path, and anything that needs a real `DocumentApp` or a live Sefaria
   request.
@@ -1889,7 +1973,11 @@ summarized in `docs/pre-upstream-review.md`.
   justification-comment standard to dynamic `.html()` writes. It reports at WARN
   (16 pre-existing sites) so CI stays green while the count is burned down.
 
-## v1.0 — cleanup pass (2026-04)
+## Cleanup pass (2026-04)
+
+> Called "v1.0" internally at the time; never a published version. *Version
+> 1.0* now means Sefaria for Google Docs 1.0, the Marketplace add-on this one
+> follows.
 
 Everything below is grouped under the one-shot cleanup that brought the rewrite branch to a shippable state. The eight stages were individually commits; see `git log --grep='^Stage '` for the commit history.
 

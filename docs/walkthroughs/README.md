@@ -14,12 +14,9 @@ should happen.
 | 4 | [Coming from Sefaria for Google Docs](4-returning-user.md) | People who use Sefaria's own *Sefaria for Google Docs* add-on | 15 min | Where its three commands went, what's new, and what behaves differently. |
 | 5 | [First five minutes](5-new-user.md) | Someone who has never used it | 5 min | Get one source into a document. |
 
-The version under demo is **2.1.0, preference schema 25** (`docs/VERSION.json`),
-plus the unreleased changes in `docs/CHANGELOG.md` (first-run setup and Simple
-mode, the 📰 Insertion Options panel and its settings rows, separate source and
-translation titles, citation style, three-way Vowels and Cantillation, Link
-Texts' Insert and *Customize this insertion*).
-*Help & Support → About* should read **Current line: 2.1**.
+The version under demo is **2.0.0, preference schema 30** (`docs/VERSION.json`
+and the v2.0.0 entry in `docs/CHANGELOG.md`).
+*Help & Support → About* should read **Current line: 2.0**.
 
 ## Before any live session
 
