@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Torah Library are documented here, newest first.
+All notable changes to Sefaria for Google Docs are documented here, newest first.
 
 The version and the preference-schema number live in
 [`docs/VERSION.json`](VERSION.json); the policy for numbering them is
@@ -11,9 +11,18 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 ## v2.0.0 — First Marketplace release (release pending)
 
 The first release published in the Google Workspace Marketplace, for people
-who use Sefaria's own add-on, *Sefaria for Google Docs* 1.0, and for new users.
+who use *Sefaria for Google Docs* 1.0, and for new users.
 It is the whole add-on as described in this file: every section below, back to
 the 2026-04 cleanup pass, ships in 2.0.0. The next release is 2.0.1.
+
+**Name and links.** The add-on is named *Sefaria for Google Docs* throughout:
+the manifest, the setup dialog, Help and the release notes. Support goes to
+Sefaria's Help Center, and the privacy and terms links to
+`sefaria.org/privacy-policy` and `sefaria.org/terms`. The Help topic for
+people who used 1.0 is *Coming from version 1.0*. Sections below were written
+while the add-on was called Torah Library and keep that name. A settings file
+is still marked `torah-library-settings`, so files exported earlier import;
+its suggested file name is now `sefaria-google-docs-settings.json`.
 
 **Preference schema 30.** A new install starts at schema 30, and so does
 anyone coming from Sefaria for Google Docs, which stores no settings. A tester

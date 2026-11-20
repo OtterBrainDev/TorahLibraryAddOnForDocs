@@ -30,8 +30,8 @@ a user has before they open 2.0.0:
   add-on. Proves `onInstall` seeds correctly, builds the menu and shows the
   first-run setup. Resetting preferences on Account A is *not* a substitute:
   it does not run `onInstall`.
-- **Account C — Sefaria for Google Docs user.** Has Sefaria's own add-on,
-  *Sefaria for Google Docs* 1.0, installed, and a document it inserted sources
+- **Account C — version 1.0 user.** Has the published
+  *Sefaria for Google Docs* 1.0 installed, and a document it inserted sources
   into. That add-on stores no settings, so C meets this one as a new user. Most
   Marketplace users will take this path.
 
@@ -47,11 +47,11 @@ a footnote serves every section below.
 | A1 | **B:** install the test deployment from a Doc, then open **Extensions** *without reloading* | The add-on's menu is already there, and the first-run setup opened (*Step 1 of 3*), not the release notes. (Marketplace reviewers check this first.) |
 | A2 | **B:** click **Continue** through all three screens without changing anything | Setup closes behind a *Saving…* spinner. Preferences shows the defaults: colours **Auto / None**, Divine Name Mappings יהוה → יי on, Linking **Candidate passages only**, Interface **Everything** |
 | A3 | **B:** *Help & Support → Quick start → Run setup again*, then **Skip for now**; reload the document | Setup reopens, then closes with nothing changed. After the reload it is not shown again on its own |
-| A4 | **C:** install; open the document Sefaria for Google Docs inserted into; open **Extensions** | Two submenus, each with its own items; the first-run setup opens once |
+| A4 | **C:** install; open the document version 1.0 inserted into; open **Extensions** | Two *Sefaria for Google Docs* submenus (the published 1.0 and this build), each with its own items; the first-run setup opens once |
 | A5 | **C:** on screen 1 choose **I've used Sefaria for Google Docs**; continue | Screens 2 and 3 start on both languages, Hebrew on the right, and Simple; a note under *God's name* says the name is now replaced as sources go in |
 | A6 | **C:** insert `Genesis 1:1` with the defaults | A two-column table, Hebrew on the right; יהוה replaced with יי; a small credit line under it |
-| A7 | **C:** *Help & Support →* **Coming from Sefaria for Google Docs** | In the Help navigation and on Quick start; every link in it lands |
-| A8 | **C:** run **Transform Divine Names**, **Link Texts with Sefaria** and **Unlink Sources** on the text Sefaria for Google Docs inserted | Each works on it like any other text; Unlink removes its sefaria.org links too |
+| A7 | **C:** *Help & Support →* **Coming from version 1.0** | In the Help navigation and on Quick start; every link in it lands |
+| A8 | **C:** run **Transform Divine Names**, **Link Texts with Sefaria** and **Unlink Sources** on the text version 1.0 inserted | Each works on it like any other text; Unlink removes its sefaria.org links too |
 
 ---
 
@@ -322,9 +322,9 @@ Build one test document containing, in this order:
 | # | Check | Expected |
 | --- | --- | --- |
 | M1 | **B:** Google's permission screen at install | Four permissions: this document, the add-on's windows, connecting to an external service, storing its settings. Nothing about your email address, profile or Drive |
-| M2 | Preferences → Linking → **🔒 Privacy & Document Scanning** → policy link | Opens the privacy policy in the **TheMerkazDev** repository (after the sync; before it, a 404 is expected) |
-| M3 | *Help & Support → About* → **Privacy policy** and **GitHub** pills | The same policy, and `TheMerkazDev/TorahLibraryAddOnForDocs`; About reads as user-facing text, with no "fork" wording |
-| M4 | *About* → **What's new** | Release Notes, *Version 2.0*: what's new compared with Sefaria for Google Docs, and what works differently |
+| M2 | Preferences → Linking → **🔒 Privacy & Document Scanning** → policy link | Opens Sefaria's privacy policy, `https://www.sefaria.org/privacy-policy` |
+| M3 | *Help & Support → About* → **Privacy policy** and **GitHub** pills | The same policy, and `TheMerkazDev/TorahLibraryAddOnForDocs`; **Terms** opens `https://www.sefaria.org/terms` and **Help Center** Sefaria's Help Center; About reads as user-facing text, with no "fork" wording |
+| M4 | *About* → **What's new** | Release Notes, *Version 2.0*: what's new since version 1.0, and what works differently |
 
 ---
 
@@ -336,7 +336,7 @@ For anything that fails, the useful report is:
 2. What you saw versus what the table says
 3. **Browser console output** — most of the failure modes here (SRI, CSP,
    `google.script.run`) show there and nowhere else
-4. Which account (A upgrading / B fresh / C from Sefaria for Google Docs), the
+4. Which account (A upgrading / B fresh / C from version 1.0), the
    interface (Simple / Everything) and the scan mode in effect
 
 State the version too: **2.0.0, schema 30**. "It broke" is not checkable

@@ -2,7 +2,7 @@
 // `href="#id"` anchors (and `data-jump-to` cards) that the dialog's script turns
 // into "switch to the Help tab and scroll there"; a link whose topic was renamed
 // or removed does nothing at all, silently. About → New in 2.0 links into Help
-// (Coming from Sefaria for Google Docs, Keyboard shortcuts), so it is pinned
+// (Coming from version 1.0, Keyboard shortcuts), so it is pinned
 // here with every other link.
 
 const test = require('node:test');

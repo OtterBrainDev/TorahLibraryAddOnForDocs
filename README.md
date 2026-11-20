@@ -1,8 +1,11 @@
-# Torah Library Add-On for Google Docs
+# Sefaria for Google Docs
 
 A Google Docs add-on that brings Sefaria-powered source finding, previewing, insertion, linking, and formatting into Google Docs.
 
-> This is not an official Sefaria project.
+> This is version 2.0 of *Sefaria for Google Docs*, prepared for Sefaria to
+> publish through its existing Marketplace listing. It is a release candidate:
+> Sefaria has not yet approved or published it. See
+> [`docs/for-sefaria-review.md`](./docs/for-sefaria-review.md).
 
 ## Privacy
 
@@ -146,27 +149,26 @@ Persistent user preferences include:
 
 When a selected result is a non-leaf or structural node rather than directly insertable text, the sidebar now provides clearer guidance and keeps insertion disabled until a text-bearing node is selected.
 
-## Coming from Sefaria for Google Docs
+## Coming from version 1.0
 
-Most people arrive from Sefaria's own add-on,
+Most people arrive from version 1.0 of
 [*Sefaria for Google Docs*](https://workspace.google.com/marketplace/app/sefaria_for_google_docs/849562338091)
 ([help](https://help.sefaria.org/hc/en-us/sections/20235182393244)): one
 sidebar (**Add Sources with Sefaria**) and two commands (**Transform Divine
 Names**, **Link Texts with Sefaria**), with format, edition and translation
-picked for each source and nothing saved. Torah Library is a separate add-on,
-installed beside it; nothing carries over because there is nothing stored to
-carry. The same commands are under **Extensions → Torah Library** (Texts, and
-Quick Actions); what's new is saved defaults, layout and formatting choices,
+picked for each source and nothing saved. Version 2.0 replaces it in place;
+no settings carry over because 1.0 stored none. The same commands are under
+**Extensions → Sefaria for Google Docs** (Texts, and Quick Actions); what's new is saved defaults, layout and formatting choices,
 reviewed linking, and the Voices, Lexicon and Session Library tools. Two
 things work differently out of the box: divine names are replaced as sources
 are inserted (יהוה → יי), and each source gets a credit line. In-app Help has
-a *Coming from Sefaria for Google Docs* topic, and
+a *Coming from version 1.0* topic, and
 [walkthrough 4](./docs/walkthroughs/4-returning-user.md) is the demo script.
 
 ## What's new compared with the original add-on
 
-Torah Library builds on the original Sefaria add-on for Google Docs by Shlomi
-Helfgot (see [LICENSE.md](./LICENSE.md)), the code it was forked from, and
+Version 2.0 builds on the original Sefaria add-on for Google Docs by Shlomi
+Helfgot (see [LICENSE.md](./LICENSE.md)), the code it grew from, and
 substantially expands it, including:
 
 - replacing the older split insertion/search flow with a unified sidebar,
@@ -203,7 +205,7 @@ An AI-assisted lesson / shiur drafting feature was developed on the rewrite bran
 
 ## Menu actions
 
-The add-on menu (**Extensions → Torah Library**) includes, by default:
+The add-on menu (**Extensions → Sefaria for Google Docs**) includes, by default:
 
 - **Texts** — the unified search-and-insert sidebar.
 - **Voices** — source-sheet search with insert controls.
@@ -218,7 +220,7 @@ Users can reorder, group and hide items in **Preferences → Menu Bar**.
 ## Demo and walkthrough
 
 - [Google Docs walkthrough](./docs/google-docs-walkthrough.md)
-- [Live walkthroughs](./docs/walkthroughs/README.md) — five scripts for live demos: a stress test, a developer tour, a power-user tour, a guide for people coming from Sefaria for Google Docs, and a five-minute first run.
+- [Live walkthroughs](./docs/walkthroughs/README.md) — five scripts for live demos: a stress test, a developer tour, a power-user tour, a guide for people coming from version 1.0, and a five-minute first run.
 
 
 ## Repository structure
@@ -324,6 +326,7 @@ For formatting or insertion changes, include before/after examples or screenshot
 
 The source code in this repository is licensed under the [MIT License](./LICENSE.md).
 
-This project uses the Sefaria API but is not an official Sefaria project.
+This repository is a release candidate offered to Sefaria; it is an official
+Sefaria release only once Sefaria publishes it.
 Texts and metadata retrieved from Sefaria may carry separate attribution,
 copyright, or reuse terms depending on the source text.

@@ -1,6 +1,6 @@
-# Walkthrough 4 — Coming from Sefaria for Google Docs
+# Walkthrough 4 — Coming from version 1.0
 
-**Audience:** people who use Sefaria's own add-on, *Sefaria for Google Docs*
+**Audience:** people who use version 1.0 of *Sefaria for Google Docs*
 ([Marketplace](https://workspace.google.com/marketplace/app/sefaria_for_google_docs/849562338091),
 [Sefaria's help](https://help.sefaria.org/hc/en-us/sections/20235182393244)),
 with its **Extensions → Sefaria for Google Docs** menu: **Add Sources with
@@ -9,25 +9,25 @@ Sefaria**, **Transform Divine Names** and **Link Texts with Sefaria**.
 
 The short version: **the same library, the same search-and-insert sidebar and
 the same command names, plus saved defaults and the layout and formatting
-choices that add-on doesn't have.** A few things work differently; they're
+choices version 1.0 doesn't have.** A few things work differently; they're
 listed at the end, so you can say what changed before anyone runs into it.
 
-Torah Library is a separate add-on (it grew from Shlomi Helfgot's original
-Sefaria add-on; see `LICENSE.md`). Installing it changes nothing in Sefaria for
-Google Docs, and there is nothing to carry over: that add-on keeps no settings.
-Both can stay installed while people try this one; each has its own
-submenu under **Extensions**.
+Version 2.0 is the same add-on, updated in place (it grew from Shlomi
+Helfgot's original code; see `LICENSE.md`). There is nothing to carry over:
+version 1.0 keeps no settings. Until 2.0 is released, a tester who has 1.0
+installed sees two **Sefaria for Google Docs** submenus under **Extensions**:
+the published 1.0 and the test deployment of 2.0.
 
 ---
 
 ## 1. Where everything went (3 min)
 
-Open **Extensions → Torah Library** next to **Extensions → Sefaria for Google
-Docs**.
+Open **Extensions → Sefaria for Google Docs**. In a test deployment, open the
+2.0 submenu next to the published 1.0 one.
 
-| Sefaria for Google Docs | Torah Library |
+| Version 1.0 | Version 2.0 |
 | --- | --- |
-| **Add Sources with Sefaria** sidebar | **Texts** tab of the sidebar (**Extensions → Torah Library → Texts**) |
+| **Add Sources with Sefaria** sidebar | **Texts** tab of the sidebar (**Extensions → Sefaria for Google Docs → Texts**) |
 | Search bar, with a dropdown of sections when you type a book name | The same box. Results appear as you type, from an English or Hebrew reference (`בראשית א:א`), a title, a traditional citation (`Hil. Shabbat 1:1`), a sefaria.org link or a phrase; near-misses come under *Close matches*. |
 | A range such as `Genesis 1:1-9` | The same. |
 | Format, edition and translation, chosen for each source | **📰 Insertion Options** (Display, Arrangement, Line numbers, Citation, and the Source and Translation sections) and **Versions** under the preview, for this source; your usual choice saved in **⚙︎ Preferences → Insertion**. |
@@ -43,14 +43,14 @@ Docs**.
 Do the thing everyone uses the add-on for: insert a pasuk in Hebrew and
 English.
 
-1. Cursor in the document. **Extensions → Torah Library → Texts**.
+1. Cursor in the document. **Extensions → Sefaria for Google Docs → Texts**.
 2. Type `Genesis 1:1`. Results appear as you type.
 3. Click the result. **New:** the **Preview** shows exactly what will be
    inserted, with your vowel and divine-name settings already applied.
    Clicking a result never inserts anything.
 4. **Add Source**.
 
-With both languages the layout is the one Sefaria for Google Docs uses: a
+With both languages the layout is the one version 1.0 uses: a
 two-column table, Hebrew on the right. **📰 Insertion Options → Arrangement**
 also offers **Left–Right** and **Stacked** (Hebrew above English), and **Line by
 line** pairs each verse with its translation: side by side, in its own row;
@@ -58,7 +58,7 @@ Stacked, the verse and then its translation, down the page.
 
 The first time the add-on opens, a short setup asks three things (what you'll
 use it for, how sources should look, Simple or Everything). Choose **I've used
-Sefaria for Google Docs**: it starts the next screens on that add-on's look
+Sefaria for Google Docs**: it starts the next screens on version 1.0's look
 (both languages, Hebrew on the right, a simple menu), and a note under *God's
 name* explains that the name is now replaced as sources go in. Every answer
 can be changed there, later in Preferences, or by **Help → Quick start → Run
@@ -101,7 +101,7 @@ setup again**.
 
 ## 4. What behaves differently (3 min) — say this out loud
 
-These are the things people coming from Sefaria for Google Docs are most
+These are the things people coming from version 1.0 are most
 likely to report as bugs if nobody warns them.
 
 1. **Divine names are replaced as you insert.** Out of the box יהוה becomes
@@ -136,11 +136,11 @@ likely to report as bugs if nobody warns them.
    inside the cell. The side-by-side layouts are tables themselves, so they go
    directly below the table, and the sidebar tells you so. Headers, footers
    and footnotes can't hold a source; you'll get a message.
-7. **It asks for fewer permissions.** Torah Library doesn't ask to see your
+7. **It asks for fewer permissions.** Version 2.0 doesn't ask to see your
    email address or profile.
 
-Text, links and divine names that Sefaria for Google Docs already put in a
-document stay as they are. Torah Library's Transform Divine Names, Link Texts
+Text, links and divine names that version 1.0 already put in a
+document stay as they are. Transform Divine Names, Link Texts
 and Unlink Sources work on them like any other text.
 
 ---
@@ -150,5 +150,5 @@ and Unlink Sources work on them like any other text.
 - **Help & Support → Support** has troubleshooting and a bug-report
   checklist.
 - **Preferences → Reset To Defaults** puts every setting back to the
-  defaults. It doesn't touch Sefaria for Google Docs.
-- Email [help@the-merkaz.org](mailto:help@the-merkaz.org).
+  defaults. It doesn't touch your documents.
+- [Sefaria's Help Center](https://help.sefaria.org/hc/en-us/sections/20235182393244).

@@ -1,4 +1,4 @@
-# Agent guide for the Torah Library Add-On
+# Agent guide for the Sefaria for Google Docs add-on
 
 You (human or AI) are working on a Google Docs add-on. This file tells
 you what this codebase is, what rules are not-negotiable, which traps

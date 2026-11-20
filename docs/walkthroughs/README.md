@@ -4,14 +4,12 @@ Five walkthroughs of the same add-on, written for five audiences. Each is a
 script to follow live in a real Google Doc — what to click, what to say, what
 should happen.
 
-> This is not an official Sefaria project.
-
 | # | Walkthrough | Audience | Length | Goal |
 | --- | --- | --- | --- | --- |
 | 1 | [Stress test](1-stress-test.md) | QA, the maintainer before release | 2–3 h | Try to break it. Surface every unexpected behaviour before Sefaria sees it. |
 | 2 | [Under the hood](2-developer.md) | Developers, Sefaria engineers | 45–60 min | What happens on the server and client for every user action. |
 | 3 | [Power user tour](3-advanced-user.md) | People who write source sheets and shiurim in Docs every week | 25–30 min | The features that save real time once you know them. |
-| 4 | [Coming from Sefaria for Google Docs](4-returning-user.md) | People who use Sefaria's own *Sefaria for Google Docs* add-on | 15 min | Where its three commands went, what's new, and what behaves differently. |
+| 4 | [Coming from version 1.0](4-returning-user.md) | People who use version 1.0 of *Sefaria for Google Docs* | 15 min | Where its three commands went, what's new, and what behaves differently. |
 | 5 | [First five minutes](5-new-user.md) | Someone who has never used it | 5 min | Get one source into a document. |
 
 The version under demo is **2.0.0, preference schema 30** (`docs/VERSION.json`
@@ -35,7 +33,7 @@ and the v2.0.0 entry in `docs/CHANGELOG.md`).
 
 ## Shared demo document
 
-Paste this into a new Google Doc titled *Torah Library demo*. Walkthroughs
+Paste this into a new Google Doc titled *Sefaria for Google Docs demo*. Walkthroughs
 2–5 use parts of it. The stress test builds a longer one.
 
 ```text

@@ -70,8 +70,8 @@ Release date: [to be confirmed].
 - **No in-place upgrade has been run live.** What an upgraded user sees is
   read from the code; the live test checklist covers only an install beside
   1.0.
-- **The candidate still carries the Torah Library name**, logo, support
-  address and policy links (`for-sefaria-review.md` §3). This notice assumes
-  they are changed to Sefaria's before release, and that Sefaria's privacy
-  policy covers saved settings and the text *Link Texts with Sefaria* sends.
+- **The candidate's logo and GitHub links are still The Merkaz's**
+  (`for-sefaria-review.md` §3); its name, support, privacy and terms links are
+  Sefaria's. Sefaria's privacy policy needs to cover saved settings and the
+  text *Link Texts with Sefaria* sends.
 - **The release date** is still a placeholder.

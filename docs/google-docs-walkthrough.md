@@ -1,16 +1,14 @@
-# Using the Torah Library Add-On for Google Docs
+# Using Sefaria for Google Docs
 
 A walkthrough of the add-on as it is today (v2.0; see the
 [changelog](./CHANGELOG.md)). The same material is inside
-the add-on under **Extensions → Torah Library → Help & Support**, or the
+the add-on under **Extensions → Sefaria for Google Docs → Help & Support**, or the
 **Help** button at the bottom of the sidebar.
-
-> This is not an official Sefaria project.
 
 ## Quick start
 
 1. Put your cursor where the source should go.
-2. Open **Extensions → Torah Library → Texts**. The sidebar opens on the right.
+2. Open **Extensions → Sefaria for Google Docs → Texts**. The sidebar opens on the right.
 3. Type a reference — `Genesis 1:1`, `Berakhot 2a`, `בראשית א:א`. Results
    appear as you type.
 4. Click a result. The **Preview** shows exactly what will be inserted.
@@ -23,25 +21,24 @@ for, how sources should look (with a preview) and how much of the add-on to
 show. Every answer starts at the current setting, so clicking through changes
 nothing. **Help & Support → Quick start → Run setup again** reopens it.
 
-## Coming from Sefaria for Google Docs
+## Coming from version 1.0
 
-If you've used Sefaria's own add-on, *Sefaria for Google Docs*, the basics
-are familiar: the same library, the same search-and-insert sidebar, and
-commands with the same names. Torah Library is a separate add-on with its own
-menu. Nothing is moved over or changed (that add-on keeps no settings), and
-the two can stay installed side by side.
+If you used version 1.0, the basics are familiar: the same library, the same
+search-and-insert sidebar, and commands with the same names. The update
+changes nothing in your documents. Version 1.0 kept no settings, so version
+2.0 starts from its own defaults.
 
-| Sefaria for Google Docs | Torah Library |
+| Version 1.0 | Version 2.0 |
 | --- | --- |
-| **Extensions → Sefaria for Google Docs** | **Extensions → Torah Library** (rearrange it in Preferences → Menu Bar) |
+| **Extensions → Sefaria for Google Docs** | The same menu, with more in it (rearrange it in Preferences → Menu Bar) |
 | **Add Sources with Sefaria** | **Texts**: type a citation (ranges such as `Genesis 1:1-9` work) or a title, click a result, check the **Preview**, **Add Source** |
 | Format, edition and translation, picked for each source | **📰 Insertion Options** and **Versions** for this source; saved defaults in **Preferences** |
 | **Transform Divine Names** | **Quick Actions → Transform Divine Names**, with the spellings set in Preferences → Insertion → Divine Name Mappings |
 | **Link Texts with Sefaria** | **Quick Actions → Link Texts with Sefaria** |
 
 **The same:** Hebrew and translation go in as a two-column table, Hebrew on
-the right. Text and links the other add-on inserted stay as they are, and
-Torah Library's Transform Divine Names, Link Texts and Unlink Sources work on
+the right. Text and links version 1.0 inserted stay as they are, and
+Transform Divine Names, Link Texts and Unlink Sources work on
 them like any other text.
 
 **New:** saved defaults (a short setup the first time, where **I've used
@@ -66,9 +63,8 @@ Advanced) and profiles, one look per class.
 4. **Clicking a result only previews it;** nothing goes in until **Add Source**.
 5. **It asks for less:** no access to your email address or profile.
 
-When you're done comparing, remove the other add-on in **Extensions →
-Add-ons → Manage add-ons** if you no longer need it. Sefaria's help for it is
-at [help.sefaria.org](https://help.sefaria.org/hc/en-us/sections/20235182393244).
+More help is in Sefaria's Help Center, at
+[help.sefaria.org](https://help.sefaria.org/hc/en-us/sections/20235182393244).
 
 ## The sidebar at a glance
 
@@ -391,7 +387,7 @@ only a selection — after asking.
 
 ## Preferences
 
-Open with **⚙︎** or **Extensions → Torah Library → Preferences**. Preferences
+Open with **⚙︎** or **Extensions → Sefaria for Google Docs → Preferences**. Preferences
 are saved defaults and follow your Google account into every document. At the
 top, **Interface** (Simple / Everything) switches at once, without Save, and
 keeps any changes you haven't saved yet. Simple hides the Search, Linking,
@@ -452,7 +448,7 @@ linking stay the same in every profile.
 
 ## The menu
 
-**Extensions → Torah Library** holds, by default: Texts, Voices, Lexicon,
+**Extensions → Sefaria for Google Docs** holds, by default: Texts, Voices, Lexicon,
 Insert Source from Selection, and a Quick Actions submenu (Quick Actions
 Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources,
 Gematriya Count), then Surprise Me (while it is switched on), Preferences and
@@ -475,8 +471,8 @@ shorter menu (see *Simple or Everything*).
 ## Getting help
 
 - Troubleshooting and a bug-report checklist: **Help & Support → Support**.
-- Email: [help@the-merkaz.org](mailto:help@the-merkaz.org)
-- [Privacy policy](./PRIVACY.md) · [Changelog](./CHANGELOG.md)
+- [Sefaria's Help Center](https://help.sefaria.org/hc/en-us/sections/20235182393244)
+- [Privacy policy](https://www.sefaria.org/privacy-policy) · [Terms](https://www.sefaria.org/terms) · [Changelog](./CHANGELOG.md)
 
 ## Current limitations
 

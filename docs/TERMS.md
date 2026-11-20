@@ -1,4 +1,8 @@
-# Terms of Service — Torah Library Add-On for Google Docs
+# Terms of Service — Sefaria for Google Docs
+
+> **Superseded.** The add-on and its listing link to Sefaria's terms, at
+> <https://www.sefaria.org/terms>. This draft was written for an independent
+> publisher and is kept only for reference.
 
 **Last updated: 2026-09-22**
 
@@ -7,7 +11,7 @@
 > reviewed by whoever speaks for the publisher before publishing, and fill in
 > the publisher's legal name where marked.
 
-These terms govern your use of the Torah Library add-on for Google Docs (the
+These terms govern your use of the Sefaria for Google Docs add-on for Google Docs (the
 "add-on"), published by **[publisher legal name]** ("we", "us"). By installing
 or using the add-on you agree to them. If you do not agree, do not install or
 use it.
@@ -82,4 +86,4 @@ Add-ons → Manage add-ons). We may stop offering the add-on at any time.
 
 ## 9. Contact
 
-Questions about these terms: **help@the-merkaz.org**.
+Questions about these terms: [Sefaria's Help Center](https://help.sefaria.org/hc/en-us/sections/20235182393244).

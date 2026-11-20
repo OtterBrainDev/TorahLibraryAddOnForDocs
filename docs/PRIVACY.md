@@ -1,4 +1,9 @@
-# Privacy Policy — Torah Library Add-On for Google Docs
+# Data handling — Sefaria for Google Docs
+
+> **The policy users see is Sefaria's**, at <https://www.sefaria.org/privacy-policy>,
+> which is what the add-on and its listing link to. This file is the technical
+> account of what the add-on touches, sends and stores, kept for reviewers and
+> for checking that policy against the code.
 
 **Last updated: 2026-11-17**
 
@@ -206,7 +211,7 @@ listing.
 ## 9. Contact
 
 Questions about this policy, or about the add-on's data handling:
-**help@the-merkaz.org**. The add-on's source code is public at
+[Sefaria's Help Center](https://help.sefaria.org/hc/en-us/sections/20235182393244). The add-on's source code is public at
 <https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs>.
 
 ---

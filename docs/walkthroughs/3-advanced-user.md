@@ -12,7 +12,7 @@ want → link the whole document → tidy up.**
 ## 1. Set your defaults once (5 min)
 
 Open **⚙︎** (bottom of the sidebar; it says *Opening Preferences…* while it
-loads) or **Extensions → Torah Library → Preferences**. These are saved to
+loads) or **Extensions → Sefaria for Google Docs → Preferences**. These are saved to
 your Google account and apply in every document.
 
 At the top, **Interface** should be **Everything**. **Simple** hides the result
