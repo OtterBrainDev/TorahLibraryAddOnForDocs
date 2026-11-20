@@ -124,10 +124,10 @@ function buildSettingsFile_(stored, overrides, defaults, meta) {
   return file;
 }
 
-/** A file name for the export: "torah-library-settings[-name].json". */
+/** A file name for the export: "sefaria-google-docs-settings[-name].json". */
 function settingsFileName_(name) {
   var slug = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
-  return 'torah-library-settings' + (slug ? '-' + slug : '') + '.json';
+  return 'sefaria-google-docs-settings' + (slug ? '-' + slug : '') + '.json';
 }
 
 /**
@@ -146,7 +146,7 @@ function parseSettingsFile_(text, currentSchema) {
     throw new Error('That is not a settings file: it could not be read.');
   }
   if (!file || typeof file !== 'object' || Array.isArray(file) || file.format !== SETTINGS_FILE_FORMAT_) {
-    throw new Error('That is not a Torah Library settings file.');
+    throw new Error('That is not a Sefaria for Google Docs settings file.');
   }
   if (Number(file.formatVersion) > SETTINGS_FILE_FORMAT_VERSION_ || Number(file.prefsSchemaVersion) > Number(currentSchema)) {
     throw new Error('That file was made by a newer version of the add-on. Reload the document to update, then try again.');

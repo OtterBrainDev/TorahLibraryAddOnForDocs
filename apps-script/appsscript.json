@@ -11,7 +11,7 @@
   ],
   "addOns": {
     "common": {
-      "name": "Torah Library",
+      "name": "Sefaria for Google Docs",
       "logoUrl": "https://the-merkaz.org/wp-content/uploads/2026/03/sefarrow_32.png",
       "useLocaleFromApp": true
     },
