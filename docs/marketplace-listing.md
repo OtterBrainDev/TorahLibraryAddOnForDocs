@@ -1,6 +1,8 @@
 # Store console package — Google Workspace Marketplace
 
-Everything to enter in the Google Cloud console to publish Torah Library, in
+Everything to enter in the Google Cloud console to publish Sefaria for Google
+Docs 2.0 under Sefaria's name (most of it is already set on the existing
+listing; a new scope and changed listing text go through Google's review), in
 the order the console asks for it, with the text ready to paste. None of it can
 live in `appsscript.json`: an editor add-on's manifest carries only a name, a
 logo URL and the scopes; Google reads everything else from the console.
@@ -25,16 +27,15 @@ inside the add-on.
 
 | Decision | Recommended | Where else it must match |
 | --- | --- | --- |
-| Publisher shown on the listing | The Merkaz | Terms §intro (legal name), OAuth consent screen |
-| Cloud project / Apps Script project that publishes | One owned by a The Merkaz account. The `scriptId` in `.clasp.json` belongs to the OtterBrainDev fork's project and is only the default for running `clasp` by hand | In TheMerkazDev: repository variable `CLASP_SCRIPT_ID` and secret `CLASP_TOKEN` (see `.github/workflows/deploy.yml`) |
-| Privacy policy URL | `https://the-merkaz.org/torah-library/privacy` (publish `docs/PRIVACY.md` there). Interim: `https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs/blob/master/docs/PRIVACY.md`, which is what the add-on links to today | `apps-script/preferences.html` (Privacy note), `apps-script/help-modal.html` (About → Privacy policy) — update both if you move it |
-| Terms of service URL | `https://the-merkaz.org/torah-library/terms` (publish `docs/TERMS.md` there after review) | — |
-| Support URL | `https://the-merkaz.org/torah-library` with a contact route, or `mailto:help@the-merkaz.org` if the form accepts it | Help → Support, Release Notes |
-| Source-code link | `https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs` (already used in the add-on). Issues are turned off on that repository, so the add-on sends bug reports to `help@the-merkaz.org`; if you turn Issues on, the Release Notes and `PRIVACY.md` §9 can link to them | `help-modal.html` GitHub pills, `release-notes.html`, `PRIVACY.md` §9 |
+| Publisher shown on the listing | Sefaria | OAuth consent screen |
+| Cloud project / Apps Script project that publishes | The project behind Sefaria's existing listing ([`for-sefaria-review.md`](for-sefaria-review.md) §1). The `scriptId` in `.clasp.json` belongs to the OtterBrainDev development project and must not be used to publish | In the publishing repository: variable `CLASP_SCRIPT_ID` and secret `CLASP_TOKEN` (see `.github/workflows/deploy.yml`) |
+| Privacy policy URL | `https://www.sefaria.org/privacy-policy`, which is what the add-on links to. Sefaria's policy needs to cover saved settings and the text *Link Texts with Sefaria* sends ([`PRIVACY.md`](PRIVACY.md) has the technical account) | `apps-script/preferences.html` (Privacy note), `apps-script/help-modal.html` (header and About → Privacy policy), `release-notes.html` — update all three if it moves |
+| Terms of service URL | `https://www.sefaria.org/terms` | `help-modal.html` (header and About → Terms), `release-notes.html` |
+| Support URL | `https://help.sefaria.org/hc/en-us/sections/20235182393244` (Sefaria's Help Center) | Help → Support, About, Release Notes |
+| Source-code link | **Open.** The add-on still links to `https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs`; point it at the repository Sefaria publishes from | `help-modal.html` GitHub pill, `release-notes.html`, `PRIVACY.md` §9 |
 
-A GitHub blob URL works as an interim privacy/terms URL — the TheMerkazDev
-repository is public — but it is tied to a repository owner and branch name. A
-page on the publisher's own domain is stable.
+The privacy, terms and support URLs are Sefaria's own pages, the same ones the
+existing listing uses.
 
 ---
 
@@ -46,14 +47,14 @@ consoles: *Google Auth Platform → Branding / Audience / Data access*).
 | Field | Value |
 | --- | --- |
 | User type | External |
-| App name | `Torah Library` — must match `addOns.common.name` in `appsscript.json` |
-| User support email | `help@the-merkaz.org` |
+| App name | `Sefaria for Google Docs` — must match `addOns.common.name` in `appsscript.json` |
+| User support email | Sefaria's (the existing listing shows `hello@sefaria.org`) |
 | App logo | The 128 × 128 icon from §3 |
 | Application home page | The project page from §0 |
 | Application privacy policy link | The privacy URL from §0 |
 | Application terms of service link | The terms URL from §0 |
-| Authorized domains | `the-merkaz.org` (and `github.com` only if any URL above stays on GitHub) |
-| Developer contact email | A monitored The Merkaz address |
+| Authorized domains | `sefaria.org` |
+| Developer contact email | A monitored Sefaria address |
 
 ### Scopes (Data access)
 
@@ -76,7 +77,7 @@ Google decides whether these scopes need verification. If it asks, the question
 that matters is *what leaves the user's document*. The answer, consistent with
 `PRIVACY.md` §2:
 
-> Torah Library sends Sefaria only what the user asks for: search terms, the
+> Sefaria for Google Docs sends Sefaria only what the user asks for: search terms, the
 > references they select, and words they look up. The one feature that sends
 > document text is **Link Texts with Sefaria**, which the user runs explicitly.
 > By default the add-on scans the document locally and uploads only passages
@@ -103,9 +104,9 @@ App Configuration.* Enable the Marketplace SDK for the project first.
 | Script ID | The publishing project's script ID (§0) |
 | Script version | The version number from the release step in §6 |
 | OAuth scopes | The four from §1 |
-| Developer name | The Merkaz |
-| Developer website URL | `https://the-merkaz.org` |
-| Developer email | `help@the-merkaz.org` |
+| Developer name | Sefaria |
+| Developer website URL | `https://www.sefaria.org` |
+| Developer email | Sefaria's (the existing listing shows `hello@sefaria.org`) |
 
 ---
 
@@ -116,7 +117,7 @@ App Configuration.* Enable the Marketplace SDK for the project first.
 | Field | Value |
 | --- | --- |
 | Language | English |
-| Application name | Torah Library |
+| Application name | Sefaria for Google Docs |
 | Category | Education (alternative: Productivity) |
 | Pricing | Free |
 
@@ -129,7 +130,7 @@ Find texts in Sefaria's library of Jewish sources and insert them into Google Do
 **Detailed description** (plain text; paste as is):
 
 ```
-Torah Library brings Sefaria's free library of Jewish texts into Google Docs. Search by reference, title, or phrase, preview exactly what you'll get, and insert it formatted the way you want — without leaving your document.
+Sefaria for Google Docs brings Sefaria's free library of Jewish texts into Google Docs. Search by reference, title, or phrase, preview exactly what you'll get, and insert it formatted the way you want — without leaving your document.
 
 WHAT YOU CAN DO
 • Find a text by reference ("Berakhot 2a", "בראשית א:א"), title, phrase, or a Sefaria link, and preview it before inserting.
@@ -142,10 +143,10 @@ WHAT YOU CAN DO
 • Arrange the add-on's menu to put the actions you use most at the top.
 
 YOUR DOCUMENT AND YOUR PRIVACY
-Torah Library can open only the document you are using it in — never your Drive or your other documents. It has no server, no account, and no analytics. Sefaria receives what you search for and the references you choose. "Link Texts with Sefaria" sends text from your document to Sefaria so it can find citations; by default only passages that look like they contain a citation are sent, and you are asked before the first time. The full privacy policy explains exactly what is sent and when.
+Sefaria for Google Docs can open only the document you are using it in — never your Drive or your other documents. It has no server, no account, and no analytics. Sefaria receives what you search for and the references you choose. "Link Texts with Sefaria" sends text from your document to Sefaria so it can find citations; by default only passages that look like they contain a citation are sent, and you are asked before the first time. The full privacy policy explains exactly what is sent and when.
 
 ABOUT
-Torah Library is an independent, open-source add-on built on Sefaria's public library and API. It is not made by Sefaria. Texts and translations carry their own licenses, shown on sefaria.org.
+Sefaria for Google Docs is open source. Texts and translations carry their own licenses, shown on sefaria.org.
 ```
 
 ### Graphic assets
@@ -154,14 +155,14 @@ Torah Library is an independent, open-source add-on built on Sefaria's public li
 | --- | --- | --- |
 | Application icon | 128 × 128 PNG | Ready: [`store-assets/sefarrow-128.png`](store-assets/sefarrow-128.png) |
 | Application icon | 32 × 32 PNG | Ready: [`store-assets/sefarrow-32.png`](store-assets/sefarrow-32.png) (the same image as the manifest `logoUrl`) |
-| Application card banner | 220 × 140 PNG | Ready: [`store-assets/card-banner-220x140.png`](store-assets/card-banner-220x140.png) — the Sefarrow over "Torah Library" |
+| Application card banner | 220 × 140 PNG | Ready: [`store-assets/card-banner-220x140.png`](store-assets/card-banner-220x140.png) — the Sefarrow over "Torah Library"; **replace** with one that says Sefaria for Google Docs, or Sefaria's own |
 | Screenshots | 1280 × 800 PNG (or the console's current size), 1–5 | **Needed** — shot list below. |
 | Promotional video | YouTube URL | Optional. |
 
 The manifest `logoUrl` must stay a public, stable HTTPS URL: Google fetches it to
 draw the icon in the Docs **Extensions** menu (the user's browser does not load
-it from the add-on). It currently points at `the-merkaz.org`, which is fine as
-long as that file stays put.
+it from the add-on). **Open:** it still points at `the-merkaz.org`; move the
+file to a stable Sefaria URL and change `logoUrl` before publishing.
 
 **Screenshot shot list** — take them from a test deployment (§6) in a clean
 document at 1280 × 800, sidebar open, no personal content visible:
@@ -236,13 +237,11 @@ decision outside the code.
 
 - [ ] **Sefaria's name and logo.** The sidebar title is `'Sefaria'`
       (`apps-script/server/menu.gs`) and the footer shows Sefaria's logo
-      (`apps-script/sidebar.html`). Left as is on purpose, pending Sefaria's
-      agreement; if they don't agree, change the title to `Torah Library` and
-      drop the logo.
+      (`apps-script/sidebar.html`). Correct under Sefaria's name; nothing to
+      change.
 - [ ] **Feedback form.** `apps-script/feedback-modal.html` embeds Sefaria's
-      Formstack form, so reports reach Sefaria. Pending: whether Sefaria can
-      forward them to help@the-merkaz.org as well.
-- [ ] **Deploy target.** In TheMerkazDev, set the `CLASP_SCRIPT_ID` variable to
+      Formstack form, so reports reach Sefaria. Correct under Sefaria's name.
+- [ ] **Deploy target.** In the publishing repository, set the `CLASP_SCRIPT_ID` variable to
       the publishing project and add a `CLASP_TOKEN` secret with access to it
       (§0). Until then the deploy workflow is skipped there.
 
@@ -255,7 +254,7 @@ decision outside the code.
 - Changes to the store listing (text, images, URLs) go through review again.
   Changing the **script version** in App Configuration (§6) normally does not,
   unless the release also changes the OAuth scopes.
-- Watch `help@the-merkaz.org` and the listing's reviews; the add-on has no
+- Watch the Help Center, the feedback form and the listing's reviews; the add-on has no
   telemetry, so these are the only signals that something broke.
 
 ---

@@ -316,7 +316,7 @@ function showFirstRunSetup_() {
   var output = template.evaluate()
     .setWidth(640)
     .setHeight(680);
-  DocumentApp.getUi().showModalDialog(output, 'Welcome to Torah Library');
+  DocumentApp.getUi().showModalDialog(output, 'Welcome to Sefaria for Google Docs');
 }
 
 /**

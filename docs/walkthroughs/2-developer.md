@@ -109,7 +109,7 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
 
 ## 2. Open the sidebar (5 min)
 
-**Do:** Extensions → Torah Library → **Texts**.
+**Do:** Extensions → Sefaria for Google Docs → **Texts**.
 
 **What runs:**
 

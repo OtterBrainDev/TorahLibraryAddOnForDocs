@@ -3,10 +3,8 @@
 **Audience:** someone who has never used the add-on. **Time:** 5 minutes.
 **You need:** a Google Doc and the add-on installed.
 
-Torah Library puts texts from [Sefaria](https://www.sefaria.org), in Hebrew,
+Sefaria for Google Docs puts texts from [Sefaria](https://www.sefaria.org), in Hebrew,
 in translation or both, straight into your Google Doc.
-
-> This is not an official Sefaria project.
 
 ---
 
@@ -18,7 +16,7 @@ Deuteronomy 6:4), and whether you want **Simple** or **Everything**. Every
 answer is already filled in, so you can just click **Continue** through it, or
 **Skip for now**. You can change all of it later.
 
-In your document, click **Extensions → Torah Library → Texts**.
+In your document, click **Extensions → Sefaria for Google Docs → Texts**.
 
 A panel opens on the right. That's the sidebar.
 
@@ -68,14 +66,14 @@ top and a short credit line underneath naming the translation.
 - **Link the references you've typed** to Sefaria: **🏃 → Link Texts with
   Sefaria**.
 - **Run the setup again:** **Help** → **Run setup again**.
-- **Get help:** click **Help** at the bottom of the sidebar, or email
-  [help@the-merkaz.org](mailto:help@the-merkaz.org).
+- **Get help:** click **Help** at the bottom of the sidebar, or visit
+  [Sefaria's Help Center](https://help.sefaria.org/hc/en-us/sections/20235182393244).
 
 ## If it doesn't work
 
 | What you see | What to do |
 | --- | --- |
-| No Torah Library under Extensions | Reload the document. |
+| No Sefaria for Google Docs under Extensions | Reload the document. |
 | "Sources can't be inserted into a header, footer or footnote" | Click in the main text of your document, then try again. |
 | "Inserted below the table" | Your cursor was in a table, and the layout you chose is a table itself. Choose one language or **Stacked** to insert inside the cell. |
 | "Couldn't reach Sefaria" | Check your internet connection and try again. |

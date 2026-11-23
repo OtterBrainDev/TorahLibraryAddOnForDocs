@@ -69,7 +69,7 @@ test('an export holds the settings, the dialog\'s unsaved values, and none of on
   assert.equal(file.prefsSchemaVersion, schema);
   assert.equal(file.name, 'Grade 7 Chumash');
   assert.equal(file.interfaceMode, 'simple');
-  assert.equal(result.fileName, 'torah-library-settings-grade-7-chumash.json');
+  assert.equal(result.fileName, 'sefaria-google-docs-settings-grade-7-chumash.json');
   assert.equal(file.settings.nekudot, 'false', 'stored value');
   assert.equal(file.settings.hebrew_font, 'Frank Ruhl Libre');
   assert.equal(file.settings.teamim, 'false', 'the dialog\'s unsaved value');
@@ -124,7 +124,7 @@ test('a foreign, broken, newer or empty file is refused with a plain message, an
   const cases = [
     ['', /empty/],
     ['{not json', /could not be read/],
-    [JSON.stringify({ format: 'something-else', settings: {} }), /not a Torah Library settings file/],
+    [JSON.stringify({ format: 'something-else', settings: {} }), /not a Sefaria for Google Docs settings file/],
     [JSON.stringify({ format: 'torah-library-settings', formatVersion: 1, prefsSchemaVersion: '99', settings: {} }), /newer version/],
     [JSON.stringify({ format: 'torah-library-settings', formatVersion: 2, prefsSchemaVersion: '26', settings: {} }), /newer version/],
     [JSON.stringify({ format: 'torah-library-settings', formatVersion: 1, prefsSchemaVersion: '26' }), /no settings/],

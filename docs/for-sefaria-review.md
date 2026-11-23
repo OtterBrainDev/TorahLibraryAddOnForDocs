@@ -4,13 +4,17 @@ Written 2026-11-17 against the 2.0.0 release candidate (816 tests passing,
 `pre_clasp_qc.sh` clean, preference schema 30).
 
 This add-on grew out of *Sefaria for Google Docs* 1.0 (Shlomi Helfgot's code,
-MIT). As it stands it is set up to be published by The Merkaz as a separate
-add-on called **Torah Library**, installed beside Sefaria's. This file is for
-the other outcome: **Sefaria takes the code and publishes it under its own
-name.** It lists what Sefaria would need to decide, change and check.
+MIT). It was first set up to be published by The Merkaz as a separate add-on
+called Torah Library. **As of 2026-11-20 it is named Sefaria for Google Docs
+and links to Sefaria's Help Center, privacy policy and terms**, ready for the
+other outcome: Sefaria takes the code and publishes it under its own name.
+This file lists what Sefaria would still need to decide, change and check.
 
-Nothing here is a change request to the code as it is today. Sections 3 and 4
-are the work; the rest is context for whoever reviews it.
+**Until Sefaria approves it, this build must not be published from any other
+account**: it carries Sefaria's name and links.
+
+Section 3 says what the rename covered and what is left; section 4 is the
+publishing work; the rest is context for whoever reviews it.
 
 ---
 
@@ -100,7 +104,7 @@ document text that *Link Texts with Sefaria* sends.
   and Unlink Sources work on text 1.0 inserted.
 
 The live test checklist (`docs/live-test-checklist-2.0.0.md`) covers a 1.0
-user who installs Torah Library *beside* 1.0 (its "Account C"). **It has no
+user who installs a test deployment of this build *beside* 1.0 (its "Account C"). **It has no
 in-place upgrade run.** Before path A goes to users, push this code to a copy
 of the 1.0 project's state, open a document as a user who has only ever had
 1.0, and confirm the bullets above.
@@ -111,7 +115,7 @@ of the 1.0 project's state, open a document as a user who has only ever had
 
 | # | Decision | Where it lives now |
 | --- | --- | --- |
-| 1 | **Name.** Keep "Sefaria for Google Docs", or adopt "Torah Library" | Section 3 lists every place |
+| 1 | **Name.** The code now says "Sefaria for Google Docs"; confirm it | Section 3 lists every place |
 | 2 | **Divine-name substitution on insert, on by default.** 1.0 only changed names when asked | `getDefaultPreferences()` in `apps-script/server/preferences.gs`; the first-run dialog also asks |
 | 3 | **Credit line under each source, on by default** | Same; pinned by `test/tests/source-attribution.test.js` |
 | 4 | **First-run setup for upgraded users** — show it (as the code does now), or mark it done for anyone coming from 1.0 so they are not interrupted | `first_run_setup` in `server/first-run.gs`; a change needs a migration and a test |
@@ -127,40 +131,42 @@ already `'Sefaria'` and the footer already shows Sefaria's logo.
 
 ---
 
-## 3. What to change to publish under Sefaria's name
+## 3. Publishing under Sefaria's name: what is done, what is left
 
 All of it is text and configuration; none of it touches how the add-on works.
 
-### In the add-on (`apps-script/`)
+### Done (2026-11-20)
 
 | What | Where |
 | --- | --- |
-| Add-on name `Torah Library` | `appsscript.json` (`addOns.common.name`); must match the listing and the OAuth consent screen exactly |
-| Manifest logo, hosted on `the-merkaz.org` | `appsscript.json` (`logoUrl`) — point it at a stable Sefaria URL |
-| "Torah Library" in the interface | `help-modal.html` (25 places), `first-run-setup.html` (4), `release-notes.html` (3), `first-run-setup/js.html`, `css/tokens.html` (a comment), the dialog title in `server/first-run.gs`, one error message in `server/settings-file.gs` |
-| Support address `help@the-merkaz.org` | `help-modal.html`, `release-notes.html` |
-| Privacy-policy and GitHub links to `TheMerkazDev/TorahLibraryAddOnForDocs` | `help-modal.html`, `preferences.html`, `release-notes.html` |
-| "Maintained by…" and "this add-on is not made by Sefaria" wording | `help-modal.html` → About; the README |
-| The *Coming from Sefaria for Google Docs* Help topic and Release Notes, which describe a separate add-on installed beside 1.0 | `help-modal.html`, `release-notes.html` — rewrite as "what's new in this version" |
-| Settings-file marker | `server/settings-file.gs` — check what an exported file is tagged with before renaming, so files exported earlier still import |
+| Add-on name `Sefaria for Google Docs` | `appsscript.json` (`addOns.common.name`); must match the listing and the OAuth consent screen exactly |
+| The name in the interface | `help-modal.html`, `first-run-setup.html`, `release-notes.html`, `first-run-setup/js.html`, the dialog title in `server/first-run.gs`, one error message in `server/settings-file.gs` |
+| Support: Sefaria's Help Center, `https://help.sefaria.org/hc/en-us/sections/20235182393244` | `help-modal.html`, `release-notes.html` |
+| Privacy policy `https://www.sefaria.org/privacy-policy`; terms `https://www.sefaria.org/terms` | `help-modal.html`, `preferences.html`, `release-notes.html` |
+| "Not made by Sefaria" wording removed | `help-modal.html` → About, `release-notes.html`, the README, the listing copy |
+| The Help topic and Release Notes that described a separate add-on installed beside 1.0 are now *Coming from version 1.0* | `help-modal.html`, `release-notes.html` |
+| Settings file: the marker stays `torah-library-settings`, so files exported earlier still import; the suggested file name is `sefaria-google-docs-settings.json` | `server/settings-file.gs` |
+| README, walkthroughs, live test checklist, listing package | `README.md`, `docs/walkthroughs/`, `docs/live-test-checklist-2.0.0.md`, `docs/marketplace-listing.md` |
+
+### Left
+
+| What | Where |
+| --- | --- |
+| Manifest logo, still hosted on `the-merkaz.org` | `appsscript.json` (`logoUrl`) — point it at a stable Sefaria URL |
+| GitHub links, still to `TheMerkazDev/TorahLibraryAddOnForDocs` | `help-modal.html` (About), `release-notes.html`, `docs/PRIVACY.md` §9 — point them at the repository Sefaria publishes from |
+| Sefaria's privacy policy must cover saved settings and the text *Link Texts with Sefaria* sends | Sefaria's site. `docs/PRIVACY.md` is the technical account to check it against; §2 is accurate as written |
+| Store icons and banner (a ס with an arrow over "Torah Library") | `docs/store-assets/` — replace with Sefaria's |
+| The repository's own name, and the deploy workflow's comment naming TheMerkazDev | GitHub; `.github/workflows/deploy.yml` |
 
 The MIT copyright headers (Shlomi Helfgot; modifications Austin Swafford) and
-`LICENSE.md` stay as they are.
+`LICENSE.md` stay as they are. `docs/TERMS.md`, a draft for an independent
+publisher, is superseded by Sefaria's terms. Dated records (the CHANGELOG's
+earlier sections, design documents, `reference/ai-lesson/`) keep the name
+Torah Library.
 
-### In the repository
+### Tests that hold the name
 
-| What | Where |
-| --- | --- |
-| Privacy policy: publisher, contact, repository link, and the sentence that the add-on is independent of Sefaria | `docs/PRIVACY.md` (§1, §9). §2 — what is sent, to whom, and when — is accurate as written and should not need changes |
-| Terms | `docs/TERMS.md` (decision 8) |
-| Listing copy, which ends "It is not made by Sefaria" | `docs/marketplace-listing.md` §3 |
-| Store icons and banner (a ס with an arrow over "Torah Library") | `docs/store-assets/` — replace with Sefaria's, or keep |
-| README, walkthroughs, live test checklist | `README.md`, `docs/walkthroughs/`, `docs/live-test-checklist-2.0.0.md` (rows M2, M3 name the TheMerkazDev repository) |
-| Version: this is 2.0.0 following 1.0.0, which already fits an in-place upgrade | `docs/VERSION.json` |
-
-### Tests to expect after renaming
-
-Four test files hold the current name or addresses: the snapshots
+Four test files hold the name or addresses, and were updated with the rename: the snapshots
 `test/ui/snapshots/preferences.html.snap` and `first-run-setup.html.snap`
 (regenerate with `UPDATE_UI_SNAPSHOTS=1 npm test`, never by hand),
 `test/tests/settings-file.test.js` and `test/tests/first-run-setup.test.js`.
