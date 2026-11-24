@@ -85,12 +85,13 @@ function loadCardSample() {
 test('the card transliteration sample drops the maqaf with Hebrew punctuation off', () => {
   const ctx = loadCardSample();
   const labels = vm.runInContext('CC_TRANSLIT_LABELS', ctx);
-  assert.equal(ctx.ccTranslitSample(labels.simple_english, true), "ha-sefer kol-ha'am");
-  assert.equal(ctx.ccTranslitSample(labels.simple_english, false), "ha-sefer kol ha'am");
-  assert.equal(ctx.ccTranslitSample(labels.traditional, false), 'ha-sēfer kol hā-ʿam');
+  assert.equal(ctx.ccTranslitSample(labels.simple_english, true), "hasefer khol-ha'am");
+  assert.equal(ctx.ccTranslitSample(labels.simple_english, false), "hasefer khol ha'am");
+  assert.equal(ctx.ccTranslitSample(labels.traditional, false), 'hasefer khol haʿam');
   // Preferences' own samples (another verse) go through the same helper.
-  assert.equal(ctx.ccTranslitSample('Vəśamtem ʾet-dəvaray ʾēleh ʿal-ləvavḵem', false), 'Vəśamtem ʾet dəvaray ʾēleh ʿal ləvavḵem');
-  assert.equal(ctx.ccTranslitSample('Ve-samtem et-devarai', false), 'Ve-samtem et devarai', 'the prefix "Ve-" is not a maqaf');
+  assert.equal(ctx.ccTranslitSample('Wəśamtem ʾeṯ-dəvāray ʾēleh ʿal-ləvavḵem', false), 'Wəśamtem ʾeṯ dəvāray ʾēleh ʿal ləvavḵem');
+  // The engine writes a hyphen only for a maqaf, so every one is a word break.
+  assert.equal(ctx.ccTranslitSample(labels.ipa_modern, false), 'hasefeʁ χol haʔam');
 });
 
 test('every card transliteration sample starts with the article on "sefer"', () => {

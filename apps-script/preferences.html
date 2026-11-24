@@ -392,7 +392,7 @@
                           </div>
                         </div>
                       </div>
-                      <div class="inline-preview transliteration" id="transliteration_preview"><span class="label">Preview</span>Ve-samtem et devarai eileh al levavchem</div>
+                      <div class="inline-preview transliteration" id="transliteration_preview"><span class="label">Preview</span>Vesamtem et-devarai eleh al-levavkhem</div>
                     </div>
                   </div>
                   <div class="pref-font-editor" data-font-editor="translationTitle" aria-label="Translation title font">
@@ -741,7 +741,19 @@
             <summary class="section-card-summary"><span>Transliteration Mapping</span></summary>
             <div class="section-card-body">
               <div class="subsection-card">
-                <div class="mini-help">Choose a Hebrew character, then specify the replacement you want this transliteration engine to use for that character.</div>
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Double dagesh chazak</div>
+                    <div class="toggle-help">Write a letter twice where a strong dagesh doubles it: <em>Shabbat</em>, <em>tefillah</em>, <em>kiddeshanu</em>. Off: <em>Shabat</em>, <em>tefilah</em>. In every style and every text; sh, ts, kh and other two-letter sounds are written once.</div>
+                  </div>
+                  <label class="switch" for="transliteration_double_dagesh">
+                    <input id="transliteration_double_dagesh" type="checkbox">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="subsection-card">
+                <div class="mini-help">Choose a Hebrew letter or vowel sign, then type how the transliteration should write it, in every style. A letter that changes with a dagesh (ב כ פ ת) changes only without it: כ → <em>ch</em> keeps כּ <em>k</em>. A vowel sign changes wherever it is pronounced; the sh'va only where it is spoken (→ <em>'</em> gives <em>b'rachah</em>). Help → Transliteration styles shows how to match a siddur's spelling.</div>
                 <div class="override-grid" id="override_grid"></div>
                 <div class="override-editor">
                   <div class="compact-field">

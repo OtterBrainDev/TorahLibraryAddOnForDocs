@@ -35,7 +35,7 @@ const HEBREW_MARK = /[\u0591-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7]/;
 
 test('the Name is read HaShem, with or without vowels and cantillation', () => {
   for (const name of ['יְהוָ֥ה', 'יְהֹוָה', 'יהוה']) assert.equal(tr(`כִּי ${name}`), `${tr('כִּי')} HaShem`, name);
-  assert.match(tr(SHEMA), /^Shema yisera'el HaShem 'eloheynv HaShem ׀ 'ekhad׃ Ve'ahaveta 'et HaShem /);
+  assert.match(tr(SHEMA), /^Shema yisra'el HaShem eloheinu HaShem ׀ ekhad׃ Ve'ahavta et HaShem /);
 });
 
 test('every substitute for the Name is read HaShem too', () => {
@@ -61,16 +61,18 @@ test('words that only contain the letters are not the Name', () => {
 test('IPA reads the Name in IPA, and is never capitalized', () => {
   assert.equal(tr('כִּי יְהוָה', 'ipa_modern'), `${tr('כִּי', 'ipa_modern')} haʃem`);
   assert.match(tr('כִּי', 'ipa_modern'), /^k/);
-  assert.equal(tr('אֶחָד׃ וְאָהַבְתָּ', 'ipa_modern'), 'ʔeχad׃ veʔahaveta');
+  assert.equal(tr('אֶחָד׃ וְאָהַבְתָּ', 'ipa_modern'), 'ʔeχad׃ veʔahavta');
 });
 
 test('each sentence starts with a capital: the line, after a sof pasuq or a period', () => {
-  assert.equal(tr('אֶחָד׃ וְאָהַבְתָּ'), "'Ekhad׃ Ve'ahaveta");
+  assert.equal(tr('אֶחָד׃ וְאָהַבְתָּ'), "Ekhad׃ Ve'ahavta");
   // After a period, and not after an ordinary word.
-  assert.match(tr('מֵאֵימָתַי קוֹרִין. מִשָּׁעָה'), /^Me'eymatay [a-z]\S*\. M/);
-  // The line marker and the aleph sign are skipped.
-  assert.match(tr('(א) בְּרֵאשִׁית בָּרָא'), /^\(\S*\) Bere'shiyt bara'$/);
-  assert.equal(tr('אֶחָד'), "'Ekhad");
+  assert.match(tr('מֵאֵימָתַי קוֹרִין. מִשָּׁעָה'), /^Me'eimatai [a-z]\S*\. M/);
+  // The line marker and an aleph or ayin sign are skipped.
+  assert.match(tr('(א) בְּרֵאשִׁית בָּרָא'), /^\(\S*\) Bereshit bara$/);
+  assert.equal(tr('אֶחָד'), 'Ekhad');
+  assert.equal(tr('אֶחָד', 'traditional'), 'Eḥad');
+  assert.equal(tr('עוֹלָם', 'traditional'), 'ʿOlam');
   // Every scheme with letters that have capitals.
   assert.match(tr('שְׁמַע יִשְׂרָאֵל', 'academic_full'), /^Šəmaʿ /);
   assert.match(tr('שְׁמַע יִשְׂרָאֵל', 'ashkenazi'), /^Shema /);
@@ -84,7 +86,7 @@ test('no Hebrew vowel or cantillation mark is left in the Latin text', () => {
 
 test('the insert path (line by line) capitalizes each line', () => {
   const out = context.transliterateHebrewHtmlPreservingBasicBreaks('אֶחָד<br>וְאָהַבְתָּ <b>אֵת</b> יְהוָה', 'simple_english', { overrideMap: {} });
-  assert.equal(out, "'Ekhad\nVe'ahaveta 'et HaShem");
+  assert.equal(out, "Ekhad\nVe'ahavta et HaShem");
 });
 
 // ── Names of people, places and peoples ──────────────────────────────────
@@ -104,15 +106,15 @@ const named = (text, scheme = 'simple_english') => withNames.transliterateHebrew
 const capitals = (text) => named(text).split(' ').slice(1).filter((w) => /[A-Z]/.test(w));
 
 test('people and places in the Tanakh are capitalized, after their prefix', () => {
-  assert.deepEqual(capitals('וַיֵּלֶךְ אַבְרָם וַיֵּלֶךְ אִתּוֹ לוֹט מֵחָרָן'), ["'Averam", 'Lvot', 'meKharan']);
-  assert.deepEqual(capitals('וַיֵּצֵא מֹשֶׁה מִמִּצְרַיִם אֶל בָּבֶל'), ['Mosheh', 'miMitserayim', 'Bavel']);
-  assert.deepEqual(capitals('עָשׂוּ כֵן בְּנֵי יִשְׂרָאֵל'), ["Yisera'el"]);
+  assert.deepEqual(capitals('וַיֵּלֶךְ אַבְרָם וַיֵּלֶךְ אִתּוֹ לוֹט מֵחָרָן'), ['Avram', 'Lot', 'meKharan']);
+  assert.deepEqual(capitals('וַיֵּצֵא מֹשֶׁה מִמִּצְרַיִם אֶל בָּבֶל'), ['Mosheh', 'miMitsrayim', 'Bavel']);
+  assert.deepEqual(capitals('עָשׂוּ כֵן בְּנֵי יִשְׂרָאֵל'), ["Yisra'el"]);
 });
 
 test('the pointing tells a name from a word spelled alike', () => {
   // עֵשָׂו is Esau; עָשׂוּ is "they did". שָׁאוּל is Saul; שְׁאוֹל is Sheol.
-  assert.deepEqual(capitals('וַיָּבֹא עֵשָׂו וַיַּעַשׂ כֵּן עָשׂוּ'), ["'Esav"]);
-  assert.deepEqual(capitals('וַיֵּרֶד שָׁאוּל שְׁאוֹל'), ["Sha'vl"]);
+  assert.deepEqual(capitals('וַיָּבֹא עֵשָׂו וַיַּעַשׂ כֵּן עָשׂוּ'), ['Esav']);
+  assert.deepEqual(capitals('וַיֵּרֶד שָׁאוּל שְׁאוֹל'), ["Sha'ul"]);
   // A common word is never capitalized: אשר is Asher 29 times, "which" 4,807.
   assert.deepEqual(capitals('וַיֹּאמֶר אֲשֶׁר אָמַר'), []);
 });
@@ -122,14 +124,14 @@ test('unpointed text is read by its consonants', () => {
 });
 
 test('a two-word name whose first word is also a word: Beit El, Be\'er Sheva', () => {
-  assert.deepEqual(capitals('וַיִּקְרָא שֵׁם הַמָּקוֹם בֵּית־אֵל'), ["Beyt-'El"]);
+  assert.deepEqual(capitals('וַיִּקְרָא שֵׁם הַמָּקוֹם בֵּית־אֵל'), ['Beit-El']);
   assert.match(named('וַיֵּלֶךְ בְּאֵר שָׁבַע'), / Be'er Shava'$/);
   // בֵּית alone is "house".
   assert.deepEqual(capitals('אֶל בֵּית אָבִיו'), []);
 });
 
 test('Talmud sages and places, with their titles and prefixes', () => {
-  assert.deepEqual(capitals('דִּבְרֵי רַבִּי אֱלִיעֶזֶר. רַבָּן גַּמְלִיאֵל אוֹמֵר'), ["Rabiy", "'Eliy'ezer.", 'Raban', "Gameliy'el"]);
+  assert.deepEqual(capitals('דִּבְרֵי רַבִּי אֱלִיעֶזֶר. רַבָּן גַּמְלִיאֵל אוֹמֵר'), ['Rabi', "Eli'ezer.", 'Raban', "Gamli'el"]);
   // Prefixes: ו, ד (of), ב (in).
   assert.deepEqual(capitals("אמר רבא משמיה דשמואל ואביי בפומבדיתא"), ['Rv', "dShmv'l", "v'Vyy", "vFvmvdyt'"]);
   // A title before a name is capitalized, and ר' abbreviates Rabbi.

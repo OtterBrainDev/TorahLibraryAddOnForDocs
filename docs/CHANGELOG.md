@@ -95,10 +95,58 @@ below marked *Migration* say what each schema step changes.
 
 The rest of this entry is the development record, newest first.
 
+### Transliteration read the way Hebrew is read; Double dagesh chazak; siddur styles
+
+#### Fixed
+
+- **The transliteration wrote every letter and sign on its own**, so most
+  pointed words came out wrong: a shuruk was a "v" (*'Eloheynv*, *Barvkhe*,
+  *Rvkha*), a holam's vav a "v" too (*Tvov*, *Yvom*), a silent yod, aleph
+  or sh'va was written (*Bere'shiyt*, *Yisera'el*, *Melekhe*), every kamatz
+  was "a" (*Kal*, *Khakhemah*), and a patach under a final ח came after it.
+  Over a sample of Sefaria's Tanakh and siddur, about two words in three
+  differed from a careful reading. Each pointed word is now read as a whole
+  (`readWord_` in `transliteration.gs`): vowel letters (shuruk, holam male,
+  hiriq/tsere/segol + yod, a final he, an aleph with no vowel), spoken and
+  silent sh'va, kamatz katan (marked U+05C7 in Sefaria's Tanakh, which is
+  trusted; elsewhere by its closed unstressed syllable, *kol*, *chokhmah*),
+  dagesh chazak and lene, and the furtive patach (*ruach*). A shin or sin dot
+  that stands for a holam is read (*משֶׁה* → *Mosheh*). The cantillation tells
+  the reader the stress before it is dropped. Text without vowels is read
+  letter by letter as before.
+- **An aleph or ayin at the start of a word is no longer an apostrophe** in
+  Simple English, Modern Israeli and Ashkenazi (*Ekhad*, *Rabbi Akiva*);
+  Traditional keeps *ʿ* for ayin, Academic both signs, IPA *ʔ*. A capital
+  now follows the *ʾ* / *ʿ* sign (*ʿOlam*).
+- The style samples in Preferences and on the composition card were written
+  by hand and showed spellings the engine never wrote (*ha-sēfer*); they are
+  now the engine's own output, and a test keeps them so.
+
+#### Added
+
+- **Double dagesh chazak** (Preferences → Insertion → Transliteration
+  Mapping): *Shabbat*, *tefillah*, or *Shabat*, *tefilah*. It is the stored
+  `transliteration_biblical_dagesh_mode` (`"none"` / `"forte"`), which had no
+  control; it now applies to every text, not only the Tanakh, and the sidebar
+  preview and Voices read it too. Default off, as before: no migration, no
+  new key. Two-letter sounds (sh, ts, kh) are written once.
+- **Vowel signs in Transliteration Mapping**: twelve vowel signs beside the
+  letters, each changed wherever it is pronounced (a sh'va only where it is
+  spoken, so *'* gives *b'mitzvotav*; tsere with its yod; holam with its vav;
+  kubutz with shuruk). A letter that changes with a dagesh now changes only
+  without it: כ → *ch* keeps כּ *k*.
+- **Help → Transliteration styles**: how the reading works, each style on one
+  blessing, and how to come close to Mishkan T'filah, Siddur Lev Shalem,
+  Koren and ArtScroll with a style and Transliteration Mapping (Hadar and
+  Pardes publish no siddur transliteration we could find).
+- `test/tests/transliteration-reading.test.js`. No new preference, RPC or
+  OAuth scope; `transliteration_is_biblical_hebrew` now means "trust the
+  Tanakh's kamatz katan marks".
+
 ### Help → About: what's new in 2.0
 
 - **About → New in 2.0 lists everything new or improved** compared with
-  Sefaria for Google Docs 1.0: 66 items in eleven folded groups (Finding a
+  Sefaria for Google Docs 1.0: 68 items in eleven folded groups (Finding a
   text, Previewing and inserting, Layout, Hebrew and translation formatting,
   Divine names, Link Texts, Voices, Lexicon, Session Library and Quick
   Actions, Your settings, Help and privacy), each tagged *New* or *Improved*

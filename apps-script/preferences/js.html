@@ -1,13 +1,15 @@
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // Deuteronomy 11:18 (וְשַׂמְתֶּם אֶת־דְּבָרַי אֵלֶּה עַל־לְבַבְכֶם) as the engine
+    // writes it; see CC_TRANSLIT_LABELS (shared/composition-card/shared).
     const transliterationExamples = {
-      simple_english: "Ve-samtem et devarai eileh al levavchem",
-      traditional: "Vəśamtem ʾet-dəvaray ʾēleh ʿal-ləvavḵem",
-      modern_israeli: "Ve-samtem et devarai eleh al levavkhem",
-      ashkenazi: "Ve-samtem es devarai eileh al levavchem",
-      academic_full: "Wəśamtem ʾet-dəvaray ʾēlleh ʿal-ləvavḵem",
-      ipa_modern: "ve-samtem et dvarai ele al levavχem",
-      ipa_tiberian: "wəsamtem ʔet dəvaʁaj ʔele ʕal ləvavχem"
+      simple_english: "Vesamtem et-devarai eleh al-levavkhem",
+      traditional: "Vesamtem et-devarai eleh \u02BFal-levavkhem",
+      modern_israeli: "Vesamtem et-devarai eleh al-levavchem",
+      ashkenazi: "Vesamtem es-devorai eileh al-levavkhem",
+      academic_full: "W\u0259\u015Bamtem \u02BEe\u1E6F-d\u0259v\u0101ray \u02BE\u0113leh \u02BFal-l\u0259vav\u1E35em",
+      ipa_modern: "vesamtem \u0294et-deva\u0281aj \u0294ele \u0294al-levav\u03C7em",
+      ipa_tiberian: "w\u0259samt\u025Bm \u0294\u025B\u03B8-d\u0259v\u0254\u02D0raj \u0294e\u02D0l\u025B \u0295al-l\u0259vav\u03C7\u025Bm"
     };
 
     const FONT_SIZE_FIELDS = ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size','hebrew_title_font_size','hebrew_link_font_size','citation_font_size'];
@@ -20,6 +22,27 @@
     const STYLED_FONT_PREFIXES = TITLE_FONT_PREFIXES.concat(['citation']);
 
     const overrideChars = ["א","ב","ג","ד","ה","ו","ז","ח","ט","י","כ","ך","ל","מ","ם","נ","ן","ס","ע","פ","ף","צ","ץ","ק","ר","ש","ת"];
+    // The vowel signs Transliteration Mapping can change, each wherever it is
+    // pronounced (transliteration.gs: vowelSound_): a sh'va only where it is
+    // spoken, hiriq and tsere with their yod too, holam with its vav, kubutz
+    // for shuruk too. Shown on a dotted circle.
+    const overrideMarks = [
+      { ch: "\u05B7", name: "Patach" },
+      { ch: "\u05B8", name: "Kamatz" },
+      { ch: "\u05C7", name: "Kamatz katan" },
+      { ch: "\u05B6", name: "Segol" },
+      { ch: "\u05B5", name: "Tsere (and tsere with yod)" },
+      { ch: "\u05B4", name: "Hiriq (and hiriq with yod)" },
+      { ch: "\u05B9", name: "Holam (and holam with vav)" },
+      { ch: "\u05BB", name: "Kubutz and shuruk" },
+      { ch: "\u05B0", name: "Sh'va, where it is spoken" },
+      { ch: "\u05B2", name: "Hataf patach" },
+      { ch: "\u05B1", name: "Hataf segol" },
+      { ch: "\u05B3", name: "Hataf kamatz" }
+    ];
+    function overrideLabel(ch) {
+      return /[\u05B0-\u05C7]/.test(ch) ? "\u25CC" + ch : ch;
+    }
     const customReplacementFields = [
       'meforash_replacement',
       'yaw_replacement',
@@ -145,8 +168,8 @@
       const preview = byId('transliteration_preview');
       if (!scheme || !preview) return;
       // Both operands are local constants: the <span> literal is static, and
-      // transliterationExamples is a hand-authored const lookup at the top of
-      // this file. No user input is interpolated.
+      // transliterationExamples is a const lookup at the top of this file (the
+      // engine's output, kept so by a test). No user input is interpolated.
       preview.innerHTML = '<span class="label">Preview</span>' + (transliterationExamples[scheme.value] || transliterationExamples.simple_english);
       updateStandardPreview('transliteration_font', 'transliteration_preview', 'transliteration_font_style');
     }
@@ -437,20 +460,34 @@
       if (!grid) return;
       // Clear: constant empty string; equivalent to replaceChildren().
       grid.innerHTML = '';
-      overrideChars.forEach(function(ch) {
+      const buttons = overrideChars.map(function(ch) { return { ch: ch, name: '' }; }).concat(overrideMarks);
+      buttons.forEach(function(item) {
+        const ch = item.ch;
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'override-char-btn' + (selectedOverrideChar === ch ? ' active' : '');
-        btn.textContent = ch;
+        btn.className = 'override-char-btn' + (item.name ? ' override-mark-btn' : '') + (selectedOverrideChar === ch ? ' active' : '');
+        btn.textContent = overrideLabel(ch);
         btn.setAttribute('data-char', ch);
+        if (item.name) {
+          btn.title = item.name;
+          btn.setAttribute('aria-label', item.name);
+        }
         btn.addEventListener('click', function() {
           selectedOverrideChar = ch;
-          byId('override_selected_char').value = ch;
+          byId('override_selected_char').value = item.name ? overrideLabel(ch) + ' ' + item.name : ch;
           byId('override_value').value = transliterationOverrides[ch] || '';
           renderOverrideGrid();
         });
         grid.appendChild(btn);
       });
+    }
+
+    // "Double dagesh chazak": a switch with no name, driving the hidden
+    // transliteration_biblical_dagesh_mode field ("forte" or "none").
+    function syncDageshSwitchFromField() {
+      const field = byId('transliteration_biblical_dagesh_mode');
+      const toggle = byId('transliteration_double_dagesh');
+      if (field && toggle) toggle.checked = field.value === 'forte' || field.value === 'all';
     }
 
     function escapeHtml(value) {
@@ -474,7 +511,7 @@
       // Every user-sourced value is passed through `escapeHtml`. If you
       // change this builder, keep every interpolation escaped.
       list.innerHTML = keys.map(function(k) {
-        return '<div class="override-item"><span><strong>' + escapeHtml(k) + '</strong> → ' + escapeHtml(transliterationOverrides[k]) + '</span></div>';
+        return '<div class="override-item"><span><strong>' + escapeHtml(overrideLabel(k)) + '</strong> → ' + escapeHtml(transliterationOverrides[k]) + '</span></div>';
       }).join('');
     }
 
@@ -743,6 +780,7 @@
               updateSheimotSummary();
               renderOverrideGrid();
               renderOverrideList();
+              syncDageshSwitchFromField();
               loadCorpusOrderFromFields();
               voicesTopicOrderEditor.load();
               dictionaryOrderEditor.load();
@@ -895,6 +933,10 @@
       if (el) el.addEventListener('change', updateSheimotSummary);
     });
 
+
+    byId('transliteration_double_dagesh').addEventListener('change', function() {
+      byId('transliteration_biblical_dagesh_mode').value = this.checked ? 'forte' : 'none';
+    });
 
     byId('save_override_btn').addEventListener('click', function() {
       if (!selectedOverrideChar) return;
