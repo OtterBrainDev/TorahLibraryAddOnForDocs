@@ -777,8 +777,9 @@ function normalizeTransliterationPosition_(value) {
 /**
  * The transliteration as an insert writes it, for one payload: `scheme`
  * (the caller's), else the stored `transliteration_scheme`; the stored
- * dagesh mode and letter overrides; a Tanakh text read as Biblical Hebrew
- * unless that setting is off.
+ * "Double dagesh chazak" setting and letter overrides; a Tanakh text read
+ * as Sefaria's Tanakh is pointed, every kamatz katan marked (U+05C7), unless
+ * `transliteration_is_biblical_hebrew` is off.
  *   read(html)  - any Hebrew.
  *   whole(segmentedData, formattedData, includeLineMarkers) - the passage,
  *               read from the Hebrew as fetched (vowels kept, the Hebrew
@@ -806,7 +807,10 @@ function transliteratorFor_(scheme, prefs, data) {
     return transliterateHebrewHtmlPreservingBasicBreaks(html, schemeKey, {
       keepNiqqud: true,
       isBiblicalHebrew: isBiblicalHebrewText,
-      dageshMode: isBiblicalHebrewText ? (settings.transliteration_biblical_dagesh_mode || "none") : "none",
+      // "Double dagesh chazak" (Preferences -> Transliteration Mapping), in every text.
+      dageshMode: settings.transliteration_biblical_dagesh_mode === "none" || !settings.transliteration_biblical_dagesh_mode ? "none" : "forte",
+      // The Name's spelling (Transliteration Mapping), in every style.
+      divineName: settings.transliteration_divine_name || "",
       overrideMap: overrideMap
     });
   };

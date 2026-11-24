@@ -592,6 +592,19 @@ test('v29 shows every tab, button and control, makes no profile, and never overw
   }
 });
 
+// v31: the transliteration's spelling of the Name. Every transliteration has
+// written "HaShem", so an upgrader keeps it (hard rule 2).
+test('v31 keeps the Name "HaShem" in the transliteration, never overwriting a stored spelling', () => {
+  const upgrader = loadMigrations({ prefs_schema_version: '30' });
+  upgrader.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(upgrader.userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(upgrader.userProperties.getProperty('transliteration_divine_name'), 'HaShem');
+  const chosen = loadMigrations({ prefs_schema_version: '30', transliteration_divine_name: 'Adonai' });
+  chosen.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(chosen.userProperties.getProperty('transliteration_divine_name'), 'Adonai');
+  assert.equal(upgrader.context.getDefaultPreferences().transliteration_divine_name, 'HaShem');
+});
+
 // A stored settings profile is migrated through the same steps when it comes
 // back into use (server/settings-profiles.gs), so the driver and the steps
 // must stay apart: the driver stamps the schema; the steps never do.

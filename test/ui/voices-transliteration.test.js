@@ -29,7 +29,7 @@ test('the composition card reaches only its own transliteration menu', () => {
 test('every sidebar Voices option carries the class its handler listens for', () => {
   const menu = SIDEBAR.match(/<div class="cc-translit-menu hidden" id="voices-translit-menu"[\s\S]*?<\/div>/)[0];
   const options = menu.match(/<button [^>]*>/g);
-  assert.equal(options.length, 8);
+  assert.equal(options.length, 10); // None and the nine styles
   options.forEach((button) => assert.match(button, /class="cc-translit-option voices-translit-option/, button));
   assert.match(CONTROLLER, /\$\(document\)\.on\('click', '#voices-translit-menu \.voices-translit-option'/);
 });

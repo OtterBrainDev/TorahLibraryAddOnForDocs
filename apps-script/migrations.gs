@@ -26,7 +26,7 @@ only a profile's keys.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '30';
+var PREFS_SCHEMA_CURRENT_ = '31';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -275,6 +275,11 @@ function applyMigrationsFrom_(userProperties, from) {
   // is left as it is.
   if (from < 30) {
     migrateToV30_(userProperties);
+  }
+  // v30 -> v31: introduces `transliteration_divine_name` ("HaShem": how the
+  // transliteration has always written the Name).
+  if (from < 31) {
+    migrateToV31_(userProperties);
   }
 }
 
@@ -753,6 +758,19 @@ function migrateToV29_(userProperties) {
 function migrateToV30_(userProperties) {
   if (userProperties.getProperty('transliteration_position') == null) {
     userProperties.setProperty('transliteration_position', 'below');
+  }
+  return true;
+}
+
+/**
+ * V31: the transliteration's spelling of the Name can be chosen
+ * (Preferences -> Insertion -> Transliteration Mapping).
+ * `transliteration_divine_name` is set to "HaShem", which every
+ * transliteration has written until now. A stored value is never overwritten.
+ */
+function migrateToV31_(userProperties) {
+  if (userProperties.getProperty('transliteration_divine_name') == null) {
+    userProperties.setProperty('transliteration_divine_name', 'HaShem');
   }
   return true;
 }

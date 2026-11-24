@@ -80,6 +80,7 @@ const SETTINGS = [
   "transliteration_overrides",
   "transliteration_is_biblical_hebrew",
   "transliteration_biblical_dagesh_mode",
+  "transliteration_divine_name",
   "versioning",
   "voices_insert_mode_default",
   "voices_translit_default",
@@ -272,6 +273,10 @@ function getDefaultPreferences() {
     transliteration_overrides: "{}",
     transliteration_is_biblical_hebrew: true,
     transliteration_biblical_dagesh_mode: "none",
+    // How the transliteration writes the Name (יהוה and its substitutes), in
+    // every style (schema 31): "HaShem", as it always has, or the reader's
+    // own ("Adonai", "Adonoy", "Hashem", "G-d"...).
+    transliteration_divine_name: "HaShem",
     versioning: true,
     yaw_replace: false,
     yaw_replacement: "קה",

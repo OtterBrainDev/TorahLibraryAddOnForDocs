@@ -161,7 +161,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **816 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **840 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -284,6 +284,20 @@ and fix it before touching the feature you came to change.
   so עֵשָׂו but not עָשׂוּ; two-word names; Talmud sages with their titles and
   prefixes; a name that is also a word only after a title), and the generated
   pointed keys match `pointedKey_`; a maqaf is a plain hyphen.
+- `transliteration-reading.test.js` — a pointed word is read before it is
+  written: vowel letters (וּ *u*, וֹ *o*, a silent yod, he or aleph), spoken and
+  silent sh'va, kamatz katan (Sefaria's U+05C7 trusted, and in the Tanakh;
+  else a closed unstressed syllable, *kol*), a shin dot's holam, the furtive
+  patach, dagesh chazak doubled only with "Double dagesh chazak"
+  (`transliteration_biblical_dagesh_mode`, every text, read once a passage);
+  Transliteration Mapping's letters change only without a dagesh and its
+  vowel signs wherever pronounced; the style samples in Preferences and the
+  composition card are the engine's output (the maqaf kept there as U+05BE),
+  and every style menu lists exactly the engine's styles. The Name is
+  written as `transliteration_divine_name` says (schema 31; "HaShem"), in
+  every style, prefixes kept; IPA reads HaShem and Adonai as Hebrew. ALA-LC
+  and BGN/PCGN 2018 are checked against the examples their standards print
+  (prefix hyphens and the prime; doubling always, never sh/ts; no final he).
 - `aligned-rows.test.js` — the "Line by line" setting: side by side, each
   verse paired with its translation in its own table row (numbering, spanning
   refs, missing segments, per-row transliteration); Stacked, the two titles
@@ -596,7 +610,9 @@ off-scope for any cleanup work:
 - `apps-script/gematriya.gs` — pure helper; has callers in both
   transliteration and insertion paths.
 - `apps-script/transliteration.gs` — self-contained transliteration
-  engine with its own override map and biblical-Hebrew dagesh mode.
+  engine: the schemes, the word reader (`readWord_`), the override map and
+  the dagesh setting. Change a reading rule only with a case in
+  `transliteration-reading.test.js` read aloud first.
 - The `include()` template pattern (`<?!= include('path/to/partial'); ?>`)
   — this is how Apps Script composes HTML and is the right pattern;
   don't introduce a bundler or a different composition scheme.

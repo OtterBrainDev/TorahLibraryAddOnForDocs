@@ -339,7 +339,7 @@ For anything that fails, the useful report is:
 4. Which account (A upgrading / B fresh / C from version 1.0), the
    interface (Simple / Everything) and the scan mode in effect
 
-State the version too: **2.0.0, schema 30**. "It broke" is not checkable
+State the version too: **2.0.0, schema 31**. "It broke" is not checkable
 later; the version and the check id are.
 
 ---

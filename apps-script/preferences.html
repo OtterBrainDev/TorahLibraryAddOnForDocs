@@ -197,6 +197,8 @@
                     <option value="modern_israeli">Modern Israeli</option>
                     <option value="ashkenazi">Ashkenazi</option>
                     <option value="academic_full">Academic (Full)</option>
+                    <option value="ala_lc">ALA-LC (Library of Congress)</option>
+                    <option value="bgn_pcgn">BGN/PCGN 2018 (Hebrew Academy)</option>
                     <option value="ipa_modern">IPA (Modern Israeli)</option>
                     <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
                   </select>
@@ -392,7 +394,7 @@
                           </div>
                         </div>
                       </div>
-                      <div class="inline-preview transliteration" id="transliteration_preview"><span class="label">Preview</span>Ve-samtem et devarai eileh al levavchem</div>
+                      <div class="inline-preview transliteration" id="transliteration_preview"><span class="label">Preview</span>Vesamtem et-devarai eleh al-levavkhem</div>
                     </div>
                   </div>
                   <div class="pref-font-editor" data-font-editor="translationTitle" aria-label="Translation title font">
@@ -697,6 +699,8 @@
                       <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="modern_israeli">Modern Israeli</button>
                       <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="ashkenazi">Ashkenazi</button>
                       <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="academic_full">Academic (Full)</button>
+                      <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="ala_lc">ALA-LC (Library of Congress)</button>
+                      <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="bgn_pcgn">BGN/PCGN 2018 (Hebrew Academy)</button>
                       <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="ipa_modern">IPA (Modern Israeli)</button>
                       <button type="button" class="cc-translit-option pref-voices-translit-option" data-value="ipa_tiberian">IPA (Tiberian-ish)</button>
                     </div>
@@ -741,7 +745,30 @@
             <summary class="section-card-summary"><span>Transliteration Mapping</span></summary>
             <div class="section-card-body">
               <div class="subsection-card">
-                <div class="mini-help">Choose a Hebrew character, then specify the replacement you want this transliteration engine to use for that character.</div>
+                <div class="toggle-row">
+                  <div class="toggle-copy">
+                    <div class="toggle-title">Double dagesh chazak</div>
+                    <div class="toggle-help">Write a letter twice where a strong dagesh doubles it: <em>Shabbat</em>, <em>tefillah</em>, <em>kiddeshanu</em>. Off: <em>Shabat</em>, <em>tefilah</em>. In every style and every text; sh, ts, kh and other two-letter sounds are written once.</div>
+                  </div>
+                  <label class="switch" for="transliteration_double_dagesh">
+                    <input id="transliteration_double_dagesh" type="checkbox">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="subsection-card">
+                <div class="subsection-title">The Name in transliteration</div>
+                <div class="mini-help">How the transliteration writes <span class="he" dir="rtl" lang="he">יהוה</span> and every substitute for it (<span class="he" dir="rtl" lang="he">יי</span>, <span class="he" dir="rtl" lang="he">יקוק</span>, <span class="he" dir="rtl" lang="he">ה׳</span>, <span class="he" dir="rtl" lang="he">השם</span>), in every style. Pick a suggestion or type your own; a prefix stays in front of it (<em>laHaShem</em>, <em>laAdonai</em>). Empty is <em>HaShem</em>.</div>
+                <div class="compact-field">
+                  <label for="transliteration_divine_name">Write the Name as</label>
+                  <input id="transliteration_divine_name" name="transliteration_divine_name" type="text" maxlength="40" list="transliteration-divine-name-options" placeholder="HaShem" autocomplete="off">
+                  <datalist id="transliteration-divine-name-options">
+                    <option value="HaShem"><option value="Hashem"><option value="Adonai"><option value="Adonoy"><option value="Ado-nai"><option value="G-d">
+                  </datalist>
+                </div>
+              </div>
+              <div class="subsection-card">
+                <div class="mini-help">Choose a Hebrew letter or vowel sign, then type how the transliteration should write it, in every style. A letter that changes with a dagesh (ב כ פ ת) changes only without it: כ → <em>ch</em> keeps כּ <em>k</em>. A vowel sign changes wherever it is pronounced; the sh'va only where it is spoken (→ <em>'</em> gives <em>b'rachah</em>). Help → Transliteration styles shows how to match a siddur's spelling.</div>
                 <div class="override-grid" id="override_grid"></div>
                 <div class="override-editor">
                   <div class="compact-field">
