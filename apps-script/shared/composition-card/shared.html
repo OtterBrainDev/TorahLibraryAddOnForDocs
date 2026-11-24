@@ -50,26 +50,29 @@
 
 var CC_TRANSLIT_LABELS = {
   none: 'None',
-  simple_english: "hasefer khol-ha'am",
-  traditional: "hasefer khol-ha\u02BFam",
-  modern_israeli: "hasefer chol-ha'am",
-  ashkenazi: "haseifer khol-ho'om",
-  academic_full: "has\u0113fer \u1E35ol-h\u0101\u02BF\u0101m",
-  ipa_modern: "hasefe\u0281 \u03C7ol-ha\u0294am",
-  ipa_tiberian: "hase\u02D0f\u025Br \u03C7\u0254l-h\u0254\u02D0\u0295\u0254\u02D0m"
+  simple_english: "hasefer khol\u05BEha'am",
+  traditional: "hasefer khol\u05BEha\u02BFam",
+  modern_israeli: "hasefer chol\u05BEha'am",
+  ashkenazi: "haseifer khol\u05BEho'om",
+  academic_full: "has\u0113fer \u1E35ol\u05BEh\u0101\u02BF\u0101m",
+  ala_lc: "ha-sefer khol\u05BEha-\u02BBam",
+  bgn_pcgn: "hassefer khol\u05BEha\u2018am",
+  ipa_modern: "hasefe\u0281 \u03C7ol\u05BEha\u0294am",
+  ipa_tiberian: "hase\u02D0f\u025Br \u03C7\u0254l\u05BEh\u0254\u02D0\u0295\u0254\u02D0m"
 };
 
 // These samples (and Preferences' own, transliterationExamples) are exactly
 // what the engine (transliteration.gs) writes for their Hebrew, the first
-// letter here in lower case; test/tests/transliteration-reading.test.js
-// keeps them so. The engine writes a hyphen only for a maqaf ("khol-",
-// "et-", "al-"), and with the Hebrew's punctuation off the maqaf is a word
-// break (stripPunctuationFromText on the server), in the transliteration as
-// in the Hebrew.
-var CC_TRANSLIT_MAQAF_RE = /-/g;
+// letter here in lower case and the maqaf kept as the Hebrew mark (U+05BE);
+// test/tests/transliteration-reading.test.js keeps them so. Shown through
+// ccTranslitSample: a hyphen, as the engine writes a maqaf, or with the
+// Hebrew's punctuation off a word break (stripPunctuationFromText on the
+// server), in the transliteration as in the Hebrew. A prefix's hyphen
+// (ALA-LC's ha-) is not a maqaf and stays.
+var CC_TRANSLIT_MAQAF_RE = /\u05BE/g;
 
 function ccTranslitSample(text, hebrewPunctuationOn) {
-  return hebrewPunctuationOn ? text : String(text).replace(CC_TRANSLIT_MAQAF_RE, ' ');
+  return String(text).replace(CC_TRANSLIT_MAQAF_RE, hebrewPunctuationOn ? '-' : ' ');
 }
 
 // Where the transliteration goes in the side-by-side arrangements

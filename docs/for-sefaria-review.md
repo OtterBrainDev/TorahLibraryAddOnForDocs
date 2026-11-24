@@ -1,7 +1,7 @@
 # For Sefaria's review — and what is left if Sefaria publishes this
 
 Written 2026-11-17 against the 2.0.0 release candidate (816 tests passing,
-`pre_clasp_qc.sh` clean, preference schema 30).
+`pre_clasp_qc.sh` clean, preference schema 31).
 
 This add-on grew out of *Sefaria for Google Docs* 1.0 (Shlomi Helfgot's code,
 MIT). It was first set up to be published by The Merkaz as a separate add-on

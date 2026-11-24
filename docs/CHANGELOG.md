@@ -24,7 +24,7 @@ while the add-on was called Torah Library and keep that name. A settings file
 is still marked `torah-library-settings`, so files exported earlier import;
 its suggested file name is now `sefaria-google-docs-settings.json`.
 
-**Preference schema 30.** A new install starts at schema 30, and so does
+**Preference schema 31.** A new install starts at schema 31, and so does
 anyone coming from Sefaria for Google Docs, which stores no settings. A tester
 upgrading from a development build is migrated on first open; the sections
 below marked *Migration* say what each schema step changes.
@@ -95,6 +95,53 @@ below marked *Migration* say what each schema step changes.
 
 The rest of this entry is the development record, newest first.
 
+### The Name in the transliteration; ALA-LC and BGN/PCGN 2018 (schema 31)
+
+#### Added
+
+- **Write the Name as** (Preferences → Insertion → Transliteration Mapping):
+  how the transliteration writes *יהוה* and every substitute for it, in every
+  style: *HaShem* (the default, as before), *Hashem*, *Adonai*, *Adonoy*,
+  *Ado-nai*, *G-d*, or the reader's own, up to 40 characters of plain text.
+  A prefix stays in front (*laAdonai*). IPA reads *HaShem* and *Adonai*
+  (and *Adonay*, *Adonoy*, *Adonoi*) as Hebrew, any other spelling as it is
+  written. It is independent of Divine Name Mappings, which change the
+  Hebrew. The insert, the sidebar preview, Link Texts and Voices read it.
+- **ALA-LC (Library of Congress)** and **BGN/PCGN 2018 (Hebrew Academy)**,
+  two new transliteration styles, from the tables attached to the request
+  (the Library of Congress Hebrew and Yiddish table, and the BGN/PCGN 2018
+  agreement based on the Academy of the Hebrew Language's 2006/2011
+  systems). ALA-LC: its letters (ʼ ṿ ḥ ṭ ḳ ś ʻ), an initial or vowel-marking
+  alef disregarded, the prime (*hisʹhid*), and the article, the conjunction
+  and the prepositions that take the article hyphenated (*ha-milon
+  he-ḥadash*, *ṿe-ha-arets*, *u-*, *la-*, *mi-*, *she-*); doubling follows
+  Double dagesh chazak. BGN/PCGN: ’ ‘ ẖ q, *v* for every vav, no final
+  silent he (*Tora*), a dagesh chazak always doubled but never *sh* or *ts*,
+  a name after a prefix capitalized and not doubled (*miMitsrayim*). Each is
+  tested against the examples its standard prints (*‘Akko*, *Karkom*,
+  *Ge’ullim*, *Be’er Sheva‘*, *Roqeaẖ*, *Ne’dar*, *Ela*; *ha-Milon
+  he-ḥadash*, *hisʹhid*).
+- **Help → Transliteration styles → Academic standards**: what each standard
+  is for, what the style does and what it leaves to the author (ALA-LC's
+  *be-*/*le-*, dictionary vowels for unpointed text; BGN's dictionary-based
+  sh'va), and IJMES, which transliterates Hebrew with the Library of
+  Congress chart and adds editorial rules (Merriam-Webster spellings, no
+  diacritics in names and titles).
+
+#### Changed
+
+- An aleph with a sh'va is a consonant, not a silent letter (*Ne’dar*).
+- The style samples keep the maqaf as the Hebrew mark, so a prefix's hyphen
+  (ALA-LC's *ha-*) is never taken for one when the Hebrew's punctuation is
+  off.
+
+#### Migration
+
+- **Schema 31** adds `transliteration_divine_name`, set to `"HaShem"` for
+  everyone who has no value, which is what every transliteration has written.
+  A stored value is never overwritten. In the settings file's *Text and
+  layout* part and in profiles.
+
 ### Transliteration read the way Hebrew is read; Double dagesh chazak; siddur styles
 
 #### Fixed
@@ -146,7 +193,7 @@ The rest of this entry is the development record, newest first.
 ### Help → About: what's new in 2.0
 
 - **About → New in 2.0 lists everything new or improved** compared with
-  Sefaria for Google Docs 1.0: 68 items in eleven folded groups (Finding a
+  Sefaria for Google Docs 1.0: 70 items in eleven folded groups (Finding a
   text, Previewing and inserting, Layout, Hebrew and translation formatting,
   Divine names, Link Texts, Voices, Lexicon, Session Library and Quick
   Actions, Your settings, Help and privacy), each tagged *New* or *Improved*

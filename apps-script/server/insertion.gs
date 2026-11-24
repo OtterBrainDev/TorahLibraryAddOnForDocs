@@ -809,6 +809,8 @@ function transliteratorFor_(scheme, prefs, data) {
       isBiblicalHebrew: isBiblicalHebrewText,
       // "Double dagesh chazak" (Preferences -> Transliteration Mapping), in every text.
       dageshMode: settings.transliteration_biblical_dagesh_mode === "none" || !settings.transliteration_biblical_dagesh_mode ? "none" : "forte",
+      // The Name's spelling (Transliteration Mapping), in every style.
+      divineName: settings.transliteration_divine_name || "",
       overrideMap: overrideMap
     });
   };

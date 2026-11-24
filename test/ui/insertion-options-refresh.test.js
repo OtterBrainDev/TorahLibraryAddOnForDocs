@@ -89,9 +89,13 @@ test('the card transliteration sample drops the maqaf with Hebrew punctuation of
   assert.equal(ctx.ccTranslitSample(labels.simple_english, false), "hasefer khol ha'am");
   assert.equal(ctx.ccTranslitSample(labels.traditional, false), 'hasefer khol haʿam');
   // Preferences' own samples (another verse) go through the same helper.
-  assert.equal(ctx.ccTranslitSample('Wəśamtem ʾeṯ-dəvāray ʾēleh ʿal-ləvavḵem', false), 'Wəśamtem ʾeṯ dəvāray ʾēleh ʿal ləvavḵem');
-  // The engine writes a hyphen only for a maqaf, so every one is a word break.
+  assert.equal(ctx.ccTranslitSample('Wəśamtem ʾeṯ\u05BEdəvāray ʾēleh ʿal\u05BEləvavḵem', true), 'Wəśamtem ʾeṯ-dəvāray ʾēleh ʿal-ləvavḵem');
+  assert.equal(ctx.ccTranslitSample('Wəśamtem ʾeṯ\u05BEdəvāray ʾēleh ʿal\u05BEləvavḵem', false), 'Wəśamtem ʾeṯ dəvāray ʾēleh ʿal ləvavḵem');
   assert.equal(ctx.ccTranslitSample(labels.ipa_modern, false), 'hasefeʁ χol haʔam');
+  // The samples keep the maqaf as the Hebrew mark, so a prefix's hyphen
+  // (ALA-LC's ha-) is never taken for one.
+  assert.equal(ctx.ccTranslitSample(labels.ala_lc, true), 'ha-sefer khol-ha-ʻam');
+  assert.equal(ctx.ccTranslitSample(labels.ala_lc, false), 'ha-sefer khol ha-ʻam');
 });
 
 test('every card transliteration sample starts with the article on "sefer"', () => {

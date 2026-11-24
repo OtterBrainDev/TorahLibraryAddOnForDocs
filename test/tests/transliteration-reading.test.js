@@ -124,7 +124,7 @@ test('a dagesh chazak doubles its letter only with "Double dagesh chazak" on', (
   assert.equal(tr('שַׁבָּת', 'simple_english', { dageshMode: 'all' }), 'shabbat');
 });
 
-test('the stored setting is read when the caller passes none, once a passage', () => {
+test('the stored settings are read when the caller passes none, once a passage', () => {
   const forte = load({ transliteration_biblical_dagesh_mode: 'forte' });
   assert.equal(forte.previewTransliterationWithOverrides('שַׁבָּת', 'simple_english'), 'Shabbat');
   assert.equal(load().previewTransliterationWithOverrides('שַׁבָּת', 'simple_english'), 'Shabat');
@@ -132,7 +132,7 @@ test('the stored setting is read when the caller passes none, once a passage', (
   forte.reads.length = 0;
   const out = forte.transliterateHebrewHtmlPreservingBasicBreaks('שַׁבָּת<br>תְּפִלָּה<br>חַיִּים', 'simple_english', { keepNiqqud: true });
   assert.equal(out, 'Shabbat\nTefillah\nKhayyim');
-  assert.deepEqual(forte.reads.slice().sort(), ['transliteration_biblical_dagesh_mode', 'transliteration_overrides']);
+  assert.deepEqual(forte.reads.slice().sort(), ['transliteration_biblical_dagesh_mode', 'transliteration_divine_name', 'transliteration_overrides']);
 });
 
 test('the insert reads the setting in every text, not only the Tanakh', () => {
@@ -186,11 +186,12 @@ test('the composition card\'s samples are the engine\'s הַסֵּפֶר כָל�
   vm.runInContext(js.match(/var CC_TRANSLIT_LABELS = \{[\s\S]*?\n\};/)[0], box);
   const labels = vm.runInContext('CC_TRANSLIT_LABELS', box);
   for (const scheme of Object.keys(labels).filter((key) => key !== 'none')) {
-    assert.equal(labels[scheme], tr('הַסֵּפֶר כָל־הָעָם', scheme), scheme);
+    assert.equal(labels[scheme].replace(/\u05BE/g, '-'), tr('הַסֵּפֶר כָל־הָעָם', scheme), scheme);
+    assert.equal(labels[scheme].split('\u05BE').length, 2, scheme + ': the maqaf is kept as the Hebrew mark');
   }
   // The Style button's text before the script draws it: the default style's.
   const markup = readUi('apps-script/shared/composition-card/markup.html');
-  assert.ok(markup.includes('id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">' + labels.simple_english + '</button>'));
+  assert.ok(markup.includes('id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">' + labels.simple_english.replace(/\u05BE/g, '-') + '</button>'));
 });
 
 test('Preferences\' samples are the engine\'s Deuteronomy 11:18', () => {
@@ -201,10 +202,10 @@ test('Preferences\' samples are the engine\'s Deuteronomy 11:18', () => {
   const examples = vm.runInContext('transliterationExamples', box);
   const verse = 'וְשַׂמְתֶּם אֶת־דְּבָרַי אֵלֶּה עַל־לְבַבְכֶם';
   for (const scheme of Object.keys(examples)) {
-    assert.equal(examples[scheme], ctx.transliterateHebrewText(verse, scheme, { overrideMap: {}, dageshMode: 'none' }), scheme);
+    assert.equal(examples[scheme].replace(/\u05BE/g, '-'), ctx.transliterateHebrewText(verse, scheme, { overrideMap: {}, dageshMode: 'none' }), scheme);
   }
   const html = readUi('apps-script/preferences.html');
-  assert.ok(html.includes('<span class="label">Preview</span>' + examples.simple_english + '</div>'), 'the static preview is the default style\'s sample');
+  assert.ok(html.includes('<span class="label">Preview</span>' + examples.simple_english.replace(/\u05BE/g, '-') + '</div>'), 'the static preview is the default style\'s sample');
 });
 
 test('Preferences has the "Double dagesh chazak" switch, driving the stored setting', () => {
@@ -224,4 +225,110 @@ test('Transliteration Mapping offers the vowel signs the engine reads', () => {
   assert.equal(marks.length, 12);
   // Kamatz and its katan, sh'va and every hataf among them.
   for (const mark of ['ָ', 'ׇ', 'ְ', 'ֱ', 'ֲ', 'ֳ']) assert.ok(marks.includes(mark), mark.codePointAt(0).toString(16));
+});
+
+// The Name, as the reader chooses to write it (transliteration_divine_name,
+// schema 31), in every style; "HaShem" unless they choose another.
+test('the Name is written as the reader chooses, in every style, prefixes kept', () => {
+  const name = (text, divineName, scheme = 'simple_english') => ctx.transliterateHebrewText(text, scheme, { overrideMap: {}, dageshMode: 'none', divineName });
+  assert.equal(name('בָּרוּךְ אַתָּה יְהוָה', 'Adonai'), 'Barukh atah Adonai');
+  assert.equal(name('בָּרוּךְ אַתָּה יְיָ', 'Adonoy', 'ashkenazi'), 'Borukh atoh Adonoy');
+  assert.equal(name('שִׁירוּ לַיהוָה', 'Adonai', 'academic_full'), 'Šîrû laAdonai');
+  for (const scheme of ['simple_english', 'traditional', 'modern_israeli', 'ashkenazi', 'academic_full']) {
+    assert.match(name('כִּי ה׳ טוֹב', 'G-d', scheme), / G-d /, scheme);
+  }
+  // Cleaned: one line of plain text, at most 40 characters; empty is HaShem.
+  assert.equal(name('יְהוָה', '  Ado-nai  '), 'Ado-nai');
+  assert.equal(name('יְהוָה', '<b>Lord</b>\n'), 'BLord/b'); // no markup; a sentence's capital
+  assert.equal(name('יְהוָה', ''), 'HaShem');
+  assert.equal(name('יְהוָה', 'x'.repeat(60)).length, 40);
+  // A word that only contains the letters is not the Name.
+  assert.equal(name('וַיְהִי', 'Adonai'), 'Vayehi');
+});
+
+test('IPA reads HaShem and Adonai as Hebrew; any other spelling as written', () => {
+  const ipa = (divineName, scheme = 'ipa_modern') => ctx.transliterateHebrewText('יְהוָה', scheme, { overrideMap: {}, dageshMode: 'none', divineName });
+  assert.equal(ipa('HaShem'), 'haʃem');
+  assert.equal(ipa('Adonai'), 'ʔadonaj');
+  assert.equal(ipa('Adonoy'), 'ʔadonaj');
+  assert.equal(ipa('Adonai', 'ipa_tiberian'), 'ʔădoːnɔːj');
+  assert.equal(ipa('G-d'), 'G-d');
+});
+
+test('the stored spelling is read when the caller passes none, and the insert passes the setting', () => {
+  const stored = load({ transliteration_divine_name: 'Adonai' });
+  assert.equal(stored.previewTransliterationWithOverrides('בָּרוּךְ אַתָּה יְהוָה', 'simple_english'), 'Barukh atah Adonai');
+  assert.equal(stored.transliterateHebrewHtmlPreservingBasicBreaks('יְהוָה<br>לַיהוָה', 'modern_israeli', { overrideMap: {} }), 'Adonai\nLaAdonai');
+  assert.equal(load().previewTransliterationWithOverrides('יְהוָה', 'simple_english'), 'HaShem');
+  const insertion = fs.readFileSync('apps-script/server/insertion.gs', 'utf8');
+  assert.match(insertion, /divineName: settings\.transliteration_divine_name \|\| ""/);
+});
+
+test('Preferences offers the Name\'s spelling, with suggestions, saved as transliteration_divine_name', () => {
+  const html = readUi('apps-script/preferences.html');
+  assert.match(html, /<input id="transliteration_divine_name" name="transliteration_divine_name" type="text" maxlength="40" list="transliteration-divine-name-options"/);
+  const list = html.match(/<datalist id="transliteration-divine-name-options">([\s\S]*?)<\/datalist>/)[1];
+  for (const value of ['HaShem', 'Hashem', 'Adonai', 'Adonoy', 'Ado-nai', 'G-d']) assert.match(list, new RegExp('<option value="' + value + '">'), value);
+});
+
+test('every style menu lists exactly the engine\'s styles', () => {
+  // Copied out of the vm context, whose arrays have another prototype.
+  const keys = JSON.parse(JSON.stringify(ctx.TRANSLITERATION_SCHEME_OPTIONS.map((option) => option.key)));
+  assert.deepEqual(JSON.parse(JSON.stringify(Object.keys(ctx.TRANSLITERATION_SCHEMES))), keys);
+  assert.deepEqual(JSON.parse(JSON.stringify(Object.keys(ctx.TRANSLITERATION_READINGS))), keys);
+  const menus = {
+    'composition card': [readUi('apps-script/shared/composition-card/markup.html'), /class="cc-translit-option" data-value="([a-z_]+)"/g],
+    'Voices (sidebar)': [readUi('apps-script/sidebar.html'), /voices-translit-option" data-value="([a-z_]+)"/g],
+    'Voices (Preferences)': [readUi('apps-script/preferences.html'), /pref-voices-translit-option" data-value="([a-z_]+)"/g],
+    'Preferences select': [readUi('apps-script/preferences.html').match(/<select[^>]*id="transliteration_scheme"[\s\S]*?<\/select>/)[0], /<option value="([a-z_]+)"/g],
+  };
+  for (const [name, [text, re]] of Object.entries(menus)) {
+    assert.deepEqual([...text.matchAll(re)].map((m) => m[1]).filter((key) => key !== 'none'), keys, name);
+  }
+});
+
+// The academic standards (Help → Transliteration styles → Academic
+// standards), checked against the examples the standards print.
+const std = (text, scheme, options = {}) => ctx.transliterateHebrewText(text, scheme, Object.assign({ overrideMap: {}, dageshMode: 'none' }, options));
+
+test('BGN/PCGN 2018: the agreement\'s own examples', () => {
+  const bgn = (text) => std(text, 'bgn_pcgn');
+  assert.equal(bgn('עַכּוֹ'), '\u2018Akko'); // a dagesh chazak doubled (note 2)
+  assert.equal(bgn('כַּרְכֹּם'), 'Karkom'); // a weak dagesh is not
+  assert.equal(bgn('גְּאֻלִּים'), 'Ge\u2019ullim'); // sh'va na e, medial alef (notes 1, 3)
+  assert.equal(bgn('בְּאֵר שֶׁבַע'), 'Be\u2019er sheva\u2018'); // (Sheva's capital is proper-names.gs's, not loaded here)
+  assert.equal(bgn('גַּלְאוֹן'), 'Gal\u2019on');
+  assert.equal(bgn('נֶאְדָּר'), 'Ne\u2019dar'); // an alef with sh'va is romanized
+  assert.equal(bgn('אֵילָה'), 'Ela'); // an initial alef is not, nor a final he
+  assert.equal(bgn('סָאסָא'), 'Sasa'); // nor an alef that only marks a vowel
+  assert.equal(bgn('רוֹקֵחַ'), 'Roqea\u1E96'); // the furtive patah first (note 5)
+  // Doubling is the agreement's, whatever "Double dagesh chazak" says; never sh or ts.
+  assert.equal(bgn('שַׁבָּת'), 'Shabbat');
+  assert.equal(bgn('הַשָּׁמַיִם'), 'Hashamayim');
+  assert.equal(bgn('מִמִּצְרַיִם'), 'Mimmitsrayim');
+  // A name's first letter after a prefix is capitalized, not doubled (note 4: HaYogev).
+  const named = load();
+  vm.runInContext(fs.readFileSync('apps-script/server/proper-names.gs', 'utf8'), named);
+  assert.equal(named.transliterateHebrewText('וַיֵּצֵא מִמִּצְרַיִם', 'bgn_pcgn', { overrideMap: {} }), 'Vayyetse miMitsrayim');
+});
+
+test('ALA-LC: the Library of Congress table and its rules', () => {
+  const lc = (text) => std(text, 'ala_lc');
+  assert.equal(lc('הִסְהִיד'), 'His\u02B9hid'); // the prime between two letters, not a digraph
+  assert.equal(lc('הַמִּלּוֹן הֶחָדָשׁ'), 'Ha-milon he-\u1E25adash'); // the table's ha-Milon he-ḥadash
+  assert.equal(lc('קִרְיַת סֵפֶר'), '\u1E32iryat sefer');
+  assert.equal(lc('וְהָאָרֶץ'), '\u1E7Ee-ha-arets'); // conjunction and article; the alef after them disregarded
+  assert.equal(lc('הָעוֹלָם'), 'Ha-\u02BBolam');
+  assert.equal(lc('וּמִצְוֹתָיו'), 'U-mits\u1E7Fota\u1E7F'); // the conjunction as shuruk
+  assert.equal(std('אֶת־יְהוָה', 'ala_lc', { divineName: 'Adonai' }), 'Et-Adonai'); // a maqaf, not a prefix: one hyphen
+  assert.equal(lc('מִצְוֹתָיו'), 'Mits\u1E7Fota\u1E7F'); // a consonantal vav is ṿ
+  assert.equal(lc('יִשְׂרָאֵל'), 'Yi\u015Bra\u02BCel'); // ś, and a medial alef ʼ
+  assert.equal(lc('חָכְמָה'), '\u1E24okhmah'); // kamatz katan o
+  // be-, le-, ke- are left alone: the pointing cannot tell them from a word's first letter.
+  assert.equal(lc('בְּרֵאשִׁית'), 'Bereshit');
+  // Doubling follows "Double dagesh chazak", which the Library of Congress leaves off.
+  assert.equal(lc('שַׁבָּת'), 'Shabat');
+  assert.equal(std('שַׁבָּת', 'ala_lc', { dageshMode: 'forte' }), 'Shabbat');
+  // A prefix before the Name keeps its hyphen.
+  assert.equal(std('לַיהוָה', 'ala_lc', { divineName: 'Adonai' }), 'La-Adonai');
 });

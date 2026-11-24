@@ -216,6 +216,7 @@ function syncVoicesTransliterationUi(value) {
   // The card's samples (shared/composition-card/shared, loaded after this file).
   var samples = typeof CC_TRANSLIT_LABELS === 'object' ? CC_TRANSLIT_LABELS : {};
   var sample = scheme === 'none' ? '' : (samples[scheme] || samples.simple_english || label);
+  if (sample && typeof ccTranslitSample === 'function') sample = ccTranslitSample(sample, true);
   $('#voices-translit-sample-latin').text(sample ? '(' + sample + ')' : '');
   $('#voices-translit-sample').prop('hidden', !sample);
 

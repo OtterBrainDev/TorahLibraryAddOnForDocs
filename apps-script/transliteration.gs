@@ -35,6 +35,26 @@ var TRANSLITERATION_SCHEMES = {
     sin: "ś",
     vowels: {"\u05B0":"ə","\u05B1":"ĕ","\u05B2":"ă","\u05B3":"ŏ","\u05B4":"i","\u05B5":"ē","\u05B6":"e","\u05B7":"a","\u05B8":"ā","\u05B9":"ō","\u05BB":"u","\u05C7":"ā"}
   },
+  // ALA-LC Hebrew romanization (Library of Congress; the table IJMES
+  // requires for Hebrew): ʼ alef, ṿ consonantal vav, ḥ, ṭ, ḳ, ś, ʻ ayin; the
+  // hard and soft ג ד ת alike.
+  ala_lc: {
+    name: "ALA-LC (Library of Congress)",
+    consonants: {"א":"\u02BC","ב":"v","ג":"g","ד":"d","ה":"h","ו":"\u1E7F","ז":"z","ח":"\u1E25","ט":"\u1E6D","י":"y","כ":"kh","ך":"kh","ל":"l","מ":"m","ם":"m","נ":"n","ן":"n","ס":"s","ע":"\u02BB","פ":"f","ף":"f","צ":"ts","ץ":"ts","ק":"\u1E33","ר":"r","ש":"sh","ת":"t"},
+    dageshForms: {"ב":"b","ג":"g","ד":"d","כ":"k","ך":"k","פ":"p","ף":"p","ת":"t"},
+    sin: "\u015B",
+    vowels: {"\u05B0":"e","\u05B1":"e","\u05B2":"a","\u05B3":"o","\u05B4":"i","\u05B5":"e","\u05B6":"e","\u05B7":"a","\u05B8":"a","\u05B9":"o","\u05BB":"u","\u05C7":"o"}
+  },
+  // BGN/PCGN 2018 agreement (the Academy of the Hebrew Language's 2006/2011
+  // system): ’ alef, ‘ ayin, ẖ, q; v for every vav; no final silent he; a
+  // dagesh chazak always doubled.
+  bgn_pcgn: {
+    name: "BGN/PCGN 2018 (Hebrew Academy)",
+    consonants: {"א":"\u2019","ב":"v","ג":"g","ד":"d","ה":"h","ו":"v","ז":"z","ח":"\u1E96","ט":"t","י":"y","כ":"kh","ך":"kh","ל":"l","מ":"m","ם":"m","נ":"n","ן":"n","ס":"s","ע":"\u2018","פ":"f","ף":"f","צ":"ts","ץ":"ts","ק":"q","ר":"r","ש":"sh","ת":"t"},
+    dageshForms: {"ב":"b","ג":"g","ד":"d","כ":"k","ך":"k","פ":"p","ף":"p","ת":"t"},
+    sin: "s",
+    vowels: {"\u05B0":"e","\u05B1":"e","\u05B2":"a","\u05B3":"o","\u05B4":"i","\u05B5":"e","\u05B6":"e","\u05B7":"a","\u05B8":"a","\u05B9":"o","\u05BB":"u","\u05C7":"o"}
+  },
   ipa_modern: {
     name: "IPA (Modern Israeli)",
     consonants: {"א":"ʔ","ב":"v","ג":"ɡ","ד":"d","ה":"h","ו":"v","ז":"z","ח":"χ","ט":"t","י":"j","כ":"χ","ך":"χ","ל":"l","מ":"m","ם":"m","נ":"n","ן":"n","ס":"s","ע":"ʔ","פ":"f","ף":"f","צ":"t͡s","ץ":"t͡s","ק":"k","ר":"ʁ","ש":"ʃ","ת":"t"},
@@ -57,6 +77,8 @@ var TRANSLITERATION_SCHEME_OPTIONS = [
   { key: "modern_israeli", label: "Modern Israeli" },
   { key: "ashkenazi", label: "Ashkenazi" },
   { key: "academic_full", label: "Academic (full)" },
+  { key: "ala_lc", label: "ALA-LC (Library of Congress)" },
+  { key: "bgn_pcgn", label: "BGN/PCGN 2018 (Hebrew Academy)" },
   { key: "ipa_modern", label: "IPA (Modern Israeli)" },
   { key: "ipa_tiberian", label: "IPA (Tiberian-ish)" }
 ];
@@ -77,6 +99,12 @@ var TRANSLITERATION_READINGS = {
   modern_israeli: { kamatzKatan: "o", shuruk: "u", holamMale: "o", hiriqYod: "i", tsereYod: "ei", segolYod: "e", yodGlide: "i", initialAlef: "", initialAyin: "", quietAlef: "", finalHe: "h" },
   ashkenazi: { kamatzKatan: "o", shuruk: "u", holamMale: "o", hiriqYod: "i", tsereYod: "ei", segolYod: "e", yodGlide: "i", initialAlef: "", initialAyin: "", quietAlef: "", finalHe: "h" },
   academic_full: { kamatzKatan: "o", shuruk: "û", holamMale: "ô", hiriqYod: "î", tsereYod: "ê", segolYod: "ê", yodGlide: "y", initialAlef: "ʾ", initialAyin: "ʿ", quietAlef: "ʾ", finalHe: "h" },
+  // ALA-LC also hyphenates the article, the conjunction and the prepositions
+  // that take the article (ha-, ṿe-, u-, ba-, mi-, she-), and puts a prime
+  // between two letters that would otherwise read as one sound (hisʹhid).
+  ala_lc: { kamatzKatan: "o", shuruk: "u", holamMale: "o", hiriqYod: "i", tsereYod: "e", segolYod: "e", yodGlide: "i", initialAlef: "", initialAyin: "\u02BB", quietAlef: "", finalHe: "h", prefixHyphen: true, digraphPrime: "\u02B9" },
+  // BGN/PCGN: a dagesh chazak is always doubled (but not sh, ts or kh).
+  bgn_pcgn: { kamatzKatan: "o", shuruk: "u", holamMale: "o", hiriqYod: "i", tsereYod: "e", segolYod: "e", yodGlide: "y", initialAlef: "", initialAyin: "\u2018", quietAlef: "", finalHe: "", alwaysDoubleDagesh: true },
   ipa_modern: { kamatzKatan: "o", shuruk: "u", holamMale: "o", hiriqYod: "i", tsereYod: "ej", segolYod: "e", yodGlide: "j", initialAlef: "ʔ", initialAyin: "ʔ", quietAlef: "", finalHe: "" },
   ipa_tiberian: { kamatzKatan: "ɔ", shuruk: "uː", holamMale: "oː", hiriqYod: "iː", tsereYod: "eː", segolYod: "ɛː", yodGlide: "j", initialAlef: "ʔ", initialAyin: "ʕ", quietAlef: "", finalHe: "" }
 };
@@ -335,7 +363,8 @@ function markVowelLetters_(clusters) {
       else if (prev.vowel === PATAH || prev.vowel === QAMATS) { c.role = "glide"; }
     } else if (c.base === "ה" && i === last && i > 0 && !c.vowel && !c.hasSheva && !c.hasDagesh) {
       c.role = "finalHe";
-    } else if (c.base === "א" && !c.vowel && !c.male && i > 0) {
+    } else if (c.base === "א" && !c.vowel && !c.male && !c.hasSheva && i > 0) {
+      // With a sh'va the aleph is a consonant (BGN/PCGN note 1: Ne’dar).
       c.role = "quiet";
     }
   });
@@ -444,23 +473,82 @@ function vowelSound_(c, scheme, reading, overrides) {
  * The Latin text of one pointed word (`clusters`, from wordClusters_), and the
  * NAME_MARK before any letter that starts a name.
  */
+/**
+ * For a style that hyphenates prefixes (ALA-LC): the clusters a hyphen
+ * follows. Only the prefixes the pointing shows: the conjunction ו, then
+ * the article ה (ha-, he-) and the prepositions that take it (ba-, la-, ka-),
+ * mi- and she- before a doubled letter. A ב, כ or ל with sh'va (be-, le-,
+ * ke-) is left alone: the pointing cannot tell it from the word's own first
+ * letter (be-reshit, but levav).
+ */
+function prefixHyphens_(clusters) {
+  var after = {};
+  var silent = { mater: true, finalHe: true, quiet: true, glide: true };
+  var pronounced = function (from) {
+    var count = 0;
+    for (var j = from + 1; j < clusters.length; j += 1) if (!silent[clusters[j].role]) count += 1;
+    return count;
+  };
+  var k = 0;
+  var first = clusters[0];
+  var second = clusters[1];
+  if (!second) return after;
+  if (first.base === "ו" && pronounced(0) >= 2 && (
+    (first.hasSheva && !first.vowel) || first.role === "shuruk" ||
+    (first.vowel === PATAH && second.dagesh === "chazak") || first.vowel === QAMATS || first.vowel === SEGOL)) {
+    after[0] = true;
+    k = 1;
+  }
+  var c = clusters[k];
+  var next = clusters[k + 1];
+  if (!c || !next || pronounced(k) < 2) return after;
+  var doubled = next.dagesh === "chazak";
+  if ((c.base === "ה" && (c.vowel === PATAH && doubled || c.vowel === QAMATS && /[אע]/.test(next.base) || c.vowel === SEGOL && /[הח]/.test(next.base))) ||
+      (/[בכל]/.test(c.base) && ((c.vowel === PATAH || c.vowel === QAMATS) && doubled || c.vowel === QAMATS && next.base === "א")) ||
+      (c.base === "מ" && (c.vowel === HIRIQ && doubled || c.vowel === TSERE && /[אהחע]/.test(next.base))) ||
+      (c.base === "ש" && c.hasShinDot && c.vowel === SEGOL && doubled)) {
+    after[k] = true;
+  }
+  return after;
+}
+
+/**
+ * The Latin text of one pointed word (`clusters`, from wordClusters_), and the
+ * NAME_MARK before any letter that starts a name.
+ */
 function readWord_(clusters, scheme, reading, options, overrides, nameStarts) {
   markVowelLetters_(clusters);
   markKamatz_(clusters, options.explicitKamatz);
   markDagesh_(clusters);
   markShevas_(clusters);
+  var hyphens = reading.prefixHyphen ? prefixHyphens_(clusters) : {};
+  var doubling = reading.alwaysDoubleDagesh || options.dageshMode !== "none";
   var out = "";
   var last = clusters.length - 1;
+  // ALA-LC's prime: two letters that would read as one sound (s + h, k + h, t + s).
+  var append = function (piece) {
+    if (reading.digraphPrime && piece) {
+      var before = out.replace(/\uE001+$/, "").slice(-1).toLowerCase();
+      var start = piece.replace(/^\uE001+/, "").charAt(0).toLowerCase();
+      if ((before === "s" || before === "k") && start === "h" || before === "t" && start === "s") out += reading.digraphPrime;
+    }
+    out += piece;
+  };
   clusters.forEach(function (c, i) {
     if (nameStarts && nameStarts[c.start]) out += NAME_MARK;
+    var initial = i === 0 || !!hyphens[i - 1];
     if (c.role === "mater") return;
     if (c.role === "glide") { out += has_.call(overrides, "י") ? String(overrides["י"]) : reading.yodGlide; return; }
     if (c.role === "finalHe") { out += reading.finalHe; return; }
     if (c.role === "quiet") { out += reading.quietAlef; return; }
     var vowel = vowelSound_(c, scheme, reading, overrides);
-    if (c.role === "shuruk") { out += has_.call(overrides, QUBUTS) ? String(overrides[QUBUTS]) : reading.shuruk; return; }
+    if (c.role === "shuruk") {
+      out += has_.call(overrides, QUBUTS) ? String(overrides[QUBUTS]) : reading.shuruk;
+      if (hyphens[i]) out += "-";
+      return;
+    }
     var cons;
-    if (i === 0 && (c.base === "א" || c.base === "ע") && !has_.call(overrides, c.base)) {
+    if (initial && (c.base === "א" || c.base === "ע") && !has_.call(overrides, c.base)) {
       cons = c.base === "א" ? reading.initialAlef : reading.initialAyin;
     } else if (c.dagesh === "mappiq") {
       cons = has_.call(overrides, "ה") ? String(overrides["ה"]) : scheme.consonants["ה"];
@@ -468,9 +556,13 @@ function readWord_(clusters, scheme, reading, options, overrides, nameStarts) {
       cons = consonantSound_(c, scheme, overrides);
     }
     var single = Array.from(cons.normalize("NFC")).length === 1;
-    if (c.dagesh === "chazak" && options.dageshMode !== "none" && i !== last && single) cons += cons;
+    // A name's first letter after a prefix keeps its capital and is not
+    // doubled (BGN/PCGN note 4: HaYogev, miMitsrayim).
+    var nameStart = !!(nameStarts && nameStarts[c.start]);
+    if (c.dagesh === "chazak" && doubling && i !== last && single && !nameStart) cons += cons;
     var furtive = i === last && i > 0 && c.vowel === PATAH && (c.base === "ח" || c.base === "ע" || c.dagesh === "mappiq");
-    out += furtive ? vowel + cons : cons + vowel;
+    append(furtive ? vowel + cons : cons + vowel);
+    if (hyphens[i]) out += "-";
   });
   return out;
 }
@@ -486,13 +578,49 @@ function normalizeBiblicalOptions_(options) {
   return options;
 }
 
-// The Name is read, not spelled out: "HaShem", however the text writes it.
-// That is יהוה and the substitutes for it, the add-on's (Preferences ->
-// Divine Name Mappings) and those Sefaria's texts already use: יי, יקוק,
-// ה' and השם. Up to two prefix letters (וַ, לַ, בַּ, מֵ, שֶׁ) keep their own
-// reading: לַיהוָה -> laHaShem. IPA reads it too, in IPA (הַשֵּׁם).
+// The Name is read, not spelled out, however the text writes it: יהוה and
+// the substitutes for it, the add-on's (Preferences -> Divine Name Mappings)
+// and those Sefaria's texts already use: יי, יקוק, ה' and השם. It is written
+// as the reader chooses, in every style (`transliteration_divine_name`,
+// Preferences -> Insertion -> Transliteration Mapping): "HaShem" unless they
+// choose another. Up to two prefix letters keep their own reading:
+// לַיהוָה -> laHaShem. IPA reads it in IPA: HaShem and Adonai as Hebrew
+// (DIVINE_NAME_IPA_SPELLINGS), any other spelling as it is written.
 var DIVINE_NAME_TRANSLITERATION = "HaShem";
-var DIVINE_NAME_SPELLED = "הַשֵּׁם";
+var DIVINE_NAME_MAX_CHARS = 40;
+var DIVINE_NAME_IPA_SPELLINGS = {
+  hashem: "\u05D4\u05B7\u05E9\u05BC\u05C1\u05B5\u05DD",
+  adonai: "\u05D0\u05B2\u05D3\u05B9\u05E0\u05B8\u05D9"
+};
+["adonay", "adonoy", "adonoi"].forEach(function (spelling) { DIVINE_NAME_IPA_SPELLINGS[spelling] = DIVINE_NAME_IPA_SPELLINGS.adonai; });
+
+/** A stored or passed spelling of the Name, cleaned: plain text, one line, at most 40 characters; else "HaShem". */
+function normalizeDivineName_(value) {
+  var text = String(value == null ? "" : value)
+    .replace(/[\u0000-\u001F\u007F<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, DIVINE_NAME_MAX_CHARS)
+    .trim();
+  return text || DIVINE_NAME_TRANSLITERATION;
+}
+
+/** The stored spelling of the Name for the transliteration. */
+function getStoredDivineName_() {
+  try {
+    return normalizeDivineName_(PropertiesService.getUserProperties().getProperty("transliteration_divine_name"));
+  } catch (error) {
+    return DIVINE_NAME_TRANSLITERATION;
+  }
+}
+
+/** The Name as `scheme` writes it: the reader's spelling; in IPA, read as Hebrew where it is HaShem or Adonai. */
+function divineNameFor_(name, scheme, reading, ipa) {
+  if (!ipa) return name;
+  var spelled = DIVINE_NAME_IPA_SPELLINGS[name.toLowerCase().replace(/[^a-z]/g, "")];
+  if (!spelled) return name;
+  return transliterateLetters_(spelled, scheme, { keepNiqqud: true, dageshMode: "none" }, {}, null, reading);
+}
 var DIVINE_NAME_WORD_RE = /[\u05D0-\u05EA\u05B0-\u05BD\u05BF\u05C1\u05C2\u05C4\u05C5\u05C7\uE002]+['\u05F3]?/g;
 var DIVINE_NAME_LETTERS_RE = /^([ובכלמש]{0,2})(?:יהוה|יי|יקוק)$|^()(?:ה['\u05F3]|השם)$/;
 // Stands in for the Name while the rest of the text is transliterated.
@@ -736,6 +864,8 @@ function transliterateLetters_(cleaned, scheme, options, overrides, nameStarts, 
  *                   kamatz is gadol: set for Tanakh text (isBiblicalHebrew,
  *                   Sefaria's Miqra according to the Masorah) and for any
  *                   text with a U+05C7 in it
+ *   divineName      how the Name is written; else the stored
+ *                   `transliteration_divine_name` ("HaShem")
  *   keepNiqqud      false: consonants only
  */
 function transliterateHebrewText(text, schemeKey, options) {
@@ -752,10 +882,9 @@ function transliterateHebrewText(text, schemeKey, options) {
   var marked = markDivineNamesForTransliteration_(cleaned);
   var out = transliterateLetters_(marked, scheme, options, overrides, ipa ? null : properNameStarts_(marked), reading);
   if (out.indexOf(DIVINE_NAME_PLACEHOLDER) >= 0) {
-    var name = ipa
-      ? transliterateLetters_(DIVINE_NAME_SPELLED, scheme, { keepNiqqud: true, dageshMode: "none" }, {}, null, reading)
-      : DIVINE_NAME_TRANSLITERATION;
-    out = out.split(DIVINE_NAME_PLACEHOLDER).join(name);
+    var name = options.divineName === undefined ? getStoredDivineName_() : normalizeDivineName_(options.divineName);
+    if (reading.prefixHyphen) out = out.replace(/([^\s\-\u05BE\uE000])\uE000/g, "$1-\uE000");
+    out = out.split(DIVINE_NAME_PLACEHOLDER).join(divineNameFor_(name, scheme, reading, ipa));
   }
 
   // A maqaf is a plain hyphen in Latin text: kol-ha'am, Beit-El.
@@ -779,6 +908,7 @@ function transliterateHebrewHtmlPreservingBasicBreaks(html, schemeKey, options) 
   if (text.indexOf(QAMATS_QATAN) !== -1) lineOptions.explicitKamatz = true;
   if (!lineOptions.overrideMap) lineOptions.overrideMap = getTransliterationOverrides_();
   if (!lineOptions.dageshMode) lineOptions.dageshMode = getStoredDageshMode_();
+  if (lineOptions.divineName === undefined) lineOptions.divineName = getStoredDivineName_();
   for (var i = 0; i < lines.length; i += 1) {
     var line = lines[i].trim();
     if (line) out.push(transliterateHebrewText(line, schemeKey, lineOptions));

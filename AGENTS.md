@@ -161,7 +161,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **832 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **840 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -292,7 +292,12 @@ and fix it before touching the feature you came to change.
   (`transliteration_biblical_dagesh_mode`, every text, read once a passage);
   Transliteration Mapping's letters change only without a dagesh and its
   vowel signs wherever pronounced; the style samples in Preferences and the
-  composition card are the engine's output.
+  composition card are the engine's output (the maqaf kept there as U+05BE),
+  and every style menu lists exactly the engine's styles. The Name is
+  written as `transliteration_divine_name` says (schema 31; "HaShem"), in
+  every style, prefixes kept; IPA reads HaShem and Adonai as Hebrew. ALA-LC
+  and BGN/PCGN 2018 are checked against the examples their standards print
+  (prefix hyphens and the prime; doubling always, never sh/ts; no final he).
 - `aligned-rows.test.js` — the "Line by line" setting: side by side, each
   verse paired with its translation in its own table row (numbering, spanning
   refs, missing segments, per-row transliteration); Stacked, the two titles

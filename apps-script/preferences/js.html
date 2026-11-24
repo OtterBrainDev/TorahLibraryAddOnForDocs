@@ -3,14 +3,20 @@
     // Deuteronomy 11:18 (וְשַׂמְתֶּם אֶת־דְּבָרַי אֵלֶּה עַל־לְבַבְכֶם) as the engine
     // writes it; see CC_TRANSLIT_LABELS (shared/composition-card/shared).
     const transliterationExamples = {
-      simple_english: "Vesamtem et-devarai eleh al-levavkhem",
-      traditional: "Vesamtem et-devarai eleh \u02BFal-levavkhem",
-      modern_israeli: "Vesamtem et-devarai eleh al-levavchem",
-      ashkenazi: "Vesamtem es-devorai eileh al-levavkhem",
-      academic_full: "W\u0259\u015Bamtem \u02BEe\u1E6F-d\u0259v\u0101ray \u02BE\u0113leh \u02BFal-l\u0259vav\u1E35em",
-      ipa_modern: "vesamtem \u0294et-deva\u0281aj \u0294ele \u0294al-levav\u03C7em",
-      ipa_tiberian: "w\u0259samt\u025Bm \u0294\u025B\u03B8-d\u0259v\u0254\u02D0raj \u0294e\u02D0l\u025B \u0295al-l\u0259vav\u03C7\u025Bm"
+      simple_english: "Vesamtem et\u05BEdevarai eleh al\u05BElevavkhem",
+      traditional: "Vesamtem et\u05BEdevarai eleh \u02BFal\u05BElevavkhem",
+      modern_israeli: "Vesamtem et\u05BEdevarai eleh al\u05BElevavchem",
+      ashkenazi: "Vesamtem es\u05BEdevorai eileh al\u05BElevavkhem",
+      academic_full: "W\u0259\u015Bamtem \u02BEe\u1E6F\u05BEd\u0259v\u0101ray \u02BE\u0113leh \u02BFal\u05BEl\u0259vav\u1E35em",
+      ala_lc: "\u1E7Ee-\u015Bamtem et\u05BEdevarai eleh \u02BBal\u05BElevavkhem",
+      bgn_pcgn: "Vesamtem et\u05BEdevaray elle \u2018al\u05BElevavkhem",
+      ipa_modern: "vesamtem \u0294et\u05BEdeva\u0281aj \u0294ele \u0294al\u05BElevav\u03C7em",
+      ipa_tiberian: "w\u0259samt\u025Bm \u0294\u025B\u03B8\u05BEd\u0259v\u0254\u02D0raj \u0294e\u02D0l\u025B \u0295al\u05BEl\u0259vav\u03C7\u025Bm"
     };
+    // The sample as the insert writes it: the maqaf (kept above as the Hebrew mark) a hyphen.
+    function transliterationExampleText(scheme) {
+      return (transliterationExamples[scheme] || transliterationExamples.simple_english).replace(/\u05BE/g, '-');
+    }
 
     const FONT_SIZE_FIELDS = ['hebrew_font_size','translation_font_size','transliteration_font_size','source_title_font_size','sefaria_link_font_size','hebrew_title_font_size','hebrew_link_font_size','citation_font_size'];
     // The four title styles (the title font editors): the translation title's plain and
@@ -168,9 +174,10 @@
       const preview = byId('transliteration_preview');
       if (!scheme || !preview) return;
       // Both operands are local constants: the <span> literal is static, and
-      // transliterationExamples is a const lookup at the top of this file (the
-      // engine's output, kept so by a test). No user input is interpolated.
-      preview.innerHTML = '<span class="label">Preview</span>' + (transliterationExamples[scheme.value] || transliterationExamples.simple_english);
+      // transliterationExampleText reads a const lookup at the top of this
+      // file (the engine's output, kept so by a test). No user input is
+      // interpolated.
+      preview.innerHTML = '<span class="label">Preview</span>' + transliterationExampleText(scheme.value);
       updateStandardPreview('transliteration_font', 'transliteration_preview', 'transliteration_font_style');
     }
 
@@ -357,6 +364,7 @@
         },
         getTranslitLabel: function (on, scheme) {
           if (!on) return 'Transliteration off';
+          // The card shows it through ccTranslitSample, which writes the maqaf.
           return transliterationExamples[scheme] || transliterationExamples.simple_english;
         },
         afterUpdate: function () {
@@ -1736,7 +1744,8 @@
     var PREF_TRANSLIT_LABELS = {
       none: 'None', simple_english: 'Simple English', traditional: 'Traditional',
       modern_israeli: 'Modern Israeli', ashkenazi: 'Ashkenazi',
-      academic_full: 'Academic (Full)', ipa_modern: 'IPA (Modern Israeli)',
+      academic_full: 'Academic (Full)', ala_lc: 'ALA-LC (Library of Congress)',
+      bgn_pcgn: 'BGN/PCGN 2018 (Hebrew Academy)', ipa_modern: 'IPA (Modern Israeli)',
       ipa_tiberian: 'IPA (Tiberian-ish)'
     };
 
