@@ -7,7 +7,7 @@ records for bugs and release verification.
 
 **Current artifact:** branch `review/launch-defaults-help-20261124`, based on
 `fix/edition-commentary-notes-20261124` at `61805f8`, published as
-[draft PR #60](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/60)
+[PR #60](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/60)
 with the initial launch implementation at `8531fd1` and the sidebar/senior
 walkthrough follow-up recorded below. The API migration remains
 [draft PR #58](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/58);
@@ -496,6 +496,17 @@ notice now explain the same implemented workflows, including modifier-key
 selection, partial-edition gaps, separate Notes, grouped controls and session
 settings. The changelog keeps Unreleased separate until the pending 2.0.0
 release is consolidated; no release date or version was changed.
+
+### Developer and agent documentation reconciliation — 2026-11-25
+
+Confirmed that the changelog explicitly names Texts v3 and the developer
+walkthrough, architecture and mirrored AGENTS/CLAUDE rules already reflect
+the migration. Clarified the request-format and selector contracts,
+passage-scoped cache boundaries, no-v1-fallback rule and the separation
+between deterministic tests, opt-in live API checks and actual Docs tests.
+The release-copy follow-up at `63c08ad` passed GitHub Actions
+([run 45651545150](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/actions/runs/45651545150)).
+This documentation pass does not change runtime code or release status.
 
 Next action: review the updated PR #60 after #58 and #59, then run the exact
 HEAD in the designated Docs test deployment using the existing checklist.

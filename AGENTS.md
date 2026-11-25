@@ -91,9 +91,18 @@ AGENTS.md still expected 248 passing tests.)
    a text request; replies must match that planned ref and index. The picker
    catalog and fetched editions are separate fields. Preserve exact edition
    titles, including whitespace, and never fill gaps from another edition
-   under a single-edition credit. Search, sheets, dictionaries, Ref and Versions
-   use their own current endpoints, not an invented `/v3/` prefix. See
-   [`docs/sefaria-api-migration.md`](docs/sefaria-api-migration.md).
+   under a single-edition credit. In `server/sefaria-fetch.gs`, preserve
+   repeated `version` selectors (default `primary` and `translation`;
+   explicit `languageFamilyName|versionTitle`), `fill_in_missing_segments=0`
+   and `return_format=default` for display/insertion. Availability alone
+   requests `family|all` per known family and `return_format=text_only`;
+   bare `version=all` is not equivalent. Failed or omitted availability
+   answers are unknown, not empty; keep passage-scoped catalogs scoped to
+   their ref. Shared-title bilingual editions are distinct by role/language.
+   Link Texts batch recovery must use the same planner and normalizer. Do not
+   restore a v1 passage-content fallback. Search, sheets, dictionaries, Ref
+   and Versions use their own current endpoints, not an invented `/v3/`
+   prefix. See [`docs/sefaria-api-migration.md`](docs/sefaria-api-migration.md).
 10. **Interpret inline commentary only through a verified edition profile.**
     Exact edition title, language and corpus must match. Unknown conventions
     and malformed bracket segments preserve words; marked notes follow their
@@ -323,8 +332,13 @@ and fix it before touching the feature you came to change.
   metadata caching, nullable segments and unavailable/mismatched responses.
   Hebrew and English editions may share a title: exclude the selected edition
   itself from the other role, not every edition carrying that title.
-  The opt-in `node tools/check-sefaria-v3.js` checks live Sefaria through the
-  production server helpers, separately from the offline suite and from Docs.
+  The opt-in `node tools/check-sefaria-v3.js` (Node 22+ and Python 3) checks
+  live Sefaria through production server helpers; append `commentary` or
+  another case-name substring to select cases. For a change to the reader or
+  source processor, run the affected cases as well as `npm test`, record
+  what ran, and leave actual Google Docs checks pending until performed.
+  Live API success alone does not prove sidebar rendering, DocumentApp
+  behavior, Apps Script latency or quotas.
 - `preview-version-unavailable.test.js` — a v3 partial/missing edition reply
   keeps the version pickers, disables insertion and shows plain-text help;
   a later valid choice recovers, and stale replies cannot replace it. A missing

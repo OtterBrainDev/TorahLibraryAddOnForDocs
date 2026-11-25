@@ -237,6 +237,13 @@ metadata route remains `/api/texts/versions/{indexTitle}`; it is not a v1
 passage request. Search, sheets, dictionaries and citation detection keep
 their own current endpoints. See the [migration handoff](../sefaria-api-migration.md).
 
+**Show the contract check:** after `npm ci` and `npm test`, run
+`node tools/check-sefaria-v3.js` with Node 22+ and Python 3. It is an opt-in,
+read-only check of the production helpers against live Sefaria; append
+`commentary` to focus on source annotations, or another case-name substring
+to select cases. Record the observed result and date. A green API run is not
+a Google Docs test; use the live checklist for sidebar and document behavior.
+
 **Show:** `test/tests/search-input-normalization.test.js`,
 `citation-abbreviations.test.js`, `sanitize-source-html.test.js`, and the
 regression log rows for the apostrophe, gershayim and `Pesalms` bugs. They're
