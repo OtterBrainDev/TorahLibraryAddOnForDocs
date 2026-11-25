@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 const { ROOT, readAppScriptFile } = require('./test-utils');
 
 // The sidebar's version lists (sidebar/js/preview-core.html). Reported:
@@ -11,7 +12,8 @@ const { ROOT, readAppScriptFile } = require('./test-utils');
 // - the source-edition list shares the .translation-version-select class, so
 //   writes meant for the translations also filled the source editions with
 //   translation titles, and a source-edition click ran the translation handler;
-// - a plain click in a multi-select list replaced the selection;
+// - ordinary clicks should replace the selection; modifier clicks extend it,
+//   including after the preview rebuilds the list;
 // - every re-render of the same passage dropped the multi-selection;
 // - a click could empty a list, and Insert then used whatever was loaded.
 
@@ -44,13 +46,33 @@ test('the translation handlers are bound to the translation list only', () => {
   assert.match(update, /translationVersionSelect\(\)\.off\('mousedown\.translationToggle'\)/);
 });
 
-test('in a multi-select list a click toggles one translation instead of replacing the selection', () => {
+test('translation clicks replace, toggle or extend a range according to modifiers', () => {
   const update = fnBody(core, 'updateSuggestion');
   const handler = update.slice(update.indexOf("'mousedown.translationToggle'"), update.indexOf("'change.translationVersion'"));
   assert.match(handler, /!select\.multiple/, 'single-select lists keep the native click');
-  assert.match(handler, /event\.preventDefault\(\)/);
-  assert.match(handler, /this\.selected = !this\.selected/);
-  assert.match(handler, /trigger\('change'\)/);
+  assert.match(handler, /event\.ctrlKey \|\| event\.metaKey, event\.shiftKey/);
+  assert.match(handler, /option:not\(:disabled\)/);
+  assert.match(handler, /translationSelectionAnchor \|\| orderedTranslationVersions\[0\]/);
+  assert.match(handler, /trigger\('change', \[next\]\)/);
+  assert.match(update, /if \(orderedTranslationVersionsRef !== resolvedRef \|\| pendingPreferredVersions \|\| !allowMulti\) \{\s*translationSelectionAnchor = '';/);
+  assert.match(update, /if \(Array\.isArray\(pointerSelection\)\) \{\s*next = pointerSelection;/);
+
+  const choose = vm.runInNewContext(fnBody(core, 'translationSelectionForClick') + '\ntranslationSelectionForClick');
+  const visible = ['A', 'B', 'D', 'E']; // C is unavailable; hidden versions are not in the list.
+  const check = (previous, anchor, clicked, additive, range, expected) => {
+    assert.deepEqual(Array.from(choose(previous, visible, anchor, clicked, additive, range)), expected);
+  };
+  check(['A', 'D'], 'A', 'B', false, false, ['B']);
+  check(['hidden', 'A'], 'A', 'B', false, false, ['B']);
+  check(['A'], 'A', 'D', true, false, ['A', 'D']);
+  check(['A', 'D'], 'D', 'A', true, false, ['D']);
+  check(['A'], 'A', 'E', false, true, ['A', 'B', 'D', 'E']);
+  check(['E'], 'E', 'B', false, true, ['E', 'B', 'D']);
+  check(['hidden', 'A'], 'A', 'D', true, true, ['hidden', 'A', 'B', 'D']);
+  check(['hidden', 'A'], 'A', 'D', false, true, ['A', 'B', 'D']);
+  check(['hidden'], 'hidden', 'D', false, true, ['D']);
+  check(['A'], 'A', 'A', true, false, []); // change handler restores the last pick.
+  check(['A'], 'A', 'C', false, true, ['A']); // unavailable option is never added.
 });
 
 test('re-rendering the same passage keeps a multi-selection; a new passage starts over', () => {

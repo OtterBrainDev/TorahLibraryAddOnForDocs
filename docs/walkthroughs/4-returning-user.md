@@ -83,8 +83,9 @@ setup again**.
   insertion** sets the layout for that batch without touching Preferences.
 - **Insert Source from Selection.** Select a reference you typed, e.g.
   `Psalms 92:1`, and run it. The citation becomes the source.
-- **Several translations at once.** With Translation only or Stacked, each
-  click in **Versions** adds a translation or takes it away. The filter box
+- **Several translations at once.** With Translation only or Stacked,
+  Ctrl/Cmd-click in **Versions** adds or removes a translation, and Shift-click
+  selects a range. A plain click selects only one. The filter box
   finds a language by name (*French*, *français*, *צרפתית*).
 - **Voices** (search Sefaria source sheets, grouped by topic) and **Lexicon**
   (the dictionary: pick a word, then the dictionaries' entries you want)

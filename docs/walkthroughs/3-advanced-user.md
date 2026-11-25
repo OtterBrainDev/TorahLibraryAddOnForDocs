@@ -173,8 +173,8 @@ Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
    preview…* and **Add Source** waits until it's done.
 
 **Several translations at once.** Open **Versions**, choose Display **A** or
-Stacked layout, and click three translations: each click adds one or takes it
-away, no <kbd>Ctrl</kbd> needed. **Add Source**
+Stacked layout, click one translation, and <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click two
+more. Plain-click replaces; Shift-click selects a range. **Add Source**
 (<kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd>) inserts one block each, in the
 order you clicked, each titled with its translation. With **Line by line** on
 in Stacked, each verse is followed by that verse in each translation instead.

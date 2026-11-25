@@ -158,11 +158,14 @@ translation language is set in **Preferences → Insertion → Insertion
 Defaults → Translation → Language**.
 
 With **Translation** only, or **Hebrew and translation** in the **Stacked**
-layout, each click on a translation adds or removes it (no
-<kbd>Ctrl</kbd>/<kbd>⌘</kbd> needed), so several can be selected. Each is
-inserted as its own block, in the order selected. The Preview can't show
-several at once; it lists them in that order. One always stays selected, and
-typing in the filter box never changes the selection.
+layout, a plain click selects just one translation. Use
+<kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click to add or remove individual translations,
+<kbd>Shift</kbd>-click to select a visible range, or both modifiers to extend
+the selection. Each is inserted as its own block, in selection order; new
+range picks are added in list order. The Preview can't show several at once;
+it lists them in that order. One always stays selected. Typing in the filter
+box never changes the selection; a plain or Shift-click replaces hidden picks
+as well as visible ones.
 
 The filter box finds a language by its name, in English, in itself or in any
 other language the add-on lists: *French*, *français* and *צרפתית* all list

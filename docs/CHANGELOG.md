@@ -8,6 +8,14 @@ The version and the preference-schema number live in
 build until the owner asks for 2.1. New work goes under an `## Unreleased`
 heading until the next build consolidates it under its own `## v2.0.X` heading.
 
+## Unreleased
+
+- **Translation Versions selection.** A plain click now selects one translation;
+  Ctrl/Cmd-click adds or removes individual translations, and Shift-click selects
+  a visible range (Ctrl/Cmd+Shift extends it). The range anchor survives preview
+  rebuilds. Filtering alone still does not change the selection; a plain click
+  replaces even filtered-out selections. Lexicon entry selection is unchanged.
+
 ## v2.0.0 — First Marketplace release (release pending)
 
 The first release published in the Google Workspace Marketplace, for people

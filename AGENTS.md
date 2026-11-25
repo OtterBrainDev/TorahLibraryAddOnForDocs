@@ -533,8 +533,9 @@ and in `test/ui/`:
   maqaf with Hebrew punctuation off.
 - `translation-version-select.test.js` — the sidebar's version lists: the
   translation list is never reached by the class the Source editions list
-  shares, a click in a multi-select list toggles one translation, a re-render
-  of the same passage keeps the multi-selection, neither list can be left
+  shares, a plain click replaces the selection, Ctrl/Cmd-click toggles, and
+  Shift-click selects a range across preview rebuilds. A re-render of the same
+  passage keeps the multi-selection, neither list can be left
   empty, the filter box never changes the selection, and a list that isn't
   focused still shows what is selected.
 - `card-hebrew-samples.test.js` — the composition card's Hebrew sample has
