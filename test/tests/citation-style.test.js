@@ -45,6 +45,7 @@ test('the citation paragraph takes the citation style', () => {
     DocumentApp: { Attribute: new Proxy({}, { get: (_, k) => String(k) }) },
   };
   vm.createContext(context);
+  vm.runInContext(fs.readFileSync('apps-script/server/source-text.gs', 'utf8'), context);
   vm.runInContext(fs.readFileSync('apps-script/server/insertion.gs', 'utf8'), context);
   context.applyRoleTypography_ = (paragraph, typography, role) => { paragraph.roles.push(role); };
   const paragraph = {

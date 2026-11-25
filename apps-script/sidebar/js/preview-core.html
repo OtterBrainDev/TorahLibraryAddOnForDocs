@@ -3,7 +3,7 @@
 // DOM order is the fallback (what $select.val() returns); this array gives selection-order insertion.
 var orderedTranslationVersions = [];
 // The ref orderedTranslationVersions belongs to. Re-rendering the same ref (a
-// Layout tray change, another source edition) keeps a multi-selection; a new
+// Layout tray change, another source edition) keeps every selection; a new
 // ref starts over.
 var orderedTranslationVersionsRef = '';
 // Last non-range click, by version title rather than option node: the preview
@@ -16,6 +16,14 @@ var translationSelectionAnchor = '';
 // editions and made a source-edition click reset the translations.
 function translationVersionSelect() {
   return $('.translation-version-select').not('.he-version-selection');
+}
+
+// Read the choices, not the last response or the filtered DOM. Either can
+// lag behind a click while a fetch is pending, and a filter can hide a choice.
+function selectedPreviewVersions(ref) {
+  if (!activeTranslationOptions || activeTranslationOptions.ref !== ref ||
+      typeof activeTranslationOptions.selected !== 'function') return null;
+  return activeTranslationOptions.selected();
 }
 
 // The list passes only enabled, visible options. A plain click replaces the
@@ -150,6 +158,34 @@ function getUnavailablePreviewVersions(response, versions) {
     }
   });
   return unavailable;
+}
+
+// An options refresh and an edition click have the same exact-edition rule.
+// Keep both pickers so a missing edition cannot silently become the default.
+function showUnavailablePreviewVersions(unavailableVersions) {
+  hasResolvedReference = false;
+  setInsertButtonState(false);
+  $('#open-on-sefaria').prop('disabled', true);
+  if (selectedResultSummary) selectedResultSummary.status = 'Choose another edition';
+  updateActionabilityUI({ isInsertable: false });
+  var editionNames = unavailableVersions.map(function (version) {
+    return (version.role === 'he' ? 'source edition' : 'translation') + ' “' + version.title + '”';
+  }).join(' and ');
+  var message = 'The selected ' + editionNames +
+    (unavailableVersions.length === 1 ? ' has' : ' have') +
+    ' no text for this passage. Choose another edition to preview and insert.';
+  $('.suggestions').empty().append($('<p class="preview-state-message" role="status"></p>').text(message));
+}
+
+function showPreviewFetchFailure(error, keepVersionSelectors) {
+  hasResolvedReference = false;
+  setInsertButtonState(false);
+  $('#open-on-sefaria').prop('disabled', true);
+  if (!keepVersionSelectors) clearVersionSelectors();
+  if (selectedResultSummary) selectedResultSummary.status = 'Preview unavailable';
+  updateActionabilityUI({ isInsertable: false });
+  var message = (error && error.message) || 'The preview could not be loaded. Try again.';
+  $('.suggestions').empty().append($('<p class="preview-state-message" role="status"></p>').text(message));
 }
 
 function buildDepthPrompt(response) {
@@ -301,20 +337,9 @@ function languagePriorityKey(label) {
   return 2;
 }
 
-// ---- Commentary (bold and italics) in the preview ----------------------------
-//
-// The Commentary choice — Default (`keep`), Combine (`discard`), Drop
-// (`only`; "Bold only" until 2026-11) — is applied by the insert, to the
-// translation only, once it is in the document (applyTypographyToParagraph,
-// server/insertion.gs). The preview showed Sefaria's markup as fetched, so
-// with `only` it showed commentary that the insert then removed (BUG-001). For
-// `discard` and `only` the preview's translation is now read the way the
-// insert reads it (the segments joined as formatDataForPesukim joins them,
-// then insertRichTextFromHTML's rules) and `only` applies the insert's own
-// plan. Each mirror below names
-// the server function it follows; preview-emphasis.test.js runs both on the
-// same input. Like the rest of the preview, it shows no line numbers or
-// chapter headings. Default (`keep`) still renders the sanitized markup as before.
+// ---- Shared commentary and note rendering ---------------------------------
+// Commentary follows verified edition conventions; marked notes have their
+// own independent policy. Entity decoding stays here for the Lexicon caller.
 
 var PREVIEW_HTML_ENTITIES = {
   amp: '&', lt: '<', gt: '>', quot: '"', apos: "'",
@@ -361,207 +386,115 @@ function joinPreviewTranslation(text, lineMarkers) {
   return out;
 }
 
-/**
- * The text and its per-character bold / italic, read as insertRichTextFromHTML
- * (server/insertion.gs) reads Sefaria's markup: each <b> tag toggles bold,
- * <strong> and <i> toggle too (with Extended Gemara on, only inside bold), <br>
- * is a line break, and a <sup> footnote marker is skipped up to the end of its
- * footnote.
- */
-function readPreviewEmphasis(html, extendedGemara) {
-  var parts = String(html || '').split(/(<\/?[a-zA-Z]+[^>]*>)/g);
-  var out = { text: '', bold: [], italic: [] };
-  var bolded = false, italicized = false, inFootnote = false, footnoteDepth = 0;
-  function add(snippet) {
-    var decoded = decodePreviewEntities(snippet);
-    for (var c = 0; c < decoded.length; c++) {
-      out.text += decoded[c];
-      out.bold.push(bolded);
-      out.italic.push(italicized);
-    }
-  }
-  for (var i = 0; i < parts.length; i++) {
-    var word = parts[i];
-    if (inFootnote) {
-      if (word === '<i class="footnote">' || word === '<i>') {
-        footnoteDepth++;
-      } else if (word === '</i>') {
-        footnoteDepth--;
-        if (footnoteDepth === 0) inFootnote = false;
-      }
-      continue;
-    }
-    if (i % 2 === 1) {
-      var tagName = /^<\/?([a-zA-Z]+)/.exec(word)[1].toLowerCase();
-      if (tagName === 'b') bolded = !bolded;
-      else if (tagName === 'strong') { if (!extendedGemara || bolded) bolded = !bolded; }
-      else if (tagName === 'i') { if (!extendedGemara || bolded) italicized = !italicized; }
-      else if (tagName === 'br') add('\n');
-      else if (tagName === 'sup') { inFootnote = true; footnoteDepth = 0; }
-      continue;
-    }
-    add(word);
-  }
-  return out;
+/** All modes use the shared source reader, including Default and footnotes. */
+function previewTranslationEmphasisHtml(text, mode, lineMarkers, extendedGemara, profile, notesMode, stripBracketDelimiters) {
+  return processSourceText_(joinPreviewTranslation(text, lineMarkers), {
+    commentaryMode: mode,
+    commentaryProfile: profile || 'none',
+    notesMode: notesMode || 'omit',
+    extendedGemara: !!extendedGemara,
+    stripBracketDelimiters: !!stripBracketDelimiters
+  }).html.replace(/(<br>)+$/, '');
 }
 
-var PREVIEW_EMPHASIS_LINE_BREAK = /[\n\r\u000b]/;
-var PREVIEW_EMPHASIS_LINE_MARKER = /^[ \t]*\([^)\n\r\u000b]*\)[ \t]*/;
-var PREVIEW_EMPHASIS_WORD_CHAR = /[\p{L}\p{N}]/u;
-var PREVIEW_EMPHASIS_SPACE = /[ \t ]/;
-
-/** planEmphasisOnlyEdits_ (server/insertion.gs), rule for rule. */
-function planPreviewEmphasisOnlyEdits(fullText, runs, keepLines) {
-  var text = String(fullText || '');
-  var n = text.length;
-  if (!n || !Array.isArray(runs) || !runs.length) return [];
-
-  var keep = new Array(n).fill(false);
-  var kept = 0;
-  runs.forEach(function (run) {
-    var from = Math.max(0, run.start);
-    var to = Math.min(n - 1, run.end);
-    if (!text.slice(from, to + 1).trim()) return;
-    for (var i = from; i <= to; i++) keep[i] = true;
-    kept++;
-  });
-  if (!kept) return [];
-
-  var edits = [];
-  var hasWordChar = function (from, to) {
-    return PREVIEW_EMPHASIS_WORD_CHAR.test(text.slice(from, to + 1));
-  };
-
-  var lines = [];
-  var lineStart = 0;
-  while (lineStart <= n) {
-    var lineEnd = lineStart;
-    while (lineEnd < n && !PREVIEW_EMPHASIS_LINE_BREAK.test(text[lineEnd])) lineEnd++;
-    var emphasized = false;
-    for (var i = lineStart; i < lineEnd; i++) {
-      if (keep[i]) { emphasized = true; break; }
-    }
-    var whole = Array.isArray(keepLines) && keepLines.indexOf(text.slice(lineStart, lineEnd).trim()) >= 0;
-    lines.push({
-      start: lineStart,
-      end: lineEnd,
-      emphasized: emphasized && !whole,
-      removed: !emphasized && !whole && text.slice(lineStart, lineEnd).trim() !== ''
-    });
-    lineStart = lineEnd + 1;
-  }
-
-  for (var l = 0; l < lines.length; l++) {
-    if (!lines[l].removed) continue;
-    var first = l;
-    while (l + 1 < lines.length && lines[l + 1].removed) l++;
-    if (l + 1 < lines.length) {
-      edits.push({ start: lines[first].start, end: lines[l + 1].start - 1, insert: '' });
-    } else {
-      edits.push({ start: Math.max(0, lines[first].start - 1), end: lines[l].end - 1, insert: '' });
-    }
-  }
-
-  lines.forEach(function (line) {
-    if (!line.emphasized) return;
-    var end = line.end;
-    var marker = PREVIEW_EMPHASIS_LINE_MARKER.exec(text.slice(line.start, end));
-    var contentStart = line.start + (marker ? marker[0].length : 0);
-    var i = contentStart;
-    while (i < end) {
-      if (keep[i]) { i++; continue; }
-      var gapStart = i;
-      while (i < end && !keep[i]) i++;
-      var gapEnd = i - 1;
-      if (!hasWordChar(gapStart, gapEnd)) continue;
-
-      var interior = gapStart > contentStart && gapEnd < end - 1;
-      var spacedAlready = interior &&
-        (PREVIEW_EMPHASIS_SPACE.test(text[gapStart - 1]) || PREVIEW_EMPHASIS_SPACE.test(text[gapEnd + 1]));
-      if (!interior || spacedAlready) {
-        edits.push({ start: gapStart, end: gapEnd, insert: '' });
-        continue;
-      }
-      var space = -1;
-      for (var k = gapStart; k <= gapEnd; k++) {
-        if (PREVIEW_EMPHASIS_SPACE.test(text[k])) { space = k; break; }
-      }
-      if (space < 0) {
-        edits.push({ start: gapStart, end: gapEnd, insert: ' ' });
-      } else {
-        if (space < gapEnd) edits.push({ start: space + 1, end: gapEnd, insert: '' });
-        if (space > gapStart) edits.push({ start: gapStart, end: space - 1, insert: '' });
-      }
-    }
-  });
-
-  return edits.sort(function (a, b) { return b.start - a.start; });
+function updatePreviewCommentaryHelp(dataIn, prepared) {
+  if (typeof document === 'undefined') return;
+  var el = document.getElementById('cc-commentary-help');
+  if (!el) return;
+  var profile = sourceCommentaryProfile_(dataIn);
+  var message = profile === 'bold-base'
+    ? 'This Davidson edition marks the base translation in bold. Combine keeps the explanation; Drop keeps the bold translation.'
+    : profile === 'bracketed'
+      ? 'This Silverstein edition marks Rashi’s additions with brackets. Combine keeps their words; Drop removes balanced bracketed comments.'
+      : 'No verified inline-commentary rule for this edition: all three Commentary choices keep its text and source emphasis.';
+  if (prepared && prepared.commentaryMalformed) message += ' A verse with unmatched brackets is kept in full.';
+  el.textContent = message + ' Marked footnotes follow Notes.';
 }
 
-/**
- * The preview's translation for Combine (`discard`) and Drop (`only`), as
- * escaped HTML with only our own <b>, <i> and <br>; null for Default (`keep`:
- * the caller renders the sanitized markup). As at insert, bold alone decides
- * what is commentary and italics is kept on whatever text is kept: `discard`
- * shows every word without the bold; `only` keeps the bold runs and drops the
- * rest by the insert's plan; a translation with no bold is kept whole.
- */
-function previewTranslationEmphasisHtml(text, mode, lineMarkers, extendedGemara) {
-  if (mode !== 'discard' && mode !== 'only') return null;
-  var read = readPreviewEmphasis(joinPreviewTranslation(text, lineMarkers), extendedGemara);
-  var chars = [];
-  for (var c = 0; c < read.text.length; c++) {
-    chars.push({ ch: read.text[c], bold: mode === 'only' && read.bold[c], italic: read.italic[c] });
-  }
-  if (mode === 'only') {
-    var runs = [];
-    for (var s = 0; s < chars.length; s++) {
-      if (!read.bold[s]) continue;
-      var e = s;
-      while (e + 1 < chars.length && read.bold[e + 1]) e++;
-      runs.push({ start: s, end: e });
-      s = e;
+// Match the insert's line-by-line grouping, omitting only the generated
+// verse numbers/chapter headings that the preview has never displayed.
+// Empty segments occupy their original positions; unsupported shapes use
+// the whole-passage preview, just as buildAlignedLinePairs_ falls back.
+function previewAlignedSourcePairs_(dataIn) {
+  if (!dataIn || !Array.isArray(dataIn.he) || !Array.isArray(dataIn.text) ||
+      !hasRenderableText(dataIn.he) || !hasRenderableText(dataIn.text)) return null;
+  function segments(value) {
+    var out = [];
+    for (var i = 0; i < value.length; i++) {
+      if (Array.isArray(value[i])) {
+        if (!dataIn.isSpanning) return null;
+        for (var j = 0; j < value[i].length; j++) {
+          if (typeof value[i][j] !== 'string') return null;
+          out.push(value[i][j]);
+        }
+      } else if (typeof value[i] === 'string') out.push(value[i]);
+      else return null;
     }
-    planPreviewEmphasisOnlyEdits(read.text, runs, []).forEach(function (edit) {
-      if (edit.end >= edit.start) chars.splice(edit.start, edit.end - edit.start + 1);
-      if (edit.insert) {
-        chars.splice.apply(chars, [edit.start, 0].concat(edit.insert.split('').map(function (ch) {
-          return { ch: ch, bold: false, italic: false };
-        })));
-      }
-    });
+    return out;
   }
-  var html = '';
-  var bold = false, italic = false;
-  chars.forEach(function (ch) {
-    if (italic && (!ch.italic || ch.bold !== bold)) { html += '</i>'; italic = false; }
-    if (bold && !ch.bold) { html += '</b>'; bold = false; }
-    if (!bold && ch.bold) { html += '<b>'; bold = true; }
-    if (!italic && ch.italic) { html += '<i>'; italic = true; }
-    html += PREVIEW_EMPHASIS_LINE_BREAK.test(ch.ch) ? '<br>' : escapeHTML(ch.ch);
-  });
-  if (italic) html += '</i>';
-  if (bold) html += '</b>';
-  return html.replace(/(<br>)+$/, '');
+  var he = segments(dataIn.he), en = segments(dataIn.text);
+  if (!he || !en || !he.length && !en.length) return null;
+  var pairs = [];
+  for (var i = 0; i < Math.max(he.length, en.length); i++) pairs.push({ he: he[i] || '', en: en[i] || '' });
+  return pairs;
 }
 
 function renderPreviewHTML(dataIn, inputTitle) {
   var mode = $('.output-mode-selection').val();
   var layout = $('.bilingual-layout-selection').val() || 'he-right';
 
-  // Sefaria's markup is rendered, not escaped — footnotes and emphasis are the
-  // point of the preview — but it is stripped of anything that would load a
-  // subresource or execute first. See sanitizeSourceHtml in shared/ui/dom.
-  var heHtml = sanitizeSourceHtml(dataIn.he) || '<p class="preview-state-message">No source text available.</p>';
-  // Combine and Drop are previewed as the insert will write them (above).
-  var emphasisHtml = previewTranslationEmphasisHtml(
-    dataIn.text,
-    ccNormalizeEmphasisMode($('.source-emphasis-mode').val()),
-    Boolean($('.wants-pesukim').prop('checked')),
-    typeof effectivePreferences !== 'undefined' && effectivePreferences &&
-      String(effectivePreferences.extended_gemara) === 'true'
+  var emphasisMode = ccNormalizeEmphasisMode($('.source-emphasis-mode').val());
+  var notesMode = ccNormalizeNotesMode($('.source-notes-mode').val());
+  var lineMarkers = Boolean($('.wants-pesukim').prop('checked'));
+  var extendedGemara = typeof effectivePreferences !== 'undefined' && effectivePreferences &&
+    String(effectivePreferences.extended_gemara) === 'true';
+  // Interpret bracket annotations separately in their original verses, as at
+  // insertion. An unmatched bracket cannot consume the next verse's words.
+  var prepared = prepareSourceCommentaryData_(dataIn, emphasisMode);
+  updatePreviewCommentaryHelp(dataIn, prepared);
+  var translationProfile = prepared.commentaryPrepared ? 'none' : sourceCommentaryProfile_(prepared);
+  var alignedPairs = mode === 'both' && $('.wants-aligned-rows').prop('checked')
+    ? previewAlignedSourcePairs_(prepared) : null;
+  if (alignedPairs) {
+    // Each insertion row has its own Notes block and marker labels. Reading
+    // the whole passage here would give repeated labels different numbers.
+    var renderedPairs = alignedPairs.map(function (pair) {
+      return {
+        he: processSourceText_(pair.he, { commentaryProfile: 'none', notesMode: notesMode, extendedGemara: !!extendedGemara }).html,
+        en: previewTranslationEmphasisHtml(pair.en, emphasisMode, false, extendedGemara,
+          translationProfile, notesMode, prepared.commentaryPunctuationStripped)
+      };
+    });
+    var heMeta = buildPreviewMeta(dataIn.heRef, dataIn);
+    var enMeta = buildPreviewMeta(dataIn.ref, inputTitle);
+    if (layout === 'he-top') {
+      return "<div class='preview-stack preview-aligned'>" + heMeta + enMeta + renderedPairs.map(function (pair) {
+        return "<div class='preview-line'>" +
+          (pair.he ? "<div class='preview-stack-block preview-he'>" + pair.he + '</div>' : '') +
+          (pair.en ? "<div class='preview-stack-block'>" + pair.en + '</div>' : '') + '</div>';
+      }).join('') + '</div>';
+    }
+    var header = layout === 'he-left'
+      ? "<td class='preview-he'>" + heMeta + '</td><td>' + enMeta + '</td>'
+      : '<td>' + enMeta + "</td><td class='preview-he'>" + heMeta + '</td>';
+    return "<table class='preview-table preview-aligned'><tr>" + header + '</tr>' + renderedPairs.map(function (pair) {
+      var heCell = "<td class='preview-he'>" + pair.he + '</td>';
+      var enCell = '<td>' + pair.en + '</td>';
+      return '<tr>' + (layout === 'he-left' ? heCell + enCell : enCell + heCell) + '</tr>';
+    }).join('') + '</table>';
+  }
+  // Both strings contain only the shared processor's escaped text and its
+  // own b/i/sup/sub/br tags. Notes are independent of Commentary in both roles.
+  var heHtml = processSourceText_(joinPreviewTranslation(prepared.he, lineMarkers), {
+    commentaryProfile: 'none', notesMode: notesMode, extendedGemara: !!extendedGemara
+  }).html || '<p class="preview-state-message">No source text available.</p>';
+  var enHtml = previewTranslationEmphasisHtml(
+    prepared.text, emphasisMode, lineMarkers, extendedGemara,
+    translationProfile,
+    notesMode, prepared.commentaryPunctuationStripped
   );
-  var enHtml = emphasisHtml || sanitizeSourceHtml(dataIn.text) || '<p class="preview-state-message">No translation text available.</p>';
+  // Empty output is deliberate; never restore source text after filtering it.
+  if (!enHtml) enHtml = '<p class="preview-state-message">No translation text remains with these options.</p>';
 
   if (mode === 'he') {
     return buildPreviewMeta(dataIn.heRef, dataIn) +
@@ -593,10 +526,10 @@ function renderPreviewHTML(dataIn, inputTitle) {
 
 function updateSuggestion(dataIn, inputTitle) {
   var resolvedRef = dataIn && dataIn.ref ? dataIn.ref : inputTitle;
-  // Selection-order tracking restarts with each rebuild, except that the same
-  // ref keeps a multi-selection: a Layout tray change, another source edition
-  // or the availability lookup used to drop every translation but one.
-  var keptTranslationVersions = (!pendingPreferredVersions && orderedTranslationVersionsRef === resolvedRef && orderedTranslationVersions.length > 1)
+  // Keep one choice as well as several. Reading dataIn alone resets a chosen
+  // edition when an options refresh or an older loaded preview rebuilds it.
+  var keptVersions = !pendingPreferredVersions ? selectedPreviewVersions(resolvedRef) : null;
+  var keptTranslationVersions = (!pendingPreferredVersions && orderedTranslationVersionsRef === resolvedRef && orderedTranslationVersions.length > 0)
     ? orderedTranslationVersions.slice()
     : [];
   var allowMulti = translationMultiSelectAllowed();
@@ -609,7 +542,7 @@ function updateSuggestion(dataIn, inputTitle) {
   var collapseToVersion = '';
   if (!allowMulti && keptTranslationVersions.length > 1) {
     collapseToVersion = keptTranslationVersions[0];
-    keptTranslationVersions = [];
+    keptTranslationVersions = [collapseToVersion];
   }
   // A translation that resolves but has no text for this ref is not worth
   // offering: record it before the option list is built so it renders disabled.
@@ -673,10 +606,12 @@ function updateSuggestion(dataIn, inputTitle) {
   });
 
   // Version-control shells interpolate only entry counts. The preview is
-  // Sefaria HTML run through sanitizeSourceHtml (an allowlist; see
-  // shared/ui/dom.html), with refs and titles escaped by buildPreviewMeta.
+  // escaped source text and fixed formatting tags from processSourceText_,
+  // with refs and titles escaped by buildPreviewMeta.
   $('.translation-version-control').html(translationInput);
+  // Fixed control markup only; edition labels are added with text nodes below.
   $('.hebrew-version-control').html(selectVersionHebrew);
+  // Shared source processor emits escaped text and fixed tags; meta fields are escaped.
   $('.suggestions').html(renderPreviewHTML(dataIn, inputTitle));
 
   if (pendingPreferredVersions) {
@@ -686,8 +621,8 @@ function updateSuggestion(dataIn, inputTitle) {
     if (preferredHe && hebrewEntries.some(function (entry) { return entry.versionTitle === preferredHe; })) heSelectedVersionTitle = preferredHe;
   }
 
-  var currentEnVersion = enSelectedVersionTitle;
-  var currentHeVersion = heSelectedVersionTitle;
+  var currentEnVersion = keptTranslationVersions[0] || enSelectedVersionTitle;
+  var currentHeVersion = (keptVersions && keptVersions.he) || heSelectedVersionTitle;
   if (collapseToVersion && translationEntries.some(function (entry) { return entry.versionTitle === collapseToVersion; })) {
     currentEnVersion = collapseToVersion;
   }
@@ -763,8 +698,8 @@ function updateSuggestion(dataIn, inputTitle) {
 
     // Every option value and label goes through escapeHTML above.
     $select.html(optionsHTML);
-    // Restore multi-selection order when the list is re-rendered (e.g., after filtering).
-    if (orderedTranslationVersions.length > 1) {
+    // Restore every selected title when the list is re-rendered, even one.
+    if (orderedTranslationVersions.length) {
       selectOptions($select, orderedTranslationVersions);
       if (!query) {
         // Only an unfiltered list shows every listed version, so only then can
@@ -774,6 +709,7 @@ function updateSuggestion(dataIn, inputTitle) {
           return restoredVals.indexOf(vt) >= 0;
         });
       }
+      if (orderedTranslationVersions.length) currentEnVersion = orderedTranslationVersions[0];
     }
 
     // Filtering only narrows what is shown; it never changes the selection.
@@ -823,6 +759,12 @@ function updateSuggestion(dataIn, inputTitle) {
   }
 
   function getVersions(targetTranslationVersion) {
+    if (typeof selectedResultRefreshPending !== 'undefined' && selectedResultRefreshPending) {
+      // The closure already holds the new edition choices. Fetch them once
+      // the pending display-filter save has landed, never with old filters.
+      scheduleSelectedResultRefresh();
+      return;
+    }
     var selectedVal = translationVersionSelect().val();
     var enVersion = targetTranslationVersion || currentEnVersion || (Array.isArray(selectedVal) ? selectedVal[0] : selectedVal) || enSelectedVersionTitle;
     var heVersion = currentHeVersion || $('.he-version-selection').val() || heSelectedVersionTitle;
@@ -836,25 +778,13 @@ function updateSuggestion(dataIn, inputTitle) {
 
     google.script.run.withSuccessHandler(function (response) {
       if (requestId !== latestResolveRequestId) return;
+      if (appMode !== 'texts') { textsPreviewStale = true; return; }
       var unavailableVersions = getUnavailablePreviewVersions(response, versions);
       if (unavailableVersions.length) {
         unavailableVersions.forEach(function (version) {
           if (version.role === 'en') markTranslationAvailability('', version.title);
         });
-        hasResolvedReference = false;
-        setInsertButtonState(false);
-        $('#open-on-sefaria').prop('disabled', true);
-        if (selectedResultSummary) selectedResultSummary.status = 'Choose another edition';
-        updateActionabilityUI({ isInsertable: false });
-        var editionNames = unavailableVersions.map(function (version) {
-          return (version.role === 'he' ? 'source edition' : 'translation') + ' “' + version.title + '”';
-        }).join(' and ');
-        var message = 'The selected ' + editionNames +
-          (unavailableVersions.length === 1 ? ' has' : ' have') +
-          ' no text for this passage. Choose another edition to preview and insert.';
-        // Keep both pickers and their choices so the reader can choose another
-        // edition. A rebuild would silently select a default without its text.
-        $('.suggestions').empty().append($('<p class="preview-state-message" role="status"></p>').text(message));
+        showUnavailablePreviewVersions(unavailableVersions);
         return;
       }
       var nodeState = getResolvedNodeState(response);
@@ -873,6 +803,9 @@ function updateSuggestion(dataIn, inputTitle) {
       markTranslationAvailability(resolvedTranslation, enVersion);
       if (enVersion && resolvedTranslation && resolvedTranslation !== enVersion) renderTranslationOptions($('#translation-version-filter').val());
       updateSuggestion(response, inputTitle);
+      // Rebuilding may have started a newer fetch (e.g. a hidden edition was
+      // replaced). That request owns the preview and its disabled Insert.
+      if (requestId !== latestResolveRequestId) return;
       updateActionabilityUI(nodeState);
       data = response;
       hasResolvedReference = true;
@@ -880,14 +813,10 @@ function updateSuggestion(dataIn, inputTitle) {
       $('#open-on-sefaria').prop('disabled', false);
     }).withFailureHandler(function (error) {
       if (requestId !== latestResolveRequestId) return;
-      if (error && error.message) showInsertWarning(error.message);
-      markTranslationAvailability('', enVersion);
-      renderTranslationOptions($('#translation-version-filter').val());
-      hasResolvedReference = false;
-      setInsertButtonState(false);
-      $('#open-on-sefaria').prop('disabled', true);
-      clearVersionSelectors();
-      updateActionabilityUI({ isInsertable: false });
+      if (appMode !== 'texts') { textsPreviewStale = true; return; }
+      // A transport failure says nothing about coverage. Keep the choices so
+      // retrying the preview never substitutes a default edition.
+      showPreviewFetchFailure(error, true);
     }).findReferenceForSidebar(resolvedRef, versions, sidebarSessionId);
   }
 
@@ -898,7 +827,11 @@ function updateSuggestion(dataIn, inputTitle) {
   var optionsBuiltForRequestId = latestResolveRequestId;
   activeTranslationOptions = {
     ref: resolvedRef,
+    selectedRef: selectedRefValue,
     label: translationLabel,
+    selected: function () {
+      return { en: orderedTranslationVersions[0] || currentEnVersion, he: currentHeVersion };
+    },
     refresh: function () {
       if (!translationVersionSelect().length) return;
       // Another lookup started since this list was built: it owns the preview.
@@ -997,6 +930,7 @@ function updateSuggestion(dataIn, inputTitle) {
 
     var wasMulti = orderedTranslationVersions.length > 1;
     orderedTranslationVersions = next;
+    currentEnVersion = orderedTranslationVersions[0];
     syncSelectedTranslationDisplay();
 
     if (orderedTranslationVersions.length > 1) {
@@ -1007,7 +941,7 @@ function updateSuggestion(dataIn, inputTitle) {
 
     var primarySelected = orderedTranslationVersions[0];
     currentEnVersion = primarySelected;
-    if (wasMulti && primarySelected === (dataIn.versionTitle || '') && typeof refreshSidebarLivePreview === 'function') {
+    if (wasMulti && hasResolvedReference && primarySelected === (dataIn.versionTitle || '') && typeof refreshSidebarLivePreview === 'function') {
       // Back to the one translation already loaded: show its preview again.
       refreshSidebarLivePreview();
       return;

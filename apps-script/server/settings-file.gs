@@ -80,6 +80,7 @@ function settingsFileValueOk_(key, value, defaults) {
   var text = String(value);
   if (text.length > PREFERENCE_VALUE_MAX_CHARS_) return false;
   var fallback = defaults[key];
+  if (key === 'source_notes_mode') return ['omit', 'inline', 'separate'].indexOf(text) >= 0;
   if (typeof fallback === 'boolean') return text === 'true' || text === 'false';
   if (/_font_size$/.test(key)) {
     return text === '' || (/^\d{1,3}(\.\d{1,2})?$/.test(text) && Number(text) > 0 && Number(text) <= 400);

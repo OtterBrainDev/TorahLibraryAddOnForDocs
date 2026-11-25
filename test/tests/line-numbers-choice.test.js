@@ -28,6 +28,7 @@ const STUBS = {
   updateSuggestion() {}, updateActionabilityUI() {}, clearVersionSelectors() {},
   showBusyOverlay() {}, hideBusyOverlay() {}, showInsertNotice() {},
   ccNormalizeEmphasisMode: (value) => value || 'keep',
+  ccNormalizeNotesMode: (value) => value === 'inline' || value === 'separate' ? value : 'omit',
   ccNormalizeTranslitPosition: (value) => value || 'below',
   getSidebarTransliterationScheme: () => 'traditional',
 };

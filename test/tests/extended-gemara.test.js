@@ -52,7 +52,7 @@ function loadAppsScriptFiles(files, propertyMap = {}) {
     _fakeElement: fakeElement,
   };
   vm.createContext(context);
-  for (const file of files) {
+  for (const file of ['apps-script/server/source-text.gs'].concat(files)) {
     vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
   }
   return context;

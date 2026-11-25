@@ -26,7 +26,7 @@ only a profile's keys.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '31';
+var PREFS_SCHEMA_CURRENT_ = '32';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -280,6 +280,11 @@ function applyMigrationsFrom_(userProperties, from) {
   // transliteration has always written the Name).
   if (from < 31) {
     migrateToV31_(userProperties);
+  }
+  // v31 -> v32: marked notes can be omitted, inline, or separate. Omit
+  // preserves the existing inserted output; the preview now agrees with it.
+  if (from < 32) {
+    migrateToV32_(userProperties);
   }
 }
 
@@ -772,6 +777,13 @@ function migrateToV31_(userProperties) {
   if (userProperties.getProperty('transliteration_divine_name') == null) {
     userProperties.setProperty('transliteration_divine_name', 'HaShem');
   }
+  return true;
+}
+
+/** V32: never overwrite a reader's explicit Notes choice. */
+function migrateToV32_(userProperties) {
+  if (userProperties.getProperty('source_notes_mode') != null) return false;
+  userProperties.setProperty('source_notes_mode', 'omit');
   return true;
 }
 

@@ -563,7 +563,7 @@
         var defaults = null;
         var custom = null;
         var INSERT_PREF_KEYS = [
-          'output_mode_default', 'bilingual_layout_default', 'source_emphasis_mode',
+          'output_mode_default', 'bilingual_layout_default', 'source_emphasis_mode', 'source_notes_mode',
           'transliteration_scheme', 'transliteration_position', 'nekudot', 'nekudot_filter', 'teamim', 'teamim_filter', 'include_transliteration_default',
           'show_line_markers_default', 'include_translation_source_info',
           'insert_sefaria_link_default', 'insert_hebrew_sefaria_link_default', 'insert_from_selection_replace',
@@ -589,6 +589,7 @@
             output_mode_default: oneOf(text('output_mode_default'), ['both', 'en', 'he']),
             bilingual_layout_default: oneOf(text('bilingual_layout_default'), ['he-right', 'he-left', 'he-top']),
             source_emphasis_mode: ccNormalizeEmphasisMode(text('source_emphasis_mode')),
+            source_notes_mode: ccNormalizeNotesMode(text('source_notes_mode')),
             transliteration_scheme: text('transliteration_scheme') || 'traditional',
             transliteration_position: ccNormalizeTranslitPosition(text('transliteration_position'))
           };
@@ -662,6 +663,7 @@
                 linesOn: custom.show_line_markers_default === 'true',
                 detailsOn: custom.include_translation_source_info === 'true',
                 emphasisMode: custom.source_emphasis_mode,
+                notesMode: custom.source_notes_mode,
                 fonts: ccFontStateFrom(function (key) { return custom[key]; })
               };
             },
@@ -681,6 +683,7 @@
               if (key === 'vowels') Object.assign(custom, ccVowelsPrefs(value));
               else if (key === 'cantillation') Object.assign(custom, ccCantillationPrefs(value));
               else if (key === 'emphasis') custom.source_emphasis_mode = ccNormalizeEmphasisMode(value);
+              else if (key === 'notes') custom.source_notes_mode = ccNormalizeNotesMode(value);
               else if (key === 'translitPosition') custom.transliteration_position = ccNormalizeTranslitPosition(value);
             },
             onSchemeSelect: function (value) {

@@ -148,6 +148,31 @@ bounded traversal and response-identity checks. Other Sefaria operations
 keep their current routes. See [the migration handoff](sefaria-api-migration.md)
 for the endpoint inventory, deliberate no-fill policy and validation boundary.
 
+## Source commentary and notes
+
+`server/source-text.gs` owns semantic note extraction and exact-edition
+commentary profiles. `tools/sync-source-text.js` generates the identical
+client implementation at `shared/source-text.html`. Both preview and
+insertion use it. It emits escaped text and a fixed set of formatting tags;
+the existing allowlist sanitizer for other rich-content surfaces is unchanged.
+Notes are recognized by Sefaria's classes before commentary filtering, so a
+bold footnote lemma cannot erase unbold translation words. `source_notes_mode`
+(schema 32) controls Omit, Inline or a labelled Notes section. It applies to
+both source and translation; Separate creates text, not native Docs footnotes.
+
+Commentary profiles are bounded by exact edition, language and corpus:
+William Davidson English Bavli uses bold base text; Silverstein's Rashi
+Chumash and Rashi Ketuvim use bracketed additions. Unknown conventions
+preserve text and source emphasis. Brackets are processed per original segment,
+with nested brackets supported and malformed segments preserved whole.
+The [handoff](sefaria-api-migration.md) records the primary-source evidence.
+
+Sidebar option refreshes carry the selected translation and source edition,
+including ordered multiple translations. A callback rechecks its request
+ownership after rebuilding the preview; a newer edition request must not be
+overwritten by an older response. The missing-edition guard keeps insertion
+disabled until the chosen editions have matching text.
+
 ## The search tabs
 
 Texts, Voices and Lexicon declare themselves in `SEARCH_TABS`
@@ -246,7 +271,7 @@ too and know nothing about their host:
   pills, which sit in the insertion options' row by id. Sidebar, Preferences
   and the Link Texts dialog.
 - `shared/insertion-options/*` — the Display and Layout pickers, and the row
-  under them with Line by line, Line #s and Citation
+  under them with Line by line, Line #s and Citation, followed by Notes
   (`initInsertionOptions`). It also hides the card's transliteration Position
   where it doesn't apply, and its Arrangement icons sketch the
   transliteration's place and Line by line (`getState().transliterationOn` /

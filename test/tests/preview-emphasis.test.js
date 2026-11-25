@@ -1,20 +1,7 @@
-// Pins that the sidebar preview shows the translation as the insert will write
-// it under each Commentary choice: Default (`keep`), Combine (`discard`) and
-// Drop (`only`) (BUG-001; then called Keep, Drop and Bold only).
-//
-// Observed: with `only` ("Bold only"), Berakhot 2a:1 (William Davidson) previewed the
-// full English, explanatory commentary included, and the insert then kept only
-// the bold. The insert filters after the text is in the document
-// (insertRichTextFromHTML, then applyTypographyToParagraph in
-// server/insertion.gs); the preview never applied the mode at all. For
-// `discard` and `only` the preview now reads and filters the markup with mirrors of those
-// server functions (sidebar/js/preview-core.html). This runs the real server
-// pipeline and the preview on the same markup and requires the same words,
-// bold and italics — italics inside the bold and outside it (kept on whatever
-// text is kept: it never marks commentary), footnotes, line numbers on and
-// off, and a translation with no bold.
-//
-// Loaded with vm.runInContext; see AGENTS.md hard rule #3.
+// Preview and insertion share semantic note parsing and edition-specific
+// commentary rules. These tests run both real boundaries, then compare their
+// text and emphasis (ignoring generated verse numbers absent in the preview).
+// The processor's detailed token/fixture cases live in source-text.test.js.
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -39,7 +26,7 @@ function loadServer(props = {}) {
   vm.createContext(context);
   ['apps-script/server/utils.gs', 'apps-script/server/menu-layout.gs', 'apps-script/server/preferences.gs',
     'apps-script/server/hebrew-font-coverage.gs', 'apps-script/server/hebrew-fonts.gs',
-    'apps-script/server/insertion.gs', 'apps-script/gematriya.gs', 'apps-script/server/text-processing.gs',
+    'apps-script/server/source-text.gs', 'apps-script/server/insertion.gs', 'apps-script/gematriya.gs', 'apps-script/server/text-processing.gs',
   ].forEach((file) => vm.runInContext(read(file), context, { filename: file }));
   return context;
 }
@@ -78,22 +65,23 @@ function fakeText() {
 
 // The translation paragraph exactly as the insert leaves it.
 function inserted(server, text, mode, lineMarkers) {
-  const data = server.formatDataForPesukim({ text, he: '', sections: [1, 1] }, lineMarkers);
+  const data = server.formatDataForPesukim({ text, he: '', sections: [1, 1], versionTitle: 'William Davidson Edition - English', actualLanguage: 'en', categories: ['Talmud', 'Bavli'] }, lineMarkers);
   const { t, chars } = fakeText();
-  server.insertRichTextFromHTML(t, data.text);
+  server.insertRichTextFromHTML(t, data.text, server.sourceTextOptions_(data, { sourceEmphasisMode: mode, sourceNotesMode: 'omit' }, 'translation'));
   server.applyTypographyToParagraph({ editAsText: () => t }, '', null, 'normal', {
-    preserveSourceEmphasis: true, sourceEmphasisMode: mode,
+    preserveSourceEmphasis: true, sourceEmphasisMode: "keep",
   });
   return describe(chars, lineMarkers);
 }
 
 // ---- the preview --------------------------------------------------------
 
-function loadPreview({ mode = 'keep', lineMarkers = false, outputMode = 'both', layout = 'he-top', extendedGemara = false } = {}) {
+function loadPreview({ mode = 'keep', notesMode = 'omit', lineMarkers = false, outputMode = 'both', layout = 'he-top', extendedGemara = false } = {}) {
   const values = {
     '.output-mode-selection': outputMode,
     '.bilingual-layout-selection': layout,
     '.source-emphasis-mode': mode,
+    '.source-notes-mode': notesMode,
   };
   const context = {
     console,
@@ -107,7 +95,7 @@ function loadPreview({ mode = 'keep', lineMarkers = false, outputMode = 'both', 
   context.window = context;
   vm.createContext(context);
   ['apps-script/shared/ui/core-shared.html', 'apps-script/shared/ui/state.html', 'apps-script/shared/ui/dom.html',
-    'apps-script/sidebar/js/preview-core.html', 'apps-script/shared/composition-card/shared.html',
+    'apps-script/shared/source-text.html', 'apps-script/sidebar/js/preview-core.html', 'apps-script/shared/composition-card/shared.html',
   ].forEach((file) => vm.runInContext(scriptBody(file), context, { filename: file }));
   // Marks what Keep renders (the sanitizer is pinned in sanitize-source-html).
   context.sanitizeSourceHtml = (html) => (html ? `[sanitized:${Array.isArray(html) ? html.join('|') : html}]` : '');
@@ -135,7 +123,7 @@ function previewChars(html) {
 
 function previewed(text, mode, lineMarkers, extendedGemara) {
   const ctx = loadPreview({ mode, lineMarkers, extendedGemara });
-  const html = ctx.previewTranslationEmphasisHtml(text, mode, lineMarkers, extendedGemara);
+  const html = ctx.previewTranslationEmphasisHtml(text, mode, lineMarkers, extendedGemara, 'bold-base', 'omit');
   return describe(previewChars(html), lineMarkers);
 }
 
@@ -197,7 +185,7 @@ test('the preview\'s planner is the insert\'s, on the insert\'s own rule cases',
   ];
   for (const [text, runs, keepLines] of cases) {
     assert.deepEqual(
-      JSON.parse(JSON.stringify(ctx.planPreviewEmphasisOnlyEdits(text, runs, keepLines))),
+      JSON.parse(JSON.stringify(ctx.sourceTextBoldOnlyEdits_(text, runs, keepLines))),
       JSON.parse(JSON.stringify(server.planEmphasisOnlyEdits_(text, runs, keepLines))),
       text,
     );
@@ -216,26 +204,74 @@ test('the preview decodes entities as the insert does', () => {
 
 test('Drop (only): the preview\'s translation is the bold alone, and the Hebrew is untouched', () => {
   const ctx = loadPreview({ mode: 'only' });
-  const html = ctx.renderPreviewHTML({ ref: 'Berakhot 2a:1', heRef: 'ברכות ב א:א', text: BERAKHOT, he: 'מֵאֵימָתַי' }, 'Berakhot 2a:1');
-  assert.match(html, /\[sanitized:מֵאֵימָתַי\]/, 'Hebrew rendered as before');
+  const html = ctx.renderPreviewHTML({ versionTitle: 'William Davidson Edition - English', actualLanguage: 'en', categories: ['Talmud', 'Bavli'], ref: 'Berakhot 2a:1', heRef: 'ברכות ב א:א', text: BERAKHOT, he: 'מֵאֵימָתַי' }, 'Berakhot 2a:1');
+  assert.match(html, /מֵאֵימָתַי/, 'Hebrew text is preserved by the same reader');
   assert.match(html, /<b>MISHNA:<\/b> <b>From the time when the priests enter to partake of their teruma\.<\/b>/);
   assert.doesNotMatch(html, /From when may one recite/);
   assert.doesNotMatch(html, /Until when/);
 });
 
-test('Combine (discard): every word, no bold, italics kept; Default (keep): the sanitized markup as before', () => {
-  const combined = loadPreview({ mode: 'discard' }).renderPreviewHTML({ ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
+test('Combine (discard): every word, no bold, italics kept; Default uses the same source reader', () => {
+  const combined = loadPreview({ mode: 'discard' }).renderPreviewHTML({ versionTitle: 'William Davidson Edition - English', actualLanguage: 'en', categories: ['Talmud', 'Bavli'], ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
   assert.match(combined, /MISHNA: From when may one recite <i>Shema<\/i> in the evening\?/);
   assert.doesNotMatch(combined.split('[sanitized:x]').join(''), /<b>/);
 
-  const keep = loadPreview({ mode: 'keep' }).renderPreviewHTML({ ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
-  assert.ok(keep.includes(`[sanitized:${BERAKHOT}]`));
+  const keep = loadPreview({ mode: 'keep' }).renderPreviewHTML({ versionTitle: 'William Davidson Edition - English', actualLanguage: 'en', categories: ['Talmud', 'Bavli'], ref: 'r', heRef: 'h', text: BERAKHOT, he: 'x' }, 'r');
+  assert.ok(keep.includes(BERAKHOT));
 });
 
 test('the filtered preview is escaped text with only its own tags', () => {
   const ctx = loadPreview({ mode: 'only' });
-  const html = ctx.previewTranslationEmphasisHtml('<b>a &lt;script&gt;x</b> <img src=x onerror=alert(1)> <b>"q"</b>', 'only', false, false);
+  const html = ctx.previewTranslationEmphasisHtml('<b>a &lt;script&gt;x</b> <img src=x onerror=alert(1)> <b>"q"</b>', 'only', false, false, 'bold-base', 'omit');
   // The two spaces around the dropped <img> have no letters, so they stay, as
   // in the insert.
   assert.equal(html, '<b>a &lt;script&gt;x</b>  <b>&quot;q&quot;</b>');
+});
+
+const EDITIONS = JSON.parse(read('test/tests/fixtures/commentary-editions.json')).cases;
+function fixtureData(name) {
+  const f = EDITIONS.find((entry) => entry.name === name);
+  assert.ok(f, name);
+  return { ref: f.ref, heRef: 'מקור', indexTitle: f.indexTitle, categories: f.categories,
+    versionTitle: f.version.versionTitle, actualLanguage: f.version.actualLanguage,
+    translationVersion: f.version, text: f.text, he: 'מקור' };
+}
+
+for (const notesMode of ['omit', 'inline', 'separate']) {
+  test(`Default / Combine / Drop keep JPS base words with Notes ${notesMode}`, () => {
+    const noteFixture = EDITIONS.find((f) => f.name.includes('jps') && f.text.includes('footnote'));
+    assert.ok(noteFixture);
+    const input = fixtureData(noteFixture.name);
+    const outputs = ['keep', 'discard', 'only'].map((mode) => loadPreview({ mode, notesMode, outputMode: 'en' }).renderPreviewHTML(input, input.ref));
+    assert.equal(outputs[0], outputs[1]);
+    assert.equal(outputs[0], outputs[2]);
+    assert.match(outputs[0], /When God began to create/);
+    if (notesMode === 'omit') assert.doesNotMatch(outputs[0], /others/i);
+    else assert.match(outputs[0], /others/i);
+    if (notesMode === 'separate') assert.match(outputs[0], /Notes/);
+  });
+}
+
+test('unknown translation keeps supplied bracket words and emphasis under Drop', () => {
+  const input = { ref: 'Genesis 1:30', heRef: 'מקור', versionTitle: 'Unknown', actualLanguage: 'en',
+    categories: ['Tanakh', 'Torah'], text: '<b>All</b> creatures [I give] <i>food</i>.', he: '' };
+  const html = loadPreview({ mode: 'only', outputMode: 'en' }).renderPreviewHTML(input, input.ref);
+  assert.match(html, /<b>All<\/b> creatures \[I give\] <i>food<\/i>/);
+});
+
+test('a wholly bracketed supported segment stays empty after Drop, with no raw-text fallback', () => {
+  const input = fixtureData('silverstein-torah-brackets');
+  input.text = '[An entire annotation.]';
+  const html = loadPreview({ mode: 'only', outputMode: 'en' }).renderPreviewHTML(input, input.ref);
+  assert.doesNotMatch(html, /An entire annotation/);
+  assert.match(html, /No translation text remains/);
+});
+
+test('Hebrew semantic notes follow Notes independently of the translation Commentary mode', () => {
+  const input = { ref: 'r', heRef: 'מקור', text: '', he: 'אב<sup class="footnote-marker">א</sup><i class="footnote"><b>ביאור</b></i>גד' };
+  const omitted = loadPreview({ mode: 'only', outputMode: 'he' }).renderPreviewHTML(input, 'r');
+  assert.match(omitted, /אבגד/);
+  assert.doesNotMatch(omitted, /ביאור/);
+  const included = loadPreview({ mode: 'only', notesMode: 'inline', outputMode: 'he' }).renderPreviewHTML(input, 'r');
+  assert.match(included, /<b>ביאור<\/b>/);
 });

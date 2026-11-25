@@ -297,6 +297,7 @@ function serverPreview(prefs, sample) {
   const userProperties = makeUserProperties(prefs);
   const context = { console, Logger: { log() {} } };
   vm.createContext(context);
+  vm.runInContext(read('server/source-text.gs'), context);
   vm.runInContext(TEXT_PROCESSING, context, { filename: 'text-processing.gs' });
   context.props = userProperties;
   context.sample = sample;
@@ -342,6 +343,7 @@ test('the preview marks a divine-name substitute exactly as the server does', ()
   const preview = loadPreview();
   const server = { console };
   vm.createContext(server);
+  vm.runInContext(read('server/source-text.gs'), server);
   vm.runInContext(TEXT_PROCESSING, server, { filename: 'text-processing.gs' });
   const names = ['יְהוָ֥ה', 'יְהֹוָה', 'יֱהֹוִה', 'יהו֥ה', 'יהוה', 'אֱלֹהִ֑ים', 'אֱלוֹהִים', 'יָ֑הּ', 'יָהּ'];
   const substitutes = ['יי', "ה'", 'יקוק', 'השם', 'אלוקים', 'אלקים', 'אלודים', 'קה', 'יְיָ', 'יי֑', 'HaShem', '$&', ''];

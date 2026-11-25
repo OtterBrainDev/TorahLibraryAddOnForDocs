@@ -122,11 +122,12 @@
         <div class="cc-row" data-sidebar-control="commentary">
           <span class="cc-row-label" id="cc-emphasis-label">Commentary</span>
           <div class="cc-seg cc-emphasis-seg" id="cc-emphasis-toggle" role="radiogroup" aria-labelledby="cc-emphasis-label" data-cc-choice="emphasis">
-            <button type="button" class="cc-seg-option" role="radio" data-value="keep" aria-checked="true" title="Keep the translation’s bold and italics">Default</button>
-            <button type="button" class="cc-seg-option" role="radio" data-value="discard" aria-checked="false" title="Discard the translation’s bold formatting">Combine</button>
-            <button type="button" class="cc-seg-option" role="radio" data-value="only" aria-checked="false" title="Keep only the translation without its commentary">Drop</button>
+            <button type="button" class="cc-seg-option" role="radio" data-value="keep" aria-checked="true" title="Keep the edition’s text and source emphasis as marked">Default</button>
+            <button type="button" class="cc-seg-option" role="radio" data-value="discard" aria-checked="false" title="Keep recognized inline commentary and blend its formatting with the translation">Combine</button>
+            <button type="button" class="cc-seg-option" role="radio" data-value="only" aria-checked="false" title="Remove inline commentary only in supported editions; other editions keep all their text">Drop</button>
           </div>
         </div>
+        <p class="cc-commentary-help" id="cc-commentary-help" data-sidebar-control="commentary">Supported: Davidson Talmud and Silverstein Rashi translations. Other editions keep their text. Marked footnotes follow Notes.</p>
       </div>
     </div>
   </details>

@@ -75,9 +75,9 @@ test('translation clicks replace, toggle or extend a range according to modifier
   check(['A'], 'A', 'C', false, true, ['A']); // unavailable option is never added.
 });
 
-test('re-rendering the same passage keeps a multi-selection; a new passage starts over', () => {
+test('re-rendering the same passage keeps one or more selected translations; a new passage starts over', () => {
   const update = fnBody(core, 'updateSuggestion');
-  assert.match(update, /orderedTranslationVersionsRef === resolvedRef && orderedTranslationVersions\.length > 1/);
+  assert.match(update, /orderedTranslationVersionsRef === resolvedRef && orderedTranslationVersions\.length > 0/);
   // A layout that inserts one translation keeps the first one picked.
   assert.match(update, /!allowMulti && keptTranslationVersions\.length > 1[\s\S]{0,80}collapseToVersion = keptTranslationVersions\[0\]/);
 });

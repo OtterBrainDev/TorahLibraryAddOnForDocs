@@ -309,6 +309,7 @@
             linesOn: linesCheck ? linesCheck.checked : false,
             detailsOn: detailsCheck ? detailsCheck.checked : false,
             emphasisMode: ccNormalizeEmphasisMode(emphasisInput ? emphasisInput.value : ''),
+            notesMode: ccNormalizeNotesMode((byId('source_notes_mode') || {}).value),
             fonts: ccFontStateFrom(function (id) { return (byId(id) || {}).value; })
           };
         },
@@ -354,6 +355,7 @@
           if (key === 'vowels') _prefSetCompositionPair(ccVowelsPrefs(value));
           else if (key === 'cantillation') _prefSetCompositionPair(ccCantillationPrefs(value));
           else if (key === 'emphasis') setPrefButtonGroup('source_emphasis_mode', ccNormalizeEmphasisMode(value));
+          else if (key === 'notes') setPrefButtonGroup('source_notes_mode', ccNormalizeNotesMode(value));
           else if (key === 'translitPosition' && byId('transliteration_position')) {
             byId('transliteration_position').value = ccNormalizeTranslitPosition(value);
           }
@@ -748,6 +750,7 @@
                 setPrefButtonGroup(groupId, val);
               });
               setPrefButtonGroup('source_emphasis_mode', ccNormalizeEmphasisMode(preferences.source_emphasis_mode));
+              setPrefButtonGroup('source_notes_mode', ccNormalizeNotesMode(preferences.source_notes_mode));
 
               setPrefTranslitDropdown(preferences.voices_translit_default || 'none');
 

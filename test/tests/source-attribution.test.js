@@ -24,7 +24,7 @@ function load() {
     PropertiesService: { getUserProperties: () => ({ getProperty: () => null }) },
   };
   vm.createContext(context);
-  ['apps-script/server/utils.gs', 'apps-script/server/insertion.gs',
+  ['apps-script/server/source-text.gs', 'apps-script/server/utils.gs', 'apps-script/server/insertion.gs',
     'apps-script/server/menu-layout.gs', 'apps-script/server/preferences.gs'].forEach((file) => {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), 'utf8'), context, { filename: file });
   });

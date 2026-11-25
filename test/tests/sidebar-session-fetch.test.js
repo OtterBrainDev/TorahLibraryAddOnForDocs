@@ -45,7 +45,7 @@ function load(stored, sessions) {
     stripHebrewNumeralMarks_: (r) => r
   };
   vm.createContext(context);
-  ['apps-script/server/text-processing.gs', 'apps-script/server/preferences.gs', 'apps-script/server/sefaria-fetch.gs'].forEach((relative) => {
+  ['apps-script/server/source-text.gs', 'apps-script/server/text-processing.gs', 'apps-script/server/preferences.gs', 'apps-script/server/sefaria-fetch.gs'].forEach((relative) => {
     vm.runInContext(read(relative), context, { filename: relative });
   });
   context.writes = writes;

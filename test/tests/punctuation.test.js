@@ -33,7 +33,7 @@ function load(files, extra = {}) {
   return context;
 }
 
-const ctx = load(['apps-script/server/text-processing.gs']);
+const ctx = load(['apps-script/server/source-text.gs', 'apps-script/server/text-processing.gs']);
 const strip = (value) => ctx.stripPunctuationFromText(value);
 
 test('Torah text: sof pasuq, paseq and parasha markers go; maqaf becomes a space', () => {
@@ -114,7 +114,7 @@ test('findReference strips punctuation before the divine-name replacements, so �
     god_replace: 'true',
     god_replacement: 'G-d',
   });
-  const fetchCtx = load(['apps-script/server/text-processing.gs', 'apps-script/server/preferences.gs', 'apps-script/server/sefaria-fetch.gs'], {
+  const fetchCtx = load(['apps-script/server/source-text.gs', 'apps-script/server/text-processing.gs', 'apps-script/server/preferences.gs', 'apps-script/server/sefaria-fetch.gs'], {
     UrlFetchApp: { fetch: v3FixtureFetch({ ref: 'Exodus 3:15', heRef: 'שמות ג׳:ט״ו', he: ['וַיֹּאמֶר יְהוָה׃'], text: ['God said, “Go.”'], type: 'Tanakh' }) },
     PropertiesService: { getUserProperties: () => props },
     expandCitationAbbreviations_: () => [],

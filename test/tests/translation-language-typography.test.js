@@ -20,7 +20,7 @@ function load(props = {}) {
     readSurroundingTextStyle_: () => null,
   };
   vm.createContext(context);
-  for (const file of ['apps-script/server/menu-layout.gs', 'apps-script/server/preferences.gs', 'apps-script/server/insertion.gs']) {
+  for (const file of ['apps-script/server/menu-layout.gs', 'apps-script/server/preferences.gs', 'apps-script/server/source-text.gs', 'apps-script/server/insertion.gs']) {
     vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
   }
   return context;

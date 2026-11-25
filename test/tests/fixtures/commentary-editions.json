@@ -1,0 +1,248 @@
+{
+  "_note": "Compact live Texts v3 examples captured 2026-11-24 America/Denver (2026-11-25 UTC). Metadata and text are from Sefaria; short excerpts are explicitly marked and otherwise unmodified. Silverstein full-book audit intentionally fetched books for research; production code must still bound references. Version title, source and license are retained. No API payload schema is mocked here: these are focused processing fixtures, not full v3 responses.",
+  "documentation": [
+    "https://developers.sefaria.org/docs/text-formatting-beyond-the-segment-level",
+    "https://developers.sefaria.org/reference/get-v3-texts",
+    "https://sefariaproject.wordpress.com/2015/10/12/the-shraga-silverstein-library/"
+  ],
+  "cases": [
+    {
+      "name": "silverstein-torah-brackets",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Genesis%201%3A1-3?version=english%7CThe+Rashi+chumash+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "ref": "Genesis 1:1",
+      "indexTitle": "Genesis",
+      "categories": [
+        "Tanakh",
+        "Torah"
+      ],
+      "version": {
+        "versionTitle": "The Rashi chumash by Rabbi Shraga Silverstein",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "http://www.sefaria.org/shraga-silverstein",
+        "license": "CC-BY"
+      },
+      "text": "In the beginning of the creation by G-d [Elokim, the attribute of justice,] of the heavens and the earth, [G-d first intending to create the world with the attribute of justice but then granting precedence to the attribute of mercy (Yod-Key-Vav-Key), seeing that the world could not otherwise endure],",
+      "excerpt": false,
+      "coverage": "User-reported bracketed Rashi comments; no bold markup exists in this source segment."
+    },
+    {
+      "name": "silverstein-italic-base",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Exodus%2037%3A8?version=english%7CThe+Rashi+chumash+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "capturedSourceUrl": "https://www.sefaria.org/api/v3/texts/Exodus?version=english%7CThe+Rashi+chumash+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "ref": "Exodus 37:8",
+      "indexTitle": "Exodus",
+      "categories": [
+        "Tanakh",
+        "Torah"
+      ],
+      "version": {
+        "versionTitle": "The Rashi chumash by Rabbi Shraga Silverstein",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "http://www.sefaria.org/shraga-silverstein",
+        "license": "CC-BY"
+      },
+      "text": "One cherub at one end and one cherub at the other end. From the <i>kaporeth</i> [itself] he made the cherubs, from its two ends.",
+      "excerpt": false,
+      "coverage": "Italic base word stays when bracketed addition is dropped."
+    },
+    {
+      "name": "silverstein-nested-brackets",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Numbers%2011%3A4?version=english%7CThe+Rashi+chumash+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "capturedSourceUrl": "https://www.sefaria.org/api/v3/texts/Numbers?version=english%7CThe+Rashi+chumash+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "ref": "Numbers 11:4",
+      "indexTitle": "Numbers",
+      "categories": [
+        "Tanakh",
+        "Torah"
+      ],
+      "version": {
+        "versionTitle": "The Rashi chumash by Rabbi Shraga Silverstein",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "http://www.sefaria.org/shraga-silverstein",
+        "license": "CC-BY"
+      },
+      "text": "\tAnd the rabble that was among them [the mixed multitude that had gathered unto them in Egypt] lusted lust, and the children of Israel also wept again [with them], and they said: \"Who shall give us flesh to eat!\" [(They had flesh [see Exodus 12:38 and Numbers 32:1] — they were only seeking a pretext)].",
+      "excerpt": false,
+      "coverage": "Nested balanced brackets: whole outer addition can be removed without leaving inner text."
+    },
+    {
+      "name": "silverstein-malformed-open-bracket",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Genesis%2049%3A17?version=english%7CThe+Rashi+chumash+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "capturedSourceUrl": "https://www.sefaria.org/api/v3/texts/Genesis?version=english%7CThe+Rashi+chumash+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "ref": "Genesis 49:17",
+      "indexTitle": "Genesis",
+      "categories": [
+        "Tanakh",
+        "Torah"
+      ],
+      "version": {
+        "versionTitle": "The Rashi chumash by Rabbi Shraga Silverstein",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "http://www.sefaria.org/shraga-silverstein",
+        "license": "CC-BY"
+      },
+      "text": "Dan will be a serpent on the way, a shififon [\"hisser\"] on the path, that bites the horse's heels, causing its rider to fall backwards. [Samson, by buckling the temple pillars, killed the Philistines in the temple without touching them directly.",
+      "excerpt": false,
+      "coverage": "Real unmatched opening bracket: preserve entire original segment for safety."
+    },
+    {
+      "name": "silverstein-malformed-close-bracket",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Genesis%2024%3A7?version=english%7CThe+Rashi+chumash+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "capturedSourceUrl": "https://www.sefaria.org/api/v3/texts/Genesis?version=english%7CThe+Rashi+chumash+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "ref": "Genesis 24:7",
+      "indexTitle": "Genesis",
+      "categories": [
+        "Tanakh",
+        "Torah"
+      ],
+      "version": {
+        "versionTitle": "The Rashi chumash by Rabbi Shraga Silverstein",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "http://www.sefaria.org/shraga-silverstein",
+        "license": "CC-BY"
+      },
+      "text": "The L-rd, the G-d of the heavens [(whereas above [3] we have: \"the G-d of the heavens and the G-d of the earth,\" Abraham having taught men to regard Him as such)], who took me out of my father's house [Charan] and from the land of my birth [Ur Kasdim], and who spoke concerning me [i.e., in my behalf] and who swore to me [at the covenant between the pieces (15:18)]: \"To your children will I give this land\"] — He shall send his angel before you, and you will take a wife for my son from there.",
+      "excerpt": false,
+      "coverage": "Real extra closing bracket: preserve entire original segment for safety."
+    },
+    {
+      "name": "silverstein-ketuvim-brackets",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Psalms%201%3A1-2?version=english%7CThe+Rashi+Ketuvim+by+Rabbi+Shraga+Silverstein&fill_in_missing_segments=0&return_format=default",
+      "ref": "Psalms 1:1",
+      "indexTitle": "Psalms",
+      "categories": [
+        "Tanakh",
+        "Writings"
+      ],
+      "version": {
+        "versionTitle": "The Rashi Ketuvim by Rabbi Shraga Silverstein",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "http://www.sefaria.org/shraga-silverstein",
+        "license": "CC-BY"
+      },
+      "text": "\tThe praises of a man (are) that he did not walk in the counsel of the wicked, and [(in consequence)] did not stand in the path of sinners, and [(in consequence)] did not sit in the seat of scoffers.",
+      "excerpt": false,
+      "coverage": "Same publisher-documented convention in the exact Rashi Ketuvim edition."
+    },
+    {
+      "name": "jps-semantic-note",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Genesis%201%3A1?version=english%7CTHE+JPS+TANAKH%3A+Gender-Sensitive+Edition&fill_in_missing_segments=0&return_format=default",
+      "ref": "Genesis 1:1",
+      "indexTitle": "Genesis",
+      "categories": [
+        "Tanakh",
+        "Torah"
+      ],
+      "version": {
+        "versionTitle": "THE JPS TANAKH: Gender-Sensitive Edition",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "https://jps.org/books/the-jps-tanakh-gender-sensitive-edition/",
+        "license": "CC-BY-NC"
+      },
+      "text": "When God began to create<sup class=\"footnote-marker\">a</sup><i class=\"footnote\"><b>When God began to create </b>In contrast to others “In the beginning God created.”</i> heaven and earth— ",
+      "excerpt": false,
+      "coverage": "Bold lemma belongs to semantic footnote, not main translation; note handling is independent of Commentary."
+    },
+    {
+      "name": "jps-supplied-translation",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Genesis%201%3A30?version=english%7CTHE+JPS+TANAKH%3A+Gender-Sensitive+Edition&fill_in_missing_segments=0&return_format=default",
+      "ref": "Genesis 1:30",
+      "indexTitle": "Genesis",
+      "categories": [
+        "Tanakh",
+        "Torah"
+      ],
+      "version": {
+        "versionTitle": "THE JPS TANAKH: Gender-Sensitive Edition",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "https://jps.org/books/the-jps-tanakh-gender-sensitive-edition/",
+        "license": "CC-BY-NC"
+      },
+      "text": "in which there is the breath of life, [I give] all the green plants for food.",
+      "excerpt": true,
+      "coverage": "Supplied translation in brackets is NOT commentary; unknown bracket conventions preserve words."
+    },
+    {
+      "name": "davidson-bold-base",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Berakhot%202a%3A1?version=english%7CWilliam+Davidson+Edition+-+English&fill_in_missing_segments=0&return_format=default",
+      "ref": "Berakhot 2a:1",
+      "indexTitle": "Berakhot",
+      "categories": [
+        "Talmud",
+        "Bavli",
+        "Seder Zeraim"
+      ],
+      "version": {
+        "versionTitle": "William Davidson Edition - English",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "https://korenpub.com/collections/the-noe-edition-koren-talmud-bavli-1",
+        "license": "CC-BY-NC"
+      },
+      "text": "<b>From when,</b> that is, from what time, does ",
+      "excerpt": true,
+      "coverage": "Exact Davidson Bavli English edition uses bold base text plus unbold explanatory words."
+    },
+    {
+      "name": "kehot-interpolated-unregistered",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Genesis%201%3A1?version=english%7CThe+Kehot+Chumash%3B+Chabad+House+Publications%2C+Los+Angeles&fill_in_missing_segments=0&return_format=default",
+      "ref": "Genesis 1:1",
+      "indexTitle": "Genesis",
+      "categories": [
+        "Tanakh",
+        "Torah"
+      ],
+      "version": {
+        "versionTitle": "The Kehot Chumash; Chabad House Publications, Los Angeles",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "https://www.chabadhousepublications.org/books",
+        "license": "Copyright: Chabad House Publications"
+      },
+      "text": "On the first day of creation, <b>in the beginning of God’s creating</b> <i>ex nihilo</i> ",
+      "excerpt": true,
+      "coverage": "Different exact edition: no generic bold inference; validate separately before registering."
+    },
+    {
+      "name": "steinsaltz-separate-commentary-unregistered",
+      "sourceUrl": "https://www.sefaria.org/api/v3/texts/Steinsaltz%20on%20Genesis%201%3A1-2?version=english%7CThe+Steinsaltz+Tanakh+-+English&fill_in_missing_segments=0&return_format=default",
+      "ref": "Steinsaltz on Genesis 1:1-2",
+      "indexTitle": "Steinsaltz on Genesis",
+      "categories": [
+        "Tanakh",
+        "Modern Commentary on Tanakh",
+        "Steinsaltz",
+        "Torah"
+      ],
+      "version": {
+        "versionTitle": "The Steinsaltz Tanakh - English",
+        "language": "en",
+        "actualLanguage": "en",
+        "languageFamilyName": "english",
+        "versionSource": "https://korenpub.com/collections/the-steinsaltz-tanakh/products/steinsaltz-tanakh",
+        "license": "Copyright: Steinsaltz Center"
+      },
+      "text": "<b>In the beginning, God created the heavens and the earth.</b> The opening verse takes the existence of God as a given.",
+      "excerpt": true,
+      "coverage": "Distinct commentary work, not a Genesis translation; preserve without an explicit registered profile."
+    }
+  ]
+}

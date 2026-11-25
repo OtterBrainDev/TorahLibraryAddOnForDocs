@@ -1,8 +1,17 @@
-# Sefaria API migration
+# Sefaria API migration and commentary follow-up
 
 **Observation date:** 2026-11-24. **Scope:** the add-on's text retrieval and
-its response handlers. This is the migration handoff; the regression log and
-live test checklist remain the records for bugs and release verification.
+its response handlers, followed by the authorized A–D fixes. This is the
+project handoff; the regression log and live test checklist remain the
+records for bugs and release verification.
+
+**Current artifact:** branch `fix/edition-commentary-notes-20261124`, based on
+`refactor/sefaria-texts-v3-20261124` at `9434795`. The API migration remains
+[draft PR #58](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/58);
+the follow-up is prepared for separate review. Release **2.0.0** is unchanged;
+the notes preference advances the schema to **32**. Nothing in this handoff
+establishes an Apps Script deployment, completed Google Docs testing, or a
+Marketplace release.
 
 ## Decision and endpoint scope
 
@@ -50,8 +59,8 @@ Surprise Me continue receiving the add-on's internal `he` / `text` payload.
   [legacy reader](https://github.com/Sefaria/Sefaria-Project/blob/master/sefaria/model/legacy_text.py)
   and [v3 adapter](https://github.com/Sefaria/Sefaria-Project/blob/master/sefaria/model/text_request_adapter.py).
 - `return_format=default` keeps the original source HTML, including semantic
-  footnote markup. The migration changes neither Commentary modes nor the
-  existing note-rendering policy.
+  footnote markup. The API migration itself changes neither Commentary modes
+  nor note rendering; the A–D follow-up below uses this retained markup.
 - V3's fetched `versions` become the selected `he` / `text` roles, with their
   titles, sources, licenses and language metadata. `available_versions`
   becomes the internal `versions` picker catalog. This catalog can be filtered
@@ -59,7 +68,7 @@ Surprise Me continue receiving the add-on's internal `he` / `text` payload.
   Reference/category metadata
   and nested segment arrays survive; null segment gaps become empty strings.
   Selected edition metadata is also retained as `sourceVersion` and
-  `translationVersion` for the later commentary work.
+  `translationVersion` for the edition-specific commentary rules below.
 
 ### Reference bounds
 
@@ -133,15 +142,127 @@ an unavailable citation without losing correctly resolved peers.
   A live API pass does not verify Apps Script authorization, quotas,
   `DocumentApp`, browser rendering or actual insertion.
 
-This change does not deploy an Apps Script project, create a numbered
-version, publish a Marketplace release, change preferences/schema, or change
-public RPC arities. The release number stays in `VERSION.json`.
+The API migration itself does not deploy an Apps Script project, create a
+numbered version, publish a Marketplace release, change preferences/schema,
+or change public RPC arities. The release number stays in `VERSION.json`.
 
-## Next separate pass
+## A–D follow-up — implementation and verification
 
-A–D remain outstanding: preserve selected editions through Insertion Options
-refreshes; share semantic footnote handling between preview and insertion;
-add validated edition-specific commentary profiles, preserving unknown
-conventions; and add the agreed note-output choices with matching Help and
-tooltips. Review that work separately after this migration's Google Docs
-checks, using the retained version metadata and original HTML.
+The owner authorized the follow-up on a separate branch. Its starting point
+is the tested v3 migration (**891 offline tests passed**), so selected edition
+metadata and original HTML are available without changing API endpoints.
+
+### A. Preserve editions during Insertion Options refreshes
+
+A refresh of the current reference retains its chosen translation, Hebrew
+edition, ordered multiple translations and selection anchor. A new reference
+starts its own edition selection. Fetches use the retained editions instead
+of requesting defaults. Request ownership is checked again after a preview
+rebuild, because that rebuild can start a newer edition fetch; the older
+callback must not install stale text or re-enable insertion. Missing-edition
+responses retain the existing v3 guard and ask for another edition.
+
+### B. One processor for semantic source notes
+
+`apps-script/server/source-text.gs` is the canonical pure JavaScript
+processor. `tools/sync-source-text.js` generates the client copy at
+`apps-script/shared/source-text.html`; preview and insertion run the same
+rules rather than maintaining separate parsers. The processor emits escaped
+text and only its own `b`, `i`, `sup`, `sub` and `br` tags. The existing
+allowlist sanitizer for other rich-content surfaces remains unchanged.
+
+[Sefaria's formatting documentation](https://developers.sefaria.org/docs/text-formatting-beyond-the-segment-level)
+defines a note marker as `sup.footnote-marker` and the body as `i.footnote`.
+The processor recognizes semantic class tokens, nested formatting and
+attribute variations. It handles marker and body together, preserves ordinary
+superscript/subscript text, and keeps malformed annotation markup rather
+than deleting the remainder of a passage. Notes are identified before
+Commentary is applied, so bold inside a note cannot decide which translation
+words survive. The same note choice applies to Hebrew and translation;
+Commentary remains a translation-only option. Transliteration always reads
+the main Hebrew without marked notes. Aligned preview processes each verse
+separately, matching insertion note labels and placement; a generation guard
+rejects older same-reference transliteration replies.
+
+### C. Validated edition conventions
+
+Profiles require the exact edition title, English language metadata and the
+appropriate source category/work. Neither a bold tag nor square brackets
+alone prove that words are commentary.
+
+| Edition and scope | Default | Combine | Drop |
+| --- | --- | --- | --- |
+| `William Davidson Edition - English`, Babylonian Talmud | Keep bold base text and plain explanation | Keep all words; remove source bold, retain italics | Keep the bold base text, with its retained italics |
+| `The Rashi chumash by Rabbi Shraga Silverstein`, the five Torah books | Keep bracketed Rashi additions | Keep the additions, removing their square brackets | Remove the bracketed additions |
+| `The Rashi Ketuvim by Rabbi Shraga Silverstein`, Tanakh / Writings | Keep bracketed Rashi additions | Keep the additions, removing their square brackets | Remove the bracketed additions |
+| Other editions or unmatched metadata | Keep text and source emphasis | Keep text and source emphasis | Keep text and source emphasis |
+
+Sefaria's [publication introducing the Silverstein library](https://sefariaproject.wordpress.com/2015/10/12/the-shraga-silverstein-library/)
+explicitly documents brackets for both the Chumash and Ketuvim. Current v3
+responses confirm those conventions and the exact edition titles. The
+compact live examples in `test/tests/fixtures/commentary-editions.json`
+record their URLs, licenses, metadata and any excerpting.
+
+Bracket handling respects nesting and each original source segment. A
+segment with an unmatched opening or closing bracket stays whole, even in
+Combine or Drop. This protects real malformed data such as Genesis 49:17 and
+Genesis 24:7 in Silverstein. Unknown editions also remain whole: the JPS2023
+`[I give]` in Genesis 1:30 is translated text, while its bold quotation in
+Genesis 1:1 belongs inside a footnote. Kehot and separate Steinsaltz Tanakh
+commentary works are not automatically registered from their author or
+appearance; each additional convention needs evidence and tests.
+
+### D. Notes preference and consistent controls
+
+**Notes** appears in Layout below Line numbers, with `source_notes_mode`:
+
+- `omit` (**Omit**, the default): leave out semantic notes and their markers.
+- `inline` (**Inline**): include the note where it occurs in the text.
+- `separate` (**Separate**): keep a marker and collect notes under a labelled
+  Notes section below the passage, or below that line with Line by line.
+
+Separate produces ordinary document text, not native Google Docs footnotes.
+The choice is independent of Commentary: notes requested with Inline or
+Separate remain available even when the translation's commentary is dropped.
+Preview and insertion use the same choice, including Default Commentary.
+
+Schema **32** seeds `source_notes_mode` to `omit` when absent. This preserves
+what the old insertion path actually wrote; that path already omitted notes,
+although Default preview could display them. The setting participates in
+saved defaults, sidebar session overrides, profiles, settings-file Text and
+layout, and Link Texts' per-insertion overrides. Existing saved values are
+not overwritten by the migration. Help and tooltips explain the supported
+editions, preservation fallback, and distinction between Commentary and Notes.
+
+### Follow-up validation and next action
+
+- Research completed on 2026-11-24 against live Sefaria v3 and the primary
+  sources linked above. It is read-only API verification, not a Google Docs
+  workflow test.
+- **A–D offline validation:** 977 passed, 0 failed, 0 skipped, from a baseline
+  of 891. This adds 86 regressions. Shared-parser parity, selection/save races,
+  per-edition transformations, Notes, all insertion arrangements, profile
+  migration and settings routes are covered. Required template snapshots were
+  regenerated. Pre-clasp QC passes; optional `clasp status` was unavailable
+  because clasp is not installed.
+- **Live annotation checks:** 6 passed, 0 failed, 16 requests, observed
+  2026-11-24 at 22:10 Mountain time. The production v3 reader and processor
+  verified Silverstein Torah/Punctuation Off, a malformed Silverstein verse,
+  Silverstein Ketuvim, JPS footnotes and supplied words, and Davidson base text.
+  Reproduce with `node tools/check-sefaria-v3.js commentary`.
+- A static browser rendering check could not run because this environment's
+  Chromium launcher has no installed browser binary. DOM/markup contracts and
+  parser tests pass; real browser/Docs visual verification is still pending.
+- Regression coverage is in `sidebar-edition-selection.test.js`,
+  `source-text.test.js`, `source-notes-settings.test.js`,
+  `source-notes-insertion.test.js`, `preview-source-notes.test.js`, the
+  preview/insertion parity tests, and preference/profile/settings-file suites.
+- Real Google Docs checks **N1–N9 and O1–O14 remain pending** in the
+  [live test checklist](live-test-checklist-2.0.0.md). In particular, verify
+  note placement, formatting, selection persistence, and asynchronous refresh
+  behavior against the exact reviewed HEAD deployment.
+
+Review this branch after the v3 migration; it is based on that migration
+so the API work remains a separate change. Next action: review both draft
+changes, then test their exact HEAD in Google Docs using N1–N9 and O1–O14
+before any numbered release.

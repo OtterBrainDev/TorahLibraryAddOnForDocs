@@ -72,7 +72,7 @@ function load({ prefs, answer = 'YES', selection = true } = {}) {
     getPreferences: () => prefs || { meforash_replace: 'true', meforash_replacement: 'יי', god_replace: 'true', god_replacement: 'TEST$&' },
   };
   vm.createContext(context);
-  for (const file of ['server/text-processing.gs', 'server/document-actions.gs']) {
+  for (const file of ['server/source-text.gs', 'server/text-processing.gs', 'server/document-actions.gs']) {
     vm.runInContext(fs.readFileSync(path.join(ROOT, 'apps-script', file), 'utf8'), context, { filename: file });
   }
   const texts = { b, c, cell, otherTab, header };

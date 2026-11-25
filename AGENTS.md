@@ -94,6 +94,12 @@ AGENTS.md still expected 248 passing tests.)
    under a single-edition credit. Search, sheets, dictionaries, Ref and Versions
    use their own current endpoints, not an invented `/v3/` prefix. See
    [`docs/sefaria-api-migration.md`](docs/sefaria-api-migration.md).
+10. **Interpret inline commentary only through a verified edition profile.**
+    Exact edition title, language and corpus must match. Unknown conventions
+    and malformed bracket segments preserve words; marked notes follow their
+    own preference. `server/source-text.gs` is canonical: regenerate
+    `shared/source-text.html` with `node tools/sync-source-text.js` when it
+    changes. Never infer removable commentary from arbitrary bold or brackets.
 
 ## Versions: keep them in sync
 
@@ -169,7 +175,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **891 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **977 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -238,14 +244,28 @@ and fix it before touching the feature you came to change.
   Transform Divine Names.
 - `typography-defaults.test.js` — "Match the document" fonts, the title
   heading style, and reading the style at the insertion point.
-- `source-emphasis-mode.test.js` — the translation's Commentary choice:
-  Default (`keep`), Combine (`discard`: the bold goes, the italics stays) or
-  Drop (`only`, once "Bold only": the text that is not bold goes; what it
-  keeps: line markers, punctuation, paragraphs with no bold, and the whole
-  Hebrew — it applies to the translation only). Only bold decides what is
-  commentary; italics (foreign and transliterated words) is kept on whatever
-  text is kept, in every mode. Each card label is pinned to its value, since
-  "Drop" used to mean `discard`.
+- `source-emphasis-mode.test.js` — legacy mode normalization, low-level
+  emphasis/typography behavior, and Default / Combine / Drop label mappings.
+  The source-content pipeline uses verified edition profiles (below), not a
+  universal inference from bold.
+- `source-text.test.js` — one generated server/browser processor: semantic
+  notes, ordinary superscripts, exact Davidson and Silverstein profiles,
+  unknown editions, nested/malformed brackets per verse, safe generated HTML
+  and real captured edition fixtures. Notes is independent of Commentary.
+- `source-notes-settings.test.js` — schema 32, Omit default, session overrides,
+  settings/profile migration and import, shared Layout controls, Link Texts
+  and immediate single/multi insertion RPC payloads.
+- `source-notes-insertion.test.js` — real source processing and typography
+  in single-language, stacked, table, aligned and multi-edition inserts;
+  punctuation-off brackets, JPS supplied words, notes protected from a second
+  commentary filter, and ordinary superscript/subscript output.
+- `sidebar-edition-selection.test.js` — single/multi/source choices survive
+  refreshes, exact titles and range anchors persist, pending display saves
+  delay edition/reference fetches, stale callbacks cannot enable insertion,
+  and Texts refreshes safely after switching tabs.
+- `preview-source-notes.test.js` — aligned note labels/placement match each
+  inserted line; transliteration omits marked notes and rejects older replies
+  for the same reference.
 - `multi-version-insert.test.js` — multi-translation insert: one title per
   block, blank-line separation, empty translations skipped, every block
   formatted like the first; HTML-entity decoding (`&thinsp;` and friends). With
@@ -387,9 +407,10 @@ and fix it before touching the feature you came to change.
 - `transform-scope.test.js` — Transform Divine Names asks first, naming its
   scope (the open tab's body, not the selection; not headers, footers,
   footnotes or other tabs) and the rules, and says how many it replaced.
-- `preview-emphasis.test.js` — the sidebar preview shows Combine and Drop as
-  the insert writes them: the real server pipeline and the preview's mirrors
-  give the same words, bold and italics.
+- `preview-emphasis.test.js` — the shared source processor gives preview
+  and insertion the same words, bold and italics; JPS notes cannot become a
+  bold-only base text, unknown editions keep supplied words, and intentionally
+  empty filtered output never falls back to the original HTML.
 - `sidebar-controls.test.js` — Preferences → Sidebar on the server: Voices
   and Lexicon are on unless switched off (only `"false"` hides one); hidden
   Quick Actions and Insertion Options are known ids only (junk hides

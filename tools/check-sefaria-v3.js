@@ -47,7 +47,7 @@ const ctx = {
   CacheService: { getUserCache: () => ({ get: (key) => cache[key] || null, put: (key, value) => { cache[key] = value; } }) },
 };
 vm.createContext(ctx);
-for (const file of ['preferences', 'text-processing', 'citation-abbreviations', 'sefaria-fetch']) {
+for (const file of ['preferences', 'source-text', 'text-processing', 'citation-abbreviations', 'sefaria-fetch']) {
   const name = 'apps-script/server/' + file + '.gs';
   vm.runInContext(fs.readFileSync(path.join(root, name), 'utf8'), ctx, { filename: name });
 }
@@ -153,6 +153,72 @@ check('display preferences retain pointed transliteration source', () => {
   assert.doesNotMatch(d.he, /[\u0591-\u05BD]/);
   assert.match(d.heTransliterationSource, /[\u0591-\u05BD]/);
   return { ref: d.ref };
+});
+
+// A–D: verify edition metadata and annotation policy through the live reader.
+function sourceOutput(data, mode, notesMode) {
+  const prepared = ctx.prepareSourceCommentaryData_(data, mode);
+  const formatted = ctx.formatDataForPesukim(Object.assign({}, prepared), false);
+  return ctx.processSourceText_(formatted.text, {
+    commentaryMode: mode,
+    commentaryProfile: prepared.commentaryPrepared ? 'none' : ctx.sourceCommentaryProfile_(prepared),
+    notesMode: notesMode || 'omit',
+    stripBracketDelimiters: !!prepared.commentaryPunctuationStripped,
+  });
+}
+const silverstein = 'The Rashi chumash by Rabbi Shraga Silverstein';
+const jps = 'THE JPS TANAKH: Gender-Sensitive Edition';
+check('commentary: Silverstein Torah brackets and punctuation', () => {
+  const d = ctx.findReference('Genesis 1:1', { en: silverstein });
+  assert.equal(ctx.sourceCommentaryProfile_(d), 'bracketed');
+  const dropped = sourceOutput(d, 'only');
+  assert.match(dropped.text, /of the heavens and the earth/);
+  assert.doesNotMatch(dropped.text, /attribute of justice/);
+  const combined = sourceOutput(d, 'discard');
+  assert.match(combined.text, /attribute of justice/);
+  assert.doesNotMatch(combined.text, /[\[\]]/);
+  const stripped = ctx.applyPunctuationPreferences(d, { getProperty: (key) => key === 'translation_punctuation' ? 'false' : null });
+  const noPunctuation = sourceOutput(stripped, 'only');
+  assert.doesNotMatch(noPunctuation.text, /attribute of justice|[\[\]]/);
+  return { ref: d.ref, profile: ctx.sourceCommentaryProfile_(d) };
+});
+check('commentary: Silverstein malformed verse stays whole', () => {
+  const d = ctx.findReference('Genesis 49:17', { en: silverstein });
+  const prepared = ctx.prepareSourceCommentaryData_(d, 'only');
+  assert.equal(prepared.commentaryMalformed, true);
+  assert.equal(sourceOutput(d, 'only').text, sourceOutput(d, 'keep').text);
+  return { ref: d.ref, preservedMalformedSegment: true };
+});
+check('commentary: Silverstein Ketuvim brackets', () => {
+  const d = ctx.findReference('Psalms 1:1', { en: 'The Rashi Ketuvim by Rabbi Shraga Silverstein' });
+  assert.equal(ctx.sourceCommentaryProfile_(d), 'bracketed');
+  assert.ok(sourceOutput(d, 'keep').text.length > sourceOutput(d, 'only').text.length);
+  return { ref: d.ref, profile: ctx.sourceCommentaryProfile_(d) };
+});
+check('commentary: JPS semantic notes independent of Drop', () => {
+  const d = ctx.findReference('Genesis 1:1', { en: jps });
+  assert.equal(ctx.sourceCommentaryProfile_(d), 'none');
+  const omit = sourceOutput(d, 'only', 'omit');
+  const inline = sourceOutput(d, 'only', 'inline');
+  const separate = sourceOutput(d, 'only', 'separate');
+  assert.equal(omit.hasNotes, true);
+  assert.match(omit.text, /When God began to create/);
+  assert.equal(omit.text, sourceOutput(d, 'keep', 'omit').text);
+  assert.ok(inline.text.length > omit.text.length);
+  assert.match(separate.text, /Notes/);
+  return { ref: d.ref, notes: omit.notes.length, unknownProfilePreservesWords: true };
+});
+check('commentary: JPS supplied bracket words are translation', () => {
+  const d = ctx.findReference('Genesis 1:30', { en: jps });
+  assert.match(sourceOutput(d, 'only').text, /\[I give\]/);
+  return { ref: d.ref, suppliedWordsPreserved: true };
+});
+check('commentary: Davidson bold base and explanation', () => {
+  const d = ctx.findReference('Berakhot 2a:1', { en: 'William Davidson Edition - English' });
+  assert.equal(ctx.sourceCommentaryProfile_(d), 'bold-base');
+  assert.ok(sourceOutput(d, 'keep').text.length > sourceOutput(d, 'only').text.length);
+  assert.equal(sourceOutput(d, 'keep').text, sourceOutput(d, 'discard').text);
+  return { ref: d.ref, profile: ctx.sourceCommentaryProfile_(d) };
 });
 
 console.log(JSON.stringify({

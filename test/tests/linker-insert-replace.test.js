@@ -90,9 +90,10 @@ function load(body, prefs) {
     }
   };
   vm.createContext(context);
-  ['apps-script/transliteration.gs', 'apps-script/server/linker-prefilter.gs', 'apps-script/server/document-actions.gs'].forEach((relative) => {
+  ['apps-script/server/preferences.gs', 'apps-script/transliteration.gs', 'apps-script/server/linker-prefilter.gs', 'apps-script/server/document-actions.gs'].forEach((relative) => {
     vm.runInContext(fs.readFileSync(path.join(ROOT, relative), 'utf8'), context, { filename: relative });
   });
+  context.getPreferences = () => Object.assign({}, prefs);
   return { context, calls, fetched };
 }
 
@@ -234,7 +235,7 @@ test('a vowels override is applied when the text is fetched, without touching st
     stripHebrewNumeralMarks_: (r) => r
   };
   vm.createContext(context);
-  ['apps-script/server/text-processing.gs', 'apps-script/server/preferences.gs', 'apps-script/server/sefaria-fetch.gs'].forEach((relative) => {
+  ['apps-script/server/source-text.gs', 'apps-script/server/text-processing.gs', 'apps-script/server/preferences.gs', 'apps-script/server/sefaria-fetch.gs'].forEach((relative) => {
     vm.runInContext(fs.readFileSync(path.join(ROOT, relative), 'utf8'), context, { filename: relative });
   });
   assert.equal(context.findReferenceWithPreferences_('Genesis 1:1', { nekudot: 'false', teamim: 'false' }).he[0], 'בראשית');
