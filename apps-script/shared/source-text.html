@@ -1,0 +1,425 @@
+<script>
+// Canonical, dependency-free source-text processing for Apps Script and preview.
+// Run `node tools/sync-source-text.js` after edits; its generated HTML is an
+// ordinary include, and source-text.test.js rejects drift between the copies.
+// The processor emits escaped text and its own b/i/sup/sub/br tags only.
+
+/** An edition profile is evidence about that edition, never about bold alone. */
+function sourceCommentaryProfile_(data) {
+  if (!data) return 'none';
+  var version = data.translationVersion || {};
+  var title = String(data.versionTitle || version.versionTitle || '');
+  if (version.versionTitle && version.versionTitle !== title) return 'none';
+  var actual = String(version.actualLanguage || data.actualLanguage || '').toLowerCase();
+  var family = String(version.languageFamilyName || data.languageFamilyName || '').toLowerCase();
+  if (actual ? actual !== 'en' : family !== 'english') return 'none';
+  var categories = Array.isArray(data.categories) ? data.categories : [];
+  if (title === 'William Davidson Edition - English' && categories[0] === 'Talmud' && categories[1] === 'Bavli' &&
+      categories.indexOf('Commentary') < 0) return 'bold-base';
+  if (title === 'The Rashi chumash by Rabbi Shraga Silverstein' &&
+      categories[0] === 'Tanakh' && categories[1] === 'Torah' &&
+      ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy'].indexOf(String(data.indexTitle || data.book || '')) >= 0) {
+    return 'bracketed';
+  }
+  if (title === 'The Rashi Ketuvim by Rabbi Shraga Silverstein' &&
+      categories[0] === 'Tanakh' && categories[1] === 'Writings' &&
+      ['Psalms', 'Proverbs', 'Job', 'Song of Songs', 'Ruth', 'Lamentations',
+        'Ecclesiastes', 'Esther', 'Daniel', 'Ezra', 'Nehemiah', 'I Chronicles', 'II Chronicles']
+        .indexOf(String(data.indexTitle || data.book || '')) >= 0) return 'bracketed';
+  return 'none';
+}
+
+function sourceTextDecode_(text) {
+  var entities = {
+    amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+    ensp: '\u2002', emsp: '\u2003', thinsp: '\u2009', hairsp: '\u200a',
+    zwnj: '\u200c', zwj: '\u200d', lrm: '\u200e', rlm: '\u200f',
+    ndash: '\u2013', mdash: '\u2014', hellip: '\u2026', middot: '\u00b7', bull: '\u2022',
+    ldquo: '"', rdquo: '"', lsquo: "'", rsquo: "'", laquo: '\u00ab', raquo: '\u00bb', shy: ''
+  };
+  return String(text == null ? '' : text)
+    .replace(/&amp;(nbsp|ensp|emsp|thinsp|hairsp|zwnj|zwj|lrm|rlm|shy);/gi, '&$1;')
+    .replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]*);/gi, function (match, body) {
+      if (body[0] === '#') {
+        var hex = body[1].toLowerCase() === 'x';
+        var code = parseInt(body.slice(hex ? 2 : 1), hex ? 16 : 10);
+        if (!(code > 0) || code > 0x10ffff) return match;
+        return code === 160 ? ' ' : String.fromCodePoint(code);
+      }
+      var name = body.toLowerCase();
+      return Object.prototype.hasOwnProperty.call(entities, name) ? entities[name] : match;
+    });
+}
+
+function sourceTextEscape_(text) {
+  return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/** Tokenize tags without mistaking an attribute's quoted > for its ending. */
+function sourceTextTokens_(html) {
+  var tokens = [];
+  var pattern = /<!--[\s\S]*?-->|<\/?[a-zA-Z][\w:-]*(?:"[^"]*"|'[^']*'|[^'">])*?>/g;
+  var last = 0, match;
+  while ((match = pattern.exec(html))) {
+    if (match.index > last) tokens.push({ kind: 'text', value: html.slice(last, match.index) });
+    var raw = match[0];
+    if (raw.indexOf('<!--') !== 0) {
+      var name = /^<\/?([\w:-]+)/.exec(raw)[1].toLowerCase();
+      var attrs = Object.create(null);
+      var attrPattern = /([\w:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s'"=<>`]+)))?/g;
+      var tail = raw.replace(/^<\/?[\w:-]+/, '').replace(/\/?\s*>$/, '');
+      var attr;
+      while ((attr = attrPattern.exec(tail))) {
+        attrs[attr[1].toLowerCase()] = sourceTextDecode_(attr[2] !== undefined ? attr[2] : attr[3] !== undefined ? attr[3] : attr[4] || '');
+      }
+      tokens.push({ kind: 'tag', raw: raw, name: name, closing: /^<\//.test(raw),
+        selfClosing: /\/\s*>$/.test(raw) || /^(br|hr|img|input|meta|link|wbr|area|base|col|embed|param|source|track)$/.test(name), attrs: attrs });
+    }
+    last = pattern.lastIndex;
+  }
+  if (last < html.length) tokens.push({ kind: 'text', value: html.slice(last) });
+  var stack = [];
+  tokens.forEach(function (token, index) {
+    if (token.kind !== 'tag' || token.selfClosing) return;
+    if (!token.closing) { stack.push(index); return; }
+    var matchIndex = -1;
+    for (var i = stack.length - 1; i >= 0; i--) {
+      if (tokens[stack[i]].name === token.name) { matchIndex = i; break; }
+    }
+    if (matchIndex < 0) return;
+    // Only a properly nested, complete body may be removed as a note. An
+    // unclosed nested tag is ambiguous, so keep its words rather than guessing.
+    if (matchIndex === stack.length - 1) {
+      var opener = stack[matchIndex];
+      tokens[opener].end = index;
+      token.start = opener;
+    }
+    stack.splice(matchIndex);
+  });
+  return tokens;
+}
+
+function sourceTextHasClass_(token, name) {
+  return token && token.kind === 'tag' &&
+    String(token.attrs['class'] || '').toLowerCase().split(/\s+/).indexOf(name) >= 0;
+}
+
+function sourceTextPlainToken_(token) {
+  return token && token.kind === 'text' && !sourceTextDecode_(token.value).trim();
+}
+
+/** Extract complete semantic note bodies, preserving ordinary sup/sub text. */
+function sourceTextExtractNotes_(tokens) {
+  var main = [], notes = [], malformed = false;
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+    var body = null, bodyIndex = -1, markerTokens = [];
+    if (token.kind === 'tag' && !token.closing && token.name === 'sup' && token.end !== undefined) {
+      var next = token.end + 1;
+      while (sourceTextPlainToken_(tokens[next])) next++;
+      var candidate = tokens[next];
+      if (candidate && !candidate.closing && candidate.name === 'i' &&
+          sourceTextHasClass_(candidate, 'footnote') && candidate.end !== undefined) {
+        // Older Sefaria editions omit the marker class. Adjacency to a real,
+        // complete i.footnote supplies the missing semantic evidence.
+        body = candidate;
+        bodyIndex = next;
+        markerTokens = tokens.slice(i + 1, token.end);
+      }
+    }
+    if (!body && token.kind === 'tag' && !token.closing && token.name === 'i' && sourceTextHasClass_(token, 'footnote')) {
+      if (token.end !== undefined) { body = token; bodyIndex = i; }
+      else malformed = true;
+    }
+    if (body) {
+      var note = { markerTokens: markerTokens, bodyTokens: tokens.slice(bodyIndex + 1, body.end),
+        originalHtml: tokens.slice(i, body.end + 1).map(function (part) { return part.kind === 'text' ? part.value : part.raw; }).join('') };
+      main.push({ kind: 'note', note: notes.length });
+      notes.push(note);
+      i = body.end;
+    } else main.push(token);
+  }
+  return { tokens: main, notes: notes, malformed: malformed };
+}
+
+function sourceTextChar_(ch, style) {
+  return { ch: ch, bold: !!style.bold, italic: !!style.italic, script: style.script || 'normal' };
+}
+
+/** Read markup into UTF-16 positions, matching Google Docs Text offsets. */
+function sourceTextReadTokens_(tokens, extendedGemara) {
+  var chars = [], stack = [];
+  var style = { bold: false, italic: false, script: 'normal' };
+  function appendSourceChars(value) {
+    for (var j = 0; j < value.length; j++) chars.push(sourceTextChar_(value[j], style));
+  }
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+    if (token.kind === 'text') { appendSourceChars(sourceTextDecode_(token.value)); continue; }
+    if (token.kind === 'note') {
+      chars.push({ ch: '\ufffc', bold: false, italic: false, script: 'normal', note: token.note });
+      continue;
+    }
+    if (!token.closing && /^(script|style|template|iframe|object|noscript)$/.test(token.name) && token.end !== undefined) {
+      // Skip a forbidden element's contents as the preview sanitizer does.
+      var close = tokens.indexOf(token) + 1;
+      while (close < tokens.length && !(tokens[close].kind === 'tag' && tokens[close].closing && tokens[close].name === token.name)) close++;
+      i = close;
+      continue;
+    }
+    if (token.name === 'br' || token.name === 'hr') { appendSourceChars('\n'); continue; }
+    if (/^(p|div|li)$/.test(token.name) && chars.length && chars[chars.length - 1].ch !== '\n') appendSourceChars('\n');
+    if (token.selfClosing) continue;
+    if (token.closing) {
+      for (var s = stack.length - 1; s >= 0; s--) {
+        if (stack[s].name !== token.name) continue;
+        style = stack[s].before;
+        stack.splice(s);
+        break;
+      }
+      continue;
+    }
+    stack.push({ name: token.name, before: style });
+    style = { bold: style.bold, italic: style.italic, script: style.script };
+    if (token.name === 'b' || (token.name === 'strong' && (!extendedGemara || style.bold))) style.bold = true;
+    if ((token.name === 'i' || token.name === 'em') && (!extendedGemara || style.bold) &&
+        !sourceTextHasClass_(token, 'footnote') &&
+        !Object.prototype.hasOwnProperty.call(token.attrs, 'data-commentator') &&
+        !Object.prototype.hasOwnProperty.call(token.attrs, 'data-overlay')) style.italic = true;
+    if (token.name === 'sup' || token.name === 'sub') style.script = token.name;
+  }
+  return chars;
+}
+
+function sourceTextCharsText_(chars) {
+  return chars.map(function (ch) { return ch.ch; }).join('');
+}
+
+function sourceTextRuns_(chars) {
+  var runs = [];
+  chars.forEach(function (ch, i) {
+    var last = runs[runs.length - 1];
+    if (last && last.bold === ch.bold && last.italic === ch.italic && last.script === ch.script) last.end = i;
+    else runs.push({ start: i, end: i, bold: ch.bold, italic: ch.italic, script: ch.script });
+  });
+  return runs;
+}
+
+function sourceTextCharsHtml_(chars) {
+  var text = sourceTextCharsText_(chars);
+  return sourceTextRuns_(chars).map(function (run) {
+    var value = sourceTextEscape_(text.slice(run.start, run.end + 1)).replace(/[\n\r\u000b]/g, '<br>');
+    if (run.script === 'sup' || run.script === 'sub') value = '<' + run.script + '>' + value + '</' + run.script + '>';
+    if (run.italic) value = '<i>' + value + '</i>';
+    if (run.bold) value = '<b>' + value + '</b>';
+    return value;
+  }).join('');
+}
+
+/** Preserve note anchors even when the surrounding commentary is dropped. */
+function sourceTextApplyEdits_(chars, edits) {
+  edits.forEach(function (edit) {
+    var removed = edit.end >= edit.start ? chars.splice(edit.start, edit.end - edit.start + 1) : [];
+    var replacement = [];
+    for (var c = 0; c < edit.insert.length; c++) replacement.push(sourceTextChar_(edit.insert[c], {}));
+    removed.forEach(function (ch) { if (ch.note !== undefined) replacement.push(ch); });
+    if (replacement.length) chars.splice.apply(chars, [edit.start, 0].concat(replacement));
+  });
+}
+
+/** Same line/spacing policy as the original Talmud-only insert planner. */
+function sourceTextBoldOnlyEdits_(fullText, runs, keepLines) {
+  var text = String(fullText || ''), n = text.length;
+  if (!n || !runs.length) return [];
+  var keep = new Array(n).fill(false), kept = 0;
+  runs.forEach(function (run) {
+    var from = Math.max(0, run.start), to = Math.min(n - 1, run.end);
+    if (!text.slice(from, to + 1).trim()) return;
+    for (var i = from; i <= to; i++) keep[i] = true;
+    kept++;
+  });
+  if (!kept) return [];
+  var edits = [], lines = [], lineStart = 0;
+  while (lineStart <= n) {
+    var lineEnd = lineStart;
+    while (lineEnd < n && !/[\n\r\u000b]/.test(text[lineEnd])) lineEnd++;
+    var emphasized = false;
+    for (var i = lineStart; i < lineEnd; i++) if (keep[i]) { emphasized = true; break; }
+    var whole = Array.isArray(keepLines) && keepLines.indexOf(text.slice(lineStart, lineEnd).trim()) >= 0;
+    lines.push({ start: lineStart, end: lineEnd, emphasized: emphasized && !whole,
+      removed: !emphasized && !whole && text.slice(lineStart, lineEnd).trim() !== '' });
+    lineStart = lineEnd + 1;
+  }
+  for (var l = 0; l < lines.length; l++) {
+    if (!lines[l].removed) continue;
+    var first = l;
+    while (l + 1 < lines.length && lines[l + 1].removed) l++;
+    edits.push(l + 1 < lines.length
+      ? { start: lines[first].start, end: lines[l + 1].start - 1, insert: '' }
+      : { start: Math.max(0, lines[first].start - 1), end: lines[l].end - 1, insert: '' });
+  }
+  lines.forEach(function (line) {
+    if (!line.emphasized) return;
+    var end = line.end;
+    var marker = /^[ \t]*\([^)\n\r\u000b]*\)[ \t]*/.exec(text.slice(line.start, end));
+    var contentStart = line.start + (marker ? marker[0].length : 0), i = contentStart;
+    while (i < end) {
+      if (keep[i]) { i++; continue; }
+      var gapStart = i;
+      while (i < end && !keep[i]) i++;
+      var gapEnd = i - 1;
+      if (!/[\p{L}\p{N}]/u.test(text.slice(gapStart, gapEnd + 1))) continue;
+      var interior = gapStart > contentStart && gapEnd < end - 1;
+      var spacedAlready = interior && (/[ \t\u00a0]/.test(text[gapStart - 1]) || /[ \t\u00a0]/.test(text[gapEnd + 1]));
+      if (!interior || spacedAlready) { edits.push({ start: gapStart, end: gapEnd, insert: '' }); continue; }
+      var space = -1;
+      for (var k = gapStart; k <= gapEnd; k++) if (/[ \t\u00a0]/.test(text[k])) { space = k; break; }
+      if (space < 0) edits.push({ start: gapStart, end: gapEnd, insert: ' ' });
+      else {
+        if (space < gapEnd) edits.push({ start: space + 1, end: gapEnd, insert: '' });
+        if (space > gapStart) edits.push({ start: gapStart, end: space - 1, insert: '' });
+      }
+    }
+  });
+  return edits.sort(function (a, b) { return b.start - a.start; });
+}
+
+function sourceTextBracketEdits_(chars, mode) {
+  var pairs = [], stack = [], malformed = false;
+  chars.forEach(function (ch, i) {
+    if (ch.note !== undefined) return;
+    if (ch.ch === '[') stack.push(i);
+    else if (ch.ch === ']') {
+      if (!stack.length) malformed = true;
+      else { var start = stack.pop(); pairs.push({ start: start, end: i, outer: stack.length === 0 }); }
+    } else if (/[\n\r\u000b]/.test(ch.ch) && stack.length) malformed = true;
+  });
+  if (stack.length) malformed = true;
+  if (malformed) return { edits: [], count: 0, malformed: true };
+  var edits = [];
+  if (mode === 'discard') pairs.forEach(function (pair) {
+    edits.push({ start: pair.start, end: pair.start, insert: '' }, { start: pair.end, end: pair.end, insert: '' });
+  });
+  var groups = [];
+  pairs.filter(function (pair) { return pair.outer; }).sort(function (a, b) { return a.start - b.start; }).forEach(function (pair) {
+    var previous = groups[groups.length - 1];
+    if (previous && /^[ \t]*$/.test(sourceTextCharsText_(chars.slice(previous.end + 1, pair.start)))) previous.end = pair.end;
+    else groups.push({ start: pair.start, end: pair.end });
+  });
+  if (mode === 'only') groups.forEach(function (pair) {
+    var from = pair.start, to = pair.end;
+    // Keep one existing separator; dropping "word [gloss] word" must not
+    // create double spaces or join words when an edition omitted spaces.
+    if (from > 0 && /[ \t]/.test(chars[from - 1].ch) && to + 1 < chars.length && /[ \t]/.test(chars[to + 1].ch)) to++;
+    var join = from > 0 && to + 1 < chars.length && /[\p{L}\p{N}]/u.test(chars[from - 1].ch) && /[\p{L}\p{N}]/u.test(chars[to + 1].ch);
+    edits.push({ start: from, end: to, insert: join ? ' ' : '' });
+  });
+  return { edits: edits.sort(function (a, b) { return b.start - a.start; }), count: pairs.length, malformed: false };
+}
+
+/**
+ * Interpret brackets before the caller joins source segments or strips
+ * punctuation. Malformed segments return their original HTML in full. Notes
+ * remain semantic markup for processSourceText_ to render under Notes later;
+ * this helper's HTML must still go through that processor before display.
+ */
+function transformSourceBrackets_(html, mode) {
+  var input = String(html == null ? '' : html);
+  var extracted = sourceTextExtractNotes_(sourceTextTokens_(input));
+  var chars = sourceTextReadTokens_(extracted.tokens, false);
+  var brackets = sourceTextBracketEdits_(chars, mode);
+  if (brackets.malformed || extracted.malformed || mode !== 'discard' && mode !== 'only') {
+    return { html: input, hasCommentary: brackets.count > 0, preservedMalformedMarkup: brackets.malformed || extracted.malformed };
+  }
+  sourceTextApplyEdits_(chars, brackets.edits);
+  var out = '', pending = [];
+  chars.forEach(function (ch) {
+    if (ch.note === undefined) { pending.push(ch); return; }
+    out += sourceTextCharsHtml_(pending) + extracted.notes[ch.note].originalHtml;
+    pending = [];
+  });
+  out += sourceTextCharsHtml_(pending);
+  return { html: out, hasCommentary: brackets.count > 0, preservedMalformedMarkup: extracted.malformed };
+}
+
+/** Preserve source segment boundaries: one broken verse cannot consume another. */
+function prepareSourceCommentaryData_(data, mode) {
+  if (!data || sourceCommentaryProfile_(data) !== 'bracketed' || data.commentaryPrepared) return data;
+  var malformed = false;
+  function visit(value) {
+    if (Array.isArray(value)) return value.map(visit);
+    if (value === null || value === undefined) return value;
+    var result = transformSourceBrackets_(value, mode);
+    malformed = malformed || result.preservedMalformedMarkup;
+    return result.html;
+  }
+  var text = visit(data.text);
+  return Object.assign({}, data, { text: text, commentaryPrepared: true, commentaryMalformed: malformed });
+}
+
+/**
+ * A single semantic transform for preview and insertion. `none` never guesses
+ * from typography or punctuation. Notes are extracted before Commentary and
+ * rendered afterwards, so a note's bold quotation cannot erase the main text.
+ * Separate means a labelled Notes block in the source, not Docs footnotes.
+ */
+function processSourceText_(html, options) {
+  options = options || {};
+  if (Array.isArray(html)) html = html.join('');
+  var input = String(html == null ? '' : html);
+  var mode = options.commentaryMode === 'only' || options.commentaryMode === 'discard' ? options.commentaryMode : 'keep';
+  var profile = options.commentaryProfile || 'none';
+  var notesMode = options.notesMode === 'inline' || options.notesMode === 'separate' ? options.notesMode : 'omit';
+  var extracted = sourceTextExtractNotes_(sourceTextTokens_(input));
+  var chars = sourceTextReadTokens_(extracted.tokens, !!options.extendedGemara);
+  var malformed = extracted.malformed, hasCommentary = false;
+  if (profile === 'bold-base' && !extracted.malformed) {
+    var boldRuns = sourceTextRuns_(chars).filter(function (run) { return run.bold; });
+    hasCommentary = boldRuns.length > 0 && chars.some(function (ch) { return !ch.bold && ch.note === undefined && /[\p{L}\p{N}]/u.test(ch.ch); });
+    if (mode === 'only') sourceTextApplyEdits_(chars, sourceTextBoldOnlyEdits_(sourceTextCharsText_(chars), boldRuns, options.keepLines));
+    if (mode === 'discard') chars.forEach(function (ch) { ch.bold = false; });
+  } else if (profile === 'bracketed' && !extracted.malformed) {
+    var brackets = sourceTextBracketEdits_(chars, mode);
+    hasCommentary = brackets.count > 0;
+    malformed = malformed || brackets.malformed;
+    sourceTextApplyEdits_(chars, brackets.edits);
+  }
+  if (options.stripBracketDelimiters) chars = chars.filter(function (ch) { return ch.note !== undefined || ch.ch !== '[' && ch.ch !== ']'; });
+  var usedLabels = Object.create(null);
+  var notes = extracted.notes.map(function (note, i) {
+    var bodyChars = sourceTextReadTokens_(note.bodyTokens, false);
+    if (options.stripBracketDelimiters) bodyChars = bodyChars.filter(function (ch) { return ch.ch !== '[' && ch.ch !== ']'; });
+    var marker = sourceTextCharsText_(sourceTextReadTokens_(note.markerTokens, false)).replace(/\s+/g, ' ').trim();
+    var label = marker || String(i + 1), suffix = 1;
+    while (Object.prototype.hasOwnProperty.call(usedLabels, label)) label = (marker || String(i + 1)) + '-' + (++suffix);
+    usedLabels[label] = true;
+    return { label: label, text: sourceTextCharsText_(bodyChars), html: sourceTextCharsHtml_(bodyChars), chars: bodyChars };
+  });
+  var mainChars = chars.filter(function (ch) { return ch.note === undefined; });
+  var rendered = [];
+  function plain(value, bold) {
+    for (var i = 0; i < value.length; i++) rendered.push(sourceTextChar_(value[i], { bold: !!bold }));
+  }
+  chars.forEach(function (ch) {
+    if (ch.note === undefined) { rendered.push(ch); return; }
+    var note = notes[ch.note];
+    if (notesMode === 'inline') {
+      plain(' (');
+      rendered = rendered.concat(note.chars);
+      plain(')');
+    } else if (notesMode === 'separate') plain('[' + note.label + ']');
+  });
+  if (notesMode === 'separate' && notes.length) {
+    if (rendered.length) plain('\n\n');
+    plain('Notes', true);
+    notes.forEach(function (note) { plain('\n[' + note.label + '] '); rendered = rendered.concat(note.chars); });
+  }
+  return {
+    html: sourceTextCharsHtml_(rendered), text: sourceTextCharsText_(rendered), runs: sourceTextRuns_(rendered),
+    mainHtml: sourceTextCharsHtml_(mainChars), mainText: sourceTextCharsText_(mainChars),
+    notes: notes.map(function (note) { return { label: note.label, text: note.text, html: note.html }; }),
+    hasNotes: notes.length > 0, hasCommentary: hasCommentary, preservedMalformedMarkup: malformed
+  };
+}
+</script>

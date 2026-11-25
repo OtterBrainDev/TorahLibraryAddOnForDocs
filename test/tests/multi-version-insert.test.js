@@ -78,7 +78,7 @@ function loadInsertion({ resolved, typography }) {
   };
   vm.createContext(context);
   // hebrew-font*.gs: every role paragraph borrows missing Hebrew marks.
-  for (const file of ['apps-script/server/utils.gs', 'apps-script/server/insertion-target.gs',
+  for (const file of ['apps-script/server/source-text.gs', 'apps-script/server/utils.gs', 'apps-script/server/insertion-target.gs',
     'apps-script/server/hebrew-font-coverage.gs', 'apps-script/server/hebrew-fonts.gs', 'apps-script/server/insertion.gs']) {
     vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
   }

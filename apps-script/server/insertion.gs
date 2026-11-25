@@ -407,7 +407,7 @@ function applyRoleTypography_(paragraph, typography, roleName, overrides) {
       color: role.color,
       background: role.background,
       preserveSourceEmphasis: extra.preserveSourceEmphasis === true,
-      sourceEmphasisMode: sourceEmphasisModeForRole_(typography, roleName),
+      sourceEmphasisMode: extra.sourceTextProcessed ? "keep" : sourceEmphasisModeForRole_(typography, roleName),
       emphasisMap: typography ? typography.emphasisMap : null,
       keepLines: typography ? typography.sectionHeadingLines : null,
       // The Hebrew marks the font lacks are always borrowed from Noto
@@ -804,7 +804,11 @@ function transliteratorFor_(scheme, prefs, data) {
     overrideMap = {};
   }
   const read = function (html) {
-    return transliterateHebrewHtmlPreservingBasicBreaks(html, schemeKey, {
+    // An annotation is not part of the text being read aloud. Remove marked
+    // notes before the transliterator's tag stripping can turn them into
+    // ordinary Hebrew words, independently of where printed Notes appear.
+    const mainHtml = processSourceText_(html, { commentaryProfile: 'none', notesMode: 'omit' }).html;
+    return transliterateHebrewHtmlPreservingBasicBreaks(mainHtml, schemeKey, {
       keepNiqqud: true,
       isBiblicalHebrew: isBiblicalHebrewText,
       // "Double dagesh chazak" (Preferences -> Transliteration Mapping), in every text.
@@ -866,11 +870,11 @@ function insertInterleavedLines_(doc, start, lines, typography) {
 
   const paragraphs = [];
   lines.forEach(function (line) {
-    if (hasInsertableText_(line.he)) paragraphs.push({ role: 'hebrew', html: line.he, typography: typography });
+    if (hasInsertableText_(line.he)) paragraphs.push({ role: 'hebrew', html: line.he, typography: typography, sourceOptions: line.sourceOptions });
     if (line.transliteration) paragraphs.push({ role: 'transliteration', text: line.transliteration });
     (line.translations || []).forEach(function (translation) {
       if (hasInsertableText_(translation.html)) {
-        paragraphs.push({ role: 'translation', html: translation.html, typography: translation.typography || typography });
+        paragraphs.push({ role: 'translation', html: translation.html, typography: translation.typography || typography, sourceOptions: translation.sourceOptions });
       }
     });
   });
@@ -884,11 +888,26 @@ function insertInterleavedLines_(doc, start, lines, typography) {
     const paragraph = doc.insertParagraph(start, "");
     paragraph.setLeftToRight(part.role !== 'hebrew');
     paragraph.setAttributes(nullStyle);
-    insertRichTextFromHTML(paragraph, part.html);
+    insertRichTextFromHTML(paragraph, part.html, part.sourceOptions);
     paragraph.setAttributes(noUnderline);
-    applyRoleTypography_(paragraph, part.typography, part.role, { preserveSourceEmphasis: true });
+    applyRoleTypography_(paragraph, part.typography, part.role, { preserveSourceEmphasis: true, sourceTextProcessed: true });
   }
   return start + paragraphs.length;
+}
+
+/** Shared source-content options; only verified translation editions can drop words. */
+function sourceTextOptions_(data, typography, role) {
+  const settings = typography || {};
+  const translation = role === 'translation';
+  return {
+    commentaryMode: translation ? settings.sourceEmphasisMode : 'keep',
+    commentaryProfile: translation && !(data && data.commentaryPrepared)
+      ? sourceCommentaryProfile_(data) : 'none',
+    notesMode: settings.sourceNotesMode || 'omit',
+    extendedGemara: settings.extendedGemara,
+    keepLines: settings.sectionHeadingLines || [],
+    stripBracketDelimiters: translation && !!(data && data.commentaryPunctuationStripped)
+  };
 }
 
 function insertReference(data, opts) {
@@ -906,6 +925,18 @@ function insertReference(data, opts) {
   if (!data || !data.ref) {
     throw new Error("Unable to insert source: no resolved reference.");
   }
+
+  const typography = getTypographySettings(typographyPropertiesFor_(options));
+  // The sidebar's Commentary choice can override the stored one for this insert.
+  if (options.sourceEmphasisMode) {
+    typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
+  }
+  if (options.sourceNotesMode !== undefined) {
+    typography.sourceNotesMode = normalizeSourceNotesMode_(options.sourceNotesMode);
+  }
+  // Brackets are interpreted independently in each original verse. A bad
+  // bracket in one verse cannot consume a neighbouring verse after joining.
+  data = prepareSourceCommentaryData_(data, typography.sourceEmphasisMode);
 
   let title = (preferredTitle) ? preferredTitle : data.ref;
   const includeLineMarkers = pasukPreference === true || pasukPreference === 'true';
@@ -961,11 +992,6 @@ function insertReference(data, opts) {
     shouldIncludeEnglishAttribution ? getEnglishAttributionLines(data) : [],
     shouldIncludeHebrewAttribution ? getHebrewAttributionLines_(data) : []
   );
-  const typography = getTypographySettings(typographyPropertiesFor_(options));
-  // The sidebar's Commentary choice can override the stored one for this insert.
-  if (options.sourceEmphasisMode) {
-    typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
-  }
   typography.sectionHeadingLines = data.sectionHeadingLines || [];
   const currentPrefs = getPreferences();
   const alignedRowsSetting = (options.alignedRows !== undefined) ? options.alignedRows : currentPrefs.bilingual_aligned_rows;
@@ -1018,14 +1044,14 @@ function insertReference(data, opts) {
     if (singleLanguage == "he") {
       mainTextParagraph.setAttributes(nullStyle);
     }
-    insertRichTextFromHTML(mainTextParagraph, mainText);
+    insertRichTextFromHTML(mainTextParagraph, mainText, sourceTextOptions_(data, typography, singleLanguage === 'he' ? 'hebrew' : 'translation'));
     mainTextParagraph.setAttributes(noUnderline);
     mainTextParagraph.setLeftToRight(ltr);
     applyRoleTypography_(
       mainTextParagraph,
       singleLanguage == "he" ? typography : typographyForTranslation_(typography, data),
       singleLanguage == "he" ? 'hebrew' : 'translation',
-      { preserveSourceEmphasis: true }
+      { preserveSourceEmphasis: true, sourceTextProcessed: true }
     );
 
     if (singleLanguage == "he" && transliterationText) {
@@ -1080,8 +1106,9 @@ function insertReference(data, opts) {
       const translationTypography = typographyForTranslation_(typography, data);
       let stackedNextIndex = insertInterleavedLines_(doc, index + 2, stackedLinePairs.map((pair) => ({
         he: pair.he,
+        sourceOptions: sourceTextOptions_(data, typography, 'hebrew'),
         transliteration: transliterationText ? transliterateLine(pair) : "",
-        translations: [{ html: pair.en, typography: translationTypography }]
+        translations: [{ html: pair.en, typography: translationTypography, sourceOptions: sourceTextOptions_(data, typography, 'translation') }]
       })), typography);
 
       if (attributionLines.length > 0) {
@@ -1097,9 +1124,9 @@ function insertReference(data, opts) {
       let hebTextParagraph = doc.insertParagraph(index + 1, "");
       hebTextParagraph.setLeftToRight(false);
       hebTextParagraph.setAttributes(nullStyle);
-      insertRichTextFromHTML(hebTextParagraph, data.he);
+      insertRichTextFromHTML(hebTextParagraph, data.he, sourceTextOptions_(data, typography, 'hebrew'));
       hebTextParagraph.setAttributes(noUnderline);
-      applyRoleTypography_(hebTextParagraph, typography, 'hebrew', { preserveSourceEmphasis: true });
+      applyRoleTypography_(hebTextParagraph, typography, 'hebrew', { preserveSourceEmphasis: true, sourceTextProcessed: true });
 
       if (transliterationText) {
         insertTransliterationParagraphAfter(doc, index + 2, transliterationText, typography, true);
@@ -1110,9 +1137,9 @@ function insertReference(data, opts) {
       let engTextParagraph = doc.insertParagraph(index + (transliterationText ? 4 : 3), "");
       engTextParagraph.setLeftToRight(true);
       engTextParagraph.setAttributes(nullStyle);
-      insertRichTextFromHTML(engTextParagraph, data.text);
+      insertRichTextFromHTML(engTextParagraph, data.text, sourceTextOptions_(data, typography, 'translation'));
       engTextParagraph.setAttributes(noUnderline);
-      applyRoleTypography_(engTextParagraph, typographyForTranslation_(typography, data), 'translation', { preserveSourceEmphasis: true });
+      applyRoleTypography_(engTextParagraph, typographyForTranslation_(typography, data), 'translation', { preserveSourceEmphasis: true, sourceTextProcessed: true });
 
       let heTopNextIndex = index + (transliterationText ? 5 : 4);
 
@@ -1191,18 +1218,18 @@ function insertReference(data, opts) {
           .insertParagraph(0, "")
           .setLeftToRight(true);
         engText.setAttributes(nullStyle);
-        insertRichTextFromHTML(engText, englishHtml);
+        insertRichTextFromHTML(engText, englishHtml, sourceTextOptions_(data, typography, 'translation'));
         engText.setAttributes(noUnderline);
-        applyRoleTypography_(engText, typographyForTranslation_(typography, data), 'translation', { preserveSourceEmphasis: true });
+        applyRoleTypography_(engText, typographyForTranslation_(typography, data), 'translation', { preserveSourceEmphasis: true, sourceTextProcessed: true });
 
         let hebText = table.getCell(row, hebrewColumn)
           .setText("")
           .insertParagraph(0, "");
         hebText.setLeftToRight(false);
         hebText.setAttributes(nullStyle);
-        insertRichTextFromHTML(hebText, hebrewHtml);
+        insertRichTextFromHTML(hebText, hebrewHtml, sourceTextOptions_(data, typography, 'hebrew'));
         hebText.setAttributes(noUnderline);
-        applyRoleTypography_(hebText, typography, 'hebrew', { preserveSourceEmphasis: true });
+        applyRoleTypography_(hebText, typography, 'hebrew', { preserveSourceEmphasis: true, sourceTextProcessed: true });
 
         if (transliterationColumn >= 0) {
           let transliterationParagraph = table.getCell(row, transliterationColumn)
@@ -1411,6 +1438,13 @@ function insertReferenceVersions(ref, opts) {
     typography.sourceEmphasisMode = normalizeSourceEmphasisMode_(options.sourceEmphasisMode);
   }
 
+  if (options.sourceNotesMode !== undefined) {
+    typography.sourceNotesMode = normalizeSourceNotesMode_(options.sourceNotesMode);
+  }
+  kept.forEach(function (entry) {
+    entry.data = prepareSourceCommentaryData_(entry.data, typography.sourceEmphasisMode);
+  });
+
   // "Line by line" (Hebrew on top only): each translation's lines, paired
   // with the Hebrew's before formatDataForPesukim joins them (it rewrites
   // the payload it is given). Null for any translation with no segments to
@@ -1492,9 +1526,9 @@ function insertReferenceVersions(ref, opts) {
 
     let heTextPara = doc.insertParagraph(index + 1, '');
     heTextPara.setLeftToRight(false).setAttributes(nullStyle);
-    insertRichTextFromHTML(heTextPara, firstData.he);
+    insertRichTextFromHTML(heTextPara, firstData.he, sourceTextOptions_(firstData, typography, 'hebrew'));
     heTextPara.setAttributes(noUnderline);
-    applyRoleTypography_(heTextPara, typography, 'hebrew', { preserveSourceEmphasis: true });
+    applyRoleTypography_(heTextPara, typography, 'hebrew', { preserveSourceEmphasis: true, sourceTextProcessed: true });
     index += 2;
 
     // Under the Hebrew, before the translations, as in a one-translation insert.
@@ -1530,9 +1564,9 @@ function insertReferenceVersions(ref, opts) {
 
     let textPara = doc.insertParagraph(index + 1, '');
     textPara.setLeftToRight(true).setAttributes(nullStyle);
-    insertRichTextFromHTML(textPara, d.text);
+    insertRichTextFromHTML(textPara, d.text, sourceTextOptions_(d, typography, 'translation'));
     textPara.setAttributes(noUnderline);
-    applyRoleTypography_(textPara, typographyForTranslation_(typography, d), 'translation', { preserveSourceEmphasis: true });
+    applyRoleTypography_(textPara, typographyForTranslation_(typography, d), 'translation', { preserveSourceEmphasis: true, sourceTextProcessed: true });
     index += 2;
 
     if (includeTranslationSourceInfo) {
@@ -1616,9 +1650,10 @@ function insertReferenceVersionLines_(doc, index, kept, linePairLists, settings)
     const hebrewPair = linePairLists[0][r];
     lines.push({
       he: hebrewPair ? hebrewPair.he : '',
+      sourceOptions: sourceTextOptions_(firstData, typography, 'hebrew'),
       transliteration: (settings.transliterator && hebrewPair) ? settings.transliterator.line(hebrewPair) : '',
       translations: linePairLists.map(function (pairs, v) {
-        return { html: pairs[r] ? pairs[r].en : '', typography: translationTypographies[v] };
+        return { html: pairs[r] ? pairs[r].en : '', typography: translationTypographies[v], sourceOptions: sourceTextOptions_(formatted[v], typography, 'translation') };
       })
     });
   }
@@ -1644,122 +1679,27 @@ function insertReferenceVersionLines_(doc, index, kept, linePairLists, settings)
   };
 }
 
-// Converts HTML from Sefaria API to rich-text in Google Docs.
-// Handles <b>, <i>, <br>, <sup> (footnotes) tags and escapes HTML entities.
-function insertRichTextFromHTML(element, htmlString) {
-  const extendedGemaraPreference =
-    PropertiesService.getUserProperties().getProperty("extended_gemara") === "true";
-
-  element = element.editAsText();
-  let buf = [];
-  let index = 0, italicsFnCount = 0, textLength = element.editAsText().getText().length;
-  let bolded = false, italicized = false, inFootnote = false;
-
-  if (Array.isArray(htmlString)) {
-    htmlString = htmlString.join("");
+// Preview and insertion use the same semantic source reader. The source's
+// note-container italics are not text emphasis; ordinary superscripts survive.
+function insertRichTextFromHTML(element, htmlString, sourceOptions) {
+  const options = Object.assign({}, sourceOptions || {});
+  if (options.extendedGemara === undefined) {
+    options.extendedGemara = PropertiesService.getUserProperties().getProperty("extended_gemara") === "true";
   }
-  let iterableString = htmlString.split(/(<\/?[a-zA-Z]+[^>]*>)/g);
-
-  let inserterFn = (textModification) => {
-    let snippet = buf.join("");
-    snippet = decodeHTMLEntities(snippet);
-
-    let snippetLength = snippet.length;
-    let snippetIndex = snippetLength - 1;
-
-    if (snippet != "") {
-      element.insertText(textLength, snippet);
-
-      element.setBold(textLength, textLength+snippetIndex, bolded);
-      element.setItalic(textLength, textLength+snippetIndex, italicized);
-
-      textLength += snippetLength;
+  const rendered = processSourceText_(Array.isArray(htmlString) ? htmlString.join("") : htmlString, options);
+  const text = element.editAsText();
+  const offset = text.getText().length;
+  if (!rendered.text) return;
+  text.insertText(offset, rendered.text);
+  rendered.runs.forEach(function (run) {
+    const start = offset + run.start;
+    const end = offset + run.end;
+    text.setBold(start, end, run.bold);
+    text.setItalic(start, end, run.italic);
+    if (typeof text.setTextAlignment === 'function' && typeof DocumentApp !== 'undefined' && DocumentApp.TextAlignment) {
+      const alignment = run.script === 'sup' ? DocumentApp.TextAlignment.SUPERSCRIPT
+        : run.script === 'sub' ? DocumentApp.TextAlignment.SUBSCRIPT : DocumentApp.TextAlignment.NORMAL;
+      text.setTextAlignment(start, end, alignment);
     }
-
-    switch(textModification) {
-      case "bold":
-        bolded = !bolded;
-        break;
-      case "italic":
-        italicized = !italicized;
-        break;
-      case "linebreak":
-        element.insertText(textLength, "\n");
-        textLength += 1;
-        break;
-    }
-  }
-
-  for (let i = 0; i < iterableString.length; i++) {
-    let word = iterableString[i];
-
-    if (inFootnote) {
-      if ( word == "<i class=\"footnote\">" || word == "<i>") {
-        italicsFnCount++;
-      } else if ( word == "</i>") {
-        italicsFnCount--;
-        if (italicsFnCount == 0) {
-          inFootnote = false;
-          continue;
-        }
-      }
-    }
-    else if (i % 2 === 1) {
-      // split() with a capture group puts every tag at an odd index. Only the
-      // tag name matters: matching the whole tag against a narrow attribute
-      // alphabet returned null on Sefaria's commentary anchors (Shulchan
-      // Arukh: hrefs with "." and "_", Hebrew data-label values) and threw,
-      // leaving a half-inserted source.
-      let tagName = /^<\/?([a-zA-Z]+)/.exec(word)[1].toLowerCase();
-
-      switch (tagName) {
-        case "b":
-          inserterFn("bold");
-          buf = [];
-          index = 0;
-          break;
-        case "strong":
-          if (!extendedGemaraPreference || bolded) {
-            inserterFn("bold");
-          }
-          buf = [];
-          index = 0;
-          break;
-        case "i":
-          if (!extendedGemaraPreference || bolded) {
-            inserterFn("italic");
-          }
-          buf = [];
-          index = 0;
-          break;
-        case "br":
-          inserterFn("linebreak");
-          buf = [];
-          index = 0;
-          break;
-        case "sup":
-          inFootnote = true;
-          italicsFnCount = 0;
-          break;
-        default:
-          break;
-      }
-      continue;
-    }
-
-    if (!inFootnote) {
-      buf[index++] = word;
-    }
-  }
-
-  let snippet = buf.join("");
-  if ( snippet != "" ) {
-    snippet = decodeHTMLEntities(snippet);
-    element.insertText(textLength, snippet);
-    let snippetIndex = snippet.length - 1;
-    // Use the live flags, not a hardcoded false: markup that never closes its
-    // <b>/<i> would otherwise drop the emphasis on the final run.
-    element.setBold(textLength, textLength+snippetIndex, bolded);
-    element.setItalic(textLength, textLength+snippetIndex, italicized);
-  }
+  });
 }

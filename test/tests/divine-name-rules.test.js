@@ -167,7 +167,7 @@ test('the punctuation after the Name is kept: sof pasuq and maqaf', () => {
 test('Transform Divine Names keeps the vowels and cantillation as well', () => {
   const context = { console, Logger: { log() {} } };
   vm.createContext(context);
-  for (const file of ['server/text-processing.gs', 'server/document-actions.gs']) {
+  for (const file of ['server/source-text.gs', 'server/text-processing.gs', 'server/document-actions.gs']) {
     vm.runInContext(fs.readFileSync(path.resolve(__dirname, '../../apps-script', file), 'utf8'), context, { filename: file });
   }
   let content = 'וַיְדַבֵּ֥ר יְהוָ֖ה אֶל־מֹשֶׁ֥ה וְאֶת־יְהוָֽה׃ אֱלֹהִ֑ים';

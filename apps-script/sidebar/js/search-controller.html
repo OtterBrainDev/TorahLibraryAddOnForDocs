@@ -270,7 +270,7 @@ function searchTextsRun(run) {
   }
 }
 
-function resolveSelectedResult(selectedRef, inputLabel) {
+function resolveSelectedResult(selectedRef, inputLabel, selectedVersions) {
   if (appMode === 'voices') {
     var item = queryState.searchResults.concat(queryState.libraryMatches).find(function(result){ return result && result.ref === selectedRef; }) || null;
     selectedVoiceItem = item;
@@ -308,6 +308,12 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     return;
   }
   selectedRefValue = selectedRef;
+  if (typeof selectedResultRefreshPending !== 'undefined' && selectedResultRefreshPending) {
+    // Keep the newly picked reference, but let the existing refresh wait for
+    // fetch-time option saves before requesting its text.
+    scheduleSelectedResultRefresh();
+    return;
+  }
   textsPreviewStale = false;
   var requestId = ++latestResolveRequestId;
   hasResolvedReference = false;
@@ -321,6 +327,11 @@ function resolveSelectedResult(selectedRef, inputLabel) {
     // Another tab is shown: its preview and Add Source are not this one's.
     // Texts fetches it again when it is shown (search-tabs).
     if (appMode !== 'texts') { textsPreviewStale = true; return; }
+    var unavailableVersions = getUnavailablePreviewVersions(response, selectedVersions);
+    if (unavailableVersions.length) {
+      showUnavailablePreviewVersions(unavailableVersions);
+      return;
+    }
     var nodeState = getResolvedNodeState(response);
     if (nodeState.isInsertable) {
       if (selectedResultSummary) {
@@ -328,6 +339,9 @@ function resolveSelectedResult(selectedRef, inputLabel) {
         updateResultsVisibility();
       }
       updateSuggestion(response, inputLabel);
+      // updateSuggestion may need a different edition and start another
+      // request. Never re-enable insertion with this now-outdated response.
+      if (requestId !== latestResolveRequestId) return;
       updateActionabilityUI(nodeState);
       data = response;
       hasResolvedReference = true;
@@ -351,15 +365,8 @@ function resolveSelectedResult(selectedRef, inputLabel) {
   }).withFailureHandler(function (error) {
     if (requestId !== latestResolveRequestId) return;
     if (appMode !== 'texts') { textsPreviewStale = true; return; }
-    hasResolvedReference = false;
-    setInsertButtonState(false);
-    $('#open-on-sefaria').prop('disabled', true);
-    clearVersionSelectors();
-    updateActionabilityUI({ isInsertable: false });
-    // Static markup; the only interpolated value is the server's error
-    // message, escaped with escapeHTML.
-    $('.suggestions').html("<br><b>" + escapeHTML((error && error.message) || 'Enter a valid reference to insert.') + "</b>");
-  }).findReferenceForSidebar(selectedRef, null, sidebarSessionId);
+    showPreviewFetchFailure(error, !!selectedVersions);
+  }).findReferenceForSidebar(selectedRef, selectedVersions || null, sidebarSessionId);
 }
 
 // How long the "not directly insertable" notice stays up before the sidebar
@@ -404,7 +411,14 @@ function refreshSelectedResult() {
   }
   if (!selectedRefValue) return;
   var fallbackLabel = selectedResultSummary && selectedResultSummary.label ? selectedResultSummary.label : selectedRefValue;
-  resolveSelectedResult(selectedRefValue, fallbackLabel);
+  // A refresh is still this passage, even when a bare book was resolved to
+  // its first section. Preserve exact titles (including significant spaces),
+  // the chosen source edition, and the first translation in insertion order.
+  var sameSelection = activeTranslationOptions &&
+    (activeTranslationOptions.ref === selectedRefValue || activeTranslationOptions.selectedRef === selectedRefValue);
+  var resolvedRef = sameSelection ? activeTranslationOptions.ref : selectedRefValue;
+  var selectedVersions = selectedPreviewVersions(resolvedRef);
+  resolveSelectedResult(resolvedRef, fallbackLabel, selectedVersions);
 }
 
 // The Voices tab's own code is in sidebar/js/voices, the Lexicon's in

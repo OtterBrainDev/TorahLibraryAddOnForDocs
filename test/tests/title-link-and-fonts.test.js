@@ -56,7 +56,7 @@ function loadInsertion() {
     applyRoleTypography_() {},
   };
   vm.createContext(context);
-  for (const file of ['apps-script/server/utils.gs', 'apps-script/server/insertion-target.gs', 'apps-script/server/insertion.gs']) {
+  for (const file of ['apps-script/server/source-text.gs', 'apps-script/server/utils.gs', 'apps-script/server/insertion-target.gs', 'apps-script/server/insertion.gs']) {
     vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
   }
   // Record which title style each title paragraph is given.
@@ -148,6 +148,7 @@ test('the new keys are preferences, with defaults equal to the translation title
 test('Link Texts and Insert from Selection pass the source title switch, following the translation\'s when unset', () => {
   const context = { console, Logger: { log() {} } };
   vm.createContext(context);
+  vm.runInContext(fs.readFileSync('apps-script/server/preferences.gs', 'utf8'), context);
   vm.runInContext(fs.readFileSync('apps-script/server/document-actions.gs', 'utf8'), context);
   const opts = (prefs) => context.buildLinkSourcesInsertOptions_(prefs);
   assert.equal(opts({ insert_sefaria_link_default: 'true', insert_hebrew_sefaria_link_default: 'false' }).insertHebrewSefariaLink, false);

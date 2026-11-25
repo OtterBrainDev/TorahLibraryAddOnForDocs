@@ -99,7 +99,7 @@ function load({ typography, fetched } = {}) {
   vm.createContext(context);
   ['apps-script/server/utils.gs', 'apps-script/server/insertion-target.gs',
     'apps-script/server/hebrew-font-coverage.gs', 'apps-script/server/hebrew-fonts.gs',
-    'apps-script/server/insertion.gs', 'apps-script/server/lexicon.gs'].forEach((file) => {
+    'apps-script/server/source-text.gs', 'apps-script/server/insertion.gs', 'apps-script/server/lexicon.gs'].forEach((file) => {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), 'utf8'), context, { filename: file });
   });
   return { lex: context, children, paragraphs: () => children.map((c) => c._state) };

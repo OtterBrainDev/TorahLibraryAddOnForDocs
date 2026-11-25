@@ -34,7 +34,7 @@ function load(files, props = {}) {
     },
   };
   vm.createContext(context);
-  for (const file of files) vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
+  for (const file of ['apps-script/server/source-text.gs'].concat(files)) vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
   return context;
 }
 
@@ -362,7 +362,7 @@ test('the composition card\'s Commentary row: Default keeps, Combine discards, D
   assert.match(markup, /data-value="discard"[^>]*>Combine</);
   assert.match(markup, /data-value="only"[^>]*>Drop</);
   assert.deepEqual({ ...loadCardScript().CC_EMPHASIS_SUMMARY }, {
-    keep: 'Commentary as marked', discard: 'Commentary combined', only: 'Commentary dropped',
+    keep: 'Commentary: Default', discard: 'Commentary: Combine', only: 'Commentary: Drop',
   });
   // Preferences sets it with the card's own control, and has no second copy.
   const prefs = fs.readFileSync('apps-script/preferences.html', 'utf8');

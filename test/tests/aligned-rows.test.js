@@ -23,7 +23,7 @@ const plain = (value) => JSON.parse(JSON.stringify(value));
 function loadPure() {
   const context = { console, Logger: { log() {} } };
   vm.createContext(context);
-  ['apps-script/gematriya.gs', 'apps-script/server/text-processing.gs'].forEach((file) => {
+  ['apps-script/gematriya.gs', 'apps-script/server/source-text.gs', 'apps-script/server/text-processing.gs'].forEach((file) => {
     vm.runInContext(read(file), context, { filename: file });
   });
   return context;
@@ -148,7 +148,7 @@ function loadInsert(storedPrefs) {
     transliterateHebrewHtmlPreservingBasicBreaks: (html) => 'tr:' + html,
   };
   vm.createContext(context);
-  ['apps-script/gematriya.gs', 'apps-script/server/text-processing.gs', 'apps-script/server/utils.gs',
+  ['apps-script/gematriya.gs', 'apps-script/server/source-text.gs', 'apps-script/server/text-processing.gs', 'apps-script/server/utils.gs',
     'apps-script/server/insertion-target.gs', 'apps-script/server/transliterated-title.gs',
     'apps-script/server/insertion.gs'].forEach((file) => {
     vm.runInContext(read(file), context, { filename: file });
@@ -211,7 +211,7 @@ test('one row: the transliteration reads the voweled Hebrew, with the same line 
   const read = [];
   context.transliterateHebrewHtmlPreservingBasicBreaks = (html) => { read.push(html); return 'tr'; };
   context.insertReference(VOWELED(), { bilingualLayout: 'he-right', pasukPreference: true, includeTransliteration: true });
-  assert.deepEqual(read, ['(א) בְּרֵאשִׁית\n(ב) וְהָאָרֶץ\n']);
+  assert.deepEqual(read.map((html) => html.replace(/<br>/g, '\n')), ['(א) בְּרֵאשִׁית\n(ב) וְהָאָרֶץ\n']);
 });
 
 test('line by line: each row\'s transliteration reads its own voweled Hebrew', () => {
@@ -502,6 +502,11 @@ test('with the real transliteration: the title reads like the text, not like its
   // The bare title, as Sefaria sends it, read "Vrʾshyt ʾ:ʾ-v".
   assert.notEqual(title.split(' ')[0], read('בראשית'));
   assert.doesNotMatch(title, /[א-ת]/, 'no Hebrew letters left');
+  // The main-text processor represents breaks as HTML; the real engine
+  // preserves the same two output lines and line markers as raw newlines.
+  const markedLines = '(א) בְּרֵאשִׁית\n(ב) וְהָאָרֶץ\n';
+  assert.equal(read(markedLines.replace(/\n/g, '<br>')), read(markedLines));
+  assert.equal(read(markedLines).split('\n').length, 2);
 });
 
 test('"below" (the default), and anything unknown, keeps the transliteration under the Hebrew', () => {

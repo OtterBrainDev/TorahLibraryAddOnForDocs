@@ -24,6 +24,7 @@ const SETTINGS = [
   "linker_review_mode",
   "show_line_markers_default",
   "source_emphasis_mode",
+  "source_notes_mode",
   "hebrew_font_color",
   "hebrew_font_background",
   "translation_font_color",
@@ -174,14 +175,13 @@ function getDefaultPreferences() {
     linker_review_mode: "summary",
     link_sources_insert_after_linking: false,
     show_line_markers_default: true,
-    // Sefaria marks up its own emphasis (the Steinsaltz Talmud bolds the Talmud's
-    // words against Steinsaltz's interpolation). "keep" by default: the source
-    // knows what it meant, and the font-style preference still sets the
-    // baseline. "discard" drops the bold; "only" keeps the bold words and
-    // drops the rest. Italics stays in all three. See
-    // normalizeSourceEmphasisMode_. Replaced the boolean
-    // `preserve_source_emphasis` in schema v14.
+    // Edition-specific inline commentary: keep as marked, combine, or drop.
+    // Verified profiles live in source-text.gs. Unknown editions keep all
+    // words and formatting. Values retain their schema-v14 names.
     source_emphasis_mode: "keep",
+    // Marked Sefaria footnotes: omit preserves the previous inserted output.
+    // Preview and insertion now share this policy. Inline / Separate are new.
+    source_notes_mode: "omit",
     // Colour and background are intentionally EMPTY by default: an empty
     // value means "leave the document's own formatting alone". Defaulting to
     // "#000000" would force black text on every user, including those with a
@@ -639,21 +639,16 @@ function readEmphasisMapping_(userProperties, prefix, fallbackStyle) {
 }
 
 /**
- * The translation's Commentary choice: what happens to Sefaria's own markup,
- * which sets a direct translation in bold and its commentary in plain text
- * (italics marks foreign and transliterated words in either, and is kept
- * wherever its text is kept):
- *   "keep"    — Default: bold and italics re-applied on top of the user's
- *               font style.
- *   "discard" — Combine: the bold is dropped, so the translation and its
- *               commentary look the same; the italics stays.
- *   "only"    — Drop: only the bold text is kept, e.g. just the Talmud's own
- *               words out of the Steinsaltz translation, with its italics.
- * Also accepts the boolean `preserve_source_emphasis` values ("true"/"false")
- * it replaced, so a value that was never migrated still means what it meant.
- * Anything unrecognised is "keep", the default.
+ * Default / Combine / Drop keep their historical stored values. The shared
+ * source reader applies the verified edition's convention: bold base text
+ * for Davidson, brackets for Silverstein. Unknown editions are preserved.
+ * Legacy preserve_source_emphasis booleans still normalize as before.
  */
 var SOURCE_EMPHASIS_MODES_ = ["keep", "discard", "only"];
+
+function normalizeSourceNotesMode_(value) {
+  return value === "inline" || value === "separate" ? value : "omit";
+}
 
 function normalizeSourceEmphasisMode_(value) {
   const v = String(value == null ? "" : value).trim().toLowerCase();
@@ -784,6 +779,8 @@ function getTypographySettings(properties) {
     sefariaLinkFontStyle: roles.sefariaLink.style,
 
     sourceEmphasisMode: normalizeSourceEmphasisMode_(userProperties.getProperty("source_emphasis_mode")),
+    sourceNotesMode: normalizeSourceNotesMode_(userProperties.getProperty("source_notes_mode")),
+    extendedGemara: userProperties.getProperty("extended_gemara") === "true",
     emphasisMap: {
       bold: readEmphasisMapping_(userProperties, "emphasis_bold", "bold"),
       italic: readEmphasisMapping_(userProperties, "emphasis_italic", "italic")

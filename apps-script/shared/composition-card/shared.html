@@ -86,16 +86,17 @@ function ccNormalizeTranslitPosition(value) {
   return CC_TRANSLIT_POSITIONS.indexOf(v) >= 0 ? v : 'below';
 }
 
-// The translation's commentary, which Sefaria tells apart from its direct
-// translation by bold (the `source_emphasis_mode` preference; the card's
-// "Commentary" row: Default = keep, Combine = discard (no bold), Drop = only
-// (only the bold text)). Italics is kept in every mode: it marks foreign and
-// transliterated words, not commentary. The Hebrew always keeps its
-// own (sourceEmphasisModeForRole_ in server/insertion.gs).
-// Mirrors normalizeSourceEmphasisMode_ in server/preferences.gs, including the
-// legacy boolean values of `preserve_source_emphasis`.
+// Commentary follows verified edition conventions (server/source-text.gs).
+// The stored values retain their historical names; unknown editions preserve
+// their text and formatting. Summaries name the selected choice, not a claim
+// that commentary was found or removed. Hebrew never uses this filter.
+// Legacy booleans are normalized as in server/preferences.gs.
 var CC_EMPHASIS_MODES = ['keep', 'discard', 'only'];
-var CC_EMPHASIS_SUMMARY = { keep: 'Commentary as marked', discard: 'Commentary combined', only: 'Commentary dropped' };
+var CC_EMPHASIS_SUMMARY = { keep: 'Commentary: Default', discard: 'Commentary: Combine', only: 'Commentary: Drop' };
+
+function ccNormalizeNotesMode(value) {
+  return value === "inline" || value === "separate" ? value : "omit";
+}
 
 function ccNormalizeEmphasisMode(value) {
   var v = String(value == null ? '' : value).trim().toLowerCase();
@@ -514,6 +515,7 @@ function updateCompositionCard() {
   // Commentary: Default (keep) / Combine (discard) / Drop (only)
   var emphasisMode = ccNormalizeEmphasisMode(state.emphasisMode);
   ccSetChoice($('#cc-emphasis-toggle'), emphasisMode);
+  ccSetChoice($('#cc-notes-toggle'), ccNormalizeNotesMode(state.notesMode));
 
   // Hebrew text visibility: one sample per combination. Vowels and
   // cantillation are separate filters (server/text-processing.gs), so with

@@ -17,9 +17,34 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
   availability now checks every catalog language family correctly. Edition
   gaps remain gaps instead of being filled from a different edition, so the
   credit names the text actually used. Search, sheets, dictionaries and the
-  citation linker keep their current supported endpoints. Commentary and
-  note-handling changes follow in a separate pass; see the
-  [migration handoff](sefaria-api-migration.md).
+  citation linker keep their current supported endpoints. The API migration
+  and separate commentary/notes follow-up are recorded in the
+  [project handoff](sefaria-api-migration.md).
+- **Selected editions survive Insertion Options changes.** Refreshing vowels,
+  cantillation, punctuation or other options keeps the selected translation,
+  Hebrew edition and ordered multiple translations. The preview and edition
+  selectors agree; a stale response cannot enable insertion while a newer
+  edition request is still loading.
+- **Commentary follows the edition.** Default / Combine / Drop supports the
+  William Davidson English Babylonian Talmud and Silverstein's Rashi Chumash
+  and Rashi Ketuvim. In the Silverstein editions, Combine keeps the explanatory
+  words without their square brackets; Drop removes balanced bracketed
+  additions. Unknown editions keep their words and source emphasis, including
+  supplied translation such as JPS's `[I give]`. A verse with malformed
+  brackets stays whole.
+- **Source Notes: Omit / Inline / Separate.** One setting in Layout applies
+  to marked footnotes in Hebrew and translation, independently of Commentary.
+  Separate collects labelled notes below the passage, or below its line in
+  Line by line; it creates text sections, not native Google Docs footnotes.
+  A shared processor handles semantic markers and nested note formatting for
+  both preview and insertion. A bold quotation inside a note no longer
+  decides which translation words survive.
+- **Migration — schema 32.** `source_notes_mode` is seeded to `omit` when
+  absent, preserving the old insertion behavior while making the preview
+  agree. Existing values stay. Notes participates in saved defaults, session
+  overrides, profiles, settings files and Link Texts' insertion options.
+  Release 2.0.0 is unchanged; live Google Docs verification remains pending
+  in checklist N and O.
 - **Translation Versions selection.** A plain click now selects one translation;
   Ctrl/Cmd-click adds or removes individual translations, and Shift-click selects
   a visible range (Ctrl/Cmd+Shift extends it). The range anchor survives preview

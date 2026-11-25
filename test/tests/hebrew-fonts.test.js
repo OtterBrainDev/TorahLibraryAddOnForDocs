@@ -18,7 +18,7 @@ const plain = (v) => JSON.parse(JSON.stringify(v));
 function load(files, extra = {}) {
   const context = Object.assign({ console, Logger: { log() {} } }, extra);
   vm.createContext(context);
-  for (const file of files) vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
+  for (const file of ['apps-script/server/source-text.gs'].concat(files)) vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
   return context;
 }
 

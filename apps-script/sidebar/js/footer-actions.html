@@ -114,6 +114,7 @@ $('#insert-source').click(function () {
   var insertSefariaLink = $('.insert-sefaria-link').is(':checked');
   var insertHebrewSefariaLink = $('.insert-hebrew-sefaria-link').is(':checked');
   var sourceEmphasisMode = ccNormalizeEmphasisMode($('.source-emphasis-mode').val());
+  var sourceNotesMode = ccNormalizeNotesMode($('.source-notes-mode').val());
   // No preferredTitle: the title is the chosen text's ref. The search box
   // holds the query ("shema", "light"), not the name of the text picked.
 
@@ -160,6 +161,7 @@ $('#insert-source').click(function () {
       insertSefariaLink: insertSefariaLink,
       insertHebrewSefariaLink: insertHebrewSefariaLink,
       sourceEmphasisMode: sourceEmphasisMode,
+      sourceNotesMode: sourceNotesMode,
       sessionId: sidebarSessionId
     });
     return;
@@ -189,6 +191,7 @@ $('#insert-source').click(function () {
     transliterationPosition: ccNormalizeTranslitPosition(effectivePreferences.transliteration_position),
     insertCitationOnly: false,
     sourceEmphasisMode: sourceEmphasisMode,
+    sourceNotesMode: sourceNotesMode,
     // The Layout tray's fonts may be session overrides only.
     sessionId: sidebarSessionId
   });

@@ -465,6 +465,16 @@ function applyPunctuationPreferences(data, userProperties) {
     clone.he = stripPunctuationDeep_(clone.he);
   }
   if (stripTranslation && Object.prototype.hasOwnProperty.call(clone, 'text')) {
+    if (sourceCommentaryProfile_(clone) === 'bracketed') {
+      // Retain annotation boundaries through punctuation removal. The shared
+      // source reader interprets them first, then removes these delimiters.
+      const protectBrackets = function (value) {
+        if (Array.isArray(value)) return value.map(protectBrackets);
+        return typeof value === 'string' ? value.replace(/\[/g, '&#91;').replace(/\]/g, '&#93;') : value;
+      };
+      clone.text = protectBrackets(clone.text);
+      clone.commentaryPunctuationStripped = true;
+    }
     clone.text = stripPunctuationDeep_(clone.text);
   }
   return clone;

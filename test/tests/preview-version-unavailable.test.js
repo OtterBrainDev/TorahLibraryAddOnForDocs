@@ -39,7 +39,7 @@ function load(en = 'Chosen translation', he = 'Chosen source') {
   const context = {
     console, $: collection,
     currentEnVersion: en, currentHeVersion: he, enSelectedVersionTitle: en, heSelectedVersionTitle: he,
-    latestResolveRequestId: 0, hasResolvedReference: true,
+    latestResolveRequestId: 0, hasResolvedReference: true, appMode: 'texts', textsPreviewStale: false,
     selectedResultSummary: { status: 'Ready to insert' },
     resolvedRef: 'Genesis 1:1', inputTitle: 'Genesis 1:1', sidebarSessionId: 's1',
     data: { ref: 'Genesis 1:1', versionTitle: 'Previously loaded', text: 'Old preview' },
@@ -161,4 +161,19 @@ test('exact edition titles retain significant trailing spaces in requests and su
   assert.equal(env.ctx.hasResolvedReference, true);
   assert.equal(env.actions.at(-1), true);
   assert.deepEqual(env.availability, [{ resolved: title, attempted: title }]);
+});
+
+test('an edition callback cannot enable an older response when rebuilding starts another fetch', () => {
+  const env = load();
+  const before = env.ctx.data;
+  env.ctx.updateSuggestion = () => {
+    env.ctx.latestResolveRequestId++;
+    env.ctx.hasResolvedReference = false;
+  };
+  env.ctx.getVersions();
+  env.calls[0].ok(payload());
+  assert.equal(env.ctx.hasResolvedReference, false);
+  assert.equal(env.actions.at(-1), false);
+  assert.equal(env.ctx.data, before);
+  assert.equal(env.dom['#open-on-sefaria'].props.disabled, true);
 });

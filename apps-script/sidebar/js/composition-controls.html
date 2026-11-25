@@ -19,6 +19,7 @@ function _sidebarCompositionGetState() {
     linesOn: $('.wants-pesukim').is(':checked'),
     detailsOn: $('.include-translation-source-info').is(':checked'),
     emphasisMode: ccNormalizeEmphasisMode($('.source-emphasis-mode').val()),
+    notesMode: ccNormalizeNotesMode($('.source-notes-mode').val()),
     fonts: ccFontStateFrom(function (key) { return effectivePreferences[key]; })
   };
 }
@@ -111,6 +112,11 @@ function _sidebarCompositionOnChoice(key, value) {
     saveSidebarPreference({ source_emphasis_mode: $('.source-emphasis-mode').val() });
     if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
     return;
+  } else if (key === 'notes') {
+    $('.source-notes-mode').val(ccNormalizeNotesMode(value));
+    saveSidebarPreference({ source_notes_mode: $('.source-notes-mode').val() });
+    if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
+    return;
   } else if (key === 'translitPosition') {
     // Shown at once; the save's answer confirms it.
     effectivePreferences.transliteration_position = ccNormalizeTranslitPosition(value);
@@ -160,17 +166,27 @@ function _sidebarCompositionOnSchemeSelect(value) {
 // still running: the second change of two quick ones could be missing.)
 var SELECTED_RESULT_REFRESH_DELAY_MS = 400;
 var selectedResultRefreshTimer = null;
+// Set only for fetch-time options, not local Commentary, Notes or font saves.
+// An edition/reference picked while these saves are pending must use the
+// saved filters too; starting a newer request alone does not establish that.
+var selectedResultRefreshPending = false;
 
 function scheduleSelectedResultRefresh() {
+  selectedResultRefreshPending = true;
   // Texts isn't shown: its preview is fetched again when it is (search-tabs).
   if (appMode !== 'texts') { textsPreviewStale = true; return; }
-  if (!selectedRefValue) return;
-  hasResolvedReference = false;
-  setInsertButtonState(false);
-  // The preview says at once that it is out of date: the save and the fetch
-  // take a few seconds, and the old text sat there meanwhile as if the change
-  // had done nothing. buildPreviewLoadingHTML escapes its message.
-  $('.suggestions').html(buildPreviewLoadingHTML('Updating preview…'));
+  // A previous fetch used the old options. Its reply must not re-enable
+  // insertion while the new settings are still being saved.
+  latestResolveRequestId++;
+  if (selectedRefValue) {
+    hasResolvedReference = false;
+    setInsertButtonState(false);
+    $('#open-on-sefaria').prop('disabled', true);
+    // The preview says at once that it is out of date: the save and the fetch
+    // take a few seconds, and the old text sat there meanwhile as if the change
+    // had done nothing. buildPreviewLoadingHTML escapes its message.
+    $('.suggestions').html(buildPreviewLoadingHTML('Updating preview…'));
+  }
   clearTimeout(selectedResultRefreshTimer);
   selectedResultRefreshTimer = setTimeout(function () {
     selectedResultRefreshTimer = null;
@@ -178,6 +194,10 @@ function scheduleSelectedResultRefresh() {
       scheduleSelectedResultRefresh();
       return;
     }
+    selectedResultRefreshPending = false;
+    // The timer may finish after switching tabs. The saved Texts selection
+    // was captured as unresolved, so explicitly arrange its fetch on return.
+    if (appMode !== 'texts') { textsPreviewStale = true; return; }
     refreshSelectedResult();
   }, SELECTED_RESULT_REFRESH_DELAY_MS);
 }

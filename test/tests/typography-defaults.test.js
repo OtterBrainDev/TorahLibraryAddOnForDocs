@@ -23,7 +23,7 @@ function load(files, props = {}, extra = {}) {
     },
   }, extra);
   vm.createContext(context);
-  for (const file of files) vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
+  for (const file of ['apps-script/server/source-text.gs'].concat(files)) vm.runInContext(fs.readFileSync(file, 'utf8'), context, { filename: file });
   return context;
 }
 

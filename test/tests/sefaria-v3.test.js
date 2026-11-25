@@ -63,6 +63,7 @@ function load(fetchImpl, stored = {}, sessions = {}) {
   vm.createContext(context);
   for (const file of [
     'apps-script/server/preferences.gs',
+    'apps-script/server/source-text.gs',
     'apps-script/server/text-processing.gs',
     'apps-script/gematriya.gs',
     'apps-script/server/sefaria-fetch.gs',

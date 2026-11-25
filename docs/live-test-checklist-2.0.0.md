@@ -4,11 +4,11 @@ Run this in a real Google Doc against HEAD — after `clasp push`, installed via
 Apps Script → Deploy → Test deployments — before creating the release version
 and pointing the Marketplace SDK at it. Everything here is something the
 automated suite **cannot** reach: `npm test` covers logic, contracts and
-snapshots, and every page has been loaded in headless Chromium without script
-errors, but nothing automated holds a `DocumentApp` handle or makes a request
-to Sefaria.
+snapshots; opt-in live API checks separately cover Sefaria responses. Neither
+kind of automated check holds a `DocumentApp` handle or proves that this HEAD
+works in the Apps Script sidebar and a real document.
 
-**Version under test:** 2.0.0 · **preference schema:** 30 (both from
+**Version under test:** 2.0.0 · **preference schema:** 32 (both from
 `docs/VERSION.json`)
 Confirm both before starting — *Help & Support → About* should read
 **Current line: 2.0**. If it says anything else, the push did not land.
@@ -25,7 +25,7 @@ a user has before they open 2.0.0:
 - **Account A — upgrading tester.** Had a development build of this add-on
   with preferences they changed: a font, a divine-name rule, a layout. Do **not** reset
   preferences. This is the account that proves the migrations (schemas up to
-  30) keep what users chose. Take a screenshot of Preferences before the push.
+  32) keep what users chose. Take a screenshot of Preferences before the push.
 - **Account B — fresh install.** A Google account that has never had the
   add-on. Proves `onInstall` seeds correctly, builds the menu and shows the
   first-run setup. Resetting preferences on Account A is *not* a substitute:
@@ -142,7 +142,7 @@ against the screenshot taken before the push.
 | E9 | `The Torah, A Women's Commentary, Deuteronomy 29:9-14` | Resolves: titles are matched by their words, not their punctuation |
 | E10 | `Genisis 1:1` | *Close matches* lists Genesis 1:1, keeping the chapter and verse; nothing opens by itself |
 | E11 | `Mishneh Torah` | Not listed as a direct match; a note under the search box says what to add |
-| E12 | A footnoted text's **preview** — Rashi on Genesis 1:1, and a Steinsaltz Talmud page | Bold/italic/footnote markers render; no visible tags, and nothing missing compared with sefaria.org. **This is the check for the sanitizer**, which keeps only a fixed set of formatting tags |
+| E12 | A footnoted text's **preview** — JPS2023 `Genesis 1:1` with **Notes: Inline**, and a William Davidson English Talmud page with **Commentary: Default** | Bold, italics and the included note render without visible tags. **This checks the sanitizer**, which keeps only a fixed set of formatting tags; Notes: Omit deliberately hides semantic notes and their markers |
 | E13 | A phrase search, e.g. `in the beginning` | Results appear (Sefaria's `/api/search-wrapper/es8` route) |
 | E14 | Preferences → Search: move Talmud above Tanakh, hide Midrash; search `shabbat` | Groups in that order, no Midrash; ⤦ Restore Corpus shows it marked *(Preferences)* |
 | E15 | Texts: type `shalom`, press Enter; switch to Voices, then Lexicon, then back | Each tab's badge counts its results; switching never searches again, the box keeps its text, and Texts comes back with its selection and preview |
@@ -203,10 +203,10 @@ against the screenshot taken before the push.
 
 | # | Check | Expected |
 | --- | --- | --- |
-| H1 | Insert the **Steinsaltz Talmud**, `Berakhot 2a`, English, **Commentary: Default** | The Talmud's own words **bold**, Steinsaltz's explanation plain |
+| H1 | Insert `Berakhot 2a`, **William Davidson Edition - English**, **Commentary: Default** | The Talmud's own words **bold**, Steinsaltz's explanation plain |
 | H2 | **Combine**, then **Drop** | Combine: no bold, and italic words (*Shema*) still italic. Drop: only the bold text, a line with no bold left out. The preview shows the same words as the insert each time |
 | H3 | Drop, with the Hebrew of `Berakhot 2a` | The whole Hebrew, with its own bold (מֵאֵימָתַי) |
-| H4 | A footnoted text (Rashi, or a Tanakh with notes) | Footnote markers survive; no raw `<sup>` or `<i>` in the document |
+| H4 | `Genesis 1:1`, **THE JPS TANAKH: Gender-Sensitive Edition**, **Notes: Inline**, then **Separate**, then **Omit** | Note text appears inline, then in a labelled Notes section with its marker, then neither note nor marker; no raw `<sup>` or `<i>` in the document. Repeat in O9 with each Commentary mode |
 | H5 | Translation **Text font** style *italic*; re-insert H1 | Body italic **and** the source's bold still visible on top |
 | H6 | A translation **text colour**; insert | The colour on the body; the source's bold still bold |
 | H7 | A **highlight**; insert; set it back to *None*; insert again | The highlight applies, then stops applying |
@@ -347,9 +347,39 @@ and record that commit below. Automated live API checks do not replace them.
 | N8 | Preview and insert a Tanakh passage and `Berakhot 2a` with vowel, cantillation, punctuation and divine-name options; include transliteration | Existing Hebrew filters and transliteration remain consistent with the chosen options; source markup and current Commentary behavior are preserved |
 | N9 | Repeat a passage lookup, change editions, and try `Fakebook 99:99`; also search Voices and Lexicon | Repeated lookups and edition changes still work; an unknown reference is a normal miss; Voices/ Lexicon remain usable through their existing endpoints |
 
-The separately reported Insertion Options selection-reset and Tanakh
-commentary/footnote issues remain scheduled for A–D. Record observations,
-but do not mark those fixes complete from this migration's checks.
+The separately reported selection-reset and commentary/footnote fixes are
+prepared on the A–D follow-up branch. Section O verifies them independently;
+passing the API migration checks alone does not mark those fixes complete.
+
+---
+
+## O. Edition persistence, commentary and notes — A–D (pending)
+
+Added 2026-11-24 for branch `fix/edition-commentary-notes-20261124`, based on
+the v3 migration. **All checks below are pending in Google Docs.** Use a HEAD
+deployment containing both changes, record its commit and schema **32**, and
+compare the selected edition names, sidebar preview and inserted document.
+The offline and live API tests do not replace these checks.
+
+| # | Check | Expected |
+| --- | --- | --- |
+| O1 | Preview `Genesis 1:1`; choose a non-default translation and a different Hebrew edition. Change Vowels, Cantillation and each Punctuation option, one at a time | Both edition names stay selected; each refreshed preview and insertion uses them. Add Source waits while the refresh is loading |
+| O2 | Stacked: choose three translations using Ctrl/Cmd-click, filter the list, then change Insertion Options. Extend the selection with Shift-click | Selection order and the range anchor survive; a hidden selection is retained. The multi-translation summary and inserted blocks agree with the list |
+| O3 | Change an option that refetches, then immediately choose another edition; repeat with several quick option changes and a slow connection | No older response replaces the latest choice or re-enables Add Source while the newer request is outstanding. A missing chosen edition leaves insertion disabled with guidance |
+| O4 | After O2, choose another reference; then switch a multi-selection from Stacked to a side-by-side arrangement | The new reference gets its own appropriate edition selection. A layout permitting one translation has one unambiguous selection and matching preview; stale choices from the previous reference do not leak in |
+| O5 | `Berakhot 2a`, **William Davidson Edition - English**: preview and insert Default, Combine and Drop; include italic words | Default keeps bold base and plain explanation; Combine keeps all words without source bold; Drop keeps base text. Retained italic words remain italic. Hebrew remains whole |
+| O6 | **The Rashi chumash by Rabbi Shraga Silverstein**: test `Genesis 1:1`, `Exodus 37:8` and nested-bracket `Numbers 11:4` in all three Commentary modes | Default keeps additions in brackets; Combine keeps their words without brackets; Drop removes complete bracketed additions. Base words and retained italics survive; preview matches insertion |
+| O7 | `Psalms 1:1`, **The Rashi Ketuvim by Rabbi Shraga Silverstein**, all three Commentary modes | Same bracket convention as O6; the exact Ketuvim edition is recognized |
+| O8 | Silverstein `Genesis 49:17` and `Genesis 24:7`, individually and in a range with adjacent verses, with Combine and Drop | Each malformed-bracket verse stays whole. It neither loses its trailing base text nor causes any adjacent verse to be removed |
+| O9 | JPS2023 `Genesis 1:1`: cross **Notes: Omit / Inline / Separate** with each Commentary mode | Omit removes the semantic note and marker; Inline shows the note at its place; Separate keeps a marker and labelled Notes section. The bold quotation inside the note never becomes the only surviving translation; requested notes remain independent of Commentary |
+| O10 | JPS2023 `Genesis 1:30` with Drop; then choose Kehot `Genesis 1:1` or `Steinsaltz on Genesis 1:1` and test Combine / Drop | JPS's `[I give]` stays. Unregistered editions preserve their words and source emphasis, with help explaining that the convention is not supported; semantic notes still follow Notes |
+| O11 | A range containing several JPS notes: Separate, both languages; test Stacked, side by side, Line by line on/off, and several translations | Notes remain attached to their own passage or aligned line and edition, without entering the Hebrew/transliteration column or another translation's notes. Numbering, titles and credits remain correct. Separate creates ordinary Notes text sections, not native Docs footnotes |
+| O12 | A source edition with marked Hebrew footnotes: record its exact reference/edition and compare Omit, Inline and Separate; include a passage containing ordinary superscript/subscript text | Notes applies to Hebrew as well as translation. Ordinary superscript/subscript content survives; omitting a footnote does not remove following main text |
+| O13 | Account A: upgrade from schema 31 without resetting; Account B: install fresh. Change Notes, save a profile, export/import Text and layout, reopen the sidebar, and use Revert / Save as defaults | Both start with Notes: Omit, preserving previous insertion behavior. The chosen note mode survives each intended settings route; session-only changes stay session-only and saved values are not overwritten |
+| O14 | Set Notes in saved Preferences, then compare Add Source, Insert from Selection, Link Texts (including Customize this insertion), and Surprise Me; inspect Help and tooltips | Each action uses its documented saved/session/one-pass options. Help names supported editions, independent Notes modes, preservation of unknown/malformed conventions and the absence of native footnotes; no broad claim that all bold or brackets are commentary |
+
+Record any failure by check ID in the existing Results table below. No
+Apps Script deployment or release is implied by this section's presence.
 
 ---
 
@@ -364,7 +394,7 @@ For anything that fails, the useful report is:
 4. Which account (A upgrading / B fresh / C from version 1.0), the
    interface (Simple / Everything) and the scan mode in effect
 
-State the version too: **2.0.0, schema 31**. "It broke" is not checkable
+State the version too: **2.0.0, schema 32**, and the exact tested commit. "It broke" is not checkable
 later; the version and the check id are.
 
 ---

@@ -1,4 +1,8 @@
 <script>
+// A reference alone cannot identify a preview: its Hebrew edition or options
+// can change while an earlier transliteration request is still in flight.
+var previewTransliterationGeneration = 0;
+
 function extractTextFromHtml_(html) {
   // Parse into an inert document rather than assigning to a detached div's
   // innerHTML. Scripts do not run either way, but a detached div DOES still
@@ -19,23 +23,31 @@ function flattenSegments_(value) {
 }
 
 function removePreviewTransliteration() {
+  previewTransliterationGeneration++;
   $('.preview-transliteration').remove();
 }
 
 function renderPreviewTransliteration(dataIn) {
   removePreviewTransliteration();
+  var generation = previewTransliterationGeneration;
   if (!$('.include-transliteration').is(':checked')) return;
   if (($('.output-mode-selection').val() || 'both') === 'en') return;
   // The Hebrew as fetched, vowels kept and the Hebrew punctuation setting
   // applied (server attachTransliterationSource_), not the Hebrew as displayed.
   var source = dataIn ? (dataIn.heTransliterationSource !== undefined ? dataIn.heTransliterationSource : dataIn.he) : '';
-  var plain = extractTextFromHtml_(flattenSegments_(source));
+  // Transliteration reads the source itself; displayed notes never become
+  // extra words in the reading. This is the same boundary as the insert.
+  var mainHtml = processSourceText_(flattenSegments_(source), { commentaryProfile: 'none', notesMode: 'omit' }).html;
+  var plain = extractTextFromHtml_(mainHtml);
   if (!plain) return;
   var refAtRequest = String((dataIn && dataIn.ref) || '');
   google.script.run.withSuccessHandler(function (text) {
+    if (generation !== previewTransliterationGeneration) return;
     if (!text) return;
     if (refAtRequest && data && data.ref && String(data.ref) !== refAtRequest) return;
     if (!$('.include-transliteration').is(':checked')) return;
+    if (($('.output-mode-selection').val() || 'both') === 'en') return;
+    if (typeof appMode !== 'undefined' && appMode !== 'texts') return;
     var $target = $('.suggestions .preview-transliteration');
     if (!$target.length) {
       var $anchor = $('.suggestions .preview-he').last();

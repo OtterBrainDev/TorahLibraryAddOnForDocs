@@ -22,7 +22,7 @@ function loadAppsScriptFiles(files, propertyMap = {}) {
     },
   };
   vm.createContext(context);
-  for (const file of files) {
+  for (const file of ['apps-script/server/source-text.gs'].concat(files)) {
     const source = fs.readFileSync(file, 'utf8');
     vm.runInContext(source, context, { filename: file });
   }

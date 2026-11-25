@@ -452,6 +452,7 @@
       <input type="checkbox" class="wants-pesukim ui-hidden-checkbox" aria-hidden="true" checked>
       <input type="checkbox" class="include-translation-source-info ui-hidden-checkbox" aria-hidden="true">
       <input type="hidden" class="source-emphasis-mode" value="keep">
+      <input type="hidden" class="source-notes-mode" value="omit">
       <input type="checkbox" class="include-transliteration ui-hidden-checkbox" aria-hidden="true">
       <input type="checkbox" class="insert-sefaria-link ui-hidden-checkbox" aria-hidden="true" checked>
       <input type="checkbox" class="insert-hebrew-sefaria-link ui-hidden-checkbox" aria-hidden="true" checked>
@@ -611,6 +612,7 @@
     <?!= include('sidebar/js/preferences-state'); ?>
     <?!= include('sidebar/js/search-utils'); ?>
     <?!= include('sidebar/js/footer-actions'); ?>
+    <?!= include('shared/source-text'); ?>
     <?!= include('sidebar/js/preview-core'); ?>
     <?!= include('sidebar/js/search-controller'); ?>
     <?!= include('sidebar/js/voices'); ?>

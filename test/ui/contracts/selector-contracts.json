@@ -11,6 +11,7 @@
       "#voices-insert-mode",
       ".voices-insert-options",
       ".source-emphasis-mode",
+      ".source-notes-mode",
       ".wants-hebrew-punctuation",
       ".wants-translation-punctuation",
       ".wants-aligned-rows",
@@ -32,6 +33,7 @@
       "#menu-layout-top",
       "#menu-layout-quick-actions",
       "#source_emphasis_mode",
+      "#source_notes_mode",
       "#hebrew_punctuation",
       "#translation_punctuation",
       "#bilingual_aligned_rows",
@@ -59,7 +61,8 @@
   "insertion_options": {
     "template": "apps-script/shared/insertion-options/markup.html",
     "requiredSelectors": [
-      "#layout-rows-toggle"
+      "#layout-rows-toggle",
+      "#cc-notes-toggle"
     ]
   },
   "linker_results": {

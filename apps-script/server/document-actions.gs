@@ -1081,6 +1081,7 @@ var LINKER_INSERT_OVERRIDE_KEYS_ = {
   bilingual_layout_default: ['he-top', 'he-right', 'he-left'],
   bilingual_aligned_rows: 'boolean',
   source_emphasis_mode: ['keep', 'discard', 'only'],
+  source_notes_mode: ['omit', 'inline', 'separate'],
   transliteration_scheme: 'scheme',
   transliteration_position: ['below', 'left', 'right'],
   nekudot: 'boolean',
@@ -1235,6 +1236,7 @@ function buildLinkSourcesInsertOptions_(prefs) {
   const insertCitationOnly = prefs.insert_citation_default == 'true' || prefs.insert_citation_default === true;
   return {
     sourceEmphasisMode: prefs.source_emphasis_mode || undefined,
+    sourceNotesMode: normalizeSourceNotesMode_(prefs.source_notes_mode),
     transliterationScheme: prefs.transliteration_scheme || undefined,
     transliterationPosition: prefs.transliteration_position || undefined,
     singleLanguage: singleLanguage,
