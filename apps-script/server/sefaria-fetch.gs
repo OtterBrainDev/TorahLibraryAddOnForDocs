@@ -282,28 +282,276 @@ function findReferenceForSidebar(reference, versions, sessionId) {
   return resolveReferenceWithFallbacks(safeReference, versions || undefined, sidebarSessionPreferenceOverlay_(sessionId));
 }
 
-/** The texts-API URL fetchReference_ reads; Link Texts' retries use it too. */
+/**
+ * Texts v3 takes repeated full-language-family|title selectors. `en` and `he`
+ * remain our translation/source roles, not API language names: a French
+ * translation is stored under Sefaria's historical `language: "en"` too.
+ * fetchReference_ supplies enLanguage/heLanguage from the version catalog.
+ * No segment filling: an edition's gaps must not be credited to that edition
+ * when their words actually came from another one. Keep the original markup;
+ * footnote/commentary policy is a separate stage, shared with the preview.
+ */
 function sefariaTextsUrl_(safeReference, versions) {
-  let url = 'https://www.sefaria.org/api/texts/'
+  const choices = versions || {};
+  const selectors = ['he', 'en'].map(function (role) {
+    const title = String(choices[role] || '');
+    if (!title.trim()) return role === 'he' ? 'primary' : 'translation';
+    const family = String(choices[role + 'Language'] || '').trim().toLowerCase();
+    if (!family || family.indexOf('|') >= 0 || title.indexOf('|') >= 0) throw sefariaUnavailableError_();
+    return family + '|' + title;
+  });
+  return sefariaV3TextsUrl_(safeReference, selectors, 'default');
+}
 
-  let encodedReference = encodeURIComponent(safeReference);
+function sefariaV3TextsUrl_(reference, selectors, returnFormat) {
+  return 'https://www.sefaria.org/api/v3/texts/' + encodeURIComponent(reference) + '?' +
+    selectors.map(function (selector) { return 'version=' + encodeURIComponent(selector); }).join('&') +
+    '&fill_in_missing_segments=0&return_format=' + encodeURIComponent(returnFormat);
+}
 
-  if (versions) {
-    let encodedEnVersion = encodeURIComponent(versions.en || "");
-    let encodedHeVersion = encodeURIComponent(versions.he || "");
-    let versionedAdditions = `${encodedReference}?ven=${encodedEnVersion}&vhe=${encodedHeVersion}&commentary=0&context=0`;
-    url = url + versionedAdditions;
+function sefariaRefUrl_(reference) {
+  return 'https://www.sefaria.org/api/ref/' + encodeURIComponent(reference);
+}
+
+/** Small, public metadata only, in the user's ephemeral cache. */
+function sefariaMetadataCacheKey_(kind, reference) {
+  return 'sefaria_v3_' + kind + ':' + Utilities.base64EncodeWebSafe(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, reference, Utilities.Charset.UTF_8));
+}
+
+function readSefariaMetadataCache_(kind, reference) {
+  try {
+    const value = CacheService.getUserCache().get(sefariaMetadataCacheKey_(kind, reference));
+    return value ? JSON.parse(value) : null;
+  } catch (error) { return null; }
+}
+
+function writeSefariaMetadataCache_(kind, reference, value) {
+  try {
+    const serialized = JSON.stringify(value);
+    if (serialized.length < 95000) {
+      CacheService.getUserCache().put(sefariaMetadataCacheKey_(kind, reference), serialized, 21600);
+    }
+  } catch (error) { /* Cache misses and quota limits never change the answer. */ }
+}
+
+/** A metadata response, without ever logging a URL or its body. */
+function interpretSefariaRefResponse_(response) {
+  if (!response) return { unavailable: true };
+  const status = response.getResponseCode ? response.getResponseCode() : 200;
+  if (status === 429 || status >= 500) return { unavailable: true, status: status };
+  const meta = parseJsonOrNull_(response.getContentText());
+  if (status >= 400 || (meta && (meta.is_ref === false || typeof meta.error === 'string'))) {
+    return { error: meta && typeof meta.error === 'string' ? meta.error : '' };
   }
-  else {
-    let nonVersionedAdditions = `${encodedReference}?commentary=0&context=0`;
-    url = url + nonVersionedAdditions;
+  if (!meta || meta.is_ref !== true || typeof meta.normalized !== 'string' || !meta.normalized ||
+      typeof meta.index_title !== 'string' || !meta.index_title ||
+      ['SchemaNode', 'JaggedArrayNode', 'DictionaryEntryNode', 'DictionaryNode', 'SheetNode'].indexOf(meta.node_type) < 0) {
+    return { unavailable: true };
   }
-  return url;
+  const structural = {
+    ref: meta.normalized, heRef: meta.hebrew || '', indexTitle: meta.index_title,
+    sectionNames: meta.section_names || [], he: [], text: [], versions: []
+  };
+  const base = { indexTitle: meta.index_title };
+  if (meta.node_type === 'SchemaNode') {
+    const child = meta.default_child_node;
+    if (!child || child.node_type !== 'JaggedArrayNode') return { resolved: structural };
+    if (child.depth === 1) return Object.assign(base, { textRef: meta.normalized });
+    // The first available ref on a complex book may be its introduction, not
+    // its implicit/default text. Enter the default child, then validate that
+    // ref through the metadata API before fetching any text.
+    if (Number(child.depth) > 1 && Array.isArray(child.address_types)) {
+      const seed = child.address_types[0] === 'Talmud' ? '1a' : '1';
+      return Object.assign(base, { nextRef: meta.normalized + ' ' + seed });
+    }
+    return { unavailable: true };
+  }
+  if (meta.node_type !== 'JaggedArrayNode' && meta.node_type !== 'DictionaryEntryNode') {
+    return { resolved: structural };
+  }
+  const starts = meta.start_labels;
+  const ends = meta.end_labels;
+  const depth = Number(meta.depth);
+  if (!Array.isArray(starts) || !Array.isArray(ends) || !(depth >= 1)) return { unavailable: true };
+  const isRange = JSON.stringify(starts) !== JSON.stringify(ends);
+  if (!isRange && starts.length < depth - 1) {
+    const first = meta.navigation_refs && meta.navigation_refs.first_available_section_ref;
+    if (typeof first !== 'string' || !first || first === meta.normalized) return { resolved: structural };
+    return Object.assign(base, { textRef: first });
+  }
+  return Object.assign(base, { textRef: meta.normalized });
+}
+
+/**
+ * v3 does not implement v1's pad=1 despite the older v3 docs' description.
+ * Resolve headings before asking for text, so "Genesis" never downloads or
+ * inserts the whole book. Explicit sections/ranges keep their exact bounds.
+ */
+function resolveSefariaTextRef_(reference) {
+  let current = reference;
+  let expectedIndex = '';
+  for (let hop = 0; hop < 4; hop++) {
+    let plan = readSefariaMetadataCache_('ref', current);
+    if (!plan) {
+      let response;
+      try { response = UrlFetchApp.fetch(sefariaRefUrl_(current), { muteHttpExceptions: true }); }
+      catch (error) { throw sefariaUnavailableError_(); }
+      plan = interpretSefariaRefResponse_(response);
+      if (plan.textRef || plan.nextRef || plan.resolved) writeSefariaMetadataCache_('ref', current, plan);
+    }
+    if (plan.unavailable) throw sefariaUnavailableError_(plan.status);
+    const indexTitle = plan.indexTitle || (plan.resolved && plan.resolved.indexTitle);
+    if (expectedIndex && indexTitle && indexTitle !== expectedIndex) throw sefariaUnavailableError_();
+    if (!plan.nextRef) return plan;
+    expectedIndex = plan.indexTitle;
+    current = plan.nextRef;
+  }
+  throw sefariaUnavailableError_();
+}
+
+/** Cache only the catalog fields needed to select exact editions. */
+function rememberSefariaVersionCatalog_(reference, list) {
+  if (!Array.isArray(list)) return;
+  const catalog = list.filter(function (v) { return v && typeof v.versionTitle === 'string'; }).map(function (v) {
+    return { versionTitle: v.versionTitle, language: v.language, actualLanguage: v.actualLanguage,
+      languageFamilyName: v.languageFamilyName, isPrimary: v.isPrimary, isSource: v.isSource };
+  });
+  writeSefariaMetadataCache_('versions', reference, catalog);
+}
+
+/** Versions is a separate current API, not the deprecated v1 Texts reader. */
+function getSefariaVersionCatalog_(reference, indexTitle) {
+  const cached = readSefariaMetadataCache_('versions', reference);
+  if (Array.isArray(cached)) return cached;
+  if (!indexTitle) {
+    const plan = resolveSefariaTextRef_(reference);
+    indexTitle = plan.indexTitle || (plan.resolved && plan.resolved.indexTitle);
+    if (!indexTitle) return [];
+  }
+  let response;
+  try {
+    response = UrlFetchApp.fetch('https://www.sefaria.org/api/texts/versions/' + encodeURIComponent(indexTitle),
+      { muteHttpExceptions: true });
+  } catch (error) { throw sefariaUnavailableError_(); }
+  const status = response.getResponseCode ? response.getResponseCode() : 200;
+  if (status >= 400) throw sefariaUnavailableError_(status);
+  const list = parseJsonOrNull_(response.getContentText());
+  if (!Array.isArray(list) || !list.every(function (v) {
+    return v && typeof v.versionTitle === 'string' && v.versionTitle.trim() &&
+      typeof v.languageFamilyName === 'string' && v.languageFamilyName.trim();
+  })) throw sefariaUnavailableError_();
+  rememberSefariaVersionCatalog_(reference, list);
+  return list;
+}
+
+function sefariaVersionRole_(version) {
+  const v = version || {};
+  const storedHebrew = String(v.language || '').toLowerCase() === 'he';
+  const actual = String(v.actualLanguage || '').toLowerCase();
+  const family = String(v.languageFamilyName || '').toLowerCase();
+  if (actual === 'he' || family === 'hebrew') return 'he';
+  // Aramaic/Judeo-Arabic primary texts still use the Hebrew source slot;
+  // Yiddish/Persian translations can share that storage bucket but belong in
+  // the translation picker. Original English works never become Hebrew.
+  if (storedHebrew && (v.isPrimary === true || v.isSource === true)) return 'he';
+  if (actual || family) return 'en';
+  return storedHebrew ? 'he' : 'en';
+}
+
+function resolveSefariaVersionSelectors_(reference, versions, indexTitle) {
+  const choices = Object.assign({}, versions || {});
+  if (!choices.en && !choices.he) return choices;
+  const catalog = getSefariaVersionCatalog_(reference, indexTitle);
+  ['he', 'en'].forEach(function (role) {
+    if (!choices[role]) return;
+    const title = String(choices[role]);
+    let matches = catalog.filter(function (v) { return v.versionTitle === title; });
+    // Some real catalog titles end in a space. Preserve their exact spelling;
+    // accept a trimmed external title only when it identifies one edition.
+    if (!matches.length) {
+      const aliases = catalog.filter(function (v) { return v.versionTitle.trim() === title.trim(); });
+      if (aliases.length === 1) matches = aliases;
+    }
+    const entry = matches.filter(function (v) { return sefariaVersionRole_(v) === role; })[0] || matches[0];
+    if (entry) choices[role] = entry.versionTitle;
+    // Request a missing title in its historical role's language; the adapter
+    // leaves that slot empty, never substituting a default edition for it.
+    choices[role + 'Language'] = entry && entry.languageFamilyName
+      ? String(entry.languageFamilyName).toLowerCase() : (role === 'he' ? 'hebrew' : 'english');
+  });
+  return choices;
+}
+
+/** v3's wire format -> the add-on's stable source/translation payload. */
+function normalizeSefariaV3TextResponse_(payload, versions) {
+  if (payload && typeof payload.error === 'string') return;
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload) ||
+      typeof payload.ref !== 'string' || !payload.ref || typeof payload.indexTitle !== 'string' || !payload.indexTitle ||
+      !Array.isArray(payload.versions) || !Array.isArray(payload.available_versions)) throw sefariaUnavailableError_();
+  function normalizedText(value) {
+    if (value === null) return '';
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.map(normalizedText);
+    throw sefariaUnavailableError_();
+  }
+  payload.versions.forEach(function (v) {
+    if (!v || typeof v.versionTitle !== 'string' || !v.versionTitle) throw sefariaUnavailableError_();
+    normalizedText(v.text);
+  });
+  function metadata(v) { const copy = Object.assign({}, v); delete copy.text; return copy; }
+  const catalog = payload.available_versions.map(function (v) {
+    if (!v || typeof v.versionTitle !== 'string' || !v.versionTitle) throw sefariaUnavailableError_();
+    return metadata(v);
+  });
+  payload.versions.forEach(function (v) {
+    if (!catalog.some(function (entry) { return entry.versionTitle === v.versionTitle && entry.language === v.language; })) {
+      catalog.push(metadata(v));
+    }
+  });
+  function select(role) {
+    const requested = String((versions && versions[role]) || '');
+    if (requested.trim()) {
+      const matches = payload.versions.filter(function (v) { return v.versionTitle === requested; });
+      return matches.filter(function (v) { return sefariaVersionRole_(v) === role; })[0] || matches[0] || null;
+    }
+    let candidates = payload.versions.filter(function (v) { return sefariaVersionRole_(v) === role; });
+    const otherTitle = String((versions && versions[role === 'he' ? 'en' : 'he']) || '');
+    if (otherTitle.trim()) candidates = candidates.filter(function (v) { return v.versionTitle !== otherTitle; });
+    candidates = candidates.slice().sort(function (a, b) {
+      function preferred(v) {
+        return role === 'he' ? (v.isPrimary === true ? 1 : 0) :
+          (v.actualLanguage === 'en' || v.languageFamilyName === 'english' ? 1 : 0);
+      }
+      return preferred(b) - preferred(a) || (Number(b.priority) || 0) - (Number(a.priority) || 0);
+    });
+    return candidates[0] || null;
+  }
+  const he = select('he');
+  const en = select('en');
+  const data = Object.assign({}, payload, {
+    versions: catalog, he: he ? normalizedText(he.text) : [], text: en ? normalizedText(en.text) : [],
+    heVersionTitle: he ? he.versionTitle : '', heVersionSource: he ? he.versionSource || '' : '', heLicense: he ? he.license || '' : '',
+    versionTitle: en ? en.versionTitle : '', versionSource: en ? en.versionSource || '' : '', license: en ? en.license || '' : '',
+    actualLanguage: en ? en.actualLanguage || '' : '', languageFamilyName: en ? en.languageFamilyName || '' : '',
+    type: payload.type || payload.primary_category || (payload.categories || [])[0] || ''
+  });
+  // Keep selected edition metadata available for rendering and future
+  // edition-aware commentary profiles, without copying its raw text again.
+  data.sourceVersion = he ? metadata(he) : null;
+  data.translationVersion = en ? metadata(en) : null;
+  if (he && he.sources) data.heSources = he.sources;
+  if (en && en.sources) data.sources = en.sources;
+  return data;
 }
 
 /** Fetch one exact reference; `properties` defaults to the stored preferences. */
 function fetchReference_(safeReference, versions, properties) {
-  const url = sefariaTextsUrl_(safeReference, versions);
+  const plan = resolveSefariaTextRef_(safeReference);
+  if (plan.resolved) return plan.resolved;
+  if (!plan.textRef) return;
+  const selectedVersions = resolveSefariaVersionSelectors_(plan.textRef, versions, plan.indexTitle);
+  const url = sefariaTextsUrl_(plan.textRef, selectedVersions);
 
   // A reference Sefaria doesn't know is an ordinary outcome ("no match"). Not
   // reaching Sefaria at all is not, and used to be reported the same way:
@@ -325,7 +573,14 @@ function fetchReference_(safeReference, versions, properties) {
   }
 
   try {
-    let data = JSON.parse(response.getContentText());
+    const payload = parseJsonOrNull_(response.getContentText());
+    let data = normalizeSefariaV3TextResponse_(payload, selectedVersions);
+    if (!data) return;
+    if (data.ref !== plan.textRef || (plan.indexTitle && data.indexTitle !== plan.indexTitle)) {
+      throw sefariaUnavailableError_();
+    }
+    rememberSefariaVersionCatalog_(data.ref, payload.available_versions);
+    writeSefariaMetadataCache_('ref', data.ref, { textRef: data.ref, indexTitle: data.indexTitle });
 
   /*although it might make more sense to put the filters (orthography, seamus) elsewhere, as it is text processing,
   all representations of this data need to have these applied to them such that the preview is נאמן to what the actual
@@ -346,6 +601,7 @@ function fetchReference_(safeReference, versions, properties) {
     return data;
 
   } catch (error) {
+    if (error && error.sefariaUnavailable) throw error;
     // Not the URL: the reference can be raw selected document text (Insert
     // Source from Selection), and hard rule 7 keeps that out of the logs.
     Logger.log(`The system has made a macha'ah in findReference: ${error.message}`)
@@ -357,10 +613,13 @@ function fetchReference_(safeReference, versions, properties) {
 /**
  * Which versions actually have text for this exact ref.
  *
- * The version list in /api/texts is the whole book's, so a translation that
- * covers only part of it (Yiddish on Deuteronomy 6:4) is listed for every
- * verse. The v3 endpoint with version=all returns each version's text for the
- * ref, which is the only per-ref signal Sefaria offers.
+ * A catalog lists candidates; only their returned text establishes passage
+ * coverage. v3's available_versions can itself be filtered to a ref, while
+ * the Versions API queried by index lists the whole book. Cache either only
+ * under the requested ref, never promote a passage catalog to a book catalog.
+ * Ask v3 for every known language's editions, with segment filling off.
+ * The deployed API requires
+ * languageFamilyName|all; a bare version=all returns an empty list/warning.
  *
  * Returns { ref, versions: { versionTitle: true|false } }, or null when the
  * answer is unknown (network, unexpected shape) — callers must then treat every
@@ -374,7 +633,7 @@ function getTranslationAvailability(ref) {
   if (!safeRef) return null;
 
   const CACHE_TTL_SECONDS = 21600;
-  const cacheKey = 'version_availability_v1:' + Utilities.base64EncodeWebSafe(
+  const cacheKey = 'version_availability_v3:' + Utilities.base64EncodeWebSafe(
     Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, safeRef, Utilities.Charset.UTF_8));
   let cache = null;
   try {
@@ -386,15 +645,27 @@ function getTranslationAvailability(ref) {
   }
 
   let data;
+  let resolvedRef = safeRef;
   try {
-    const url = 'https://www.sefaria.org/api/v3/texts/' + encodeURIComponent(safeRef) +
-      '?version=all&return_format=text_only';
+    const plan = resolveSefariaTextRef_(safeRef);
+    if (!plan.textRef) return null;
+    resolvedRef = plan.textRef;
+    const catalog = getSefariaVersionCatalog_(resolvedRef, plan.indexTitle);
+    const selectors = [];
+    catalog.forEach(function (version) {
+      const family = String(version.languageFamilyName || '').trim().toLowerCase();
+      const selector = family + '|all';
+      if (family && family.indexOf('|') < 0 && selectors.indexOf(selector) < 0) selectors.push(selector);
+    });
+    if (!selectors.length) return null;
+    const url = sefariaV3TextsUrl_(resolvedRef, selectors, 'text_only');
     const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
     const status = response.getResponseCode ? response.getResponseCode() : 200;
     if (status >= 400) return null;
     data = JSON.parse(response.getContentText());
+    if (data.ref && data.ref !== resolvedRef) return null;
   } catch (error) {
-    Logger.log('getTranslationAvailability failed: ' + (error && error.message));
+    Logger.log('getTranslationAvailability could not obtain an availability response.');
     return null;
   }
 
@@ -413,8 +684,8 @@ function summarizeVersionAvailability_(data) {
   if (!list || !list.length) return null;
   const versions = {};
   list.forEach(function (version) {
-    const title = version && String(version.versionTitle || '').trim();
-    if (!title) return;
+    const title = version && String(version.versionTitle || '');
+    if (!title || !title.trim()) return;
     // The same title in two languages: available if either has text.
     versions[title] = versions[title] === true || versionHasText_(version.text);
   });

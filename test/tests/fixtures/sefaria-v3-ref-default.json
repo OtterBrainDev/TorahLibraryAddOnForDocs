@@ -1,0 +1,31 @@
+{
+  "_note": "Unmodified Sefaria Reference API response captured 2026-11-24 (America/Denver); provenance fields added.",
+  "_source": "https://www.sefaria.org/api/ref/Mesillat%20Yesharim",
+  "is_ref": true,
+  "normalized": "Mesillat Yesharim",
+  "hebrew": "מסילת ישרים",
+  "url_ref": "Mesillat_Yesharim",
+  "index_title": "Mesillat Yesharim",
+  "node_type": "SchemaNode",
+  "navigation_refs": {
+    "shortest_path_to_root": [],
+    "first_available_section_ref": "Mesillat Yesharim, Introduction"
+  },
+  "children": [
+    "Introduction",
+    ""
+  ],
+  "default_child_node": {
+    "node_type": "JaggedArrayNode",
+    "node_index": 1,
+    "depth": 2,
+    "address_types": [
+      "Perek",
+      "Integer"
+    ],
+    "sectionNames": [
+      "Chapter",
+      "Verse"
+    ]
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "_note": "Captured from Sefaria on 2026-11-24 (America/Denver). Version metadata is limited to the fields used by the add-on; available_versions is reduced to returned editions and, where present, the French and Contemporary Torah comparison editions. Reference metadata and retained strings are unchanged. The long English segment is truncated after its first 300 characters (followed by an ellipsis).",
+  "_source": "https://www.sefaria.org/api/v3/texts/Berakhot.2a.1?version=primary&version=translation&return_format=default&fill_in_missing_segments=0",
+  "versions": [
+    {
+      "status": "locked",
+      "priority": 3.0,
+      "license": "CC-BY-NC",
+      "versionTitleInHebrew": "מהדורת וויליאם דייוידסון - ארמית המנוקד",
+      "shortVersionTitle": "",
+      "language": "he",
+      "versionSource": "http://sefaria.org",
+      "versionTitle": "William Davidson Edition - Vocalized Aramaic",
+      "actualLanguage": "he",
+      "languageFamilyName": "hebrew",
+      "isSource": true,
+      "isPrimary": true,
+      "direction": "rtl",
+      "text": "<big><strong>מֵאֵימָתַי</strong></big> קוֹרִין אֶת שְׁמַע בָּעֲרָבִין? מִשָּׁעָה שֶׁהַכֹּהֲנִים נִכְנָסִים לֶאֱכוֹל בִּתְרוּמָתָן. עַד סוֹף הָאַשְׁמוּרָה הָרִאשׁוֹנָה. דִּבְרֵי רַבִּי אֱלִיעֶזֶר."
+    },
+    {
+      "status": "locked",
+      "priority": 2.0,
+      "license": "CC-BY-NC",
+      "versionTitleInHebrew": "מהדורת וויליאם דייוידסון - אנגלית",
+      "shortVersionTitle": "Koren - Steinsaltz",
+      "language": "en",
+      "versionSource": "https://korenpub.com/collections/the-noe-edition-koren-talmud-bavli-1",
+      "versionTitle": "William Davidson Edition - English",
+      "actualLanguage": "en",
+      "languageFamilyName": "english",
+      "isSource": false,
+      "isPrimary": false,
+      "direction": "ltr",
+      "text": "The beginning of tractate <i>Berakhot</i>, the first tractate in the first of the six orders of Mishna, opens with a discussion of the recitation of <i>Shema</i>, as the recitation of <i>Shema</i> encompasses an acceptance of the yoke of Heaven and of the mitzvot, and as such, forms the basis for al …"
+    }
+  ],
+  "available_versions": [
+    {
+      "status": "locked",
+      "priority": 3.0,
+      "license": "CC-BY-NC",
+      "versionTitleInHebrew": "מהדורת וויליאם דייוידסון - ארמית המנוקד",
+      "shortVersionTitle": "",
+      "language": "he",
+      "title": "Berakhot",
+      "versionSource": "http://sefaria.org",
+      "versionTitle": "William Davidson Edition - Vocalized Aramaic",
+      "actualLanguage": "he",
+      "languageFamilyName": "hebrew",
+      "isSource": true,
+      "isPrimary": true,
+      "direction": "rtl"
+    },
+    {
+      "status": "locked",
+      "priority": 2.0,
+      "license": "CC-BY-NC",
+      "versionTitleInHebrew": "מהדורת וויליאם דייוידסון - אנגלית",
+      "shortVersionTitle": "Koren - Steinsaltz",
+      "language": "en",
+      "title": "Berakhot",
+      "versionSource": "https://korenpub.com/collections/the-noe-edition-koren-talmud-bavli-1",
+      "versionTitle": "William Davidson Edition - English",
+      "actualLanguage": "en",
+      "languageFamilyName": "english",
+      "isSource": false,
+      "isPrimary": false,
+      "direction": "ltr"
+    }
+  ],
+  "ref": "Berakhot 2a:1",
+  "heRef": "ברכות ב׳ א:א׳",
+  "sections": [
+    "2a",
+    "1"
+  ],
+  "toSections": [
+    "2a",
+    "1"
+  ],
+  "sectionRef": "Berakhot 2a",
+  "heSectionRef": "ברכות ב׳ א",
+  "firstAvailableSectionRef": "Berakhot 2a:1",
+  "isSpanning": false,
+  "next": "Berakhot 2b",
+  "prev": null,
+  "title": "Berakhot 2a",
+  "book": "Berakhot",
+  "heTitle": "ברכות",
+  "primary_category": "Talmud",
+  "type": "Talmud",
+  "indexTitle": "Berakhot",
+  "categories": [
+    "Talmud",
+    "Bavli",
+    "Seder Zeraim"
+  ],
+  "heIndexTitle": "ברכות",
+  "isComplex": false,
+  "isDependant": false,
+  "order": [
+    1,
+    1
+  ],
+  "collectiveTitle": "",
+  "heCollectiveTitle": "",
+  "alts": [],
+  "lengths": [
+    127,
+    2749
+  ],
+  "length": 127,
+  "textDepth": 2,
+  "sectionNames": [
+    "Daf",
+    "Line"
+  ],
+  "addressTypes": [
+    "Talmud",
+    "Integer"
+  ],
+  "titleVariants": [
+    "Berachoth",
+    "Berachot",
+    "Berakhoth",
+    "Brachot",
+    "Tractate Berakhot",
+    "Berachos",
+    "Masekhet Berakhot",
+    "Talmud Berakhot",
+    "Berakot",
+    "Ber.",
+    "B’rakhoth",
+    "T.B. Berakhoth",
+    "BT Berakhot",
+    "Berakhot"
+  ],
+  "heTitleVariants": [
+    "בְּרָכוֹת",
+    "ברכו'",
+    "ברכות"
+  ],
+  "index_offsets_by_depth": {},
+  "warnings": []
+}

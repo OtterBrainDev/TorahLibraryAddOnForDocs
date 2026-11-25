@@ -15,6 +15,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { v3FixtureFetch } = require('./helpers/sefaria-v3-fixture');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const TYPES = { PARAGRAPH: 'PARAGRAPH', LIST_ITEM: 'LIST_ITEM', TEXT: 'TEXT', BODY_SECTION: 'BODY_SECTION', TABLE: 'TABLE' };
@@ -221,7 +222,7 @@ test('a vowels override is applied when the text is fetched, without touching st
   const context = {
     console,
     Logger: { log() {} },
-    UrlFetchApp: { fetch: () => ({ getResponseCode: () => 200, getContentText: () => JSON.stringify({ ref: 'Genesis 1:1', he: ['בְּרֵאשִׁ֖ית'], text: ['In the beginning'], type: 'Tanakh' }) }) },
+    UrlFetchApp: { fetch: v3FixtureFetch({ ref: 'Genesis 1:1', he: ['בְּרֵאשִׁ֖ית'], text: ['In the beginning'], type: 'Tanakh' }) },
     PropertiesService: { getUserProperties: () => ({
       getProperty: (key) => (key in stored ? stored[key] : null),
       setProperty: (key, value) => writes.push([key, value])

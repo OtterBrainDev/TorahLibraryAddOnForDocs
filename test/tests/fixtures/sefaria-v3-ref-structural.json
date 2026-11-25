@@ -1,0 +1,30 @@
+{
+  "_note": "Unmodified Sefaria Reference API response captured 2026-11-24 (America/Denver); provenance fields added.",
+  "_source": "https://www.sefaria.org/api/ref/Pesach%20Haggadah",
+  "is_ref": true,
+  "normalized": "Pesach Haggadah",
+  "hebrew": "הגדה של פסח",
+  "url_ref": "Pesach_Haggadah",
+  "index_title": "Pesach Haggadah",
+  "node_type": "SchemaNode",
+  "navigation_refs": {
+    "shortest_path_to_root": [],
+    "first_available_section_ref": "Pesach Haggadah, Kadesh"
+  },
+  "children": [
+    "Kadesh",
+    "Urchatz",
+    "Karpas",
+    "Yachatz",
+    "Magid",
+    "Rachtzah",
+    "Motzi Matzah",
+    "Maror",
+    "Korech",
+    "Shulchan Orech",
+    "Tzafun",
+    "Barech",
+    "Hallel",
+    "Nirtzah"
+  ]
+}

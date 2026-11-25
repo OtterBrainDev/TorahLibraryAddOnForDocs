@@ -14,6 +14,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { v3FixtureFetch } = require('./helpers/sefaria-v3-fixture');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const read = (relative) => fs.readFileSync(path.join(ROOT, relative), 'utf8');
@@ -28,7 +29,7 @@ function load(stored, sessions) {
   const context = {
     console,
     Logger: { log() {} },
-    UrlFetchApp: { fetch: () => ({ getResponseCode: () => 200, getContentText: () => JSON.stringify({ ref: 'Genesis 1:1', he: [WITH_TEAMIM], text: ['In the beginning'], type: 'Tanakh' }) }) },
+    UrlFetchApp: { fetch: v3FixtureFetch({ ref: 'Genesis 1:1', he: [WITH_TEAMIM], text: ['In the beginning'], type: 'Tanakh' }) },
     PropertiesService: { getUserProperties: () => ({
       getProperty: (key) => (key in stored ? stored[key] : null),
       setProperty: (key, value) => writes.push([key, value])

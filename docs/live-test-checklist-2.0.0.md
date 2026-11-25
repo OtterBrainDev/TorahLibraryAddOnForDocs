@@ -328,6 +328,31 @@ Build one test document containing, in this order:
 
 ---
 
+## N. Sefaria v3 migration (pending)
+
+Added 2026-11-24 for the migration described in
+[the technical handoff](sefaria-api-migration.md). These checks are **not yet
+run in Google Docs**. Run them against the migration commit's HEAD deployment
+and record that commit below. Automated live API checks do not replace them.
+
+| # | Check | Expected |
+| --- | --- | --- |
+| N1 | Texts: preview and insert `Genesis 1:1` with both languages and Citation on | Hebrew and translation present; edition titles and licenses match the selected editions; bold and italics survive |
+| N2 | On that passage, choose a French translation, then Yiddish, and change the source edition | Each preview and insert uses the named edition and its language; no silent default-edition substitution; source and translation remain in their intended output positions |
+| N3 | Choose two translations in Stacked and insert; repeat with translation-only output | Both translations insert in selection order, credited separately; Stacked credits the source edition once |
+| N4 | Search `Genesis`, `Berakhot`, `Sefer HaChinukh`, then a structural heading such as `Mishneh Torah` | Simple books open their first available section; complex default text opens its main text; a structural heading stays non-insertable; no entire book or arbitrary introduction is inserted |
+| N5 | Insert `Genesis 1:31-2:3` with Line numbers and Line by line on; repeat with both off | The requested range only; chapter headings, restarted numbers, Hebrew/translation pairing and unnumbered prose remain correct |
+| N6 | On `Genesis 1:1`, compare available translations with a later passage and toggle Show unavailable translations | Editions with no passage text are absent or disabled as configured; a failed availability lookup does not empty the picker |
+| N7 | Insert Source from Selection, Link Texts with `Hil. Shabbat 1:1` and `Duplicate A: Genesis 2:1`, then Surprise Me | All fetch paths work; linker excerpts match their targets, duplicate labels stay plain, and insertion uses the intended passage and saved/session options for that action |
+| N8 | Preview and insert a Tanakh passage and `Berakhot 2a` with vowel, cantillation, punctuation and divine-name options; include transliteration | Existing Hebrew filters and transliteration remain consistent with the chosen options; source markup and current Commentary behavior are preserved |
+| N9 | Repeat a passage lookup, change editions, and try `Fakebook 99:99`; also search Voices and Lexicon | Repeated lookups and edition changes still work; an unknown reference is a normal miss; Voices/ Lexicon remain usable through their existing endpoints |
+
+The separately reported Insertion Options selection-reset and Tanakh
+commentary/footnote issues remain scheduled for A–D. Record observations,
+but do not mark those fixes complete from this migration's checks.
+
+---
+
 ## Reporting back
 
 For anything that fails, the useful report is:

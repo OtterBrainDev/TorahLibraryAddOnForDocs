@@ -8,6 +8,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { v3FixtureFetch } = require('./helpers/sefaria-v3-fixture');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -114,7 +115,7 @@ test('findReference strips punctuation before the divine-name replacements, so �
     god_replacement: 'G-d',
   });
   const fetchCtx = load(['apps-script/server/text-processing.gs', 'apps-script/server/preferences.gs', 'apps-script/server/sefaria-fetch.gs'], {
-    UrlFetchApp: { fetch: () => ({ getResponseCode: () => 200, getContentText: () => JSON.stringify({ ref: 'Exodus 3:15', heRef: 'שמות ג׳:ט״ו', he: ['וַיֹּאמֶר יְהוָה׃'], text: ['God said, “Go.”'], type: 'Tanakh' }) }) },
+    UrlFetchApp: { fetch: v3FixtureFetch({ ref: 'Exodus 3:15', heRef: 'שמות ג׳:ט״ו', he: ['וַיֹּאמֶר יְהוָה׃'], text: ['God said, “Go.”'], type: 'Tanakh' }) },
     PropertiesService: { getUserProperties: () => props },
     expandCitationAbbreviations_: () => [],
     normalizeReferenceInput: (r) => r,

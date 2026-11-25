@@ -137,6 +137,17 @@ controls inline.
 - `apps-script/migrations.gs` — (added Stage 2) preferences schema
   migration on `onOpen`.
 
+## Sefaria text boundary
+
+`server/sefaria-fetch.gs` reads passage content through Texts v3, resolves
+reference bounds through `/api/ref/`, and uses the Versions catalog for exact
+edition/language-family requests. Its adapter retains the internal `he` /
+`text` and edition metadata contract before display filters run. Link Texts'
+batch recovery uses the same metadata planner and response normalizer, with
+bounded traversal and response-identity checks. Other Sefaria operations
+keep their current routes. See [the migration handoff](sefaria-api-migration.md)
+for the endpoint inventory, deliberate no-fill policy and validation boundary.
+
 ## The search tabs
 
 Texts, Voices and Lexicon declare themselves in `SEARCH_TABS`
