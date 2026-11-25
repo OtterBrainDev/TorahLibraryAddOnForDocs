@@ -6,7 +6,9 @@ project handoff; the regression log and live test checklist remain the
 records for bugs and release verification.
 
 **Current artifact:** branch `review/launch-defaults-help-20261124`, based on
-`fix/edition-commentary-notes-20261124` at `61805f8`. The API migration remains
+`fix/edition-commentary-notes-20261124` at `61805f8`, published as
+[draft PR #60](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/60)
+with implementation commit `8531fd1`. The API migration remains
 [draft PR #58](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/58);
 the follow-up is [draft PR #59](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/59),
 with implementation commit `3b7d3eb`. Release **2.0.0** is unchanged;
@@ -405,7 +407,7 @@ is implied. The current version remains **2.0.0 pending release**.
   tutorial checks. Source review and local API calls do not establish a
   tested Apps Script deployment, a recording or a public release.
 
-Review the third branch after the v3 and A–D changes. Merge order is the API
-migration, then A–D, then this follow-up; test the resulting exact HEAD in
+Review [PR #60](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/60)
+after the v3 and A–D changes. Merge order is **#58 → #59 → #60**; test the resulting exact HEAD in
 Google Docs before creating a numbered release. The sidebar grouping above
 is the proposed next UI pass, with no structural redesign applied here.
