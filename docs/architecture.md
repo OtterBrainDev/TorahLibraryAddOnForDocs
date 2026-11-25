@@ -142,11 +142,36 @@ controls inline.
 `server/sefaria-fetch.gs` reads passage content through Texts v3, resolves
 reference bounds through `/api/ref/`, and uses the Versions catalog for exact
 edition/language-family requests. Its adapter retains the internal `he` /
-`text` and edition metadata contract before display filters run. Link Texts'
+`text` and edition metadata contract before display filters run. A bilingual
+publication may give both roles the same title; identity includes the edition's
+language/role, not the title alone. Link Texts'
 batch recovery uses the same metadata planner and response normalizer, with
 bounded traversal and response-identity checks. Other Sefaria operations
-keep their current routes. See [the migration handoff](sefaria-api-migration.md)
-for the endpoint inventory, deliberate no-fill policy and validation boundary.
+keep their current routes. Do not reintroduce a v1 passage-reader fallback:
+the supported Versions metadata endpoint is distinct from the deprecated
+v1 content endpoint.
+
+| Request purpose | Selector and format contract |
+| --- | --- |
+| Default passage | Repeated `version=primary` and `version=translation` |
+| Exact edition | Catalog language family plus exact version title, including whitespace |
+| Display and insertion | `return_format=default`, retaining source HTML for the shared processor |
+| Passage availability | Repeated `version=family\|all` for known families, `return_format=text_only` |
+
+All text requests disable segment filling. Cache public reference plans and
+compact catalog metadata, not text; passage catalogs must not be reused as
+whole-book catalogs. An omitted or failed availability answer remains unknown.
+Some available editions have incomplete coverage: align by chapter/verse,
+preserve gaps and do not substitute another edition's words. Validate the
+requested output before modifying the document.
+
+See [the migration handoff](sefaria-api-migration.md) for the full endpoint
+inventory, observed service behavior and validation boundary. Run
+`npm test` and, for relevant changes, the opt-in read-only
+`node tools/check-sefaria-v3.js` (Node 22+ and Python 3). This exercises
+production helpers against Sefaria, not Google Docs. The
+[live checklist](live-test-checklist-2.0.0.md) covers actual document insertion,
+sidebar behavior and latency.
 
 ## Source commentary and notes
 
@@ -155,6 +180,8 @@ commentary profiles. `tools/sync-source-text.js` generates the identical
 client implementation at `shared/source-text.html`. Both preview and
 insertion use it. It emits escaped text and a fixed set of formatting tags;
 the existing allowlist sanitizer for other rich-content surfaces is unchanged.
+Image descriptions are plain text in both outputs; images and their URLs are
+never emitted or fetched by this processor.
 Notes are recognized by Sefaria's classes before commentary filtering, so a
 bold footnote lemma cannot erase unbold translation words. `source_notes_mode`
 (schema 32) controls Omit, Inline or a labelled Notes section. It applies to
@@ -171,7 +198,9 @@ Sidebar option refreshes carry the selected translation and source edition,
 including ordered multiple translations. A callback rechecks its request
 ownership after rebuilding the preview; a newer edition request must not be
 overwritten by an older response. The missing-edition guard keeps insertion
-disabled until the chosen editions have matching text.
+disabled until the editions required by Display have matching text. An unused
+role cannot block single-language output; switching to Both revalidates its
+required editions before making a previous partial reply insertable.
 
 ## The search tabs
 

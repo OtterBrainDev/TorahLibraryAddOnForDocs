@@ -59,6 +59,48 @@ function loadMigrations(initialProps = {}) {
   return { context, userProperties };
 }
 
+test('every user setting has a canonical default for reads, reset and profile snapshots', () => {
+  const { context } = loadMigrations();
+  const defaults = context.getDefaultPreferences();
+  const keys = vm.runInContext('SETTINGS', context);
+  keys.forEach((key) => {
+    assert.ok(Object.hasOwn(defaults, key), `missing default: ${key}`);
+    assert.notEqual(defaults[key], undefined, `undefined default: ${key}`);
+  });
+});
+
+test('schema 33 seeds the existing Voices and Lexicon fallback choices once', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '32' });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('prefs_schema_version'), CURRENT);
+  assert.equal(userProperties.getProperty('voices_insert_mode_default'), 'reference');
+  assert.equal(userProperties.getProperty('voices_translit_default'), 'none');
+  assert.equal(userProperties.getProperty('lexicon_insert_mode_default'), 'entry');
+  assert.equal(context.migrateToV33_(userProperties), false, 'a second pass writes nothing');
+});
+
+test('schema 33 preserves saved workflow modes, Commentary, Notes and interface choices', () => {
+  const chosen = {
+    voices_insert_mode_default: 'both', voices_translit_default: 'ashkenazi',
+    lexicon_insert_mode_default: 'definition', source_emphasis_mode: 'only',
+    source_notes_mode: 'separate', ui_mode: 'simple'
+  };
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '32', ...chosen });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  Object.entries(chosen).forEach(([key, value]) => assert.equal(userProperties.getProperty(key), value, key));
+});
+
+test('schema 33 repairs a generated undefined mode already activated from an old profile', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '32',
+    voices_insert_mode_default: 'undefined', voices_translit_default: 'undefined', lexicon_insert_mode_default: 'undefined'
+  });
+  context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(userProperties.getProperty('voices_insert_mode_default'), 'reference');
+  assert.equal(userProperties.getProperty('voices_translit_default'), 'none');
+  assert.equal(userProperties.getProperty('lexicon_insert_mode_default'), 'entry');
+  assert.equal(context.migrateToV33_(userProperties), false);
+});
+
 test('fresh install at current schema version does not rewrite anything', () => {
   // A new user installs the add-on; onInstall has already populated defaults,
   // and the schema version is already up to date. No migration work.

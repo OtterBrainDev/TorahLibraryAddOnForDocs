@@ -12,9 +12,16 @@ should happen.
 | 4 | [Coming from version 1.0](4-returning-user.md) | People who use version 1.0 of *Sefaria for Google Docs* | 15 min | Where its three commands went, what's new, and what behaves differently. |
 | 5 | [First five minutes](5-new-user.md) | Someone who has never used it | 5 min | Get one source into a document. |
 
-The version under demo is **2.0.0, preference schema 32** (`docs/VERSION.json`
+The version under demo is **2.0.0, preference schema 33** (`docs/VERSION.json`
 and the v2.0.0 entry in `docs/CHANGELOG.md`).
 *Help & Support → About* should read **Current line: 2.0**.
+
+**Status:** these scripts have been reconciled with the current source,
+including Texts v3, edition persistence, Commentary and Notes, the grouped
+sidebar and keyboard controls. They are not a record of a completed live
+demonstration or a video. The new Google Docs checks in the
+[live test checklist](../live-test-checklist-2.0.0.md) remain pending;
+record the deployed commit and observed results there before a launch demo.
 
 ## Before any live session
 
@@ -30,6 +37,9 @@ and the v2.0.0 entry in `docs/CHANGELOG.md`).
 4. **Check that sefaria.org is up.** Every feature except Preferences calls it.
 5. Zoom the browser to 110–125 % if you are screen-sharing. The sidebar is
    300 px wide.
+6. **Record the test deployment's commit.** About's release line does not
+   establish which HEAD a test deployment runs. A passing Node suite or live
+   Sefaria API check does not prove Google Docs insertion or browser layout.
 
 ## Shared demo document
 

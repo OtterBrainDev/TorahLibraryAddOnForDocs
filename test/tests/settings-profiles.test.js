@@ -140,6 +140,49 @@ test('a profile kept aside is migrated when it comes back, and a value no settin
   assert.equal(broken.store.nekudot, 'true');
 });
 
+test('a never-set workflow snapshots real defaults and survives switching away and back', () => {
+  const { ctx, store } = load();
+  // Also cover a sparse store that reaches the profile API before these keys
+  // were seeded: the snapshot must use the canonical defaults, not undefined.
+  const expected = {
+    voices_insert_mode_default: 'reference', voices_translit_default: 'none', lexicon_insert_mode_default: 'entry'
+  };
+  Object.keys(expected).forEach((key) => { delete store[key]; });
+  ctx.createSettingsProfile('With text');
+  const kept = JSON.parse(store.settings_profile_p1).values;
+  Object.entries(expected).forEach(([key, value]) => assert.equal(kept[key], value, key));
+  store.voices_insert_mode_default = 'both';
+  store.voices_translit_default = 'traditional';
+  store.lexicon_insert_mode_default = 'definition';
+  ctx.switchSettingsProfile('p1');
+  Object.entries(expected).forEach(([key, value]) => assert.equal(store[key], value, key));
+  ctx.switchSettingsProfile('p2');
+  assert.equal(store.voices_insert_mode_default, 'both');
+  assert.equal(store.voices_translit_default, 'traditional');
+  assert.equal(store.lexicon_insert_mode_default, 'definition');
+});
+
+test('old profiles repair only the generated undefined workflow sentinel and preserve real choices', () => {
+  const index = JSON.stringify({ active: 'p1', profiles: [{ id: 'p1', name: 'Now' }, { id: 'p2', name: 'Old' }] });
+  const old = JSON.stringify({ schema: '32', values: {
+    voices_insert_mode_default: 'undefined', voices_translit_default: 'undefined', lexicon_insert_mode_default: 'undefined',
+    source_emphasis_mode: 'only', source_notes_mode: 'inline'
+  } });
+  const { ctx, store } = load({ settings_profiles: index, settings_profile_p2: old });
+  ctx.switchSettingsProfile('p2');
+  assert.equal(store.voices_insert_mode_default, 'reference');
+  assert.equal(store.voices_translit_default, 'none');
+  assert.equal(store.lexicon_insert_mode_default, 'entry');
+  assert.equal(store.source_emphasis_mode, 'only');
+  assert.equal(store.source_notes_mode, 'inline');
+  const chosen = ctx.migrateProfileValues_(JSON.stringify({ schema: '32', values: {
+    voices_insert_mode_default: 'contents', voices_translit_default: 'ipa_modern', lexicon_insert_mode_default: 'headword'
+  } }), ctx.getDefaultPreferences());
+  assert.equal(chosen.voices_insert_mode_default, 'contents');
+  assert.equal(chosen.voices_translit_default, 'ipa_modern');
+  assert.equal(chosen.lexicon_insert_mode_default, 'headword');
+});
+
 test('names are cleaned and unique, there is a limit, and a rename changes no setting', () => {
   const { ctx, store } = load();
   assert.throws(() => ctx.createSettingsProfile('   '), /Give the profile a name/);

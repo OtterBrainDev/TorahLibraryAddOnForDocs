@@ -910,6 +910,14 @@ function sourceTextOptions_(data, typography, role) {
   };
 }
 
+// Check the words that the shared processor will actually insert, before
+// numbering can make empty segments look nonempty or a target replaces text.
+function hasSourceTextForInsertion_(value, sourceOptions) {
+  if (Array.isArray(value)) return value.some(function (part) { return hasSourceTextForInsertion_(part, sourceOptions); });
+  if (value === null || value === undefined) return false;
+  return processSourceText_(value, sourceOptions).text.trim().length > 0;
+}
+
 function insertReference(data, opts) {
   const options = opts || {};
   let singleLanguage = options.singleLanguage;
@@ -937,6 +945,23 @@ function insertReference(data, opts) {
   // Brackets are interpreted independently in each original verse. A bad
   // bracket in one verse cannot consume a neighbouring verse after joining.
   data = prepareSourceCommentaryData_(data, typography.sourceEmphasisMode);
+  const hasHebrew = hasSourceTextForInsertion_(data.he, sourceTextOptions_(data, typography, 'hebrew'));
+  const hasTranslation = hasSourceTextForInsertion_(data.text, sourceTextOptions_(data, typography, 'translation'));
+  if (singleLanguage === 'he' && !hasHebrew) {
+    throw new Error('No original text is available for this passage with these options. Choose Translation or Both in Display, or choose another source.');
+  }
+  if (singleLanguage === 'en' && !hasTranslation) {
+    throw new Error('No translation text is available for this passage with these options. Choose Original or Both in Display, or choose another translation.');
+  }
+  if (!hasHebrew && !hasTranslation) {
+    throw new Error('No text is available for this passage with these options. Choose another passage or change the insertion options.');
+  }
+  // Both uses the language that exists; an explicitly requested language
+  // must never become an empty block or silently switch languages instead.
+  if (!singleLanguage) {
+    if (hasHebrew && !hasTranslation) singleLanguage = 'he';
+    else if (hasTranslation && !hasHebrew) singleLanguage = 'en';
+  }
 
   let title = (preferredTitle) ? preferredTitle : data.ref;
   const includeLineMarkers = pasukPreference === true || pasukPreference === 'true';
@@ -951,15 +976,6 @@ function insertReference(data, opts) {
   if (typeof data.heRef === 'string') {
     data = Object.assign({}, data, { heRef: decodeHTMLEntities(data.heRef) });
   }
-  // A bilingual insert of a source with only one language (Siddur Rashi has
-  // no translation) inserts that language alone, not an empty titled block.
-  if (!singleLanguage) {
-    const hasHebrew = hasInsertableText_(data.he);
-    const hasTranslation = hasInsertableText_(data.text);
-    if (hasHebrew && !hasTranslation) singleLanguage = 'he';
-    else if (hasTranslation && !hasHebrew) singleLanguage = 'en';
-  }
-
   // Side-by-side layouts are a table of their own; everything else is
   // paragraphs, which can also go inside a table cell. See insertion-target.gs.
   const createsTable = !singleLanguage && bilingualLayout !== "he-top";
@@ -1318,11 +1334,11 @@ function selectInsertableVersions_(versionTitles, dataList) {
   const skipped = [];
   const seen = {};
   for (let i = 0; i < versionTitles.length; i++) {
-    const requested = String(versionTitles[i] || '').trim();
-    if (!requested || seen[requested]) continue;
+    const requested = String(versionTitles[i] || '');
+    if (!requested.trim() || seen[requested]) continue;
     seen[requested] = true;
     const data = dataList[i];
-    const resolvedTitle = String((data && data.versionTitle) || '').trim();
+    const resolvedTitle = String((data && data.versionTitle) || '');
     if (!data || resolvedTitle !== requested || !hasInsertableText_(data.text)) {
       skipped.push(requested);
       continue;
@@ -1393,14 +1409,15 @@ function buildSefariaVersionUrl_(ref, enVersionTitle, heVersionTitle) {
  *        omitted means the stored `source_emphasis_mode` preference.
  * @param {string}  [opts.sessionId]           The sidebar session whose overrides
  *        (vowels, cantillation, punctuation) apply to the fetch.
- * @return {{inserted: string[], skipped: string[]}} Version titles inserted, and
- *         those left out because they have no text for this ref.
+ * @return {{inserted: string[], skipped: string[], filtered: string[]}} Version
+ *         titles inserted, unavailable for this ref, or omitted by the current
+ *         Commentary/Notes policy. Filtered editions remain available to choose.
  */
 function insertReferenceVersions(ref, opts) {
   const options = opts || {};
   const versionTitles = Array.isArray(options.versionTitles) ? options.versionTitles.filter(Boolean) : [];
   const heVersionTitle = options.heVersionTitle || '';
-  const singleLanguage = options.singleLanguage;
+  let singleLanguage = options.singleLanguage;
   const pasukPreference = options.pasukPreference !== undefined ? options.pasukPreference : true;
   const preferredTitle = options.preferredTitle || null;
   const includeTranslationSourceInfo = options.includeTranslationSourceInfo === true;
@@ -1409,6 +1426,9 @@ function insertReferenceVersions(ref, opts) {
 
   if (!ref) throw new Error('insertReferenceVersions: no reference provided.');
   if (!versionTitles.length) throw new Error('insertReferenceVersions: no version titles provided.');
+  if (singleLanguage === 'he') {
+    throw new Error('Multiple translations require Translation or Both in Display. Choose one edition to insert Original only.');
+  }
 
   // The sidebar's session overrides (Vowels, Cantillation, Punctuation) apply
   // at fetch time, so they have to reach this re-fetch too.
@@ -1418,7 +1438,7 @@ function insertReferenceVersions(ref, opts) {
       : findReference(ref, { en: vt, he: heVersionTitle });
   });
   const selection = selectInsertableVersions_(versionTitles, resolved);
-  const kept = selection.kept;
+  let kept = selection.kept;
 
   if (!kept.length) {
     throw new Error('None of the selected translations has text for this reference.');
@@ -1444,6 +1464,26 @@ function insertReferenceVersions(ref, opts) {
   kept.forEach(function (entry) {
     entry.data = prepareSourceCommentaryData_(entry.data, typography.sourceEmphasisMode);
   });
+  // Policy-empty editions are different from missing editions: changing
+  // Commentary or Notes can make their words available again.
+  const filtered = [];
+  kept = kept.filter(function (entry) {
+    if (hasSourceTextForInsertion_(entry.data.text, sourceTextOptions_(entry.data, typography, 'translation'))) return true;
+    filtered.push(entry.versionTitle);
+    return false;
+  });
+  if (!kept.length) {
+    throw new Error('None of the selected translations has text for this passage with these options. Choose another translation or change the insertion options.');
+  }
+  if (singleLanguage !== 'en' && !hasSourceTextForInsertion_(kept[0].data.he,
+      sourceTextOptions_(kept[0].data, typography, 'hebrew'))) {
+    if (heVersionTitle) {
+      throw new Error('The selected source edition has no text for this passage with these options. Choose another source edition or choose Translation in Display.');
+    }
+    // Both with no source edition available follows the single insert's
+    // established fallback: translations alone, without an empty source block.
+    singleLanguage = 'en';
+  }
 
   // "Line by line" (Hebrew on top only): each translation's lines, paired
   // with the Hebrew's before formatDataForPesukim joins them (it rewrites
@@ -1455,7 +1495,8 @@ function insertReferenceVersions(ref, opts) {
   if (singleLanguage !== 'en') {
     const alignedRowsSetting = (options.alignedRows !== undefined) ? options.alignedRows : prefs().bilingual_aligned_rows;
     if (alignedRowsSetting === true || alignedRowsSetting === 'true') {
-      linePairLists = kept.map(function (entry) { return buildAlignedLinePairs_(entry.data, includeLineMarkers); });
+      const peerData = kept.map(function (entry) { return entry.data; });
+      linePairLists = kept.map(function (entry) { return buildAlignedLinePairs_(entry.data, includeLineMarkers, peerData); });
       if (!linePairLists.every(Boolean)) linePairLists = null;
     }
   }
@@ -1502,6 +1543,7 @@ function insertReferenceVersions(ref, opts) {
       transliterator: transliterator,
       typography: typography,
       skipped: selection.skipped,
+      filtered: filtered,
       notice: target.notice
     });
   }
@@ -1593,6 +1635,7 @@ function insertReferenceVersions(ref, opts) {
   return {
     inserted: kept.map(function (entry) { return entry.versionTitle; }),
     skipped: selection.skipped,
+    filtered: filtered,
     notice: target.notice
   };
 }
@@ -1675,6 +1718,7 @@ function insertReferenceVersionLines_(doc, index, kept, linePairLists, settings)
   return {
     inserted: kept.map(function (entry) { return entry.versionTitle; }),
     skipped: settings.skipped,
+    filtered: settings.filtered,
     notice: settings.notice
   };
 }

@@ -358,3 +358,27 @@ test('the Hebrew credit does not pass its 8 pt size on to the translation titles
   const titles = children.filter((c) => c._state.text.startsWith('Genesis'));
   titles.forEach((t) => assert.notEqual(t._state.attrs.FONT_SIZE, 8, t._state.text));
 });
+
+
+test('multi-version insertion preserves significant edition whitespace in results and pinned links', () => {
+  const title = 'The Philosophical Tanakh '; // Exact title present in Sefaria's Genesis catalog.
+  const fixture = { ...resolved.Koren, versionTitle: title };
+  const { ctx, children } = loadInsertion({ resolved: { [title]: fixture, JPS: resolved.JPS } });
+  const result = ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: [title, 'JPS'], singleLanguage: 'en', insertSefariaLink: true,
+  });
+  assert.deepEqual(Array.from(result.inserted), [title, 'JPS']);
+  assert.equal(children.map((c) => c._state.link).filter(Boolean)[0],
+    'https://www.sefaria.org/Genesis_1%3A1?ven=The_Philosophical_Tanakh_');
+});
+
+test('multi-version selection compares exact edition names and never merges whitespace-distinct identities', () => {
+  const { ctx } = loadInsertion({ resolved });
+  const one = { ...resolved.Koren, versionTitle: 'Edition' };
+  const two = { ...resolved.Koren, versionTitle: 'Edition ' };
+  const result = ctx.selectInsertableVersions_(['Edition', 'Edition ', 'Edition'], [one, two, one]);
+  assert.deepEqual(Array.from(result.kept, (entry) => entry.versionTitle), ['Edition', 'Edition ']);
+  const mismatch = ctx.selectInsertableVersions_(['Edition '], [one]);
+  assert.equal(mismatch.kept.length, 0);
+  assert.deepEqual(Array.from(mismatch.skipped), ['Edition ']);
+});

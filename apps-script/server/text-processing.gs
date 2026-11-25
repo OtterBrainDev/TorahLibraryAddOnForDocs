@@ -668,76 +668,90 @@ function formatDataForPesukim(data, pesukim) {
  * segments nested deeper than chapters), so the caller falls back to one row
  * for the whole passage. Segments the other language lacks are left blank.
  *
+ * @param {Array<Object>} [peerData] Other editions in the same insertion.
+ *   Their chapter lengths reserve shared row positions for every edition.
  * @return {Array<{he: string, en: string, heRaw: string, number: (number|null), heading: boolean}>|null}
  *   he/en carry the line marker; heRaw is the Hebrew without it, as fetched
  *   (heTransliterationSource), for transliteration; empty for a heading;
  *   number is the verse number used
  *   for the marker.
  */
-function buildAlignedLinePairs_(data, includeLineMarkers) {
+function buildAlignedLinePairs_(data, includeLineMarkers, peerData) {
   if (!data || !Array.isArray(data.he) || !Array.isArray(data.text)) return null;
   const rawFromVerse = Array.isArray(data.sections) ? data.sections[1] : undefined;
   const fromVerse = Number(rawFromVerse) || 1;
-
   const markers = !!includeLineMarkers;
-
-  // [{text, number, heading}] for one language; null when it can't be split
-  // into lines.
-  function segmentsOf(value, lang) {
-    const out = [];
-    if (data.isSpanning) {
-      let verse = fromVerse;
-      for (let c = 0; c < value.length; c++) {
-        const chapter = value[c];
-        if (Array.isArray(chapter)) {
-          if (markers && chapter.length) {
-            out.push({ text: spanningSectionHeading_(data, c, lang), number: null, heading: true });
-          }
-          for (let i = 0; i < chapter.length; i++) {
-            if (typeof chapter[i] !== 'string') return null;
-            out.push({ text: chapter[i], number: verse + i });
-          }
-          verse = 1;
-        } else if (typeof chapter === 'string') {
-          out.push({ text: chapter, number: null });
-        } else {
-          return null;
-        }
-      }
-      return out;
-    }
-    for (let i = 0; i < value.length; i++) {
-      if (typeof value[i] !== 'string') return null;
-      out.push({ text: value[i], number: fromVerse + i });
-    }
-    return out;
+  // Every edition in a stacked multi-translation insert uses this same shape.
+  // Otherwise a longer early chapter in one edition would shift later rows.
+  const peers = Array.isArray(peerData) && peerData.length ? peerData : [data];
+  const fields = [];
+  for (let p = 0; p < peers.length; p++) {
+    if (!peers[p] || !Array.isArray(peers[p].he) || !Array.isArray(peers[p].text) ||
+        !!peers[p].isSpanning !== !!data.isSpanning) return null;
+    fields.push(peers[p].he, peers[p].text);
   }
-
-  const he = segmentsOf(data.he, 'he');
-  const en = segmentsOf(data.text, 'en');
-  if (!he || !en || (!he.length && !en.length)) return null;
-  // Each row's transliteration is read from the fetched Hebrew (vowels kept),
-  // when it splits into the same lines.
   const source = data.heTransliterationSource;
-  const heSource = Array.isArray(source) ? segmentsOf(source, 'he') : null;
-  const sourceAligned = !!(heSource && heSource.length === he.length);
-
+  // Read pointed Hebrew only when its chapter/verse coordinates match the
+  // displayed Hebrew. An equal flattened length is not enough across gaps.
+  const sourceAligned = Array.isArray(source) && source.length === data.he.length &&
+    data.he.every(function (chapter, c) {
+      return Array.isArray(chapter)
+        ? Array.isArray(source[c]) && source[c].length === chapter.length &&
+          source[c].every(function (verse) { return typeof verse === 'string'; })
+        : typeof chapter === 'string' && typeof source[c] === 'string';
+    });
   const pairs = [];
-  for (let i = 0; i < Math.max(he.length, en.length); i++) {
-    const h = he[i];
-    const e = en[i];
-    const number = h ? h.number : (e ? e.number : null);
-    const heRaw = h ? h.text : '';
-    const enRaw = e ? e.text : '';
-    const heading = !!((h && h.heading) || (e && e.heading));
+  function addPair(he, en, number, heading, raw) {
     const withMarker = markers && number != null;
     pairs.push({
-      he: (withMarker && heRaw) ? '(' + gematriya(number, { punctuate: false }) + ') ' + heRaw : heRaw,
-      en: (withMarker && enRaw) ? '(' + number + ') ' + enRaw : enRaw,
-      heRaw: heading ? '' : (sourceAligned ? heSource[i].text : heRaw),
+      he: withMarker && he ? '(' + gematriya(number, { punctuate: false }) + ') ' + he : he,
+      en: withMarker && en ? '(' + number + ') ' + en : en,
+      heRaw: heading ? '' : raw,
       number: withMarker ? number : null,
       heading: heading
     });
   }
-  return pairs;
+  const count = fields.reduce(function (most, field) { return Math.max(most, field.length); }, 0);
+  if (!data.isSpanning) {
+    if (fields.some(function (field) { return field.some(function (v) { return typeof v !== 'string'; }); })) return null;
+    for (let i = 0; i < count; i++) {
+      const he = data.he[i] || '';
+      addPair(he, data.text[i] || '', fromVerse + i, false, sourceAligned ? source[i] || '' : he);
+    }
+    return pairs.length ? pairs : null;
+  }
+  // Pair within each chapter before moving to the next. Missing/short
+  // chapters keep blank cells instead of consuming the next chapter's words.
+  for (let c = 0; c < count; c++) {
+    const chapters = fields.map(function (field) { return field[c]; });
+    const nested = chapters.some(Array.isArray);
+    if (!nested) {
+      if (chapters.some(function (chapter) { return chapter !== undefined && typeof chapter !== 'string'; })) return null;
+      const he = data.he[c] || '';
+      addPair(he, data.text[c] || '', null, false, sourceAligned ? source[c] || '' : he);
+      continue;
+    }
+    // An empty scalar is v3's normalized null chapter. Non-empty scalars
+    // cannot safely be aligned with a chapter's verse array: keep the fallback.
+    if (chapters.some(function (chapter) {
+      return Array.isArray(chapter)
+        ? chapter.some(function (verse) { return typeof verse !== 'string'; })
+        : chapter !== undefined && chapter !== '';
+    })) return null;
+    const heChapter = Array.isArray(data.he[c]) ? data.he[c] : [];
+    const enChapter = Array.isArray(data.text[c]) ? data.text[c] : [];
+    const rawChapter = sourceAligned && Array.isArray(source[c]) ? source[c] : heChapter;
+    const verseCount = chapters.reduce(function (most, chapter) {
+      return Math.max(most, Array.isArray(chapter) ? chapter.length : 0);
+    }, 0);
+    if (markers && verseCount) {
+      addPair(heChapter.length ? spanningSectionHeading_(data, c, 'he') : '',
+        enChapter.length ? spanningSectionHeading_(data, c, 'en') : '', null, true, '');
+    }
+    const firstVerse = c === 0 ? fromVerse : 1;
+    for (let i = 0; i < verseCount; i++) {
+      addPair(heChapter[i] || '', enChapter[i] || '', firstVerse + i, false, rawChapter[i] || '');
+    }
+  }
+  return pairs.length ? pairs : null;
 }

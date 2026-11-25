@@ -91,9 +91,18 @@ AGENTS.md still expected 248 passing tests.)
    a text request; replies must match that planned ref and index. The picker
    catalog and fetched editions are separate fields. Preserve exact edition
    titles, including whitespace, and never fill gaps from another edition
-   under a single-edition credit. Search, sheets, dictionaries, Ref and Versions
-   use their own current endpoints, not an invented `/v3/` prefix. See
-   [`docs/sefaria-api-migration.md`](docs/sefaria-api-migration.md).
+   under a single-edition credit. In `server/sefaria-fetch.gs`, preserve
+   repeated `version` selectors (default `primary` and `translation`;
+   explicit `languageFamilyName|versionTitle`), `fill_in_missing_segments=0`
+   and `return_format=default` for display/insertion. Availability alone
+   requests `family|all` per known family and `return_format=text_only`;
+   bare `version=all` is not equivalent. Failed or omitted availability
+   answers are unknown, not empty; keep passage-scoped catalogs scoped to
+   their ref. Shared-title bilingual editions are distinct by role/language.
+   Link Texts batch recovery must use the same planner and normalizer. Do not
+   restore a v1 passage-content fallback. Search, sheets, dictionaries, Ref
+   and Versions use their own current endpoints, not an invented `/v3/`
+   prefix. See [`docs/sefaria-api-migration.md`](docs/sefaria-api-migration.md).
 10. **Interpret inline commentary only through a verified edition profile.**
     Exact edition title, language and corpus must match. Unknown conventions
     and malformed bracket segments preserve words; marked notes follow their
@@ -167,6 +176,18 @@ dated list. Short form of the worst offenders:
 - **Server refactor renames a function the client calls.** The client
   does not fail loudly — `google.script.run.foo()` on a missing `foo`
   silently no-ops. `test/ui/rpc-surface.test.js` pins this.
+- **Flattened offsets treated as verse identity.** Pair a spanning range
+  by chapter and verse before flattening. Every selected translation uses
+  the same coordinates; a missing chapter fragment stays blank.
+- **Session actions bypass pending writes.** Revert, Save as defaults and
+  profile switching follow preceding setting saves and stay busy through
+  their final mutation. Failed persistence must not enable insertion with
+  older server filters; retain a recoverable snapshot and pause.
+- **Any-language resolution treated as requested content.** Validate the
+  processed output before numbering or resolving a document insertion
+  target. Both may use an available language; an explicit missing language
+  cannot become an empty block. Policy-filtered editions remain selectable;
+  only genuinely missing editions update availability.
 
 ## How to run tests locally
 
@@ -175,7 +196,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **977 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **1032 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -185,7 +206,10 @@ and fix it before touching the feature you came to change.
 - `attribution.test.js` — attribution-line formatting.
 - `hebrew-preferences.test.js` — Hebrew display filters, divine-name
   replacements, transliteration, search payload shape.
-- `migrations.test.js` — the UserProperties schema migrations.
+- `migrations.test.js` — the UserProperties schema migrations; every SETTINGS
+  key has a defined canonical default. Schema 33 supplies the existing Voices
+  and Lexicon workflow defaults and repairs only their old generated
+  `undefined` sentinel, preserving valid saved choices.
 - `menu-layout.test.js` — the customizable add-on menu: default layout
   matches the pre-customization menu, Preferences and Help are always last,
   dividers collapse, stored layouts are normalized; the Menu Bar's labelled
@@ -251,7 +275,8 @@ and fix it before touching the feature you came to change.
 - `source-text.test.js` — one generated server/browser processor: semantic
   notes, ordinary superscripts, exact Davidson and Silverstein profiles,
   unknown editions, nested/malformed brackets per verse, safe generated HTML
-  and real captured edition fixtures. Notes is independent of Commentary.
+  and real captured edition fixtures. Notes is independent of Commentary;
+  image descriptions are escaped text, with no external image request.
 - `source-notes-settings.test.js` — schema 32, Omit default, session overrides,
   settings/profile migration and import, shared Layout controls, Link Texts
   and immediate single/multi insertion RPC payloads.
@@ -289,6 +314,10 @@ and fix it before touching the feature you came to change.
 - `insertion-target.test.js` — where an insert goes: after the cursor's
   block, inside a table cell for paragraph layouts, below the table (with a
   notice) for side-by-side layouts, never into a header, footer or footnote.
+- `required-output.test.js` — missing explicit languages and policy-empty
+  sources fail before target resolution or selection replacement; Both keeps
+  its available-language fallback. Multi-insertion distinguishes policy
+  omissions from missing editions and keeps the former selectable.
 - `sheet-insert.test.js` — a Voices (source sheet) insert: Both is the
   sheet's text under a title linked to the sheet, never the citation block on
   top of it; Citation leaves out a summary that only repeats the title; the
@@ -301,11 +330,20 @@ and fix it before touching the feature you came to change.
 - `sefaria-v3.test.js` — real captured v3 and Ref payloads, exact editions and
   credit, French/Yiddish and source roles, bounded books/default nodes, ranges,
   metadata caching, nullable segments and unavailable/mismatched responses.
-  The opt-in `node tools/check-sefaria-v3.js` checks live Sefaria through the
-  production server helpers, separately from the offline suite and from Docs.
+  Hebrew and English editions may share a title: exclude the selected edition
+  itself from the other role, not every edition carrying that title.
+  The opt-in `node tools/check-sefaria-v3.js` (Node 22+ and Python 3) checks
+  live Sefaria through production server helpers; append `commentary` or
+  another case-name substring to select cases. For a change to the reader or
+  source processor, run the affected cases as well as `npm test`, record
+  what ran, and leave actual Google Docs checks pending until performed.
+  Live API success alone does not prove sidebar rendering, DocumentApp
+  behavior, Apps Script latency or quotas.
 - `preview-version-unavailable.test.js` — a v3 partial/missing edition reply
   keeps the version pickers, disables insertion and shows plain-text help;
-  a later valid choice recovers, and stale replies cannot replace it.
+  a later valid choice recovers, and stale replies cannot replace it. A missing
+  unused role cannot block single-language output; switching to Both
+  revalidates its required editions before enabling insertion.
 - `punctuation.test.js` — the Hebrew and translation "Punctuation: Off"
   settings: what is stripped (sof pasuq, paseq, {פ}, maqaf → space) and kept
   (ר', רש"י, G-d, 3:16, tags, entities), the two toggles independent, refs
@@ -389,6 +427,9 @@ and fix it before touching the feature you came to change.
   choice), switches re-draw only when nothing is left to save, and a change
   the fetch applies re-fetches once, with Add Source disabled meanwhile. A
   change made before the bootstrap gives the sidebar its session is kept.
+  Revert, Save as defaults and profile changes drain preceding writes;
+  failures retry once, then pause insertion with retry/Revert recovery. Save
+  defaults confirms the visible snapshot, including after cache expiry.
 - `citation-style.test.js` — the citation under a source has its own style
   (Preferences → Insertion → Layout → Citation style); its defaults and schema v25 keep the old
   8 pt italic in the font of the text above.
@@ -542,6 +583,14 @@ and in `test/ui/`:
   (`shared/insertion-options`): every host (sidebar, Preferences, Link Texts
   dialog) includes and initialises them, and no page has its own copy of the
   cards or their CSS.
+- `insertion-options-grouping.test.js` — sidebar grouping moves the real
+  shared controls without losing or duplicating them; Line by line and
+  Transliteration stay outside details, roles and hidden settings retain
+  their values, summaries expose consequential choices, and the tray contains
+  focus while preserving background state. Other hosts retain their editors.
+- `composition-keyboard.test.js` — shared radio and transliteration-style
+  keyboard behavior, selected state, Escape containment and focus restoration,
+  without changing the separate Voices menu.
 - `native-controls.test.js` — Google's `add-ons.css` loads only into the
   `google-addons` cascade layer, every page with `shared/ui/head` includes
   `shared/css/native-controls`, and every `<input type>` in use has a base rule

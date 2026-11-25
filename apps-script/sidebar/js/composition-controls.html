@@ -173,6 +173,7 @@ var selectedResultRefreshPending = false;
 
 function scheduleSelectedResultRefresh() {
   selectedResultRefreshPending = true;
+  if (sessionSaveQueue.failed) { showSessionSaveFailure_(); return; }
   // Texts isn't shown: its preview is fetched again when it is (search-tabs).
   if (appMode !== 'texts') { textsPreviewStale = true; return; }
   // A previous fetch used the old options. Its reply must not re-enable
@@ -190,7 +191,10 @@ function scheduleSelectedResultRefresh() {
   clearTimeout(selectedResultRefreshTimer);
   selectedResultRefreshTimer = setTimeout(function () {
     selectedResultRefreshTimer = null;
-    if (sessionSaveQueue.inFlight || sessionSaveQueue.pending) {
+    // A failed save stays visible for an explicit retry or Revert. Do not
+    // poll forever or fetch using the server's previous settings meanwhile.
+    if (sessionSaveQueue.failed) return;
+    if (sessionSaveQueue.inFlight || sessionSaveQueue.pending || sessionSaveQueue.action) {
       scheduleSelectedResultRefresh();
       return;
     }
@@ -215,6 +219,7 @@ function refreshCompositionAndPreview() {
 function bindSidebarCompositionCard() {
   initCompositionCard({
     containerId: 'composition-card-container',
+    groupedOptionsRoot: '#layout-tray',
     getState: _sidebarCompositionGetState,
     onToggle: _sidebarCompositionOnToggle,
     onSchemeSelect: _sidebarCompositionOnSchemeSelect,

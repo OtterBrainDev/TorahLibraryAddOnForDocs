@@ -244,3 +244,20 @@ test('unknown modes or profiles never remove translation words and default to om
   assert.equal(out.text, 'Title base [supplied]');
   assert.equal(out.html, '<b>Title</b> base [supplied]');
 });
+
+test('figure descriptions survive as escaped text without images or external requests', () => {
+  const html = 'Before <b><img src="https://example.invalid/figure" alt="  Plan &amp; &lt;door&gt;  " onerror="bad()"></b> after<img src="https://example.invalid/empty">';
+  const out = process(html);
+  assert.equal(out.text, 'Before Plan & <door> after');
+  assert.equal(out.html, 'Before <b>Plan &amp; &lt;door&gt;</b> after');
+  assert.deepEqual(plain(browser.processSourceText_(html)), out);
+});
+
+test('figure descriptions inside semantic notes follow the selected Notes policy', () => {
+  const html = 'Main<sup class="footnote-marker">1</sup><i class="footnote"><img alt="A figure caption" src="https://example.invalid/note"></i> text';
+  assert.equal(process(html).text, 'Main text');
+  assert.equal(process(html, { notesMode: 'inline' }).text, 'Main (A figure caption) text');
+  const separate = process(html, { notesMode: 'separate' });
+  assert.match(separate.text, /Notes\n\[1\] A figure caption$/);
+  assert.doesNotMatch(separate.html, /<img|https:/);
+});

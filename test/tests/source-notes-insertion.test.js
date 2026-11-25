@@ -147,3 +147,23 @@ test('ordinary superscript and subscript survive Notes Omit and document typogra
   assert.equal(main.chars[6].script, 'SUBSCRIPT');
   assert.ok(main.chars.slice(8).every((ch) => ch.script === 'NORMAL'));
 });
+
+
+test('multi-version line-by-line insertion uses shared chapter positions across editions with different gaps', () => {
+  for (const numbers of [false, true]) {
+    const base = { ref: 'Genesis 1:30-2:1', heRef: 'בראשית א:ל-ב:א', indexTitle: 'Genesis',
+      sections: [1, 30], toSections: [2, 1], isSpanning: true, heVersionTitle: 'Source',
+      he: [['H30'], ['H1']], categories: ['Tanakh', 'Torah'], actualLanguage: 'en' };
+    const one = { ...base, versionTitle: 'One', text: [[], ['A1']] };
+    const two = { ...base, versionTitle: 'Two', text: [['B30', 'B31'], ['B1']] };
+    const env = loadSourceInsertion({ versions: { One: one, Two: two } });
+    env.ctx.insertReferenceVersions(base.ref, { versionTitles: ['One', 'Two'], heVersionTitle: 'Source',
+      bilingualLayout: 'he-top', alignedRows: true, pasukPreference: numbers });
+    assert.deepEqual(flat(env).match(/[HAB]\d+/g), ['H30', 'B30', 'B31', 'H1', 'A1', 'B1']);
+    if (numbers) {
+      assert.ok(flat(env).includes('(31) B31'));
+      assert.ok(flat(env).includes('(1) A1'));
+      assert.ok(!flat(env).includes('(30) A1'));
+    }
+  }
+});

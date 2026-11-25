@@ -6,6 +6,11 @@ project behind its existing listing (path A in
 [`for-sefaria-review.md`](for-sefaria-review.md) §1). Sefaria's approval and
 the release date are not established.
 
+Source copy reconciled on 2026-11-25 for the final candidate's insertion
+options, edition selection, Commentary and Notes. In-place upgrade behavior
+and the new Google Docs checks still need live verification before this
+notice is sent.
+
 ---
 
 **Subject: Sefaria for Google Docs 2.0: you'll be asked to authorize one new permission**
@@ -30,8 +35,12 @@ Docs will not run until you authorize it, and the earlier version will not be
 available instead. On a school or workplace account, your administrator may
 need to approve the permission first.
 
-**What's new.** Saved preferences, more layout and formatting choices,
-dictionary and source-sheet search, and a preview before a source is inserted.
+**What's new.** Preview a source before inserting it, remember your preferred
+settings, choose a bilingual layout or transliteration, and find dictionary
+entries and source sheets. The most-used insertion choices stay together,
+with additional settings in folding groups. You can also insert several
+translations at once and choose separately how supported inline commentary
+and marked footnotes appear.
 
 **When you first open the sidebar**
 
@@ -43,6 +52,21 @@ dictionary and source-sheet search, and a preview before a source is inserted.
   naming the edition and its license.
 - Selecting a search result now shows a preview. Click **Add Source** to
   insert it.
+- Leave **Commentary** on **Default** to preserve the edition's explanation
+  and markings. **Notes** starts on **Omit**, preserving the previous
+  inserted output; choose Inline or Separate in **Insertion Options → Text and
+  notes** (or Layout in Preferences) to include marked footnotes. Separate
+  creates an ordinary Notes text section.
+- Display, Arrangement, Line by line and Transliteration stay at the top of
+  Insertion Options when applicable. Other choices are in three folding
+  groups: Text and notes, References and numbering, and Fonts and appearance.
+  These session choices are saved for later only with **Save as defaults**.
+- Your chosen translation and Hebrew edition stay selected when you change
+  insertion options. An edition's missing verses stay missing instead of
+  being filled from a different edition. Choose another in Versions if needed.
+  In Translation only or the bilingual Stacked arrangement, Ctrl-click
+  (Cmd-click on Mac) adds or removes individual translations and Shift-click
+  selects a range.
 - **Insert Source from Selection** replaces the highlighted citation by
   default. To keep the citation and insert below it, change this in
   Preferences → Insertion.

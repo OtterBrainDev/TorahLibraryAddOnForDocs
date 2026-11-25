@@ -1,13 +1,44 @@
 <script>
 // ── Layout Tray: open/close, sync ─────────────────────────────────────────
 
+var layoutTrayBackground = [];
+
+function setLayoutTrayBackgroundInert(inert) {
+  if (!inert) {
+    layoutTrayBackground.forEach(function (entry) { entry.node.inert = entry.inert; });
+    layoutTrayBackground = [];
+    return;
+  }
+  if (layoutTrayBackground.length) return;
+  var tray = document.querySelector('#layout-tray');
+  if (!tray || !tray.parentElement) return;
+  Array.prototype.forEach.call(tray.parentElement.children, function (node) {
+    // Keep progress announcements available while a session action runs.
+    if (node === tray || node.classList.contains('busy-overlay')) return;
+    layoutTrayBackground.push({ node: node, inert: !!node.inert });
+    node.inert = true;
+  });
+}
+
+function getLayoutTrayFocusable() {
+  var tray = document.querySelector('#layout-tray');
+  if (!tray) return [];
+  return Array.prototype.filter.call(tray.querySelectorAll('button, input, select, textarea, a[href], summary, [tabindex]'), function (node) {
+    return !node.disabled && !node.closest('[inert]') && node.tabIndex >= 0 && node.getClientRects().length > 0;
+  });
+}
+
 function openLayoutTray() {
+  setLayoutTrayBackgroundInert(true);
   $('#layout-tray').addClass('is-open');
   $('#layout-tray-close').focus();
 }
 
 function closeLayoutTray() {
+  if (typeof closeCompositionCardTranslitMenu === 'function') closeCompositionCardTranslitMenu(false);
+  if (typeof ccCloseFontPanel === 'function') ccCloseFontPanel(false);
   $('#layout-tray').removeClass('is-open');
+  setLayoutTrayBackgroundInert(false);
   $('#open-layout-settings').focus();
 }
 
@@ -28,9 +59,25 @@ $('#layout-tray-backdrop').on('click', function () {
 });
 
 $(document).on('keydown', function (event) {
-  if (event.key === 'Escape' && $('#layout-tray').hasClass('is-open')) {
+  if (!$('#layout-tray').hasClass('is-open')) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
     event.stopPropagation();
     closeLayoutTray();
+  } else if (event.key === 'Tab') {
+    var choices = getLayoutTrayFocusable();
+    if (!choices.length) return;
+    var first = choices[0];
+    var last = choices[choices.length - 1];
+    // A child menu may already have dismissed itself and moved focus.
+    var focused = document.activeElement;
+    if (event.shiftKey && (focused === first || choices.indexOf(focused) < 0)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (focused === last || choices.indexOf(focused) < 0)) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 });
 

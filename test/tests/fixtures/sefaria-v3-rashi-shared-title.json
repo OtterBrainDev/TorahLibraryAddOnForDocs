@@ -1,0 +1,147 @@
+{
+  "_note": "Captured from Sefaria on 2026-11-24 (America/Denver). Version metadata is limited to fields used by the add-on; available_versions retains the two returned editions. Reference fields and text are unchanged. The Hebrew and English editions have the same title and must remain separate by language.",
+  "_source": "https://www.sefaria.org/api/v3/texts/Rashi%20on%20Genesis%201%3A2%3A1?version=primary&version=translation&fill_in_missing_segments=0&return_format=default",
+  "versions": [
+    {
+      "status": "locked",
+      "priority": 4.0,
+      "license": "Public Domain",
+      "versionTitleInHebrew": "",
+      "shortVersionTitle": "M. Rosenbaum and A.M. Silbermann, London, 1929-1934",
+      "language": "he",
+      "versionSource": "https://www.nli.org.il/he/books/NNL_ALEPH001969084",
+      "versionTitle": "Pentateuch with Rashi's commentary by M. Rosenbaum and A.M. Silbermann, 1929-1934",
+      "actualLanguage": "he",
+      "languageFamilyName": "hebrew",
+      "isSource": true,
+      "isPrimary": true,
+      "direction": "rtl",
+      "text": "<b>תהו ובהו.</b> תֹּהוּ לְשׁוֹן תֵּמַהּ וְשִׁמָּמוֹן, שֶׁאָדָם תּוֹהֵא וּמִשְׁתּוֹמֵם עַל בֹּהוּ שֶׁבָּהּ:"
+    },
+    {
+      "status": "locked",
+      "priority": 5.0,
+      "license": "Public Domain",
+      "versionTitleInHebrew": "חמישה חומשי תורה עם פירוש רש״י, מ. רוזנבאום וא.מ. סילברמן",
+      "shortVersionTitle": "M. Rosenbaum and A.M. Silbermann, London, 1929-1934",
+      "language": "en",
+      "versionSource": "https://www.nli.org.il/he/books/NNL_ALEPH001969084",
+      "versionTitle": "Pentateuch with Rashi's commentary by M. Rosenbaum and A.M. Silbermann, 1929-1934",
+      "actualLanguage": "en",
+      "languageFamilyName": "english",
+      "isSource": false,
+      "isPrimary": false,
+      "direction": "ltr",
+      "text": "תהו ובהו DESOLATE AND VOID — The word תהו signifies astonishment and amazement, for a person would have been astonished and amazed at its emptiness."
+    }
+  ],
+  "available_versions": [
+    {
+      "status": "locked",
+      "priority": 4.0,
+      "license": "Public Domain",
+      "versionTitleInHebrew": "",
+      "shortVersionTitle": "M. Rosenbaum and A.M. Silbermann, London, 1929-1934",
+      "language": "he",
+      "versionSource": "https://www.nli.org.il/he/books/NNL_ALEPH001969084",
+      "versionTitle": "Pentateuch with Rashi's commentary by M. Rosenbaum and A.M. Silbermann, 1929-1934",
+      "actualLanguage": "he",
+      "languageFamilyName": "hebrew",
+      "isSource": true,
+      "isPrimary": true,
+      "direction": "rtl"
+    },
+    {
+      "status": "locked",
+      "priority": 5.0,
+      "license": "Public Domain",
+      "versionTitleInHebrew": "חמישה חומשי תורה עם פירוש רש״י, מ. רוזנבאום וא.מ. סילברמן",
+      "shortVersionTitle": "M. Rosenbaum and A.M. Silbermann, London, 1929-1934",
+      "language": "en",
+      "versionSource": "https://www.nli.org.il/he/books/NNL_ALEPH001969084",
+      "versionTitle": "Pentateuch with Rashi's commentary by M. Rosenbaum and A.M. Silbermann, 1929-1934",
+      "actualLanguage": "en",
+      "languageFamilyName": "english",
+      "isSource": false,
+      "isPrimary": false,
+      "direction": "ltr"
+    }
+  ],
+  "ref": "Rashi on Genesis 1:2:1",
+  "heRef": "רש\"י על בראשית א׳:ב׳:א׳",
+  "sections": [
+    "1",
+    "2",
+    "1"
+  ],
+  "toSections": [
+    "1",
+    "2",
+    "1"
+  ],
+  "sectionRef": "Rashi on Genesis 1:2",
+  "heSectionRef": "רש\"י על בראשית א׳:ב׳",
+  "firstAvailableSectionRef": "Rashi on Genesis 1:2:1",
+  "isSpanning": false,
+  "next": "Rashi on Genesis 1:4",
+  "prev": "Rashi on Genesis 1:1",
+  "title": "Rashi on Genesis 1:2",
+  "book": "Rashi on Genesis",
+  "heTitle": "רש\"י על בראשית",
+  "primary_category": "Commentary",
+  "type": "Commentary",
+  "indexTitle": "Rashi on Genesis",
+  "categories": [
+    "Tanakh",
+    "Rishonim on Tanakh",
+    "Rashi",
+    "Torah"
+  ],
+  "heIndexTitle": "רש\"י על בראשית",
+  "isComplex": false,
+  "isDependant": true,
+  "textDepth": 3,
+  "sectionNames": [
+    "Chapter",
+    "Verse",
+    "Comment"
+  ],
+  "addressTypes": [
+    "Perek",
+    "Pasuk",
+    "Integer"
+  ],
+  "titleVariants": [
+    "Rashi on Bereshit",
+    "Rashi on Gen",
+    "Rashi on Gen.",
+    "Rashi on Breishit",
+    "Rashi on Ber",
+    "Rashi on Bereishit",
+    "Rashi on Ber.",
+    "Rashi on Beresheet",
+    "Rashi on Bereshith",
+    "Rashi on Genesis"
+  ],
+  "heTitleVariants": [
+    "רש\"י על ברא'",
+    "רש\"י על בר'",
+    "רש\"י על בר׳",
+    "רש\"י על ברא׳",
+    "רש\"י על בְּרֵאשִׁית",
+    "רש״י על בראשית",
+    "רש”י על בראשית",
+    "רש״י על ברא'",
+    "רש”י על ברא'",
+    "רש״י על בר'",
+    "רש”י על בר'",
+    "רש״י על בר׳",
+    "רש”י על בר׳",
+    "רש״י על ברא׳",
+    "רש”י על ברא׳",
+    "רש״י על בְּרֵאשִׁית",
+    "רש”י על בְּרֵאשִׁית",
+    "רש\"י על בראשית"
+  ],
+  "warnings": []
+}

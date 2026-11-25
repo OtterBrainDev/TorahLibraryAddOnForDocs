@@ -10,6 +10,63 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+These changes are part of the pending 2.0.0 candidate, not a published
+update. For a reader-oriented overview, see [New in 2.0 in the README](../README.md#whats-new-compared-with-the-original-add-on),
+Help → About → New in 2.0, and the in-app Release Notes. The detailed changes
+below include fixes found during development of the candidate.
+
+- **Simpler sidebar Insertion Options.** Display and Arrangement now have
+  text labels. Line by line stays beside them for Both; Transliteration stays
+  directly accessible when original text is included, with Style and Position
+  shown as applicable. Remaining controls fold into Text and notes,
+  References and numbering, and Fonts and appearance, with readable summaries.
+  The existing shared controls, Simple/Everything modes and hidden-control
+  choices remain. Collapsing a group never changes a setting or fetches text.
+- **Safe session actions.** Revert, Save as defaults and profile switching
+  wait for pending option saves. A failed save retries once, then pauses
+  insertion with retry/Revert guidance so visible choices cannot silently
+  insert with older settings. Saving defaults confirms the complete visible
+  session first, including after its cache expires.
+- **Correct lines across chapter gaps.** Line by line pairs Hebrew and
+  translations by chapter and verse, leaving missing text blank. A missing
+  early chapter fragment no longer shifts later translations or verse numbers,
+  including when inserting several translations.
+- **No empty language blocks.** An explicit missing Original/Translation
+  output is stopped before a document or selection changes. Both still uses
+  the language available. Translations emptied by Commentary/Notes are omitted
+  with an explanation and remain available for different options.
+- **Exact edition titles preserved.** Multiple-translation insertion keeps
+  significant title whitespace in identity checks, results and pinned links.
+- **Keyboard and documentation follow-through.** Shared radio controls and
+  the transliteration menu support keyboard navigation and focus restoration;
+  the Insertion Options dialog contains focus. Help/About, Preferences text
+  and all tutorials describe the grouping and sidebar-session scope. Hidden
+  controls keep their effective value; Revert restores saved defaults.
+- **Bilingual edition identity and single-language recovery.** Some Hebrew
+  and English editions share a title, including Rosenbaum/Silbermann's Rashi.
+  Choosing one now retains the other language by edition identity. An
+  unavailable edition in an unused language no longer blocks single-language
+  output; changing Display refetches when needed, and Both revalidates its
+  required editions before enabling Add Source.
+- **Launch defaults completed — schema 33.** Voices starts on Citation with
+  transliteration None, and Lexicon on Full entry. These were already the
+  controls' fallbacks but were missing from the central defaults, so Reset,
+  profiles and settings files could disagree. The migration fills missing
+  values and repairs the literal `undefined` saved by affected older profile
+  snapshots; valid choices stay. Settings imports reject that invalid value.
+  Commentary remains Default and Notes remains Omit; other output defaults
+  are unchanged.
+- **Help and tutorials reconciled.** Help, Support, About, release notes,
+  the user guide and all five walkthroughs explain edition persistence,
+  partial-edition gaps, supported Commentary conventions and independent
+  Notes modes. Preview limits and missing-edition recovery are explicit.
+  The developer walkthrough now describes the v3 adapter and request costs.
+  Tutorial scripts are prepared from source; live Google Docs checks and
+  any updated screenshots or recordings are still to be completed.
+- **Image descriptions preserved.** The shared source processor keeps an
+  image's supplied alternative text in preview and insertion, including
+  images inside marked notes. The note choice still applies. Actual images
+  are not inserted or fetched.
 - **Sefaria Texts v3.** All passage fetching now uses Sefaria's current text
   reader, preserving edition selection, credits and formatting metadata.
   Book references open a bounded section; malformed or mismatched replies
@@ -32,8 +89,9 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
   additions. Unknown editions keep their words and source emphasis, including
   supplied translation such as JPS's `[I give]`. A verse with malformed
   brackets stays whole.
-- **Source Notes: Omit / Inline / Separate.** One setting in Layout applies
-  to marked footnotes in Hebrew and translation, independently of Commentary.
+- **Source Notes: Omit / Inline / Separate.** Notes in Insertion Options →
+  Text and notes (or Preferences → Insertion → Layout) applies to marked
+  footnotes in Hebrew and translation, independently of Commentary.
   Separate collects labelled notes below the passage, or below its line in
   Line by line; it creates text sections, not native Google Docs footnotes.
   A shared processor handles semantic markers and nested note formatting for
@@ -55,8 +113,10 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 The first release published in the Google Workspace Marketplace, for people
 who use *Sefaria for Google Docs* 1.0, and for new users.
-It is the whole add-on as described in this file: every section below, back to
-the 2026-04 cleanup pass, ships in 2.0.0. The next release is 2.0.1.
+It is the whole add-on as described in this file: the Unreleased changes above
+are planned for 2.0.0 together with the sections below, back to the 2026-04
+cleanup pass. At release, consolidate the pending notes under this heading
+following the versioning policy. The next release is 2.0.1.
 
 **Name and links.** The add-on is named *Sefaria for Google Docs* throughout:
 the manifest, the setup dialog, Help and the release notes. Support goes to
@@ -67,7 +127,7 @@ while the add-on was called Torah Library and keep that name. A settings file
 is still marked `torah-library-settings`, so files exported earlier import;
 its suggested file name is now `sefaria-google-docs-settings.json`.
 
-**Preference schema 31.** A new install starts at schema 31, and so does
+**Preference schema 33.** A new install starts at schema 33, and so does
 anyone coming from Sefaria for Google Docs, which stores no settings. A tester
 upgrading from a development build is migrated on first open; the sections
 below marked *Migration* say what each schema step changes.
@@ -98,8 +158,9 @@ below marked *Migration* say what each schema step changes.
   each edition and its license.
 - **Formatting.** Vowels Off / Tanakh / On; Cantillation Off / Tanakh / Torah;
   Punctuation for each language; transliteration in several styles (*HaShem*,
-  capitalized names); Commentary Default / Combine / Drop for translations
-  such as the Steinsaltz Talmud; fonts that match the document; colour and
+  capitalized names); Commentary Default / Combine / Drop for the Davidson
+  English Babylonian Talmud and Silverstein's Rashi Chumash and Ketuvim;
+  Notes Omit / Inline / Separate for marked footnotes; fonts that match the document; colour and
   highlight; separate source and translation titles; a citation style;
   formatting by translation language; cantillation marks a font lacks are
   borrowed from Noto Hebrew instead of showing as boxes.

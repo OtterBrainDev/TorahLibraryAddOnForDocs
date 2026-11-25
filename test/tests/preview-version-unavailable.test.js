@@ -17,6 +17,7 @@ function load(en = 'Chosen translation', he = 'Chosen source') {
   const controls = {
     '.translation-version-select': { value: en },
     '.he-version-selection': { value: he },
+    '.output-mode-selection': { value: 'both' },
   };
   function collection(key) {
     const state = controls[key] || (dom[key] || (dom[key] = { text: '', html: '', props: {} }));
@@ -161,6 +162,25 @@ test('exact edition titles retain significant trailing spaces in requests and su
   assert.equal(env.ctx.hasResolvedReference, true);
   assert.equal(env.actions.at(-1), true);
   assert.deepEqual(env.availability, [{ resolved: title, attempted: title }]);
+});
+
+test('single-language edition replies ignore the unused missing role but still require the chosen output', () => {
+  for (const mode of ['en', 'he']) {
+    const env = load();
+    env.controls['.output-mode-selection'].value = mode;
+    env.ctx.getVersions();
+    const usable = payload(mode === 'en' ? { heVersionTitle: '', he: [] } : { versionTitle: '', text: [] });
+    env.calls[0].ok(usable);
+    assert.equal(env.ctx.hasResolvedReference, true);
+    assert.equal(env.actions.at(-1), true);
+    assert.equal(env.ctx.data, usable);
+
+    env.ctx.getVersions();
+    env.calls[1].ok(payload(mode === 'en' ? { versionTitle: '', text: [] } : { heVersionTitle: '', he: [] }));
+    assert.equal(env.ctx.hasResolvedReference, false);
+    assert.equal(env.actions.at(-1), false);
+    assert.equal(env.ctx.data, usable, 'a failed chosen role never replaces the last successful payload');
+  }
 });
 
 test('an edition callback cannot enable an older response when rebuilding starts another fetch', () => {

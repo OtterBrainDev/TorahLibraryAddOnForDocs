@@ -86,7 +86,7 @@ function page() {
     const node = document.querySelector(selector);
     $(node).val(value);
     const h = handlers.get(node) || {};
-    const key = Object.keys(h).find((event) => event.startsWith('change.'));
+    const key = Object.keys(h).find((event) => event === 'change' || event.startsWith('change.'));
     assert.ok(key, selector + ' has its production change handler');
     h[key].call(node, {}, pointerSelection);
   } };
@@ -107,6 +107,8 @@ function load() {
     buildPreviewLoadingHTML: (s) => '<p>' + s + '</p>',
     setInsertButtonState: (enabled) => insertStates.push(enabled),
     updateResultsVisibility() {}, updateVersionControlsVisibility() {}, updateModeDependentSections() {},
+    updateBilingualLayoutVisibility() {}, updateTranslationDetailsVisibility() {},
+    updateHebrewOptionsVisibility() {}, updateTransliterationVisibility() {}, syncDisplayModeCards() {},
     showSidebarToast() {},
     google: { script: { run: {
       withSuccessHandler(ok) { return { withFailureHandler(fail) { return {
@@ -128,6 +130,10 @@ function load() {
   });
   const schedule = body('sidebar/js/composition-controls.html').match(/var SELECTED_RESULT_REFRESH_DELAY_MS[\s\S]*?\n}\n/)[0];
   vm.runInContext(schedule, ctx);
+  const bindings = body('sidebar/js/event-bindings.html');
+  const outputStart = bindings.indexOf("$('.output-mode-selection').on('change', function () {");
+  const outputEnd = bindings.indexOf('\n});', outputStart) + '\n});'.length;
+  vm.runInContext(bindings.slice(outputStart, outputEnd), ctx);
   const fetches = () => calls.filter((c) => c.name === 'fetch');
   return { ctx, ...dom, calls, insertStates, fetches, tick() {
     const entry = timers.entries().next().value;
@@ -382,3 +388,80 @@ test('a queued options refresh that finishes in another tab is fetched when Text
   env.answer(payload('Chosen ', 'Source chosen'));
   assert.equal(env.ctx.hasResolvedReference, true);
 });
+
+for (const mode of ['en', 'he']) {
+  test('switching to ' + mode + ' recovers from a missing unused edition and switching back to Both revalidates it', () => {
+    const env = load(); env.start(); choose(env);
+    const partial = payload('Chosen ', 'Source chosen');
+    if (mode === 'en') { partial.heVersionTitle = ''; partial.he = []; }
+    else { partial.versionTitle = ''; partial.text = []; }
+    env.ctx.refreshSelectedResult();
+    env.answer(partial);
+    assert.equal(env.ctx.hasResolvedReference, false);
+    assert.equal(env.insertStates.at(-1), false);
+    const previous = env.ctx.data;
+    const before = env.fetches().length;
+
+    env.change('.output-mode-selection', mode);
+    assert.equal(env.fetches().length, before + 1);
+    assert.equal(env.ctx.data, previous, 'a display switch cannot make stale text insertable');
+    assert.equal(env.insertStates.at(-1), false);
+    env.answer(partial);
+    assert.equal(env.ctx.hasResolvedReference, true);
+    assert.equal(env.ctx.data, partial);
+    assert.equal(env.insertStates.at(-1), true);
+
+    env.change('.output-mode-selection', 'both');
+    assert.equal(env.fetches().length, before + 2);
+    assert.equal(env.ctx.hasResolvedReference, false);
+    assert.equal(env.insertStates.at(-1), false);
+    env.answer(partial);
+    assert.equal(env.ctx.hasResolvedReference, false);
+    assert.equal(env.insertStates.at(-1), false);
+    assert.match(env.$('.suggestions').text(), /Choose another edition/);
+  });
+}
+
+test('switching display with both selected editions already loaded reuses the valid preview', () => {
+  const env = load(); env.start(); choose(env);
+  const before = env.fetches().length;
+  env.change('.output-mode-selection', 'en');
+  env.change('.output-mode-selection', 'both');
+  assert.equal(env.fetches().length, before);
+  assert.equal(env.ctx.hasResolvedReference, true);
+  assert.equal(env.ctx.data.versionTitle, 'Chosen ');
+  assert.deepEqual(env.picks(), ['Chosen ']);
+});
+
+
+for (const missingMode of ['en', 'he']) {
+  test('a missing default ' + missingMode + ' output blocks Insert and Display can recover to its available language or Both', () => {
+    const env = load();
+    env.$('.output-mode-selection').val(missingMode);
+    const partial = payload(missingMode === 'en' ? '' : 'Default', missingMode === 'he' ? '' : 'Source default');
+    if (missingMode === 'en') partial.text = [];
+    else partial.he = [];
+    partial.versions = partial.versions.filter((version) => version.language !== missingMode);
+    env.start(partial);
+    assert.equal(env.ctx.hasResolvedReference, false);
+    assert.equal(env.insertStates.at(-1), false);
+    assert.match(env.$('.suggestions').text(), /No (translation|original) text is available.*or Both in Display/);
+    assert.equal(env.ctx.selectedResultSummary.status, 'Choose another Display option');
+
+    const availableMode = missingMode === 'en' ? 'he' : 'en';
+    env.change('.output-mode-selection', availableMode);
+    env.answer(partial);
+    assert.equal(env.ctx.hasResolvedReference, true);
+    assert.equal(env.insertStates.at(-1), true);
+    assert.equal(env.ctx.data, partial);
+    const before = env.fetches().length;
+    env.change('.output-mode-selection', 'both');
+    assert.equal(env.fetches().length, before, 'Both reuses the available language; no explicit missing edition was chosen');
+    assert.equal(env.ctx.hasResolvedReference, true);
+    env.change('.output-mode-selection', missingMode);
+    env.answer(partial);
+    assert.equal(env.ctx.hasResolvedReference, false);
+    assert.equal(env.insertStates.at(-1), false);
+    assert.match(env.$('.suggestions').text(), /or Both in Display/);
+  });
+}

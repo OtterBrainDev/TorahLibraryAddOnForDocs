@@ -8,10 +8,12 @@ snapshots; opt-in live API checks separately cover Sefaria responses. Neither
 kind of automated check holds a `DocumentApp` handle or proves that this HEAD
 works in the Apps Script sidebar and a real document.
 
-**Version under test:** 2.0.0 · **preference schema:** 32 (both from
+**Version under test:** 2.0.0 · **preference schema:** 33 (both from
 `docs/VERSION.json`)
 Confirm both before starting — *Help & Support → About* should read
-**Current line: 2.0**. If it says anything else, the push did not land.
+**Current line: 2.0**. This confirms the release line only: record the exact
+commit pushed to the Apps Script project and the test deployment used. The
+About label alone cannot distinguish two builds on the same release line.
 
 It asks whether each change in the v2.0.0 changelog entry landed.
 [`walkthroughs/1-stress-test.md`](walkthroughs/1-stress-test.md) goes further,
@@ -25,7 +27,7 @@ a user has before they open 2.0.0:
 - **Account A — upgrading tester.** Had a development build of this add-on
   with preferences they changed: a font, a divine-name rule, a layout. Do **not** reset
   preferences. This is the account that proves the migrations (schemas up to
-  32) keep what users chose. Take a screenshot of Preferences before the push.
+  33) keep what users chose. Take a screenshot of Preferences before the push.
 - **Account B — fresh install.** A Google account that has never had the
   add-on. Proves `onInstall` seeds correctly, builds the menu and shows the
   first-run setup. Resetting preferences on Account A is *not* a substitute:
@@ -357,7 +359,8 @@ passing the API migration checks alone does not mark those fixes complete.
 
 Added 2026-11-24 for branch `fix/edition-commentary-notes-20261124`, based on
 the v3 migration. **All checks below are pending in Google Docs.** Use a HEAD
-deployment containing both changes, record its commit and schema **32**, and
+deployment containing both changes, record its commit and schema (**32** for
+the A–D branch; **33** when the launch-defaults follow-up is included), and
 compare the selected edition names, sidebar preview and inserted document.
 The offline and live API tests do not replace these checks.
 
@@ -383,6 +386,60 @@ Apps Script deployment or release is implied by this section's presence.
 
 ---
 
+## P. Launch compatibility and defaults review (pending)
+
+Added 2026-11-24 for `review/launch-defaults-help-20261124`, schema **33**.
+These cases supplement N and O. They remain **NOT RUN in Google Docs**;
+offline coverage and live Sefaria API checks are recorded in
+[the handoff](sefaria-api-migration.md#launch-review--compatibility-defaults-and-documentation).
+
+| # | Starting state and action | Expected / evidence to record |
+| --- | --- | --- |
+| P1 | Preview and insert `Rashi on Genesis 1:2:1`; explicitly select only the translation, then only the source, named **Pentateuch with Rashi's commentary by M. Rosenbaum and A.M. Silbermann, 1929-1934** | Both Hebrew and English stay present, with their own role metadata and credit, even though the edition titles are identical. Record selected titles, preview and inserted text. |
+| P2 | Start with Both and selected editions, then encounter a missing selected edition. Switch to the single-language output whose edition is available; switch back to Both | The usable language recovers after a fresh response. Returning to Both revalidates the missing edition and keeps Add Source disabled until resolved. No stale preview becomes insertable during the switch. Record the exact passage and editions used. |
+| P3 | Account A: upgrade from schema 32 with non-default Voices output/transliteration, Lexicon output, Commentary and Notes. Open an inactive old profile, then return | All valid saved choices survive; a never-set workflow has Citation / None / Full entry defaults. If an older test profile contains the generated `undefined` value, only that invalid value is repaired. Capture before/after values. |
+| P4 | In an authorized test account, change the three workflow modes, Commentary and Notes, then use Reset To Defaults; export Text and layout and reopen the sidebar | Voices Citation, Voices transliteration None, Lexicon Full entry, Commentary Default and Notes Omit agree in Preferences, export and sidebar. The chosen Simple / Everything interface remains unchanged. Restore the test account's original settings afterward. |
+| P5 | Choose a confirmed partial edition over a range; record the exact passage and edition, compare it on Sefaria, and inspect Line by line on/off | Missing segments stay gaps and are not borrowed from another edition. A listed edition is not a guarantee of complete coverage. Check Help's explanation; there is no per-verse completeness notice in this build. |
+| P6 | Time the first preview, a repeated lookup and an edition change; run a representative Link Texts scan on a test document | Record actual time and any Apps Script quota/timeout error, browser and exact HEAD commit. Metadata preflight adds work; API-only timings do not establish sidebar performance. Do not assign a pass without observing the core tasks complete. |
+| P7 | Follow the returning-user and new-user scripts, open Help → About → What's new, and follow a Help link to the Notes guidance | Labels match the implemented UI, the supported commentary editions and Notes choices are clear, saved defaults are distinguished from session changes, and no page promises exact pagination or a preview of every selected translation. With the later sidebar follow-up included, use Q to verify its implemented grouping. |
+
+Record results and failures in the existing table below, identifying N/O/P
+case IDs. Neither this section nor source-updated tutorials establish a
+tested deployment or a completed demonstration recording.
+
+---
+
+## Q. Sidebar grouping and senior walkthrough (pending)
+
+Added 2026-11-24 for the updated PR #60, **2.0.0 pending release, schema 33**.
+All cases remain **NOT RUN in Google Docs**. The source suite has 1,032
+passing tests; no native browser rendering or Docs run is implied. Record the
+exact commit/test deployment, browser, sidebar width and starting settings.
+Use an authorized disposable document and restore temporary defaults and
+profiles afterward.
+
+| # | Starting state and action | Expected / evidence to record |
+| --- | --- | --- |
+| Q1 | Open Insertion Options in Simple and Everything at normal sidebar width. Switch Display and Arrangement | Readable labels. Line by line remains outside groups with Both; Transliteration remains outside groups when original text is included. Style/Position appear as applicable. All controls remain reachable by scrolling. |
+| Q2 | Set Notes Separate, Commentary Drop, Citation off and custom Hebrew font/size. Collapse/reopen every group | Summaries expose consequential values without clipping. Opening/closing changes no setting, edition, preview or fetch. |
+| Q3 | Hide controls in Preferences → Sidebar, including every control in a group. Switch languages; inspect Preferences/Link Texts | Hidden controls stay hidden; empty sidebar groups disappear. Notes remains available for Original-only unless hidden. Effective values and expansion state survive redraw; other hosts retain detailed editors. |
+| Q4 | Use Tab, arrows and Home/End in choices. Open Style, navigate without selecting, Escape, then select None | One tab stop per radio group; Ctrl/Alt/Meta navigation chords do not change settings. Style commits only on selection; Escape closes the menu alone; None returns focus to Transliteration. Check accessible names and visible focus. |
+| Q5 | Tab/Shift+Tab at both ends of the tray; open a font panel and Escape; close tray. Start a session/profile action | Focus stays in the dialog and skips inert controls during mutation. Child Escape closes that panel alone. Closing restores opener focus and background interactivity. Progress announcements remain exposed. |
+| Q6 | With an existing override, change Vowels and immediately Save as defaults; repeat with Revert and repeated action clicks | The setting write finishes first. Save includes the latest choice; a late write cannot undo Revert. Reopening confirms intended persistence; no duplicate mutation or stale insertability. |
+| Q7 | Switch profile during a pending setting save; repeat with a controlled save/clear failure in the test deployment | The action waits through session clearing. A failed switch differs from a switched profile whose overrides could not be cleared; failures offer retry/Revert guidance. |
+| Q8 | Cause two setting-save failures in the test environment; restore connectivity and change another option. Repeat with Revert | One automatic retry, then insertion/new passage fetches pause. The complete visible snapshot remains recoverable. A new choice retries it; Revert discards it. No endless refresh polling or stale insertion. |
+| Q9 | Confirm a partial edition over a cross-chapter range with an empty/short early fragment. Compare Sefaria and Line by line with numbering on/off | Pairing/notes keep chapter and verse coordinates; missing cells stay blank and numbering restarts correctly. Record exact live fixture. Offline controlled example: `Genesis 1:31–2:2`. |
+| Q10 | Stacked + Line by line, several editions with different chapter coverage, transliteration enabled | All editions share the Hebrew chapter/verse positions; pointed source coordinates match. A gap never shifts later words or another edition's notes. |
+| Q11 | Insert an available whitespace-significant edition, such as catalog title `The Philosophical Tanakh `, alongside another; follow linked titles | Exact identity survives fetch, result and pinned URL. Record title/URL with significant whitespace. Whitespace-distinct returned titles cannot substitute. |
+| Q12 | Confirm a one-language source (check current `Siddur Rashi 1`). Choose the missing Display language; repeat via Selection and Link Texts defaults | Sidebar disables Add Source with guidance and recovers with the usable language or Both. Other entry points fail before document changes; selected citation survives. Both has no empty block. |
+| Q13 | Confirm a segment emptied by Commentary/Notes. Insert it with another translation, then change options to restore its content | Empty block omitted with explanation, edition remains selectable. All-empty output fails before editing. Only truly unavailable editions affect availability. Record exact fixture/options; synthetic test data does not establish a live fixture. |
+
+Record Q results in the same Results table as N/O/P. Browser layout, native
+keyboard traversal, actual Apps Script execution and tutorial recordings
+remain separate from source/test verification.
+
+---
+
 ## Reporting back
 
 For anything that fails, the useful report is:
@@ -394,7 +451,7 @@ For anything that fails, the useful report is:
 4. Which account (A upgrading / B fresh / C from version 1.0), the
    interface (Simple / Everything) and the scan mode in effect
 
-State the version too: **2.0.0, schema 32**, and the exact tested commit. "It broke" is not checkable
+State the version too: **2.0.0, schema 33**, and the exact tested commit. "It broke" is not checkable
 later; the version and the check id are.
 
 ---

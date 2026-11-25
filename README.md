@@ -66,39 +66,55 @@ The sidebar groups results into:
 
 ### Display and layout controls
 
-The sidebar's **📰 Insertion Options** panel (the full-width button under
-**Add Source**) sets this session's insertion; **Preferences → Insertion** sets
-the defaults, and Link Texts' **📰 Customize this insertion** one linking pass.
-Its **Display** control has three modes:
+The sidebar's **📰 Insertion Options** panel (under **Add Source**) changes
+this sidebar session. **Preferences → Insertion** sets saved defaults, and
+Link Texts' **📰 Customize this insertion** applies to one linking pass.
 
-- **A** — translation only
-- **A + א** — Hebrew with translation
-- **א** — Hebrew only
+The primary controls stay outside the folded groups:
 
-For bilingual insertion, **Arrangement** offers:
+- **Display:** **Translation**, **Both**, or **Original**, with text labels
+  beside the A / A + א / א icons.
+- **Arrangement**, with Both: **Stacked**, **Hebrew right**, or **Hebrew left**.
+- **Line by line**, with Both: each verse beside its translation in its own
+  table row, or in Stacked, each verse followed by its translations.
+- **Transliteration**, when original text is included: turn it on to reveal
+  **Style**, and with side-by-side bilingual layouts, **Position** (Below,
+  Left, or Right of the Hebrew).
 
-- **Stacked** (Hebrew above the translation)
-- **Right–Left** (Hebrew on the right)
-- **Left–Right** (Hebrew on the left)
-
-with switches for **Citation**, **Line by line** (each verse with its
-translation: side by side, a table row per verse; Stacked, each verse and then
-its translation, down the page) and **Line numbers**. Each Arrangement icon
-sketches the page it gives with the other settings.
+The Arrangement icons reflect the line and transliteration choices. Arrow
+keys select choices; the Style menu supports keyboard navigation and returns
+focus when dismissed.
 
 ### Hebrew and translation formatting controls
 
-The panel's **Insertion Format** card has a **Source** (Hebrew) section and a
-**Translation** section, each folding to a one-line summary. They hold:
+The sidebar starts with three folded groups. Their summaries show the current
+choices, and closing a group does not change settings or reload the passage.
 
-- **Link title to Sefaria**, **Title font** and **Text font** (each section its own),
-- **Vowels** (Off / Tanakh / On) and **Cantillation** (Off / Tanakh / Torah),
-- **Punctuation** (each section its own),
-- **Transliteration**, with its **Style** and, side by side, its **Position**
-  (below the Hebrew, or a column of its own left or right of it),
-- **Commentary** (Default / Combine / Drop) for the translation: keep the
-  commentary as Sefaria marks it (translation in bold), run it together with
-  the translation, or leave it out. Italics is always kept.
+| Group | Controls |
+| --- | --- |
+| **Text and notes** | Vowels, Cantillation, Hebrew punctuation, Translation punctuation, Commentary and Notes. |
+| **References and numbering** | Link source title, Link translation title, Citation and Line numbers. |
+| **Fonts and appearance** | Fonts and sizes for the source and translation titles and text. |
+
+**Commentary** offers Default / Combine / Drop: preserve the edition's
+markings, combine translation and explanation, or leave out recognized
+explanation. The William Davidson English Babylonian Talmud uses bold base
+text; Silverstein's Rashi Chumash and Rashi Ketuvim use bracketed additions.
+Other editions retain their words and source emphasis; a verse with malformed
+brackets stays whole.
+
+**Notes** separately controls marked footnotes in Hebrew and translation:
+**Omit** (the default), **Inline**, or **Separate**. Separate adds a labelled
+Notes text section below the passage or each aligned line; it does not create
+native Google Docs footnotes. Dropping commentary never removes a note
+requested with Inline or Separate.
+
+Preferences and Link Texts retain their detailed **Layout**, **Source** and
+**Translation** sections using the same controls. Simple and Everything keep
+the sidebar grouping. Controls hidden in **Preferences → Sidebar** remain
+hidden; their current values, including session overrides, continue to apply.
+**Revert** restores saved defaults, and **Save as defaults** keeps the current
+session choices for future sessions.
 
 Hebrew marks a chosen font lacks (often the cantillation) are set in Noto
 Serif / Sans Hebrew, so they never show as empty boxes.
@@ -107,13 +123,26 @@ Advanced source-edition/version controls remain available for cases where a spec
 
 ### Translation/version handling
 
-The add-on supports:
+Choose one translation or, with Translation only or Stacked, several in
+selection order. Changing Insertion Options keeps the selected translation,
+Hebrew edition and order. The preview waits for the matching text before
+insertion is enabled.
 
-- version-aware translation selection,
-- improved translation label handling,
-- translation filtering,
-- language-aware translation display labels,
-- optional translation details/attribution in inserted output.
+Passage content uses Sefaria Texts v3. The chosen edition supplies its own
+text: missing verses are not filled from a different edition under the same
+credit. A missing or mismatched edition needed for the chosen Display
+requires another choice.
+The edition list reflects Sefaria's catalog for the requested passage and
+may differ between passages. A book name opens a bounded first section;
+the preview title says which passage will be inserted.
+
+The preview uses the insertion rules for words, commentary and notes. It is
+not a complete rendering of a Google Docs page: generated line numbers,
+chapter headings, pagination and the final document font must be checked in
+the document. With several translations selected, it lists their names
+instead of rendering every translation. The
+[migration handoff](./docs/sefaria-api-migration.md) records API scope,
+deliberate behavior changes and pending live checks.
 
 ### Linking features
 
@@ -171,22 +200,26 @@ Version 2.0 builds on the original Sefaria add-on for Google Docs by Shlomi
 Helfgot (see [LICENSE.md](./LICENSE.md)), the code it grew from, and
 substantially expands it, including:
 
-- replacing the older split insertion/search flow with a unified sidebar,
-- improving search-result selection and preview behavior,
-- adding bilingual layout controls,
-- surfacing Vowels and Cantillation controls,
-- improving translation/version selection UX,
-- adding linking workflows,
-- adding typography preferences,
-- improving divine-name workflows,
-- improving structural-node guidance and preview clarity.
+- **Find and preview sources:** search by citation, phrase, title or Sefaria link in a unified sidebar; explore Texts, Voices (source sheets) and Lexicon (dictionary entries).
+- **Familiar first steps, more control when needed:** choose Simple or Everything. Display, Arrangement, Line by line and Transliteration are immediately accessible when applicable; other insertion choices fold into Text and notes, References and numbering, and Fonts and appearance.
+- **Your choices, remembered:** use saved defaults and profiles, or change insertion settings for the current sidebar session. Revert and Save as defaults wait for pending saves.
+- **Choose exact editions:** selected editions survive formatting changes. With Translation only or bilingual Stacked output, Ctrl/Cmd-click to pick individual translations or Shift-click for a range; insertion follows selection order. The preview lists multiple selections by name.
+- **Flexible source sheets:** insert original text, translation or both, side by side or stacked, with aligned verses, line numbers, transliteration and separate title links. Missing text keeps its place in aligned rows.
+- **Commentary and Notes:** Default, Combine and Drop recognize verified conventions in Davidson's English Talmud and Silverstein's Rashi Chumash and Rashi Ketuvim; unknown conventions preserve the words. Independently choose Omit (default), Inline or Separate for marked notes. Separate creates a Notes text section, not native Docs footnotes.
+- **Faithful retrieval and credits:** current Sefaria Texts v3 preserves the selected edition's identity and credits; partial editions retain their gaps instead of borrowing text from another edition. A requested language with no text cannot create an empty inserted block.
+- **Appearance and Hebrew text:** choose vowels, cantillation, punctuation, divine-name mappings, transliteration styles, typography and citation styling.
+- **Document tools:** link existing citations, insert from a selected citation, revisit sources in the Session Library, transform divine names, unlink sources and count gematriya.
+
+These are features of the **2.0.0 release candidate**. Live Google Docs
+verification and Marketplace publication are separate steps; see the
+[release checklist](./docs/live-test-checklist-2.0.0.md).
 
 See [docs/CHANGELOG.md](./docs/CHANGELOG.md) for a fuller summary of changes and [LICENSE.md](./LICENSE.md) for the repository license.
 
 ## Source attribution
 
 Each inserted source can carry a small credit block under it, and this is **on
-by default** (the **Citation** switch in 📰 Insertion Options, or Preferences →
+by default** (the **Citation** switch in 📰 Insertion Options → References and numbering, or Preferences →
 Insertion → Layout). Many
 Sefaria texts are CC-BY or CC-BY-NC, so the credit is what lets a user reuse
 them properly.

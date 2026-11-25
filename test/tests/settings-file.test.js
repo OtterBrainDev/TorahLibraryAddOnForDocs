@@ -204,6 +204,38 @@ test('Reset To Defaults in Simple mode leaves the Simple menu and no second, kep
   assert.ok(!('menu_layout' in simple.props.store) || simple.props.store.menu_layout === simple.ctx.getDefaultMenuLayoutJson_());
 });
 
+test('Reset To Defaults also resets all workflow modes, Commentary and Notes', () => {
+  const { ctx, props } = load({
+    voices_insert_mode_default: 'both', voices_translit_default: 'ashkenazi',
+    lexicon_insert_mode_default: 'definition', source_emphasis_mode: 'only',
+    source_notes_mode: 'separate', ui_mode: 'simple'
+  });
+  const result = ctx.resetPreferencesToDefaults();
+  const expected = {
+    voices_insert_mode_default: 'reference', voices_translit_default: 'none',
+    lexicon_insert_mode_default: 'entry', source_emphasis_mode: 'keep', source_notes_mode: 'omit'
+  };
+  Object.entries(expected).forEach(([key, value]) => {
+    assert.equal(props.store[key], value, `stored ${key}`);
+    assert.equal(result[key], value, `returned ${key}`);
+  });
+  assert.equal(props.store.ui_mode, 'simple', 'Reset does not change the chosen interface');
+  const exported = JSON.parse(ctx.exportSettingsFile({}, '').text);
+  Object.entries(expected).forEach(([key, value]) => assert.equal(exported.settings[key], value, `exported ${key}`));
+});
+
+test('an old settings file cannot restore the generated undefined workflow modes', () => {
+  const chosen = { voices_insert_mode_default: 'both', voices_translit_default: 'ashkenazi', lexicon_insert_mode_default: 'definition' };
+  const { ctx, props } = load(chosen);
+  const text = JSON.stringify({ format: 'torah-library-settings', formatVersion: 1, prefsSchemaVersion: '32',
+    settings: Object.fromEntries(Object.keys(chosen).map((key) => [key, 'undefined']))
+  });
+  const preview = ctx.previewSettingsImport(text);
+  assert.equal(preview.skippedCount, 3);
+  ctx.applySettingsImport(text, ['text']);
+  Object.entries(chosen).forEach(([key, value]) => assert.equal(props.store[key], value, key));
+});
+
 test('every setting belongs to exactly one part, and the excluded keys are real settings', () => {
   const { ctx } = load({});
   const settings = vm.runInContext('SETTINGS', ctx);

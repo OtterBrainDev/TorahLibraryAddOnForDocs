@@ -137,11 +137,21 @@ $('#insert-source').click(function () {
       upsertSessionEntry('inserted', buildSessionEntry(data.ref, selectedResultSummary && selectedResultSummary.label ? selectedResultSummary.label : data.ref, getCurrentCorpusForRef(data.ref)));
       showInsertNotice(result);
       var skipped = (result && Array.isArray(result.skipped)) ? result.skipped : [];
+      var filtered = (result && Array.isArray(result.filtered)) ? result.filtered : [];
+      var warnings = [];
       if (skipped.length) {
         markTranslationsUnavailable(data.ref, skipped);
-        showInsertWarning('Skipped ' + skipped.length + ' translation' + (skipped.length === 1 ? '' : 's') +
+        warnings.push('Skipped ' + skipped.length + ' translation' + (skipped.length === 1 ? '' : 's') +
           ' with no text for this reference: ' + skipped.join(', '));
       }
+      if (filtered.length) {
+        // These editions have text; the current policy removed it. Keep them
+        // selectable so changing Commentary or Notes can restore their words.
+        warnings.push('Omitted ' + filtered.length + ' translation' + (filtered.length === 1 ? '' : 's') +
+          ' because no text remained with these Commentary and Notes choices: ' + filtered.join(', ') +
+          '. Change those options to include them.');
+      }
+      if (warnings.length) showInsertWarning(warnings.join(' '));
     }).withFailureHandler(function (error) {
       hideBusyOverlay();
       showInsertWarning(error && error.message);

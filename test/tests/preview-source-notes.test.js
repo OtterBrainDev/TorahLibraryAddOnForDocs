@@ -96,6 +96,27 @@ test('nested chapter arrays retain empty source and translation positions in ali
   assert.deepEqual(lines, ['אA', 'B', 'ג']);
 });
 
+test('aligned previews preserve chapter gaps and keep the next chapter notes with their own Hebrew', () => {
+  for (const layout of ['he-top', 'he-left', 'he-right']) {
+    const { ctx } = preview({ layout });
+    const data = { ...payload(), isSpanning: true, he: [['h31'], ['h1', 'h2']],
+      text: [[], ['e1' + note('e1'), 'e2']] };
+    const pairs = JSON.parse(JSON.stringify(ctx.previewAlignedSourcePairs_(data)));
+    assert.equal(pairs[0].en, '');
+    assert.equal(pairs[1].he, 'h1');
+    assert.equal(pairs[1].en, 'e1' + note('e1'));
+    assert.deepEqual(pairs[2], { he: 'h2', en: 'e2' });
+    const doc = parse(ctx.renderPreviewHTML(data, data.ref));
+    const lines = layout === 'he-top' ? [...doc.querySelectorAll('.preview-line')]
+      : [...doc.querySelectorAll('tr')].slice(1);
+    assert.equal(lines.length, 3);
+    assert.equal(lines[0].textContent, 'h31');
+    assert.ok(lines[1].textContent.includes('h1') && lines[1].textContent.includes('e1 note'));
+    assert.ok(!lines[1].textContent.includes('h31') && !lines[1].textContent.includes('e2'));
+    assert.ok(lines[2].textContent.includes('h2') && lines[2].textContent.includes('e2'));
+  }
+});
+
 test('aligned inline and omitted notes stay in their own verse without changing main text', () => {
   for (const notes of ['inline', 'omit']) {
     const { ctx } = preview({ notes });

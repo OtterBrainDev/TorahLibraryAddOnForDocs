@@ -169,6 +169,12 @@ function sourceTextReadTokens_(tokens, extendedGemara) {
       continue;
     }
     if (token.name === 'br' || token.name === 'hr') { appendSourceChars('\n'); continue; }
+    if (token.name === 'img' && !token.closing) {
+      // The old preview kept figure descriptions as text. Keep that fallback
+      // in both outputs, without emitting an image or requesting its URL.
+      appendSourceChars(String(token.attrs.alt || '').trim());
+      continue;
+    }
     if (/^(p|div|li)$/.test(token.name) && chars.length && chars[chars.length - 1].ch !== '\n') appendSourceChars('\n');
     if (token.selfClosing) continue;
     if (token.closing) {

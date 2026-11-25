@@ -148,16 +148,44 @@ function hasRenderableText(value) {
 // Texts v3 can return a valid ref with just one requested edition, or an
 // edition whose passage is empty. A successful RPC alone must never make a
 // different edition insertable under the user's still-selected title.
-function getUnavailablePreviewVersions(response, versions) {
+function getUnavailablePreviewVersions(response, versions, outputMode) {
   var unavailable = [];
+  var mode = outputMode || $('.output-mode-selection').val() || 'both';
   [['en', 'versionTitle', 'text'], ['he', 'heVersionTitle', 'he']].forEach(function (fields) {
+    // An unused translation cannot block a source-only insertion, nor an
+    // unused source edition a translation-only insertion. Both still needs
+    // each explicitly selected edition, even when the API succeeds partly.
+    if ((mode === 'he' && fields[0] === 'en') || (mode === 'en' && fields[0] === 'he')) return;
     var requested = String((versions && versions[fields[0]]) || '');
     if (requested && (String((response && response[fields[1]]) || '') !== requested ||
         !hasRenderableText(response && response[fields[2]]))) {
       unavailable.push({ role: fields[0], title: requested });
+    } else if (!requested && mode === fields[0] && isResolvedReference(response) &&
+        !hasRenderableText(response[fields[2]]) &&
+        hasRenderableText(response[fields[0] === 'he' ? 'text' : 'he'])) {
+      // The default can have no edition at all in this language. A valid
+      // reference in the other language must not enable an empty insert.
+      unavailable.push({ role: fields[0], title: '', missingDisplayLanguage: true });
     }
   });
   return unavailable;
+}
+
+// A display change can recover from a missing unused edition. Going back to
+// Both must validate that edition again before insertion is re-enabled; an
+// old, partially successful payload is not enough for the newly chosen mode.
+function refreshPreviewForOutputMode() {
+  if (appMode !== 'texts') return;
+  if (!hasResolvedReference || !data || !data.ref) {
+    if (selectedRefValue) refreshSelectedResult();
+    return;
+  }
+  var versions = selectedPreviewVersions(data.ref);
+  if (getUnavailablePreviewVersions(data, versions).length) {
+    refreshSelectedResult();
+    return;
+  }
+  updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
 }
 
 // An options refresh and an edition click have the same exact-edition rule.
@@ -166,8 +194,17 @@ function showUnavailablePreviewVersions(unavailableVersions) {
   hasResolvedReference = false;
   setInsertButtonState(false);
   $('#open-on-sefaria').prop('disabled', true);
-  if (selectedResultSummary) selectedResultSummary.status = 'Choose another edition';
+  var missingDisplay = unavailableVersions.filter(function (version) { return version.missingDisplayLanguage; })[0];
+  if (selectedResultSummary) selectedResultSummary.status = missingDisplay ? 'Choose another Display option' : 'Choose another edition';
   updateActionabilityUI({ isInsertable: false });
+  if (missingDisplay) {
+    var role = missingDisplay.role === 'he' ? 'original' : 'translation';
+    var other = missingDisplay.role === 'he' ? 'Translation' : 'Original';
+    var displayMessage = 'No ' + role + ' text is available for this passage. Choose ' + other +
+      ' or Both in Display, or choose another passage or edition.';
+    $('.suggestions').empty().append($('<p class="preview-state-message" role="status"></p>').text(displayMessage));
+    return;
+  }
   var editionNames = unavailableVersions.map(function (version) {
     return (version.role === 'he' ? 'source edition' : 'translation') + ' “' + version.title + '”';
   }).join(' and ');
@@ -418,25 +455,31 @@ function updatePreviewCommentaryHelp(dataIn, prepared) {
 function previewAlignedSourcePairs_(dataIn) {
   if (!dataIn || !Array.isArray(dataIn.he) || !Array.isArray(dataIn.text) ||
       !hasRenderableText(dataIn.he) || !hasRenderableText(dataIn.text)) return null;
-  function segments(value) {
-    var out = [];
-    for (var i = 0; i < value.length; i++) {
-      if (Array.isArray(value[i])) {
-        if (!dataIn.isSpanning) return null;
-        for (var j = 0; j < value[i].length; j++) {
-          if (typeof value[i][j] !== 'string') return null;
-          out.push(value[i][j]);
-        }
-      } else if (typeof value[i] === 'string') out.push(value[i]);
-      else return null;
-    }
-    return out;
-  }
-  var he = segments(dataIn.he), en = segments(dataIn.text);
-  if (!he || !en || !he.length && !en.length) return null;
   var pairs = [];
-  for (var i = 0; i < Math.max(he.length, en.length); i++) pairs.push({ he: he[i] || '', en: en[i] || '' });
-  return pairs;
+  var count = Math.max(dataIn.he.length, dataIn.text.length);
+  for (var c = 0; c < count; c++) {
+    var he = dataIn.he[c], en = dataIn.text[c];
+    if (Array.isArray(he) || Array.isArray(en)) {
+      if (!dataIn.isSpanning) return null;
+      // Match buildAlignedLinePairs_: pad a missing/short chapter before
+      // advancing, so a translation from chapter 2 never joins chapter 1.
+      if ((!Array.isArray(he) && he !== undefined && he !== '') ||
+          (!Array.isArray(en) && en !== undefined && en !== '')) return null;
+      var heChapter = Array.isArray(he) ? he : [];
+      var enChapter = Array.isArray(en) ? en : [];
+      var verses = Math.max(heChapter.length, enChapter.length);
+      for (var i = 0; i < verses; i++) {
+        if ((heChapter[i] !== undefined && typeof heChapter[i] !== 'string') ||
+            (enChapter[i] !== undefined && typeof enChapter[i] !== 'string')) return null;
+        pairs.push({ he: heChapter[i] || '', en: enChapter[i] || '' });
+      }
+    } else {
+      if ((he !== undefined && typeof he !== 'string') ||
+          (en !== undefined && typeof en !== 'string')) return null;
+      pairs.push({ he: he || '', en: en || '' });
+    }
+  }
+  return pairs.length ? pairs : null;
 }
 
 function renderPreviewHTML(dataIn, inputTitle) {

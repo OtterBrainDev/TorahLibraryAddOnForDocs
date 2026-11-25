@@ -343,6 +343,27 @@ test('source and translation editions with the same title remain separate by sto
   assert.match(result.text, /When God began/);
 });
 
+for (const role of ['en', 'he']) {
+  test('choosing only the ' + role + ' edition keeps the other language of a real bilingual publication', () => {
+    const raw = fixture('rashi-shared-title');
+    const title = raw.versions[0].versionTitle;
+    const { ctx, calls } = load(apiResponse(raw, fixture('ref-rashi-shared-title')), {
+      apply_sheimot_on_insertion: 'false',
+    });
+    const result = ctx.findReference(raw.ref, { [role]: title });
+    assert.equal(result.ref, raw.ref);
+    assert.equal(result.versionTitle, title);
+    assert.equal(result.heVersionTitle, title);
+    assert.equal(result.text, raw.versions.find((v) => v.actualLanguage === 'en').text);
+    assert.equal(result.he, raw.versions.find((v) => v.actualLanguage === 'he').text);
+    assert.equal(result.translationVersion.actualLanguage, 'en');
+    assert.equal(result.sourceVersion.actualLanguage, 'he');
+    const selectors = new URL(calls.find((call) => call.url.includes('/api/v3/texts/')).url).searchParams.getAll('version');
+    assert.ok(selectors.includes((role === 'en' ? 'english' : 'hebrew') + '|' + title));
+    assert.ok(selectors.includes(role === 'en' ? 'primary' : 'translation'));
+  });
+}
+
 test('primary/source flags do not put an English original into the Hebrew lane', () => {
   const { ctx } = load();
   const raw = fixture('genesis');

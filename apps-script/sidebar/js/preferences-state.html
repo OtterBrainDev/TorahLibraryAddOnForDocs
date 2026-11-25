@@ -43,7 +43,9 @@ function syncSessionOverrideButtons() {
   var isTexts = isAdvancedSessionMode();
   var hasSelectedTextResult = isTexts && !!selectedResultKey;
   $('.session-override-actions').toggle(isTexts);
-  $('.reset-session-overrides-button, .save-session-defaults-button').prop('disabled', !isTexts || !hasSessionOverrides());
+  var changingSession = !!sessionSaveQueue.action;
+  $('.reset-session-overrides-button, .save-session-defaults-button').prop('disabled', changingSession || !isTexts || !hasSessionOverrides());
+  $('#tray-profile-select').prop('disabled', changingSession);
   $('.inline-session-settings').toggle(isTexts && hasSelectedTextResult);
   $('#open-session-library').prop('disabled', false).attr('aria-disabled', 'false');
 }
@@ -87,10 +89,20 @@ function saveAccountPreference(payload, onDone) {
 // Now a change shows at once, changes made while a save is in flight wait and
 // go together in the next one, and the switches are re-read from the server's
 // answer only when nothing is left to send.
-var sessionSaveQueue = { pending: null, callbacks: [], inFlight: false };
+var sessionSaveQueue = { pending: null, callbacks: [], inFlight: false, action: null, failed: false, retries: 0, needsRefresh: false };
 
 function saveSessionPreference(payload, onDone) {
+  // Revert, Save as defaults and a profile switch own the session until their
+  // server calls finish. The tray is inert meanwhile; this also protects a
+  // keyboard event already queued when the action began.
+  if (sessionSaveQueue.action) { applyEffectivePreferencesToUI(); return; }
   var change = payload || {};
+  // A new explicit choice retries the complete snapshot retained after a
+  // failed save, so an earlier failed Vowels change is not silently lost.
+  if (sessionSaveQueue.failed) {
+    sessionSaveQueue.failed = false;
+    sessionSaveQueue.retries = 0;
+  }
   sessionPreferences = Object.assign({}, sessionPreferences, change);
   effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
   sessionSaveQueue.pending = Object.assign(sessionSaveQueue.pending || {}, change);
@@ -112,7 +124,23 @@ function adoptSidebarSession(sessionId, sessionState) {
 
 function flushSessionSaves_() {
   var queue = sessionSaveQueue;
-  if (queue.inFlight || !queue.pending) return;
+  if (queue.inFlight) return;
+  if (queue.failed) {
+    // Revert and profile switching discard this session, so they can clear a
+    // failed snapshot without trying to save it first.
+    if (queue.action && queue.action.kind !== 'session-save' && !queue.action.started) {
+      queue.action.started = true;
+      queue.action.run(false);
+    }
+    return;
+  }
+  if (!queue.pending) {
+    if (queue.action && !queue.action.started) {
+      queue.action.started = true;
+      queue.action.run(queue.action.saveFailed);
+    }
+    return;
+  }
   var batch = queue.pending;
   var callbacks = queue.callbacks;
   queue.pending = null;
@@ -121,22 +149,123 @@ function flushSessionSaves_() {
 
   function finish(updated) {
     queue.inFlight = false;
+    queue.retries = 0;
     if (!queue.pending) {
+      if (queue.action) queue.action.saveFailed = !updated;
       sessionPreferences = clonePlainObject(updated || sessionPreferences);
       effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
       applyEffectivePreferencesToUI();
     }
     callbacks.forEach(function (callback) { callback(updated); });
     flushSessionSaves_();
+    if (!queue.inFlight && !queue.pending && !queue.action && queue.needsRefresh) {
+      queue.needsRefresh = false;
+      if (selectedRefValue) scheduleSelectedResultRefresh();
+    }
   }
 
   google.script.run
     .withSuccessHandler(finish)
     .withFailureHandler(function () {
-      showSidebarToast('A setting could not be saved for this session. Try again.');
-      finish(null);
+      queue.inFlight = false;
+      queue.needsRefresh = true;
+      if (typeof selectedResultRefreshPending !== 'undefined') selectedResultRefreshPending = true;
+      if (selectedRefValue) {
+        latestResolveRequestId++;
+        hasResolvedReference = false;
+        setInsertButtonState(false);
+      }
+      queue.pending = Object.assign({}, sessionPreferences, queue.pending || {});
+      queue.callbacks = callbacks.concat(queue.callbacks);
+      queue.retries++;
+      if (queue.retries <= 1) { flushSessionSaves_(); return; }
+      // Keep the optimistic choices available to retry, but do not fetch or
+      // insert with an older server snapshot after repeated save failure.
+      queue.failed = true;
+      showSessionSaveFailure_();
+      if (queue.action && queue.action.kind === 'session-save') {
+        queue.action.started = true;
+        queue.action.run(true);
+      } else {
+        flushSessionSaves_();
+      }
     })
     .setSidebarSessionState(sidebarSessionId, batch);
+}
+
+function showSessionSaveFailure_() {
+  syncSessionOverrideButtons();
+  if (typeof selectedResultRefreshPending !== 'undefined') selectedResultRefreshPending = true;
+  if (selectedRefValue) {
+    latestResolveRequestId++;
+    hasResolvedReference = false;
+    setInsertButtonState(false);
+    if (typeof buildPreviewLoadingHTML === 'function') {
+      // The shared loading builder escapes this static status message.
+      $('.suggestions').html(buildPreviewLoadingHTML('Settings could not be saved. Change an option to retry, or choose Revert.'));
+    }
+  }
+  showSidebarToast('Session settings could not be saved. Insertion is paused. Change an option to retry, or click Revert.', 7000);
+}
+
+// Account/session mutations must follow the last setting save. Otherwise a
+// late setSidebarSessionState can recreate a cleared session, or Save as
+// defaults can promote the previous snapshot. Keep one action in flight and
+// leave the shared server cache primitives unchanged.
+function beginSidebarSessionAction_(kind, run) {
+  if (sessionSaveQueue.action) return false;
+  sessionSaveQueue.action = { kind: kind, started: false, saveFailed: false, run: run };
+  $('#layout-tray').attr('aria-busy', 'true');
+  $('#layout-tray .tray-body').prop('inert', true);
+  syncSessionOverrideButtons();
+  showBusyOverlay(kind);
+  if (typeof selectedResultRefreshPending !== 'undefined') selectedResultRefreshPending = true;
+  if (selectedRefValue) {
+    latestResolveRequestId++;
+    hasResolvedReference = false;
+    setInsertButtonState(false);
+  }
+  flushSessionSaves_();
+  return true;
+}
+
+function finishSidebarSessionAction_() {
+  sessionSaveQueue.action = null;
+  $('#layout-tray').removeAttr('aria-busy');
+  $('#layout-tray .tray-body').prop('inert', false);
+  hideBusyOverlay();
+  syncSessionOverrideButtons();
+  // Re-fetch even when a fetch-time setting had already invalidated the old
+  // preview. A Revert or profile switch must not leave it unresolved forever.
+  if (sessionSaveQueue.failed) showSessionSaveFailure_();
+  else if (selectedRefValue) {
+    sessionSaveQueue.needsRefresh = false;
+    scheduleSelectedResultRefresh();
+  }
+}
+
+function clearSidebarSessionAfterSaves_(onDone, onFailure) {
+  google.script.run.withSuccessHandler(function () {
+    sessionSaveQueue.pending = null;
+    sessionSaveQueue.callbacks = [];
+    sessionSaveQueue.failed = false;
+    sessionSaveQueue.retries = 0;
+    sessionPreferences = {};
+    effectivePreferences = mergePreferenceLayers(accountPreferences, {});
+    applyEffectivePreferencesToUI();
+    updateModeDependentSections();
+    finishSidebarSessionAction_();
+    if (typeof onDone === 'function') onDone();
+  }).withFailureHandler(function () {
+    // The account may already have switched profile. Keep this session's
+    // choices visible until a successful Revert clears the server copy too.
+    effectivePreferences = mergePreferenceLayers(accountPreferences, sessionPreferences);
+    sessionSaveQueue.failed = true;
+    sessionSaveQueue.pending = clonePlainObject(sessionPreferences);
+    applyEffectivePreferencesToUI();
+    finishSidebarSessionAction_();
+    if (typeof onFailure === 'function') onFailure();
+  }).clearSidebarSessionState(sidebarSessionId);
 }
 
 function saveSidebarPreference(payload, onDone, forceAccountSave) {
@@ -149,14 +278,11 @@ function saveSidebarPreference(payload, onDone, forceAccountSave) {
 
 function resetSessionOverrides(onDone) {
   if (!sidebarSessionId) return;
-  google.script.run.withSuccessHandler(function () {
-    sessionPreferences = {};
-    effectivePreferences = mergePreferenceLayers(accountPreferences, {});
-    applyEffectivePreferencesToUI();
-    if (hasResolvedReference && data && data.ref) refreshSelectedResult();
-    updateModeDependentSections();
-    if (typeof onDone === 'function') onDone();
-  }).clearSidebarSessionState(sidebarSessionId);
+  beginSidebarSessionAction_('session-reset', function () {
+    clearSidebarSessionAfterSaves_(onDone, function () {
+      showSidebarToast('Could not revert to your saved defaults. Your session choices are still in use. Try again.', 6000);
+    });
+  });
 }
 
 // ── Settings profiles (server/settings-profiles.gs) ─────────────────────────
@@ -210,42 +336,59 @@ function loadSettingsProfiles() {
 function switchProfileFromSidebar(id) {
   var current = activeSettingsProfile();
   if (!id || (current && current.id === id)) return;
-  var $select = $('#tray-profile-select').prop('disabled', true);
-  showBusyOverlay('profile');
-  google.script.run.withSuccessHandler(function (result) {
-    hideBusyOverlay();
-    $select.prop('disabled', false);
-    settingsProfiles = (result && result.profiles) || settingsProfiles;
-    accountPreferences = clonePlainObject((result && result.preferences) || accountPreferences);
-    renderProfilePicker();
-    var name = (activeSettingsProfile() || {}).name || '';
-    var announce = function () { showSidebarToast('Using \u201c' + name + '\u201d.'); };
-    if (sidebarSessionId) {
-      resetSessionOverrides(announce);
-    } else {
-      sessionPreferences = {};
-      effectivePreferences = mergePreferenceLayers(accountPreferences, {});
-      applyEffectivePreferencesToUI();
-      announce();
-    }
-  }).withFailureHandler(function (error) {
-    hideBusyOverlay();
-    $select.prop('disabled', false);
-    renderProfilePicker();
-    showSidebarToast((error && error.message) || 'Could not switch profiles. Nothing was changed.', 6000);
-  }).switchSettingsProfile(id);
+  beginSidebarSessionAction_('profile', function () {
+    google.script.run.withSuccessHandler(function (result) {
+      settingsProfiles = (result && result.profiles) || settingsProfiles;
+      accountPreferences = clonePlainObject((result && result.preferences) || accountPreferences);
+      renderProfilePicker();
+      var name = (activeSettingsProfile() || {}).name || '';
+      var announce = function () { showSidebarToast('Using \u201c' + name + '\u201d.'); };
+      if (sidebarSessionId) {
+        clearSidebarSessionAfterSaves_(announce, function () {
+          showSidebarToast('The profile changed, but its session overrides could not be cleared. Click Revert to use only the new profile\u2019s defaults.', 7000);
+        });
+      } else {
+        sessionPreferences = {};
+        effectivePreferences = mergePreferenceLayers(accountPreferences, {});
+        applyEffectivePreferencesToUI();
+        finishSidebarSessionAction_();
+        announce();
+      }
+    }).withFailureHandler(function (error) {
+      renderProfilePicker();
+      finishSidebarSessionAction_();
+      showSidebarToast((error && error.message) || 'Could not switch profiles. Nothing was changed.', 6000);
+    }).switchSettingsProfile(id);
+  });
 }
 
 function saveSessionAsDefaults(onDone) {
-  if (!sidebarSessionId) return;
-  google.script.run.withSuccessHandler(function (updated) {
-    accountPreferences = clonePlainObject(updated || accountPreferences);
-    sessionPreferences = {};
-    effectivePreferences = mergePreferenceLayers(accountPreferences, {});
-    applyEffectivePreferencesToUI();
-    updateModeDependentSections();
-    if (typeof onDone === 'function') onDone(updated);
-  }).saveSidebarSessionAsAccountDefaults(sidebarSessionId);
+  if (!sidebarSessionId || sessionSaveQueue.action) return;
+  // Promote the choices visible now, including a change whose earlier save
+  // failed or whose cached session expired. Confirm that complete snapshot
+  // before asking the server to make it the account default.
+  sessionSaveQueue.pending = Object.assign({}, sessionPreferences, sessionSaveQueue.pending || {});
+  sessionSaveQueue.failed = false;
+  sessionSaveQueue.retries = 0;
+  beginSidebarSessionAction_('session-save', function (saveFailed) {
+    if (saveFailed) {
+      finishSidebarSessionAction_();
+      showSidebarToast('Your latest session choices could not be saved, so your defaults were not changed. Try Save as defaults again.', 7000);
+      return;
+    }
+    google.script.run.withSuccessHandler(function (updated) {
+      accountPreferences = clonePlainObject(updated || accountPreferences);
+      sessionPreferences = {};
+      effectivePreferences = mergePreferenceLayers(accountPreferences, {});
+      applyEffectivePreferencesToUI();
+      updateModeDependentSections();
+      finishSidebarSessionAction_();
+      if (typeof onDone === 'function') onDone(updated);
+    }).withFailureHandler(function () {
+      finishSidebarSessionAction_();
+      showSidebarToast('Could not save your session choices as defaults. Your choices are still shown; try again.', 6000);
+    }).saveSidebarSessionAsAccountDefaults(sidebarSessionId);
+  });
 }
 
 function mergePreferenceDefaults(preferences) {

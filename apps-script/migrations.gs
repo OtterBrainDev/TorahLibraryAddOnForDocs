@@ -26,7 +26,7 @@ only a profile's keys.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '32';
+var PREFS_SCHEMA_CURRENT_ = '33';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -285,6 +285,13 @@ function applyMigrationsFrom_(userProperties, from) {
   // preserves the existing inserted output; the preview now agrees with it.
   if (from < 32) {
     migrateToV32_(userProperties);
+  }
+  // v32 -> v33: make the Voices and Lexicon fallback choices explicit.
+  // Reset, settings files and profiles now share the same defaults; readers
+  // who already chose a mode keep it. Repair the generated "undefined"
+  // sentinel from older profile snapshots, which is not a valid choice.
+  if (from < 33) {
+    migrateToV33_(userProperties);
   }
 }
 
@@ -785,6 +792,23 @@ function migrateToV32_(userProperties) {
   if (userProperties.getProperty('source_notes_mode') != null) return false;
   userProperties.setProperty('source_notes_mode', 'omit');
   return true;
+}
+
+/** V33: seed workflow choices and repair only the old generated sentinel. */
+function migrateToV33_(userProperties) {
+  var defaults = {
+    voices_insert_mode_default: 'reference',
+    voices_translit_default: 'none',
+    lexicon_insert_mode_default: 'entry'
+  };
+  var wrote = false;
+  Object.keys(defaults).forEach(function (key) {
+    var current = userProperties.getProperty(key);
+    if (current != null && current !== 'undefined') return;
+    userProperties.setProperty(key, defaults[key]);
+    wrote = true;
+  });
+  return wrote;
 }
 
 function migrateToV3_(userProperties) {

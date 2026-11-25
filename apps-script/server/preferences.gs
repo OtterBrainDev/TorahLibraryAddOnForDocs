@@ -182,6 +182,11 @@ function getDefaultPreferences() {
     // Marked Sefaria footnotes: omit preserves the previous inserted output.
     // Preview and insertion now share this policy. Inline / Separate are new.
     source_notes_mode: "omit",
+    // Workflow defaults previously existed only in the controls' fallbacks.
+    // Keep them here too so Reset, settings files and profiles agree.
+    voices_insert_mode_default: "reference",
+    voices_translit_default: "none",
+    lexicon_insert_mode_default: "entry",
     // Colour and background are intentionally EMPTY by default: an empty
     // value means "leave the document's own formatting alone". Defaulting to
     // "#000000" would force black text on every user, including those with a
@@ -336,7 +341,8 @@ function getDefaultPreferences() {
     // The sidebar's Quick Actions buttons and Insertion Options controls the
     // user has hidden, as JSON arrays of ids (SIDEBAR_QUICK_ACTIONS_,
     // SIDEBAR_OPTION_CONTROLS_). "[]": every one shows, as it always has. A
-    // hidden Insertion Options control uses the saved default.
+    // hidden Insertion Options control keeps its effective value, including
+    // an existing sidebar session override; visibility never resets a value.
     sidebar_quick_actions_hidden: "[]",
     sidebar_options_hidden: "[]",
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See
