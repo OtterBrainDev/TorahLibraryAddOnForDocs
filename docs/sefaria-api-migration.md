@@ -8,7 +8,8 @@ records for bugs and release verification.
 **Current artifact:** branch `fix/edition-commentary-notes-20261124`, based on
 `refactor/sefaria-texts-v3-20261124` at `9434795`. The API migration remains
 [draft PR #58](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/58);
-the follow-up is prepared for separate review. Release **2.0.0** is unchanged;
+the follow-up is [draft PR #59](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/59),
+with implementation commit `3b7d3eb`. Release **2.0.0** is unchanged;
 the notes preference advances the schema to **32**. Nothing in this handoff
 establishes an Apps Script deployment, completed Google Docs testing, or a
 Marketplace release.
