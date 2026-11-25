@@ -1,0 +1,164 @@
+{
+  "_note": "Captured from Sefaria on 2026-11-24 (America/Denver). Version metadata is limited to the fields used by the add-on; available_versions is reduced to returned editions and, where present, the French and Contemporary Torah comparison editions. Reference metadata and retained strings are unchanged.",
+  "_source": "https://www.sefaria.org/api/v3/texts/Genesis.1.1?version=primary&version=french%7CBible+du+Rabbinat+1899+%5Bfr%5D&return_format=default&fill_in_missing_segments=0",
+  "versions": [
+    {
+      "status": "locked",
+      "priority": 2.0,
+      "license": "CC-BY-SA",
+      "versionTitleInHebrew": "מקרא על פי המסורה",
+      "shortVersionTitle": "",
+      "language": "he",
+      "versionSource": "https://he.wikisource.org/wiki/%D7%9E%D7%A9%D7%AA%D7%9E%D7%A9:Dovi/%D7%9E%D7%A7%D7%A8%D7%90_%D7%A2%D7%9C_%D7%A4%D7%99_%D7%94%D7%9E%D7%A1%D7%95%D7%A8%D7%94",
+      "versionTitle": "Miqra according to the Masorah",
+      "actualLanguage": "he",
+      "languageFamilyName": "hebrew",
+      "isSource": true,
+      "isPrimary": true,
+      "direction": "rtl",
+      "text": "<big>בְּ</big>רֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃"
+    },
+    {
+      "status": "locked",
+      "priority": 1.0,
+      "license": "Public Domain",
+      "versionTitleInHebrew": "",
+      "shortVersionTitle": "",
+      "language": "en",
+      "versionSource": "https://fr.wikisource.org/wiki/Bible_du_Rabbinat_1899",
+      "versionTitle": "Bible du Rabbinat 1899 [fr]",
+      "actualLanguage": "fr",
+      "languageFamilyName": "french",
+      "isSource": false,
+      "isPrimary": false,
+      "direction": "ltr",
+      "text": "Au commencement, Dieu créa le ciel et la terre."
+    }
+  ],
+  "available_versions": [
+    {
+      "status": "locked",
+      "priority": 7.0,
+      "license": "CC-BY-NC",
+      "versionTitleInHebrew": "",
+      "shortVersionTitle": "The Contemporary Torah, JPS, 2006",
+      "language": "en",
+      "title": "Genesis",
+      "versionSource": "https://www.nli.org.il/he/books/NNL_ALEPH002529489/NLI",
+      "versionTitle": "The Contemporary Torah, Jewish Publication Society, 2006",
+      "actualLanguage": "en",
+      "languageFamilyName": "english",
+      "isSource": false,
+      "isPrimary": false,
+      "direction": "ltr"
+    },
+    {
+      "status": "locked",
+      "priority": 2.0,
+      "license": "CC-BY-SA",
+      "versionTitleInHebrew": "מקרא על פי המסורה",
+      "shortVersionTitle": "",
+      "language": "he",
+      "title": "Genesis",
+      "versionSource": "https://he.wikisource.org/wiki/%D7%9E%D7%A9%D7%AA%D7%9E%D7%A9:Dovi/%D7%9E%D7%A7%D7%A8%D7%90_%D7%A2%D7%9C_%D7%A4%D7%99_%D7%94%D7%9E%D7%A1%D7%95%D7%A8%D7%94",
+      "versionTitle": "Miqra according to the Masorah",
+      "actualLanguage": "he",
+      "languageFamilyName": "hebrew",
+      "isSource": true,
+      "isPrimary": true,
+      "direction": "rtl"
+    },
+    {
+      "status": "locked",
+      "priority": 1.0,
+      "license": "Public Domain",
+      "versionTitleInHebrew": "",
+      "shortVersionTitle": "",
+      "language": "en",
+      "title": "Genesis",
+      "versionSource": "https://fr.wikisource.org/wiki/Bible_du_Rabbinat_1899",
+      "versionTitle": "Bible du Rabbinat 1899 [fr]",
+      "actualLanguage": "fr",
+      "languageFamilyName": "french",
+      "isSource": false,
+      "isPrimary": false,
+      "direction": "ltr"
+    }
+  ],
+  "ref": "Genesis 1:1",
+  "heRef": "בראשית א׳:א׳",
+  "sections": [
+    "1",
+    "1"
+  ],
+  "toSections": [
+    "1",
+    "1"
+  ],
+  "sectionRef": "Genesis 1",
+  "heSectionRef": "בראשית א׳",
+  "firstAvailableSectionRef": "Genesis 1:1",
+  "isSpanning": false,
+  "next": "Genesis 2",
+  "prev": null,
+  "title": "Genesis 1",
+  "book": "Genesis",
+  "heTitle": "בראשית",
+  "primary_category": "Tanakh",
+  "type": "Tanakh",
+  "indexTitle": "Genesis",
+  "categories": [
+    "Tanakh",
+    "Torah"
+  ],
+  "heIndexTitle": "בראשית",
+  "isComplex": false,
+  "isDependant": false,
+  "order": [
+    1,
+    1
+  ],
+  "collectiveTitle": "",
+  "heCollectiveTitle": "",
+  "alts": [],
+  "lengths": [
+    50,
+    1533
+  ],
+  "length": 50,
+  "textDepth": 2,
+  "sectionNames": [
+    "Chapter",
+    "Verse"
+  ],
+  "addressTypes": [
+    "Perek",
+    "Pasuk"
+  ],
+  "titleVariants": [
+    "Bereshit",
+    "Gen",
+    "Gen.",
+    "Breishit",
+    "Bereishit",
+    "Beresheet",
+    "Bereshith",
+    "Bereishis",
+    "B’resh.",
+    "B’reshith",
+    "Genèse",
+    "Beresheit",
+    "Gn.",
+    "Genesis"
+  ],
+  "heTitleVariants": [
+    "ברא'",
+    "בר'",
+    "בר׳",
+    "ברא׳",
+    "בְּרֵאשִׁית",
+    "בראשית"
+  ],
+  "index_offsets_by_depth": {},
+  "warnings": []
+}

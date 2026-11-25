@@ -1,0 +1,29 @@
+{
+  "_note": "Unmodified Sefaria Reference API response captured 2026-11-24 (America/Denver); provenance fields added.",
+  "_source": "https://www.sefaria.org/api/ref/Obadiah",
+  "is_ref": true,
+  "normalized": "Obadiah",
+  "hebrew": "עובדיה",
+  "url_ref": "Obadiah",
+  "index_title": "Obadiah",
+  "node_type": "JaggedArrayNode",
+  "navigation_refs": {
+    "shortest_path_to_root": [],
+    "first_available_section_ref": "Obadiah 1",
+    "first_subref": "Obadiah 1",
+    "last_subref": "Obadiah 1"
+  },
+  "depth": 2,
+  "address_types": [
+    "Perek",
+    "Pasuk"
+  ],
+  "section_names": [
+    "Chapter",
+    "Verse"
+  ],
+  "start_indexes": [],
+  "start_labels": [],
+  "end_indexes": [],
+  "end_labels": []
+}

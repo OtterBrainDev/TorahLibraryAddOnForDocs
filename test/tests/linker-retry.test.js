@@ -17,6 +17,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { v3TextFixture, v3RefFixture } = require('./helpers/sefaria-v3-fixture');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 
@@ -28,15 +29,18 @@ function response(status, body) {
 }
 
 function refFromUrl(url) {
-  const match = /\/api\/texts\/([^?]+)/.exec(url);
+  const match = /\/api\/(?:v3\/texts|ref)\/([^?]+)/.exec(url);
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-// A texts API that knows the refs in `known` ({ref: payload}) and answers
+// Ref metadata and v3 text APIs that know the refs in `known` ({ref: payload}) and answer
 // everything else with `errors[ref]` or a generic "could not find title".
 function textsApi(known, errors) {
-  return function (ref) {
-    if (known[ref]) return response(200, Object.assign({ ref }, known[ref]));
+  return function (ref, metadata) {
+    if (known[ref]) {
+      const sample = Object.assign({ ref }, known[ref]);
+      return response(200, metadata ? v3RefFixture(sample) : v3TextFixture(sample));
+    }
     return response(200, { error: (errors && errors[ref]) || `Could not find title in reference: ${ref}` });
   };
 }
@@ -70,11 +74,18 @@ function load(extra) {
 // A fetchAll over `api` that records every request, round by round.
 function recordingFetchAll(api) {
   const rounds = [];
+  const batches = [];
   const fetchAll = (requests) => {
-    rounds.push(requests.map((r) => refFromUrl(r.url)));
-    return requests.map((r) => api(refFromUrl(r.url)));
+    batches.push(requests.map((r) => r.url));
+    // A spelling is tried once, at its metadata lookup. Only resolved
+    // passages receive the second, v3-content batch for that same round.
+    if (requests.every((r) => /\/api\/ref\//.test(r.url))) {
+      rounds.push(requests.map((r) => refFromUrl(r.url)));
+    }
+    return requests.map((r) => api(refFromUrl(r.url), /\/api\/ref\//.test(r.url)));
   };
   fetchAll.rounds = rounds;
+  fetchAll.batches = batches;
   return fetchAll;
 }
 
@@ -209,7 +220,7 @@ test('a Hebrew "שם" citation is reported as pointing back, but שמות is not
 
 test('no network while retrying is reported per citation and never fails the scan', () => {
   const ctx = load();
-  const fetchAll = () => { throw new Error('Address unavailable: https://www.sefaria.org/api/texts/x'); };
+  const fetchAll = () => { throw new Error('Address unavailable: https://www.sefaria.org/api/v3/texts/x'); };
   const result = ctx.recoverUnmatchedCitations_([unmatchedEntry('Genesis 51:3', 'Genesis 51:3')], fetchAll);
 
   assert.equal(result.recovered.length, 0);
@@ -221,7 +232,7 @@ test('a 503 for one citation leaves the others\' retries alone', () => {
   const DOC = 'Hil. Shabbat 1:1 and Genesis 1:1';
   const ctx = load();
   const known = textsApi({ 'Mishneh Torah, Hilchot Shabbat 1:1': { text: ['x'] } });
-  const fetchAll = recordingFetchAll((ref) => (ref === 'Genesis 1:1' ? response(503, 'busy') : known(ref)));
+  const fetchAll = recordingFetchAll((ref, metadata) => (ref === 'Genesis 1:1' ? response(503, 'busy') : known(ref, metadata)));
   const result = ctx.recoverUnmatchedCitations_([
     unmatchedEntry(DOC, 'Hil. Shabbat 1:1'),
     unmatchedEntry(DOC, 'Genesis 1:1'),
@@ -231,6 +242,124 @@ test('a 503 for one citation leaves the others\' retries alone', () => {
   assert.equal(result.unmatched.length, 1);
   assert.equal(result.unmatched[0].documentText, 'Genesis 1:1');
   assert.equal(result.unmatched[0].reason, 'unavailable');
+});
+
+test('a malformed successful v3 reply is unavailable, while other citations still resolve', () => {
+  const DOC = 'Hil. Shabbat 1:1 and Genesis 1:1';
+  for (const malformed of ['<html>Temporarily unavailable</html>', {}, { ref: 'Genesis 1:1' }]) {
+    const ctx = load();
+    const known = textsApi({ 'Mishneh Torah, Hilchot Shabbat 1:1': { text: ['Rest on Shabbat.'] } });
+    const fetchAll = recordingFetchAll((ref, metadata) => (ref === 'Genesis 1:1'
+      ? response(200, metadata ? v3RefFixture({ ref }) : malformed) : known(ref, metadata)));
+    const result = ctx.recoverUnmatchedCitations_([
+      unmatchedEntry(DOC, 'Hil. Shabbat 1:1'),
+      unmatchedEntry(DOC, 'Genesis 1:1'),
+    ], fetchAll);
+
+    assert.equal(result.recovered.length, 1);
+    assert.equal(result.recovered[0].candidates[0].preview, 'Rest on Shabbat.');
+    assert.equal(result.unmatched.length, 1);
+    assert.equal(result.unmatched[0].reason, 'unavailable');
+    assert.equal(result.unmatched[0].attempts.length, 0, 'a broken reply is not a failed reference spelling');
+  }
+});
+
+test('a v3 source-only reply supplies the recovered citation\'s Hebrew excerpt', () => {
+  const ctx = load();
+  const fetchAll = recordingFetchAll(textsApi({
+    'Genesis 1:1': { heRef: 'בראשית א׳:א׳', he: ['<b>בְּרֵאשִׁית</b> בָּרָא'] },
+  }));
+  const result = ctx.recoverUnmatchedCitations_([unmatchedEntry('Genesis 1:1', 'Genesis 1:1')], fetchAll);
+  assert.equal(result.recovered[0].candidates[0].preview, 'בְּרֵאשִׁית בָּרָא');
+  assert.equal(result.recovered[0].candidates[0].heRef, 'בראשית א׳:א׳');
+});
+
+test('a broader or wrong-work text reply is unavailable while a correct peer is recovered', () => {
+  const DOC = 'Genesis 1:1, Exodus 1:1 and Numbers 1:1';
+  const ctx = load();
+  const fetchAll = recordingFetchAll((ref, metadata) => {
+    if (metadata) return response(200, v3RefFixture({ ref }));
+    const sample = { ref, text: ['Requested passage.'] };
+    if (ref === 'Genesis 1:1') sample.ref = 'Genesis 1';
+    if (ref === 'Numbers 1:1') sample.indexTitle = 'Leviticus';
+    return response(200, v3TextFixture(sample));
+  });
+  const result = ctx.recoverUnmatchedCitations_([
+    unmatchedEntry(DOC, 'Genesis 1:1'),
+    unmatchedEntry(DOC, 'Exodus 1:1'),
+    unmatchedEntry(DOC, 'Numbers 1:1'),
+  ], fetchAll);
+
+  assert.equal(result.recovered.length, 1);
+  assert.equal(result.recovered[0].candidates[0].ref, 'Exodus 1:1');
+  assert.equal(result.recovered[0].candidates[0].preview, 'Requested passage.');
+  assert.deepEqual(Array.from(result.unmatched, (entry) => [entry.documentText, entry.reason]), [
+    ['Genesis 1:1', 'unavailable'], ['Numbers 1:1', 'unavailable']
+  ]);
+  assert.ok(result.unmatched.every((entry) => entry.attempts.length === 0), 'a mismatched reply never becomes reference evidence');
+});
+
+test('metadata batches keep their positions through invalid refs, headings and complex default nodes', () => {
+  const ctx = load();
+  const metadata = {
+    'Genesis 1:1': v3RefFixture({ ref: 'Genesis 1:1' }),
+    'Unknown': { is_ref: false },
+    'Mishneh Torah': Object.assign(v3RefFixture({ ref: 'Mishneh Torah' }), { node_type: 'SchemaNode' }),
+    'Sefer HaChinukh': Object.assign(v3RefFixture({ ref: 'Sefer HaChinukh' }), {
+      node_type: 'SchemaNode',
+      default_child_node: { node_type: 'JaggedArrayNode', depth: 2, address_types: ['Integer', 'Integer'] }
+    }),
+    'Sefer HaChinukh 1': v3RefFixture({ ref: 'Sefer HaChinukh 1' })
+  };
+  const fetchAll = recordingFetchAll((ref, isMetadata) => {
+    assert.equal(isMetadata, true, 'metadata traversal never asks for text');
+    return response(200, metadata[ref]);
+  });
+  const plans = ctx.resolveLinkerRefPlans_(['Genesis 1:1', 'Unknown', 'Mishneh Torah', 'Sefer HaChinukh'], fetchAll);
+
+  assert.equal(plans[0].textRef, 'Genesis 1:1');
+  assert.equal(plans[1].error, '');
+  assert.equal(plans[2].resolved.ref, 'Mishneh Torah');
+  assert.equal(plans[3].textRef, 'Sefer HaChinukh 1');
+  assert.deepEqual(fetchAll.rounds.map((round) => Array.from(round)), [
+    ['Genesis 1:1', 'Unknown', 'Mishneh Torah', 'Sefer HaChinukh'], ['Sefer HaChinukh 1']
+  ]);
+});
+
+test('broken or redirecting metadata stays unavailable with bounded requests', () => {
+  const ctx = load();
+  let batches = 0;
+  const complex = (ref, indexTitle) => Object.assign(v3RefFixture({ ref, indexTitle }), {
+    node_type: 'SchemaNode',
+    default_child_node: { node_type: 'JaggedArrayNode', depth: 2, address_types: ['Integer', 'Integer'] }
+  });
+  const plans = ctx.resolveLinkerRefPlans_(['Too deep', 'Cycle', 'Wrong index', 'Truncated'], (requests) => {
+    batches++;
+    return requests.filter((r) => refFromUrl(r.url) !== 'Truncated').map((r) => {
+      const ref = refFromUrl(r.url);
+      if (ref.startsWith('Too deep')) return response(200, complex(ref, 'Too deep'));
+      if (ref.startsWith('Cycle')) return response(200, complex('Cycle', 'Cycle'));
+      if (ref === 'Wrong index') return response(200, complex(ref, 'Wrong index'));
+      return response(200, v3RefFixture({ ref, indexTitle: 'A different work' }));
+    });
+  });
+  assert.equal(batches, 4, 'deep or looping metadata cannot keep the scan running');
+  assert.ok(plans.every((plan) => plan.unavailable));
+});
+
+test('a broad ref is linked to the bounded canonical section and never fetched as a whole book', () => {
+  const ctx = load();
+  const fetchAll = recordingFetchAll((ref, metadata) => {
+    if (metadata) return response(200, v3RefFixture({ ref }));
+    assert.equal(ref, 'Genesis 1');
+    return response(200, v3TextFixture({ ref, text: ['In the beginning.'] }));
+  });
+  const result = ctx.recoverUnmatchedCitations_([unmatchedEntry('Genesis', 'Genesis')], fetchAll);
+  assert.equal(result.recovered[0].candidates[0].ref, 'Genesis 1');
+  assert.equal(result.recovered[0].candidates[0].preview, 'In the beginning.');
+  assert.equal(fetchAll.batches.length, 2);
+  assert.match(fetchAll.batches[0][0], /\/api\/ref\/Genesis$/);
+  assert.match(fetchAll.batches[1][0], /\/api\/v3\/texts\/Genesis%201\?/);
 });
 
 test('past the cap, citations are listed as not looked up, and cost no requests', () => {
@@ -269,7 +398,7 @@ test('scanDocumentForReferences: the report lists what stayed unmatched and link
         if (/find-refs/.test(url)) return response(200, { task_id: 't1' });
         return response(200, { ready: true, result: { body: findRefs } });
       },
-      fetchAll: (requests) => requests.map((r) => api(refFromUrl(r.url))),
+      fetchAll: (requests) => requests.map((r) => api(refFromUrl(r.url), /\/api\/ref\//.test(r.url))),
     },
   });
   ctx.getPreferences = () => ({ linker_scan_mode: 'full' });

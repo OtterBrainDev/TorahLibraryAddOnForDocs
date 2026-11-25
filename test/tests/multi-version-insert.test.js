@@ -169,6 +169,48 @@ test('a request where every translation is empty fails instead of inserting noth
   assert.equal(children.length, 0);
 });
 
+test('he-top rejects a missing, empty, or substituted selected source edition before writing', () => {
+  const chosenSource = 'Miqra according to the Masorah';
+  const unavailableSources = [
+    { heVersionTitle: '', he: [] },
+    { heVersionTitle: chosenSource, he: ['', '&nbsp;'] },
+    { heVersionTitle: 'Another source edition', he: 'בְּרֵאשִׁית' },
+  ];
+  for (const source of unavailableSources) {
+    const { ctx, children } = loadInsertion({
+      resolved: {
+        Koren: Object.assign({}, resolved.Koren, source),
+        JPS: Object.assign({}, resolved.JPS, source),
+      },
+    });
+    assert.throws(
+      () => ctx.insertReferenceVersions('Genesis 1:1', {
+        versionTitles: ['Koren', 'JPS'], heVersionTitle: chosenSource,
+        bilingualLayout: 'he-top', insertHebrewSefariaLink: true,
+      }),
+      /source.*edition|Hebrew.*edition/i,
+      'successful translation fetches do not satisfy the explicitly chosen source edition'
+    );
+    assert.equal(children.length, 0, 'no title, blank source paragraph, or translation may be written before failure');
+  }
+});
+
+test('translation-only multi-insert does not require an unused selected source edition', () => {
+  const { ctx, texts } = loadInsertion({
+    resolved: {
+      Koren: Object.assign({}, resolved.Koren, { heVersionTitle: '', he: [] }),
+      JPS: Object.assign({}, resolved.JPS, { heVersionTitle: '', he: [] }),
+    },
+  });
+  const result = ctx.insertReferenceVersions('Genesis 1:1', {
+    versionTitles: ['Koren', 'JPS'], heVersionTitle: 'Unavailable source edition',
+    singleLanguage: 'en',
+  });
+  assert.deepEqual([...result.inserted], ['Koren', 'JPS']);
+  assert.ok(texts().includes('In the beginning'));
+  assert.ok(texts().includes('When God began'));
+});
+
 test('decodeHTMLEntities handles the typographic spaces Sefaria puts in Hebrew', () => {
   const { ctx } = loadInsertion({ resolved });
   assert.equal(ctx.decodeHTMLEntities('אָמַר&thinsp;רַבִּי'), 'אָמַר רַבִּי');

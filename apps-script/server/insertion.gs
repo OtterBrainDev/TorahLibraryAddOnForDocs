@@ -1397,6 +1397,14 @@ function insertReferenceVersions(ref, opts) {
     throw new Error('None of the selected translations has text for this reference.');
   }
 
+  // v3 can return translations even when the explicitly selected source
+  // edition is missing. This path refetches after the preview; stop before
+  // any document writes rather than insert a blank or substituted source.
+  if (singleLanguage !== 'en' && heVersionTitle &&
+      (kept[0].data.heVersionTitle !== heVersionTitle || !hasInsertableText_(kept[0].data.he))) {
+    throw new Error('The selected source edition has no text for this passage. Choose another source edition and try again.');
+  }
+
   const includeLineMarkers = pasukPreference === true || pasukPreference === 'true';
   const typography = getTypographySettings(typographyPropertiesFor_(options));
   if (options.sourceEmphasisMode) {

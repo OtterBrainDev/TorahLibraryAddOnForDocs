@@ -137,6 +137,21 @@ function hasRenderableText(value) {
   return stripped.length > 0;
 }
 
+// Texts v3 can return a valid ref with just one requested edition, or an
+// edition whose passage is empty. A successful RPC alone must never make a
+// different edition insertable under the user's still-selected title.
+function getUnavailablePreviewVersions(response, versions) {
+  var unavailable = [];
+  [['en', 'versionTitle', 'text'], ['he', 'heVersionTitle', 'he']].forEach(function (fields) {
+    var requested = String((versions && versions[fields[0]]) || '');
+    if (requested && (String((response && response[fields[1]]) || '') !== requested ||
+        !hasRenderableText(response && response[fields[2]]))) {
+      unavailable.push({ role: fields[0], title: requested });
+    }
+  });
+  return unavailable;
+}
+
 function buildDepthPrompt(response) {
   var sectionNames = (response && Array.isArray(response.sectionNames)) ? response.sectionNames.filter(Boolean) : [];
   if (sectionNames.length >= 2) return "Enter " + sectionNames[0] + " and optionally a " + sectionNames[1] + ". Specify a range with '-'.";
@@ -214,8 +229,8 @@ function filterTranslationItems(items, filterTerm) {
   });
 }
 
-// Ask the server which translations have text for this exact ref; Sefaria's
-// version list is the whole book's. A failed or unusable answer changes
+// Ask the server which candidate translations have text for this exact ref.
+// A catalog entry alone is not a coverage guarantee. A failed answer changes
 // nothing: no translation is ever hidden on a lookup that didn't work.
 function requestTranslationAvailability(ref) {
   if (!ref || translationAvailabilityRequested[ref]) return;
@@ -701,8 +716,8 @@ function updateSuggestion(dataIn, inputTitle) {
   }
 
   function markTranslationAvailability(resolvedVersionTitle, attemptedVersionTitle) {
-    var resolved = String(resolvedVersionTitle || '').trim();
-    var attempted = String(attemptedVersionTitle || '').trim();
+    var resolved = String(resolvedVersionTitle || '');
+    var attempted = String(attemptedVersionTitle || '');
     if (!attempted) return;
     var wasResolved = !!(resolved && resolved === attempted);
     translationAvailabilityByRef[resolvedRef + '::' + attempted] = wasResolved;
@@ -821,6 +836,27 @@ function updateSuggestion(dataIn, inputTitle) {
 
     google.script.run.withSuccessHandler(function (response) {
       if (requestId !== latestResolveRequestId) return;
+      var unavailableVersions = getUnavailablePreviewVersions(response, versions);
+      if (unavailableVersions.length) {
+        unavailableVersions.forEach(function (version) {
+          if (version.role === 'en') markTranslationAvailability('', version.title);
+        });
+        hasResolvedReference = false;
+        setInsertButtonState(false);
+        $('#open-on-sefaria').prop('disabled', true);
+        if (selectedResultSummary) selectedResultSummary.status = 'Choose another edition';
+        updateActionabilityUI({ isInsertable: false });
+        var editionNames = unavailableVersions.map(function (version) {
+          return (version.role === 'he' ? 'source edition' : 'translation') + ' “' + version.title + '”';
+        }).join(' and ');
+        var message = 'The selected ' + editionNames +
+          (unavailableVersions.length === 1 ? ' has' : ' have') +
+          ' no text for this passage. Choose another edition to preview and insert.';
+        // Keep both pickers and their choices so the reader can choose another
+        // edition. A rebuild would silently select a default without its text.
+        $('.suggestions').empty().append($('<p class="preview-state-message" role="status"></p>').text(message));
+        return;
+      }
       var nodeState = getResolvedNodeState(response);
       if (!nodeState.isInsertable) {
         hasResolvedReference = false;
@@ -833,7 +869,7 @@ function updateSuggestion(dataIn, inputTitle) {
         return;
       }
 
-      var resolvedTranslation = String((response && response.versionTitle) || '').trim();
+      var resolvedTranslation = String((response && response.versionTitle) || '');
       markTranslationAvailability(resolvedTranslation, enVersion);
       if (enVersion && resolvedTranslation && resolvedTranslation !== enVersion) renderTranslationOptions($('#translation-version-filter').val());
       updateSuggestion(response, inputTitle);

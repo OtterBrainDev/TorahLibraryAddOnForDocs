@@ -86,6 +86,14 @@ AGENTS.md still expected 248 passing tests.)
    If you really do need to change it, update the JSON in the same
    commit, add a row to `docs/regression-log.md`, and search the
    client HTML to update every caller.
+9. **Keep text retrieval on Sefaria Texts v3 and normalize every response at
+   the API boundary.** Ref metadata bounds a book to its first section before
+   a text request; replies must match that planned ref and index. The picker
+   catalog and fetched editions are separate fields. Preserve exact edition
+   titles, including whitespace, and never fill gaps from another edition
+   under a single-edition credit. Search, sheets, dictionaries, Ref and Versions
+   use their own current endpoints, not an invented `/v3/` prefix. See
+   [`docs/sefaria-api-migration.md`](docs/sefaria-api-migration.md).
 
 ## Versions: keep them in sync
 
@@ -161,7 +169,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **840 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **891 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -242,6 +250,8 @@ and fix it before touching the feature you came to change.
   block, blank-line separation, empty translations skipped, every block
   formatted like the first; HTML-entity decoding (`&thinsp;` and friends). With
   the Hebrew on top and Citation on, the Hebrew edition is credited once.
+  A refetch missing the explicitly chosen source edition stops before any
+  document write; translation-only output can still use its translations.
 - `translation-language-typography.test.js` — per-language translation
   formatting: stored entries cleaned, the translation's language read from
   Sefaria's payload, and only that language's blocks reformatted.
@@ -268,6 +278,14 @@ and fix it before touching the feature you came to change.
   (its ref), never with what was typed in the search box.
 - `sefaria-unavailable.test.js` — "couldn't reach Sefaria" and a find-refs
   timeout throw, instead of reading as "no match" / "no citations".
+- `sefaria-v3.test.js` — real captured v3 and Ref payloads, exact editions and
+  credit, French/Yiddish and source roles, bounded books/default nodes, ranges,
+  metadata caching, nullable segments and unavailable/mismatched responses.
+  The opt-in `node tools/check-sefaria-v3.js` checks live Sefaria through the
+  production server helpers, separately from the offline suite and from Docs.
+- `preview-version-unavailable.test.js` — a v3 partial/missing edition reply
+  keeps the version pickers, disables insertion and shows plain-text help;
+  a later valid choice recovers, and stale replies cannot replace it.
 - `punctuation.test.js` — the Hebrew and translation "Punctuation: Off"
   settings: what is stripped (sof pasuq, paseq, {פ}, maqaf → space) and kept
   (ר', רש"י, G-d, 3:16, tags, entities), the two toggles independent, refs

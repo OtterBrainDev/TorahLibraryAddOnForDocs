@@ -18,6 +18,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { v3RefFixture, v3FixtureFetch } = require('./helpers/sefaria-v3-fixture');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 
@@ -58,10 +59,10 @@ test('findReference: an unknown reference is "no match", not an error', () => {
 });
 
 test('findReference: no network throws a message that says so, without the URL', () => {
-  const ctx = load(() => { throw new Error('Address unavailable: https://www.sefaria.org/api/texts/Private%20note'); });
+  const ctx = load(() => { throw new Error('Address unavailable: https://www.sefaria.org/api/v3/texts/Private%20note'); });
   assert.throws(() => ctx.findReference('Genesis 1:1'), (error) => {
     assert.match(error.message, /Couldn.t reach Sefaria/);
-    assert.doesNotMatch(error.message, /api\/texts|Private/, 'the URL can carry document text (hard rule 7)');
+    assert.doesNotMatch(error.message, /api\/v3\/texts|Private/, 'the URL can carry document text (hard rule 7)');
     return true;
   });
 });
@@ -74,8 +75,29 @@ test('findReference: a server error or rate limit throws, with the status', () =
 });
 
 test('findReference: a good response still resolves', () => {
-  const ctx = load(() => response(200, { ref: 'Genesis 1:1', text: 'In the beginning', he: 'בראשית' }));
-  assert.equal(ctx.findReference('Genesis 1:1').ref, 'Genesis 1:1');
+  const ctx = load(v3FixtureFetch({ ref: 'Genesis 1:1', text: 'In the beginning', he: 'בראשית' }));
+  const result = ctx.findReference('Genesis 1:1');
+  assert.equal(result.ref, 'Genesis 1:1');
+  assert.equal(result.text, 'In the beginning');
+  assert.equal(result.he, 'בראשית');
+});
+
+test('findReference: malformed successful v3 responses throw unavailable, not no match', () => {
+  for (const malformed of ['<html>Private note</html>', {}, { ref: 'Genesis 1:1' }]) {
+    const ctx = load((url) => response(200, /\/api\/ref\//.test(url)
+      ? v3RefFixture({ ref: 'Genesis 1:1' }) : malformed));
+    assert.throws(() => ctx.findReference('Genesis 1:1'), (error) => {
+      assert.equal(error.sefariaUnavailable, true);
+      assert.match(error.message, /Couldn.t reach Sefaria/);
+      assert.doesNotMatch(error.message, /Private|<html>/);
+      return true;
+    });
+  }
+});
+
+test('findReference: an API reference error with HTTP 200 is still no match', () => {
+  const ctx = load(() => response(200, { error: 'Could not find title in reference.' }));
+  assert.equal(ctx.findReference('Fakebook 99:99'), undefined);
 });
 
 test('find-refs: a task that never finishes throws a timeout message instead of "nothing found"', () => {

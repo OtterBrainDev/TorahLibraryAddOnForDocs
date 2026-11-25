@@ -10,6 +10,16 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Sefaria Texts v3.** All passage fetching now uses Sefaria's current text
+  reader, preserving edition selection, credits and formatting metadata.
+  Book references open a bounded section; malformed or mismatched replies
+  cannot become inserted text or recovered citation links. Translation
+  availability now checks every catalog language family correctly. Edition
+  gaps remain gaps instead of being filled from a different edition, so the
+  credit names the text actually used. Search, sheets, dictionaries and the
+  citation linker keep their current supported endpoints. Commentary and
+  note-handling changes follow in a separate pass; see the
+  [migration handoff](sefaria-api-migration.md).
 - **Translation Versions selection.** A plain click now selects one translation;
   Ctrl/Cmd-click adds or removes individual translations, and Shift-click selects
   a visible range (Ctrl/Cmd+Shift extends it). The range anchor survives preview

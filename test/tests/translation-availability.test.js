@@ -1,6 +1,6 @@
 // Translations listed for a book but empty for the passage (Yiddish on
 // Deuteronomy 6:4) used to be offered as if they had text. Sefaria's
-// /api/texts version list is the whole book's; getTranslationAvailability asks
+// available_versions list is the whole book's; getTranslationAvailability asks
 // the v3 endpoint which versions have text for the exact ref, and the sidebar
 // leaves the empty ones out unless "Show unavailable translations" is on.
 //
@@ -13,6 +13,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const ROOT = path.resolve(__dirname, '..', '..');
+const { v3RefFixture } = require('./helpers/sefaria-v3-fixture');
 
 function response(status, body) {
   return {
@@ -50,15 +51,26 @@ function loadServer(fetchImpl) {
 
 const DEUT_6_4 = {
   versions: [
-    { versionTitle: 'The Contemporary Torah, JPS, 2006', language: 'en', text: 'Hear, O Israel!' },
-    { versionTitle: 'Miqra according to the Masorah', language: 'he', text: 'שְׁמַע יִשְׂרָאֵל' },
-    { versionTitle: 'Yehoash Yiddish Translation [yi]', language: 'en', text: '' },
-    { versionTitle: 'Markup only', language: 'en', text: ['<i></i>', '&nbsp;'] },
+    { versionTitle: 'The Contemporary Torah, JPS, 2006', language: 'en', languageFamilyName: 'english', text: 'Hear, O Israel!' },
+    { versionTitle: 'Miqra according to the Masorah', language: 'he', languageFamilyName: 'hebrew', text: 'שְׁמַע יִשְׂרָאֵל' },
+    { versionTitle: 'Yehoash Yiddish Translation [yi]', language: 'en', languageFamilyName: 'yiddish', text: '' },
+    { versionTitle: 'Markup only', language: 'en', languageFamilyName: 'english', text: ['<i></i>', '&nbsp;'] },
   ],
 };
 
+function availabilityFetch(payload) {
+  return (url) => {
+    if (url.includes('/api/ref/')) {
+      const ref = decodeURIComponent(new URL(url).pathname.replace('/api/ref/', ''));
+      return response(200, v3RefFixture({ ref }));
+    }
+    return response(200, url.includes('/api/texts/versions/')
+      ? payload.versions.map(({ text, ...version }) => version) : payload);
+  };
+}
+
 test('each version is available exactly when it has text for the ref', () => {
-  const ctx = loadServer(() => response(200, DEUT_6_4));
+  const ctx = loadServer(availabilityFetch(DEUT_6_4));
   const result = ctx.getTranslationAvailability('Deuteronomy 6:4');
   assert.equal(result.ref, 'Deuteronomy 6:4');
   assert.deepEqual(JSON.parse(JSON.stringify(result.versions)), {
@@ -67,14 +79,17 @@ test('each version is available exactly when it has text for the ref', () => {
     'Yehoash Yiddish Translation [yi]': false,
     'Markup only': false,
   });
-  assert.match(ctx.fetched[0], /^https:\/\/www\.sefaria\.org\/api\/v3\/texts\/Deuteronomy%206%3A4\?version=all/);
+  const url = new URL(ctx.fetched.find((u) => u.includes('/api/v3/texts/')));
+  assert.deepEqual(url.searchParams.getAll('version').sort(), ['english|all', 'hebrew|all', 'yiddish|all']);
+  assert.equal(url.searchParams.get('fill_in_missing_segments'), '0');
+  assert.equal(url.searchParams.get('return_format'), 'text_only');
 });
 
 test('the answer is cached per ref, so the list does not refetch it', () => {
-  const ctx = loadServer(() => response(200, DEUT_6_4));
+  const ctx = loadServer(availabilityFetch(DEUT_6_4));
   ctx.getTranslationAvailability('Deuteronomy 6:4');
   const again = ctx.getTranslationAvailability('Deuteronomy 6:4');
-  assert.equal(ctx.fetched.length, 1);
+  assert.equal(ctx.fetched.length, 3, 'metadata, catalog and text once, then the cached result');
   assert.equal(again.versions['Yehoash Yiddish Translation [yi]'], false);
 });
 
@@ -88,10 +103,10 @@ test('a lookup that fails or returns no versions is "unknown" (null), never "una
 });
 
 test('a title shared by two languages is available if either has text', () => {
-  const ctx = loadServer(() => response(200, {
+  const ctx = loadServer(availabilityFetch({
     versions: [
-      { versionTitle: 'Same', language: 'he', text: '' },
-      { versionTitle: 'Same', language: 'en', text: 'x' },
+      { versionTitle: 'Same', language: 'he', languageFamilyName: 'hebrew', text: '' },
+      { versionTitle: 'Same', language: 'en', languageFamilyName: 'english', text: 'x' },
     ],
   }));
   assert.equal(ctx.getTranslationAvailability('Genesis 1:1').versions.Same, true);

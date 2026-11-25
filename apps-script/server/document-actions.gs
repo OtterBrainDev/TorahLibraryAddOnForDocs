@@ -407,23 +407,36 @@ function recoverUnmatchedCitations_(unmatched, fetchAll, docText) {
     });
     if (!batch.length) break;
 
-    let responses;
-    try {
-      responses = fetchAll(batch.map(function (item) {
-        return { url: sefariaTextsUrl_(item.variants[round].spelling), muteHttpExceptions: true };
-      }));
-    } catch (error) {
-      responses = null;
-    }
-    if (!responses) {
-      items.forEach(function (item) {
-        if (item.checked && !item.resolved) item.unavailable = true;
+    // Ref metadata canonicalizes each spelling and bounds broad refs to one
+    // section before v3 fetches text. Structural headings need no text call.
+    // Keep the original indices: some citations fail metadata or are headings
+    // while their peers in the same round need a second, content-only batch.
+    const outcomes = resolveLinkerRefPlans_(batch.map(function (item) {
+      return item.variants[round].spelling;
+    }), fetchAll);
+    const textPlans = [];
+    outcomes.forEach(function (plan, b) {
+      if (plan.textRef) {
+        textPlans.push({ index: b, ref: plan.textRef, indexTitle: plan.indexTitle });
+      }
+    });
+    if (textPlans.length) {
+      let textResponses;
+      try {
+        textResponses = fetchAll(textPlans.map(function (plan) {
+          return { url: sefariaTextsUrl_(plan.ref), muteHttpExceptions: true };
+        }));
+      } catch (error) {
+        textResponses = null;
+      }
+      textPlans.forEach(function (plan, t) {
+        outcomes[plan.index] = interpretTextsResponse_(
+          Array.isArray(textResponses) ? textResponses[t] : null, plan.ref, plan.indexTitle);
       });
-      break;
     }
 
     batch.forEach(function (item, b) {
-      const outcome = interpretTextsResponse_(responses[b]);
+      const outcome = outcomes[b];
       if (outcome.unavailable) {
         item.unavailable = true;
         return;
@@ -473,6 +486,48 @@ function recoverUnmatchedCitations_(unmatched, fetchAll, docText) {
   return { recovered: recovered, unmatched: stillUnmatched };
 }
 
+/** Resolve a batch's metadata, following complex default nodes at most 4 times. */
+function resolveLinkerRefPlans_(refs, fetchAll) {
+  const outcomes = refs.map(function () { return { unavailable: true }; });
+  let pending = refs.map(function (ref, index) {
+    return { ref: ref, index: index, visited: [ref], indexTitle: '' };
+  });
+  for (let depth = 0; depth < 4 && pending.length; depth++) {
+    let responses;
+    try {
+      responses = fetchAll(pending.map(function (item) {
+        return { url: sefariaRefUrl_(item.ref), muteHttpExceptions: true };
+      }));
+    } catch (error) {
+      responses = null;
+    }
+    if (!Array.isArray(responses)) break;
+    const following = [];
+    pending.forEach(function (item, i) {
+      let plan;
+      try {
+        plan = interpretSefariaRefResponse_(responses[i]);
+      } catch (error) {
+        plan = null;
+      }
+      if (!plan) return;
+      const indexTitle = plan.indexTitle || (plan.resolved && plan.resolved.indexTitle) || '';
+      if (item.indexTitle && indexTitle && item.indexTitle !== indexTitle) return;
+      if (plan.nextRef) {
+        if (item.visited.indexOf(plan.nextRef) >= 0) return;
+        following.push({
+          ref: plan.nextRef, index: item.index,
+          visited: item.visited.concat([plan.nextRef]), indexTitle: item.indexTitle || indexTitle
+        });
+      } else {
+        outcomes[item.index] = plan;
+      }
+    });
+    pending = following;
+  }
+  return outcomes;
+}
+
 // "Duplicate A: Genesis 2:1", "Source 1: בראשית ב:א": up to 40 characters of
 // label, a colon, a space, then a letter.
 var LINKER_CITATION_LABEL_RE_ = /^([^:\n]{1,40}?):\s+(?=[A-Za-z\u05D0-\u05EA])/;
@@ -503,14 +558,27 @@ function narrowLabelledCitation_(entry, docText) {
 }
 
 /** One texts-API response as {resolved}, {error}, or {unavailable}. */
-function interpretTextsResponse_(response) {
+function interpretTextsResponse_(response, expectedRef, expectedIndexTitle) {
   if (!response) return { unavailable: true };
-  const status = response.getResponseCode ? response.getResponseCode() : 200;
-  if (status === 429 || status >= 500) return { unavailable: true };
-  const data = parseJsonOrNull_(response.getContentText());
-  // The same test the sidebar applies (resolveReferenceWithFallbacks).
-  if (status < 400 && data && data.ref && !data.error) return { resolved: data };
-  return { error: (data && typeof data.error === 'string') ? data.error : '' };
+  try {
+    const status = response.getResponseCode ? response.getResponseCode() : 200;
+    if (status === 429 || status >= 500) return { unavailable: true };
+    const data = parseJsonOrNull_(response.getContentText());
+    const apiError = (data && typeof data.error === 'string') ? data.error : '';
+    if (status >= 400 || apiError) return { error: apiError };
+    // Batch recovery bypasses fetchReference_, so it must normalize the v3
+    // payload too. A malformed successful response is an unavailable service,
+    // never evidence that the citation does not exist.
+    const resolved = normalizeSefariaV3TextResponse_(data);
+    if (!resolved || !resolved.ref ||
+        (expectedRef && resolved.ref !== expectedRef) ||
+        (expectedIndexTitle && resolved.indexTitle !== expectedIndexTitle)) {
+      return { unavailable: true };
+    }
+    return { resolved: resolved };
+  } catch (error) {
+    return { unavailable: true };
+  }
 }
 
 /** A review-table candidate from a texts-API payload, like buildLinkerCandidate_. */
