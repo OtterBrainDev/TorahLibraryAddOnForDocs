@@ -48,7 +48,7 @@ test('schema 32 keeps existing insertion behavior, preserves a chosen Notes mode
     const env = server(initial);
     assert.equal(env.ctx.getDefaultPreferences().source_notes_mode, 'omit');
     assert.equal(env.ctx.runUserPreferenceMigrationsIfNeeded_(), true);
-    assert.equal(env.store.prefs_schema_version, '32');
+    assert.equal(env.store.prefs_schema_version, env.ctx.PREFS_SCHEMA_CURRENT_);
     assert.equal(env.store.source_notes_mode, chosen || 'omit');
     assert.equal(env.store.source_emphasis_mode, 'only', 'Commentary is independent');
     const before = env.writes.length;

@@ -8,10 +8,12 @@ snapshots; opt-in live API checks separately cover Sefaria responses. Neither
 kind of automated check holds a `DocumentApp` handle or proves that this HEAD
 works in the Apps Script sidebar and a real document.
 
-**Version under test:** 2.0.0 · **preference schema:** 32 (both from
+**Version under test:** 2.0.0 · **preference schema:** 33 (both from
 `docs/VERSION.json`)
 Confirm both before starting — *Help & Support → About* should read
-**Current line: 2.0**. If it says anything else, the push did not land.
+**Current line: 2.0**. This confirms the release line only: record the exact
+commit pushed to the Apps Script project and the test deployment used. The
+About label alone cannot distinguish two builds on the same release line.
 
 It asks whether each change in the v2.0.0 changelog entry landed.
 [`walkthroughs/1-stress-test.md`](walkthroughs/1-stress-test.md) goes further,
@@ -25,7 +27,7 @@ a user has before they open 2.0.0:
 - **Account A — upgrading tester.** Had a development build of this add-on
   with preferences they changed: a font, a divine-name rule, a layout. Do **not** reset
   preferences. This is the account that proves the migrations (schemas up to
-  32) keep what users chose. Take a screenshot of Preferences before the push.
+  33) keep what users chose. Take a screenshot of Preferences before the push.
 - **Account B — fresh install.** A Google account that has never had the
   add-on. Proves `onInstall` seeds correctly, builds the menu and shows the
   first-run setup. Resetting preferences on Account A is *not* a substitute:
@@ -357,7 +359,8 @@ passing the API migration checks alone does not mark those fixes complete.
 
 Added 2026-11-24 for branch `fix/edition-commentary-notes-20261124`, based on
 the v3 migration. **All checks below are pending in Google Docs.** Use a HEAD
-deployment containing both changes, record its commit and schema **32**, and
+deployment containing both changes, record its commit and schema (**32** for
+the A–D branch; **33** when the launch-defaults follow-up is included), and
 compare the selected edition names, sidebar preview and inserted document.
 The offline and live API tests do not replace these checks.
 
@@ -383,6 +386,29 @@ Apps Script deployment or release is implied by this section's presence.
 
 ---
 
+## P. Launch compatibility and defaults review (pending)
+
+Added 2026-11-24 for `review/launch-defaults-help-20261124`, schema **33**.
+These cases supplement N and O. They remain **NOT RUN in Google Docs**;
+offline coverage and live Sefaria API checks are recorded in
+[the handoff](sefaria-api-migration.md#launch-review--compatibility-defaults-and-documentation).
+
+| # | Starting state and action | Expected / evidence to record |
+| --- | --- | --- |
+| P1 | Preview and insert `Rashi on Genesis 1:2:1`; explicitly select only the translation, then only the source, named **Pentateuch with Rashi's commentary by M. Rosenbaum and A.M. Silbermann, 1929-1934** | Both Hebrew and English stay present, with their own role metadata and credit, even though the edition titles are identical. Record selected titles, preview and inserted text. |
+| P2 | Start with Both and selected editions, then encounter a missing selected edition. Switch to the single-language output whose edition is available; switch back to Both | The usable language recovers after a fresh response. Returning to Both revalidates the missing edition and keeps Add Source disabled until resolved. No stale preview becomes insertable during the switch. Record the exact passage and editions used. |
+| P3 | Account A: upgrade from schema 32 with non-default Voices output/transliteration, Lexicon output, Commentary and Notes. Open an inactive old profile, then return | All valid saved choices survive; a never-set workflow has Citation / None / Full entry defaults. If an older test profile contains the generated `undefined` value, only that invalid value is repaired. Capture before/after values. |
+| P4 | In an authorized test account, change the three workflow modes, Commentary and Notes, then use Reset To Defaults; export Text and layout and reopen the sidebar | Voices Citation, Voices transliteration None, Lexicon Full entry, Commentary Default and Notes Omit agree in Preferences, export and sidebar. The chosen Simple / Everything interface remains unchanged. Restore the test account's original settings afterward. |
+| P5 | Choose a confirmed partial edition over a range; record the exact passage and edition, compare it on Sefaria, and inspect Line by line on/off | Missing segments stay gaps and are not borrowed from another edition. A listed edition is not a guarantee of complete coverage. Check Help's explanation; there is no per-verse completeness notice in this build. |
+| P6 | Time the first preview, a repeated lookup and an edition change; run a representative Link Texts scan on a test document | Record actual time and any Apps Script quota/timeout error, browser and exact HEAD commit. Metadata preflight adds work; API-only timings do not establish sidebar performance. Do not assign a pass without observing the core tasks complete. |
+| P7 | Follow the returning-user and new-user scripts, open Help → About → What's new, and follow a Help link to the Notes guidance | Labels match the implemented UI, the supported commentary editions and Notes choices are clear, saved defaults are distinguished from session changes, and no page promises exact pagination or a preview of every selected translation. No new sidebar grouping is claimed. |
+
+Record results and failures in the existing table below, identifying N/O/P
+case IDs. Neither this section nor source-updated tutorials establish a
+tested deployment or a completed demonstration recording.
+
+---
+
 ## Reporting back
 
 For anything that fails, the useful report is:
@@ -394,7 +420,7 @@ For anything that fails, the useful report is:
 4. Which account (A upgrading / B fresh / C from version 1.0), the
    interface (Simple / Everything) and the scan mode in effect
 
-State the version too: **2.0.0, schema 32**, and the exact tested commit. "It broke" is not checkable
+State the version too: **2.0.0, schema 33**, and the exact tested commit. "It broke" is not checkable
 later; the version and the check id are.
 
 ---

@@ -148,9 +148,14 @@ function hasRenderableText(value) {
 // Texts v3 can return a valid ref with just one requested edition, or an
 // edition whose passage is empty. A successful RPC alone must never make a
 // different edition insertable under the user's still-selected title.
-function getUnavailablePreviewVersions(response, versions) {
+function getUnavailablePreviewVersions(response, versions, outputMode) {
   var unavailable = [];
+  var mode = outputMode || $('.output-mode-selection').val() || 'both';
   [['en', 'versionTitle', 'text'], ['he', 'heVersionTitle', 'he']].forEach(function (fields) {
+    // An unused translation cannot block a source-only insertion, nor an
+    // unused source edition a translation-only insertion. Both still needs
+    // each explicitly selected edition, even when the API succeeds partly.
+    if ((mode === 'he' && fields[0] === 'en') || (mode === 'en' && fields[0] === 'he')) return;
     var requested = String((versions && versions[fields[0]]) || '');
     if (requested && (String((response && response[fields[1]]) || '') !== requested ||
         !hasRenderableText(response && response[fields[2]]))) {
@@ -158,6 +163,23 @@ function getUnavailablePreviewVersions(response, versions) {
     }
   });
   return unavailable;
+}
+
+// A display change can recover from a missing unused edition. Going back to
+// Both must validate that edition again before insertion is re-enabled; an
+// old, partially successful payload is not enough for the newly chosen mode.
+function refreshPreviewForOutputMode() {
+  if (appMode !== 'texts') return;
+  if (!hasResolvedReference || !data || !data.ref) {
+    if (selectedRefValue) refreshSelectedResult();
+    return;
+  }
+  var versions = selectedPreviewVersions(data.ref);
+  if (getUnavailablePreviewVersions(data, versions).length) {
+    refreshSelectedResult();
+    return;
+  }
+  updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
 }
 
 // An options refresh and an edition click have the same exact-edition rule.

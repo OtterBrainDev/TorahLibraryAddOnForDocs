@@ -94,6 +94,18 @@ check('exact alternate source edition', () => {
   assert.ok(ctx.versionHasText_(d.he) && ctx.versionHasText_(d.text));
   return { ref: d.ref, source: d.heVersionTitle };
 });
+for (const role of ['en', 'he']) {
+  check('bilingual shared title with only ' + role + ' selected', () => {
+    const title = "Pentateuch with Rashi's commentary by M. Rosenbaum and A.M. Silbermann, 1929-1934";
+    const d = ctx.findReference('Rashi on Genesis 1:2:1', { [role]: title });
+    assert.equal(d.versionTitle, title);
+    assert.equal(d.heVersionTitle, title);
+    assert.ok(ctx.versionHasText_(d.he) && ctx.versionHasText_(d.text));
+    assert.equal(d.sourceVersion.actualLanguage, 'he');
+    assert.equal(d.translationVersion.actualLanguage, 'en');
+    return { ref: d.ref, selectedRole: role, sharedTitle: title };
+  });
+}
 check('literal edition-title whitespace', () => {
   const title = 'The Philosophical Tanakh ';
   const d = ctx.findReference('Genesis 1:1', { en: title, he: sourceTitle });

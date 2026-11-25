@@ -3,6 +3,11 @@
 Written 2026-11-17 against the 2.0.0 release candidate (816 tests passing,
 `pre_clasp_qc.sh` clean, preference schema 31).
 
+Current source update, 2026-11-24: the v3, Commentary/Notes and launch-defaults
+changes are recorded in [the project handoff](sefaria-api-migration.md).
+The current schema is 33; the date and test count above describe the original
+review. Deployment and release approval remain separate.
+
 This add-on grew out of *Sefaria for Google Docs* 1.0 (Shlomi Helfgot's code,
 MIT). It was first set up to be published by The Merkaz as a separate add-on
 called Torah Library. **As of 2026-11-20 it is named Sefaria for Google Docs
@@ -190,6 +195,11 @@ links. Finish with `npm ci && npm test` (0 failing, **0 skipped**) and
 - [ ] `clasp push` to the project's HEAD, then **Deploy → Test deployments**
 - [ ] `docs/live-test-checklist-2.0.0.md` run against that test deployment,
       plus the in-place upgrade run described in section 1
+- [ ] In particular, checklist N (v3 and edition identity), O (selection,
+      Commentary and Notes), and P (launch compatibility and defaults)
+      verified against the reviewed HEAD. The updated
+      tutorial scripts are source-supported; new screenshots or recordings
+      are not established by the code or local API checks
 - [ ] Privacy policy and terms published at URLs Sefaria controls; the in-app
       links, the OAuth consent screen and the listing all point to the same
       ones
@@ -214,8 +224,11 @@ procedure in full.
 profile (`grep -rn "getActiveUser\|getEffectiveUser\|getEmail" apps-script/`
 is empty).
 
-**Where data goes.** Every server request (10 `UrlFetchApp.fetch` calls and 2
-`fetchAll`) goes to `www.sefaria.org`; user input is URL-encoded. There is no
+**Where data goes.** Server requests go to `www.sefaria.org`; user input is
+URL-encoded. Passage retrieval uses Texts v3, while Ref, Versions, search,
+sheets, dictionaries and citation detection retain their own supported
+endpoints. The [migration handoff](sefaria-api-migration.md) records exact
+routes, edition-gap policy and pending live validation. There is no
 server of the publisher's, no account and no analytics. *Link Texts with
 Sefaria* is the one feature that sends document text: by default only passages
 that look like they hold a citation, after a one-time confirmation. Details:

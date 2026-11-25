@@ -516,8 +516,16 @@ function normalizeSefariaV3TextResponse_(payload, versions) {
       return matches.filter(function (v) { return sefariaVersionRole_(v) === role; })[0] || matches[0] || null;
     }
     let candidates = payload.versions.filter(function (v) { return sefariaVersionRole_(v) === role; });
-    const otherTitle = String((versions && versions[role === 'he' ? 'en' : 'he']) || '');
-    if (otherTitle.trim()) candidates = candidates.filter(function (v) { return v.versionTitle !== otherTitle; });
+    const otherRole = role === 'he' ? 'en' : 'he';
+    const otherTitle = String((versions && versions[otherRole]) || '');
+    if (otherTitle.trim()) {
+      const otherMatches = payload.versions.filter(function (v) { return v.versionTitle === otherTitle; });
+      const otherEdition = otherMatches.filter(function (v) { return sefariaVersionRole_(v) === otherRole; })[0] || otherMatches[0];
+      // One bilingual publication can use the same title for its Hebrew and
+      // English editions (Rosenbaum/Silbermann's Rashi does). Exclude only the
+      // actual edition chosen for the other role, never every matching title.
+      candidates = candidates.filter(function (v) { return v !== otherEdition; });
+    }
     candidates = candidates.slice().sort(function (a, b) {
       function preferred(v) {
         return role === 'he' ? (v.isPrimary === true ? 1 : 0) :

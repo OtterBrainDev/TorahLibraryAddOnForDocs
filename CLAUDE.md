@@ -175,7 +175,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **977 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **993 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -185,7 +185,10 @@ and fix it before touching the feature you came to change.
 - `attribution.test.js` — attribution-line formatting.
 - `hebrew-preferences.test.js` — Hebrew display filters, divine-name
   replacements, transliteration, search payload shape.
-- `migrations.test.js` — the UserProperties schema migrations.
+- `migrations.test.js` — the UserProperties schema migrations; every SETTINGS
+  key has a defined canonical default. Schema 33 supplies the existing Voices
+  and Lexicon workflow defaults and repairs only their old generated
+  `undefined` sentinel, preserving valid saved choices.
 - `menu-layout.test.js` — the customizable add-on menu: default layout
   matches the pre-customization menu, Preferences and Help are always last,
   dividers collapse, stored layouts are normalized; the Menu Bar's labelled
@@ -251,7 +254,8 @@ and fix it before touching the feature you came to change.
 - `source-text.test.js` — one generated server/browser processor: semantic
   notes, ordinary superscripts, exact Davidson and Silverstein profiles,
   unknown editions, nested/malformed brackets per verse, safe generated HTML
-  and real captured edition fixtures. Notes is independent of Commentary.
+  and real captured edition fixtures. Notes is independent of Commentary;
+  image descriptions are escaped text, with no external image request.
 - `source-notes-settings.test.js` — schema 32, Omit default, session overrides,
   settings/profile migration and import, shared Layout controls, Link Texts
   and immediate single/multi insertion RPC payloads.
@@ -301,11 +305,15 @@ and fix it before touching the feature you came to change.
 - `sefaria-v3.test.js` — real captured v3 and Ref payloads, exact editions and
   credit, French/Yiddish and source roles, bounded books/default nodes, ranges,
   metadata caching, nullable segments and unavailable/mismatched responses.
+  Hebrew and English editions may share a title: exclude the selected edition
+  itself from the other role, not every edition carrying that title.
   The opt-in `node tools/check-sefaria-v3.js` checks live Sefaria through the
   production server helpers, separately from the offline suite and from Docs.
 - `preview-version-unavailable.test.js` — a v3 partial/missing edition reply
   keeps the version pickers, disables insertion and shows plain-text help;
-  a later valid choice recovers, and stale replies cannot replace it.
+  a later valid choice recovers, and stale replies cannot replace it. A missing
+  unused role cannot block single-language output; switching to Both
+  revalidates its required editions before enabling insertion.
 - `punctuation.test.js` — the Hebrew and translation "Punctuation: Off"
   settings: what is stripped (sof pasuq, paseq, {פ}, maqaf → space) and kept
   (ר', רש"י, G-d, 3:16, tags, entities), the two toggles independent, refs

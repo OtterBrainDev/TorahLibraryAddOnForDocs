@@ -6,6 +6,10 @@ project behind its existing listing (path A in
 [`for-sefaria-review.md`](for-sefaria-review.md) §1). Sefaria's approval and
 the release date are not established.
 
+Source copy reconciled on 2026-11-24 for edition selection, Commentary and
+Notes. In-place upgrade behavior and the new Google Docs checks still need
+live verification before this notice is sent.
+
 ---
 
 **Subject: Sefaria for Google Docs 2.0: you'll be asked to authorize one new permission**
@@ -31,7 +35,8 @@ available instead. On a school or workplace account, your administrator may
 need to approve the permission first.
 
 **What's new.** Saved preferences, more layout and formatting choices,
-dictionary and source-sheet search, and a preview before a source is inserted.
+dictionary and source-sheet search, a preview before a source is inserted,
+and separate choices for supported inline commentary and marked footnotes.
 
 **When you first open the sidebar**
 
@@ -43,6 +48,13 @@ dictionary and source-sheet search, and a preview before a source is inserted.
   naming the edition and its license.
 - Selecting a search result now shows a preview. Click **Add Source** to
   insert it.
+- Leave **Commentary** on **Default** to preserve the edition's explanation
+  and markings. **Notes** starts on **Omit**, preserving the previous
+  inserted output; choose Inline or Separate under Layout to include marked
+  footnotes. Separate creates an ordinary Notes text section.
+- Your chosen translation and Hebrew edition stay selected when you change
+  insertion options. An edition's missing verses stay missing instead of
+  being filled from a different edition. Choose another in Versions if needed.
 - **Insert Source from Selection** replaces the highlighted citation by
   default. To keep the citation and insert below it, change this in
   Preferences → Insertion.

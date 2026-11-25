@@ -9,6 +9,12 @@ deliberately does things a real user will eventually do by accident: odd cursor
 positions, awkward references, editing while a dialog is open, old
 preferences, slow networks. Run the checklist first; start this once it passes.
 
+This script is reconciled with the current source, not a completed live run.
+The v3/edition cases in checklist N, Commentary/Notes cases in checklist O,
+and launch compatibility/defaults cases in checklist P
+remain release gates. Record their results against the deployed commit;
+preserve prior failures and append retest evidence.
+
 Every step has three parts:
 
 - **Do**: the action.
@@ -146,7 +152,7 @@ preview, then insert.
 | 3.6 | `Genesis` (whole book), then `Mishneh Torah` | `Genesis`: opens at chapter 1 — preview and title say *Genesis 1*, and **Add Source** inserts that chapter only (kept by decision; a one-chapter book such as `Obadiah` inserts whole, as intended). `Mishneh Torah`: not insertable; the sidebar says to pick a passage and **Add Source** is disabled. | A 50-chapter insert, a timeout, or a title that says *Genesis* over chapter 1 alone. |
 | 3.7 | `Mishneh Torah, Shabbat 1:1` and `Hil. Shabbat 1:1` | Both resolve to the same passage. | The abbreviated form resolving to something else. |
 | 3.8 | `Hil. Avodah Zarah 12:11` | Mishneh Torah suggested **first**; the Talmud tractate lower. | The tractate first (an abbreviation silently retargeted). |
-| 3.9 | `Shulchan Arukh, Orach Chayim 1:1` | Resolves. Note whether commentary text appears (it shouldn't; `commentary=0`). | Commentary mixed into the body. |
+| 3.9 | `Shulchan Arukh, Orach Chayim 1:1` | Resolves to that work's text; the v3 reader does not append linked commentary works. Inline notes and annotations belong to the chosen edition and follow its supported rules. | A linked commentary work mixed into the body, or source words deleted by an unsupported commentary inference. |
 | 3.10 | `Rashi on Genesis 1:1:1` | Resolves. Bold heading words (דיבור המתחיל) stay bold. | Raw `<b>` tags, or emphasis flattened. |
 | 3.11 | A Siddur node: search `Siddur Ashkenaz` and drill in | Structural levels explain they aren't insertable; a leaf inserts. | A structural node that inserts nothing, or throws. |
 | 3.12 | `Zohar 1:1a` | Resolves or gives a clear no-result message. | Blank panel. |
@@ -171,7 +177,7 @@ preview, then insert.
 | 4.2 | Same, with the Translation section's **Link title to Sefaria** on | Each title opens *that* translation on sefaria.org. | Every link opening the default translation. |
 | 4.2a | Both languages, Stacked. Source section's **Link title to Sefaria** on, Translation's off; insert. Then the reverse | Only the Hebrew title linked, then only the translation title. Each title keeps its own **Title font** whether linked or not; a linked title takes its linked style (Preferences → Insertion, that title's **Title font**) only while that title's **Hyperlink formatting override** is on (the default). | One switch linking both titles; a linked title losing its font with the override off. |
 | 4.2b | Both titles linked. Preferences → Insertion → the Translation section's **Name the translation in the title** (under **Link title to Sefaria**) off; insert. Then the Source section's **Name the edition in the title** | First: the translation title is just `Genesis 1:1`, still linked and in its linked style, and the Hebrew title still names its edition. Then the Hebrew title is just the reference too. With three translations and the switch off, each title reads `Genesis 1:1 (Version)`. | The switch changing both titles; the link or linked style lost with the label; multi-translation blocks with identical titles. |
-| 4.3 | Look for a translation that doesn't cover the verse (a partial translation) in the list; then turn on Preferences → Search → Advanced → **Show unavailable translations** | Not listed. With the switch on, listed greyed out *unavailable for this ref*, and it can't be picked. If one gets through (the availability lookup failed) and is inserted, it is skipped, reported, and removed from the list. | An empty block, or a duplicate of the default translation; a language unticked in Translation Languages listed anyway. |
+| 4.3 | Look for a catalogued translation with no text for the verse; turn on Preferences → Search → Advanced → **Show unavailable translations**; also inspect a partially translated range | Known empty translations are hidden, then greyed out when requested. A missing catalog entry need not appear at all. A partially translated range keeps its gaps; no borrowed verses. An unavailable edition needed for Display leaves the pickers visible and Add Source disabled; choose another to recover. Multi-insert skips and reports unavailable translations. | An empty block under a valid credit, substituted default text, a claim that availability guarantees every verse, or a language unticked in Translation Languages listed anyway. |
 | 4.4 | Multi-select, then switch Arrangement to **Right–Left** | Blocked, or reduced to one translation with a message. | Several translations crammed into one table cell, or silently dropped. |
 | 4.5 | Preferences → Insertion → Insertion Defaults → Translation → **Language**: **French**; search `Genesis 1:1` | A French translation if one exists; otherwise a fallback that is clearly labelled. | English inserted with no indication. |
 | 4.6 | Pick a non-default **Original Versions** Hebrew edition; insert Hebrew only | The credit block names *that* edition and its license. | The credit naming the default edition. |
@@ -189,10 +195,10 @@ preview, then insert.
 | 5.3 | Title style → **Heading 2**; insert three sources; Insert → Table of contents | All three titles in the TOC. | Title font forced over the heading style. |
 | 5.4 | Set a translation text colour and highlight; insert; reset both to **Auto/None**; insert | Applied, then not applied. | Colour sticking after reset; black text forced. |
 | 5.5 | File → Page setup → a dark page colour; insert with default colours | Text inherits the document; nothing forced black. | Black text on the dark page. |
-| 5.6 | Preferences → Insertion → **Commentary** → *Advanced: how the kept bold and italics look*: bold → blue, no bold. Insert `Berakhot 2a` (Steinsaltz) | Talmud words blue, not bold. | Nothing blue; or the title also blue. |
+| 5.6 | Preferences → Insertion → **Commentary** → *Advanced: how the kept bold and italics look*: bold → blue, no bold. Insert `Berakhot 2a`, **William Davidson Edition - English** | Talmud words blue, not bold. | Nothing blue; or the title also blue. |
 | 5.7 | **Commentary** → **Combine**; insert the same | Every word, no bold; *Shema* and *teruma* still in italics. | Leftover bold; italics removed. |
 | 5.7a | 📰 Insertion Options → Translation section → **Commentary** → **Drop**; insert `Berakhot 2a` both languages, then translation only | Translation: only the bold words (the Talmud's own, *Shema* still in italics), line markers kept, lines with no bold left out. The preview shows the same words before inserting (without line numbers). The Hebrew/Aramaic is inserted whole, with its own bold (מֵאֵימָתַי) kept. | Empty insert; Steinsaltz's explanation left in, in the insert or the preview; an italic word kept from the explanation, or italics removed from the bold; Hebrew cut down to its bold words. |
-| 5.7b | **Commentary** → **Combine**; insert `Mishnah Berakhot 1:1`, both languages | Translation without bold, its italics kept; the Hebrew's opening מֵאֵימָתַי still bold. | The Hebrew's bold dropped too (the setting is the translation's only). |
+| 5.7b | **Commentary** → **Combine**; insert `Mishnah Berakhot 1:1`, both languages, recording the exact translation | An edition without a registered commentary convention keeps its words and source emphasis. The Hebrew keeps its own emphasis. | Arbitrary translation bold removed because Combine was selected, or Hebrew filtered by Commentary. |
 | 5.8 | Vowels **Off**, Cantillation **Tanakh**; insert `Genesis 1:1` | Cantillation kept, vowels gone, sof pasuq **׃** and paseq **׀** kept. | Punctuation stripped with the vowels. |
 | 5.9 | Preferences → Insertion → **Vowels: Tanakh**; save. Insert `Mishnah Berakhot 1:1` and `Genesis 1:1`. Then click **Off** and **Tanakh** again, save, and reopen | Mishnah without niqqud, Genesis with. After reopening, **Tanakh** is still selected. | **K8 (fixed):** *Tanakh* lost when Vowels changed. |
 | 5.9a | Cantillation **Torah**; insert `Genesis 1:1` and `Isaiah 40:1`. Then **Tanakh** | *Torah*: marks on Genesis only. *Tanakh*: on both. An account that had an old stored `"torah"` shows **Tanakh** (schema 24 rewrote it). | Torah-only applied to Isaiah; an upgrader's setting changing meaning. |
@@ -263,7 +269,7 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
 | 7.18 | Run; open the panel without changing anything | Collapsed by default. Opened, it shows the same controls as the sidebar's 📰 Insertion Options (Layout, then Insertion Format with folded Source and Translation sections), set to your **Preferences** (not the sidebar's session choices), and says *Your defaults*. Revert and Save are disabled. | Session choices from the sidebar; blank controls; the panel missing entirely (it stays hidden only if Preferences couldn't be read). |
-| 7.19 | Set Display **A + א**, Arrangement **Stacked**, Vowels **Off**, **Line numbers** off, Commentary **Combine**; tick **Insert** on paragraph 3's two citations and `Leviticus 19:18`; apply | All three sources: no vowels, no line numbers, the translation without bold (the Hebrew keeps its own). The panel said *Customized for this pass*. Afterwards Preferences → Insertion and the sidebar's 📰 Insertion Options are unchanged. | Any source with your defaults instead; Preferences changed without **Save as defaults**. |
+| 7.19 | Set Display **A + א**, Arrangement **Stacked**, Vowels **Off**, **Line numbers** off, Commentary **Combine**; tick **Insert** on paragraph 3's two citations and `Leviticus 19:18`; apply | All sources: no vowels or line numbers. Combine follows only a registered edition's convention; other editions keep their emphasis. The Hebrew keeps its own. The panel said *Customized for this pass*. Afterwards Preferences → Insertion and the sidebar's 📰 Insertion Options are unchanged. | Generic removal of every translation's bold; a source using saved defaults instead; Preferences changed without **Save as defaults**. |
 | 7.20 | Display **A** (translation only), then **א** | **A**: Arrangement and the Source section (Vowels, Cantillation, Transliteration…) are hidden; Citation, Line numbers and the Translation section stay. **א**: the Translation section is hidden. Back to **A + א** shows both. | Hebrew controls offered for a translation-only insert. |
 | 7.21 | Untick **Replace a citation on its own line**; insert `Leviticus 19:18` | The citation stays and the source goes below it. Preferences' *replaces the selection* is still on. | The citation removed; the preference turned off. |
 | 7.22 | Change two settings, then **↺ Revert to defaults** | Everything back to Preferences; *Your defaults*. | A setting left changed. |
@@ -383,7 +389,7 @@ For each failure, record:
 2. What happened versus **Expect**
 3. Browser console output and the Executions entry (duration, error)
 4. Scan mode and After-linking mode, for anything in section 7
-5. Version: **2.0.0, schema 32** (the v2.0.0 entry in `docs/CHANGELOG.md`), and the commit you pushed
+5. Version: **2.0.0, schema 33** (the v2.0.0 entry in `docs/CHANGELOG.md`), and the commit you pushed
 
 Anything under **Known suspects** that reproduces should get a row in
 [`docs/regression-log.md`](../regression-log.md) and a pinning test when it's

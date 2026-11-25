@@ -1,16 +1,17 @@
 # Sefaria API migration and commentary follow-up
 
 **Observation date:** 2026-11-24. **Scope:** the add-on's text retrieval and
-its response handlers, followed by the authorized A–D fixes. This is the
+its response handlers, followed by the authorized A–D fixes and launch review. This is the
 project handoff; the regression log and live test checklist remain the
 records for bugs and release verification.
 
-**Current artifact:** branch `fix/edition-commentary-notes-20261124`, based on
-`refactor/sefaria-texts-v3-20261124` at `9434795`. The API migration remains
+**Current artifact:** branch `review/launch-defaults-help-20261124`, based on
+`fix/edition-commentary-notes-20261124` at `61805f8`. The API migration remains
 [draft PR #58](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/58);
 the follow-up is [draft PR #59](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/59),
 with implementation commit `3b7d3eb`. Release **2.0.0** is unchanged;
-the notes preference advances the schema to **32**. Nothing in this handoff
+the notes preference introduced schema **32**, and the launch defaults repair
+advances it to **33**. Nothing in this handoff
 establishes an Apps Script deployment, completed Google Docs testing, or a
 Marketplace release.
 
@@ -263,7 +264,148 @@ editions, preservation fallback, and distinction between Commentary and Notes.
   note placement, formatting, selection persistence, and asynchronous refresh
   behavior against the exact reviewed HEAD deployment.
 
-Review this branch after the v3 migration; it is based on that migration
+Review the A–D branch after the v3 migration; it is based on that migration
 so the API work remains a separate change. Next action: review both draft
 changes, then test their exact HEAD in Google Docs using N1–N9 and O1–O14
 before any numbered release.
+
+## Launch review — compatibility, defaults and documentation
+
+The owner requested a further compatibility check, a defaults review,
+sidebar simplification ideas and updated Help/tutorials before merging.
+This work is on a third branch, leaving the two reviewed branches intact.
+
+### Deliberate differences and remaining limits
+
+| Behavior | Consequence for a reader | Decision / evidence |
+| --- | --- | --- |
+| Exact editions keep their own gaps | A partial translation can contain fewer words than the old merged default. An available edition may cover only part of a range. | Keep `fill_in_missing_segments=0` and accurate edition credit. Help and tutorials now explain this; an unavailable edition is different from an incomplete one. There is not yet a per-verse completeness indicator. |
+| Catalogs can be limited to the passage | “Show unavailable translations” cannot reveal an edition that Sefaria omitted from the response. | Help now promises known unavailable entries, not the whole-book catalog. Availability means some text exists, not complete coverage. |
+| Ref metadata precedes a cold passage lookup; exact edition selection may need the Versions catalog | A first lookup has additional HTTP work and another service dependency. | Metadata is cached; text remains fresh. Actual Apps Script latency and quota use require the live launch checks. Local API timing is not a Docs benchmark. |
+| Sefaria chooses default editions by its current priorities | An unpinned default is not a permanent edition guarantee. | The API audit compared six live works and found the same default editions between v1 and v3 in those samples. Select an explicit edition when wording must be reproducible. |
+| Missing selected editions do not silently fall back | The reader can be asked to choose another edition instead of receiving substitute words under the selected title. | Preserve exact edition identity. Single-language output should depend on its required role, and switching back to Both must revalidate. |
+| Commentary acts only on verified edition conventions | Combine or Drop leaves an unsupported edition's words and source emphasis unchanged. | This is the A–D policy, not a v3 API limitation. Help names the three supported profiles and preserves malformed bracket segments. |
+| Marked Notes are Omit by default | Some Default previews show fewer annotations than before; the old insertion path already omitted them. | Preview and insertion now agree. Inline and Separate are explicit alternatives; Separate makes ordinary Notes text, not native Docs footnotes. |
+| Preview is a content preview | Pagination, exact document typography and all inserted translations still need document inspection. Source images and arbitrary HTML styling are not reproduced. | Correct the prior claim that preview is an exact image of insertion. Preserve an image's supplied description as plain text, as the old preview did, without loading the image. |
+
+The primary sources still identify [Texts v1 as deprecated](https://developers.sefaria.org/reference/get-v1-texts)
+and [Texts v3 as the current reader](https://developers.sefaria.org/reference/get-v3-texts),
+without an announced removal date. There is no reason in this review to
+restore a v1 content fallback. Search, sheets, dictionaries and metadata keep
+their own supported API routes.
+
+### Compatibility fixes found in this review
+
+1. A bilingual publication can give its Hebrew and English editions the same
+   title. The normalizer previously excluded all candidates carrying the
+   other selected role's title. It now excludes only that selected edition
+   object, preserving the opposite language. The real regression fixture is
+   `Rashi on Genesis 1:2:1`, **Pentateuch with Rashi's commentary by M.
+   Rosenbaum and A.M. Silbermann, 1929-1934** (both editions Public Domain).
+2. A missing selected edition in an unused language no longer blocks
+   single-language output. The actual Display handler refetches when
+   recovering from a failed preview, and revalidates newly required roles
+   when changing back to Both. Already valid bilingual data is reused.
+3. The new shared text processor now preserves image descriptions that the
+   old preview sanitizer retained. Descriptions are escaped text in preview
+   and insertion; descriptions inside notes follow the Notes choice.
+
+The six direct v1/v3 default-edition comparisons returned matching source
+and translation titles for `Kuzari 1:1`, `Guide for the Perplexed, Part 1 1`,
+`Mishneh Torah, Human Dispositions 1:1`, `Mishnah Berakhot 1:1`,
+`Rashi on Genesis 1:1`, and `Berakhot 2a:1`. These were read-only audit
+requests on 2026-11-24, not a v1 path in shipped code. This sample does not
+establish identical defaults or coverage throughout the library. No default
+selector was changed speculatively.
+
+### Preference defaults
+
+Keep the current text defaults: Both languages, Hebrew on the right, line
+numbers on, line-by-line off, title links and edition credits on, fonts that
+match the document, Commentary Default, Notes Omit and transliteration off.
+Vowels and cantillation remain on where supplied. The existing divine-name
+choice stays intact. Interface defaults are separate: skipping setup keeps
+Everything; the returning-user purpose preselects Simple without changing
+these content rules.
+
+The review found three settings present in `SETTINGS` but absent from
+`getDefaultPreferences()`. Their controls had fallbacks, while Reset and
+profile snapshots did not. Schema **33** supplies the same existing behavior:
+
+| Setting | Canonical default | User-facing result |
+| --- | --- | --- |
+| `voices_insert_mode_default` | `reference` | Voices: Citation |
+| `voices_translit_default` | `none` | Voices transliteration: None |
+| `lexicon_insert_mode_default` | `entry` | Lexicon: Full entry |
+
+The migration fills absent values and repairs only the literal invalid
+`undefined` value generated by old profiles. Valid stored choices remain
+untouched. Inactive profiles receive the same repair through the existing
+profile migration path. Settings import rejects that invalid value so an old
+file cannot restore it. A regression now requires a defined canonical default
+for every `SETTINGS` key.
+
+One existing distinction remains: the untouched cantillation default uses
+`available` (keep marks where supplied), while explicitly selecting the
+Tanakh button writes the narrower `tanakh` filter. The control maps the former
+to Tanakh because that is where marks normally occur. This pass documents the
+default accurately and does not silently change it for another corpus.
+
+### Sidebar proposal — not implemented in this pass
+
+The source and translation sections already collapse. The visible Layout
+controls, icon-only choices, typography controls mixed with content choices,
+and the distinction between session changes and saved defaults still make a
+long first encounter. The proposed next UI pass is:
+
+| Placement | Controls / information |
+| --- | --- |
+| Always visible at the top | Display, Arrangement when Both is selected, and a short readable summary of the active settings. Add text labels to the icon choices. |
+| Collapsed “Text and notes” group | Vowels, cantillation, punctuation, transliteration, Commentary and Notes, with the existing applicability rules. Notes remains independent of Commentary. |
+| Collapsed “References and numbering” group | Title links, edition labels where offered, source credits, line numbers and line-by-line layout. |
+| Collapsed “Fonts and appearance” group | Existing font controls, retaining the shared editors and “Match the document” behavior. |
+| Persistent session context | Say that changes apply to this sidebar session; keep Revert and Save as defaults visible when changed. |
+
+Closed groups should summarize their active values, especially Notes Inline /
+Separate, Commentary Drop, disabled credits and custom formatting. Closing a
+group must not alter values or cause an extra fetch. Keep one set of controls
+and shared handlers across hosts; this is a presentation change, not another
+stored interface tier or preset. Keep explicit user-hidden controls hidden.
+
+Until that UI pass, the current **Preferences → Sidebar → Insertion Options**
+visibility controls can reduce the sidebar for a particular class. They keep
+using the saved defaults. The owner should review the proposed grouping
+before implementation; current Help/tutorials describe the existing UI.
+
+### Documentation and release boundary
+
+Current Help, About, release notes, README, upgrade guidance, Marketplace
+handoff and tutorial scripts are reconciled to the implemented rules.
+Historical review records retain their original observations and receive a
+superseded notice where they had directed readers toward future v3 work.
+Tutorials are source-checked scripts; no recording or real Docs verification
+is implied. The current version remains **2.0.0 pending release**.
+
+### Launch review validation and next action
+
+- **993 offline tests passed, 0 failed, 0 skipped**, up from 977: eight
+  defaults/reset/profile regressions, six v3/Display regressions and two
+  image-description regressions. Required template snapshot regeneration
+  completed without a snapshot diff. Pre-clasp QC passed; optional clasp
+  status was unavailable because clasp is not installed here.
+- **Two new live production-reader checks passed**, 4 HTTP requests,
+  observed 2026-11-24 at 23:14 Mountain time. Both explicit en-only and
+  he-only choices for the genuine Rashi shared-title edition retain both
+  languages. Reproduce with
+  `node tools/check-sefaria-v3.js 'bilingual shared title'`.
+- Independent review found no blocker in the edition identity, Display
+  recovery/save ordering or escaped image-description changes.
+- **Google Docs checks N1–N9, O1–O14 and P1–P7 remain pending.** Section P
+  adds the launch defaults, partial-coverage, actual latency and updated
+  tutorial checks. Source review and local API calls do not establish a
+  tested Apps Script deployment, a recording or a public release.
+
+Review the third branch after the v3 and A–D changes. Merge order is the API
+migration, then A–D, then this follow-up; test the resulting exact HEAD in
+Google Docs before creating a numbered release. The sidebar grouping above
+is the proposed next UI pass, with no structural redesign applied here.

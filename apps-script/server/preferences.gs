@@ -182,6 +182,11 @@ function getDefaultPreferences() {
     // Marked Sefaria footnotes: omit preserves the previous inserted output.
     // Preview and insertion now share this policy. Inline / Separate are new.
     source_notes_mode: "omit",
+    // Workflow defaults previously existed only in the controls' fallbacks.
+    // Keep them here too so Reset, settings files and profiles agree.
+    voices_insert_mode_default: "reference",
+    voices_translit_default: "none",
+    lexicon_insert_mode_default: "entry",
     // Colour and background are intentionally EMPTY by default: an empty
     // value means "leave the document's own formatting alone". Defaulting to
     // "#000000" would force black text on every user, including those with a

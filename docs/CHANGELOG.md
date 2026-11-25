@@ -10,6 +10,31 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Bilingual edition identity and single-language recovery.** Some Hebrew
+  and English editions share a title, including Rosenbaum/Silbermann's Rashi.
+  Choosing one now retains the other language by edition identity. An
+  unavailable edition in an unused language no longer blocks single-language
+  output; changing Display refetches when needed, and Both revalidates its
+  required editions before enabling Add Source.
+- **Launch defaults completed — schema 33.** Voices starts on Citation with
+  transliteration None, and Lexicon on Full entry. These were already the
+  controls' fallbacks but were missing from the central defaults, so Reset,
+  profiles and settings files could disagree. The migration fills missing
+  values and repairs the literal `undefined` saved by affected older profile
+  snapshots; valid choices stay. Settings imports reject that invalid value.
+  Commentary remains Default and Notes remains Omit; other output defaults
+  are unchanged.
+- **Help and tutorials reconciled.** Help, Support, About, release notes,
+  the user guide and all five walkthroughs explain edition persistence,
+  partial-edition gaps, supported Commentary conventions and independent
+  Notes modes. Preview limits and missing-edition recovery are explicit.
+  The developer walkthrough now describes the v3 adapter and request costs.
+  Tutorial scripts are prepared from source; live Google Docs checks and
+  any updated screenshots or recordings are still to be completed.
+- **Image descriptions preserved.** The shared source processor keeps an
+  image's supplied alternative text in preview and insertion, including
+  images inside marked notes. The note choice still applies. Actual images
+  are not inserted or fetched.
 - **Sefaria Texts v3.** All passage fetching now uses Sefaria's current text
   reader, preserving edition selection, credits and formatting metadata.
   Book references open a bounded section; malformed or mismatched replies
@@ -67,7 +92,7 @@ while the add-on was called Torah Library and keep that name. A settings file
 is still marked `torah-library-settings`, so files exported earlier import;
 its suggested file name is now `sefaria-google-docs-settings.json`.
 
-**Preference schema 31.** A new install starts at schema 31, and so does
+**Preference schema 33.** A new install starts at schema 33, and so does
 anyone coming from Sefaria for Google Docs, which stores no settings. A tester
 upgrading from a development build is migrated on first open; the sections
 below marked *Migration* say what each schema step changes.
@@ -98,8 +123,9 @@ below marked *Migration* say what each schema step changes.
   each edition and its license.
 - **Formatting.** Vowels Off / Tanakh / On; Cantillation Off / Tanakh / Torah;
   Punctuation for each language; transliteration in several styles (*HaShem*,
-  capitalized names); Commentary Default / Combine / Drop for translations
-  such as the Steinsaltz Talmud; fonts that match the document; colour and
+  capitalized names); Commentary Default / Combine / Drop for the Davidson
+  English Babylonian Talmud and Silverstein's Rashi Chumash and Ketuvim;
+  Notes Omit / Inline / Separate for marked footnotes; fonts that match the document; colour and
   highlight; separate source and translation titles; a citation style;
   formatting by translation language; cantillation marks a font lacks are
   borrowed from Noto Hebrew instead of showing as boxes.

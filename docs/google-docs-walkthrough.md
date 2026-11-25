@@ -5,13 +5,17 @@ A walkthrough of the add-on as it is today (v2.0; see the
 the add-on under **Extensions → Sefaria for Google Docs → Help & Support**, or the
 **Help** button at the bottom of the sidebar.
 
+This copy describes the current source. Release and live-test status are
+recorded in the [project handoff](sefaria-api-migration.md); these instructions
+do not establish that a Marketplace release or a recorded tutorial exists.
+
 ## Quick start
 
 1. Put your cursor where the source should go.
 2. Open **Extensions → Sefaria for Google Docs → Texts**. The sidebar opens on the right.
 3. Type a reference — `Genesis 1:1`, `Berakhot 2a`, `בראשית א:א`. Results
    appear as you type.
-4. Click a result. The **Preview** shows exactly what will be inserted.
+4. Click a result. The **Preview** shows the passage with your text choices.
 5. Optional: open **📰 Insertion Options** to choose Hebrew, translation or both, and how
    they are arranged.
 6. Click **Add Source** (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).
@@ -44,8 +48,9 @@ them like any other text.
 **New:** saved defaults (a short setup the first time, where **I've used
 Sefaria for Google Docs** starts from the look you know; Help → Quick start →
 **Run setup again**); arrangement, vowels, cantillation, punctuation,
-transliteration, fonts and heading titles; **Commentary** for translations
-that weave commentary in; Insert Source from Selection; Voices, Lexicon and the
+transliteration, fonts and heading titles; **Commentary** for supported
+Davidson Talmud and Silverstein Tanakh editions; separate **Notes** choices
+for marked footnotes; Insert Source from Selection; Voices, Lexicon and the
 Session Library; several translations at once; settings files (Preferences →
 Advanced) and profiles, one look per class.
 
@@ -157,6 +162,9 @@ needed, a specific Hebrew edition (**Original Versions**). Your preferred
 translation language is set in **Preferences → Insertion → Insertion
 Defaults → Translation → Language**.
 
+Changing Insertion Options keeps the chosen translation, Hebrew edition and
+order of multiple translations. Add Source waits while a refresh is loading.
+
 With **Translation** only, or **Hebrew and translation** in the **Stacked**
 layout, a plain click selects just one translation. Use
 <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click to add or remove individual translations,
@@ -173,12 +181,22 @@ the French translations. The first few letters are enough; capitals, accents
 and vowel points don't matter. A code (*fr*) works too, and so does part of a
 version's title.
 
-A translation with no text for the passage is left out of the list. **Preferences
-→ Search → Advanced → Show unavailable translations** lists those greyed out,
-*unavailable for this ref*. Languages unticked in **Preferences → Search →
-Translation Languages** are left out too.
+A catalogued translation with no text for the passage is left out of the
+list. **Preferences → Search → Advanced → Show unavailable translations**
+shows known unavailable entries greyed out. Sefaria may omit editions from a
+passage's catalog entirely, so this is not necessarily every edition of the
+book. Languages unticked in **Preferences → Search → Translation Languages**
+are left out too.
 
-**🔁 Preview** shows what **Add Source** will insert right now.
+An edition may cover only some verses. Its gaps stay gaps: another edition's
+words are not borrowed under the selected edition's credit. If an edition
+needed for the selected Display is unavailable, the pickers remain visible
+and Add Source waits for a valid choice.
+
+**🔁 Preview** uses the same words, Commentary and Notes rules as insertion.
+Generated line numbers, chapter headings, final document fonts and page
+breaks are checked in the document. With several translations picked, the
+preview lists their names rather than rendering them all.
 
 ## Insertion Options (📰)
 
@@ -203,6 +221,11 @@ controls out of it.
   verse, its transliteration and its translation one after another down the
   page, with several translations in the order picked) and **Line numbers**.
   The Arrangement icons sketch the page each gives with your other settings.
+- **Notes** — **Omit** (the default) leaves out marked source footnotes and
+  their markers in both Hebrew and translation; **Inline** adds their text
+  in parentheses where they occur; **Separate** keeps markers and collects
+  notes under a labelled Notes section below the passage, or below each line
+  with Line by line. These are text sections, not Google Docs footnotes.
 
 **Insertion Format** — two sections, **Source** (the Hebrew) and
 **Translation**. Each folds to one line saying what is set (*Vowels,
@@ -220,7 +243,7 @@ hidden, and with the Hebrew alone the Translation section.
 | **Cantillation** | Source | **Off** / **Tanakh** / **Torah** (the Five Books only). |
 | **Punctuation** | both | Keep the punctuation. Off removes sof pasuq, paseq, {פ}/{ס}, commas and the like; a maqaf becomes a space. |
 | **Transliteration** | Source | Add a transliteration; **Style** under it picks the scheme while it is on (Simple English, Traditional, Modern Israeli, Ashkenazi, Academic, IPA). Side by side, **Position** puts it **Below** the Hebrew, or in a column of its own **Left** or **Right** of it, headed by the Hebrew title in Latin letters (*Bereshit 1:1*, Ashkenazi *Bereishis 1:1*), linked like the Hebrew title. Stacked always puts it under the Hebrew. Read from the fully vowelled text, so it is complete with Vowels off; with the Hebrew's Punctuation off it drops the same punctuation. The Name, and every substitute for it, is written *HaShem*; sentences and the names of people, places and peoples start with a capital (not in IPA). |
-| **Commentary** | Translation | Sefaria sets some translations' direct translation in bold and their commentary in plain text. **Default** keeps that bold; **Combine** drops it, so translation and commentary look the same; **Drop** leaves the commentary out (only the bold is inserted). Italics marks foreign and transliterated words, not commentary, and is kept in every mode. The Hebrew is always inserted whole, with its own. |
+| **Commentary** | Translation | **Default** preserves the edition's explanation and markings; **Combine** keeps its words without the recognized distinction; **Drop** removes recognized explanation. Supported conventions are listed below. Other editions retain their words and source emphasis. This never filters Hebrew; marked footnotes follow Notes independently. |
 
 Vowels, Cantillation, Punctuation and Transliteration change what is fetched:
 the sidebar fetches the passage again, the Preview says *Updating preview…*
@@ -252,18 +275,30 @@ Titles can be set to Heading 1–6 (Layout → **Title style**) so they appear i
 the outline and table of contents. Sefaria's own bold and italics are kept;
 change how they look under **Commentary → Advanced** in Insertion Defaults.
 
-**Commentary: Drop** inserts just the words the translation puts in bold.
-Only bold decides: italics, which marks foreign and transliterated words, is
-kept on the words that stay. For example, Sefaria's
-English Talmud (Steinsaltz) bolds the Talmud's own words and leaves
-Steinsaltz's explanation plain. With **Drop**, the
-Berakhot 2a passage *"**From when does one recite Shema in the evening? From
-the time when the priests enter** to immerse and purify themselves in order
-**to partake of their teruma.**"* is inserted as *"From when does one recite
-Shema in the evening? From the time when the priests enter to partake of their
-teruma."* Line markers are kept. Lines with no bold are left out. A passage
-with no bold anywhere, such as the Aramaic original, is inserted whole.
-**Combine** inserts every word without the bold, italics kept.
+### Commentary and Notes
+
+| Edition | Default | Combine | Drop |
+| --- | --- | --- | --- |
+| **William Davidson Edition - English**, Babylonian Talmud | Bold base translation, plain explanation | All words without source bold | Bold base translation |
+| **The Rashi chumash by Rabbi Shraga Silverstein**, Torah; **The Rashi Ketuvim by Rabbi Shraga Silverstein**, Writings | Additions in square brackets | All words without those brackets | Balanced bracketed additions removed |
+| Other editions | Words and source emphasis retained | Words and source emphasis retained | Words and source emphasis retained |
+
+Retained words keep their italics. In Davidson, a line with no bold is
+removed by Drop when another line has bold; a passage with no bold anywhere
+is kept. Each Silverstein verse is processed separately; if its brackets are
+incomplete or mismatched, that verse stays whole. Drop can leave an abrupt
+sentence: it removes explanation but does not rewrite the edition's prose.
+
+JPS's `[I give]` in Genesis 1:30 is supplied translation, so it stays. A bold
+quotation inside a marked JPS footnote belongs to the note and follows Notes.
+**Commentary: Drop + Notes: Separate** therefore keeps that note under the
+passage. Notes applies to either language; transliteration reads the main
+Hebrew without its marked notes.
+
+Try `Genesis 1:1` with **THE JPS TANAKH: Gender-Sensitive Edition**, changing
+Notes from Omit to Inline to Separate. Then choose Silverstein's Chumash and
+compare the Commentary modes. Check the selected edition name after each
+change and insert a sample to inspect final placement in Google Docs.
 
 ## Voices (source sheets)
 
@@ -280,7 +315,8 @@ link to the sheet), and optionally a **Transliteration**: each Hebrew passage
 is then followed by its transliteration in parentheses; the English and
 comments are not transliterated. The Voices transliteration is its own
 setting, separate from Texts'. Click **Add Sheet**. Defaults live in
-**Preferences → Insertion → Insertion Defaults → Voices**.
+**Preferences → Insertion → Insertion Defaults → Voices**. The starting
+choices are Citation and transliteration None.
 
 ## Lexicon (dictionary)
 
@@ -297,7 +333,7 @@ typed. Each shows its dictionaries and what they say it means.
 - **Pick a word** to list its entries, one per dictionary (and one per meaning
   where a dictionary has two words spelled alike). The first is selected;
   click others to add them, or **Select all**. One always stays selected.
-- **What to insert:** **Full entry** (the word, each dictionary's line, its
+- **What to insert:** **Full entry** (the default: the word, each dictionary's line, its
   numbered senses and notes), **Word + ref** (the word and the dictionaries'
   names) or **Definition** (the senses alone). The preview is an outline;
   **Show the whole entry** opens a long one, and **Copy** copies what will be
@@ -396,6 +432,27 @@ top, **Interface** (Simple / Everything) switches at once, without Save, and
 keeps any changes you haven't saved yet. Simple hides the Search, Linking,
 Advanced and Experimental tabs; Everything shows them, and the Profiles column
 beside the tabs.
+
+### Starting choices
+
+These are the defaults before setup or your own changes. Existing saved
+choices are retained when the add-on updates.
+
+| Setting | Starts on |
+| --- | --- |
+| Display and Arrangement | Hebrew and translation; Hebrew on the right |
+| Line numbers / Line by line | On / Off |
+| Citation credit / title links | On |
+| Commentary / Notes | Default / Omit |
+| Transliteration | Off |
+| Vowels / Punctuation | On |
+| Fonts and sizes | Match the document |
+| Voices | Citation; transliteration None |
+| Lexicon | Full entry |
+
+The returning-user setup choice starts with the familiar bilingual layout
+and Simple interface. It does not reset every setting. To keep an existing
+profile intact, use **Keep my settings** when setup offers it.
 
 | Tab | Contents |
 | --- | --- |

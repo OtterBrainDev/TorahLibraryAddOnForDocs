@@ -96,9 +96,18 @@ The panel's **Insertion Format** card has a **Source** (Hebrew) section and a
 - **Punctuation** (each section its own),
 - **Transliteration**, with its **Style** and, side by side, its **Position**
   (below the Hebrew, or a column of its own left or right of it),
-- **Commentary** (Default / Combine / Drop) for the translation: keep the
-  commentary as Sefaria marks it (translation in bold), run it together with
-  the translation, or leave it out. Italics is always kept.
+- **Commentary** (Default / Combine / Drop) for supported translations:
+  preserve the edition's markings, combine its translation and explanation,
+  or leave out recognized explanation. The William Davidson English
+  Babylonian Talmud uses bold base text; Silverstein's Rashi Chumash and Rashi
+  Ketuvim use bracketed additions. Other editions retain their words and
+  source emphasis, and a verse with malformed brackets stays whole.
+
+**Notes**, under Layout, separately controls marked footnotes in Hebrew and
+translation: **Omit** (the default), **Inline**, or **Separate**. Separate
+adds a labelled Notes text section below the passage, or below each line with
+Line by line; it does not create native Google Docs footnotes. Dropping
+commentary never removes a note requested with Inline or Separate.
 
 Hebrew marks a chosen font lacks (often the cantillation) are set in Noto
 Serif / Sans Hebrew, so they never show as empty boxes.
@@ -107,13 +116,26 @@ Advanced source-edition/version controls remain available for cases where a spec
 
 ### Translation/version handling
 
-The add-on supports:
+Choose one translation or, with Translation only or Stacked, several in
+selection order. Changing Insertion Options keeps the selected translation,
+Hebrew edition and order. The preview waits for the matching text before
+insertion is enabled.
 
-- version-aware translation selection,
-- improved translation label handling,
-- translation filtering,
-- language-aware translation display labels,
-- optional translation details/attribution in inserted output.
+Passage content uses Sefaria Texts v3. The chosen edition supplies its own
+text: missing verses are not filled from a different edition under the same
+credit. A missing or mismatched edition needed for the chosen Display
+requires another choice.
+The edition list reflects Sefaria's catalog for the requested passage and
+may differ between passages. A book name opens a bounded first section;
+the preview title says which passage will be inserted.
+
+The preview uses the insertion rules for words, commentary and notes. It is
+not a complete rendering of a Google Docs page: generated line numbers,
+chapter headings, pagination and the final document font must be checked in
+the document. With several translations selected, it lists their names
+instead of rendering every translation. The
+[migration handoff](./docs/sefaria-api-migration.md) records API scope,
+deliberate behavior changes and pending live checks.
 
 ### Linking features
 

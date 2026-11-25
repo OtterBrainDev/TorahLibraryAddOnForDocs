@@ -49,7 +49,7 @@ var SETTINGS_FILE_EXCLUDED_ = [
 
 // The parts an import offers, in the order the dialog lists them.
 var SETTINGS_FILE_GROUPS_ = [
-  { id: 'text', label: 'Text and layout', help: 'Vowels, cantillation, punctuation, display and arrangement, citation, transliteration, translation language, divine names' },
+  { id: 'text', label: 'Text and layout', help: 'Vowels, cantillation, punctuation, display and arrangement, citation, commentary, marked notes, transliteration, translation language, divine names' },
   { id: 'look', label: 'Fonts, colours and titles', help: 'Every font, size, style, colour and highlight; title and citation styles; linked-title look' },
   { id: 'search', label: 'Search and linking', help: 'Corpus and dictionary order, hidden languages, Link Texts and Insert from Selection' },
   { id: 'menu', label: 'Menu and interface', help: 'The add-on menu, Simple or Everything, the sidebar\'s tabs, Quick Actions and Insertion Options, experimental features' }
@@ -81,6 +81,9 @@ function settingsFileValueOk_(key, value, defaults) {
   if (text.length > PREFERENCE_VALUE_MAX_CHARS_) return false;
   var fallback = defaults[key];
   if (key === 'source_notes_mode') return ['omit', 'inline', 'separate'].indexOf(text) >= 0;
+  // Older profiles could export this generated sentinel because these keys
+  // had no canonical defaults. An old settings file must not reintroduce it.
+  if (['voices_insert_mode_default', 'voices_translit_default', 'lexicon_insert_mode_default'].indexOf(key) >= 0 && text === 'undefined') return false;
   if (typeof fallback === 'boolean') return text === 'true' || text === 'false';
   if (/_font_size$/.test(key)) {
     return text === '' || (/^\d{1,3}(\.\d{1,2})?$/.test(text) && Number(text) > 0 && Number(text) <= 400);

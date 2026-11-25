@@ -194,9 +194,7 @@ $('.output-mode-selection').on('change', function () {
   updateTransliterationVisibility();
   syncDisplayModeCards();
   saveSidebarPreference({ output_mode_default: $('.output-mode-selection').val() });
-  if (hasResolvedReference && data && data.ref) {
-    updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
-  }
+  refreshPreviewForOutputMode();
 });
 
 // The Display and Layout pickers' clicks: initInsertionOptions in

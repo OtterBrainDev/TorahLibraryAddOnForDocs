@@ -15,6 +15,15 @@ evidence than the docs site for *what exists*, but it does not tell us
 Sefaria's deprecation **timeline**. Before acting on §1.2, confirm against
 the developer portal from a machine that can reach it.
 
+> **Current status (2026-11-24):** the API inventory and future-v3 advice
+> below are historical. Passage content has since migrated to Texts v3;
+> search uses `/api/search-wrapper/es8`. The
+> [current migration handoff](sefaria-api-migration.md) records official
+> documentation, live API checks, normalization, exact-edition gaps and
+> remaining Google Docs verification. Multi-translation content requests are
+> still separate; a single batched v3 request was not part of the migration.
+> The original review is preserved below as evidence of its date.
+
 ---
 
 ## 0. Blockers — status

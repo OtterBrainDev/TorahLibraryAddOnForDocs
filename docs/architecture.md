@@ -142,7 +142,9 @@ controls inline.
 `server/sefaria-fetch.gs` reads passage content through Texts v3, resolves
 reference bounds through `/api/ref/`, and uses the Versions catalog for exact
 edition/language-family requests. Its adapter retains the internal `he` /
-`text` and edition metadata contract before display filters run. Link Texts'
+`text` and edition metadata contract before display filters run. A bilingual
+publication may give both roles the same title; identity includes the edition's
+language/role, not the title alone. Link Texts'
 batch recovery uses the same metadata planner and response normalizer, with
 bounded traversal and response-identity checks. Other Sefaria operations
 keep their current routes. See [the migration handoff](sefaria-api-migration.md)
@@ -155,6 +157,8 @@ commentary profiles. `tools/sync-source-text.js` generates the identical
 client implementation at `shared/source-text.html`. Both preview and
 insertion use it. It emits escaped text and a fixed set of formatting tags;
 the existing allowlist sanitizer for other rich-content surfaces is unchanged.
+Image descriptions are plain text in both outputs; images and their URLs are
+never emitted or fetched by this processor.
 Notes are recognized by Sefaria's classes before commentary filtering, so a
 bold footnote lemma cannot erase unbold translation words. `source_notes_mode`
 (schema 32) controls Omit, Inline or a labelled Notes section. It applies to
@@ -171,7 +175,9 @@ Sidebar option refreshes carry the selected translation and source edition,
 including ordered multiple translations. A callback rechecks its request
 ownership after rebuilding the preview; a newer edition request must not be
 overwritten by an older response. The missing-edition guard keeps insertion
-disabled until the chosen editions have matching text.
+disabled until the editions required by Display have matching text. An unused
+role cannot block single-language output; switching to Both revalidates its
+required editions before making a previous partial reply insertable.
 
 ## The search tabs
 

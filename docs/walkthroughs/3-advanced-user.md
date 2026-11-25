@@ -55,16 +55,24 @@ the same for the citation.
 - **Colour and highlight** default to *Auto / None* (your document decides).
   Set a colour on the translation to set it apart from your own commentary.
 - **Commentary** (Translation section): **Default / Combine / Drop.**
-  Sefaria's own bold and italics are kept by default. In the Steinsaltz
-  Talmud the bold marks the Talmud's own words and the plain text is
-  Steinsaltz's explanation: **Combine** drops the bold so the two read as one
-  text, and **Drop** leaves the explanation out, inserting just the Talmud's
-  words. Italics marks foreign and transliterated words (*Shema*), not
-  commentary, so it is kept in all three.
+  Default preserves the edition's words and markings. In the **William
+  Davidson Edition - English** of the Babylonian Talmud, bold marks the
+  Talmud's words and plain text its explanation: Combine removes the bold;
+  Drop keeps the bold base text. Retained words keep their italics.
+  **The Rashi chumash by Rabbi Shraga Silverstein** and **The Rashi Ketuvim
+  by Rabbi Shraga Silverstein** instead mark additions with square brackets:
+  Combine removes those brackets; Drop removes the additions. Other editions
+  keep their words and source emphasis, and a malformed Silverstein verse
+  stays whole. The help under Commentary identifies the current convention.
   **Advanced** under it maps bold to something else, such as blue text
   without bold. The sidebar's Insertion Options has the same control for one
   session. It applies to the translation only; the Hebrew always keeps its
   own bold and italics.
+- **Notes** (Layout): **Omit / Inline / Separate**, independently of
+  Commentary. Omit is the default and leaves out marked source footnotes in
+  either language. Inline includes them in parentheses. Separate collects
+  labelled notes below the passage, or below each line with Line by line.
+  These are ordinary text sections, not native Google Docs footnotes.
 - **Language** (Translation section): the preferred translation language, if
   you don't work in English.
 
@@ -147,7 +155,7 @@ Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
    Hebrew or in a column of its own, left or right of it; the Arrangement
    icons sketch the result.
 3. **Citation** (the edition and license credit) and **Line numbers** are
-   switches under the pickers.
+   switches under the pickers, followed by **Notes**.
 4. **Insertion Format:** the **Source** and **Translation** sections are
    folded to one line saying what's set (*Vowels, Cantillation, Punctuation ·
    Translit*). Open **Source** to see the live sample change as you set:
@@ -170,7 +178,8 @@ Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
    defaults** (at the top of the panel) makes them your Preferences;
    **↺ Revert** goes back to them. After a change to what's fetched (Vowels,
    Cantillation, Punctuation, Transliteration) the preview says *Updating
-   preview…* and **Add Source** waits until it's done.
+   preview…* and **Add Source** waits until it's done. The chosen translation,
+   Hebrew edition and multi-translation order stay selected.
 
 **Several translations at once.** Open **Versions**, choose Display **A** or
 Stacked layout, click one translation, and <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click two
@@ -185,6 +194,22 @@ find one in a long list, type its language in the filter box: *German*,
 
 **A specific Hebrew edition:** **Versions → Original Versions**. The credit
 block under the source names the edition you chose and its license.
+
+**Partial editions:** a listed translation may cover some, but not all, of
+the passage. Missing verses stay missing; the add-on does not borrow another
+edition's words under that credit. If an edition needed for the selected
+Display is unavailable, the notice asks you to choose another and Add Source
+stays disabled.
+Sefaria can also return a different edition catalog for a different passage.
+
+**Optional two-minute comparison:** select `Genesis 1:1`, choose **The Rashi
+chumash by Rabbi Shraga Silverstein**, and compare Default, Combine and Drop.
+Change Vowels once: the edition must stay selected. Next choose **THE JPS
+TANAKH: Gender-Sensitive Edition**,
+and compare Notes Omit, Inline and Separate with Commentary Drop. The main
+verse must remain; the note follows Notes. Insert one example to check
+the note placement in the document; the preview does not show document
+pagination or generated line numbers. Restore your defaults afterwards.
 
 **The credit block** (**Citation**) is on by default. Many Sefaria texts are
 CC-BY or CC-BY-NC, so it's what lets you share the document properly. Switch
@@ -240,7 +265,7 @@ This works on a document you wrote yourself, full of citations you typed.
 5. Want these sources different from your usual? Open **📰 Customize this
    insertion** under the table: the same controls as Insertion Options
    (Display, Arrangement, Citation, Line numbers, both Link title switches,
-   Vowels, Cantillation, Punctuation, Transliteration, Commentary) plus
+   Vowels, Cantillation, Punctuation, Transliteration, Commentary, Notes) plus
    **Replace a citation on its own line**, for this pass only. It says *Your
    defaults* until you change something, then *Customized for this pass*. Try
    **א** with Vowels **Off** for a handout. **💾 Save as defaults** if you want

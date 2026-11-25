@@ -45,8 +45,8 @@ English.
 
 1. Cursor in the document. **Extensions → Sefaria for Google Docs → Texts**.
 2. Type `Genesis 1:1`. Results appear as you type.
-3. Click the result. **New:** the **Preview** shows exactly what will be
-   inserted, with your vowel and divine-name settings already applied.
+3. Click the result. **New:** the **Preview** shows the selected passage,
+   with your vowel and divine-name settings already applied.
    Clicking a result never inserts anything.
 4. **Add Source**.
 
@@ -70,13 +70,16 @@ setup again**.
 
 - **Saved defaults.** Choose once in **⚙︎ Preferences** how sources go in —
   Hebrew, translation or both; arrangement; vowels; fonts — instead of for
-  every source. **📰 Insertion Options** still changes them for one source.
+  every source. **📰 Insertion Options** changes them for this sidebar
+  session; **Save as defaults** keeps those changes for future sessions.
 - **Layout and formatting.** Hebrew on either side or on top; **Vowels**
   (Off / Tanakh / On) and **Cantillation** (Off / Tanakh / Torah);
   **Punctuation** for each language; **Transliteration** in several styles;
   fonts that match your document; titles as Headings, so they show in the
-  outline; **Commentary** for translations that weave commentary in (keep it,
-  combine it, or drop it).
+  outline; **Commentary** for the Davidson English Talmud and Silverstein's
+  Rashi Chumash and Rashi Ketuvim (keep, combine or drop their explanation).
+  Other editions keep their words. **Notes** separately omits marked source
+  footnotes, puts them inline, or collects them under the passage.
 - **Link Texts with Sefaria** shows what it linked, asks when a citation
   could mean more than one text, and tells you what it couldn't link. Tick
   **Insert** on a row to put the source's text in as well; **📰 Customize this
@@ -139,6 +142,24 @@ likely to report as bugs if nobody warns them.
    and footnotes can't hold a source; you'll get a message.
 7. **It asks for fewer permissions.** Version 2.0 doesn't ask to see your
    email address or profile.
+8. **An edition's gaps stay gaps.** The selected edition supplies its own
+   words, without filling missing verses from another translation. Choose a
+   different edition in **Versions** if you need one that covers more of the
+   passage. An unavailable edition needed for your Display shows a notice
+   and keeps Add Source disabled until you choose an available edition.
+9. **Commentary and Notes are separate.** Start with **Commentary: Default**
+   and **Notes: Omit**, the defaults. Default keeps explanation and its
+   markings; Omit leaves out marked footnotes, as the previous insertion
+   path did. A bold quotation in a JPS footnote is controlled by Notes, not
+   Commentary. **Separate** creates a labelled text section, not a native
+   Google Docs footnote.
+
+For the simplest workflow, leave Insertion Options closed after choosing
+Display and Arrangement. **Simple** shortens the menu and search tools; it
+does not reduce the options inside this panel. The Source and Translation
+sections can stay folded. To hide controls you never change, use
+**Everything → Preferences → Sidebar → Insertion Options**, save, then
+return to Simple. Hidden controls continue using your saved values.
 
 Text, links and divine names that version 1.0 already put in a
 document stay as they are. Transform Divine Names, Link Texts

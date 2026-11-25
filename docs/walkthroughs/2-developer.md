@@ -115,7 +115,7 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
 
 1. `textsHTML()` → `openSharedSidebar_('texts')` (`server/menu.gs`).
 2. `HtmlService.createTemplateFromFile('sidebar')` evaluates `sidebar.html`,
-   which `include()`s 48 partials: `shared/ui/head` (CSP, jQuery with
+   which composes its partials with `include()`: `shared/ui/head` (CSP, jQuery with
    SRI), `css/tokens`, `sidebar/js/*`. `template.uiMode = getUiMode_()` lands
    on `<main data-ui-mode="simple|full">`. Server data is embedded as
    `appConfigJson = toEmbeddedJson_(getUiAppConfig_(…))` (`ui_core.gs`). Any
@@ -204,20 +204,32 @@ Executions page (`getSidebarBootstrapData`, `returnTitles`).
      marks stripped, then **citation-abbreviation expansions**
      (`server/citation-abbreviations.gs`: `Hil.` → `Mishneh Torah, Hilchot`).
      An expansion may only **add** words. Dropping one could quietly point the
-     query at a different work that really exists. Each candidate is a
-     `GET /api/texts/{ref}?commentary=0&context=0`.
+     query at a different work that really exists. Ref metadata from
+     `GET /api/ref/{ref}` first validates and bounds a candidate; content
+     comes from `GET /api/v3/texts/{ref}`. A bare book is resolved to a
+     bounded first section before text is requested. Display requests use
+     repeated `version` selectors, `fill_in_missing_segments=0` and
+     `return_format=default`.
    - `findSearchAdvanced(q, …)`: full text,
      `POST /api/search-wrapper/es8` (`server/search.gs`).
 3. Results are grouped: library matches, then search results, then **Close
    matches** (a token-overlap and edit-distance pass over the title list).
    Close matches are never opened automatically.
-4. Everything that renders Sefaria HTML goes through `sanitizeSourceHtml`
-   (`shared/ui/dom.html`). It's an **allowlist** (inline typography only), and
-   its output is re-parsed and must come back the same, or the caller gets
-   escaped text. It replaced a blocklist that mutation XSS got past
-   (`<math><mi><table><mglyph><xmp>…`). The Node tests use linkedom, which
-   can't reproduce parser mutations, so sanitizer changes are also checked in
-   headless Chromium.
+4. Texts preview uses the shared source processor (`server/source-text.gs`,
+   generated into `shared/source-text.html`). It escapes all text and emits
+   only its own inline formatting tags. Other rich-content surfaces use
+   `sanitizeSourceHtml` (`shared/ui/dom.html`), an **allowlist** whose output
+   is re-parsed and checked. It replaced a blocklist that mutation XSS got
+   past (`<math><mi><table><mglyph><xmp>…`). Node's linkedom cannot reproduce
+   browser parser mutations; sanitizer changes require a real browser check.
+
+V3 returns fetched content in `versions[]` and the picker catalog in
+`available_versions`. The adapter keeps those distinct, preserves nested
+segment positions, validates the returned reference and work, and carries
+exact edition metadata into credit and commentary processing. The Versions
+metadata route remains `/api/texts/versions/{indexTitle}`; it is not a v1
+passage request. Search, sheets, dictionaries and citation detection keep
+their own current endpoints. See the [migration handoff](../sefaria-api-migration.md).
 
 **Show:** `test/tests/search-input-normalization.test.js`,
 `citation-abbreviations.test.js`, `sanitize-source-html.test.js`, and the
@@ -242,15 +254,19 @@ later. The **server** then applies, in order, `attachTransliterationSource_`
 Off / Tanakh / On, `teamim` / `teamim_filter` for Cantillation Off / Tanakh /
 Torah), `applyPunctuationPreferences`, `applyHebrewDivineNamePreferences` and
 `applyEnglishDivineNamePreference` (`server/text-processing.gs`) before
-returning. So the preview is exactly what will be inserted.
+returning. Preview and insertion then use the same commentary and note rules;
+Google Docs handles the final font, generated numbers and page layout.
 
 A change in the tray that the fetch applies (Vowels, Cantillation, either
 Punctuation, Transliteration) calls `scheduleSelectedResultRefresh()`
 (`sidebar/js/composition-controls.html`): Add Source is disabled and the
 preview says *Updating preview…* at once, and the one re-fetch waits until
 the clicks stop and the session saves have landed
-(`test/tests/sidebar-session-fetch.test.js`). The original
-add-on made the same choice, and the comment in `findReference` still says why.
+(`test/tests/sidebar-session-fetch.test.js`). The selected translation, source
+edition and multi-selection order are captured from the current picker state.
+Request generations reject late replies, including a reply for the same
+reference with older transliteration settings. A missing edition preserves
+the pickers and disables insertion; a transport failure gets its own message.
 
 Divine-name rules are a config table (`allRules` in `text-processing.gs`).
 Each rule has an `enabledBy` key, a Unicode-aware pattern that treats
@@ -307,18 +323,22 @@ got inserted. While it runs the sidebar shows its busy overlay
    reads the paragraph at the insertion point, or the nearest body-text
    paragraph above it. All styling goes through `applyRoleTypography_(paragraph,
    typography, role, overrides)`.
-5. **Rich text and emphasis:** `insertRichTextFromHTML` turns Sefaria's `<b>`,
-   `<i>`, `<sup>` and entities into Docs runs. `decodeHTMLEntities`
-   (`server/utils.gs`) is a single-pass table decoder, which fixed the literal
-   `&thinsp;` bug. Then `captureEmphasisRuns_` → the baseline style →
-   re-assert, mapped through the user's emphasis settings
-   (`applyEmphasisMapping_`). Without this, the Steinsaltz Talmud loses the
-   bold that marks the Talmud's own words. `source_emphasis_mode` (schema 14;
-   the card's **Commentary**: Default / Combine / Drop) picks **keep**,
-   **discard**, or **only**, which first removes the text the source didn't
-   emphasise (`planEmphasisOnlyEdits_`). It applies to the translation only:
-   `sourceEmphasisModeForRole_` returns `keep` for every other role, so the
-   Hebrew is always inserted whole.
+5. **Rich text, commentary and notes:** `insertRichTextFromHTML` consumes
+   `processSourceText_`, the same processor used by preview. It emits text
+   and UTF-16 formatting runs for bold, italics, superscript and subscript.
+   `source_emphasis_mode` maps Default / Combine / Drop to **keep**,
+   **discard**, or **only**, but filtering requires a verified exact edition,
+   language and corpus: Davidson English Bavli uses bold base text;
+   Silverstein's Rashi Chumash and Ketuvim use brackets. Bracket filtering
+   happens per original verse before joining; malformed segments and unknown
+   editions keep their words. Source/Hebrew text is never commentary-filtered.
+   Semantic `sup.footnote-marker` / `i.footnote` notes are extracted before
+   filtering and rendered afterwards according to `source_notes_mode`
+   (Omit / Inline / Separate, default Omit; added in schema 32). Bold inside a
+   note cannot become the surviving main text. Typography preserves the
+   processed runs and does not apply Drop a second time. Transliteration
+   reads the main Hebrew without marked notes. Regenerate the client copy
+   with `node tools/sync-source-text.js` after a processor change.
 6. **Hebrew marks the font lacks:** last of all, `applyRoleTypography_` asks
    `planHebrewMarkFallback_` (`server/hebrew-fonts.gs`) which marks the
    font (or, on *Match the document*, the document's font) has no glyph for,
@@ -330,13 +350,20 @@ got inserted. While it runs the sidebar shows its busy overlay
    Apps Script and in Node. It credits the translation version and license and
    the Hebrew edition and its `heLicense`, and prints no empty lines.
 
-**Multi-translation:** `insertReferenceVersions(ref, opts)` fetches one
-`/api/texts` per version. Each result is checked with `selectInsertableVersions_`,
-because Sefaria **substitutes the default version** when you ask for one that
-doesn't cover the ref, and can return empty text. Mismatches are skipped and
-reported, not inserted. (`docs/pre-upstream-review.md` §1.2 explains why moving
-to `/api/v3/texts` would reduce this to one request, and why that isn't a
-simple URL change.)
+**Multi-translation:** `insertReferenceVersions(ref, opts)` still fetches each
+chosen translation separately through the v3 adapter; moving endpoints did
+not batch those requests into one. Each result is checked with
+`selectInsertableVersions_`; unavailable translations are skipped and
+reported. If the selected Hebrew edition is required and missing, the entire
+operation stops before document writes. Edition gaps are not filled from
+other editions. Exact titles, including significant whitespace, survive.
+
+**Request cost:** Ref planning adds requests on a cold reference; an exact
+edition may also need the Versions catalog. Compact metadata is cached for
+up to six hours, while text remains fresh. Availability can fetch all catalog
+families' versions for the passage. Test long ranges, cold loads and several
+translations in Apps Script; a local API test does not establish production
+latency or quota headroom.
 
 **Show:** `test/tests/multi-version-insert.test.js`,
 `typography-defaults.test.js`, `format-data-for-pesukim.test.js`. **Be
@@ -513,9 +540,12 @@ then set that number in the SDK.
 
 ## Questions Sefaria reviewers are likely to ask
 
-- *Why v1 `/api/texts` and not v3?* It works and is maintained. Moving to v3
-  is a real refactor (string `sections`, a `versions[]` shape), planned behind
-  an adapter after the upstream merge. `pre-upstream-review.md` §1.2.
+- *Why do some routes still have no `/v3/`?* Passage content is entirely on
+  Texts v3; API versions belong to individual operations. Ref, the Versions
+  catalog, search, sheets, dictionaries and the linker retain their current
+  endpoints. There is no v1 content fallback. The
+  [migration handoff](../sefaria-api-migration.md) records the endpoint audit
+  and the API behavior the adapter protects against.
 - *Why the raw sheet search proxy?* No documented sheet-search API exists. A
   supported one would be welcome.
 - *What do you send?* What the user typed; plus, for the linker only, the

@@ -137,10 +137,14 @@ WHAT YOU CAN DO
 • Insert Hebrew, translation, or both — side by side or stacked — and choose among the translations Sefaria has for the passage, or insert several at once.
 • Control how Hebrew appears: show or hide niqqud and ta'amim, and choose how divine names are written in Hebrew and English.
 • Keep the source's own emphasis — for example, the Steinsaltz Talmud's bolding of the Talmud's words — and set fonts, sizes, colours, and highlights for every part of an inserted source.
+• Keep, combine or omit inline explanation in the William Davidson English Talmud and Silverstein's Rashi Chumash and Rashi Ketuvim. Other editions keep their words and source emphasis.
+• Choose separately whether marked source footnotes are omitted, included inline or collected in a Notes text section below the passage.
 • Add a citation and a link back to Sefaria with each source.
 • Search Sefaria source sheets in Voices.
 • Link Texts with Sefaria: turn citations already written in your document into Sefaria links, with a review step when a citation could mean more than one source.
 • Arrange the add-on's menu to put the actions you use most at the top.
+
+Each selected edition supplies its own text. If it covers only part of a passage, its gaps are not filled from another edition. The preview follows your text choices; final fonts, numbering and page layout are checked in the document.
 
 YOUR DOCUMENT AND YOUR PRIVACY
 Sefaria for Google Docs can open only the document you are using it in — never your Drive or your other documents. It has no server, no account, and no analytics. Sefaria receives what you search for and the references you choose. "Link Texts with Sefaria" sends text from your document to Sefaria so it can find citations; by default only passages that look like they contain a citation are sent, and you are asked before the first time. The full privacy policy explains exactly what is sent and when.
