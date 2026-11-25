@@ -6,6 +6,9 @@ var orderedTranslationVersions = [];
 // Layout tray change, another source edition) keeps a multi-selection; a new
 // ref starts over.
 var orderedTranslationVersionsRef = '';
+// Last non-range click, by version title rather than option node: the preview
+// and filter can rebuild the list between a click and its following Shift-click.
+var translationSelectionAnchor = '';
 
 // The translation version list. The source-edition list carries the
 // .translation-version-select class too (for its styling), so a lookup by the
@@ -13,6 +16,29 @@ var orderedTranslationVersionsRef = '';
 // editions and made a source-edition click reset the translations.
 function translationVersionSelect() {
   return $('.translation-version-select').not('.he-version-selection');
+}
+
+// The list passes only enabled, visible options. A plain click replaces the
+// entire selection, including filtered-out versions; Ctrl/Cmd toggles one,
+// Shift replaces with a visible range, and Ctrl/Cmd+Shift extends the selection.
+// Keep surviving picks in insertion order; append new range picks in list order.
+function translationSelectionForClick(previous, visible, anchor, clicked, additive, range) {
+  if (visible.indexOf(clicked) < 0) return previous.slice();
+  if (!range) {
+    if (!additive) return [clicked];
+    return previous.indexOf(clicked) >= 0
+      ? previous.filter(function (vt) { return vt !== clicked; })
+      : previous.concat(clicked);
+  }
+  var end = visible.indexOf(clicked);
+  var start = visible.indexOf(anchor);
+  if (start < 0) start = end;
+  var picked = visible.slice(Math.min(start, end), Math.max(start, end) + 1);
+  var next = additive ? previous.slice() : previous.filter(function (vt) { return picked.indexOf(vt) >= 0; });
+  picked.forEach(function (vt) {
+    if (next.indexOf(vt) < 0) next.push(vt);
+  });
+  return next;
 }
 
 // Multi-select is only meaningful when the output will be stacked (he-top) or translation-only (en),
@@ -46,7 +72,7 @@ function applyMultiSelectMode() {
     $select.after($hint);
   }
   if (allowMulti) {
-    $hint.text('Click to add or remove a translation. Several are inserted in the order you pick them.').show();
+    $hint.text('Click for one; Ctrl/Cmd-click to add or remove; Shift-click for a range. Inserted in selection order.').show();
   } else {
     $hint.hide();
   }
@@ -558,9 +584,12 @@ function updateSuggestion(dataIn, inputTitle) {
   var keptTranslationVersions = (!pendingPreferredVersions && orderedTranslationVersionsRef === resolvedRef && orderedTranslationVersions.length > 1)
     ? orderedTranslationVersions.slice()
     : [];
+  var allowMulti = translationMultiSelectAllowed();
+  if (orderedTranslationVersionsRef !== resolvedRef || pendingPreferredVersions || !allowMulti) {
+    translationSelectionAnchor = '';
+  }
   orderedTranslationVersions = [];
   orderedTranslationVersionsRef = resolvedRef;
-  var allowMulti = translationMultiSelectAllowed();
   // A layout that inserts one translation keeps the first one picked.
   var collapseToVersion = '';
   if (!allowMulti && keptTranslationVersions.length > 1) {
@@ -854,6 +883,7 @@ function updateSuggestion(dataIn, inputTitle) {
     select: function (versionTitle) {
       if (latestResolveRequestId !== optionsBuiltForRequestId) return;
       orderedTranslationVersions = versionTitle ? [versionTitle] : [];
+      translationSelectionAnchor = versionTitle || '';
       if (versionTitle) currentEnVersion = versionTitle;
       selectOptions(translationVersionSelect(), orderedTranslationVersions);
       syncSelectedTranslationDisplay();
@@ -877,35 +907,48 @@ function updateSuggestion(dataIn, inputTitle) {
     }
   });
 
-  // In a multi-select list a plain click replaced the whole selection (only
-  // Ctrl / Cmd added to it), so picking a second translation dropped the
-  // first. A click toggles the one option instead; the change handler below
-  // decides what that means.
+  // A native list box loses its range anchor when the preview rebuilds it.
+  // Preserve the anchor by title, and apply Explorer-style pointer selection
+  // to the complete ordered selection (which may include filtered-out items).
+  // Single-select lists and keyboard input still use native behavior.
   translationVersionSelect().off('mousedown.translationToggle').on('mousedown.translationToggle', 'option', function (event) {
     var select = translationVersionSelect()[0];
     if (!select || !select.multiple || this.disabled || event.button !== 0) return;
     event.preventDefault();
     var scrollTop = select.scrollTop;
-    this.selected = !this.selected;
+    var clicked = this.value;
+    var visible = $(select).find('option:not(:disabled)').map(function () { return this.value; }).get();
+    var anchor = translationSelectionAnchor || orderedTranslationVersions[0] || clicked;
+    var next = translationSelectionForClick(orderedTranslationVersions, visible, anchor, clicked,
+      event.ctrlKey || event.metaKey, event.shiftKey);
+    if (!event.shiftKey || visible.indexOf(anchor) < 0) translationSelectionAnchor = clicked;
+    else translationSelectionAnchor = anchor;
+    selectOptions($(select), next);
     select.focus({ preventScroll: true });
     select.scrollTop = scrollTop;
-    $(select).trigger('change');
+    $(select).trigger('change', [next]);
   });
 
-  translationVersionSelect().off('change.translationVersion').on('change.translationVersion', function () {
+  translationVersionSelect().off('change.translationVersion').on('change.translationVersion', function (event, pointerSelection) {
     var $select = $(this);
     var selected = $select.val();
     var selectedArr = Array.isArray(selected) ? selected : (selected ? [selected] : []);
     var shown = $select.find('option').map(function () { return $(this).val(); }).get();
 
-    // Maintain selection order: drop deselected items, append newly selected
-    // items. A version the filter box hides can't have been deselected: keep it.
-    var next = orderedTranslationVersions.filter(function (vt) {
-      return selectedArr.indexOf(vt) >= 0 || ($select.prop('multiple') && shown.indexOf(vt) < 0);
-    });
-    selectedArr.forEach(function (vt) {
-      if (next.indexOf(vt) < 0) next.push(vt);
-    });
+    // Pointer selections already account for hidden items and modifier keys.
+    // Native keyboard changes keep hidden selections and preserve pick order.
+    var next;
+    if (Array.isArray(pointerSelection)) {
+      next = pointerSelection;
+    } else {
+      next = orderedTranslationVersions.filter(function (vt) {
+        return selectedArr.indexOf(vt) >= 0 || ($select.prop('multiple') && shown.indexOf(vt) < 0);
+      });
+      selectedArr.forEach(function (vt) {
+        if (next.indexOf(vt) < 0) next.push(vt);
+      });
+      if (selectedArr.length) translationSelectionAnchor = selectedArr[selectedArr.length - 1];
+    }
 
     // Never end with nothing selected: Insert would quietly use whatever the
     // preview last loaded. Put the selection back and say why.
