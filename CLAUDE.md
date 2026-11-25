@@ -169,7 +169,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **889 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **891 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -250,6 +250,8 @@ and fix it before touching the feature you came to change.
   block, blank-line separation, empty translations skipped, every block
   formatted like the first; HTML-entity decoding (`&thinsp;` and friends). With
   the Hebrew on top and Citation on, the Hebrew edition is credited once.
+  A refetch missing the explicitly chosen source edition stops before any
+  document write; translation-only output can still use its translations.
 - `translation-language-typography.test.js` — per-language translation
   formatting: stored entries cleaned, the translation's language read from
   Sefaria's payload, and only that language's blocks reformatted.

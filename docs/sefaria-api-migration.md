@@ -102,6 +102,10 @@ Missing-edition warnings remain attached to the normalized result; exact
 selection prevents substitution. A sidebar edition fetch with a missing,
 empty or mismatched requested edition leaves the pickers visible, disables
 insertion and asks the reader to choose another edition. Unknown references remain ordinary misses.
+Multi-translation insertion independently checks the explicitly selected
+source edition after its refetch. Missing, empty or substituted source text
+stops the operation before document writes; translation-only output can use
+the valid translations without that unused source.
 Network failures, rate limits, server errors, malformed successful responses
 and mismatched response identities remain unavailable outcomes, with no
 raw document text logged. Link Texts' batch recovery performs the same
@@ -111,7 +115,7 @@ an unavailable citation without losing correctly resolved peers.
 ## Validation and release boundary
 
 - Baseline before changes: **840 passing, 0 failing, 0 skipped**.
-- Migration branch: **889 passing, 0 failing, 0 skipped**. This adds 49
+- Migration branch: **891 passing, 0 failing, 0 skipped**. This adds 51
   regressions to the baseline. Pre-clasp QC passes; its optional `clasp status`
   check was skipped because clasp is not installed in this environment.
 - Live contract run, 2026-11-24 (21:06 Mountain time): **14 passed, 0 failed**,
