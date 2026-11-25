@@ -30,7 +30,7 @@ Open **Extensions → Sefaria for Google Docs**. In a test deployment, open the
 | **Add Sources with Sefaria** sidebar | **Texts** tab of the sidebar (**Extensions → Sefaria for Google Docs → Texts**) |
 | Search bar, with a dropdown of sections when you type a book name | The same box. Results appear as you type, from an English or Hebrew reference (`בראשית א:א`), a title, a traditional citation (`Hil. Shabbat 1:1`), a sefaria.org link or a phrase; near-misses come under *Close matches*. |
 | A range such as `Genesis 1:1-9` | The same. |
-| Format, edition and translation, chosen for each source | **📰 Insertion Options** (Display, Arrangement, Line numbers, Citation, and the Source and Translation sections) and **Versions** under the preview, for this source; your usual choice saved in **⚙︎ Preferences → Insertion**. |
+| Format, edition and translation, chosen for each source | **📰 Insertion Options** (Display, Arrangement, Line by line and Transliteration at the top, with three folding groups for other choices) and **Versions** under the preview, for this source; your usual choice saved in **⚙︎ Preferences → Insertion**. |
 | **Add Source** | **Add Source** (or <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd>), after the **Preview** shows what will go in. |
 | **Transform Divine Names**, choosing one of its Hebrew spellings | **🏃 Quick Actions → Transform Divine Names**, with the spellings set in **Preferences → Insertion → Divine Name Mappings** (and English *God*). |
 | **Link Texts with Sefaria** sidebar, **Link Texts** button | **🏃 Quick Actions → Link Texts with Sefaria**: a review dialog. |
@@ -52,7 +52,7 @@ English.
 
 With both languages the layout is the one version 1.0 uses: a
 two-column table, Hebrew on the right. **📰 Insertion Options → Arrangement**
-also offers **Left–Right** and **Stacked** (Hebrew above English), and **Line by
+also offers **Hebrew left** and **Stacked** (Hebrew above English), and **Line by
 line** pairs each verse with its translation: side by side, in its own row;
 Stacked, the verse and then its translation, down the page.
 
@@ -156,10 +156,13 @@ likely to report as bugs if nobody warns them.
 
 For the simplest workflow, leave Insertion Options closed after choosing
 Display and Arrangement. **Simple** shortens the menu and search tools; it
-does not reduce the options inside this panel. The Source and Translation
-sections can stay folded. To hide controls you never change, use
-**Everything → Preferences → Sidebar → Insertion Options**, save, then
-return to Simple. Hidden controls continue using your saved values.
+does not reduce the options inside this panel. Its primary controls stay
+visible when applicable; **Text and notes**, **References and numbering**, and
+**Fonts and appearance** start folded and summarize current settings.
+In Everything, **Preferences → Sidebar** can hide controls you never use,
+then you can return to Simple. Hiding a control preserves its current value,
+including an existing session override; use **Revert** first if you want saved
+defaults.
 
 Text, links and divine names that version 1.0 already put in a
 document stay as they are. Transform Divine Names, Link Texts

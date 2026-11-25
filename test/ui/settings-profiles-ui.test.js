@@ -109,7 +109,8 @@ test('the sidebar picker shows with two or more profiles and names the one in us
 test('a switch, in the sidebar or in Preferences, drops the session\'s Insertion Options changes', () => {
   const sw = fn(STATE_JS, 'switchProfileFromSidebar');
   assert.match(sw, /accountPreferences = clonePlainObject\(/);
-  assert.match(sw, /if \(sidebarSessionId\) \{\s*resetSessionOverrides\(announce\);/);
+  assert.match(sw, /beginSidebarSessionAction_\('profile'/);
+  assert.match(sw, /if \(sidebarSessionId\) \{\s*clearSidebarSessionAfterSaves_\(announce,/);
   assert.match(sw, /\.switchSettingsProfile\(id\);/);
   const adopt = fn(STATE_JS, 'adoptSettingsProfiles');
   assert.match(adopt, /settingsProfiles\.active !== before && hasSessionOverrides\(\)\) \{\s*resetSessionOverrides\(\);/);

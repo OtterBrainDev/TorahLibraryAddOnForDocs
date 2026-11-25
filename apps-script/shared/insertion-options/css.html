@@ -48,13 +48,15 @@
 .mode-card,
 .layout-option {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 36px;
-  padding: 0 6px;
+  min-height: 54px;
+  padding: 5px 3px;
   overflow: hidden;
   cursor: pointer;
   background: transparent;
@@ -63,6 +65,13 @@
   color: var(--row-sublabel);
   text-align: center;
   transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.io-choice-label {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .mode-card:hover,
@@ -289,5 +298,59 @@
    side-by-side arrangements use (updateInsertionOptions). */
 .cc-translit-position-row.is-inapplicable {
   display: none;
+}
+
+/* The sidebar groups the same controls; Preferences and Link Texts retain
+   their detailed Source / Translation editors. No duplicate settings. */
+.io-grouped-options .io-inapplicable,
+.io-grouped-options .io-options-group[hidden],
+.io-grouped-options .io-primary-options[hidden] {
+  display: none !important;
+}
+
+.io-primary-options {
+  margin: -6px 0 8px;
+}
+
+.io-options-group > .cc-section-summary {
+  display: grid;
+  grid-template-columns: 5px minmax(0, 1fr);
+  gap: 3px 8px;
+  padding: 10px 4px;
+}
+
+.io-options-group > .cc-section-summary::before {
+  align-self: center;
+}
+
+.io-options-group .io-group-state {
+  grid-column: 2;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.io-options-group .cc-section-label {
+  min-width: 0;
+}
+
+.io-options-group .cc-section-body {
+  padding-bottom: 10px;
+}
+
+.io-grouped-options .cc-translit-wrap {
+  width: 100%;
+}
+
+.io-grouped-options .cc-translit-menu {
+  right: 0;
+  left: auto;
+  box-sizing: border-box;
+  min-width: min(240px, 100%);
+  max-width: 100%;
+}
+
+.io-grouped-options .cc-translit-option {
+  white-space: normal;
 }
 </style>

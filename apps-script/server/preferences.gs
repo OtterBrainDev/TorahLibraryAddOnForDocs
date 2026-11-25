@@ -341,7 +341,8 @@ function getDefaultPreferences() {
     // The sidebar's Quick Actions buttons and Insertion Options controls the
     // user has hidden, as JSON arrays of ids (SIDEBAR_QUICK_ACTIONS_,
     // SIDEBAR_OPTION_CONTROLS_). "[]": every one shows, as it always has. A
-    // hidden Insertion Options control uses the saved default.
+    // hidden Insertion Options control keeps its effective value, including
+    // an existing sidebar session override; visibility never resets a value.
     sidebar_quick_actions_hidden: "[]",
     sidebar_options_hidden: "[]",
     // Order and nesting of the add-on menu, edited from the Menu Bar tab. See

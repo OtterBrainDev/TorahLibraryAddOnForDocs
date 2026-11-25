@@ -66,48 +66,55 @@ The sidebar groups results into:
 
 ### Display and layout controls
 
-The sidebar's **📰 Insertion Options** panel (the full-width button under
-**Add Source**) sets this session's insertion; **Preferences → Insertion** sets
-the defaults, and Link Texts' **📰 Customize this insertion** one linking pass.
-Its **Display** control has three modes:
+The sidebar's **📰 Insertion Options** panel (under **Add Source**) changes
+this sidebar session. **Preferences → Insertion** sets saved defaults, and
+Link Texts' **📰 Customize this insertion** applies to one linking pass.
 
-- **A** — translation only
-- **A + א** — Hebrew with translation
-- **א** — Hebrew only
+The primary controls stay outside the folded groups:
 
-For bilingual insertion, **Arrangement** offers:
+- **Display:** **Translation**, **Both**, or **Original**, with text labels
+  beside the A / A + א / א icons.
+- **Arrangement**, with Both: **Stacked**, **Hebrew right**, or **Hebrew left**.
+- **Line by line**, with Both: each verse beside its translation in its own
+  table row, or in Stacked, each verse followed by its translations.
+- **Transliteration**, when original text is included: turn it on to reveal
+  **Style**, and with side-by-side bilingual layouts, **Position** (Below,
+  Left, or Right of the Hebrew).
 
-- **Stacked** (Hebrew above the translation)
-- **Right–Left** (Hebrew on the right)
-- **Left–Right** (Hebrew on the left)
-
-with switches for **Citation**, **Line by line** (each verse with its
-translation: side by side, a table row per verse; Stacked, each verse and then
-its translation, down the page) and **Line numbers**. Each Arrangement icon
-sketches the page it gives with the other settings.
+The Arrangement icons reflect the line and transliteration choices. Arrow
+keys select choices; the Style menu supports keyboard navigation and returns
+focus when dismissed.
 
 ### Hebrew and translation formatting controls
 
-The panel's **Insertion Format** card has a **Source** (Hebrew) section and a
-**Translation** section, each folding to a one-line summary. They hold:
+The sidebar starts with three folded groups. Their summaries show the current
+choices, and closing a group does not change settings or reload the passage.
 
-- **Link title to Sefaria**, **Title font** and **Text font** (each section its own),
-- **Vowels** (Off / Tanakh / On) and **Cantillation** (Off / Tanakh / Torah),
-- **Punctuation** (each section its own),
-- **Transliteration**, with its **Style** and, side by side, its **Position**
-  (below the Hebrew, or a column of its own left or right of it),
-- **Commentary** (Default / Combine / Drop) for supported translations:
-  preserve the edition's markings, combine its translation and explanation,
-  or leave out recognized explanation. The William Davidson English
-  Babylonian Talmud uses bold base text; Silverstein's Rashi Chumash and Rashi
-  Ketuvim use bracketed additions. Other editions retain their words and
-  source emphasis, and a verse with malformed brackets stays whole.
+| Group | Controls |
+| --- | --- |
+| **Text and notes** | Vowels, Cantillation, Hebrew punctuation, Translation punctuation, Commentary and Notes. |
+| **References and numbering** | Link source title, Link translation title, Citation and Line numbers. |
+| **Fonts and appearance** | Fonts and sizes for the source and translation titles and text. |
 
-**Notes**, under Layout, separately controls marked footnotes in Hebrew and
-translation: **Omit** (the default), **Inline**, or **Separate**. Separate
-adds a labelled Notes text section below the passage, or below each line with
-Line by line; it does not create native Google Docs footnotes. Dropping
-commentary never removes a note requested with Inline or Separate.
+**Commentary** offers Default / Combine / Drop: preserve the edition's
+markings, combine translation and explanation, or leave out recognized
+explanation. The William Davidson English Babylonian Talmud uses bold base
+text; Silverstein's Rashi Chumash and Rashi Ketuvim use bracketed additions.
+Other editions retain their words and source emphasis; a verse with malformed
+brackets stays whole.
+
+**Notes** separately controls marked footnotes in Hebrew and translation:
+**Omit** (the default), **Inline**, or **Separate**. Separate adds a labelled
+Notes text section below the passage or each aligned line; it does not create
+native Google Docs footnotes. Dropping commentary never removes a note
+requested with Inline or Separate.
+
+Preferences and Link Texts retain their detailed **Layout**, **Source** and
+**Translation** sections using the same controls. Simple and Everything keep
+the sidebar grouping. Controls hidden in **Preferences → Sidebar** remain
+hidden; their current values, including session overrides, continue to apply.
+**Revert** restores saved defaults, and **Save as defaults** keeps the current
+session choices for future sessions.
 
 Hebrew marks a chosen font lacks (often the cantillation) are set in Noto
 Serif / Sans Hebrew, so they never show as empty boxes.
@@ -208,7 +215,7 @@ See [docs/CHANGELOG.md](./docs/CHANGELOG.md) for a fuller summary of changes and
 ## Source attribution
 
 Each inserted source can carry a small credit block under it, and this is **on
-by default** (the **Citation** switch in 📰 Insertion Options, or Preferences →
+by default** (the **Citation** switch in 📰 Insertion Options → References and numbering, or Preferences →
 Insertion → Layout). Many
 Sefaria texts are CC-BY or CC-BY-NC, so the credit is what lets a user reuse
 them properly.

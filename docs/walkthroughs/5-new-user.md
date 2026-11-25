@@ -42,13 +42,15 @@ The **Preview** shows the selected passage with your current text choices.
 Want only English, or only Hebrew? Click **📰 Insertion Options** under Add
 Source and, under **Display**, choose:
 
-- **A** — translation only
-- **A + א** — Hebrew and translation
-- **א** — Hebrew only
+- **Translation** (A) — translation only
+- **Both** (A + א) — Hebrew and translation
+- **Original** (א) — Hebrew only
 
 The preview changes as you choose. Press <kbd>Esc</kbd> to close the panel.
 
-You can leave the other options alone. **Commentary: Default** preserves a
+Line by line and Transliteration also stay at the top when they apply. The
+other settings are in three folding groups; you can leave them closed.
+**Text and notes → Commentary: Default** preserves a
 translation's explanation and markings; **Notes: Omit** leaves out marked
 source footnotes. For a different edition, open **Versions** beneath the
 preview. Changing a layout option keeps that selection.

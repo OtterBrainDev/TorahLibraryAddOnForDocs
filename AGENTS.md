@@ -167,6 +167,18 @@ dated list. Short form of the worst offenders:
 - **Server refactor renames a function the client calls.** The client
   does not fail loudly — `google.script.run.foo()` on a missing `foo`
   silently no-ops. `test/ui/rpc-surface.test.js` pins this.
+- **Flattened offsets treated as verse identity.** Pair a spanning range
+  by chapter and verse before flattening. Every selected translation uses
+  the same coordinates; a missing chapter fragment stays blank.
+- **Session actions bypass pending writes.** Revert, Save as defaults and
+  profile switching follow preceding setting saves and stay busy through
+  their final mutation. Failed persistence must not enable insertion with
+  older server filters; retain a recoverable snapshot and pause.
+- **Any-language resolution treated as requested content.** Validate the
+  processed output before numbering or resolving a document insertion
+  target. Both may use an available language; an explicit missing language
+  cannot become an empty block. Policy-filtered editions remain selectable;
+  only genuinely missing editions update availability.
 
 ## How to run tests locally
 
@@ -175,7 +187,7 @@ npm ci      # once per checkout; installs the test-only devDependency
 npm test
 ```
 
-Expected: **993 passing, 0 failing, 0 skipped**. A *skipped* count above
+Expected: **1032 passing, 0 failing, 0 skipped**. A *skipped* count above
 zero usually means `npm ci` has not been run and the sanitizer tests are
 sitting out — treat that as red, not as a pass. If anything is red, stop
 and fix it before touching the feature you came to change.
@@ -293,6 +305,10 @@ and fix it before touching the feature you came to change.
 - `insertion-target.test.js` — where an insert goes: after the cursor's
   block, inside a table cell for paragraph layouts, below the table (with a
   notice) for side-by-side layouts, never into a header, footer or footnote.
+- `required-output.test.js` — missing explicit languages and policy-empty
+  sources fail before target resolution or selection replacement; Both keeps
+  its available-language fallback. Multi-insertion distinguishes policy
+  omissions from missing editions and keeps the former selectable.
 - `sheet-insert.test.js` — a Voices (source sheet) insert: Both is the
   sheet's text under a title linked to the sheet, never the citation block on
   top of it; Citation leaves out a summary that only repeats the title; the
@@ -397,6 +413,9 @@ and fix it before touching the feature you came to change.
   choice), switches re-draw only when nothing is left to save, and a change
   the fetch applies re-fetches once, with Add Source disabled meanwhile. A
   change made before the bootstrap gives the sidebar its session is kept.
+  Revert, Save as defaults and profile changes drain preceding writes;
+  failures retry once, then pause insertion with retry/Revert recovery. Save
+  defaults confirms the visible snapshot, including after cache expiry.
 - `citation-style.test.js` — the citation under a source has its own style
   (Preferences → Insertion → Layout → Citation style); its defaults and schema v25 keep the old
   8 pt italic in the font of the text above.
@@ -550,6 +569,14 @@ and in `test/ui/`:
   (`shared/insertion-options`): every host (sidebar, Preferences, Link Texts
   dialog) includes and initialises them, and no page has its own copy of the
   cards or their CSS.
+- `insertion-options-grouping.test.js` — sidebar grouping moves the real
+  shared controls without losing or duplicating them; Line by line and
+  Transliteration stay outside details, roles and hidden settings retain
+  their values, summaries expose consequential choices, and the tray contains
+  focus while preserving background state. Other hosts retain their editors.
+- `composition-keyboard.test.js` — shared radio and transliteration-style
+  keyboard behavior, selected state, Escape containment and focus restoration,
+  without changing the separate Voices menu.
 - `native-controls.test.js` — Google's `add-ons.css` loads only into the
   `google-addons` cascade layer, every page with `shared/ui/head` includes
   `shared/css/native-controls`, and every `<input type>` in use has a base rule

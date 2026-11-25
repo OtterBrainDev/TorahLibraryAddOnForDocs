@@ -134,7 +134,12 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
    - **Sidebar session overrides:** `CacheService.getUserCache()`, keyed by
      `sessionId`, with a 6-hour TTL (`setSidebarSessionState`). The
      Insertion Options tray (`#layout-tray`, opened by `#open-layout-settings`)
-     writes here. **💾 Save as defaults** copies session into account
+     writes here. Its sidebar-only grouping moves the existing controls once
+     (`initGroupedInsertionOptions` in `shared/insertion-options/js.html`),
+     without cloning controls or changing values. Primary Line by line and
+     Transliteration stay outside the three details groups; closing a group
+     makes no RPC. Preferences and Link Texts keep the detailed Source and
+     Translation sections. **💾 Save as defaults** copies session into account
      (`saveSidebarSessionAsAccountDefaults`).
    - Session saves go **one at a time** (`saveSessionPreference` →
      `flushSessionSaves_`, `sidebar/js/preferences-state.html`).
@@ -163,7 +168,8 @@ Both load the real `.gs` into a `vm` context with fake `PropertiesService` and
    (`data-sidebar-tabs`, `data-quick-actions-hidden`, `data-options-hidden`,
    from `show_voices_tab` / `show_lexicon_tab` and the two `*_hidden` lists,
    schema 29), and CSS hides it. Junk in a stored list hides nothing; a
-   hidden Insertion Options control keeps its saved value
+   hidden Insertion Options control keeps its effective value, including an
+   existing session override; visibility does not rewrite preferences
    (`test/tests/sidebar-controls.test.js`, `test/ui/sidebar-controls-ui.test.js`). The menu side is
    `getSimpleMenuLayout_()` (the default layout with `SIMPLE_MENU_HIDDEN_`
    hidden); `planUiModeSwitch_()` keeps the user's own layout in
@@ -279,9 +285,10 @@ still match with a prefix. See `test/tests/divine-name-rules.test.js`.
 ## 5. Insert (10 min)
 
 **Do:** in **📰 Insertion Options**, Display **A + א**, Arrangement
-**Right–Left**, **Line numbers** on, and both **Link title to Sefaria**
-switches on (Source section: `insert_hebrew_sefaria_link_default`;
-Translation section: `insert_sefaria_link_default`). Click **Add Source**.
+**Hebrew right**. In **References and numbering**, turn **Line numbers**,
+**Link source title** (`insert_hebrew_sefaria_link_default`) and
+**Link translation title** (`insert_sefaria_link_default`) on. Click
+**Add Source**.
 Then select three translations with the Stacked arrangement and insert again.
 
 **Single insert:** `google.script.run.insertReference(data, opts)`
@@ -304,7 +311,7 @@ got inserted. While it runs the sidebar shows its busy overlay
    used to insert into the body at an index that belonged to the cursor's own
    parent, which is how a table insert ended up somewhere unrelated
    (regression log).
-3. **Layout:** Stacked is paragraphs. Right–Left and Left–Right are a 2-column
+3. **Layout:** Stacked is paragraphs. Hebrew right and Hebrew left are a 2-column
    table with the Hebrew paragraphs set RTL, which is how the original add-on
    did it; a third column when the transliteration has one of its own
    (`transliteration_position` "left" / "right", schema 30). **Line by line**

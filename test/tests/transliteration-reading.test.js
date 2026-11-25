@@ -191,7 +191,7 @@ test('the composition card\'s samples are the engine\'s הַסֵּפֶר כָל�
   }
   // The Style button's text before the script draws it: the default style's.
   const markup = readUi('apps-script/shared/composition-card/markup.html');
-  assert.ok(markup.includes('id="cc-translit-toggle" aria-haspopup="listbox" aria-expanded="false">' + labels.simple_english.replace(/\u05BE/g, '-') + '</button>'));
+  assert.equal(markup.match(/id="cc-translit-toggle"[^>]*>([^<]*)<\/button>/)[1], labels.simple_english.replace(/\u05BE/g, '-'));
 });
 
 test('Preferences\' samples are the engine\'s Deuteronomy 11:18', () => {

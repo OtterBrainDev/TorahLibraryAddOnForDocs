@@ -98,7 +98,9 @@ the sidebar brings one back for a single search).
 
 **Sidebar tab:** switch off what you never use: the Voices or Lexicon tab, a
 Quick Actions button, or (handy for a class) an Insertion Options control,
-which then always uses your saved default.
+which keeps its current value, including any existing session override.
+Use **Revert** before hiding controls if the class should start from saved
+defaults.
 
 **Profiles** (the column beside the tabs): **+ New profile** copies your
 settings into a second profile, say *Beginners* with transliteration on, and
@@ -146,40 +148,39 @@ Open **Texts** and press <kbd>/</kbd> to jump to the search box. Try:
 
 Select `Genesis 1:1-5`. Open **📰 Insertion Options**.
 
-1. **Display:** **A** (translation), **A + א** (both), **א** (Hebrew).
-2. **Arrangement** (for both languages): **Stacked**, **Right–Left** (a
-   two-column table, Hebrew on the right) or **Left–Right**. **Line by line**
-   pairs each verse with its translation: side by side, its own table row;
-   Stacked, the verse and then its translation, down the page. With
-   Transliteration on, its **Position** (side by side) puts it under the
-   Hebrew or in a column of its own, left or right of it; the Arrangement
-   icons sketch the result.
-3. **Citation** (the edition and license credit) and **Line numbers** are
-   switches under the pickers, followed by **Notes**.
-4. **Insertion Format:** the **Source** and **Translation** sections are
-   folded to one line saying what's set (*Vowels, Cantillation, Punctuation ·
-   Translit*). Open **Source** to see the live sample change as you set:
-   - **Vowels: Off / Tanakh / On.** *Tanakh* keeps niqqud in Tanakh and
-     drops it from the Mishnah, Talmud and everything else.
-   - **Cantillation: Off / Tanakh / Torah.** *Torah* keeps the marks in the
-     Five Books only; a Haftarah on the same sheet comes in without them.
-   - **Punctuation** off strips sof pasuq, paseq and the like, and the
-     transliteration follows it (*kol ha'am*, not *kol-ha'am*).
-   - **Transliteration**, with **Style** (Traditional, Academic, Modern
-     Israeli, IPA…) under it while it's on. It's read from the fully
-     vowelled text, so it's complete even with Vowels off.
+1. **Display:** the labels **Translation**, **Both**, and **Original** sit
+   beside the A / A + א / א icons.
+2. **Arrangement**, with Both: **Stacked**, **Hebrew right**, or **Hebrew left**.
+   **Line by line** stays visible directly below: each verse gets a table row
+   beside its translation, or in Stacked, the verse and its translations down
+   the page. Turn on **Transliteration** beside it to reveal **Style**; a
+   side-by-side bilingual arrangement also reveals **Position** (Below, Left,
+   Right of the Hebrew). The icons sketch the result.
+3. Open **Text and notes** for the text samples and language controls:
+   **Vowels: Off / Tanakh / On**, **Cantillation: Off / Tanakh / Torah**,
+   separate Hebrew and Translation punctuation, **Commentary** and **Notes**.
+   Punctuation Off also affects transliteration; Vowels Off does not stop
+   transliteration from using the fully vowelled source.
+4. Open **References and numbering** for **Link source title** and
+   **Link translation title**, plus **Citation** and **Line numbers**.
+   Open **Fonts and appearance** for the source/translation title and text
+   fonts. Each button opens Font and Size; *Colour, style and more…* opens
+   Preferences. Closing a group changes nothing. Its summary keeps the
+   current Notes, Commentary, credit, numbering, font and size choices clear.
+5. **Session:** these choices last for this sidebar. The session explanation
+   remains above the scrolling controls. **💾 Save as defaults** keeps the
+   changes; **↺ Revert** restores saved Preferences. Fetch-time changes
+   (Vowels, Cantillation, Punctuation, Transliteration) show *Updating
+   preview…* and Add Source waits. The translation, Hebrew edition and
+   multi-translation order stay selected. Explicitly hidden controls stay
+   hidden, but hiding them does not discard an earlier session override.
 
-   Open **Translation** for its own **Punctuation** and **Commentary**.
-   Each section has its own **Link title to Sefaria** switch, so you can link
-   the Hebrew title and leave the translation title plain, and its own
-   **Title font** and **Text font** buttons (font and size; *Colour, style
-   and more…* opens Preferences).
-5. **Session:** these choices last for this sidebar only. **💾 Save as
-   defaults** (at the top of the panel) makes them your Preferences;
-   **↺ Revert** goes back to them. After a change to what's fetched (Vowels,
-   Cantillation, Punctuation, Transliteration) the preview says *Updating
-   preview…* and **Add Source** waits until it's done. The chosen translation,
-   Hebrew edition and multi-translation order stay selected.
+The primary controls require no group expansion; controls for a language not
+being inserted disappear. Notes still applies to either language. Try the
+Style menu with the keyboard: arrows browse, Enter selects, and Esc dismisses
+only the menu. Selecting None returns focus to the Transliteration switch.
+Preferences and Link Texts retain their more detailed Source and Translation
+sections using these shared settings.
 
 **Several translations at once.** Open **Versions**, choose Display **A** or
 Stacked layout, click one translation, and <kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click two
@@ -263,7 +264,8 @@ This works on a document you wrote yourself, full of citations you typed.
    your words and still linked, so it isn't repeated; one inside a sentence
    stays. With Title set to Heading 3 in step 1, your outline now lists them.
 5. Want these sources different from your usual? Open **📰 Customize this
-   insertion** under the table: the same controls as Insertion Options
+   insertion** under the table: the settings from Insertion Options, arranged
+   here in the detailed Layout, Source and Translation sections
    (Display, Arrangement, Citation, Line numbers, both Link title switches,
    Vowels, Cantillation, Punctuation, Transliteration, Commentary, Notes) plus
    **Replace a citation on its own line**, for this pass only. It says *Your
@@ -314,8 +316,8 @@ alone.
 
 ## Things worth knowing
 
-- **Tables:** one language or Stacked goes inside the cell; Right–Left and
-  Left–Right go directly below the table, with a message saying so. Headers,
+- **Tables:** one language or Stacked goes inside the cell; Hebrew right and
+  Hebrew left go directly below the table, with a message saying so. Headers,
   footers and footnotes can't hold a source.
 - **Vowels: Tanakh** (Insertion Options, or Preferences → Insertion for
   good) keeps niqqud in Tanakh and drops it everywhere else, as the original

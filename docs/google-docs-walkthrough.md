@@ -120,7 +120,8 @@ takes effect at once, without Save). Simple hides, and never removes:
 
 In either interface, **Preferences → Sidebar** leaves out what you don't use:
 the Voices and Lexicon tabs, Quick Actions buttons, and (in Everything)
-Insertion Options controls; a hidden control uses your saved default. Anything
+Insertion Options controls; hiding one keeps its current value, including a
+session override. Anything
 switched off is hidden, not removed: a tab's menu item still opens it.
 
 Everything also has **profiles** (see *Profiles* below).
@@ -193,6 +194,12 @@ words are not borrowed under the selected edition's credit. If an edition
 needed for the selected Display is unavailable, the pickers remain visible
 and Add Source waits for a valid choice.
 
+An explicit Display language with no text cannot insert an empty block;
+choose the available language or Both. If Commentary/Notes leaves no content,
+insertion stops before changing the document. With several translations, an
+edition emptied by those choices is omitted with a notice and stays available
+for different options.
+
 **🔁 Preview** uses the same words, Commentary and Notes rules as insertion.
 Generated line numbers, chapter headings, final document fonts and page
 breaks are checked in the document. With several translations picked, the
@@ -200,50 +207,70 @@ preview lists their names rather than rendering them all.
 
 ## Insertion Options (📰)
 
-Everything here applies to the current sidebar session only. The same controls
-set your saved defaults in **Preferences → Insertion**, and one linking pass in
-Link Texts' **📰 Customize this insertion**. **↺ Revert** (back to your
-Preferences) and **💾 Save as defaults** (make these your Preferences) are at
-the top of the panel, greyed out until something differs. The panel scrolls;
-<kbd>Esc</kbd> closes it. With two or more profiles, its **Profile** list
-switches between them; in Everything, **Preferences → Sidebar** can leave
-controls out of it.
+Everything here applies to the current sidebar session. A short explanation
+stays above the scrolling controls; **↺ Revert** restores saved Preferences,
+and **💾 Save as defaults** keeps session choices for later sessions. These
+actions become available when something differs. With two or more profiles, the
+**Profile** list switches between them. Simple and Everything use the same
+panel; **Preferences → Sidebar** can hide individual controls.
 
-**Layout**
+Revert, Save as defaults and profile changes wait for any setting still
+saving. If saving fails after a retry, insertion pauses with your choices
+still visible. Change an option to retry, or choose Revert to restore saved
+defaults.
 
-- **Display** — a segmented control: **A** (translation), **A + א** (Hebrew
-  with translation), **א** (Hebrew only).
-- **Arrangement** (with both) — **Stacked**, **Right–Left** (Hebrew on the
-  right), **Left–Right** (Hebrew on the left).
-- Then a switch each for **Citation** (the editions and their licenses under
-  the text), **Line by line** (with both languages, in every arrangement: side
-  by side, one table row per verse, beside its translation; Stacked, each
-  verse, its transliteration and its translation one after another down the
-  page, with several translations in the order picked) and **Line numbers**.
-  The Arrangement icons sketch the page each gives with your other settings.
-- **Notes** — **Omit** (the default) leaves out marked source footnotes and
-  their markers in both Hebrew and translation; **Inline** adds their text
-  in parentheses where they occur; **Separate** keeps markers and collects
-  notes under a labelled Notes section below the passage, or below each line
-  with Line by line. These are text sections, not Google Docs footnotes.
+**The controls at the top**
 
-**Insertion Format** — two sections, **Source** (the Hebrew) and
-**Translation**. Each folds to one line saying what is set (*Vowels,
-Cantillation, Punctuation · Translit*); click it for the live sample and the
-settings, one per row. In the sidebar and Link Texts they start folded; in
-Preferences, open. With Display on the translation alone the Source section is
-hidden, and with the Hebrew alone the Translation section.
+- **Display:** **Translation**, **Both**, or **Original**, labelled beside
+  the A / A + א / א icons.
+- **Arrangement**, with Both: **Stacked**, **Hebrew right**, or **Hebrew left**.
+- **Line by line**, with Both, remains visible in every arrangement. Side by
+  side, each verse gets its own table row. Stacked, each verse is followed by
+  its transliteration and translations in the order picked.
+- **Transliteration**, with Original or Both, stays outside the folded groups.
+  Turn it on to reveal **Style**. In side-by-side bilingual layouts,
+  **Position** offers Below, Left, or Right of the Hebrew. Stacked always
+  keeps it under the Hebrew. The Arrangement icons sketch these choices.
 
-| Row | Section | What it does |
-| --- | --- | --- |
-| **Link title to Sefaria** | both | Link that title to the passage on sefaria.org. The source title and the translation title are set separately. |
-| **Title font** | both | That title's font and size, linked or not. |
-| **Text font** | both | The Hebrew's, or the translation's, font and size. Opens a small panel (**Font**, **Size**; a blank size matches the text where you insert); **Colour, style and more…** there opens Preferences. |
-| **Vowels** | Source | **Off** / **Tanakh** (Tanakh only) / **On**. |
-| **Cantillation** | Source | **Off** / **Tanakh** / **Torah** (the Five Books only). |
-| **Punctuation** | both | Keep the punctuation. Off removes sof pasuq, paseq, {פ}/{ס}, commas and the like; a maqaf becomes a space. |
-| **Transliteration** | Source | Add a transliteration; **Style** under it picks the scheme while it is on (Simple English, Traditional, Modern Israeli, Ashkenazi, Academic, IPA). Side by side, **Position** puts it **Below** the Hebrew, or in a column of its own **Left** or **Right** of it, headed by the Hebrew title in Latin letters (*Bereshit 1:1*, Ashkenazi *Bereishis 1:1*), linked like the Hebrew title. Stacked always puts it under the Hebrew. Read from the fully vowelled text, so it is complete with Vowels off; with the Hebrew's Punctuation off it drops the same punctuation. The Name, and every substitute for it, is written *HaShem*; sentences and the names of people, places and peoples start with a capital (not in IPA). |
-| **Commentary** | Translation | **Default** preserves the edition's explanation and markings; **Combine** keeps its words without the recognized distinction; **Drop** removes recognized explanation. Supported conventions are listed below. Other editions retain their words and source emphasis. This never filters Hebrew; marked footnotes follow Notes independently. |
+**The three folded groups**
+
+Their summaries show active choices, including Notes, Commentary, credits,
+line numbers, title links, fonts and sizes. Open a group to change a setting;
+closing it does not change values or fetch the passage again.
+
+| Group | Controls and behavior |
+| --- | --- |
+| **Text and notes** | **Vowels:** Off / Tanakh / On. **Cantillation:** Off / Tanakh / Torah. **Hebrew punctuation** and **Translation punctuation** are independent. **Commentary:** Default / Combine / Drop, following the supported conventions below. **Notes:** Omit / Inline / Separate for marked source footnotes in either language. |
+| **References and numbering** | **Link source title** and **Link translation title** independently link each title to Sefaria. **Citation** adds the editions and licenses below the passage. **Line numbers** numbers each verse or line; chapter crossings add headings. |
+| **Fonts and appearance** | **Source title**, **Hebrew text**, **Translation title** and **Translation text** buttons open Font and Size. A blank size matches the text where you insert. **Colour, style and more…** opens Preferences. |
+
+Source-specific controls disappear for Translation; translation-specific
+controls disappear for Original. Notes remains available in either case.
+Controls you explicitly hide stay hidden without changing their current
+value, including an earlier session override. Use **Revert** to restore saved
+defaults before hiding a control if that is the intended starting point.
+
+**Preferences and Link Texts:** these share the settings but retain the
+detailed **Layout**, **Source** and **Translation** sections. Preferences
+starts Source and Translation open and offers full font editors. Link Texts
+starts them folded and applies its choices to one linking pass. In those
+sections each title's link switch is called **Link title to Sefaria**;
+Preferences also offers the linked title's **Name the edition / translation**
+choice.
+
+**Transliteration details:** Style includes Simple English, Traditional,
+Modern Israeli, Ashkenazi, Academic, ALA-LC, BGN/PCGN 2018 and IPA. A separate
+column is headed by the Hebrew title in Latin letters (*Bereshit 1:1*,
+Ashkenazi *Bereishis 1:1*) and linked like the Hebrew title. The text is read
+from the fully vowelled source, even when Vowels is Off. Hebrew punctuation
+Off also removes that punctuation from transliteration. The Name reads
+*HaShem* unless changed in Transliteration Mapping; sentences and recognized
+names start with capitals except in IPA.
+
+**Keyboard:** Tab reaches the selected choice in a segmented control; arrows
+select another. In Style, arrows move through choices and Enter or Space
+selects one. Esc first closes the open menu; choosing None returns focus to
+the Transliteration switch. Esc closes the panel when no inner menu is open.
 
 Vowels, Cantillation, Punctuation and Transliteration change what is fetched:
 the sidebar fetches the passage again, the Preview says *Updating preview…*
@@ -264,7 +291,7 @@ arrangement, then the citation if **Citation** is on, styled as set in
 **Preferences → Insertion → Layout → Citation style**.
 
 With the cursor in a table cell, one language or the **Stacked** layout goes
-inside the cell. **Right–Left** and **Left–Right** are tables themselves, so
+inside the cell. **Hebrew right** and **Hebrew left** are tables themselves, so
 they go directly below the table, and the sidebar says so. Headers, footers
 and footnotes can't hold a source.
 
@@ -390,8 +417,9 @@ whole document).
    line of its own is **replaced** by its source (titled with the citation,
    still linked), like Insert from Selection; one inside a sentence stays.
 4. Optional: **📰 Customize this insertion**, under the table, has the
-   Insertion Options controls (Layout and Insertion Format) plus **Replace a
-   citation on its own line**. It reads *Your defaults* until you change
+   Insertion Options settings, arranged as Layout and the detailed Source and
+   Translation sections, plus **Replace a citation on its own line**.
+   It reads *Your defaults* until you change
    something, then *Customized for this pass*. The choices apply to this pass's
    inserts only; **↺ Revert to defaults** undoes them and **💾 Save as
    defaults** makes them your Preferences.
@@ -481,8 +509,9 @@ use. Save applies it, and an open sidebar follows at once.
 - **Quick Actions:** which buttons the 🏃 panel offers. The menu is arranged
   separately, in Menu Bar.
 - **Insertion Options** (Everything): which controls 📰 Insertion Options
-  offers. A hidden control always uses your saved default, so a class can't
-  change it by accident. **Show all** brings them back.
+  offers. Hiding a control keeps its current value, including a session
+  override; use Revert first if the class should start from saved defaults.
+  **Show all** brings them back.
 
 Anything switched off is hidden, not removed, and your settings still apply.
 

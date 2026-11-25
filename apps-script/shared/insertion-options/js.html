@@ -40,9 +40,20 @@ function initInsertionOptions(config) {
 
   function chooser(attribute, callbackName) {
     return function (event) {
-      if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+      if (event.type === 'keydown' && (event.altKey || event.ctrlKey || event.metaKey)) return;
+      var target = this;
+      if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+        if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].indexOf(event.key) < 0) return;
+        var group = this.closest('[role="radiogroup"]');
+        var choices = Array.prototype.slice.call(group.querySelectorAll('button[role="radio"]'));
+        var at = choices.indexOf(this);
+        var next = event.key === 'Home' ? 0 : event.key === 'End' ? choices.length - 1 :
+          (at + (event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 1) + choices.length) % choices.length;
+        target = choices[next];
+        target.focus();
+      }
       event.preventDefault();
-      _ioConfig[callbackName]($(this).attr(attribute));
+      _ioConfig[callbackName]($(target).attr(attribute));
       updateInsertionOptions();
     };
   }
@@ -66,12 +77,12 @@ function updateInsertionOptions() {
 
   $root.find('.mode-card').each(function () {
     var isSelected = $(this).attr('data-mode') === mode;
-    $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false');
+    $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false').attr('tabindex', isSelected ? '0' : '-1');
   });
 
   $root.find('.layout-option').each(function () {
     var isSelected = $(this).attr('data-layout') === layout;
-    $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false');
+    $(this).toggleClass('selected', isSelected).attr('aria-checked', isSelected ? 'true' : 'false').attr('tabindex', isSelected ? '0' : '-1');
   });
 
   // A layout only means something with both languages, and a translation-only
@@ -114,5 +125,172 @@ function updateInsertionOptions() {
   // Hebrew-only one.
   $root.find('.cc-section--source').toggle(!hide || mode !== 'en');
   $root.find('.cc-section--translation').toggle(!hide || mode !== 'he');
+  updateGroupedInsertionOptions();
+}
+
+// The sidebar's compact presentation moves these existing, shared controls
+// once. IDs, event handlers, values and host persistence stay the same.
+// Preferences keeps the detailed editors, including its inline font forms.
+var _ioGroupedRoot = null;
+
+function initGroupedInsertionOptions(rootSelector) {
+  var root = document.querySelector(rootSelector);
+  if (!root || root.classList.contains('io-grouped-options')) return;
+  var surface = root.querySelector('#composition-card-container .cc-surface');
+  if (!surface) return;
+  _ioGroupedRoot = root;
+  root.classList.add('io-grouped-options');
+
+  function element(tag, className, text) {
+    var node = document.createElement(tag);
+    node.className = className;
+    if (text) node.textContent = text;
+    return node;
+  }
+  function createOptionsGroup(id, label) {
+    var section = element('details', 'cc-section io-options-group');
+    section.id = 'io-' + id + '-group';
+    var summary = element('summary', 'cc-section-summary');
+    summary.appendChild(element('span', 'cc-section-label', label));
+    var state = element('span', 'cc-section-state io-group-state');
+    state.id = 'io-' + id + '-state';
+    summary.appendChild(state);
+    section.appendChild(summary);
+    var body = element('div', 'cc-section-body cc-rows');
+    section.appendChild(body);
+    surface.insertBefore(section, surface.querySelector('#cc-font-panel'));
+    // A font popup belongs to the controls that opened it. Closing a group
+    // hides that popup too; it never writes a preference or refreshes a source.
+    section.addEventListener('toggle', function () {
+      if (section.open) return;
+      var expanded = section.querySelector('.cc-font-chip[aria-expanded="true"]');
+      if (expanded && typeof ccCloseFontPanel === 'function') ccCloseFontPanel(false);
+    });
+    return body;
+  }
+  function move(selector, target, role, label, sample) {
+    var selected = root.querySelector(selector);
+    if (!selected) return null;
+    var row = selected.closest('.cc-row') || selected;
+    if (role) row.setAttribute('data-io-role', role);
+    if (!sample) row.setAttribute('data-io-item', '');
+    if (label) {
+      var caption = row.querySelector('.cc-row-label');
+      if (caption) caption.textContent = label;
+    }
+    target.appendChild(row);
+    return row;
+  }
+
+  var primary = element('div', 'cc-rows io-primary-options');
+  surface.insertBefore(primary, surface.firstChild);
+  move('#layout-rows-toggle', primary);
+  move('.cc-translit-wrap', primary, 'he');
+
+  var text = createOptionsGroup('text', 'Text and notes');
+  move('.cc-hebrew-stage', text, 'he', null, true);
+  move('#cc-vowels-toggle', text, 'he');
+  move('#cc-cantillation-toggle', text, 'he');
+  move('#cc-hebrew-punct-toggle', text, 'he', 'Hebrew punctuation');
+  move('.cc-translation-stage', text, 'en', null, true);
+  move('#cc-translation-punct-toggle', text, 'en', 'Translation punctuation');
+  move('#cc-emphasis-toggle', text, 'en');
+  move('#cc-commentary-help', text, 'en', null, true);
+  move('#cc-notes-toggle', text);
+
+  var references = createOptionsGroup('references', 'References and numbering');
+  move('#cc-he-title-toggle', references, 'he', 'Link source title');
+  move('#cc-he-edition-toggle', references, 'he');
+  move('#cc-title-toggle', references, 'en', 'Link translation title');
+  move('#cc-edition-toggle', references, 'en');
+  move('#cc-details-toggle', references);
+  move('#cc-lines-toggle', references);
+
+  var fonts = createOptionsGroup('fonts', 'Fonts and appearance');
+  move('#cc-hebrew-title-font-chip', fonts, 'he', 'Source title');
+  move('#cc-hebrew-font-chip', fonts, 'he', 'Hebrew text');
+  move('#cc-hebrew-font-note', fonts, 'he', null, true);
+  var translitFont = move('#cc-transliteration-font-chip', fonts, 'he', 'Transliteration');
+  if (translitFont) translitFont.setAttribute('data-sidebar-control', 'transliteration text_fonts');
+  move('#cc-translation-title-font-chip', fonts, 'en', 'Translation title');
+  move('#cc-translation-font-chip', fonts, 'en', 'Translation text');
+
+  // All controls and samples have moved; only their former section shells
+  // remain. Removing these shells does not replace any interactive node.
+  Array.prototype.forEach.call(surface.querySelectorAll('.cc-section--source, .cc-section--translation'), function (section) {
+    section.remove();
+  });
+  var oldRows = root.querySelector('.layout-rows-row');
+  if (oldRows && !oldRows.children.length) oldRows.remove();
+}
+
+function updateGroupedInsertionOptions() {
+  var root = _ioGroupedRoot;
+  if (!root || !_ioConfig || typeof _ccConfig === 'undefined' || !_ccConfig) return;
+  var layout = _ioConfig.getState() || {};
+  var state = _ccConfig.getState() || {};
+  var mode = layout.outputMode || 'both';
+  var hasSource = mode !== 'en';
+  var hasTranslation = mode !== 'he';
+  var sidebar = root.closest('.unified-sidebar');
+  var hidden = ((sidebar && sidebar.getAttribute('data-options-hidden')) || '').split(/\s+/);
+
+  Array.prototype.forEach.call(root.querySelectorAll('[data-io-role]'), function (row) {
+    var applies = row.getAttribute('data-io-role') === 'he' ? hasSource : hasTranslation;
+    row.classList.toggle('io-inapplicable', !applies);
+  });
+
+  // Do not use :visible here: every row in a closed <details> is invisible.
+  // Availability depends only on its own feature/applicability/hidden flags.
+  function available(row) {
+    if (row.hidden || row.classList.contains('io-inapplicable') || row.style.display === 'none') return false;
+    var controls = (row.getAttribute('data-sidebar-control') || '').split(/\s+/);
+    return !controls.some(function (id) { return id && hidden.indexOf(id) >= 0; });
+  }
+  Array.prototype.forEach.call(root.querySelectorAll('.io-options-group, .io-primary-options'), function (section) {
+    section.hidden = !Array.prototype.some.call(section.querySelectorAll('[data-io-item]'), available);
+  });
+  // Samples accompany the controls they demonstrate, not a hidden control.
+  var heSample = root.querySelector('.cc-hebrew-stage');
+  if (heSample) heSample.hidden = ['vowels', 'cantillation', 'hebrew_punctuation'].every(function (id) { return hidden.indexOf(id) >= 0; });
+  var enSample = root.querySelector('.cc-translation-stage');
+  if (enSample) enSample.hidden = ['translation_punctuation', 'commentary'].every(function (id) { return hidden.indexOf(id) >= 0; });
+
+  var notes = { omit: 'Notes omitted', inline: 'Notes inline', separate: 'Notes below text' };
+  var commentary = { keep: 'Default commentary', discard: 'Commentary combined', only: 'Commentary dropped' };
+  var marks = { never: 'off', always: 'on', tanakh: 'Tanakh', torah: 'Torah' };
+  var textParts = [notes[state.notesMode] || notes.omit];
+  if (hasTranslation) textParts.push(commentary[state.emphasisMode] || commentary.keep);
+  if (hasSource) {
+    textParts.push('Vowels ' + (marks[state.vowelsMode] || 'on'));
+    textParts.push('Cantillation ' + (marks[state.cantillationMode] || 'Tanakh'));
+    if (state.hebrewPunctuationOn === false) textParts.push('Hebrew punctuation off');
+  }
+  if (hasTranslation && state.translationPunctuationOn === false) textParts.push('Translation punctuation off');
+  root.querySelector('#io-text-state').textContent = textParts.join(' · ');
+
+  var refParts = [state.detailsOn ? 'Credits on' : 'Credits off', state.linesOn ? 'Line numbers on' : 'Line numbers off'];
+  var links = [];
+  if (hasSource) links.push(!!state.hebrewLinkOn);
+  if (hasTranslation) links.push(!!state.linkOn);
+  refParts.push(links.every(Boolean) ? 'Title links on' : links.some(Boolean) ? 'One title link off' : 'Title links off');
+  root.querySelector('#io-references-state').textContent = refParts.join(' · ');
+
+  var fontParts = [];
+  var fontRoles = [['hebrew', 'Hebrew', hasSource], ['hebrew_title', 'Source title', hasSource],
+    ['translation', 'Translation', hasTranslation], ['source_title', 'Translation title', hasTranslation],
+    ['transliteration', 'Transliteration', hasSource && state.transliterationOn]];
+  fontRoles.forEach(function (role) {
+    var font = (state.fonts || {})[role[0]] || {};
+    if (role[2] && (font.font || font.size)) fontParts.push(role[1] + ': ' + (font.font || 'document font') + (font.size ? ', ' + font.size + ' pt' : ''));
+  });
+  root.querySelector('#io-fonts-state').textContent = fontParts.length ? fontParts.join(' · ') : 'Match document fonts and sizes';
+
+  // A mode or visibility change must not leave a popup for a hidden button.
+  if (typeof _ccFontPanelRole !== 'undefined' && _ccFontPanelRole) {
+    var chip = root.querySelector('.cc-font-chip[data-font-role="' + _ccFontPanelRole + '"]');
+    if (chip && !available(chip.closest('.cc-row'))) ccCloseFontPanel(false);
+  }
+  if ((!hasSource || hidden.indexOf('transliteration') >= 0) && typeof closeCompositionCardTranslitMenu === 'function') closeCompositionCardTranslitMenu();
 }
 </script>

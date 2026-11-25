@@ -432,3 +432,36 @@ test('switching display with both selected editions already loaded reuses the va
   assert.equal(env.ctx.data.versionTitle, 'Chosen ');
   assert.deepEqual(env.picks(), ['Chosen ']);
 });
+
+
+for (const missingMode of ['en', 'he']) {
+  test('a missing default ' + missingMode + ' output blocks Insert and Display can recover to its available language or Both', () => {
+    const env = load();
+    env.$('.output-mode-selection').val(missingMode);
+    const partial = payload(missingMode === 'en' ? '' : 'Default', missingMode === 'he' ? '' : 'Source default');
+    if (missingMode === 'en') partial.text = [];
+    else partial.he = [];
+    partial.versions = partial.versions.filter((version) => version.language !== missingMode);
+    env.start(partial);
+    assert.equal(env.ctx.hasResolvedReference, false);
+    assert.equal(env.insertStates.at(-1), false);
+    assert.match(env.$('.suggestions').text(), /No (translation|original) text is available.*or Both in Display/);
+    assert.equal(env.ctx.selectedResultSummary.status, 'Choose another Display option');
+
+    const availableMode = missingMode === 'en' ? 'he' : 'en';
+    env.change('.output-mode-selection', availableMode);
+    env.answer(partial);
+    assert.equal(env.ctx.hasResolvedReference, true);
+    assert.equal(env.insertStates.at(-1), true);
+    assert.equal(env.ctx.data, partial);
+    const before = env.fetches().length;
+    env.change('.output-mode-selection', 'both');
+    assert.equal(env.fetches().length, before, 'Both reuses the available language; no explicit missing edition was chosen');
+    assert.equal(env.ctx.hasResolvedReference, true);
+    env.change('.output-mode-selection', missingMode);
+    env.answer(partial);
+    assert.equal(env.ctx.hasResolvedReference, false);
+    assert.equal(env.insertStates.at(-1), false);
+    assert.match(env.$('.suggestions').text(), /or Both in Display/);
+  });
+}

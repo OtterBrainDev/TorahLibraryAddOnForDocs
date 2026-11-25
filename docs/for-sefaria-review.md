@@ -4,7 +4,8 @@ Written 2026-11-17 against the 2.0.0 release candidate (816 tests passing,
 `pre_clasp_qc.sh` clean, preference schema 31).
 
 Current source update, 2026-11-24: the v3, Commentary/Notes and launch-defaults
-changes are recorded in [the project handoff](sefaria-api-migration.md).
+changes, followed by the sidebar grouping and senior engineering review,
+are recorded in [the project handoff](sefaria-api-migration.md).
 The current schema is 33; the date and test count above describe the original
 review. Deployment and release approval remain separate.
 

@@ -135,8 +135,31 @@ function ccSetToggle($row, on) {
 function ccSetChoice($group, value) {
   $group.attr('data-value', value).find('.cc-seg-option').each(function () {
     var selected = $(this).attr('data-value') === value;
-    $(this).toggleClass('is-selected', selected).attr('aria-checked', selected ? 'true' : 'false');
+    $(this).toggleClass('is-selected', selected)
+      .attr('aria-checked', selected ? 'true' : 'false')
+      .attr('tabindex', selected ? '0' : '-1');
   });
+}
+
+// The choices are radios: Tab reaches the selected one, and arrows choose
+// its neighbour. Native button clicks remain the one path that changes state.
+function ccChoiceKeydown(event) {
+  if (event.altKey || event.ctrlKey || event.metaKey) return;
+  var keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+  if (keys.indexOf(event.key) < 0) return;
+  var group = this.closest('.cc-seg');
+  if (!group) return;
+  var options = Array.prototype.filter.call(group.querySelectorAll('.cc-seg-option'), function (option) {
+    return !option.disabled && !option.hidden;
+  });
+  var index = options.indexOf(this);
+  if (index < 0 || !options.length) return;
+  var next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1
+    : (index + (event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1 : 1) + options.length) % options.length;
+  event.preventDefault();
+  event.stopPropagation();
+  options[next].focus();
+  options[next].click();
 }
 
 // The font preferences the card's font buttons read and write: the Hebrew
@@ -231,6 +254,12 @@ function initCompositionCard(config) {
   });
 
   if (features.indexOf('openSections') >= 0) $container.find('.cc-section').prop('open', true);
+
+  // The sidebar can regroup the same controls after feature filtering, before
+  // a host's font editors mount beside their buttons. Nothing is copied.
+  if (config.groupedOptionsRoot && typeof initGroupedInsertionOptions === 'function') {
+    initGroupedInsertionOptions(config.groupedOptionsRoot);
+  }
 
   _ccFontsEnabled = features.indexOf('fonts') >= 0 && typeof planHebrewMarkFallback === 'function';
   if (_ccFontsEnabled) _ccMountInlineFontEditors();
@@ -465,9 +494,57 @@ function _ccHasFeature(name) {
   return _ccFeatures.indexOf(name) >= 0;
 }
 
-function closeCompositionCardTranslitMenu() {
+function closeCompositionCardTranslitMenu(returnFocus) {
   $('#cc-translit-menu').addClass('hidden');
   $('#cc-translit-toggle').attr('aria-expanded', 'false');
+  if (returnFocus) {
+    // Choosing None hides Style, so return to the still-visible switch.
+    var on = _ccConfig && _ccConfig.getState().transliterationOn;
+    var target = document.getElementById(on ? 'cc-translit-toggle' : 'cc-translit-pill');
+    if (target) target.focus();
+  }
+}
+
+function openCompositionCardTranslitMenu() {
+  var menu = document.getElementById('cc-translit-menu');
+  if (!menu) return;
+  $('#cc-translit-menu').removeClass('hidden');
+  $('#cc-translit-toggle').attr('aria-expanded', 'true');
+  var selected = menu.querySelector('[aria-selected="true"]') || menu.querySelector('.cc-translit-option');
+  if (selected) selected.focus();
+}
+
+function ccTranslitMenuKeydown(event) {
+  if (event.altKey || event.ctrlKey || event.metaKey) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    event.stopPropagation();
+    closeCompositionCardTranslitMenu(true);
+    return;
+  }
+  if (event.key === 'Tab') {
+    // Let the browser continue Tab from the trigger after dismissing the menu.
+    closeCompositionCardTranslitMenu(true);
+    return;
+  }
+  var option = event.target.closest('.cc-translit-option');
+  if (!option) return;
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    event.stopPropagation();
+    option.click();
+    return;
+  }
+  if (['ArrowUp', 'ArrowDown', 'Home', 'End'].indexOf(event.key) < 0) return;
+  var options = Array.prototype.slice.call(this.querySelectorAll('.cc-translit-option'));
+  var index = options.indexOf(option);
+  if (index < 0 || !options.length) return;
+  var next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1
+    : (index + (event.key === 'ArrowUp' ? -1 : 1) + options.length) % options.length;
+  event.preventDefault();
+  event.stopPropagation();
+  options.forEach(function (item, i) { item.tabIndex = i === next ? 0 : -1; });
+  options[next].focus();
 }
 
 function updateCompositionCard() {
@@ -506,6 +583,7 @@ function updateCompositionCard() {
   $('#cc-translit-font-row').prop('hidden', !state.transliterationOn);
   $('#cc-translit-position-row').prop('hidden', !state.transliterationOn);
   ccSetChoice($('#cc-translit-position-toggle'), ccNormalizeTranslitPosition(state.translitPosition));
+  if (!state.transliterationOn) closeCompositionCardTranslitMenu(false);
   if (!state.transliterationOn && _ccInlineFontRole === 'transliteration') ccCloseInlineFontEditor(false);
 
   // Line numbers and the source citation (in shared/insertion-options)
@@ -547,9 +625,15 @@ function updateCompositionCard() {
 
   // Scheme menu selection state. Only this card's menu: the Voices menus
   // (sidebar, Preferences) share the option class but not the setting.
+  var schemeName = 'None';
   $('#cc-translit-menu .cc-translit-option').each(function () {
-    $(this).toggleClass('is-selected', $(this).attr('data-value') === scheme);
+    var selected = $(this).attr('data-value') === scheme;
+    $(this).toggleClass('is-selected', selected)
+      .attr('aria-selected', selected ? 'true' : 'false')
+      .attr('tabindex', selected ? '0' : '-1');
+    if (selected) schemeName = $(this).text();
   });
+  $('#cc-translit-toggle').attr('aria-label', 'Transliteration style: ' + schemeName);
 
   // Status line
   var $status = $('#cc-status');
@@ -597,19 +681,27 @@ function _bindCompositionCardEvents() {
     if (_ccConfig.onChoice) _ccConfig.onChoice(key, $(this).attr('data-value'));
     updateCompositionCard();
   });
+  $('.cc-seg[data-cc-choice] .cc-seg-option').off('keydown.cc').on('keydown.cc', ccChoiceKeydown);
   $('#cc-translit-toggle').off('click.cc').on('click.cc', function (event) {
     event.preventDefault();
     event.stopPropagation();
-    $('#cc-translit-menu').toggleClass('hidden');
-    $(this).attr('aria-expanded', $('#cc-translit-menu').hasClass('hidden') ? 'false' : 'true');
+    if ($('#cc-translit-menu').hasClass('hidden')) openCompositionCardTranslitMenu();
+    else closeCompositionCardTranslitMenu(true);
+  });
+  $('#cc-translit-toggle').off('keydown.cc').on('keydown.cc', function (event) {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    event.preventDefault();
+    event.stopPropagation();
+    openCompositionCardTranslitMenu();
   });
 
   $('#cc-translit-menu .cc-translit-option').off('click.cc').on('click.cc', function () {
     var value = $(this).attr('data-value');
     _ccConfig.onSchemeSelect(value);
-    closeCompositionCardTranslitMenu();
     updateCompositionCard();
+    closeCompositionCardTranslitMenu(true);
   });
+  $('#cc-translit-menu').off('keydown.cc').on('keydown.cc', ccTranslitMenuKeydown);
 
   $(document).off('click.ccDismiss').on('click.ccDismiss', function (event) {
     if (!$(event.target).closest('.cc-translit-wrap').length) closeCompositionCardTranslitMenu();

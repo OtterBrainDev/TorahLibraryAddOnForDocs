@@ -50,8 +50,13 @@ and separate choices for supported inline commentary and marked footnotes.
   insert it.
 - Leave **Commentary** on **Default** to preserve the edition's explanation
   and markings. **Notes** starts on **Omit**, preserving the previous
-  inserted output; choose Inline or Separate under Layout to include marked
-  footnotes. Separate creates an ordinary Notes text section.
+  inserted output; choose Inline or Separate in **Insertion Options → Text and
+  notes** (or Layout in Preferences) to include marked footnotes. Separate
+  creates an ordinary Notes text section.
+- Display, Arrangement, Line by line and Transliteration stay at the top of
+  Insertion Options when applicable. Other choices are in three folding
+  groups: Text and notes, References and numbering, and Fonts and appearance.
+  These session choices are saved for later only with **Save as defaults**.
 - Your chosen translation and Hebrew edition stay selected when you change
   insertion options. An edition's missing verses stay missing instead of
   being filled from a different edition. Choose another in Versions if needed.

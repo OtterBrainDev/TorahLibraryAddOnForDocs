@@ -130,7 +130,7 @@ Find texts in Sefaria's library of Jewish sources and insert them into Google Do
 **Detailed description** (plain text; paste as is):
 
 ```
-Sefaria for Google Docs brings Sefaria's free library of Jewish texts into Google Docs. Search by reference, title, or phrase, preview exactly what you'll get, and insert it formatted the way you want — without leaving your document.
+Sefaria for Google Docs brings Sefaria's free library of Jewish texts into Google Docs. Search by reference, title, or phrase, preview the selected passage, and insert it formatted the way you want — without leaving your document.
 
 WHAT YOU CAN DO
 • Find a text by reference ("Berakhot 2a", "בראשית א:א"), title, phrase, or a Sefaria link, and preview it before inserting.
@@ -139,6 +139,7 @@ WHAT YOU CAN DO
 • Keep the source's own emphasis — for example, the Steinsaltz Talmud's bolding of the Talmud's words — and set fonts, sizes, colours, and highlights for every part of an inserted source.
 • Keep, combine or omit inline explanation in the William Davidson English Talmud and Silverstein's Rashi Chumash and Rashi Ketuvim. Other editions keep their words and source emphasis.
 • Choose separately whether marked source footnotes are omitted, included inline or collected in a Notes text section below the passage.
+• Keep Display, Arrangement, Line by line and Transliteration close at hand, with other insertion settings in three folding groups.
 • Add a citation and a link back to Sefaria with each source.
 • Search Sefaria source sheets in Voices.
 • Link Texts with Sefaria: turn citations already written in your document into Sefaria links, with a review step when a citation could mean more than one source.

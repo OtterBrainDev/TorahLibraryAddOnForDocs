@@ -8,7 +8,8 @@ records for bugs and release verification.
 **Current artifact:** branch `review/launch-defaults-help-20261124`, based on
 `fix/edition-commentary-notes-20261124` at `61805f8`, published as
 [draft PR #60](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/60)
-with implementation commit `8531fd1`. The API migration remains
+with the initial launch implementation at `8531fd1` and the sidebar/senior
+walkthrough follow-up recorded below. The API migration remains
 [draft PR #58](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/58);
 the follow-up is [draft PR #59](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/59),
 with implementation commit `3b7d3eb`. Release **2.0.0** is unchanged;
@@ -353,31 +354,33 @@ Tanakh button writes the narrower `tanakh` filter. The control maps the former
 to Tanakh because that is where marks normally occur. This pass documents the
 default accurately and does not silently change it for another corpus.
 
-### Sidebar proposal — not implemented in this pass
+### Sidebar grouping — implemented after owner review
 
-The source and translation sections already collapse. The visible Layout
-controls, icon-only choices, typography controls mixed with content choices,
-and the distinction between session changes and saved defaults still make a
-long first encounter. The proposed next UI pass is:
+The owner approved the grouping with two corrections: **Line by line** and
+**Transliteration** must remain beside the primary controls, outside every
+collapsed group. The follow-up implements this in the sidebar:
 
 | Placement | Controls / information |
 | --- | --- |
-| Always visible at the top | Display, Arrangement when Both is selected, and a short readable summary of the active settings. Add text labels to the icon choices. |
-| Collapsed “Text and notes” group | Vowels, cantillation, punctuation, transliteration, Commentary and Notes, with the existing applicability rules. Notes remains independent of Commentary. |
-| Collapsed “References and numbering” group | Title links, edition labels where offered, source credits, line numbers and line-by-line layout. |
-| Collapsed “Fonts and appearance” group | Existing font controls, retaining the shared editors and “Match the document” behavior. |
-| Persistent session context | Say that changes apply to this sidebar session; keep Revert and Save as defaults visible when changed. |
+| Primary controls, outside all groups | Display; Arrangement and Line by line with Both; Transliteration when original text is included. Display/Arrangement have visible text labels. Style appears with transliteration enabled; Position applies to side-by-side arrangements. |
+| Collapsed “Text and notes” group | Vowels, cantillation, Hebrew and translation punctuation, Commentary and Notes, with the existing applicability rules. Notes remains available for either language and independent of Commentary. |
+| Collapsed “References and numbering” group | Source and translation title links, edition labels where the host offers them, Citation (source credits) and Line numbers. |
+| Collapsed “Fonts and appearance” group | Existing font controls, retaining the shared editors and “Match the document” behavior. The summary names custom fonts/sizes. |
+| Persistent session context | The session explanation, Revert and Save as defaults sit above the scrolling body. Actions are enabled when relevant and held while a session mutation is in progress. |
 
-Closed groups should summarize their active values, especially Notes Inline /
-Separate, Commentary Drop, disabled credits and custom formatting. Closing a
-group must not alter values or cause an extra fetch. Keep one set of controls
-and shared handlers across hosts; this is a presentation change, not another
-stored interface tier or preset. Keep explicit user-hidden controls hidden.
+Closed summaries wrap so consequential settings such as Notes Separate,
+Commentary Drop, disabled credits and custom fonts/sizes remain readable.
+The shared insertion-options module moves existing controls once; it never
+clones them or changes their values. Preferences and Link Texts keep their
+detailed Source/Translation editors. Grouping adds no preference, interface
+tier, schema migration or fetch. Simple and Everything receive the same
+grouping. Empty groups disappear when all their controls are inapplicable or
+explicitly hidden, without changing their expansion state or settings.
 
-Until that UI pass, the current **Preferences → Sidebar → Insertion Options**
-visibility controls can reduce the sidebar for a particular class. They keep
-using the saved defaults. The owner should review the proposed grouping
-before implementation; current Help/tutorials describe the existing UI.
+**Preferences → Sidebar → Insertion Options** still controls visibility for a
+particular class. Hiding a control preserves its effective value, including
+an existing session override; Revert is the explicit way to restore saved
+defaults. Help, Preferences text and tutorials now describe that accurately.
 
 ### Documentation and release boundary
 
@@ -409,5 +412,81 @@ is implied. The current version remains **2.0.0 pending release**.
 
 Review [PR #60](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/60)
 after the v3 and A–D changes. Merge order is **#58 → #59 → #60**; test the resulting exact HEAD in
-Google Docs before creating a numbered release. The sidebar grouping above
-is the proposed next UI pass, with no structural redesign applied here.
+Google Docs before creating a numbered release. The next section records the
+subsequent implemented sidebar and senior engineering walkthrough.
+
+## Sidebar and senior engineering walkthrough — 2026-11-24
+
+**Scope:** update the existing PR #60 with the accepted primary controls,
+then trace likely new-user, returning-user, teacher and multiple-translation
+workflows. This pass builds on the 993-test launch review. No release number
+or preference schema changes: **2.0.0 pending release, schema 33**.
+
+### Confirmed findings and fixes
+
+| Priority | Likely workflow and confirmed failure | Change and regression evidence |
+| --- | --- | --- |
+| P1 | A bilingual range crosses chapters and an edition lacks the first chapter fragment. Flattening each language separately paired chapter 2's translation with chapter 1's Hebrew and could assign the wrong verse number. | Pair by chapter and verse before advancing; preserve gaps. Multiple translations reserve the same chapter shape, and pointed Hebrew must match those coordinates. Server/preview and single/multiple/aligned insertion cases are in `aligned-rows`, `preview-source-notes` and `source-notes-insertion` tests. |
+| P1 | A setting is still saving when the reader chooses Revert, Save as defaults or another profile. A late write could resurrect reverted values or save the previous settings as defaults. | Session actions drain preceding writes, reject duplicate actions and hold controls through the full mutation. Save as defaults first confirms the visible snapshot, including when the session cache expired. Eleven new `sidebar-session-saves` cases cover ordering, failures, profile clearing and recovery. |
+| P1 | A preference save fails while the controls optimistically show the new value. A later fetch could use the server's older filters and re-enable insertion. | Retry once; repeated failure retains the complete snapshot and pauses insertion/new reference fetches with a recovery message. A new choice retries the snapshot; Revert discards it. The refresh timer stops instead of polling indefinitely. |
+| P2 | An explicit Original-only or Translation-only request has no content in that language. Insertion could create an empty titled block and reach selection replacement. | Validate processed content before numbering and before resolving the document target. The sidebar explains a missing default language and recovers on Display changes. Actual Selection and Link Texts entry-point tests prove no citation deletion or target mutation. Both keeps its established single-language fallback. |
+| P2 | One selected translation becomes empty under Commentary/Notes while another has content. The old path could still write its empty block. | Omit the empty block and return `filtered` separately from genuinely unavailable `skipped` editions. Warn without changing its availability or selection; all-empty output fails before a document edit. `required-output.test.js` covers the server and sidebar result handler. |
+| P2 | An exact edition title has significant trailing whitespace. The multi-insertion selector trimmed it, accepted a different identity and changed its pinned link. | Compare and return exact titles; preserve whitespace in the version URL. `multi-version-insert.test.js` covers whitespace-distinct editions and the captured catalog convention. |
+| P2 | Keyboard use of radios, the transliteration menu or the modal tray loses focus or leaks it behind the dialog. | One tab stop per radio group; arrow/Home/End choices through existing handlers. The style menu has option/selected semantics, explicit selection, Escape containment and focus restoration (to the switch after None). The tray contains Tab navigation and makes background controls inert while preserving progress announcements. `composition-keyboard` and `insertion-options-grouping` exercise these behaviors. |
+| Documentation | The proposed grouping, single-insertion wording, hidden-control default promises and two exact-preview claims were out of sync. | Current Help/About/release notes, Preferences, README, all five tutorials, upgrade and review/store guidance now match the implemented controls and session scope. Historical records remain historical; no recording is claimed. |
+
+### Reviewed use cases and boundaries
+
+- **New and returning readers:** primary controls remain discoverable in
+  Simple and Everything, dependent controls appear only when applicable, and
+  explicitly hidden controls do not return after a redraw. Expansion changes
+  neither settings nor requests. The session and account-default distinction
+  is visible above the scroll area.
+- **Source-sheet preparation:** Both/Original/Translation; Stacked and both
+  side-by-side arrangements; Line by line with missing segments; Commentary
+  and Notes independently; multiple translations with different gaps; exact
+  titles and pinned links. The same processor and shared controls remain in
+  use. No change to the transliteration engine or commentary profile allowlist.
+- **Settings transitions:** existing valid preferences, schema 33 defaults,
+  profiles, Reset and import contracts remain intact. A hypothetical
+  schema-24 import concern was dismissed after checking that the first
+  exporter shipped at schema 26; no speculative migration was added.
+- **Other entry points:** Selection and Link Texts use the guard before a
+  document can be changed; Surprise Me still uses the shared insertion path.
+  Voices and Lexicon retain their independent controls and workflow defaults.
+
+### Validation, remaining gaps and next action
+
+- **1,032 offline tests passed, 0 failed, 0 skipped**: 39 new regressions
+  beyond the 993-test launch review (16 insertion/edition/alignment, 11 session
+  ordering/failure, 12 grouping/keyboard). The required entry-template
+  snapshots were regenerated for Sidebar and Preferences.
+- Pre-clasp QC passed; the optional clasp-status check is unavailable because
+  clasp is not installed here. A local helper was renamed to satisfy the
+  include-graph duplicate-name gate; no runtime scope or behavior changed.
+- Independent integration review found no lost controls or changed values in
+  grouping, and caught modifier-key/inert-status details that were corrected.
+  Production-code tests establish source behavior; they do not establish a
+  Google Docs deployment or native browser layout.
+- A separate final review of chapter alignment, exact titles, output guards
+  and filtered-versus-unavailable results found no blocking regression.
+- **Static visual rendering is blocked here:** the Chromium launcher exists
+  but its browser binary is absent. Narrow sidebar layout, actual Tab
+  traversal and assistive-technology announcements still need a real browser.
+- **Live Google Docs checks N/O/P and new Q remain NOT RUN.** Q covers the
+  primary controls/groups, hidden settings, keyboard/modal behavior, session
+  actions/failures, gaps, exact titles and empty-language handling. Real
+  Apps Script latency, quotas and document layout remain launch gates.
+- **Known product limits remain explicit:** availability is not a completeness
+  guarantee; there is no per-verse gap indicator or full multi-translation
+  preview. Partial-edition gaps stay gaps. Only verified commentary profiles
+  transform inline commentary. Notes Separate creates ordinary document text.
+  If a policy removes all otherwise available content, the server refuses the
+  empty insertion with guidance; the sidebar does not pre-disable every such
+  policy combination. Those are bounded usability enhancements, not evidence
+  of an empty-document write after this fix.
+
+Next action: review the updated PR #60 after #58 and #59, then run the exact
+HEAD in the designated Docs test deployment using the existing checklist.
+No merge, Apps Script push, numbered version, Marketplace publication or
+tutorial recording was performed in this pass.

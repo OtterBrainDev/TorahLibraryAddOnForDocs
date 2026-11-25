@@ -18,9 +18,9 @@
   <div class="display-choice-detail" data-sidebar-control="display">
     <div class="display-choice-label" id="display-choice-label">Display</div>
     <div class="mode-card-group compact-mode-card-group" role="radiogroup" aria-labelledby="display-choice-label">
-      <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content"><span class="mode-card-symbol latin">A</span></span></button>
-      <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span></button>
-      <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content"><span class="mode-card-symbol">א</span></span></button>
+      <button type="button" class="mode-card" data-mode="en" role="radio" aria-checked="false" title="Translation"><span class="mode-card-content" aria-hidden="true"><span class="mode-card-symbol latin">A</span></span><span class="io-choice-label">Translation</span></button>
+      <button type="button" class="mode-card" data-mode="both" role="radio" aria-checked="false" title="Original with Translation"><span class="mode-card-content both" aria-hidden="true"><span class="mode-card-symbol latin">A</span><span class="mode-card-plus">+</span><span class="mode-card-symbol">א</span></span><span class="io-choice-label">Both</span></button>
+      <button type="button" class="mode-card" data-mode="he" role="radio" aria-checked="false" title="Original"><span class="mode-card-content" aria-hidden="true"><span class="mode-card-symbol">א</span></span><span class="io-choice-label">Original</span></button>
     </div>
   </div>
   <div class="display-choice-detail bilingual-layout-wrapper" data-sidebar-control="arrangement">
@@ -28,12 +28,15 @@
     <div class="layout-option-group" role="radiogroup" aria-labelledby="layout-choice-label">
       <button type="button" class="layout-option" data-layout="he-top" role="radio" aria-checked="false" title="Stacked">
         <span class="layout-icon stacked" aria-hidden="true"><span class="layout-row he"></span><span class="layout-row tr"></span><span class="layout-row en"></span><span class="layout-row he layout-row--next"></span><span class="layout-row tr layout-row--next"></span><span class="layout-row en layout-row--next"></span></span>
+        <span class="io-choice-label">Stacked</span>
       </button>
       <button type="button" class="layout-option" data-layout="he-right" role="radio" aria-checked="false" title="Right–Left">
         <span class="layout-icon side-by-side" aria-hidden="true"><span class="layout-col en"></span><span class="layout-col he"></span><span class="layout-col tr"></span></span>
+        <span class="io-choice-label">Hebrew right</span>
       </button>
       <button type="button" class="layout-option" data-layout="he-left" role="radio" aria-checked="false" title="Left–Right">
         <span class="layout-icon side-by-side reverse" aria-hidden="true"><span class="layout-col he"></span><span class="layout-col en"></span><span class="layout-col tr"></span></span>
+        <span class="io-choice-label">Hebrew left</span>
       </button>
     </div>
   </div>

@@ -62,11 +62,41 @@ test('a language missing a segment leaves its cell blank', () => {
   assert.deepEqual(plain(pairs).map((p) => [p.he, p.en]), [['(א) a', '(1) A'], ['(ב) b', '']]);
 });
 
+test('spanning ranges keep later chapters aligned when a chapter is absent or shorter in either language', () => {
+  const ctx = loadPure();
+  const data = { isSpanning: true, sections: [1, 31], he: [['h31'], ['h1', 'h2']],
+    text: [[], ['e1', 'e2']], heTransliterationSource: [['raw31'], ['raw1', 'raw2']] };
+  assert.deepEqual(plain(ctx.buildAlignedLinePairs_(data, false)), [
+    { he: 'h31', en: '', heRaw: 'raw31', number: null, heading: false },
+    { he: 'h1', en: 'e1', heRaw: 'raw1', number: null, heading: false },
+    { he: 'h2', en: 'e2', heRaw: 'raw2', number: null, heading: false },
+  ]);
+  assert.deepEqual(plain(ctx.buildAlignedLinePairs_(data, true)).map((p) => [p.he, p.en]), [
+    ['פרק א', ''], ['(לא) h31', ''], ['פרק ב', 'Chapter 2'], ['(א) h1', '(1) e1'], ['(ב) h2', '(2) e2'],
+  ]);
+  const sourceGap = { ...data, he: [[], ['h1', 'h2']], text: [['e31'], ['e1']] };
+  assert.deepEqual(plain(ctx.buildAlignedLinePairs_(sourceGap, false)).map((p) => [p.he, p.en]), [
+    ['', 'e31'], ['h1', 'e1'], ['h2', ''],
+  ]);
+  // A normalized null chapter is an empty string, not an array.
+  assert.deepEqual(plain(ctx.buildAlignedLinePairs_({ ...data, text: ['', ['e1', 'e2']] }, false)),
+    plain(ctx.buildAlignedLinePairs_(data, false)));
+});
+
+test('pointed transliteration source must match chapter coordinates, not just total segment count', () => {
+  const ctx = loadPure();
+  const data = { isSpanning: true, sections: [1, 31], he: [['h31'], ['h1', 'h2']],
+    text: [['e31'], ['e1', 'e2']], heTransliterationSource: [[], ['wrong31', 'wrong1', 'wrong2']] };
+  assert.deepEqual(plain(ctx.buildAlignedLinePairs_(data, false)).map((p) => p.heRaw), ['h31', 'h1', 'h2']);
+});
+
 test('nothing to pair falls back (null): a single string, or deeper nesting', () => {
   const ctx = loadPure();
   assert.equal(ctx.buildAlignedLinePairs_({ he: 'whole', text: ['A'] }, true), null);
   assert.equal(ctx.buildAlignedLinePairs_({ he: [['nested']], text: [['N']] }, true), null);
   assert.equal(ctx.buildAlignedLinePairs_({ he: [], text: [] }, true), null);
+  assert.equal(ctx.buildAlignedLinePairs_({ isSpanning: true, he: [[['deeper']]], text: [['verse']] }, true), null);
+  assert.equal(ctx.buildAlignedLinePairs_({ isSpanning: true, he: ['whole chapter'], text: [['verse']] }, true), null);
 });
 
 // A table of fake cells, enough for insertReference's side-by-side branch.
@@ -175,6 +205,14 @@ test('on, each verse gets its own row beside its translation', () => {
     ['(1) In the beginning', '(א) בראשית'],
     ['(2) The earth', '(ב) והארץ'],
   ]);
+});
+
+test('a side-by-side insertion leaves a missing chapter blank without moving the next translation', () => {
+  const { context, tables } = loadInsert({});
+  const data = { ref: 'Genesis 1:31-2:2', heRef: 'בראשית א:לא-ב:ב', isSpanning: true, sections: [1, 31],
+    he: [['h31'], ['h1', 'h2']], text: [[], ['e1', 'e2']] };
+  context.insertReference(data, { bilingualLayout: 'he-left', alignedRows: true, pasukPreference: false });
+  assert.deepEqual(tables[0].texts().slice(1), [['h31', ''], ['h1', 'e1'], ['h2', 'e2']]);
 });
 
 test('the caller can override the stored setting; Left–Right puts the Hebrew first', () => {

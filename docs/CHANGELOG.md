@@ -10,6 +10,33 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Simpler sidebar Insertion Options.** Display and Arrangement now have
+  text labels. Line by line stays beside them for Both; Transliteration stays
+  directly accessible when original text is included, with Style and Position
+  shown as applicable. Remaining controls fold into Text and notes,
+  References and numbering, and Fonts and appearance, with readable summaries.
+  The existing shared controls, Simple/Everything modes and hidden-control
+  choices remain. Collapsing a group never changes a setting or fetches text.
+- **Safe session actions.** Revert, Save as defaults and profile switching
+  wait for pending option saves. A failed save retries once, then pauses
+  insertion with retry/Revert guidance so visible choices cannot silently
+  insert with older settings. Saving defaults confirms the complete visible
+  session first, including after its cache expires.
+- **Correct lines across chapter gaps.** Line by line pairs Hebrew and
+  translations by chapter and verse, leaving missing text blank. A missing
+  early chapter fragment no longer shifts later translations or verse numbers,
+  including when inserting several translations.
+- **No empty language blocks.** An explicit missing Original/Translation
+  output is stopped before a document or selection changes. Both still uses
+  the language available. Translations emptied by Commentary/Notes are omitted
+  with an explanation and remain available for different options.
+- **Exact edition titles preserved.** Multiple-translation insertion keeps
+  significant title whitespace in identity checks, results and pinned links.
+- **Keyboard and documentation follow-through.** Shared radio controls and
+  the transliteration menu support keyboard navigation and focus restoration;
+  the Insertion Options dialog contains focus. Help/About, Preferences text
+  and all tutorials describe the grouping and sidebar-session scope. Hidden
+  controls keep their effective value; Revert restores saved defaults.
 - **Bilingual edition identity and single-language recovery.** Some Hebrew
   and English editions share a title, including Rosenbaum/Silbermann's Rashi.
   Choosing one now retains the other language by edition identity. An
