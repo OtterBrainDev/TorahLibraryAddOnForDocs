@@ -200,15 +200,19 @@ Version 2.0 builds on the original Sefaria add-on for Google Docs by Shlomi
 Helfgot (see [LICENSE.md](./LICENSE.md)), the code it grew from, and
 substantially expands it, including:
 
-- replacing the older split insertion/search flow with a unified sidebar,
-- improving search-result selection and preview behavior,
-- adding bilingual layout controls,
-- surfacing Vowels and Cantillation controls,
-- improving translation/version selection UX,
-- adding linking workflows,
-- adding typography preferences,
-- improving divine-name workflows,
-- improving structural-node guidance and preview clarity.
+- **Find and preview sources:** search by citation, phrase, title or Sefaria link in a unified sidebar; explore Texts, Voices (source sheets) and Lexicon (dictionary entries).
+- **Familiar first steps, more control when needed:** choose Simple or Everything. Display, Arrangement, Line by line and Transliteration are immediately accessible when applicable; other insertion choices fold into Text and notes, References and numbering, and Fonts and appearance.
+- **Your choices, remembered:** use saved defaults and profiles, or change insertion settings for the current sidebar session. Revert and Save as defaults wait for pending saves.
+- **Choose exact editions:** selected editions survive formatting changes. With Translation only or bilingual Stacked output, Ctrl/Cmd-click to pick individual translations or Shift-click for a range; insertion follows selection order. The preview lists multiple selections by name.
+- **Flexible source sheets:** insert original text, translation or both, side by side or stacked, with aligned verses, line numbers, transliteration and separate title links. Missing text keeps its place in aligned rows.
+- **Commentary and Notes:** Default, Combine and Drop recognize verified conventions in Davidson's English Talmud and Silverstein's Rashi Chumash and Rashi Ketuvim; unknown conventions preserve the words. Independently choose Omit (default), Inline or Separate for marked notes. Separate creates a Notes text section, not native Docs footnotes.
+- **Faithful retrieval and credits:** current Sefaria Texts v3 preserves the selected edition's identity and credits; partial editions retain their gaps instead of borrowing text from another edition. A requested language with no text cannot create an empty inserted block.
+- **Appearance and Hebrew text:** choose vowels, cantillation, punctuation, divine-name mappings, transliteration styles, typography and citation styling.
+- **Document tools:** link existing citations, insert from a selected citation, revisit sources in the Session Library, transform divine names, unlink sources and count gematriya.
+
+These are features of the **2.0.0 release candidate**. Live Google Docs
+verification and Marketplace publication are separate steps; see the
+[release checklist](./docs/live-test-checklist-2.0.0.md).
 
 See [docs/CHANGELOG.md](./docs/CHANGELOG.md) for a fuller summary of changes and [LICENSE.md](./LICENSE.md) for the repository license.
 

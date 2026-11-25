@@ -486,6 +486,17 @@ or preference schema changes: **2.0.0 pending release, schema 33**.
   policy combination. Those are bounded usability enhancements, not evidence
   of an empty-document write after this fix.
 
+### Release-copy reconciliation — 2026-11-25
+
+Reopened PR #60 after the interrupted confirmation. Its engineering changes
+were already saved on GitHub at `646e818`; the PR recorded 1,032 passing tests
+and successful Actions on that implementation commit. The changelog, About
+→ New in 2.0, in-app Release Notes, README feature overview and draft upgrade
+notice now explain the same implemented workflows, including modifier-key
+selection, partial-edition gaps, separate Notes, grouped controls and session
+settings. The changelog keeps Unreleased separate until the pending 2.0.0
+release is consolidated; no release date or version was changed.
+
 Next action: review the updated PR #60 after #58 and #59, then run the exact
 HEAD in the designated Docs test deployment using the existing checklist.
 No merge, Apps Script push, numbered version, Marketplace publication or

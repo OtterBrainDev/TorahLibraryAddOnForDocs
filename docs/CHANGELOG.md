@@ -10,6 +10,11 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+These changes are part of the pending 2.0.0 candidate, not a published
+update. For a reader-oriented overview, see [New in 2.0 in the README](../README.md#whats-new-compared-with-the-original-add-on),
+Help → About → New in 2.0, and the in-app Release Notes. The detailed changes
+below include fixes found during development of the candidate.
+
 - **Simpler sidebar Insertion Options.** Display and Arrangement now have
   text labels. Line by line stays beside them for Both; Transliteration stays
   directly accessible when original text is included, with Style and Position
@@ -84,8 +89,9 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
   additions. Unknown editions keep their words and source emphasis, including
   supplied translation such as JPS's `[I give]`. A verse with malformed
   brackets stays whole.
-- **Source Notes: Omit / Inline / Separate.** One setting in Layout applies
-  to marked footnotes in Hebrew and translation, independently of Commentary.
+- **Source Notes: Omit / Inline / Separate.** Notes in Insertion Options →
+  Text and notes (or Preferences → Insertion → Layout) applies to marked
+  footnotes in Hebrew and translation, independently of Commentary.
   Separate collects labelled notes below the passage, or below its line in
   Line by line; it creates text sections, not native Google Docs footnotes.
   A shared processor handles semantic markers and nested note formatting for
@@ -107,8 +113,10 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 The first release published in the Google Workspace Marketplace, for people
 who use *Sefaria for Google Docs* 1.0, and for new users.
-It is the whole add-on as described in this file: every section below, back to
-the 2026-04 cleanup pass, ships in 2.0.0. The next release is 2.0.1.
+It is the whole add-on as described in this file: the Unreleased changes above
+are planned for 2.0.0 together with the sections below, back to the 2026-04
+cleanup pass. At release, consolidate the pending notes under this heading
+following the versioning policy. The next release is 2.0.1.
 
 **Name and links.** The add-on is named *Sefaria for Google Docs* throughout:
 the manifest, the setup dialog, Help and the release notes. Support goes to
