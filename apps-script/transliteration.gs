@@ -213,9 +213,9 @@ function collectCluster_(text, startIndex) {
   };
 }
 
-function getTransliterationOverrides_() {
+function getTransliterationOverrides_(properties) {
   try {
-    var raw = PropertiesService.getUserProperties().getProperty("transliteration_overrides") || "{}";
+    var raw = (properties || PropertiesService.getUserProperties()).getProperty("transliteration_overrides") || "{}";
     var parsed = JSON.parse(raw);
     return parsed && typeof parsed === "object" ? parsed : {};
   } catch (error) {
@@ -224,9 +224,9 @@ function getTransliterationOverrides_() {
 }
 
 /** The stored "Double dagesh chazak" choice: "forte" or "none". */
-function getStoredDageshMode_() {
+function getStoredDageshMode_(properties) {
   try {
-    return PropertiesService.getUserProperties().getProperty("transliteration_biblical_dagesh_mode") === "forte" ? "forte" : "none";
+    return (properties || PropertiesService.getUserProperties()).getProperty("transliteration_biblical_dagesh_mode") === "forte" ? "forte" : "none";
   } catch (error) {
     return "none";
   }
@@ -606,9 +606,9 @@ function normalizeDivineName_(value) {
 }
 
 /** The stored spelling of the Name for the transliteration. */
-function getStoredDivineName_() {
+function getStoredDivineName_(properties) {
   try {
-    return normalizeDivineName_(PropertiesService.getUserProperties().getProperty("transliteration_divine_name"));
+    return normalizeDivineName_((properties || PropertiesService.getUserProperties()).getProperty("transliteration_divine_name"));
   } catch (error) {
     return DIVINE_NAME_TRANSLITERATION;
   }
@@ -917,14 +917,18 @@ function transliterateHebrewHtmlPreservingBasicBreaks(html, schemeKey, options) 
 }
 
 /** The sidebar preview: the stored overrides and "Double dagesh chazak" setting, as an insert reads them. */
-function previewTransliterationWithOverrides(text, schemeKey) {
-  var options = { keepNiqqud: true, isBiblicalHebrew: false };
+function previewTransliterationWithOverrides(text, schemeKey, sessionId) {
+  var properties = typeof sidebarSessionPreferenceOverlay_ === "function" ? sidebarSessionPreferenceOverlay_(sessionId) : null;
+  var options = {
+    keepNiqqud: true,
+    isBiblicalHebrew: false,
+    overrideMap: getTransliterationOverrides_(properties),
+    dageshMode: getStoredDageshMode_(properties),
+    divineName: getStoredDivineName_(properties)
+  };
   // Aligned previews send one batch. Preserve empty rows and read the
   // stored settings once, while older callers can still send one string.
   if (Array.isArray(text)) {
-    options.overrideMap = getTransliterationOverrides_();
-    options.dageshMode = getStoredDageshMode_();
-    options.divineName = getStoredDivineName_();
     return text.map(function (segment) {
       return segment ? transliterateHebrewText(segment, schemeKey, options) : '';
     });

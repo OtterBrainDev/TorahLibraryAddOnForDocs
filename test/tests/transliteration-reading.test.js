@@ -339,3 +339,14 @@ test('ALA-LC: the Library of Congress table and its rules', () => {
   // A prefix before the Name keeps its hyphen.
   assert.equal(std('לַיהוָה', 'ala_lc', { divineName: 'Adonai' }), 'La-Adonai');
 });
+
+test('the sidebar preview reads the active session and document transliteration choices', () => {
+  const ctx = load({ transliteration_biblical_dagesh_mode: 'none' });
+  ctx.sidebarSessionPreferenceOverlay_ = (id) => {
+    assert.equal(id, 'open-preview');
+    const effective = { transliteration_biblical_dagesh_mode: 'forte', transliteration_divine_name: 'Adonai' };
+    return { getProperty: (key) => effective[key] || null };
+  };
+  const result = ctx.previewTransliterationWithOverrides(['שַׁבָּת', 'יְהוָה'], 'simple_english', 'open-preview');
+  assert.deepEqual(Array.from(result), ['Shabbat', 'Adonai']);
+});

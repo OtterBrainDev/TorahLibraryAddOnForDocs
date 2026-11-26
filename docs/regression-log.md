@@ -151,3 +151,5 @@ RPCs remain for open clients from earlier builds.
 | Symptom | Root cause | Fix / regression |
 | --- | --- | --- |
 | Saving preferences for one Doc could change account defaults | The form only had an account persistence path and a temporary preview path | A private per-Doc layer between account defaults and the sidebar session. `getDocumentPreferenceProfile` (0), `saveDocumentPreferenceProfile` (2), and the existing `getAccountPreferences` (0) are listed in the RPC contract. Profile tests verify document isolation, inheritance, stale writes and session precedence. |
+
+The optional session ID on `previewTransliterationWithOverrides` (3) lets the preview read transliteration overrides, dagesh, and the divine name from the same preference layers as insertion. Older clients can still pass two arguments.

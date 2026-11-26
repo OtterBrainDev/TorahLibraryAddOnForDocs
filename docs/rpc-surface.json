@@ -119,7 +119,7 @@
     },
     {
       "name": "previewTransliterationWithOverrides",
-      "arity": 2,
+      "arity": 3,
       "definedIn": "apps-script/transliteration.gs"
     },
     {
