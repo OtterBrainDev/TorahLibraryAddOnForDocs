@@ -742,8 +742,8 @@
                 if (el.dataset.customFor) return;
                 if (preferences[el.name] !== undefined && preferences[el.name] !== null && preferences[el.name] !== '') {
                   el.value = preferences[el.name];
-                } else if (FONT_SIZE_FIELDS.indexOf(el.name) >= 0 && preferences[el.name] === '') {
-                  el.value = ''; // blank size = match the document
+                } else if (preferences[el.name] === '' && (FONT_SIZE_FIELDS.indexOf(el.name) >= 0 || el.name === 'transliteration_divine_name')) {
+                  el.value = ''; // blank means use the document size or the default spelling
                 }
               });
 
@@ -985,6 +985,15 @@
     bindReplacementField('yaw_replacement', 'yaw_replace');
     bindReplacementField('elodim_replacement', 'elodim_replace');
     bindReplacementField('god_replacement', 'god_replace');
+
+    function applyTransliterationNameSuggestion_(event) {
+      var suggestions = event.currentTarget;
+      if (!suggestions.value) return;
+      byId('transliteration_divine_name').value = suggestions.value;
+      suggestions.selectedIndex = 0;
+    }
+
+    byId('transliteration-divine-name-options').addEventListener('change', applyTransliterationNameSuggestion_);
 
     ['meforash_replace','yaw_replace','elodim_replace','god_replace'].forEach(function(id) {
       const el = byId(id);

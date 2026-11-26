@@ -273,9 +273,28 @@ test('the stored spelling is read when the caller passes none, and the insert pa
 
 test('Preferences offers the Name\'s spelling, with suggestions, saved as transliteration_divine_name', () => {
   const html = readUi('apps-script/preferences.html');
-  assert.match(html, /<input id="transliteration_divine_name" name="transliteration_divine_name" type="text" maxlength="40" list="transliteration-divine-name-options"/);
-  const list = html.match(/<datalist id="transliteration-divine-name-options">([\s\S]*?)<\/datalist>/)[1];
+  assert.match(html, /<input id="transliteration_divine_name" name="transliteration_divine_name" type="text" maxlength="40" placeholder="HaShem"/);
+  const list = html.match(/<select id="transliteration-divine-name-options" aria-label="Spelling suggestions">([\s\S]*?)<\/select>/)[1];
   for (const value of ['HaShem', 'Hashem', 'Adonai', 'Adonoy', 'Ado-nai', 'G-d']) assert.match(list, new RegExp('<option value="' + value + '">'), value);
+});
+
+test('Name suggestions fill the saved field, and loading a blank spelling clears a previous value', () => {
+  const js = readUi('apps-script/preferences/js.html');
+  const handler = js.match(/function applyTransliterationNameSuggestion_\(event\) \{[\s\S]*?\n    \}/)[0];
+  const restore = js.match(/function applyPreferencesToForm[\s\S]*?(document\.querySelectorAll\('input\[type="text"\], input\[type="number"\], input\[type="hidden"\]'\)\.forEach[\s\S]*?\n              \}\);)/)[1];
+  const field = { name: 'transliteration_divine_name', value: 'HaShem', dataset: {} };
+  const suggestions = { value: 'Adonai', selectedIndex: 3 };
+  const code = vm.createContext({
+    byId: () => field, document: { querySelectorAll: () => [field] }, FONT_SIZE_FIELDS: []
+  });
+  vm.runInContext(handler + '\nfunction restore(preferences) { ' + restore + ' }', code);
+  code.applyTransliterationNameSuggestion_({ currentTarget: suggestions });
+  assert.equal(field.value, 'Adonai');
+  assert.equal(suggestions.selectedIndex, 0);
+  code.restore({ transliteration_divine_name: 'Ha-Shem' });
+  assert.equal(field.value, 'Ha-Shem');
+  code.restore({ transliteration_divine_name: '' });
+  assert.equal(field.value, '');
 });
 
 test('every style menu lists exactly the engine\'s styles', () => {

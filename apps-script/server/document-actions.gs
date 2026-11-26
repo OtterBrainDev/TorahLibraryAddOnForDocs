@@ -11,9 +11,9 @@ function enabledDivineNameRules_(prefs) {
     { on: p.meforash_replace, name: 'יהוה', replacement: p.meforash_replacement || 'יי' },
     { on: p.yaw_replace, name: 'יה', replacement: p.yaw_replacement || 'קה' },
     { on: p.elodim_replace, name: 'אלהים / אלוהים', replacement: p.elodim_replacement || 'אלוקים' },
-    { on: p.god_replace, name: 'God', replacement: p.god_replacement || 'G-d' }
+    { on: p.god_replace, name: 'God', ltr: true, replacement: p.god_replacement || 'G-d' }
   ].filter(function (rule) { return rule.on == 'true'; })
-    .map(function (rule) { return { name: rule.name, replacement: String(rule.replacement) }; });
+    .map(function (rule) { return { name: rule.name, replacement: String(rule.replacement), ltr: !!rule.ltr }; });
 }
 
 /**
@@ -28,7 +28,15 @@ function divineNameTransformPrompt_(rules, hasSelection) {
     'Headers, footers, footnotes and other tabs are not changed.' +
     (hasSelection ? '\n\nYou have text selected: the selection does not limit what is replaced.' : '') +
     '\n\nRules turned on (Preferences \u2192 Divine Name Mappings):\n' +
-    rules.map(function (rule) { return '    ' + rule.name + '  \u2192  ' + rule.replacement; }).join('\n') +
+    rules.map(function (rule) {
+      // Docs alerts are plain text. Pin the visual order with a left-to-right
+      // isolate, then isolate each name so its own characters read naturally.
+      const replacement = '\u2068' + rule.replacement + '\u2069';
+      const line = rule.ltr
+        ? rule.name + '  \u2192  ' + replacement
+        : replacement + '  \u2190  \u2067' + rule.name + '\u2069';
+      return '    \u2066' + line + '\u2069';
+    }).join('\n') +
     '\n\nEdit \u2192 Undo reverses it. Continue?';
 }
 

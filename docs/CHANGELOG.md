@@ -10,6 +10,9 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Divine names.** Confirmation arrows point left for Hebrew rules and
+  right for English rules. The transliteration spelling menu shows all
+  suggestions and keeps custom input editable.
 - **Factory and Import/Export.** Factory restores the three 1.0 menu commands in their original order, followed by Preferences and Help.
   Import/Export identifies its loading step when opened from This Document.
 - **Sidebar and Preferences.** Notes follows Commentary, and both use ⓘ help. Sidebar startup waits for its controls to load before requesting settings.

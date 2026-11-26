@@ -414,6 +414,10 @@ Menu-only: **Unlink Sources** removes every sefaria.org link from the
 document; **Gematriya Count** totals the gematria of the selection (or the
 whole document).
 
+**The Name in transliteration** under **Preferences → Insertion →
+Transliteration Mapping** saves a single spelling for the selected document
+or profile. Pick from **Spelling suggestions** or type your own, then save.
+A blank field uses *HaShem*.
 In Texts search, the **Aא language filter** shows results with at least one
 translation containing text in any selected language. The original alone
 does not qualify. For a book title, the check covers the opening section
