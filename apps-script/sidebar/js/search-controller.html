@@ -8,6 +8,9 @@ function updateActionabilityUI(state) {
   if (isActionable) {
     dot.addClass('dot-ready');
     if (selectedResultSummary) selectedResultSummary.status = 'Ready to insert';
+  } else if (state && state.isBrowsable) {
+    dot.addClass('dot-pending');
+    if (selectedResultSummary) selectedResultSummary.status = 'Choose a section';
   } else if (state && state.isStructural) {
     dot.addClass('dot-error');
     if (selectedResultSummary) selectedResultSummary.status = 'Choose a more specific ref';
@@ -167,6 +170,10 @@ function searchTextsRun(run) {
       markResultRefNonInsertable(directLookupInput, run.postState);
       if (response && response.ref) markResultRefNonInsertable(response.ref, run.postState);
       setSearchRunHint(run, buildNonInsertableHint(directLookupInput, directRefState.prompt));
+    } else if (directRefState.isBrowsable) {
+      directRefMatch.subtitle = 'Table of contents';
+      setLibraryMatches([directRefMatch].concat(qs.rawLibraryMatches));
+      setSearchRunHint(run, '');
     } else if (directRefState.isInsertable) {
       var resolvedLangs = Array.isArray(response && response.availableLangs)
         ? response.availableLangs.map(function(l) { return String(l || '').toLowerCase(); }).filter(Boolean)
@@ -189,7 +196,7 @@ function searchTextsRun(run) {
     if (error && error.message) setSearchRunHint(run, error.message);
     else if (isHebrewScript) setSearchRunHint(run, 'No direct library match for this Hebrew ref. Check spelling and try again.');
     finishResultGroup();
-  }).findReferenceForSidebar(directLookupInput, null, sidebarSessionId);
+  }).findReferenceForSidebar(directLookupInput, { browseBook: true }, sidebarSessionId);
 
   var searchParameters = getSearchParameters();
   google.script.run.withSuccessHandler(function (response) {
@@ -270,6 +277,34 @@ function searchTextsRun(run) {
   }
 }
 
+function showBookContents(response) {
+  clearVersionSelectors();
+  var $picker = $('<select id="book-contents-section" size="6" aria-label="Book section"></select>');
+  response.bookContents.forEach(function (section) {
+    $picker.append($('<option></option>').val(section.ref).text(section.label));
+  });
+  $picker.val(response.bookContents[0].ref);
+  var $open = $('<button type="button" class="submit">Open section</button>');
+  function openSection() {
+    var ref = $picker.val();
+    if (!ref || data !== response || appMode !== 'texts') return;
+    if (selectedResultSummary) selectedResultSummary.label = ref;
+    resolveSelectedResult(ref, ref);
+  }
+  $open.on('click', openSection);
+  $picker.on('dblclick', openSection).on('keydown', function (event) {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    event.stopPropagation();
+    openSection();
+  });
+  var $contents = $('<div class="book-contents"></div>');
+  $contents.append($('<label for="book-contents-section"></label>').text(response.ref + ' · Table of contents'), $picker, $open);
+  $('.suggestions').not('.voices-suggestions').empty().append($contents);
+  $('.preview-section .preview-accordion').prop('open', true);
+  updateModeDependentSections();
+}
+
 function resolveSelectedResult(selectedRef, inputLabel, selectedVersions) {
   if (appMode === 'voices') {
     var item = queryState.searchResults.concat(queryState.libraryMatches).find(function(result){ return result && result.ref === selectedRef; }) || null;
@@ -321,18 +356,25 @@ function resolveSelectedResult(selectedRef, inputLabel, selectedVersions) {
   $('#open-on-sefaria').prop('disabled', true);
   // buildPreviewLoadingHTML escapes its message.
   $('.suggestions').html(buildPreviewLoadingHTML('Loading preview…'));
+  updateSidebarTextOptionsAvailability(null);
 
   google.script.run.withSuccessHandler(function (response) {
     if (requestId !== latestResolveRequestId) return;
     // Another tab is shown: its preview and Add Source are not this one's.
     // Texts fetches it again when it is shown (search-tabs).
     if (appMode !== 'texts') { textsPreviewStale = true; return; }
+    var nodeState = getResolvedNodeState(response);
+    if (nodeState.isBrowsable) {
+      data = response;
+      updateActionabilityUI(nodeState);
+      showBookContents(response);
+      return;
+    }
     var unavailableVersions = getUnavailablePreviewVersions(response, selectedVersions);
     if (unavailableVersions.length) {
       showUnavailablePreviewVersions(unavailableVersions);
       return;
     }
-    var nodeState = getResolvedNodeState(response);
     if (nodeState.isInsertable) {
       if (selectedResultSummary) {
         selectedResultSummary.status = 'Ready to insert';
@@ -366,7 +408,7 @@ function resolveSelectedResult(selectedRef, inputLabel, selectedVersions) {
     if (requestId !== latestResolveRequestId) return;
     if (appMode !== 'texts') { textsPreviewStale = true; return; }
     showPreviewFetchFailure(error, !!selectedVersions);
-  }).findReferenceForSidebar(selectedRef, selectedVersions || null, sidebarSessionId);
+  }).findReferenceForSidebar(selectedRef, selectedVersions || { browseBook: true }, sidebarSessionId);
 }
 
 // How long the "not directly insertable" notice stays up before the sidebar

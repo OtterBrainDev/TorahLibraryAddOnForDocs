@@ -187,17 +187,17 @@ $('.results-panel').on('click', '.result-pin-button', function (event) {
 });
 
 // The help button is independent of the summary's expand/collapse action.
-$('.version-help-button').on('click', function (event) {
+$(document).on('click', '.sidebar-option-help-button', function (event) {
   event.preventDefault();
   $(this).parent().removeAttr('data-dismissed');
   this.focus({ preventScroll: true });
-}).on('keydown', function (event) {
+}).on('keydown', '.sidebar-option-help-button', function (event) {
   if (event.key !== 'Escape') return;
   event.preventDefault();
   event.stopPropagation();
   $(this).parent().attr('data-dismissed', '');
 });
-$('.version-help').on('mouseenter focusin', function () {
+$(document).on('mouseenter focusin', '.sidebar-option-help', function () {
   $(this).removeAttr('data-dismissed');
 });
 

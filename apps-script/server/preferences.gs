@@ -181,7 +181,7 @@ function getDefaultPreferences() {
     source_emphasis_mode: "keep",
     // Marked Sefaria footnotes: omit preserves the previous inserted output.
     // Preview and insertion now share this policy. Inline / Separate are new.
-    source_notes_mode: "omit",
+    source_notes_mode: "separate",
     // Workflow defaults previously existed only in the controls' fallbacks.
     // Keep them here too so Reset, settings files and profiles agree.
     voices_insert_mode_default: "reference",
@@ -653,7 +653,7 @@ function readEmphasisMapping_(userProperties, prefix, fallbackStyle) {
 var SOURCE_EMPHASIS_MODES_ = ["keep", "discard", "only"];
 
 function normalizeSourceNotesMode_(value) {
-  return value === "inline" || value === "separate" ? value : "omit";
+  return value === "inline" || value === "omit" ? value : "separate";
 }
 
 function normalizeSourceEmphasisMode_(value) {

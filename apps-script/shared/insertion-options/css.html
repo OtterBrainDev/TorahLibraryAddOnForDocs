@@ -304,6 +304,7 @@
    their detailed Source / Translation editors. No duplicate settings. */
 .io-grouped-options .io-inapplicable,
 .io-grouped-options .io-options-group[hidden],
+.io-grouped-options .io-text-role[hidden],
 .io-grouped-options .io-primary-options[hidden] {
   display: none !important;
 }
@@ -336,6 +337,32 @@
 
 .io-options-group .cc-section-body {
   padding-bottom: 10px;
+}
+
+.io-text-role-label {
+  margin: 8px 0 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.io-text-option {
+  position: relative;
+}
+
+.io-text-option-label {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.io-text-option-label .cc-row-label {
+  flex: 0 1 auto;
+}
+
+.io-text-option .sidebar-option-tooltip {
+  white-space: normal;
 }
 
 .io-grouped-options .cc-translit-wrap {

@@ -94,6 +94,7 @@ function applyMultiSelectMode() {
 function updateMultiSelectPreviewNotice() {
   var count = orderedTranslationVersions.length;
   if (count <= 1) return;
+  updateSidebarTextOptionsAvailability(null);
   var $notice = $("<div class='preview-state-message preview-multi-notice'></div>");
   $notice.append($('<strong></strong>').text(count + ' translations selected. They will be inserted in this order:'));
   var $list = $("<ol class='preview-multi-list'></ol>");
@@ -240,13 +241,15 @@ function getResolvedNodeState(response) {
   var hasText = hasRenderableText(response && response.text);
   var hasHebrew = hasRenderableText(response && response.he);
   var isInsertable = resolved && (hasText || hasHebrew);
-  var isStructural = resolved && !isInsertable;
+  var isBrowsable = resolved && Array.isArray(response.bookContents) && response.bookContents.length > 0;
+  var isStructural = resolved && !isInsertable && !isBrowsable;
   return {
     resolved: resolved,
     hasText: hasText,
     hasHebrew: hasHebrew,
     isInsertable: isInsertable,
     isStructural: isStructural,
+    isBrowsable: isBrowsable,
     prompt: buildDepthPrompt(response)
   };
 }
@@ -452,18 +455,48 @@ function previewTranslationEmphasisHtml(text, mode, lineMarkers, extendedGemara,
   }).html.replace(/(<br>)+$/, '');
 }
 
-function updatePreviewCommentaryHelp(dataIn, prepared) {
-  if (typeof document === 'undefined') return;
-  var el = document.getElementById('cc-commentary-help');
-  if (!el) return;
-  var profile = sourceCommentaryProfile_(dataIn);
-  var message = profile === 'bold-base'
-    ? 'This Davidson edition marks the base translation in bold. Combine keeps the explanation; Drop keeps the bold translation.'
+// Check the source markup before display policy removes notes. Damaged
+// markup is inconclusive, so it does not disable Notes.
+function previewMayHaveNotes(value) {
+  if (Array.isArray(value)) return value.some(previewMayHaveNotes);
+  if (typeof value !== 'string' || !value.includes('<')) return false;
+  var extracted = sourceTextExtractNotes_(sourceTextTokens_(value));
+  return extracted.malformed || extracted.notes.length > 0;
+}
+
+function updateSidebarTextOptionsAvailability(dataIn, prepared) {
+  if (typeof document === 'undefined' || !document.querySelector) return;
+  var mode = $('.output-mode-selection').val() || 'both';
+  var multiple = mode !== 'he' && orderedTranslationVersions.length > 1;
+  var hasTranslation = dataIn && mode !== 'he' && hasRenderableText(dataIn.text);
+  var hasSource = dataIn && mode !== 'en' && hasRenderableText(dataIn.he);
+  var profile = hasTranslation && !multiple ? sourceCommentaryProfile_(dataIn) : '';
+  var commentary = profile === 'bold-base'
+    ? 'This Davidson edition marks the base translation in bold. Combine keeps the explanation. Drop keeps the bold translation.'
     : profile === 'bracketed'
-      ? 'This Silverstein edition marks Rashi’s additions with brackets. Combine keeps their words; Drop removes balanced bracketed comments.'
-      : 'No verified inline-commentary rule for this edition: all three Commentary choices keep its text and source emphasis.';
-  if (prepared && prepared.commentaryMalformed) message += ' A verse with unmatched brackets is kept in full.';
-  el.textContent = message + ' Marked footnotes follow Notes.';
+      ? 'This Silverstein edition marks additions with brackets. Combine keeps their words. Drop removes balanced bracketed comments.'
+      : profile === 'none'
+        ? 'No verified inline-commentary rule for this edition. Its text and source emphasis are preserved.'
+        : 'Commentary controls apply to supported inline-commentary editions.';
+  if (prepared && prepared.commentaryMalformed) commentary += ' A verse with unmatched brackets is kept in full.';
+  var notesUnavailable = !multiple && !!(hasSource || hasTranslation) &&
+    !(hasSource && previewMayHaveNotes(dataIn.he)) && !(hasTranslation && previewMayHaveNotes(dataIn.text));
+
+  function update(key, control, disabled, message) {
+    var tip = document.querySelector('#io-' + key + '-tip');
+    var group = document.querySelector('#' + control);
+    if (!tip || !group) return;
+    tip.textContent = message;
+    group.title = disabled ? message : '';
+    group.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    Array.prototype.forEach.call(group.querySelectorAll('button'), function (button) {
+      button.disabled = disabled;
+    });
+  }
+  update('commentary', 'cc-emphasis-toggle', profile === 'none', commentary);
+  update('notes', 'cc-notes-toggle', notesUnavailable, notesUnavailable
+    ? 'Sefaria returned no marked footnotes for the displayed text.'
+    : 'Choose how to include Sefaria’s marked footnotes.');
 }
 
 // Match the insert's line-by-line grouping, omitting only the generated
@@ -543,7 +576,7 @@ function renderPreviewHTML(dataIn, inputTitle, transliterationSources) {
   // Interpret bracket annotations separately in their original verses, as at
   // insertion. An unmatched bracket cannot consume the next verse's words.
   var prepared = prepareSourceCommentaryData_(dataIn, emphasisMode);
-  updatePreviewCommentaryHelp(dataIn, prepared);
+  updateSidebarTextOptionsAvailability(dataIn, prepared);
   var translationProfile = prepared.commentaryPrepared ? 'none' : sourceCommentaryProfile_(prepared);
   var alignedPairs = mode === 'both' && $('.wants-aligned-rows').prop('checked')
     ? previewAlignedSourcePairs_(prepared, pointedHebrew) : null;
@@ -878,6 +911,7 @@ function updateSuggestion(dataIn, inputTitle) {
     $('#open-on-sefaria').prop('disabled', true);
     // buildPreviewLoadingHTML escapes its message.
     $('.suggestions').html(buildPreviewLoadingHTML('Refreshing preview…'));
+    updateSidebarTextOptionsAvailability(null);
 
     google.script.run.withSuccessHandler(function (response) {
       if (requestId !== latestResolveRequestId) return;

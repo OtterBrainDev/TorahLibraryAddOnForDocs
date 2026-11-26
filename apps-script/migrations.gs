@@ -281,8 +281,8 @@ function applyMigrationsFrom_(userProperties, from) {
   if (from < 31) {
     migrateToV31_(userProperties);
   }
-  // v31 -> v32: marked notes can be omitted, inline, or separate. Omit
-  // preserves the existing inserted output; the preview now agrees with it.
+  // v31 -> v32: seed the Notes preference when no choice was stored.
+  // Earlier builds already seeded Omit; those stored choices are preserved.
   if (from < 32) {
     migrateToV32_(userProperties);
   }
@@ -790,7 +790,7 @@ function migrateToV31_(userProperties) {
 /** V32: never overwrite a reader's explicit Notes choice. */
 function migrateToV32_(userProperties) {
   if (userProperties.getProperty('source_notes_mode') != null) return false;
-  userProperties.setProperty('source_notes_mode', 'omit');
+  userProperties.setProperty('source_notes_mode', 'separate');
   return true;
 }
 

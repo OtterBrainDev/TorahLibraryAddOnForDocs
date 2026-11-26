@@ -98,11 +98,11 @@
   white-space: nowrap;
 }
 
-.version-help[hidden] {
+.sidebar-option-help[hidden] {
   display: none;
 }
 
-.version-help-button {
+.sidebar-option-help-button {
   display: inline-grid;
   place-items: center;
   min-width: 24px;
@@ -115,7 +115,7 @@
   font-size: 16px;
 }
 
-.version-tooltip {
+.sidebar-option-tooltip {
   position: absolute;
   z-index: 2;
   top: 100%;
@@ -134,12 +134,12 @@
   visibility: hidden;
 }
 
-.version-choice-details:not([open]) .version-tooltip {
+.version-choice-details:not([open]) .sidebar-option-tooltip {
   top: auto;
   bottom: 100%;
 }
 
-.version-help:not([data-dismissed]):is(:hover, :focus-within) .version-tooltip {
+.sidebar-option-help:not([data-dismissed]):is(:hover, :focus-within) .sidebar-option-tooltip {
   visibility: visible;
 }
 </style>

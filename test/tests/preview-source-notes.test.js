@@ -20,6 +20,14 @@ function preview(options = {}) {
   const doc = parse('<section class="preview-section"><div class="suggestions"></div></section>' +
     '<section class="voices-preview-section"><div class="suggestions voices-suggestions">Voices</div></section>');
   const target = doc.querySelector('.preview-section .suggestions');
+  for (const [key, group] of [['notes', 'cc-notes-toggle'], ['commentary', 'cc-emphasis-toggle']]) {
+    const tip = doc.createElement('span');
+    tip.id = 'io-' + key + '-tip';
+    const box = doc.createElement('div');
+    box.id = group;
+    box.appendChild(doc.createElement('button'));
+    doc.body.append(tip, box);
+  }
   const saves = [];
   const run = {
     withSuccessHandler(callback) { return {
@@ -27,6 +35,7 @@ function preview(options = {}) {
     }; }
   };
   const ctx = vm.createContext({
+    document: doc,
     effectivePreferences: { extended_gemara: 'false', transliteration_position: options.position },
     google: { script: { run } },
     appMode: 'texts', hasResolvedReference: true, selectedResultSummary: null, data: payload(),
@@ -63,7 +72,7 @@ function preview(options = {}) {
     target.innerHTML = ctx.renderPreviewHTML(data, title, sources);
     ctx.renderPreviewTransliteration(sources);
   };
-  return { ctx, state, requests, saves, target, render(data = payload()) {
+  return { ctx, doc, state, requests, saves, target, render(data = payload()) {
     ctx.data = data;
     ctx.refreshSidebarLivePreview();
   }, displayed: () => [...target.querySelectorAll('.preview-transliteration')].map((el) => el.textContent) };
@@ -257,4 +266,28 @@ test('clearing the preview discards a pending transliteration', () => {
   target.textContent = 'Select a result to preview it.';
   requests[0].callback(['Late']);
   assert.deepEqual(displayed(), []);
+});
+
+
+test('preview disables Commentary and Notes independently and keeps them available when several translations need inspection', () => {
+  const { ctx, doc, state, render } = preview({ transliteration: false });
+  const disabled = (id) => doc.querySelector('#' + id + ' button').disabled;
+  render();
+  assert.equal(disabled('cc-emphasis-toggle'), true, 'ordinary JPS edition has no commentary rule');
+  assert.equal(disabled('cc-notes-toggle'), false, 'JPS translation contains marked notes');
+  assert.match(doc.querySelector('#io-commentary-tip').textContent, /No verified inline-commentary rule/);
+  state.output = 'he';
+  render();
+  assert.equal(disabled('cc-notes-toggle'), true, 'undisplayed translation notes do not count');
+  assert.match(doc.querySelector('#io-notes-tip').textContent, /no marked footnotes/);
+  state.output = 'both';
+  ctx.orderedTranslationVersions = ['JPS with no notes previewed', 'Second edition not loaded'];
+  render({ ...payload(), text: ['Plain source'] });
+  assert.equal(disabled('cc-notes-toggle'), false);
+  assert.equal(disabled('cc-emphasis-toggle'), false);
+  ctx.orderedTranslationVersions = [];
+  render({ ...payload(), versionTitle: 'The Rashi chumash by Rabbi Shraga Silverstein', text: ['Plain [commentary] source'] });
+  assert.equal(disabled('cc-emphasis-toggle'), false);
+  assert.match(doc.querySelector('#io-commentary-tip').textContent, /Silverstein/);
+  assert.equal(disabled('cc-notes-toggle'), true);
 });

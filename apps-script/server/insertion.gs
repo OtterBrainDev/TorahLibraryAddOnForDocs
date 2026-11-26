@@ -903,7 +903,7 @@ function sourceTextOptions_(data, typography, role) {
     commentaryMode: translation ? settings.sourceEmphasisMode : 'keep',
     commentaryProfile: translation && !(data && data.commentaryPrepared)
       ? sourceCommentaryProfile_(data) : 'none',
-    notesMode: settings.sourceNotesMode || 'omit',
+    notesMode: settings.sourceNotesMode || 'separate',
     extendedGemara: settings.extendedGemara,
     keepLines: settings.sectionHeadingLines || [],
     stripBracketDelimiters: translation && !!(data && data.commentaryPunctuationStripped)
