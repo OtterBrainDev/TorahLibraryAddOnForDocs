@@ -18,6 +18,19 @@ function translationVersionSelect() {
   return $('.translation-version-select').not('.he-version-selection');
 }
 
+// Chromium can scroll the native list after selected flags change, during
+// its next layout. Restore the viewport on the surviving list after that.
+function restoreTranslationListScroll_(select, scrollTop) {
+  select.scrollTop = scrollTop;
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        if (select.isConnected) select.scrollTop = scrollTop;
+      });
+    });
+  }
+}
+
 // Read the choices, not the last response or the filtered DOM. Either can
 // lag behind a click while a fetch is pending, and a filter can hide a choice.
 function selectedPreviewVersions(ref) {
@@ -595,6 +608,13 @@ function renderPreviewHTML(dataIn, inputTitle, transliterationSources) {
 
 function updateSuggestion(dataIn, inputTitle) {
   var resolvedRef = dataIn && dataIn.ref ? dataIn.ref : inputTitle;
+  // The new select is a different node, so preserve the view of the list
+  // the reader was using for this passage before replacing its markup.
+  var previousSelect = orderedTranslationVersionsRef === resolvedRef ? translationVersionSelect()[0] : null;
+  var previousFilter = previousSelect ? $('#translation-version-filter')[0] : null;
+  var previousFocus = previousSelect ? document.activeElement : null;
+  var previousScroll = previousSelect ? previousSelect.scrollTop : 0;
+  var filterText = previousFilter ? previousFilter.value : '';
   // Keep one choice as well as several. Reading dataIn alone resets a chosen
   // edition when an options refresh or an older loaded preview rebuilds it.
   var keptVersions = !pendingPreferredVersions ? selectedPreviewVersions(resolvedRef) : null;
@@ -744,6 +764,8 @@ function updateSuggestion(dataIn, inputTitle) {
     var optionsHTML = '';
     var hasSelectableOption = false;
     var $select = translationVersionSelect();
+    var select = $select[0];
+    var scrollTop = select.options.length ? select.scrollTop : null;
     $('.translation-version-control .version-count').text(listed.length + ' available');
 
     if (!filtered.length) {
@@ -795,6 +817,7 @@ function updateSuggestion(dataIn, inputTitle) {
       orderedTranslationVersions = currentEnVersion ? [currentEnVersion] : [];
     }
 
+    if (scrollTop !== null) restoreTranslationListScroll_(select, scrollTop);
     syncSelectedTranslationDisplay();
   }
 
@@ -893,7 +916,20 @@ function updateSuggestion(dataIn, inputTitle) {
   // Seed selection-order tracking: the multi-selection kept from the last
   // render of this ref, else the single version the list selects.
   orderedTranslationVersions = keptTranslationVersions;
+  // First validate against the complete list, then restore the reader's
+  // filter. A selection that is hidden by that filter still stays selected.
   renderTranslationOptions('');
+  var $translationFilter = $('#translation-version-filter');
+  if (filterText) {
+    $translationFilter.val(filterText);
+    renderTranslationOptions(filterText);
+  }
+  if (previousSelect) {
+    var nextSelect = translationVersionSelect()[0];
+    if (previousFocus === previousSelect) nextSelect.focus({ preventScroll: true });
+    else if (previousFocus === previousFilter) $translationFilter[0].focus({ preventScroll: true });
+    restoreTranslationListScroll_(nextSelect, previousScroll);
+  }
   var optionsBuiltForRequestId = latestResolveRequestId;
   activeTranslationOptions = {
     ref: resolvedRef,
@@ -964,7 +1000,7 @@ function updateSuggestion(dataIn, inputTitle) {
     else translationSelectionAnchor = anchor;
     selectOptions($(select), next);
     select.focus({ preventScroll: true });
-    select.scrollTop = scrollTop;
+    restoreTranslationListScroll_(select, scrollTop);
     $(select).trigger('change', [next]);
   });
 

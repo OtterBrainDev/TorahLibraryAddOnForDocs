@@ -413,6 +413,88 @@ test('scanDocumentForReferences: the report lists what stayed unmatched and link
   assert.equal(report.unmatched[0].reason, 'out-of-range');
 });
 
+for (const scanMode of ['full', 'candidates']) {
+  for (const scopeKind of ['whole document', 'bilingual selection', 'English selection']) {
+    test('Link Texts links every Genesis heading in ' + scopeKind + ' (' + scanMode + ')', () => {
+      const hebrew = 'בראשית א׳:א׳-ב׳';
+      const english = 'Genesis 1:1-2';
+      const docText = [
+        'Outside the selection: ' + english,
+        hebrew,
+        'בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ׃',
+        english + ' (The Koren Jerusalem Bible)',
+        'English translation.',
+        english + ' (The Philosophical Tanakh)',
+        'Another English translation.',
+        english + ' (The Rashi chumash by Rabbi Shraga Silverstein)',
+        'Commentary on the translation.',
+      ].join('\n\n');
+      const linkedStart = docText.indexOf(hebrew);
+      const linkedEnd = linkedStart + hebrew.length;
+      const writes = [];
+      const uploads = [];
+      const uploadsByTask = new Map();
+      const bodyText = {
+        getText: () => docText,
+        getLinkUrl: (i) => i >= linkedStart && i < linkedEnd ? 'original link' : null,
+        setLinkUrl: (start, end, url) => writes.push({ start, end, url }),
+      };
+      const doc = { getId: () => 'doc', getBody: () => ({ editAsText: () => bodyText }) };
+      const ctx = load({
+        DocumentApp: { getActiveDocument: () => doc },
+        UrlFetchApp: {
+          fetch(url, options) {
+            if (url.includes('/find-refs')) {
+              const payload = JSON.parse(options.payload);
+              uploads.push(payload);
+              const task = 'task-' + uploads.length;
+              uploadsByTask.set(task, payload);
+              return response(202, { task_id: task });
+            }
+            const payload = uploadsByTask.get(url.split('/').at(-1));
+            const text = payload.text.body;
+            const row = (start, citation, refs = [english]) => ({
+              startChar: start, endChar: start + citation.length, refs, linkFailed: !refs.length,
+            });
+            const heRow = row(text.indexOf(hebrew), hebrew);
+            const enRows = Array.from(text.matchAll(/Genesis 1:1-2/g), (m) => row(m.index, english));
+            // The unforced Hebrew model omits all English headings, as in
+            // the live reproduction. The forced English model may also
+            // echo the Hebrew heading. Identical or failed echoes add no row.
+            const results = payload.lang === 'he' || (!payload.lang && text.includes(hebrew))
+              ? [heRow, ...enRows.map((r) => ({ ...r, refs: [], linkFailed: true }))]
+              : (text.includes(hebrew) ? [heRow, ...enRows] : enRows);
+            return response(200, { ready: true, result: { body: { results, refData: {} } } });
+          },
+          fetchAll() { throw new Error('All headings should come from the two models'); },
+        },
+      });
+      ctx.selectionTextHash_ = (text) => text;
+      ctx.getPreferences = () => ({ linker_scan_mode: scanMode });
+      ctx.getSefariaTitlesCached_ = () => ['Genesis', 'בראשית'];
+      const selectedStart = scopeKind === 'bilingual selection' ? linkedStart : docText.indexOf(english, linkedEnd);
+      const scope = scopeKind === 'whole document' ? undefined : {
+        selected: true, ranges: [{ start: selectedStart, end: docText.length }], bodyHash: docText,
+        documentId: 'doc', tabId: '',
+      };
+
+      const report = ctx.scanDocumentForReferences(scope);
+      const expected = Array.from(docText.matchAll(/Genesis 1:1-2/g), (m) => m.index)
+        .filter((start) => !scope || start >= selectedStart);
+      assert.deepEqual(Array.from(report.matches, (m) => m.startChar), expected);
+      assert.deepEqual(Array.from(report.matches, (m) => m.documentText), expected.map(() => english));
+      assert.equal(report.unresolvedCount, 0);
+      assert.deepEqual(uploads.map((payload) => payload.lang),
+        scopeKind === 'English selection' ? [undefined] : ['he', 'en']);
+      if (scope) assert.ok(uploads.every((payload) => !payload.text.body.includes('Outside the selection')));
+      assert.equal(ctx.applyLinkerDecisions(JSON.stringify(report.matches.map((m) => ({ ...m, ref: m.candidates[0].ref })))).linked, expected.length);
+      assert.deepEqual(writes.map((item) => [item.start, item.end]),
+        expected.slice().reverse().map((start) => [start, start + english.length - 1]));
+      assert.ok(writes.every((item) => item.url === 'https://www.sefaria.org/Genesis_1%3A1-2'));
+    });
+  }
+}
+
 // BUG-010 (T07, 30 October 2026): "Duplicate A: Genesis 2:1" and "Duplicate B:
 // Genesis 2:1" each came back from Sefaria's linker as one unmatched citation,
 // label included, and every spelling of that failed with a book-name error.

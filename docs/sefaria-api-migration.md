@@ -529,3 +529,16 @@ PR #63 is merged; master 56f8d0e is the base. User reported Notes missing from P
 ### Repeated citation follow-up — 2026-11-25
 
 PR #64 merged at master 7f71f7d. User reports Link Texts with no selection only detects first repeated citation. Existing classifier already preserves returned positions; upstream Sefaria source (`sefaria/helper/linker/linker.py`, `_make_find_refs_response_inner`) deduplicates metadata, not result rows. Added conservative repeat recovery scoped to actual scan segments, one standalone Ref metadata lookup per missing distinct spelling (max 50 per scan), requires same canonical fully addressed unambiguous source, excludes existing spans and existing links. Same-span API rows combine candidate sets; distinct positions remain independent. Added regression tests and live checklist T1–T5. Actual API/Docs reproduction and verification remain pending. No preference change or deployment.
+
+
+### Bilingual citation follow-up — 2026-11-25
+
+PR #65's repeat recovery requires a detected spelling. A synthetic fixture
+with a Hebrew citation and three English `Genesis 1:1-2` headings confirmed
+that the live Find Refs API can select only the Hebrew model for a mixed
+body. The same fixture with explicit `lang: "en"` returned all three English
+citations. Mixed Hebrew/Latin payloads now enqueue both language models
+before polling. Both models receive only the already scoped payload, and
+their results retain the original offsets. Same-span results deduplicate
+and conflicting resolved targets remain reviewable. Google Docs checklist
+T6 is pending.
