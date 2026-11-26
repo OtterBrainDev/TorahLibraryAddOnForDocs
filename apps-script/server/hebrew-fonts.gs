@@ -136,5 +136,61 @@ function getInsertionPointFont() {
   }
   var font = surrounding && surrounding.font ? String(surrounding.font) : readDocumentBaseFont_();
   var size = surrounding && Number(surrounding.size) > 0 ? Number(surrounding.size) : null;
-  return { font: font, size: size };
+  var result = { font: font, size: size };
+  if (surrounding && surrounding.hebrewContext) result.hebrewContext = true;
+  return result;
+}
+
+
+// Measured from regular Google Fonts glyph outlines; see docs/hebrew-auto-scale.md.
+// Keep the preview mirror in shared/fonts/js.html in sync.
+var HEBREW_AUTO_SCALE_ = {
+  "Alef": 1.163,
+  "Arimo": 1.015,
+  "Assistant": 1.044,
+  "Bellefair": 1.158,
+  "Bona Nova": 1,
+  "Cardo": 1,
+  "David Libre": 1.013,
+  "Frank Ruhl Libre": 1,
+  "Heebo": 1.077,
+  "IBM Plex Sans Hebrew": 1.002,
+  "Miriam Libre": 1.089,
+  "Noto Rashi Hebrew": 1,
+  "Noto Sans Hebrew": 1.063,
+  "Noto Serif Hebrew": 1,
+  "Open Sans": 1,
+  "Rubik": 1.068,
+  "Secular One": 1.109,
+  "Suez One": 1.032,
+  "Tinos": 1,
+  "Varela Round": 1.025
+};
+
+function hebrewAutoScaleFactor_(font) {
+  var name = String(font || '').trim().toLowerCase();
+  var key = Object.keys(HEBREW_AUTO_SCALE_).find(function (family) { return family.toLowerCase() === name; });
+  return key ? HEBREW_AUTO_SCALE_[key] : 1;
+}
+
+// Only called for a Hebrew role with both font and size set to match.
+// Do not enlarge already-Hebrew context (including repeated insertions).
+function applyMatchedHebrewScale_(role, surrounding) {
+  if (surrounding && surrounding.hebrewContext) return;
+  var font = role.font;
+  var size = role.size;
+  if (!font || !size) {
+    try {
+      var normal = DocumentApp.getActiveDocument().getBody().getHeadingAttributes(DocumentApp.ParagraphHeading.NORMAL);
+      font = font || normal[DocumentApp.Attribute.FONT_FAMILY];
+      size = size || Number(normal[DocumentApp.Attribute.FONT_SIZE]);
+    } catch (error) { return; }
+  }
+  var factor = hebrewAutoScaleFactor_(font);
+  if (factor <= 1 || !(size > 0) || size > 400) return;
+  var scaled = Math.min(400, Math.max(size, Math.round(size * factor * 10) / 10));
+  if (scaled > size) {
+    role.font = font;
+    role.size = scaled;
+  }
 }

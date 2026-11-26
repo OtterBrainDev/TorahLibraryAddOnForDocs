@@ -13,6 +13,7 @@ const SETTINGS = [
   "god_replacement",
   "hebrew_font",
   "hebrew_font_size",
+  "auto_scale_hebrew",
   "hebrew_font_style",
   "include_translation_source_info",
   "include_transliteration_default",
@@ -150,6 +151,8 @@ function getDefaultPreferences() {
     // with a heading style, the heading's own).
     hebrew_font: "",
     hebrew_font_size: "",
+    // New opt-in enlargement; existing documents retain their exact formatting.
+    auto_scale_hebrew: false,
     hebrew_font_style: "normal",
     // Credit line (edition and license) under every inserted source. On by
     // default: many Sefaria texts are CC-BY / CC-BY-NC and require attribution.
@@ -757,7 +760,10 @@ function getTypographySettings(properties) {
     } catch (error) {
       surrounding = null;
     }
+    const scaleHebrew = String(userProperties.getProperty("auto_scale_hebrew")) === "true" &&
+      roles.hebrew.font === "" && roles.hebrew.size == null;
     fillTypographyFromSurroundingText_(roles, surrounding, titleHeading);
+    if (scaleHebrew) applyMatchedHebrewScale_(roles.hebrew, surrounding);
   }
 
   return {

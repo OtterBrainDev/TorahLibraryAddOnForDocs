@@ -673,3 +673,14 @@ test('a new user is seeded with both sidebar tabs on', () => {
   assert.equal(defaults.show_voices_tab, true);
   assert.equal(defaults.show_lexicon_tab, true);
 });
+
+
+test('schema 34 preserves existing sizing and explicit Auto-Scale Hebrew choice', () => {
+  const unset = loadMigrations({ prefs_schema_version: '33' });
+  unset.context.runUserPreferenceMigrationsIfNeeded_();
+  assert.equal(unset.userProperties.getProperty('auto_scale_hebrew'), 'false');
+  assert.equal(unset.context.migrateToV34_(unset.userProperties), false);
+  const enabled = loadMigrations({ prefs_schema_version: '33', auto_scale_hebrew: 'true' });
+  enabled.context.migrateToV34_(enabled.userProperties);
+  assert.equal(enabled.userProperties.getProperty('auto_scale_hebrew'), 'true');
+});

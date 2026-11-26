@@ -9,7 +9,7 @@
   "previous": "1.0.0",
 
   "_prefsSchemaVersion": "Must equal PREFS_SCHEMA_CURRENT_ in apps-script/migrations.gs. This is the user-data schema, not the add-on version: it only ever increases, and it increases whenever a new preference key ships. It was not reset with the version numbers and must never be. A mismatch means either a migration landed without a version bump or the reverse — both leave upgrading users in a state no migration covers.",
-  "prefsSchemaVersion": "33",
+  "prefsSchemaVersion": "34",
 
   "_surfaces": "Every place the version string is shown to a user. An agent bumping the version must update all of them; the manifest test checks they agree.",
   "surfaces": [
@@ -27,10 +27,10 @@
 
   "_docs": "Every doc that names the version: the version under demo or test, the live test checklist the walkthroughs and the listing point to, and the release commands. The manifest test checks each like a surface: in its file, carrying the full version (or, marked `line`, the release line as Help → About shows it), and the current schema where it names one. A dated record (a CHANGELOG heading, a past release's live test checklist, a design doc's target) is not listed: it keeps the number it was written for.",
   "docs": [
-    { "file": "docs/walkthroughs/README.md", "shows": "The version under demo is **2.0.0, preference schema 33**" },
+    { "file": "docs/walkthroughs/README.md", "shows": "The version under demo is **2.0.0, preference schema 34**" },
     { "file": "docs/walkthroughs/README.md", "shows": "*Help → About* should read **Current line: 2.0**", "line": true },
     { "file": "docs/walkthroughs/1-stress-test.md", "shows": "This goes further than [`docs/live-test-checklist-2.0.0.md`](../live-test-checklist-2.0.0.md)." },
-    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "Version: **2.0.0, schema 33**" },
+    { "file": "docs/walkthroughs/1-stress-test.md", "shows": "Version: **2.0.0, schema 34**" },
     { "file": "docs/walkthroughs/2-developer.md", "shows": "`docs/live-test-checklist-2.0.0.md` covers the rest" },
     { "file": "docs/walkthroughs/2-developer.md", "shows": "`clasp version \"v2.0.0\"`" },
     { "file": "docs/google-docs-walkthrough.md", "shows": "as it is today (v2.0;", "line": true },

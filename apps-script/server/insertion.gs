@@ -507,7 +507,14 @@ function readSurroundingTextStyle_() {
     const length = text.getText().length;
     if (length > 0 && isNormalTextParagraph_(paragraph)) {
       const at = Math.max(0, Math.min(length - 1, charIndex));
-      return { font: text.getFontFamily(at), size: text.getFontSize(at) };
+      const result = { font: text.getFontFamily(at), size: text.getFontSize(at) };
+      // Ignore punctuation/marks when identifying the script at the insertion point.
+      const source = text.getText();
+      const before = source.slice(0, at + 1).match(/\p{L}(?![\s\S]*\p{L})/u);
+      const after = source.slice(at + 1).match(/\p{L}/u);
+      const letter = (before || after || [''])[0];
+      if (/[\u05D0-\u05EA\u05F0-\u05F2\uFB1D-\uFB4F]/.test(letter)) result.hebrewContext = true;
+      return result;
     }
     charIndex = Infinity; // earlier paragraphs: sample their last character
     do {

@@ -26,6 +26,7 @@
     "requiredSelectors": [
       "#source_title_font",
       "#hebrew_font",
+      "#auto_scale_hebrew",
       "#transliteration_scheme",
       "#output_mode_default",
       "#bilingual_layout_default",

@@ -117,6 +117,13 @@
       return chosen || (typeof _ccDocumentFont === 'string' ? _ccDocumentFont : '') || '';
     }
 
+    function syncAutoScaleHebrew() {
+      const row = byId('auto-scale-hebrew-row');
+      const font = byId('hebrew_font');
+      const size = byId('hebrew_font_size');
+      if (row) row.hidden = !font || !size || !!font.value || !!size.value;
+    }
+
     function updateFontPreview(selectId, previewId) {
       const preview = byId(previewId);
       if (!preview) return;
@@ -129,6 +136,12 @@
       if (sample) {
         if (sample.dataset.sample == null) sample.dataset.sample = sample.textContent;
         renderHebrewPreviewText(sample, sample.dataset.sample, font);
+        if (selectId === 'hebrew_font') {
+          syncAutoScaleHebrew();
+          const enabled = (byId('auto_scale_hebrew') || {}).checked && !(byId('auto-scale-hebrew-row') || {}).hidden;
+          const scale = enabled && !_ccDocumentHebrewContext ? hebrewAutoScaleFactor(font) : 1;
+          sample.style.fontSize = scale > 1 ? (scale * 100) + '%' : '';
+        }
       }
     }
 
@@ -314,7 +327,7 @@
             detailsOn: detailsCheck ? detailsCheck.checked : false,
             emphasisMode: ccNormalizeEmphasisMode(emphasisInput ? emphasisInput.value : ''),
             notesMode: ccNormalizeNotesMode((byId('source_notes_mode') || {}).value),
-            fonts: ccFontStateFrom(function (id) { return (byId(id) || {}).value; })
+            fonts: ccFontStateFrom(function (id) { const field = byId(id) || {}; return id === 'auto_scale_hebrew' ? field.checked : field.value; })
           };
         },
         // Each font button opens that font's full editor in place: font,
@@ -925,6 +938,11 @@
     if (byId('show_line_markers_default')) byId('show_line_markers_default').addEventListener('change', function(){ updateCompositionCard(); });
     if (byId('include_translation_source_info')) byId('include_translation_source_info').addEventListener('change', function(){ updateCompositionCard(); });
     // insert_citation_default removed — citation feature was dropped.
+
+    byId('auto_scale_hebrew').addEventListener('change', function () {
+      updateStandardPreview('hebrew_font', 'hebrew_font_preview', 'hebrew_font_style');
+      updateCompositionCard();
+    });
 
     FONT_SIZE_FIELDS.forEach(function(id) {
       const el = byId(id);

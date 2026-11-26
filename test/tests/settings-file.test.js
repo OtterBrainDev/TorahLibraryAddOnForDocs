@@ -276,18 +276,19 @@ test('Import/Export modal: nothing Save collects, nothing drawn as HTML, a downl
 
 test('Factory applies the complete preset while preserving inactive profiles, history and consent', () => {
   const initial = {
-    prefs_schema_version: '33', ui_mode: 'full', source_notes_mode: 'inline',
+    prefs_schema_version: '34', ui_mode: 'full', source_notes_mode: 'inline', auto_scale_hebrew: 'true',
     settings_profiles: JSON.stringify({ active: 'p1', profiles: [{ id: 'p1', name: 'Main' }, { id: 'p2', name: 'Class' }] }),
     settings_profile_p2: JSON.stringify({ values: { source_notes_mode: 'inline' } }),
     linker_upload_acknowledged: 'true', last_search_sort_mode: 'chronological',
   };
   const { ctx, props, calls } = load(initial);
   const preset = vm.runInContext('FACTORY_PREFERENCE_VALUES_', ctx);
-  assert.equal(Object.keys(preset).length, 112);
+  assert.equal(Object.keys(preset).length, 113);
   const result = ctx.restorePreferencePreset('factory', 'p1');
   assert.equal(result.uiMode, 'simple');
   assert.equal(result.preferences.source_notes_mode, 'omit');
   assert.equal(result.preferences.bilingual_layout_default, 'he-top');
+  assert.equal(result.preferences.auto_scale_hebrew, 'false');
   for (const [key, value] of Object.entries(preset)) assert.equal(props.store[key], value, key);
   for (const key of ['settings_profiles', 'settings_profile_p2', 'prefs_schema_version', 'last_search_sort_mode', 'linker_upload_acknowledged']) {
     assert.equal(props.store[key], initial[key], key);

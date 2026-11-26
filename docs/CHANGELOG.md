@@ -10,6 +10,8 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Auto-Scale Hebrew (schema 34).** Optional, font-specific enlargement for matched Hebrew body text; explicit formatting, unsupported fonts and Hebrew insertion context are unchanged. Existing users and factory defaults retain the prior behavior (off). See [the measurement method](hebrew-auto-scale.md).
+
 - **Preferences.** A profile rail in both modes gives each Google Doc its
   own saved overrides, alongside the built-in User Profile and reusable named
   profiles. The footer has a 💾 Save icon with a destination tooltip,

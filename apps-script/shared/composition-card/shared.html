@@ -176,6 +176,7 @@ function ccFontStateFrom(read) {
   CC_FONT_PREFIXES.forEach(function (prefix) {
     out[prefix] = { font: read(prefix + '_font'), size: read(prefix + '_font_size') };
   });
+  out.autoScaleHebrew = String(read('auto_scale_hebrew')) === 'true';
   return out;
 }
 
@@ -235,6 +236,7 @@ var _ccFontsEnabled = false;
 // The font at the insertion point, for "Match the document"
 // (getInsertionPointFont). Null until the server answers, or with no server.
 var _ccDocumentFont = null;
+var _ccDocumentHebrewContext = false;
 var _ccFontPanelRole = null;
 // The font button whose full editor is open in place (fontEditor), if any.
 var _ccInlineFontRole = null;
@@ -275,6 +277,7 @@ function ccRefreshDocumentFont() {
   google.script.run
     .withSuccessHandler(function (result) {
       _ccDocumentFont = result && result.font ? String(result.font) : null;
+      _ccDocumentHebrewContext = !!(result && result.hebrewContext);
       updateCompositionCard();
     })
     .withFailureHandler(function () {})
@@ -331,6 +334,10 @@ function _ccUpdateFonts(state) {
     $('#cc-hebrew-preview').css('font-family', previewFontStack(hebrewFont, 'serif'));
     $('#cc-translation-preview').css('font-family', previewFontStack(translationFont, 'serif'));
   }
+
+  var autoScale = state.fonts && state.fonts.autoScaleHebrew && !fontState.hebrew.font && !fontState.hebrew.size && !_ccDocumentHebrewContext;
+  var scale = autoScale && typeof hebrewAutoScaleFactor === 'function' ? hebrewAutoScaleFactor(hebrewFont) : 1;
+  $('#cc-hebrew-preview .cc-hebrew-text').css('font-size', scale > 1 ? (scale * 100) + '%' : '');
 
   // Each Hebrew sample, drawn as Docs will (marks the font lacks in Noto).
   $('.cc-hebrew-text').each(function () {

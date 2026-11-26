@@ -15,6 +15,35 @@
 //
 // Include after shared/fonts/coverage.html.
 
+// Mirror of HEBREW_AUTO_SCALE_ (server/hebrew-fonts.gs).
+var HEBREW_AUTO_SCALE = {
+  "Alef": 1.163,
+  "Arimo": 1.015,
+  "Assistant": 1.044,
+  "Bellefair": 1.158,
+  "Bona Nova": 1,
+  "Cardo": 1,
+  "David Libre": 1.013,
+  "Frank Ruhl Libre": 1,
+  "Heebo": 1.077,
+  "IBM Plex Sans Hebrew": 1.002,
+  "Miriam Libre": 1.089,
+  "Noto Rashi Hebrew": 1,
+  "Noto Sans Hebrew": 1.063,
+  "Noto Serif Hebrew": 1,
+  "Open Sans": 1,
+  "Rubik": 1.068,
+  "Secular One": 1.109,
+  "Suez One": 1.032,
+  "Tinos": 1,
+  "Varela Round": 1.025
+};
+function hebrewAutoScaleFactor(font) {
+  var name = String(font || '').trim().toLowerCase();
+  var key = Object.keys(HEBREW_AUTO_SCALE).find(function (family) { return family.toLowerCase() === name; });
+  return key ? HEBREW_AUTO_SCALE[key] : 1;
+}
+
 var HEBREW_MARK_LENDERS = { serif: 'Noto Serif Hebrew', sans: 'Noto Sans Hebrew' };
 
 // Hebrew fonts offered in the pickers: Google Fonts with Hebrew, suited to

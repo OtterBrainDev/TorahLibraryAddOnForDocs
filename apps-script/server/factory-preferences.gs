@@ -10,6 +10,7 @@ const FACTORY_PREFERENCE_VALUES_ = Object.freeze({
   "god_replacement": "HaShem",
   "hebrew_font": "",
   "hebrew_font_size": "",
+  "auto_scale_hebrew": "false",
   "hebrew_font_style": "normal",
   "include_translation_source_info": "false",
   "include_transliteration_default": "false",
