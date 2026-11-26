@@ -2634,11 +2634,13 @@
       };
     }
 
-    function switchToProfile_(id, next) {
+    function switchToProfile_(id, next, forTransfer) {
       if (preferencesBaseline_ === null) return;
       var target = id === 'document' ? { name: 'This Document' } : profileById_(id);
       if (!target || id === (editingDocument_ ? 'document' : profileIndex_().active)) return;
-      withUnsavedChangesHandled_('Switching to ' + quoted_(target.name) + ' loads its settings here.', function () {
+      var question = forTransfer ? 'Import/Export uses the saved settings for ' + quoted_(target.name) + '.'
+        : 'Switching to ' + quoted_(target.name) + ' loads its settings here.';
+      withUnsavedChangesHandled_(question, function () {
         if (id === 'document') {
           modalBusyShow('Loading this document…');
           google.script.run.withSuccessHandler(function (result) {
@@ -2654,7 +2656,7 @@
           }).getDocumentPreferenceProfile();
           return;
         }
-        var answer = profileAnswer_('Switching profile…', true, function (before, now) {
+        var answer = profileAnswer_(forTransfer ? 'Loading saved settings for Import/Export…' : 'Switching profile…', true, function (before, now) {
           return 'Now using ' + quoted_(now.name) + '.';
         });
         if (id === profileIndex_().active) {
@@ -2818,7 +2820,7 @@
       currentUiMode: currentUiMode_,
       activeProfileId: function () { return profileIndex_().active; },
       withTransferProfile: function (open) {
-        if (editingDocument_) switchToProfile_(activeProfile_().id, open);
+        if (editingDocument_) switchToProfile_(activeProfile_().id, open, true);
         else if (preferencesBaseline_ !== null) open();
       }
     };

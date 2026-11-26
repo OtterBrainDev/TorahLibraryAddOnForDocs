@@ -243,3 +243,27 @@ test('a Texts selection whose preview had loaded comes back without a fetch', ()
   assert.equal(env.get('hasResolvedReference'), true);
   assert.equal(env.get('data.ref'), 'Genesis 1:1', 'Add Source inserts what was previewed');
 });
+
+test('the language filter holds title and content results until verified and rechecks when changed', () => {
+  const env = loadSidebarSearch({ mode: 'texts' });
+  let languages = ['fr'];
+  env.ctx.getSearchParameters = () => ({ sortMode: 'relevance', translationOnly: !!languages.length, translationLanguages: languages });
+  env.type('Genesis 1:1');
+  const run = env.ctx.startSearchRun('texts', 'Genesis 1:1');
+  env.last('findReferenceForSidebar').ok({ ref: 'Genesis 1:1', text: ['English'], he: ['א'], sections: [1], indexTitle: 'Genesis' });
+  env.last('findSearchAdvanced').ok([
+    { _source: { ref: 'Genesis 1:2', hasEn: true } }, { _source: { ref: 'Genesis 1:3' } }
+  ]);
+  const titles = env.last('getNameCandidates');
+  if (titles) titles.ok([]);
+  assert.equal(run.queryState.libraryMatches.length + run.queryState.searchResults.length, 0);
+  const check = env.last('getSearchTranslationMatches');
+  assert.ok(check.args[0].includes('Genesis 1:1'));
+  assert.ok(check.args[0].includes('Genesis 1:2'));
+  check.ok({ matches: [{ ref: 'Genesis 1:2', languages: ['fr'] }, { ref: 'Genesis 1:3', languages: ['fr'] }], incomplete: false });
+  assert.deepEqual(Array.from(run.queryState.searchResults, (item) => item.ref), ['Genesis 1:2', 'Genesis 1:3']);
+  assert.equal(run.queryState.libraryMatches.length, 0);
+  languages = [];
+  env.ctx.refreshTextSearchForLanguageFilter_();
+  assert.equal(env.pending('findSearchAdvanced').length, 2);
+});

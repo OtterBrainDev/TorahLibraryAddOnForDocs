@@ -394,7 +394,9 @@ up to thirty you pin). Open it with **📜** or <kbd>Ctrl</kbd>/<kbd>⌘</kbd> +
 (Texts, Voices or Lexicon), selected and ready to insert; **📌** pins it;
 filter by Pinned, Recent or category, and sort; **Copy References** for a
 plain-text list; **Clear Recent** (keeps pinned) or **Reset Session** (clears
-everything). The Session Library is kept in your browser only.
+everything). The Session Library is kept in your browser and can show entries from
+other Docs. **This Document** settings are private to your account and
+the current Doc. Sidebar overrides are temporary for the open sidebar.
 
 ## Quick Actions (🏃)
 
@@ -411,6 +413,11 @@ off, 🏃 goes too.
 Menu-only: **Unlink Sources** removes every sefaria.org link from the
 document; **Gematriya Count** totals the gematria of the selection (or the
 whole document).
+
+In Texts search, the **Aא language filter** shows results with at least one
+translation containing text in any selected language. The original alone
+does not qualify. For a book title, the check covers the opening section
+returned by Sefaria. Use **Any** to show results without this filter.
 
 ## Link Texts with Sefaria
 
