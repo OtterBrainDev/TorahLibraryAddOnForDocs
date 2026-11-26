@@ -417,7 +417,7 @@ test('the setup page is told whether to offer it, and setup still opens if that 
 test('screen 1: "I\'ve used Sefaria for Google Docs" for everyone, "Keep my settings" hidden unless offered', () => {
   const purposes = [...SETUP_HTML.matchAll(/name="purpose" value="([^"]+)"/g)].map((m) => m[1]);
   assert.deepEqual(purposes, ['quoting', 'sheets', 'academic', 'sefaria', 'returning']);
-  assert.match(SETUP_HTML, /value="sefaria">\s*<span class="setup-card-title">I've used Sefaria for Google Docs</);
+  assert.match(SETUP_HTML, /value="sefaria">\s*<span class="setup-card-title">I've used Sefaria for Google Docs 1.0</);
   assert.match(SETUP_HTML, /<label class="setup-card" id="setup-purpose-keep" hidden>\s*<input type="radio" name="purpose" value="returning">/);
   assert.ok(!/used Sefaria for Google Docs before|Keep my settings as they are/.test(SETUP_HTML));
   assert.match(SETUP_JS, /\$one\('#setup-purpose-keep'\)\.hidden = config\.hasSavedSettings !== true;/);

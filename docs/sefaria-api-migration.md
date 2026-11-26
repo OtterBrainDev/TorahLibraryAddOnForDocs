@@ -511,3 +511,5 @@ This documentation pass does not change runtime code or release status.
 PRs #58–60 were merged; master at cc77a87 is the base of the selection/setup follow-up. The new branch changes selection-scoped linking, explicit Insert from Selection review, Gematriya selection extraction, 1.0 setup, optional tools, Help and restart choices. No deployment or release. Run the full suite and live checklist Q1–Q9 against the final PR head; confirm fuzzy fallback and selection placement in Docs before launch.
 No merge, Apps Script push, numbered version, Marketplace publication or
 tutorial recording was performed in this pass.
+
+PR [#62](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/62) is the new draft against master. Initial CI at cdfe562 reported 1,034 passed and four failures in test fixtures/expectations; repaired those to accommodate the new submenu, wizard label and safe template JSON. Full CI and live Docs checks must still be confirmed.

@@ -70,7 +70,7 @@ Document Scanning**:
   abbreviation. Only those passages, plus a small amount of surrounding
   context needed to resolve them, are uploaded. Paragraphs of your own
   writing that contain no citation are never transmitted.
-- **Whole document.** The entire body text of the document is uploaded. This
+- **Whole document.** The entire highlighted selection, or the body text of the current document tab if nothing is highlighted, is uploaded. This
   can catch unusual citation forms the local scan misses. This was the
   add-on's original behavior.
 

@@ -117,7 +117,8 @@ test('an emptied submenu is left out of the menu', () => {
     quick_actions: ['-'],
   };
   const plan = ctx.planMenuFromLayout_(layout, { surpriseMeEnabled: false });
-  assert.ok(!plan.some((e) => e.type === 'submenu'));
+  assert.ok(!plan.some((e) => e.type === 'submenu' && e.label === 'Quick Actions'));
+  assert.ok(plan.some((e) => e.type === 'submenu' && e.label === 'Help'));
 });
 
 test('no two dividers are ever adjacent, and none leads a list', () => {
@@ -177,7 +178,8 @@ test('hiding the submenu placeholder hides the whole Quick Actions submenu', () 
   const ctx = load();
   const d = ctx.getDefaultMenuLayout_();
   const plan = ctx.planMenuFromLayout_({ top: d.top, quick_actions: d.quick_actions, hidden: ['quick_actions'] }, { surpriseMeEnabled: false });
-  assert.ok(!plan.some((e) => e.type === 'submenu'));
+  assert.ok(!plan.some((e) => e.type === 'submenu' && e.label === 'Quick Actions'));
+  assert.ok(plan.some((e) => e.type === 'submenu' && e.label === 'Help'));
 });
 
 test('a layout without "hidden" hides nothing', () => {

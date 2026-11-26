@@ -385,7 +385,7 @@ function confirmLinkerUploadOnce_(scanMode, scope) {
   }
 
   const scopeSentence = scope && scope.selected
-    ? 'Only the selected text (or citation-like passages inside it) will be sent. Without a selection, this command can scan the whole document according to your Linking preferences.'
+    ? 'Only the selected text (or citation-like passages inside it) will be sent. Without a selection, Link Texts can scan the whole document according to your Linking preferences.'
     : (scanMode === 'full')
       ? 'Right now it is set to send the ENTIRE text of this document.'
       : 'Right now it is set to send only the passages that look like they contain a citation — the rest of your writing stays in the document.';
