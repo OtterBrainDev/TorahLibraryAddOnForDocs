@@ -196,7 +196,7 @@ Search → Advanced → *Show unavailable translations* lists it greyed out). To
 find one in a long list, type its language in the filter box: *German*,
 *Deutsch* or *de*.
 
-**A specific Hebrew edition:** **Versions → Original Versions**. The credit
+**A specific Hebrew edition:** **Versions → Source editions**. The credit
 block under the source names the edition you chose and its license.
 
 **Partial editions:** a listed translation may cover some, but not all, of

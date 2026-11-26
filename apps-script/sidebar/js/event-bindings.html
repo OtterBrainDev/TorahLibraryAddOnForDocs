@@ -186,6 +186,21 @@ $('.results-panel').on('click', '.result-pin-button', function (event) {
   togglePinnedRef($(this).attr('data-ref'), $(this).attr('data-label'));
 });
 
+// The help button is independent of the summary's expand/collapse action.
+$('.version-help-button').on('click', function (event) {
+  event.preventDefault();
+  $(this).parent().removeAttr('data-dismissed');
+  this.focus({ preventScroll: true });
+}).on('keydown', function (event) {
+  if (event.key !== 'Escape') return;
+  event.preventDefault();
+  event.stopPropagation();
+  $(this).parent().attr('data-dismissed', '');
+});
+$('.version-help').on('mouseenter focusin', function () {
+  $(this).removeAttr('data-dismissed');
+});
+
 $('.output-mode-selection').on('change', function () {
   updateBilingualLayoutVisibility();
   updateTranslationDetailsVisibility();
