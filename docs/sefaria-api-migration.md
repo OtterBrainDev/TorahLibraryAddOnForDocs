@@ -513,3 +513,7 @@ No merge, Apps Script push, numbered version, Marketplace publication or
 tutorial recording was performed in this pass.
 
 PR [#62](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/62) is the new draft against master. Initial CI at cdfe562 reported 1,034 passed and four failures in test fixtures/expectations; repaired those to accommodate the new submenu, wizard label and safe template JSON. Full CI and live Docs checks must still be confirmed.
+
+### Preferences transfer follow-up — 2026-11-25
+
+PR #62 remains the review branch. The earlier corrected selection/setup head 8a76961 passed CI (run 45731731253). This follow-up keeps disabled optional tools consistent with menu visibility, preserves unrelated unsaved form edits through mode switches, moves Rename to a labeled pencil above Profiles, and replaces the Advanced settings-file tab with the Import/Export modal in both interfaces. Everything can target a named profile without activating it; shared settings are opt-in. Simple transfers current preferences; imports preserve interface mode. Original RPCs remain for compatibility. Updated release documentation, mirrored agent guides and live cases R1–R9. No new preference key or schema migration, deployment or release. Run CI on final branch head and test modal focus, actual menu rendering, transfer/download and profile isolation in Docs before merge.

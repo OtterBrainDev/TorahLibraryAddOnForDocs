@@ -126,3 +126,11 @@ Columns:
 | Selected paragraph reported empty; fuzzy/multiple citations no review | Selection reader handled only TEXT nodes and insertion used a direct-only resolver | Shared selection leaf reader, exact body-range mapping, review override, prefilled Texts fallback; selection-workflows and required-output tests |
 | Selection ignored by Link Texts | Whole body scanned regardless of selection | Scoped payload mapping and placement validation; scanDocumentForReferences RPC now accepts captured scope |
 | Legacy setup continued through customization; Help always opened one tab | Purpose was merely a preset, menu had a single Help entry | One-step legacy preset, optional tools, fixed Help submenu, restartFirstRunSetup RPC; first-run-setup and menu-layout tests |
+
+### Preference mode and profile-transfer follow-up — 2026-11-25
+
+| Symptom | Root cause | Fix / regression |
+| --- | --- | --- |
+| Disabled optional tools appear after mode switch | Menu availability and editor visibility differed; form baseline not reconciled | Respect explicit Sidebar switches in both modes; update only menu baseline; mode round-trip and UI tests |
+| Rename looked like a profile | Text action adjacent to list | Labeled U+1F589 above list |
+| Import/Export hidden in Simple, import only addressed live settings | Mode-dependent Advanced tab and active-only RPCs | U+21C5 modal and target-aware RPCs; inactive snapshot transfer, shared-group opt-in, preserve mode; settings-profile and settings-file tests |

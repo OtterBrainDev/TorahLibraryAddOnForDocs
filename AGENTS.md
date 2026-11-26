@@ -216,7 +216,7 @@ and fix it before touching the feature you came to change.
   *Move to Quick Actions ▸* / *◂ Move to main menu* move an item into the
   submenu (its end; a hidden or emptied submenu comes back) or out (just
   below Quick Actions).
-- `settings-file.test.js` — Preferences → Advanced's settings file: an
+- `settings-file.test.js` — Preferences → Import/Export settings file: an
   export holds settings only (with the dialog's unsaved values) and round
   trips; an import writes only `SETTINGS` keys with valid values, only the
   parts ticked and only what differs, refuses foreign, broken or newer files,
@@ -758,8 +758,7 @@ different repo.
   transliteration capitalizes, from STEPBible's tagged Tanakh (CC BY 4.0) and
   `talmud-names.txt`. Never hand-edit the `.gs`; add a Talmud name to the
   `.txt` and re-run the generator.
-- `apps-script/server/settings-file.gs` — the settings file (Preferences →
-  Advanced): what an export holds and what an import may write.
+- `apps-script/server/settings-file.gs` — the settings file (Preferences → Import/Export): what an export holds and what an import may write.
 - `apps-script/server/settings-profiles.gs` — settings profiles (Everything's
   Profiles column, the sidebar's Profile list): what a profile holds, and how
   a switch stores and restores it.
@@ -775,3 +774,8 @@ different repo.
 
 - Selection-scoped linking captures body offsets and document/tab identity before opening review. Never upload outside the selected slices, substitute a same-text occurrence elsewhere, or fall back to whole-document scanning on selection failure. Insert Source from Selection always opens review (including quiet saved mode); unresolved/fuzzy queries can move to the prefilled Texts sidebar.
 - The legacy setup preset resets active preferences to the documented compatible look/workflow with Voices/Lexicon off; do not downgrade v3, attribution, privacy or edition handling. Reset in rerun preserves named profile snapshots and upload consent. Keep starts from current preferences without purpose presets overwriting them. The Help submenu remains fixed at the bottom.
+
+### Interface and settings-transfer contracts
+
+- Simple/Everything changes visibility, not explicit search-tool preferences. Disabled Voices/Lexicon remain absent from the menu and Menu Bar editor. The UI updates only the saved menu baseline on a mode switch; never mark unrelated unsaved form edits as saved.
+- The Import/Export modal is available in both modes. Simple targets the active preferences; Everything selects a profile, defaulting to its text/layout/appearance keys. Shared search/linking/menu/sidebar settings require explicit opt-in and checked import groups. Active export includes valid unsaved form values; inactive export uses the saved snapshot. Inactive-only imports never activate that profile or reload the active form. Target-aware RPCs verify the mode and active profile identity before writes; import does not change the interface. Preserve older RPC signatures for already-open clients. No new persistent schema key.
