@@ -66,8 +66,7 @@
   "insertion_options": {
     "template": "apps-script/shared/insertion-options/markup.html",
     "requiredSelectors": [
-      "#layout-rows-toggle",
-      "#cc-notes-toggle"
+      "#layout-rows-toggle"
     ]
   },
   "linker_results": {
@@ -90,7 +89,8 @@
       "#cc-translation-punct-toggle",
       "#cc-translation-preview",
       ".cc-pill-row",
-      ".cc-translation"
+      ".cc-translation",
+      "#cc-notes-toggle"
     ]
   },
   "first-run-setup": {

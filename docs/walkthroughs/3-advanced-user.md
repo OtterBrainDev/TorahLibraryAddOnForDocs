@@ -68,7 +68,7 @@ the same for the citation.
   without bold. The sidebar's Insertion Options has the same control for one
   session. It applies to the translation only; the Hebrew always keeps its
   own bold and italics.
-- **Notes** (Layout): **Omit / Inline / Separate**, independently of
+- **Notes** (top of Insertion Defaults → Texts): **Omit / Inline / Separate**, independently of
   Commentary. Omit is the default and leaves out marked source footnotes in
   either language. Inline includes them in parentheses. Separate collects
   labelled notes below the passage, or below each line with Line by line.

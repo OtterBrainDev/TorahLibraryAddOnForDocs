@@ -297,7 +297,7 @@ template (head, api, feedback, state, dom, core-shared). The insertion
 options are shared by more than one entry, so they live under `shared/`
 too and know nothing about their host:
 
-- `shared/composition-card/*` — linked title, then a Source section
+- `shared/composition-card/*` — shared Notes choice (both languages), then a Source section
   (vowels, cantillation, Hebrew punctuation, font, transliteration) and a
   Translation section (punctuation, Commentary, font), each a `<details>` that folds
   to a summary line; `openSections` in `data-cc-features` opens them
@@ -305,8 +305,8 @@ too and know nothing about their host:
   pills, which sit in the insertion options' row by id. Sidebar, Preferences
   and the Link Texts dialog.
 - `shared/insertion-options/*` — the Display and Layout pickers, and the row
-  under them with Line by line, Line #s and Citation, followed by Notes
-  (`initInsertionOptions`). It also hides the card's transliteration Position
+  under them with Line by line, Line #s and Citation
+  (`initInsertionOptions`). Notes is in the composition card, not Layout. It also hides the card's transliteration Position
   where it doesn't apply, and its Arrangement icons sketch the
   transliteration's place and Line by line (`getState().transliterationOn` /
   `transliterationPosition`; the card calls `updateInsertionOptions` after

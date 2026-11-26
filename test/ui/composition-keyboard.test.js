@@ -180,3 +180,18 @@ test('composition keyboard bindings do not reach the independent Voices translit
   assert.equal(voice.hasAttribute('aria-selected'), false);
   assert.deepEqual(h.changes, []);
 });
+
+
+test('Notes responds to click and keyboard independently of Commentary and language sections', needsDom, () => {
+  const h = harness();
+  const group = h.get('#cc-notes-toggle');
+  assert.equal(group.closest('.cc-section--source, .cc-section--translation'), null);
+  group.querySelector('[data-value="inline"]').click();
+  assert.equal(h.state.notesMode, 'inline');
+  const active = group.querySelector('[aria-checked="true"]');
+  assert.equal(active.getAttribute('data-value'), 'inline');
+  h.key(active, 'ArrowRight');
+  assert.equal(h.state.notesMode, 'separate');
+  assert.equal(group.querySelector('[tabindex="0"]').getAttribute('data-value'), 'separate');
+  assert.deepEqual(h.changes, [['notes', 'inline'], ['notes', 'separate']]);
+});

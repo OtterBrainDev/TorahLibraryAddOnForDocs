@@ -472,7 +472,7 @@ choices are retained when the add-on updates.
 | Display and Arrangement | Hebrew and translation; Hebrew on the right |
 | Line numbers / Line by line | On / Off |
 | Citation credit / title links | On |
-| Commentary / Notes | Default / Omit |
+| Commentary / Notes (Insertion Defaults → Texts) | Default / Omit |
 | Transliteration | Off |
 | Vowels / Punctuation | On |
 | Fonts and sizes | Match the document |

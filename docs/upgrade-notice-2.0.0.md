@@ -58,7 +58,7 @@ and marked footnotes appear.
 - Leave **Commentary** on **Default** to preserve the edition's explanation
   and markings. **Notes** starts on **Omit**, preserving the previous
   inserted output; choose Inline or Separate in **Insertion Options → Text and
-  notes** (or Layout in Preferences) to include marked footnotes. Separate
+  notes** (or Preferences → Insertion → Insertion Defaults → Texts) to include marked footnotes. Separate
   creates an ordinary Notes text section.
 - Display, Arrangement, Line by line and Transliteration stay at the top of
   Insertion Options when applicable. Other choices are in three folding
