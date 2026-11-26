@@ -502,3 +502,13 @@ checklist was run against the code that shipped.
 | S3 | Compare all shared controls in Preferences and sidebar; change Display to Original, Both, Translation | Notes remains applicable in each; Preferences keeps defaults editable for other display choices; sidebar hides only inapplicable or explicitly disabled controls. |
 | S4 | Switch saved profile and use Import/Export or Reset to Defaults; inspect Notes and other shared options | Notes follows the active saved profile/defaults, not a stale session; Reset returns Omit. |
 | S5 | Run Link Texts → Customize this insertion; choose Notes with either language | Notes is available outside the language sections and applies only to the pass until Save as defaults. |
+
+### T — repeated citation detection (pending live verification)
+
+| Case | Action | Expected |
+| --- | --- | --- |
+| T1 | No selection: repeat Genesis 1:1 on three lines and in a sentence; run Link Texts in both scanning modes and review modes | Every unlinked occurrence is represented and can link independently, not just the first. |
+| T2 | Repeat בראשית א:א in a Hebrew document, with the first occurrence already linked | Remaining copies are linked; existing link untouched. |
+| T3 | Include Genesis 1:10, Genesis 1:1-2, Rashi on Genesis 1:1, and ambiguous/ibid citations | Never link a substring or copy a context-dependent/ambiguous resolution. |
+| T4 | Select only two repeated citations; run Link Texts or Insert from Selection | Only occurrences inside the selection are eligible. |
+| T5 | Run review and quiet linking again after linking all repetitions | Previously linked occurrences remain untouched; no duplicate link rows. |

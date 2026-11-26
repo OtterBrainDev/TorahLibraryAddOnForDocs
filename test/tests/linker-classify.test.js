@@ -371,3 +371,76 @@ test('an unmatched citation stitched across two windows is unplaceable, not unma
   assert.equal(result.unplaceableCount, 1);
   assert.equal(result.unresolvedCount, 0);
 });
+
+
+function repeatScan(context, text, rawMatches, options) {
+  context.sefariaRefUrl_ = (ref) => 'https://www.sefaria.org/api/ref/' + encodeURIComponent(ref);
+  context.parseJsonOrNull_ = JSON.parse;
+  const requests = [];
+  const opts = options || {};
+  const result = context.recoverRepeatedLinkerMatches_({
+    docText: text, scan: opts.scan || { payload: text, segments: null },
+    rawMatches, existingMatches: opts.existingMatches || [],
+    isAlreadyLinked: opts.isAlreadyLinked || (() => false),
+  }, (batch) => {
+    requests.push(...batch);
+    return batch.map((req) => {
+      const spelling = decodeURIComponent(req.url.split('/api/ref/')[1]);
+      const meta = opts.metadata ? opts.metadata(spelling) :
+        { is_ref: true, normalized: 'Genesis 1:1', start_labels: ['1', '1'] };
+      return { getResponseCode: () => 200, getContentText: () => JSON.stringify(meta) };
+    });
+  });
+  return { rows: JSON.parse(JSON.stringify(result)), requests };
+}
+
+test('repeat recovery retains every English occurrence even if the API returns the first only', () => {
+  const context = load();
+  const text = 'Genesis 1:1\nGenesis 1:1\nSee (Genesis 1:1).';
+  const { rows, requests } = repeatScan(context, text, [raw({ startChar: 0, endChar: 11 })]);
+  assert.deepEqual(rows.map(r => r.startChar), [12, 29]);
+  assert.deepEqual(rows.map(r => r.occurrence), [1, 2]);
+  assert.equal(requests.length, 1);
+  assert.ok(rows.every(r => r.candidates[0].ref === 'Genesis 1:1' && !r.ambiguous));
+});
+
+test('repeat recovery works for Hebrew citations and a previously linked first occurrence', () => {
+  const context = load();
+  const cite = 'בראשית א:א';
+  const text = cite + '\n' + cite + '\n' + cite;
+  const { rows } = repeatScan(context, text, [raw({ startChar: 0, endChar: cite.length })],
+    { isAlreadyLinked: (start) => start === 0 || start === cite.length + 1 });
+  assert.deepEqual(rows.map(r => r.startChar), [2 * (cite.length + 1)]);
+  assert.equal(rows[0].documentText, cite);
+  assert.equal(rows[0].occurrence, 2);
+});
+
+test('repeat recovery never invents a duplicate row at an existing span or in a longer citation', () => {
+  const context = load();
+  const text = 'Genesis 1:1\nGenesis 1:1\nGenesis 1:10\nGenesis 1:1-2\nRashi on Genesis 1:1\nGenesis 1:1';
+  const { rows } = repeatScan(context, text, [
+    raw({ startChar: 0, endChar: 11 }), raw({ startChar: 12, endChar: 23 })
+  ]);
+  assert.deepEqual(rows.map(r => r.startChar), [text.lastIndexOf('Genesis 1:1')]);
+});
+
+test('repeat recovery requires independent canonical agreement and a real address', () => {
+  const context = load();
+  const text = 'Genesis 1:1\nGenesis 1:1';
+  for (const metadata of [
+    () => ({ is_ref: true, normalized: 'Genesis 1:2', start_labels: ['1','2'] }),
+    () => ({ is_ref: true, normalized: 'Genesis 1:1', start_labels: [] }),
+    () => ({ is_ref: false }),
+  ]) assert.deepEqual(repeatScan(context, text, [raw({ startChar: 0, endChar: 11 })], { metadata }).rows, []);
+  assert.deepEqual(repeatScan(context, text, [raw({ startChar: 0, endChar: 11, refs: ['Genesis 1:1', 'Rashi on Genesis 1:1'] })]).rows, []);
+});
+
+test('repeat recovery cannot escape candidate windows or selected slices', () => {
+  const context = load();
+  const text = 'Genesis 1:1\nGenesis 1:1\nGenesis 1:1';
+  const scan = { payload: 'Genesis 1:1\n\nGenesis 1:1', segments: [
+    { docStart: 0, payloadStart: 0, length: 11 }, { docStart: 24, payloadStart: 13, length: 11 }
+  ] };
+  const { rows } = repeatScan(context, text, [raw({ startChar: 0, endChar: 11 })], { scan });
+  assert.deepEqual(rows.map(r => r.startChar), [24]);
+});

@@ -584,3 +584,7 @@ The Help menu has How to..., Support, About and Re-run Setup Wizard. The same re
 ### Profile transfer and interface controls (launch follow-up)
 
 Use **🖉** above the Profiles list to rename the profile in use. Import/Export is no longer an Advanced tab: **⇅** beside Interface opens it in Simple and Everything. Switching interfaces does not turn explicitly disabled Voices or Lexicon back on. In Everything, select the profile to import or export. An inactive-profile-only import does not replace unsaved edits in the active form. Active imports and shared changes can replace unsaved form edits; review the preview before Apply. Import preserves the current Simple/Everything mode.
+
+### Repeated citations
+
+Link Texts treats each occurrence of a citation separately, even if the source is the same. Already linked occurrences are left alone. If Sefaria misses a literal repeat, the add-on can recover a fully specified citation after an independent exact-reference check. Ambiguous or context-dependent citations are not automatically copied. The current scanning scope still applies.
