@@ -68,10 +68,17 @@ test('findReference: no network throws a message that says so, without the URL',
 });
 
 test('findReference: a server error or rate limit throws, with the status', () => {
-  for (const status of [500, 503, 429]) {
+  for (const status of [403, 408, 429, 500, 503]) {
     const ctx = load(() => response(status, 'oops'));
     assert.throws(() => ctx.findReference('Genesis 1:1'), new RegExp('error ' + status));
   }
+});
+
+test('findReference: an HTTP timeout from Texts v3 is an error before insertion', () => {
+  const ctx = load((url) => /\/api\/ref\//.test(url)
+    ? response(200, v3RefFixture({ ref: 'Genesis 1:1' }))
+    : response(408, 'Request timeout'));
+  assert.throws(() => ctx.findReference('Genesis 1:1'), /responded with error 408/);
 });
 
 test('findReference: a good response still resolves', () => {

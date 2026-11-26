@@ -298,7 +298,8 @@ function _ccEffectiveFont(roleState) {
 
 function _ccFontChipLabel(roleState, prefix) {
   // The citation's blank font is the font of the passage above it.
-  var match = prefix === 'citation' ? 'Same as the text above' : (_ccDocumentFont ? 'Document: ' + _ccDocumentFont : 'Match the document');
+  var inherited = _ccConfig && _ccConfig.matchFontLabel;
+  var match = prefix === 'citation' ? 'Same as the text above' : (inherited || 'Match the document');
   var name = roleState.font || match;
   return roleState.size ? name + ' \u00B7 ' + roleState.size + ' pt' : name;
 }
@@ -362,8 +363,7 @@ function _ccSyncFontPanel(fontState, state) {
   var select = document.getElementById('cc-font-select');
   if (select && typeof populateFontSelect === 'function') {
     populateFontSelect(select, _ccIsHebrewFontRole(role) ? 'hebrew' : 'latin', roleState.font);
-    // "Match the document" names the font it matches, when known.
-    if (_ccDocumentFont && select.options[0]) select.options[0].textContent = 'Match the document (' + _ccDocumentFont + ')';
+    if (select.options[0]) select.options[0].textContent = (_ccConfig && _ccConfig.matchFontLabel) || 'Match the document';
   }
   var $size = $('#cc-font-size');
   if (document.activeElement !== $size[0]) $size.val(roleState.size);

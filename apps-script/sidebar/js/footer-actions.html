@@ -30,11 +30,11 @@ $('#insert-source').click(function () {
     var $btn = $('#insert-source');
     var insertedWord = selectedLexiconItem;
 
+    clearInsertWarning();
     showBusyOverlay('insert');
     google.script.run
       .withSuccessHandler(function () {
         hideBusyOverlay();
-        $('.insert-warning').remove();
         // Reopening it from the Session Library looks the word up again.
         if (insertedWord) upsertSessionEntry('inserted', lexiconSessionEntry(insertedWord, lexiconPayload.entries));
         if (insertedWord !== selectedLexiconItem) return;
@@ -45,10 +45,7 @@ $('#insert-source').click(function () {
           $btn.text(originalLabel).removeClass('lexicon-insert-success');
         }, 1800);
       })
-      .withFailureHandler(function (error) {
-        hideBusyOverlay();
-        showInsertWarning(error && error.message);
-      })
+      .withFailureHandler(showInsertFailure)
       .insertLexiconEntry(lexiconPayload);
     return;
   }
@@ -82,18 +79,17 @@ $('#insert-source').click(function () {
     var insertedSheet = selectedVoiceItem;
     var insertedFrom = shownSearchRun();
     if (fetchesSheet) { $('.voices-fetch-loading').show(); }
+    clearInsertWarning();
     showBusyOverlay(fetchesSheet ? 'fetch' : 'insert');
     google.script.run
       .withSuccessHandler(function () {
         $('.voices-fetch-loading').hide();
         hideBusyOverlay();
-        $('.insert-warning').remove();
         upsertSessionEntry('inserted', voicesSessionEntry(insertedSheet, insertedFrom));
       })
       .withFailureHandler(function (error) {
         $('.voices-fetch-loading').hide();
-        hideBusyOverlay();
-        showInsertWarning(error && error.message);
+        showInsertFailure(error);
       })
       .insertSheet(sheetPayload, { insertMode: insertMode, transliterationScheme: transliterationScheme !== 'none' ? transliterationScheme : null });
     return;
@@ -130,10 +126,10 @@ $('#insert-source').click(function () {
   var isMultiInsert = allowMulti && Array.isArray(selectedVersions) && selectedVersions.length > 1;
 
   if (isMultiInsert) {
+    clearInsertWarning();
     showBusyOverlay('insert');
     google.script.run.withSuccessHandler(function (result) {
       hideBusyOverlay();
-      $('.insert-warning').remove();
       upsertSessionEntry('inserted', buildSessionEntry(data.ref, selectedResultSummary && selectedResultSummary.label ? selectedResultSummary.label : data.ref, getCurrentCorpusForRef(data.ref)));
       showInsertNotice(result);
       var skipped = (result && Array.isArray(result.skipped)) ? result.skipped : [];
@@ -152,10 +148,7 @@ $('#insert-source').click(function () {
           '. Change those options to include them.');
       }
       if (warnings.length) showInsertWarning(warnings.join(' '));
-    }).withFailureHandler(function (error) {
-      hideBusyOverlay();
-      showInsertWarning(error && error.message);
-    }).insertReferenceVersions(data.ref, {
+    }).withFailureHandler(showInsertFailure).insertReferenceVersions(data.ref, {
       versionTitles: selectedVersions,
       // The edition loaded, even while the filter box hides its option.
       heVersionTitle: $('.he-version-selection').val() || data.heVersionTitle || '',
@@ -177,16 +170,13 @@ $('#insert-source').click(function () {
     return;
   }
 
+  clearInsertWarning();
   showBusyOverlay('insert');
   google.script.run.withSuccessHandler(function (result) {
     hideBusyOverlay();
-    $('.insert-warning').remove();
     upsertSessionEntry('inserted', buildSessionEntry(data.ref, selectedResultSummary && selectedResultSummary.label ? selectedResultSummary.label : data.ref, getCurrentCorpusForRef(data.ref)));
     showInsertNotice(result);
-    }).withFailureHandler(function (error) {
-    hideBusyOverlay();
-    showInsertWarning(error && error.message);
-  }).insertReference(data, {
+  }).withFailureHandler(showInsertFailure).insertReference(data, {
     singleLanguage: language,
     pasukPreference: showPesukim,
     includeTranslationSourceInfo: includeTranslationSourceInfo,
@@ -231,13 +221,11 @@ $(document).on('click', function (event) {
 
 $('.insert-from-selection-tool').on('click', function () {
   $('#footer-actions-panel').hide();
+  clearInsertWarning();
   showBusyOverlay('selection');
   google.script.run.withSuccessHandler(function () {
     hideBusyOverlay();
-  }).withFailureHandler(function (error) {
-    hideBusyOverlay();
-    if (typeof showSidebarToast === 'function') showSidebarToast((error && error.message) || 'Insert from Selection failed.');
-  }).insertSourceFromSelection();
+  }).withFailureHandler(showInsertFailure).insertSourceFromSelection();
 });
 
 $('.open-divine-names-tool').on('click', function () {

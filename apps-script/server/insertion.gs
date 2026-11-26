@@ -588,81 +588,111 @@ function insertTransliterationIntoCell(cell, transliterationText, typography) {
   applyRoleTypography_(paragraph, typography, 'transliteration');
 }
 
-function getAttributionParagraphText(attributionLines) {
-  if (!attributionLines || !Array.isArray(attributionLines) || attributionLines.length === 0) {
-    return "";
+// License destinations used by Sefaria's version panel. An edition's own
+// license URL takes precedence when present.
+const ATTRIBUTION_LICENSE_URLS_ = Object.freeze({
+  'Public Domain': 'https://en.wikipedia.org/wiki/Public_domain',
+  'CC0': 'https://creativecommons.org/publicdomain/zero/1.0/',
+  'CC-BY': 'https://creativecommons.org/licenses/by/3.0/',
+  'CC-BY-SA': 'https://creativecommons.org/licenses/by-sa/3.0/',
+  'CC-BY-NC': 'https://creativecommons.org/licenses/by-nc/4.0/',
+  'CC-BY-NC-ND': 'https://creativecommons.org/licenses/by-nc-nd/4.0/'
+});
+
+function attributionUrl_(value) {
+  const url = String(value || '').trim();
+  return /^https?:\/\/[^\s/?#]+/i.test(url) && !/[\s\u0000-\u001f\u007f-\u009f]/.test(url) ? url : '';
+}
+
+function attributionLicensePart_(label, license, url) {
+  const name = String(license || '').trim();
+  const directUrl = attributionUrl_(name);
+  const mapped = Object.prototype.hasOwnProperty.call(ATTRIBUTION_LICENSE_URLS_, name)
+    ? ATTRIBUTION_LICENSE_URLS_[name] : '';
+  return { text: name && !directUrl ? label + ': ' + name : label, url: attributionUrl_(url) || directUrl || mapped };
+}
+
+function translationAttributionLine_(edition) {
+  const parts = [edition.versionTitle];
+  if (edition.sourceDisplay) parts.push({ text: 'Source: ' + edition.sourceDisplay, url: attributionUrl_(edition.source) });
+  if (edition.digitization) parts.push('Digitization: ' + edition.digitization);
+  if (edition.license || attributionUrl_(edition.licenseUrl)) {
+    parts.push(attributionLicensePart_('License', edition.license, edition.licenseUrl));
   }
-  return attributionLines.join("\n");
+  return parts;
 }
 
 /**
- * The citation under a source (edition and license). 8 pt italic, as it has
- * always been, then the citation style (Preferences → Layout → Citation style) on
- * top, when the caller has the typography; its defaults are that same look.
+ * Write edition credits as compact lines, with optional links on individual
+ * fields. Citation typography still applies to the paragraph.
  */
 function insertAttributionParagraph(paragraph, attributionLines, typography) {
-  const attributionText = getAttributionParagraphText(attributionLines);
-  if (!attributionText) {
-    return;
-  }
+  let attributionText = '';
+  const links = [];
+  (attributionLines || []).forEach(function (line) {
+    if (attributionText) attributionText += '\n';
+    const parts = Array.isArray(line) ? line : [line];
+    parts.forEach(function (part, i) {
+      if (i) attributionText += ' · ';
+      const text = String(typeof part === 'string' ? part : part.text).replace(/\s+/g, ' ').trim();
+      const start = attributionText.length;
+      attributionText += text;
+      if (part.url && text) links.push({ start: start, end: attributionText.length - 1, url: part.url });
+    });
+  });
+  if (!attributionText) return;
 
   paragraph.setText(attributionText);
-  let attributionStyle = {};
-      attributionStyle[DocumentApp.Attribute.ITALIC] = true;
-      attributionStyle[DocumentApp.Attribute.FONT_SIZE] = 8;
-      attributionStyle[DocumentApp.Attribute.BOLD] = false;
-      attributionStyle[DocumentApp.Attribute.UNDERLINE] = false;
+  const attributionStyle = {};
+  attributionStyle[DocumentApp.Attribute.ITALIC] = true;
+  attributionStyle[DocumentApp.Attribute.FONT_SIZE] = 8;
+  attributionStyle[DocumentApp.Attribute.BOLD] = false;
+  attributionStyle[DocumentApp.Attribute.UNDERLINE] = false;
   paragraph.setAttributes(attributionStyle);
   paragraph.setLeftToRight(true);
   if (typography) applyRoleTypography_(paragraph, typography, 'citation');
+  if (links.length) {
+    const text = paragraph.editAsText();
+    links.forEach(function (link) { text.setLinkUrl(link.start, link.end, link.url); });
+  }
 }
 
-/**
- * Credit lines for the Hebrew edition, the counterpart of
- * getEnglishAttributionLines (attribution.gs, which stays English-only). The
- * v1 texts API returns the Hebrew version's title and license as
- * heVersionTitle / heLicense; each edition carries its own license, which is
- * the line that matters for reuse.
- */
 function getHebrewAttributionLines_(data) {
   const title = String((data && data.heVersionTitle) || '').trim();
   if (!title) return [];
-  const lines = ['Hebrew: ' + title];
-  const license = String((data && (data.heLicense || data.heVersionLicense)) || '').trim();
-  if (license) lines.push('License: ' + license);
-  return lines;
+  const parts = ['Hebrew: ' + title];
+  const license = data.heLicense || data.heVersionLicense;
+  const licenseUrl = data.heLicenseUrl || (data.sourceVersion && data.sourceVersion.licenseUrl);
+  if (license || attributionUrl_(licenseUrl)) parts.push(attributionLicensePart_('License', license, licenseUrl));
+  return [parts];
 }
 
 function buildCitationLines(data, preferredTitle, includeTranslationSourceInfo) {
-  const titleLine = String((preferredTitle || (data && data.ref) || '')).trim();
-  const lines = [];
-  if (titleLine) lines.push(titleLine);
-
-  const englishVersion = String((data && data.versionTitle) || '').trim();
-  const englishSource = String((data && data.versionSource) || '').trim();
-  const hebrewVersion = String((data && data.heVersionTitle) || '').trim();
-  const hebrewSource = String((data && data.heVersionSource) || '').trim();
-  const license = String((data && (data.license || data.licenseName || data.licenseString)) || '').trim();
-  const hebrewLicense = String((data && (data.heLicense || data.heVersionLicense)) || '').trim();
-  const author = String((data && (data.author || data.collectiveTitle || data.authors)) || '').trim();
-
-  if (author) lines.push('Author: ' + author);
-  if (includeTranslationSourceInfo && englishVersion) lines.push('Translation: ' + englishVersion);
-  if (includeTranslationSourceInfo && englishSource) lines.push('Translation source: ' + englishSource);
-  if (hebrewVersion) lines.push('Source edition: ' + hebrewVersion);
-  if (hebrewSource) lines.push('Source edition URL: ' + hebrewSource);
-  if (license && hebrewLicense && license !== hebrewLicense) {
-    lines.push('Translation license: ' + license);
-    lines.push('Source edition license: ' + hebrewLicense);
-  } else if (license || hebrewLicense) {
-    lines.push('License: ' + (license || hebrewLicense));
+  const citation = data || {};
+  const title = String(preferredTitle || citation.ref || '').trim();
+  const author = String(citation.author || citation.collectiveTitle || citation.authors || '').trim();
+  const heading = [title, author && 'Author: ' + author].filter(Boolean);
+  const editions = [];
+  if (includeTranslationSourceInfo && citation.versionTitle) editions.push('Translation: ' + citation.versionTitle);
+  if (includeTranslationSourceInfo && citation.versionSource) editions.push('Translation source: ' + citation.versionSource);
+  if (citation.heVersionTitle) editions.push('Source edition: ' + citation.heVersionTitle);
+  if (citation.heVersionSource) editions.push('Source edition URL: ' + citation.heVersionSource);
+  const license = String(citation.license || citation.licenseName || citation.licenseString || '').trim();
+  const heLicense = String(citation.heLicense || citation.heVersionLicense || '').trim();
+  const licenseUrl = attributionUrl_(citation.licenseUrl || (citation.translationVersion && citation.translationVersion.licenseUrl));
+  const heLicenseUrl = attributionUrl_(citation.heLicenseUrl || (citation.sourceVersion && citation.sourceVersion.licenseUrl));
+  if ((license || licenseUrl) && (heLicense || heLicenseUrl) && (license !== heLicense || licenseUrl !== heLicenseUrl)) {
+    editions.push(attributionLicensePart_('Translation license', license, licenseUrl));
+    editions.push(attributionLicensePart_('Source edition license', heLicense, heLicenseUrl));
+  } else if (license || heLicense || licenseUrl || heLicenseUrl) {
+    editions.push(attributionLicensePart_('License', license || heLicense, licenseUrl || heLicenseUrl));
   }
-  return lines.filter(Boolean);
+  return [heading, editions].filter(function (parts) { return parts.length > 0; });
 }
 
 function insertCitationParagraph(doc, insertAtIndex, citationLines, typography) {
   if (!citationLines || !citationLines.length) return;
-  const paragraph = doc.insertParagraph(insertAtIndex, citationLines.join(''));
+  const paragraph = doc.insertParagraph(insertAtIndex, '');
   insertAttributionParagraph(paragraph, citationLines, typography);
 }
 
@@ -1005,7 +1035,7 @@ function insertReference(data, opts) {
   const shouldIncludeEnglishAttribution = includeTranslationSourceInfo && singleLanguage != "he";
   const shouldIncludeHebrewAttribution = includeTranslationSourceInfo && singleLanguage != "en";
   let attributionLines = [].concat(
-    shouldIncludeEnglishAttribution ? getEnglishAttributionLines(data) : [],
+    shouldIncludeEnglishAttribution ? getEnglishAttributionLines(data, translationAttributionLine_) : [],
     shouldIncludeHebrewAttribution ? getHebrewAttributionLines_(data) : []
   );
   typography.sectionHeadingLines = data.sectionHeadingLines || [];
@@ -1612,7 +1642,7 @@ function insertReferenceVersions(ref, opts) {
     index += 2;
 
     if (includeTranslationSourceInfo) {
-      let attrLines = getEnglishAttributionLines(d);
+      let attrLines = getEnglishAttributionLines(d, translationAttributionLine_);
       if (attrLines.length) {
         let attrPara = doc.insertParagraph(index, '');
         insertAttributionParagraph(attrPara, attrLines, typography);
@@ -1705,7 +1735,7 @@ function insertReferenceVersionLines_(doc, index, kept, linePairLists, settings)
   if (settings.includeTranslationSourceInfo) {
     const creditLines = [].concat(
       getHebrewAttributionLines_(firstData),
-      formatted.reduce(function (all, d) { return all.concat(getEnglishAttributionLines(d)); }, [])
+      formatted.reduce(function (all, d) { return all.concat(getEnglishAttributionLines(d, translationAttributionLine_)); }, [])
     );
     if (creditLines.length) {
       insertAttributionParagraph(doc.insertParagraph(index, ''), creditLines, typography);

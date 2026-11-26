@@ -26,6 +26,11 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
   below the Hebrew according to Position, including one reading per line
   in aligned layouts.
 
+- **Compact source credits.** Each inserted edition takes one credit line,
+  with a link on its license where Sefaria provides a destination.
+- **Clearer sidebar insertion.** Inherited fonts read **Match formatting**.
+  Failed inserts display an error beside **Add Source**.
+
 - **Link repeated citations:** retain each distinct document position even when references resolve to the same source. If Sefaria omits a literal repeat, recover it only when a context-free Ref API lookup confirms the same fully addressed, unambiguous source. Already-linked text, overlapping matches and text outside the scan scope are not added.
 
 - **Insertion control parity:** Notes now appears at the top of Preferences →

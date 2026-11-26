@@ -11,9 +11,7 @@ Pure attribution helper that works in both Google Apps Script and Node.
       const byTitle = data.versions.find(
         (version) => version.language === "en" && version.versionTitle === data.versionTitle
       );
-      if (byTitle) {
-        return byTitle;
-      }
+      return byTitle || null;
     }
 
     return data.versions.find((version) => version.language === "en") || null;
@@ -24,16 +22,13 @@ Pure attribution helper that works in both Google Apps Script and Node.
       return "";
     }
 
-    try {
-      const parsed = new URL(source);
-      return parsed.hostname.replace(/^www\./, "");
-    } catch (_error) {
-      return source;
-    }
+    // Apps Script does not provide the browser's URL constructor.
+    const host = /^https?:\/\/([^\s/?#]+)(?:[/?#]|$)/i.exec(source);
+    return host ? host[1].replace(/^www\./i, "") : source;
   }
 
   function getEnglishAttributionDetails(data) {
-    const selectedVersion = findSelectedEnglishVersion(data);
+    const selectedVersion = (data && data.translationVersion) || findSelectedEnglishVersion(data);
     const versionTitle = (data && data.versionTitle) || (selectedVersion && selectedVersion.versionTitle);
 
     if (!versionTitle) {
@@ -62,15 +57,17 @@ Pure attribution helper that works in both Google Apps Script and Node.
       sourceDisplay: cleanSourceForDisplay(source),
       digitization,
       license,
+      licenseUrl: (data && data.licenseUrl) || (selectedVersion && selectedVersion.licenseUrl) || "",
     };
   }
 
-  function getEnglishAttributionLines(data) {
+  function getEnglishAttributionLines(data, formatLine) {
     const details = getEnglishAttributionDetails(data);
     if (!details) {
       return [];
     }
 
+    if (formatLine) return [formatLine(details)];
     const lines = [details.versionTitle];
     if (details.sourceDisplay) {
       lines.push(`Source: ${details.sourceDisplay}`);

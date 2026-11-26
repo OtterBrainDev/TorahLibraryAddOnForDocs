@@ -533,6 +533,7 @@
       </div>
 
       <footer class="sidebar-footer">
+      <div id="sidebar-insert-warning" class="insert-warning" role="alert" hidden></div>
       <section class="primary-actions" aria-label="Primary actions">
         <button class="submit primary-action-button" id="insert-source" disabled title="Add Source (Ctrl+Enter)">Add Source</button>
         <button class="submit secondary-action-button text-mode-only" id="open-layout-settings" title="Insertion Options" aria-label="Insertion Options">&#x1F4F0; Insertion Options<span class="layout-settings-profile" id="layout-settings-profile" hidden></span></button>

@@ -194,12 +194,13 @@ against the screenshot taken before the push.
 | G7 | **Cantillation: Torah**; insert `Genesis 1:1`, then `Isaiah 40:1`. Then Cantillation on with **Vowels: Off** | Genesis keeps its ta'amim, Isaiah has none. The last: marks without vowels, in the card's sample and in the insert |
 | G8 | Source **Punctuation** off; insert `Genesis 1:1-2` and `Rashi on Genesis 1:1:1`. Then Translation Punctuation off alone | No sof pasuq, paseq or {פ}; a maqaf becomes a space; רש"י and other abbreviations kept. The two switches are independent |
 | G9 | With a source previewed, click Vowels twice quickly, then Add Source | *Updating preview…* at once; Add Source waits for the re-fetch; the insert has the vowels the switch shows |
+| G9a | Preview a source, collapse Preview, and simulate an insertion RPC or multi-translation retrieval failure | The busy overlay clears and an error appears beside Add Source. The chosen reference and editions stay available for retry. The retry clears the old error |
 | G10 | Transliteration on, `Deuteronomy 6:4`, then `Genesis 33:1` | The Name reads *HaShem*; each sentence starts with a capital; the names יַעֲקֹב and עֵשָׂו are capitalized; no cantillation mark or meteg in the Latin text; a maqaf is a plain hyphen |
 | G11 | Source **Link title to Sefaria** off, Translation on; Preferences → *Name the translation in the title* off; Layout → **Title style: Heading 2** | Only the translation title is linked, and reads *Genesis 1:1* alone; both titles appear in the document outline |
 | G12 | Layout → **Citation style**: 10 pt, a colour | The credit line uses it; *Same as the text above* and a blank size go back to the passage's font and size |
 | G13 | Source **Text font** David Libre, Cantillation on; insert `Genesis 1:1`. Then *Match the document* in a paragraph set in Heebo | Letters in David Libre, marks in Noto Serif Hebrew — no empty boxes; the preview matches. With Heebo, the marks are in Noto Sans Hebrew |
 | G14 | Preferences → Insertion → Translation → **Text font** → *Advanced: formatting for specific languages*: add French with its own font; insert a French translation | French in that font; English unchanged |
-| G15 | Insert into a paragraph set in Georgia 14 with every font on *Match the document* | The source in Georgia 14 |
+| G15 | Insert into a paragraph set in Georgia 14 with every font on *Match the document* | The sidebar font controls read **Match formatting**, including after changing the cursor font. The source follows Georgia 14. A specific override shows the chosen font by name |
 | G16 | **Save as defaults** in Insertion Options; then **Revert** | Preferences shows the saved values; Revert puts the card back to them |
 
 ---
@@ -342,7 +343,7 @@ and record that commit below. Automated live API checks do not replace them.
 
 | # | Check | Expected |
 | --- | --- | --- |
-| N1 | Texts: preview and insert `Genesis 1:1` with both languages and Citation on | Hebrew and translation present; edition titles and licenses match the selected editions; bold and italics survive |
+| N1 | Texts: preview and insert `Genesis 1:1` with both languages and Citation on | Hebrew and translation present; edition titles and licenses match the selected editions, with one credit line per edition and working links for known licenses. Bold and italics survive |
 | N2 | On that passage, choose a French translation, then Yiddish, and change the source edition | Each preview and insert uses the named edition and its language; no silent default-edition substitution; source and translation remain in their intended output positions |
 | N3 | Choose two translations in Stacked and insert; repeat with translation-only output | Both translations insert in selection order, credited separately; Stacked credits the source edition once |
 | N4 | Search `Genesis`, `Berakhot`, `Sefer HaChinukh`, then a structural heading such as `Mishneh Torah` | Simple books open their first available section; complex default text opens its main text; a structural heading stays non-insertable; no entire book or arbitrary introduction is inserted |
