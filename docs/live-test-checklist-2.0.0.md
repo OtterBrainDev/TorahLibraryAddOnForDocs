@@ -8,7 +8,7 @@ snapshots; opt-in live API checks separately cover Sefaria responses. Neither
 kind of automated check holds a `DocumentApp` handle or proves that this HEAD
 works in the Apps Script sidebar and a real document.
 
-**Version under test:** 2.0.0 · **preference schema:** 33 (both from
+**Version under test:** 2.0.0 · **preference schema:** 34 (both from
 `docs/VERSION.json`)
 Confirm both before starting — *Help → About* should read
 **Current line: 2.0**. This confirms the release line only: record the exact
@@ -27,7 +27,7 @@ a user has before they open 2.0.0:
 - **Account A — upgrading tester.** Had a development build of this add-on
   with preferences they changed: a font, a divine-name rule, a layout. Do **not** reset
   preferences. This is the account that proves the migrations (schemas up to
-  33) keep what users chose. Take a screenshot of Preferences before the push.
+  34) keep what users chose. Take a screenshot of Preferences before the push.
 - **Account B — fresh install.** A Google account that has never had the
   add-on. Proves `onInstall` seeds correctly, builds the menu and shows the
   first-run setup. Resetting preferences on Account A is *not* a substitute:
@@ -460,7 +460,7 @@ For anything that fails, the useful report is:
 4. Which account (A upgrading / B fresh / C from version 1.0), the
    interface (Simple / Everything) and the scan mode in effect
 
-State the version too: **2.0.0, schema 33**, and the exact tested commit. "It broke" is not checkable
+State the version too: **2.0.0, schema 34**, and the exact tested commit. "It broke" is not checkable
 later; the version and the check id are.
 
 ---

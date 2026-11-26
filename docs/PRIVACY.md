@@ -44,21 +44,20 @@ the following — is sent to `https://www.sefaria.org`:
 
 | When | What is sent |
 | --- | --- |
-| You search for a text | Your search terms. |
+| You search for a text | Your search terms. With a translation-language filter selected, the add-on also checks candidate Sefaria references for translation text. |
 | You select or insert a source | The reference you selected (e.g. `Genesis 1:1`). |
 | You look up a word in the Lexicon | The word you looked up. |
 | You search Voices (source sheets) | Your search terms. |
-| You run **Link Texts with Sefaria** | Text from your document — see §2.1 below. |
+| You run **Link Texts with Sefaria** or **Insert Source from Selection** | Text from your document or its selection — see §2.1 below. |
 
-Your search terms and references are of course things you typed on purpose.
-The linker is the one feature that sends text you did not explicitly hand
-over, so it gets its own section.
+You enter your search terms or select a source. The citation-detection
+commands that send document text are described below.
 
 ### 2.1 The "Link Texts with Sefaria" feature
 
-This feature finds citations already written in your document and turns them
-into Sefaria hyperlinks. To do that, Sefaria's reference-linker service has to
-see the text.
+These commands use Sefaria’s reference linker to identify citations. Link
+Texts can turn those citations into hyperlinks. Insert Source from Selection
+sends the selected text to resolve a source and opens a review before insertion.
 
 You control how much text is sent, in **Preferences → Linking → Privacy &
 Document Scanning**:
