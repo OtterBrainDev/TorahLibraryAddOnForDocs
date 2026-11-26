@@ -273,7 +273,11 @@
       if (language && translationRows) translationRows.insertBefore(language, translationRows.firstChild);
       var mapping = document.querySelector('[data-cc-attach="emphasisMapping"]');
       var emphasisRow = byId('cc-emphasis-toggle') && byId('cc-emphasis-toggle').closest('.cc-row');
-      if (mapping && emphasisRow) emphasisRow.parentNode.insertBefore(mapping, emphasisRow.nextSibling);
+      var notes = byId('cc-notes-toggle');
+      var notesRow = notes && notes.closest('.cc-row');
+      if (emphasisRow && notesRow) emphasisRow.after(notesRow);
+      var advancedAnchor = notesRow || emphasisRow;
+      if (mapping && advancedAnchor) advancedAnchor.after(mapping);
     }
 
     // Preferences adapter for the shared composition card component.
@@ -967,98 +971,86 @@
       renderOverrideGrid();
     });
 
-    document.querySelector('.reset-preferences-button').addEventListener('click', function() {
-      byId('reset_modal').hidden = false;
-    });
-
-    document.querySelector('.reset-cancel-button').addEventListener('click', function() {
-      byId('reset_modal').hidden = true;
-    });
-
-    // Tells an open sidebar the stored preferences changed: it re-reads them
-    // on the storage event (reloadAccountPreferences in sidebar/js/
-    // preferences-state). Storage can be unavailable; the sidebar then
-    // re-reads them on its next use after opening this dialog.
+    // An open sidebar reloads account defaults through this storage event.
     function markPreferencesSaved() {
       try { localStorage.setItem('sefariaPreferencesSavedAt', String(Date.now())); } catch (e) {}
     }
 
-    // Every save covers the dialog with the busy overlay (shared/ui/busy-overlay)
-    // until the server answers; the result line then says how it went.
-    document.querySelector('.reset-confirm-button').addEventListener('click', function() {
-      byId('reset_modal').hidden = true;
-      setResultsMessage('');
-      modalBusyShow('Resetting to defaults…');
-      // One call: the defaults, with the menu that goes with the interface
-      // mode in use (server/first-run.gs resetPreferencesToDefaults).
-      google.script.run.withSuccessHandler(function(stored) {
-        markPreferencesSaved();
-        modalBusyHide();
-        applyPreferencesToForm(stored || {});
-        setResultsMessage('Preferences reset to defaults. The interface stays ' + (currentUiMode_() === 'simple' ? 'Simple' : 'Everything') + '.');
-      }).withFailureHandler(function(error) {
-        console.error('Preferences reset failed:', error);
-        modalBusyHide();
-        setResultsMessage('Could not reset preferences.');
-      }).resetPreferencesToDefaults();
+    // Only the open sidebar for this document/tab can acknowledge this request.
+    // Clear the storage value immediately so opening a sidebar later cannot
+    // apply an old form or inherit another document's settings.
+    var pendingSidebarPreferences = null;
+    $('.apply-sidebar-preferences-button').on('click', function () {
+      if (pendingSidebarPreferences) return;
+      var channel = sidebarPreferenceChannel();
+      var $button = $(this);
+      if (!channel) { setResultsMessage('Open the sidebar and preview a source to apply settings here.'); return; }
+      var form = collectPreferenceObject();
+      var values = {};
+      (getAppConfig().sidebarPreferenceKeys || []).forEach(function (key) {
+        if (Object.prototype.hasOwnProperty.call(form, key)) values[key] = form[key];
+      });
+      var id = String(Date.now()) + ':' + Math.random();
+      function finish(message) {
+        clearTimeout(pendingSidebarPreferences.timer);
+        pendingSidebarPreferences = null;
+        $button.prop('disabled', false);
+        setResultsMessage(message);
+      }
+      $button.prop('disabled', true);
+      setResultsMessage('Sending insertion settings to the sidebar…');
+      pendingSidebarPreferences = { id: id, finish: finish, timer: setTimeout(function () {
+        finish('No sidebar preview confirmed the change. Open the sidebar, preview a source, then try again.');
+      }, 12000) };
+      try {
+        localStorage.setItem(channel, JSON.stringify({ id: id, profile: activeProfile_().id, values: values }));
+        localStorage.removeItem(channel);
+      } catch (error) {
+        finish('The sidebar could not be reached from Preferences.');
+      }
     });
 
-    $('.refresh-sidebar-button').on('click', function() {
-      setResultsMessage('');
-      modalBusyShow('Refreshing the sidebar…');
-      google.script.run.withSuccessHandler(function() {
-        modalBusyHide();
-        setResultsMessage('Sidebar refreshed. Sidebar-only session items were cleared.');
-      }).withFailureHandler(function(error) {
-        console.error('Sidebar refresh failed:', error);
-        modalBusyHide();
-        setResultsMessage('Could not refresh the sidebar.');
-      }).refreshSidebarAfterPreferences();
+    window.addEventListener('storage', function (event) {
+      var channel = sidebarPreferenceChannel();
+      if (!pendingSidebarPreferences || !channel || event.key !== channel + ':ack' || !event.newValue) return;
+      var answer;
+      try { answer = JSON.parse(event.newValue); } catch (error) { return; }
+      if (!answer || answer.id !== pendingSidebarPreferences.id) return;
+      pendingSidebarPreferences.finish(answer.message);
     });
 
-    $(".save-preferences-button").click(function() {
-      setResultsMessage('');
-      modalBusyShow('Saving preferences…');
-      const preferenceObject = collectPreferenceObject();
-      google.script.run.withSuccessHandler(function() {
-        markPreferencesSaved();
-        markMenuLayoutSaved(preferenceObject.menu_layout);
-        markFormClean_(preferenceObject);
-        google.script.run.withSuccessHandler(function() {
-          modalBusyHide();
-          setResultsMessage('Successfully updated preferences.');
-          updateSheimotSummary();
-        }).withFailureHandler(function(error) {
-          console.error('Menu refresh failed:', error);
-          modalBusyHide();
-          setResultsMessage('Preferences saved, but menu refresh failed. Close and reopen the document to see menu changes.');
-        }).buildAndInstallMenu();
-      }).withFailureHandler(function(error) {
-        console.error('Preferences save failed:', error);
-        modalBusyHide();
-        setResultsMessage('Could not save preferences.');
-      }).setPreferences(preferenceObject);
+    $('.close-preferences-button').on('click', function () { google.script.host.close(); });
+    $('.save-preferences-button').on('click', function () {
+      saveFormThen_(function () { setResultsMessage('Saved to your account defaults.'); });
     });
 
-    $(".save-close-preferences-button").click(function() {
-      setResultsMessage('');
-      modalBusyShow('Saving preferences…');
-      const preferenceObject = collectPreferenceObject();
-      // On success the overlay stays up until the dialog closes.
-      google.script.run.withSuccessHandler(function() {
-        markPreferencesSaved();
-        google.script.run.withSuccessHandler(function() {
-          updateSheimotSummary();
-          google.script.host.close();
-        }).withFailureHandler(function(error) {
-          console.error('Menu refresh failed:', error);
-          google.script.host.close();
-        }).buildAndInstallMenu();
-      }).withFailureHandler(function(error) {
-        console.error('Preferences save-and-close failed:', error);
-        modalBusyHide();
-        setResultsMessage('Could not save preferences.');
-      }).setPreferences(preferenceObject);
+    $('.pref-preset-button').on('click', function () {
+      var preset = $(this).attr('data-preset');
+      var factory = preset === 'factory';
+      var name = activeProfile_().name;
+      askProfileQuestion_({
+        title: factory ? 'Restore Factory preset?' : 'Reset ' + quoted_(name) + '?',
+        message: factory
+          ? 'This replaces the active profile’s settings, resets shared settings, and switches to Simple. Other named profiles are kept. Unsaved edits in this window will be discarded.'
+          : 'This restores the add-on defaults for text, layout and appearance in this profile. Unsaved edits in this window will be discarded.',
+        ok: factory ? 'Restore Factory preset' : 'Reset profile',
+        onOk: function () {
+          var profile = activeProfile_().id;
+          modalBusyShow('Restoring defaults…');
+          google.script.run.withSuccessHandler(function (result) {
+            modalBusyHide();
+            setInterfaceModeUi_(result.uiMode);
+            announceUiModeToSidebar_(result.uiMode);
+            try { google.script.host.setWidth(result.uiMode === 'full' ? 860 : 600); } catch (e) {}
+            applyPreferencesToForm(result.preferences);
+            markPreferencesSaved();
+            setResultsMessage(factory ? 'Factory preset saved to your account.' : 'Active profile reset to add-on defaults.');
+          }).withFailureHandler(function (error) {
+            modalBusyHide();
+            setResultsMessage((error && error.message) || 'Could not restore defaults.');
+          }).restorePreferencePreset(preset, profile);
+        }
+      });
     });
 
     // ── Text-search corpus order (Search tab) ───────────────────────────────
@@ -2215,7 +2207,7 @@
             current = (result && result.uiMode) || input.value;
             setInterfaceModeUi_(current);
             announceUiModeToSidebar_(current);
-            // Everything is wider, for the profiles column (preferencesPopup).
+            // Everything is wider, for the extra tabs and editors (preferencesPopup).
             try { google.script.host.setWidth(current === 'full' ? 860 : 600); } catch (e) {}
             // setUiMode may have moved the stored menu. Show it in the Menu
             // Bar editor, unless the editor holds changes not saved yet:
@@ -2429,23 +2421,17 @@
 
     function saveFormThen_(next) {
       setResultsMessage('');
-      modalBusyShow('Saving preferences…');
+      modalBusyShow('Saving account defaults…');
       var preferenceObject = collectPreferenceObject();
-      google.script.run.withSuccessHandler(function () {
+      google.script.run.withSuccessHandler(function (result) {
         markPreferencesSaved();
-        markMenuLayoutSaved(preferenceObject.menu_layout);
-        markFormClean_(preferenceObject);
-        google.script.run.withSuccessHandler(function () {
-          modalBusyHide();
-          next();
-        }).withFailureHandler(function () {
-          modalBusyHide();
-          next();
-        }).buildAndInstallMenu();
-      }).withFailureHandler(function () {
+        applyPreferencesToForm(result.preferences);
         modalBusyHide();
-        setResultsMessage('Could not save preferences. Nothing else was changed.');
-      }).setPreferences(preferenceObject);
+        next();
+      }).withFailureHandler(function (error) {
+        modalBusyHide();
+        setResultsMessage((error && error.message) || 'Could not save account defaults.');
+      }).savePreferenceDefaults(preferenceObject, activeProfile_().id);
     }
 
     // Unsaved changes belong to the profile in use: save them to it, drop
@@ -2506,7 +2492,7 @@
       }
       withUnsavedChangesHandled_('A new profile starts as a copy of the saved settings.', function () {
         var created = profileAnswer_('Making the profile…', true, function (before, now) {
-          return quoted_(now.name) + ' is ready and in use, a copy of ' + quoted_(before.name) + '. Change what you like, then Save.';
+          return quoted_(now.name) + ' is ready and in use, a copy of ' + quoted_(before.name) + '. Change what you like, then use Save defaults to account.';
         });
         google.script.run.withSuccessHandler(created.ok).withFailureHandler(created.fail).createSettingsProfile(name);
       });

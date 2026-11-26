@@ -39,13 +39,18 @@ const fn = (source, name) => {
   return source.match(new RegExp(`function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n${indent}\\}`))[0];
 };
 
-test('the profiles column is in Everything only, beside the tabs, and the dialog is wider there', () => {
-  assert.match(PREFS, /<nav class="pref-profile-rail" id="pref-profile-rail"/);
-  assert.ok(PREFS.indexOf('id="pref-profile-rail"') < PREFS.indexOf('<div class="pref-main">'), 'a column before the tabs');
-  assert.match(PREFS_CSS, /\.preferences-dialog:not\(\[data-ui-mode="full"\]\) \.pref-profile-rail \{ display: none; \}/);
-  assert.match(PREFS_CSS, /\.preferences-dialog\[data-ui-mode="full"\] \.preferences-shell \{\s*display: grid;/);
-  assert.match(readAppScriptFile('server/menu.gs'), /\.setWidth\(template\.uiMode === 'full' \? 860 : 600\)/);
-  assert.match(fn(PREFS_JS, 'initInterfaceMode'), /google\.script\.host\.setWidth\(current === 'full' \? 860 : 600\)/);
+test('Profiles is a tab in both modes and owns the persistent actions', needsDom, () => {
+  const { document } = parseHTML(PREFS);
+  const tab = document.querySelector('#pref-tab-profiles-btn');
+  const panel = document.getElementById(tab.getAttribute('aria-controls'));
+  assert.ok(panel.querySelector('#pref-profile-rail'));
+  assert.ok(panel.querySelector('.save-preferences-button'));
+  assert.equal(panel.querySelectorAll('.pref-preset-button').length, 2);
+  assert.doesNotMatch(PREFS_CSS, /not\(\[data-ui-mode="full"\]\) \.pref-profile-rail/);
+  const footer = document.querySelector('.save-bar');
+  assert.equal(footer.querySelectorAll('button').length, 2);
+  assert.match(footer.querySelector('.apply-sidebar-preferences-button').title, /session/);
+  assert.ok(footer.querySelector('.close-preferences-button'));
 });
 
 test('a profile name is drawn as text', needsDom, () => {
@@ -84,8 +89,8 @@ test('a switch or a new profile asks about unsaved changes first; a rename does 
   assert.match(fn(PROFILES_JS, 'deleteActiveProfile_'), /Changes not saved here are dropped\./);
   // "Unsaved" is measured against what was last loaded or saved.
   assert.match(fn(PREFS_JS, 'applyPreferencesToForm'), /markFormClean_\(\);/);
-  assert.match(PREFS_JS, /markMenuLayoutSaved\(preferenceObject\.menu_layout\);\s*markFormClean_\(preferenceObject\);/);
-  assert.match(fn(PROFILES_JS, 'saveFormThen_'), /markFormClean_\(preferenceObject\);/);
+  assert.match(fn(PROFILES_JS, 'saveFormThen_'), /applyPreferencesToForm\(result.preferences\)/);
+  assert.match(fn(PROFILES_JS, 'saveFormThen_'), /savePreferenceDefaults\(preferenceObject, activeProfile_\(\).id\)/);
 });
 
 test('every profile change reloads what it changed and tells an open sidebar', () => {

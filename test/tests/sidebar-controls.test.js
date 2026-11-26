@@ -48,7 +48,7 @@ function loadServer(stored = {}) {
     maybeShowFirstRunSetup_: () => false,
   };
   vm.createContext(context);
-  ['apps-script/server/menu-layout.gs', 'apps-script/server/preferences.gs', 'apps-script/ui_core.gs', 'apps-script/server/menu.gs']
+  ['apps-script/server/menu-layout.gs', 'apps-script/server/preferences.gs', 'apps-script/server/settings-file.gs', 'apps-script/server/settings-profiles.gs', 'apps-script/ui_core.gs', 'apps-script/server/menu.gs']
     .forEach((file) => vm.runInContext(read(file), context, { filename: file }));
   return { context, store, templates, shown, reads: () => reads };
 }

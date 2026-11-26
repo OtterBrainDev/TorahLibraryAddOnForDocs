@@ -5,6 +5,23 @@
     return window.APP_CONFIG || {};
   }
 
+  function sidebarPreferenceChannel() {
+    var scope = getAppConfig().sidebarPreferenceScope;
+    if (!scope) return '';
+    // sessionStorage is scoped to the browser tab. The document scope
+    // separately distinguishes Docs tabs sharing that browsing context.
+    try {
+      var key = 'sefariaSidebarPreferenceBrowserTab';
+      var tab = window.sessionStorage.getItem(key);
+      if (!tab) {
+        tab = String(Date.now()) + ':' + Math.random();
+        window.sessionStorage.setItem(key, tab);
+      }
+      return 'sefariaSidebarPreferences:' + scope + ':' + tab;
+    } catch (error) { return ''; }
+  }
+
+
   function isTextsMode(mode) {
     return String(mode || '') === 'texts';
   }

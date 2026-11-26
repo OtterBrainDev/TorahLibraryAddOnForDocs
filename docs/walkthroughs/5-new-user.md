@@ -52,8 +52,8 @@ The preview changes as you choose. Press <kbd>Esc</kbd> to close the panel.
 Line by line and Transliteration also stay at the top when they apply. The
 other settings are in three folding groups; you can leave them closed.
 **Text and notes → Commentary: Default** preserves a
-translation's explanation and markings; **Notes: Omit** leaves out marked
-source footnotes. For a different edition, open **Versions** beneath the
+translation's explanation and markings. **Notes: Separate** puts marked
+footnotes below the passage when no other choice is saved. For a different edition, open **Versions** beneath the
 preview. Changing a layout option keeps that selection.
 
 ## 4. Insert it

@@ -96,7 +96,7 @@ var CC_EMPHASIS_MODES = ['keep', 'discard', 'only'];
 var CC_EMPHASIS_SUMMARY = { keep: 'Commentary: Default', discard: 'Commentary: Combine', only: 'Commentary: Drop' };
 
 function ccNormalizeNotesMode(value) {
-  return value === "inline" || value === "separate" ? value : "omit";
+  return value === "inline" || value === "omit" ? value : "separate";
 }
 
 function ccNormalizeEmphasisMode(value) {

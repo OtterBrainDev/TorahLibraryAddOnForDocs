@@ -153,9 +153,9 @@ Result tools:
 The selected-source card has **‹ Prev** / **Next ›** to step to the
 neighbouring passage and **Open on Sefaria**. Book and section headings with no
 text of their own (*Mishneh Torah*) can't be inserted — the sidebar says so and
-keeps **Add Source** disabled until you pick a specific passage. A book Sefaria
-opens at its first chapter (*Genesis* on its own) previews and inserts that one
-chapter, titled *Genesis 1*.
+keeps **Add Source** disabled until you pick a specific passage. Searching for
+*Genesis* on its own shows its table of contents when Sefaria provides section
+data. Pick a chapter and select **Open section** to preview and insert it.
 
 ## Versions & Preview
 
@@ -495,6 +495,7 @@ not saved named profile snapshots.
 | Tab | Contents |
 | --- | --- |
 | **Insertion** | Default Layout (the sidebar's pickers, plus the titles' **Title style** — e.g. Heading 2 — and **Citation style**, 8 pt italic in the font of the text above unless changed); Insertion Defaults for Texts (the card, plus the translation **Language**), Voices and Lexicon; Transliteration Mapping; Divine Name Mappings; Insert from Selection (also used by Link Texts' Insert). Every font button (each title, the Hebrew, transliteration and translation text, the citation) opens that font's full settings in place: font, size, style, colour, highlight and a preview, and for a title its **Hyperlink formatting override**. Under each **Link title to Sefaria**, while it is on, **Name the edition in the title** (Source) and **Name the translation in the title** (Translation) say whether a linked title names its edition. |
+| **Profiles** | Switch, rename or create profiles. Save account defaults and restore presets. |
 | **Search** | Text Search Results (group order and hidden groups); **Voices Topics** (the order of the topic groups, and the topics to leave out); **Lexicon Dictionaries** (the order a word's entries are listed in, and the dictionaries to leave out); Translation Languages; Advanced (Show unavailable translations). A chip in the sidebar brings a hidden topic or dictionary back for one search. |
 | **Linking** | After linking; Insert text after linking; Document scanning. |
 | **Sidebar** | What the sidebar shows (see below). |
@@ -502,11 +503,13 @@ not saved named profile snapshots.
 | **⇅ Import/Export** (button beside Interface, both modes) | Simple targets current preferences. Everything asks which profile to export or update; inactive profiles stay inactive. Active exports include unsaved form values, inactive exports use saved snapshots. Profile files normally carry text, layout and appearance; shared settings are opt-in. Choose a file or paste its JSON, preview the changes and apply only checked groups. The interface mode stays unchanged. Files contain settings only, not searches, documents or account details. |
 | **🧪 Experimental** | Optional in-progress features such as Surprise Me. |
 
-Buttons: **Reset To Defaults** (every setting back to the original, and the
-menu to the default for your interface; Simple or Everything stays),
-**🔁 Refresh** (reload the sidebar from saved defaults, dropping its session
-changes), **Save Defaults** and **Save & Close**. While one is working, a
-spinner covers the dialog and says what is happening (*Saving preferences…*).
+**Profiles** appears in either interface. **Save defaults to account** keeps
+changes across documents. **Reset active profile** restores its insertion
+defaults. **Restore Factory preset** applies the 1.0-style configuration,
+including shared settings and the Simple interface.
+
+At the bottom, **Apply to sidebar** sends insertion settings to the open
+Texts preview for this session. **Close** closes Preferences.
 
 ## What the sidebar shows
 

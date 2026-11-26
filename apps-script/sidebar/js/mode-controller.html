@@ -110,9 +110,48 @@ function reloadAccountPreferences() {
   }).getPreferences();
 }
 
+function applyPreferencesToCurrentPreview(event) {
+  var channel = sidebarPreferenceChannel();
+  if (!channel || event.key !== channel || !event.newValue) return;
+  var request;
+  try { request = JSON.parse(event.newValue); } catch (error) { return; }
+  if (!request || typeof request.id !== 'string' || !request.values) return;
+
+  function respond(message) {
+    try {
+      localStorage.setItem(channel + ':ack', JSON.stringify({ id: request.id, message: message }));
+      localStorage.removeItem(channel + ':ack');
+    } catch (error) { /* Preferences will report the missing acknowledgement. */ }
+  }
+  if (appMode !== 'texts' || !hasResolvedReference || !sidebarSessionId) {
+    respond('Preview a source in the open Texts sidebar before applying these settings.');
+    return;
+  }
+  var profile = activeSettingsProfile();
+  if (request.profile !== (profile ? profile.id : 'p1')) {
+    respond('The sidebar is using a different profile. Reopen Preferences and try again.');
+    return;
+  }
+  if (sessionSaveQueue.action) {
+    respond('The sidebar is changing its settings. Try again when it is ready.');
+    return;
+  }
+  var changes = {};
+  (getAppConfig().sidebarPreferenceKeys || []).forEach(function (key) {
+    var value = request.values[key];
+    if (typeof value === 'boolean' || typeof value === 'number' ||
+        (typeof value === 'string' && value.length <= 9000)) changes[key] = value;
+  });
+  saveSessionPreference(changes, function () {
+    respond('Applied for this sidebar session. The preview will refresh.');
+  });
+  scheduleSelectedResultRefresh();
+}
+
 window.addEventListener('storage', function (event) {
   if (event.key === PREFERENCES_SAVED_STORAGE_KEY) reloadAccountPreferences();
   if (event.key === UI_MODE_STORAGE_KEY) applyUiModeFromStorage(event.newValue);
+  applyPreferencesToCurrentPreview(event);
 });
 
 // Preferences' Interface switch (Simple / Everything) reaches an open sidebar

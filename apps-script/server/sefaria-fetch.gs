@@ -373,8 +373,71 @@ function writeSefariaMetadataCache_(kind, reference, value) {
   } catch (error) { /* Cache misses and quota limits never change the answer. */ }
 }
 
+/** Shape data is optional. Keep ordinary text lookup when it is unavailable
+ * or its addresses can't be verified against Ref metadata. */
+function fetchBookContents_(book) {
+  const cached = readSefariaMetadataCache_('contents', book.ref);
+  if (cached) return cached;
+  try {
+    const response = UrlFetchApp.fetch('https://www.sefaria.org/api/shape/' + encodeURIComponent(book.ref),
+      { muteHttpExceptions: true });
+    if (response.getResponseCode && response.getResponseCode() >= 400) return null;
+    const contents = buildBookContents_(book, parseJsonOrNull_(response.getContentText()));
+    if (contents) writeSefariaMetadataCache_('contents', book.ref, contents);
+    return contents;
+  } catch (error) {
+    return null;
+  }
+}
+
+function buildBookContents_(book, payload) {
+  const shapes = Array.isArray(payload) ? payload : [payload];
+  const root = shapes.find(function (shape) {
+    return shape && shape.book === book.ref && (book.complex ? shape.isComplex === true : shape.title === book.ref);
+  });
+  if (!root || !Array.isArray(root.chapters)) return null;
+  const sections = [];
+  if (book.complex) {
+    const prefix = book.ref + ', ';
+    const seen = new Set();
+    function addNamedSections(children) {
+      children.forEach(function (child) {
+        if (!child || child.book !== book.ref) return;
+        if (child.isComplex && Array.isArray(child.chapters)) {
+          addNamedSections(child.chapters);
+        } else if (typeof child.title === 'string' && child.title.startsWith(prefix) && !seen.has(child.title) &&
+            (Number(child.chapters) > 0 || Array.isArray(child.chapters) && child.chapters.some(Boolean))) {
+          seen.add(child.title);
+          sections.push({ ref: child.title, label: child.title.slice(prefix.length) });
+        }
+      });
+    }
+    addNamedSections(root.chapters);
+  } else {
+    const prefix = book.ref + ' ';
+    const daf = book.addressType === 'Talmud';
+    function indexOfAddress(ref) {
+      if (!ref || !ref.startsWith(prefix)) return NaN;
+      const address = ref.slice(prefix.length);
+      if (!daf) return /^\d+$/.test(address) ? Number(address) : NaN;
+      const match = /^(\d+)([ab])$/.exec(address);
+      return match ? Number(match[1]) * 2 + (match[2] === 'b' ? 1 : 0) : NaN;
+    }
+    const first = indexOfAddress(book.first);
+    const last = indexOfAddress(book.last);
+    if (last - first + 1 !== root.chapters.length) return null;
+    root.chapters.forEach(function (count, offset) {
+      if (!(Number(count) > 0 || Array.isArray(count) && count.some(Boolean))) return;
+      const index = first + offset;
+      const address = daf ? Math.floor(index / 2) + (index % 2 ? 'b' : 'a') : String(index);
+      sections.push({ ref: prefix + address, label: book.sectionName + ' ' + address });
+    });
+  }
+  return sections.length ? { ref: book.ref, heRef: book.heRef, indexTitle: book.ref, bookContents: sections } : null;
+}
+
 /** A metadata response, without ever logging a URL or its body. */
-function interpretSefariaRefResponse_(response) {
+function interpretSefariaRefResponse_(response, browseBook) {
   if (!response) return { unavailable: true };
   const status = response.getResponseCode ? response.getResponseCode() : 200;
   if (status >= 400 && status !== 400 && status !== 404) return { unavailable: true, status: status };
@@ -392,9 +455,21 @@ function interpretSefariaRefResponse_(response) {
     sectionNames: meta.section_names || [], he: [], text: [], versions: []
   };
   const base = { indexTitle: meta.index_title };
+  if (browseBook && meta.normalized === meta.index_title) {
+    const complex = meta.node_type === 'SchemaNode';
+    if (complex || meta.node_type === 'JaggedArrayNode' && Number(meta.depth) > 1 &&
+        Array.isArray(meta.start_labels) && meta.start_labels.length === 0) {
+      const nav = meta.navigation_refs || {};
+      base.bookForContents = {
+        ref: meta.normalized, heRef: meta.hebrew || '', complex: complex,
+        first: nav.first_subref, last: nav.last_subref,
+        addressType: (meta.address_types || [])[0], sectionName: (meta.section_names || [])[0] || 'Section'
+      };
+    }
+  }
   if (meta.node_type === 'SchemaNode') {
     const child = meta.default_child_node;
-    if (!child || child.node_type !== 'JaggedArrayNode') return { resolved: structural };
+    if (!child || child.node_type !== 'JaggedArrayNode') return Object.assign(base, { resolved: structural });
     if (child.depth === 1) return Object.assign(base, { textRef: meta.normalized });
     // The first available ref on a complex book may be its introduction, not
     // its implicit/default text. Enter the default child, then validate that
@@ -406,7 +481,7 @@ function interpretSefariaRefResponse_(response) {
     return { unavailable: true };
   }
   if (meta.node_type !== 'JaggedArrayNode' && meta.node_type !== 'DictionaryEntryNode') {
-    return { resolved: structural };
+    return Object.assign(base, { resolved: structural });
   }
   const starts = meta.start_labels;
   const ends = meta.end_labels;
@@ -415,7 +490,7 @@ function interpretSefariaRefResponse_(response) {
   const isRange = JSON.stringify(starts) !== JSON.stringify(ends);
   if (!isRange && starts.length < depth - 1) {
     const first = meta.navigation_refs && meta.navigation_refs.first_available_section_ref;
-    if (typeof first !== 'string' || !first || first === meta.normalized) return { resolved: structural };
+    if (typeof first !== 'string' || !first || first === meta.normalized) return Object.assign(base, { resolved: structural });
     return Object.assign(base, { textRef: first });
   }
   return Object.assign(base, { textRef: meta.normalized });
@@ -426,21 +501,26 @@ function interpretSefariaRefResponse_(response) {
  * Resolve headings before asking for text, so "Genesis" never downloads or
  * inserts the whole book. Explicit sections/ranges keep their exact bounds.
  */
-function resolveSefariaTextRef_(reference) {
+function resolveSefariaTextRef_(reference, browseBook) {
+  const cacheKind = browseBook ? 'browse-ref' : 'ref';
   let current = reference;
   let expectedIndex = '';
   for (let hop = 0; hop < 4; hop++) {
-    let plan = readSefariaMetadataCache_('ref', current);
+    let plan = readSefariaMetadataCache_(cacheKind, current);
     if (!plan) {
       let response;
       try { response = UrlFetchApp.fetch(sefariaRefUrl_(current), { muteHttpExceptions: true }); }
       catch (error) { throw sefariaUnavailableError_(); }
-      plan = interpretSefariaRefResponse_(response);
-      if (plan.textRef || plan.nextRef || plan.resolved) writeSefariaMetadataCache_('ref', current, plan);
+      plan = interpretSefariaRefResponse_(response, browseBook);
+      if (plan.textRef || plan.nextRef || plan.resolved) writeSefariaMetadataCache_(cacheKind, current, plan);
     }
     if (plan.unavailable) throw sefariaUnavailableError_(plan.status);
     const indexTitle = plan.indexTitle || (plan.resolved && plan.resolved.indexTitle);
     if (expectedIndex && indexTitle && indexTitle !== expectedIndex) throw sefariaUnavailableError_();
+    if (plan.bookForContents) {
+      const contents = fetchBookContents_(plan.bookForContents);
+      if (contents) return { resolved: contents };
+    }
     if (!plan.nextRef) return plan;
     expectedIndex = plan.indexTitle;
     current = plan.nextRef;
@@ -593,7 +673,7 @@ function normalizeSefariaV3TextResponse_(payload, versions) {
 
 /** Fetch one exact reference; `properties` defaults to the stored preferences. */
 function fetchReference_(safeReference, versions, properties) {
-  const plan = resolveSefariaTextRef_(safeReference);
+  const plan = resolveSefariaTextRef_(safeReference, versions && versions.browseBook === true);
   if (plan.resolved) return plan.resolved;
   if (!plan.textRef) return;
   const selectedVersions = resolveSefariaVersionSelectors_(plan.textRef, versions, plan.indexTitle);

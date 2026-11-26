@@ -111,7 +111,7 @@ test('switching the interface changes no setting, keeps unsaved edits and reache
   assert.match(sidebar, /if \(event\.key === UI_MODE_STORAGE_KEY\) applyUiModeFromStorage\(event\.newValue\);/);
   assert.match(sidebar, /\$\('\.unified-sidebar'\)\.attr\('data-ui-mode', mode\)/);
   // Save marks the menu saved, so a later switch sees no stale "unsaved" edit.
-  assert.match(js, /markMenuLayoutSaved\(preferenceObject\.menu_layout\);/);
+  assert.match(js, /applyPreferencesToForm\(result.preferences\);/);
   // Restore default menu is an edit, not the stored menu.
   assert.match(js, /loadMenuLayoutEditor\('', \{ edit: true \}\);/);
 });

@@ -38,9 +38,9 @@ test('a change the fetch applies shows the preview as updating at once', () => {
 
 test('every Preferences save tells an open sidebar, which re-reads them and refreshes the preview', () => {
   const prefs = readAppScriptFile('preferences/js.html');
-  // Every server write: Save, Save & Close, Reset To Defaults.
-  const saves = prefs.match(/\.(setPreferences|resetPreferencesToDefaults)\(/g) || [];
-  assert.ok(saves.length >= 3);
+  // Explicit persistent writes from the Profiles tab.
+  const saves = prefs.match(/\.(savePreferenceDefaults|restorePreferencePreset)\(/g) || [];
+  assert.equal(saves.length, 2);
   // The helper's definition, plus one call per save, plus one in
   // profileAnswer_, the success handler every settings-profile change uses
   // (a switch, a new profile or a delete rewrites the saved settings).
@@ -103,4 +103,40 @@ test('every card transliteration sample starts with the article on "sefer"', () 
   Object.keys(labels).filter((key) => key !== 'none').forEach((key) => {
     assert.match(labels[key], /^has?\W*s/u, key + ': ' + labels[key]);
   });
+});
+
+
+test('applying preferences reaches only the matching sidebar preview and acknowledges the temporary write', () => {
+  const sidebar = readAppScriptFile('sidebar/js/mode-controller.html');
+  const handler = sidebar.match(/function applyPreferencesToCurrentPreview\(event\) \{[\s\S]*?\n\}/)[0];
+  const reported = [], saved = [], refreshed = [];
+  const ctx = vm.createContext({
+    sidebarPreferenceChannel: () => 'doc-and-tab',
+    appMode: 'texts', hasResolvedReference: true, sidebarSessionId: 's1', sessionSaveQueue: {},
+    getAppConfig: () => ({ sidebarPreferenceKeys: ['source_notes_mode'] }),
+    activeSettingsProfile: () => ({ id: 'p2' }),
+    localStorage: { setItem: (key, val) => reported.push([key, JSON.parse(val)]), removeItem() {} },
+    saveSessionPreference(changes, done) { saved.push({ ...changes }); ctx.done = done; },
+    scheduleSelectedResultRefresh() { refreshed.push(true); },
+  });
+  vm.runInContext(handler, ctx);
+  const send = (key, profile) => ctx.applyPreferencesToCurrentPreview({
+    key, newValue: JSON.stringify({ id: '123', profile, values: { source_notes_mode: 'inline', menu_layout: 'shared' } }),
+  });
+  send('other-document', 'p2');
+  assert.equal(saved.length, 0);
+  send('doc-and-tab', 'p1');
+  assert.match(reported.at(-1)[1].message, /different profile/);
+  assert.equal(saved.length, 0);
+  ctx.hasResolvedReference = false;
+  send('doc-and-tab', 'p2');
+  assert.match(reported.at(-1)[1].message, /Preview a source/);
+  assert.equal(saved.length, 0);
+  ctx.hasResolvedReference = true;
+  send('doc-and-tab', 'p2');
+  assert.deepEqual(saved, [{ source_notes_mode: 'inline' }]);
+  assert.equal(refreshed.length, 1);
+  assert.equal(reported.length, 2, 'no acknowledgement before the queued session write lands');
+  ctx.done();
+  assert.deepEqual(reported.at(-1), ['doc-and-tab:ack', { id: '123', message: 'Applied for this sidebar session. The preview will refresh.' }]);
 });

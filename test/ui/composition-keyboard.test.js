@@ -190,7 +190,7 @@ test('Notes responds to click and keyboard independently of Commentary and langu
   assert.equal(h.state.notesMode, 'inline');
   const active = group.querySelector('[aria-checked="true"]');
   assert.equal(active.getAttribute('data-value'), 'inline');
-  h.key(active, 'ArrowRight');
+  h.key(active, 'ArrowLeft');
   assert.equal(h.state.notesMode, 'separate');
   assert.equal(group.querySelector('[tabindex="0"]').getAttribute('data-value'), 'separate');
   assert.deepEqual(h.changes, [['notes', 'inline'], ['notes', 'separate']]);
