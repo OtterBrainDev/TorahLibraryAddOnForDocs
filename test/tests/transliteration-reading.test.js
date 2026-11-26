@@ -135,6 +135,13 @@ test('the stored settings are read when the caller passes none, once a passage',
   assert.deepEqual(forte.reads.slice().sort(), ['transliteration_biblical_dagesh_mode', 'transliteration_divine_name', 'transliteration_overrides']);
 });
 
+test('the sidebar batch preserves empty rows and reads transliteration settings once', () => {
+  const ctx = load({ transliteration_biblical_dagesh_mode: 'forte' });
+  const result = ctx.previewTransliterationWithOverrides(['שַׁבָּת', '', 'תְּפִלָּה'], 'simple_english');
+  assert.deepEqual(Array.from(result), ['Shabbat', '', 'Tefillah']);
+  assert.deepEqual(ctx.reads.slice().sort(), ['transliteration_biblical_dagesh_mode', 'transliteration_divine_name', 'transliteration_overrides']);
+});
+
 test('the insert reads the setting in every text, not only the Tanakh', () => {
   const insertion = fs.readFileSync('apps-script/server/insertion.gs', 'utf8');
   const line = insertion.match(/dageshMode: [^\n]*/)[0];

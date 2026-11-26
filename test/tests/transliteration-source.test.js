@@ -75,6 +75,6 @@ test('a payload without a source (an older client) falls back to the Hebrew', ()
 });
 
 test('the sidebar preview transliterates the same source', () => {
-  const js = read('apps-script/sidebar/js/preview-render.html');
+  const js = read('apps-script/sidebar/js/preview-core.html');
   assert.match(js, /dataIn\.heTransliterationSource/);
 });

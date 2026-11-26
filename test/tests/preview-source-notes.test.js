@@ -17,31 +17,56 @@ const parse = (html) => new DOMParser().parseFromString('<html><body>' + html + 
 function preview(options = {}) {
   const state = { layout: 'he-top', output: 'both', aligned: true, lineMarkers: false, notes: 'separate', transliteration: true, ...options };
   const requests = [];
-  let displayed = '';
+  const doc = parse('<section class="preview-section"><div class="suggestions"></div></section>' +
+    '<section class="voices-preview-section"><div class="suggestions voices-suggestions">Voices</div></section>');
+  const target = doc.querySelector('.preview-section .suggestions');
+  const saves = [];
   const run = {
-    withSuccessHandler(callback) { this.callback = callback; return this; },
-    previewTransliterationWithOverrides(text, scheme) { requests.push({ callback: this.callback, text, scheme }); return this; }
+    withSuccessHandler(callback) { return {
+      previewTransliterationWithOverrides(text, scheme) { requests.push({ callback, text: Array.from(text), scheme }); }
+    }; }
   };
   const ctx = vm.createContext({
-    effectivePreferences: { extended_gemara: 'false' },
+    effectivePreferences: { extended_gemara: 'false', transliteration_position: options.position },
     google: { script: { run } },
-    appMode: 'texts', data: { ref: 'Genesis 1:1-2' },
-    getSidebarTransliterationScheme: () => 'traditional',
+    appMode: 'texts', hasResolvedReference: true, selectedResultSummary: null, data: payload(),
+    getSidebarTransliterationScheme: () => ctx.effectivePreferences.transliteration_scheme || 'traditional',
     parseInertHtml: parse,
-    $: (selector) => ({
-      val: () => ({ '.output-mode-selection': state.output, '.bilingual-layout-selection': state.layout,
-        '.source-emphasis-mode': state.commentary || 'only', '.source-notes-mode': state.notes })[selector],
-      prop: () => selector === '.wants-aligned-rows' ? state.aligned : selector === '.wants-pesukim' ? state.lineMarkers : undefined,
-      is: () => state.transliteration,
-      remove: () => { displayed = ''; },
-      length: 1,
-      text: (value) => { displayed = value; }
-    })
+    initInsertionOptions: (adapter) => { state.adapter = adapter; },
+    saveSidebarPreference: (change) => {
+      saves.push({ ...change });
+      Object.assign(ctx.effectivePreferences, change);
+    },
+    $: (selector) => {
+      if (typeof selector !== 'string') return { text: (value) => { selector.textContent = value; } };
+      const checkedKey = { '.wants-aligned-rows': 'aligned', '.wants-pesukim': 'lineMarkers',
+        '.include-transliteration': 'transliteration' }[selector];
+      const nodes = doc.querySelectorAll(selector);
+      return {
+        val: () => ({ '.output-mode-selection': state.output, '.bilingual-layout-selection': state.layout,
+          '.source-emphasis-mode': state.commentary || 'only', '.source-notes-mode': state.notes })[selector],
+        prop: (_, value) => value === undefined ? state[checkedKey] : (state[checkedKey] = value),
+        is: () => state[checkedKey],
+        length: nodes.length,
+        each: (fn) => nodes.forEach((node, index) => fn.call(node, index))
+      };
+    }
   });
   for (const name of ['apps-script/shared/source-text.html', 'apps-script/shared/composition-card/shared.html',
-    'apps-script/sidebar/js/preview-core.html', 'apps-script/sidebar/js/preview-render.html']) vm.runInContext(script(name), ctx, { filename: name });
+    'apps-script/sidebar/js/preview-core.html', 'apps-script/sidebar/js/preview-render.html',
+    'apps-script/sidebar/js/display-controls.html', 'apps-script/sidebar/js/composition-controls.html']) {
+    vm.runInContext(script(name), ctx, { filename: name });
+  }
   ctx.buildPreviewMeta = (ref) => '<span class="meta">' + String(ref) + '</span>';
-  return { ctx, state, requests, displayed: () => displayed };
+  ctx.updateSuggestion = (data, title) => {
+    const sources = [];
+    target.innerHTML = ctx.renderPreviewHTML(data, title, sources);
+    ctx.renderPreviewTransliteration(sources);
+  };
+  return { ctx, state, requests, saves, target, render(data = payload()) {
+    ctx.data = data;
+    ctx.refreshSidebarLivePreview();
+  }, displayed: () => [...target.querySelectorAll('.preview-transliteration')].map((el) => el.textContent) };
 }
 
 for (const layout of ['he-top', 'he-left', 'he-right']) {
@@ -90,7 +115,7 @@ test('nested chapter arrays retain empty source and translation positions in ali
   const { ctx } = preview();
   const data = { ...payload(), isSpanning: true, he: [['א', ''], ['ג']], text: [['A', 'B'], ['']] };
   const pairs = JSON.parse(JSON.stringify(ctx.previewAlignedSourcePairs_(data)));
-  assert.deepEqual(pairs, [{ he: 'א', en: 'A' }, { he: '', en: 'B' }, { he: 'ג', en: '' }]);
+  assert.deepEqual(pairs, [{ he: 'א', en: 'A', heRaw: 'א' }, { he: '', en: 'B', heRaw: '' }, { he: 'ג', en: '', heRaw: 'ג' }]);
   const html = ctx.renderPreviewHTML(data, data.ref);
   const lines = [...parse(html).querySelectorAll('.preview-line')].map((el) => el.textContent);
   assert.deepEqual(lines, ['אA', 'B', 'ג']);
@@ -105,7 +130,7 @@ test('aligned previews preserve chapter gaps and keep the next chapter notes wit
     assert.equal(pairs[0].en, '');
     assert.equal(pairs[1].he, 'h1');
     assert.equal(pairs[1].en, 'e1' + note('e1'));
-    assert.deepEqual(pairs[2], { he: 'h2', en: 'e2' });
+    assert.deepEqual(pairs[2], { he: 'h2', en: 'e2', heRaw: 'h2' });
     const doc = parse(ctx.renderPreviewHTML(data, data.ref));
     const lines = layout === 'he-top' ? [...doc.querySelectorAll('.preview-line')]
       : [...doc.querySelectorAll('tr')].slice(1);
@@ -130,11 +155,11 @@ test('aligned inline and omitted notes stay in their own verse without changing 
 
 test('the transliteration preview sends only the pointed main Hebrew, regardless of Notes mode', () => {
   for (const notes of ['omit', 'inline', 'separate']) {
-    const { ctx, requests } = preview({ notes });
+    const { render, requests } = preview({ notes, aligned: false });
     const data = { ...payload(), he: ['שלום'], heTransliterationSource: ['שָׁלוֹם<sup class=footnote-marker>א</sup><i class=footnote>הֶעָרָה</i> עוֹלָם'] };
-    ctx.renderPreviewTransliteration(data);
+    render(data);
     assert.equal(requests.length, 1);
-    assert.equal(requests[0].text, 'שָׁלוֹם עוֹלָם');
+    assert.deepEqual(requests[0].text, ['שָׁלוֹם עוֹלָם']);
   }
 });
 
@@ -151,21 +176,85 @@ test('whole and per-line insertion transliteration exclude note markers and bodi
   assert.ok(calls.every((value) => !value.includes('הֶעָרָה')));
 });
 
-test('an older same-reference transliteration cannot overwrite a later source edition or option change', () => {
-  const { ctx, requests, displayed } = preview();
-  ctx.renderPreviewTransliteration({ ...payload(), heTransliterationSource: ['שָׁלוֹם'] });
-  ctx.renderPreviewTransliteration({ ...payload(), heTransliterationSource: ['עוֹלָם'] });
-  assert.equal(requests.length, 2);
-  requests[1].callback('Olam');
-  assert.equal(displayed(), 'Olam');
-  requests[0].callback('Shalom');
-  assert.equal(displayed(), 'Olam');
+test('Line by line redraws the selected passage in place on both switches', () => {
+  const { state, render, target, saves } = preview({ aligned: false, transliteration: false, layout: 'he-right' });
+  render();
+  assert.equal(target.querySelectorAll('tr').length, 1);
+  state.adapter.onToggleAlignedRows();
+  assert.deepEqual(saves.at(-1), { bilingual_aligned_rows: true });
+  assert.equal(target.querySelectorAll('tr').length, 3);
+  state.adapter.onToggleAlignedRows();
+  assert.equal(target.querySelectorAll('tr').length, 1);
 });
 
-test('clearing the preview invalidates a pending transliteration even for the same reference', () => {
-  const { ctx, requests, displayed } = preview();
-  ctx.renderPreviewTransliteration(payload());
-  ctx.removePreviewTransliteration();
-  requests[0].callback('late');
-  assert.equal(displayed(), '');
+test('transliteration toggle and position update Texts beside the correct Hebrew cell', () => {
+  const env = preview({ transliteration: false, aligned: false, layout: 'he-right', position: 'below' });
+  env.render();
+  assert.equal(env.requests.length, 0);
+  env.ctx._sidebarCompositionOnToggle('translit');
+  env.requests.at(-1).callback(['Reading']);
+  assert.equal(env.target.querySelector('td.preview-he .preview-transliteration').textContent, 'Reading');
+  for (const [position, index] of [['left', 1], ['right', 2]]) {
+    env.ctx._sidebarCompositionOnChoice('translitPosition', position);
+    env.requests.at(-1).callback(['Reading']);
+    const cells = env.target.querySelectorAll('td');
+    assert.equal(cells.length, 3);
+    assert.equal(cells[index].querySelector('.preview-transliteration').textContent, 'Reading');
+    assert.ok(cells[position === 'left' ? 2 : 1].matches('.preview-he'));
+  }
+  env.ctx._sidebarCompositionOnSchemeSelect('simple_english');
+  assert.equal(env.requests.at(-1).scheme, 'simple_english');
+  env.ctx._sidebarCompositionOnToggle('translit');
+  env.requests.at(-1).callback(['Late']);
+  assert.deepEqual(env.displayed(), []);
+});
+
+test('aligned transliteration keeps pointed Hebrew, source gaps and verse positions', () => {
+  const { render, requests, target, displayed } = preview({ layout: 'he-top', position: 'left' });
+  render({ ...payload(), isSpanning: true, he: [['א', ''], ['ג']], text: [['A', 'B'], ['C']],
+    heTransliterationSource: [['אָ', ''], ['גָ']] });
+  assert.deepEqual(requests[0].text, ['אָ', '', 'גָ']);
+  requests[0].callback(['First', '', 'Third']);
+  assert.deepEqual(displayed(), ['First', '', 'Third']);
+  assert.deepEqual([...target.querySelectorAll('.preview-line')].map((line) => line.textContent),
+    ['אFirstA', 'B', 'גThirdC']);
+});
+
+test('each aligned table row keeps its reading in its own sibling cell', () => {
+  const { render, requests, target } = preview({ layout: 'he-left', position: 'right' });
+  render();
+  requests[0].callback(['First reading', 'Second reading']);
+  const rows = [...target.querySelectorAll('tr')].slice(1);
+  assert.equal(rows.length, 2);
+  for (const [index, expected] of ['First reading', 'Second reading'].entries()) {
+    const cells = rows[index].querySelectorAll('td');
+    assert.equal(cells.length, 3);
+    assert.ok(cells[0].matches('.preview-he'));
+    assert.equal(cells[1].querySelector('.preview-transliteration').textContent, expected);
+    assert.match(cells[2].textContent, /verse/);
+  }
+});
+
+test('translation-only previews do not request or show transliteration', () => {
+  const { render, requests, displayed } = preview({ output: 'en' });
+  render();
+  assert.equal(requests.length, 0);
+  assert.deepEqual(displayed(), []);
+});
+
+test('an older same-reference transliteration cannot overwrite a later source edition or option change', () => {
+  const { render, requests, displayed } = preview({ aligned: false });
+  render({ ...payload(), heTransliterationSource: ['שָׁלוֹם'] });
+  render({ ...payload(), heTransliterationSource: ['עוֹלָם'] });
+  requests[1].callback(['Olam']);
+  requests[0].callback(['Shalom']);
+  assert.deepEqual(displayed(), ['Olam']);
+});
+
+test('clearing the preview discards a pending transliteration', () => {
+  const { render, requests, displayed, target } = preview();
+  render();
+  target.textContent = 'Select a result to preview it.';
+  requests[0].callback(['Late']);
+  assert.deepEqual(displayed(), []);
 });
