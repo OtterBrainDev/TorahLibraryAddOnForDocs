@@ -214,3 +214,46 @@ test('the sidebar opens with each editor’s own effective settings in the share
   assert.equal(editor.effectivePreferences.source_notes_mode, 'separate');
   assert.equal(editor.effectivePreferences.nekudot, 'false');
 });
+
+test('a storage outage opens a read-only preview for sidebar and Preferences without sharing private settings', () => {
+  const env = load({ failReads: new Error('Personal settings unavailable') });
+  const { context } = env;
+  const open = [];
+  const ui = {
+    showSidebar: (output) => open.push(output),
+    showModalDialog: (output) => open.push(output),
+  };
+  let preset = JSON.stringify({
+    output_mode_default: 'en',
+    bilingual_layout_default: 'not a layout',
+    source_notes_mode: 'inline',
+    unrelated: 'must not be exposed',
+  });
+  context.PropertiesService.getDocumentProperties = () => ({
+    getProperty(key) {
+      assert.equal(key, 'sefaria_shared_startup_preset');
+      return preset;
+    },
+  });
+  context.DocumentApp.getUi = () => ui;
+  context.HtmlService.createTemplateFromFile = (file) => ({
+    file,
+    evaluate() { return this; },
+    setTitle() { return this; },
+    setWidth() { return this; },
+    setHeight() { return this; },
+  });
+
+  context.openSharedSidebar_('texts');
+  assert.equal(open[0].file, 'startup-fallback');
+  assert.deepEqual({ ...open[0].summary }, {
+    shared: true, display: 'Translation only', layout: 'Hebrew on the right', notes: 'Inline',
+  });
+
+  preset = '{broken JSON';
+  context.preferencesPopup();
+  assert.equal(open[1].file, 'startup-fallback');
+  assert.deepEqual({ ...open[1].summary }, {
+    shared: false, display: 'Original with translation', layout: 'Hebrew on the right', notes: 'Separate',
+  });
+});

@@ -260,6 +260,34 @@ Users can reorder, group and hide items in **Preferences → Menu Bar**.
 - [Live walkthroughs](./docs/walkthroughs/README.md) — five scripts for live demos: a stress test, a developer tour, a power-user tour, a guide for people coming from version 1.0, and a five-minute first run.
 
 
+## Troubleshooting shared Docs
+
+If the sidebar or Preferences fails while several Google accounts are signed
+in, reopen the Doc in a separate browser profile with only the Google account
+authorized to run the add-on. Signing a Chrome profile into Chrome Sync is
+optional. The relevant sign-in is the Google account used in Google Docs.
+Google Apps Script does not support multiple Google accounts in the same
+browser session. A public document link does not authorize an anonymous
+visitor to run the add-on.
+
+If Google opens the add-on but personal settings cannot be read, a read-only
+preview shows the shared document preset or Factory values. The normal
+**This Document** profile belongs to each editor. Its settings are never
+published to visitors. To troubleshoot a failure in a single-account session,
+include the failed Apps Script execution's function name and error message,
+and say whether Texts search worked.
+
+For maintainers of a bound test Doc, an optional document property named
+`sefaria_shared_startup_preset` stores shared preview values as a JSON object.
+For example, its value can be
+`{"output_mode_default":"both","bilingual_layout_default":"he-top","source_notes_mode":"separate"}`.
+Set it in that document's Apps Script project using
+`PropertiesService.getDocumentProperties()`. Each omitted or invalid value
+uses the Factory setting. This preview does not save settings or insert text.
+
+- [Google Apps Script account troubleshooting](https://developers.google.com/apps-script/guides/support/troubleshooting#issues_with_multiple_google_accounts)
+- [Authorization for Editor add-ons](https://developers.google.com/workspace/add-ons/concepts/editor-scopes)
+
 ## Repository structure
 
 - `LICENSE.md` - Repository license.

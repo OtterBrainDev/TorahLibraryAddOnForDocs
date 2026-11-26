@@ -46,6 +46,9 @@ function loadServer(stored = {}) {
     DocumentApp: { getUi: () => ({ showSidebar: (output) => shown.push(output) }) },
     getUiMode_: () => store.ui_mode || 'full',
     maybeShowFirstRunSetup_: () => false,
+    runUserPreferenceMigrationsIfNeeded_() {},
+    Utilities: { getUuid: () => 'session' },
+    CacheService: { getUserCache: () => ({ get: () => null }) },
   };
   vm.createContext(context);
   ['apps-script/server/menu-layout.gs', 'apps-script/server/preferences.gs', 'apps-script/server/settings-file.gs', 'apps-script/server/settings-profiles.gs', 'apps-script/ui_core.gs', 'apps-script/server/menu.gs']

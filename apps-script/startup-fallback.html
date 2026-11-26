@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Sefaria settings preview</title>
+    <?!= include('shared/ui/head'); ?>
+    <?!= include('shared/css/native-controls'); ?>
+    <style>
+      body { padding: 16px; font: 14px/1.5 Arial, sans-serif; color: #222; }
+      h1 { font-size: 18px; margin-top: 0; }
+      dt { font-weight: 700; }
+      dd { margin: 0 0 8px; }
+      a { color: #18446e; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1><?= summary.shared ? 'Shared document preset' : 'Factory settings' ?></h1>
+      <p>Personal settings couldn’t load. You can review these values while the add-on’s editing controls are unavailable.</p>
+      <dl>
+        <dt>Display</dt><dd><?= summary.display ?></dd>
+        <dt>Bilingual layout</dt><dd><?= summary.layout ?></dd>
+        <dt>Notes</dt><dd><?= summary.notes ?></dd>
+      </dl>
+      <p>To restore editing, reopen this Doc in a browser profile signed into just the Google account that is authorized to run the add-on.</p>
+      <p><a href="https://www.sefaria.org/texts" target="_blank" rel="noopener noreferrer">Browse texts on Sefaria</a></p>
+    </main>
+  </body>
+</html>

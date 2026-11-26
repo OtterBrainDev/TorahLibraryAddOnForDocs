@@ -119,3 +119,44 @@ function updateDocumentPreferences_(expectedKey, nextValues) {
   rebuildMenuQuietly_();
   return getDocumentPreferenceProfile();
 }
+
+
+// A document can opt in to sharing these three presentation choices. Its
+// normal This Document settings live in UserProperties and stay private.
+function getStartupFallbackSettings_() {
+  const choices = {
+    output_mode_default: { both: 'Original with translation', he: 'Original only', en: 'Translation only' },
+    bilingual_layout_default: { 'he-right': 'Hebrew on the right', 'he-left': 'Hebrew on the left', 'he-top': 'Hebrew above translation' },
+    source_notes_mode: { separate: 'Separate', inline: 'Inline', omit: 'Omit' }
+  };
+  let shared = null;
+  try {
+    const properties = PropertiesService.getDocumentProperties();
+    if (properties) shared = JSON.parse(properties.getProperty('sefaria_shared_startup_preset') || 'null');
+  } catch (error) { /* A missing or unreadable shared preset uses Factory. */ }
+
+  let hasSharedValues = false;
+  const labels = {};
+  Object.keys(choices).forEach(function (key) {
+    const labelsByValue = choices[key];
+    const value = shared && Object.prototype.hasOwnProperty.call(shared, key) ? shared[key] : null;
+    const valid = typeof value === 'string' && Object.prototype.hasOwnProperty.call(labelsByValue, value);
+    if (valid) hasSharedValues = true;
+    labels[key] = labelsByValue[valid ? value : FACTORY_PREFERENCE_VALUES_[key]];
+  });
+  return {
+    shared: hasSharedValues,
+    display: labels.output_mode_default,
+    layout: labels.bilingual_layout_default,
+    notes: labels.source_notes_mode
+  };
+}
+
+function showStartupFallback_(sidebar) {
+  const template = HtmlService.createTemplateFromFile('startup-fallback');
+  template.summary = getStartupFallbackSettings_();
+  const ui = DocumentApp.getUi();
+  const output = template.evaluate().setTitle('Sefaria settings preview');
+  if (sidebar) ui.showSidebar(output.setWidth(300));
+  else ui.showModalDialog(output.setWidth(440).setHeight(380), 'Sefaria settings preview');
+}
