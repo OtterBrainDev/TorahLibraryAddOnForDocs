@@ -1033,31 +1033,31 @@
     });
     $('.save-preferences-button').on('click', function () { saveFormThen_(); });
 
-    function resetDocumentProfile_() {
+    function cloneAccountSettings_() {
       askProfileQuestion_({
-        title: 'Use account defaults in this document?',
-        message: 'This removes the preferences you saved for this document and discards unsaved edits in this window.',
-        ok: 'Use account defaults',
+        title: 'Clone Account Settings?',
+        message: 'This copies the saved User Profile and shared account settings into This Document. It replaces saved settings for this document and discards unsaved edits in this window.',
+        ok: 'Clone Account Settings',
         onOk: function () {
-          modalBusyShow('Resetting this document…');
+          modalBusyShow('Cloning account settings…');
           google.script.run.withSuccessHandler(function (result) {
             modalBusyHide();
             adoptDocumentProfile_(result);
             applyPreferencesToForm(result.preferences);
             renderSettingsProfiles_();
             markPreferencesSaved();
-            setResultsMessage('This Document now uses your account defaults.');
+            setResultsMessage('Copied User Profile settings to This Document.');
           }).withFailureHandler(function (error) {
             modalBusyHide();
-            setResultsMessage((error && error.message) || 'Could not reset this document.');
-          }).saveDocumentPreferenceProfile(null, documentProfile_.key);
+            setResultsMessage((error && error.message) || 'Could not clone account settings.');
+          }).cloneAccountSettingsForDocument(documentProfile_.key);
         }
       });
     }
 
     $('.pref-preset-button').on('click', function () {
       var preset = $(this).attr('data-preset');
-      if (preset === 'document') { resetDocumentProfile_(); return; }
+      if (preset === 'document') { cloneAccountSettings_(); return; }
       var factory = preset === 'factory';
       var name = activeProfile_().name;
       askProfileQuestion_({
@@ -2372,7 +2372,7 @@
     }
 
     function profileIndex_() {
-      return settingsProfiles_ || { active: 'p1', implicit: true, max: 10, profiles: [{ id: 'p1', name: 'Account' }] };
+      return settingsProfiles_ || { active: 'p1', implicit: true, max: 10, profiles: [{ id: 'p1', name: 'User Profile' }] };
     }
 
     function profileById_(id) {
@@ -2423,32 +2423,46 @@
         ? 'Changes apply only to this Google Doc. Import/Export and Factory apply to reusable profiles.'
         : 'Reusable profiles store text, layout and appearance. Other settings are shared across the account.';
       var save = editingDocument_ ? 'Save changes to this document'
-        : profile.id === 'p1' ? 'Save Account defaults' : 'Save ' + quoted_(profile.name) + ' defaults';
+        : profile.id === 'p1' ? 'Save User Profile' : 'Save profile changes';
       $('.save-preferences-button').text(save);
-      $('.close-preferences-button').attr('title', save);
+      $('.close-preferences-button').attr('title', editingDocument_ ? save : 'Save changes to ' + quoted_(profile.name));
       document.querySelectorAll('.pref-preset-button').forEach(function (button) {
         if (button.dataset.preset !== 'factory') button.hidden = (button.dataset.preset === 'document') !== editingDocument_;
-        if (button.dataset.preset === 'document') button.disabled = !documentProfile_.hasOverrides;
         if (button.dataset.preset === 'profile') button.textContent = 'Reset ' + profile.name;
       });
-      byId('pref-profile-new').hidden = !!profileNameMode_ || index.profiles.length >= (index.max || 10);
+      byId('pref-profile-new').hidden = profileNameMode_ === 'create' || index.profiles.length >= (index.max || 10);
+      renderProfileNameField_(protectedProfile ? null : profile);
+    }
+
+    function renderProfileNameField_(profile) {
+      var creating = profileNameMode_ === 'create';
+      var field = byId('pref-profile-name-field');
+      field.hidden = !creating && !profile;
+      var target = creating ? 'new' : profile ? profile.id : '';
+      if (field.dataset.target !== target) {
+        field.dataset.target = target;
+        byId('pref-profile-name').value = !creating && profile ? profile.name : '';
+      }
+      byId('pref-profile-name-label').textContent = creating ? 'New profile name' : 'Profile name';
+      byId('pref-profile-name-ok').textContent = creating ? 'Create' : 'Rename';
+      byId('pref-profile-name-cancel').hidden = !creating;
     }
 
     function closeProfileNameField_() {
       profileNameMode_ = null;
-      byId('pref-profile-name-field').hidden = true;
+      delete byId('pref-profile-name-field').dataset.target;
       renderSettingsProfiles_();
     }
 
     function openProfileNameField_(mode) {
-      profileNameMode_ = mode;
-      var field = byId('pref-profile-name-field');
+      if (preferencesBaseline_ === null) return;
+      if (mode === 'rename') closeProfileNameField_();
+      else {
+        profileNameMode_ = 'create';
+        renderSettingsProfiles_();
+      }
+      _activatePrefTab(byId('pref-tab-profiles-btn'));
       var input = byId('pref-profile-name');
-      byId('pref-profile-name-label').textContent = mode === 'rename' ? 'Rename ' + quoted_(activeProfile_().name) : 'New profile';
-      byId('pref-profile-name-ok').textContent = mode === 'rename' ? 'Rename' : 'Create';
-      input.value = mode === 'rename' ? activeProfile_().name : '';
-      field.hidden = false;
-      renderSettingsProfiles_();
       input.focus();
       input.select();
     }
@@ -2600,8 +2614,10 @@
 
     function submitProfileName_() {
       var name = byId('pref-profile-name').value;
-      if (profileNameMode_ === 'rename') {
-        var id = activeProfile_().id;
+      if (profileNameMode_ !== 'create') {
+        var profile = activeProfile_();
+        if (editingDocument_ || profile.id === 'p1' || name.trim() === profile.name) return;
+        var id = profile.id;
         var renamed = profileAnswer_('Renaming…', false, function (before, now) {
           return 'Renamed to ' + quoted_(now.name) + '.';
         });

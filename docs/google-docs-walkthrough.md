@@ -500,11 +500,12 @@ not saved named profile snapshots.
 | **Linking** | After linking; Insert text after linking; Document scanning. |
 | **Sidebar** | What the sidebar shows (see below). |
 | **Menu Bar** | Reorder, group, hide and divide menu items; **Move to Quick Actions ▸** / **◂ Move to main menu** move an item into the submenu or out. |
-| **⇅ Import/Export** (Profiles tab, both modes) | Simple targets current preferences. Everything asks which profile to export or update; inactive profiles stay inactive. Active exports include unsaved form values, inactive exports use saved snapshots. Profile files normally carry text, layout and appearance; shared settings are opt-in. Choose a file or paste its JSON, preview the changes and apply only checked groups. The interface mode stays unchanged. Files contain settings only, not searches, documents or account details. |
+| **⇅ Import/Export** (Details tab, both modes) | Simple targets current preferences. Everything asks which profile to export or update; inactive profiles stay inactive. Active exports include unsaved form values, inactive exports use saved snapshots. Profile files normally carry text, layout and appearance; shared settings are opt-in. Choose a file or paste its JSON, preview the changes and apply only checked groups. The interface mode stays unchanged. Files contain settings only, not searches, documents or account details. |
 | **🧪 Experimental** | Optional in-progress features such as Surprise Me. |
 
 **Save & Close** saves your changes to the profile selected on the left and
-shows what changed. **This Document** is selected by default. The **🡆 Update
+shows what changed. **This Document** is selected by default. Use **Save changes to this document**
+to save and keep editing. The **🡆 Update
 Sidebar Preview** button sends your insertion settings to an open Texts
 preview for the current sidebar session.
 
@@ -531,13 +532,14 @@ Use the profile list on the left in either interface mode.
 
 - **This Document** remembers the settings you change for this Google Doc
   when you reopen it. Other settings inherit the reusable profile in use.
-  Under **Profiles → Reset options**, use **Use account defaults in this
-  document** to clear the document’s saved overrides.
-- **Account** is the built-in profile. Select it to save defaults across
+  Under **Details → Reset options**, **👤 → ⚙ Clone Account Settings**
+  replaces the document’s saved settings with a copy of the built-in User
+  Profile and shared account settings.
+- **User Profile** is the built-in profile. Select it to save defaults across
   documents. Add named profiles for different text, layout and appearance
   settings. **+ New profile** copies the reusable profile in use. Use the
-  pencil and trash buttons to rename or delete a named profile.
-- Use **⇅ Import/Export** in the Profiles tab to transfer reusable settings.
+  name field, pencil and trash in **Details** to rename or delete a named profile.
+- Use **⇅ Import/Export** in the Details tab to transfer reusable settings.
   **Restore Factory preset** applies the 1.0-style settings to the reusable
   profile in use and shared account settings, including Simple mode.
 - The sidebar’s **Insertion Options → Profile** switches reusable profiles.

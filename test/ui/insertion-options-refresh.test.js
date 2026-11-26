@@ -39,7 +39,7 @@ test('a change the fetch applies shows the preview as updating at once', () => {
 test('every Preferences save tells an open sidebar, which re-reads them and refreshes the preview', () => {
   const prefs = readAppScriptFile('preferences/js.html');
   // Explicit persistent writes from the Profiles tab.
-  const saves = prefs.match(/\.(savePreferenceDefaults|restorePreferencePreset|saveDocumentPreferenceProfile)\(/g) || [];
+  const saves = prefs.match(/\.(savePreferenceDefaults|restorePreferencePreset|saveDocumentPreferenceProfile|cloneAccountSettingsForDocument)\(/g) || [];
   assert.equal(saves.length, 4);
   // The helper's definition, plus one call per save, plus one in
   // profileAnswer_, the success handler every settings-profile change uses

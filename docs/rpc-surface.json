@@ -18,6 +18,11 @@
       "definedIn": "apps-script/server/preferences.gs"
     },
     {
+      "name": "cloneAccountSettingsForDocument",
+      "arity": 1,
+      "definedIn": "apps-script/server/document-preferences.gs"
+    },
+    {
       "name": "findReference",
       "arity": 3,
       "definedIn": "apps-script/server/sefaria-fetch.gs"

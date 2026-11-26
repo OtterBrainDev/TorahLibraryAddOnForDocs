@@ -12,7 +12,7 @@
 //     preferences (a schema-23 "torah" cantillation filter comes back "tanakh"),
 //     and a value no setting could hold comes back as the default;
 //   - nobody without profiles sees anything change; the first new profile turns
-//     the settings in use into "Account";
+//     the settings in use into "User Profile";
 //   - names are cleaned and unique; there is a limit; the last one stays;
 //   - the index is not a setting: setPreferences and a settings file can't write it.
 //
@@ -72,17 +72,17 @@ test('a profile holds how sources look, and nothing that belongs to the person',
   }
 });
 
-test('with no profiles, the settings in use are shown as "Account" and nothing is stored', () => {
+test('with no profiles, the settings in use are shown as "User Profile" and nothing is stored', () => {
   const { ctx, store } = load();
   assert.equal(store.settings_profiles, '', 'seeded as none');
   assert.deepEqual(plain(ctx.getSettingsProfiles()),
-    { active: 'p1', implicit: true, max: 10, profiles: [{ id: 'p1', name: 'Account' }] });
+    { active: 'p1', implicit: true, max: 10, profiles: [{ id: 'p1', name: 'User Profile' }] });
 });
 
-test('the first new profile turns the settings in use into "Account", copies them, and is in use', () => {
+test('the first new profile turns the settings in use into "User Profile", copies them, and is in use', () => {
   const { ctx, store, writes } = load({ nekudot: 'false' });
   const result = ctx.createSettingsProfile('  Grade   3 ');
-  assert.deepEqual(plain(result.profiles.profiles), [{ id: 'p1', name: 'Account' }, { id: 'p2', name: 'Grade 3' }]);
+  assert.deepEqual(plain(result.profiles.profiles), [{ id: 'p1', name: 'User Profile' }, { id: 'p2', name: 'Grade 3' }]);
   assert.equal(result.profiles.active, 'p2');
   assert.equal(result.preferences.nekudot, 'false', 'a copy: nothing the person sees changes');
   const kept = JSON.parse(store.settings_profile_p1);
@@ -101,7 +101,7 @@ test('switching keeps the outgoing settings, writes the incoming ones, and touch
   writes.length = 0;
   const result = ctx.switchSettingsProfile('p1');
   assert.equal(result.profiles.active, 'p1');
-  assert.equal(store.nekudot, 'false', 'Account came back');
+  assert.equal(store.nekudot, 'false', 'User Profile came back');
   assert.equal(store.include_transliteration_default, 'false');
   assert.equal(result.preferences.nekudot, 'false');
   // Adults was kept, with what it had.
@@ -187,11 +187,12 @@ test('names are cleaned and unique, there is a limit, and a rename changes no se
   const { ctx, store } = load();
   assert.throws(() => ctx.createSettingsProfile('   '), /Give the profile a name/);
   assert.throws(() => ctx.createSettingsProfile('aCCount'), /reserved/);
+  assert.throws(() => ctx.createSettingsProfile('user PROFILE'), /reserved/);
   assert.throws(() => ctx.createSettingsProfile('this DOCUMENT'), /reserved/);
   ctx.createSettingsProfile('A'.repeat(60) + '\u0007');
   assert.equal(ctx.getSettingsProfiles().profiles[1].name, 'A'.repeat(40));
   const before = Object.assign({}, store);
-  assert.throws(() => ctx.renameSettingsProfile('p1', 'Adult class'), /Account cannot be renamed/);
+  assert.throws(() => ctx.renameSettingsProfile('p1', 'Adult class'), /User Profile cannot be renamed/);
   ctx.renameSettingsProfile('p2', 'Adult class');
   assert.equal(ctx.getSettingsProfiles().profiles[1].name, 'Adult class');
   Object.keys(before).filter((k) => k !== 'settings_profiles').forEach((k) => assert.equal(store[k], before[k], k));
@@ -200,7 +201,7 @@ test('names are cleaned and unique, there is a limit, and a rename changes no se
   for (let i = 4; i <= 10; i++) ctx.createSettingsProfile(`Class ${i}`);
   assert.equal(ctx.getSettingsProfiles().profiles.length, 10);
   assert.throws(() => ctx.createSettingsProfile('One more'), /up to 10 profiles/);
-  assert.throws(() => load().ctx.renameSettingsProfile('p1', 'Shiur'), /Account cannot be renamed/);
+  assert.throws(() => load().ctx.renameSettingsProfile('p1', 'Shiur'), /User Profile cannot be renamed/);
 });
 
 test('deleting the profile in use switches to another first; the last one stays', () => {
@@ -209,10 +210,10 @@ test('deleting the profile in use switches to another first; the last one stays'
   store.nekudot = 'true';
   const result = ctx.deleteSettingsProfile('p2');
   assert.equal(result.profiles.active, 'p1');
-  assert.deepEqual(plain(result.profiles.profiles), [{ id: 'p1', name: 'Account' }]);
-  assert.equal(store.nekudot, 'false', 'Account came back');
+  assert.deepEqual(plain(result.profiles.profiles), [{ id: 'p1', name: 'User Profile' }]);
+  assert.equal(store.nekudot, 'false', 'User Profile came back');
   assert.ok(!('settings_profile_p1' in store) && !('settings_profile_p2' in store));
-  assert.throws(() => ctx.deleteSettingsProfile('p1'), /Account cannot be deleted/);
+  assert.throws(() => ctx.deleteSettingsProfile('p1'), /User Profile cannot be deleted/);
   // Deleting one not in use changes no setting.
   ctx.createSettingsProfile('Kids');
   ctx.createSettingsProfile('Adults');
@@ -220,7 +221,7 @@ test('deleting the profile in use switches to another first; the last one stays'
   ctx.deleteSettingsProfile('p2');
   assert.equal(store.nekudot, nekudot);
   assert.ok(!('settings_profile_p2' in store));
-  assert.deepEqual(plain(ctx.getSettingsProfiles().profiles.map((p) => p.name)), ['Account', 'Adults']);
+  assert.deepEqual(plain(ctx.getSettingsProfiles().profiles.map((p) => p.name)), ['User Profile', 'Adults']);
 });
 
 test('settings too large for one stored value are refused with a plain message, and nothing changes', () => {
@@ -242,7 +243,7 @@ test('the index is not a setting: setPreferences and a settings file never write
     assert.deepEqual(plain(ctx.readProfileIndex_(junk)), { active: null, profiles: [] }, junk);
   }
   assert.deepEqual(plain(ctx.readProfileIndex_('{"active":"p9","profiles":[{"id":"p2","name":"B"},{"id":"p2","name":"C"}]}')),
-    { active: 'p2', profiles: [{ id: 'p1', name: 'Account' }, { id: 'p2', name: 'B' }] }, 'an unknown active falls back; a repeated id is dropped');
+    { active: 'p2', profiles: [{ id: 'p1', name: 'User Profile' }, { id: 'p2', name: 'B' }] }, 'an unknown active falls back; a repeated id is dropped');
 });
 
 test('a failure is logged by message only, never with a value', () => {
@@ -268,7 +269,7 @@ test('profile export uses the named saved snapshot, not the active form or share
   ctx.createSettingsProfile('Grade 3');
   ctx.setPreferences({ nekudot: 'true' });
   const file = JSON.parse(ctx.exportSettingsForTarget({ nekudot: 'true', hebrew_font: 'not the inactive profile' }, '', transferTarget_(ctx, 'p1')).text);
-  assert.equal(file.name, 'Account');
+  assert.equal(file.name, 'User Profile');
   assert.equal(file.settings.nekudot, 'false');
   assert.notEqual(file.settings.hebrew_font, 'not the inactive profile');
   assert.ok(!('show_voices_tab' in file.settings));
@@ -287,7 +288,7 @@ test('import into an inactive profile changes only its selected settings; active
   const target = transferTarget_(ctx, 'p1');
   const text = transferFile_({ nekudot: 'false', hebrew_font: 'Times New Roman', show_voices_tab: 'true' }, 'simple');
   const preview = ctx.previewSettingsImportForTarget(text, target);
-  assert.equal(preview.targetName, 'Account');
+  assert.equal(preview.targetName, 'User Profile');
   assert.equal(preview.targetActive, false);
   assert.equal(preview.ignoredShared, 1);
   assert.ok(!preview.groups.some(g => g.id === 'menu'));
@@ -398,18 +399,34 @@ test('document edits persist per Doc, inherit unedited defaults, and sit below s
   assert.equal(ctx.saveDocumentPreferenceProfile(null, key).hasOverrides, false);
   assert.equal(ctx.getPreferences().nekudot, 'true');
 
+  ctx.createSettingsProfile('Active named format');
+  ctx.setAccountPreferences({ nekudot: 'false', source_notes_mode: 'omit', show_voices_tab: 'false' });
+  ctx.saveDocumentPreferenceProfile({ nekudot: false, source_notes_mode: 'inline' }, key);
+  const cloned = ctx.cloneAccountSettingsForDocument(key);
+  assert.equal(cloned.preferences.nekudot, 'true', 'clone uses the saved User Profile');
+  assert.equal(cloned.preferences.source_notes_mode, 'separate', 'clone replaces older document overrides');
+  assert.equal(cloned.preferences.show_voices_tab, 'false', 'clone also copies shared settings');
+  assert.equal(cloned.profiles.active, 'p2', 'cloning does not switch reusable profiles');
+  assert.equal(ctx.getAccountPreferences().source_notes_mode, 'omit');
+  ctx.setAccountPreferences({ show_voices_tab: 'true' });
+  assert.equal(ctx.getPreferences().show_voices_tab, 'false', 'the copy is independent of later account edits');
+  docId = 'doc-two';
+  assert.equal(ctx.getPreferences().source_notes_mode, 'omit');
+  assert.throws(() => ctx.cloneAccountSettingsForDocument(key), /document changed/);
+  docId = 'doc-one';
+
   store[key] = JSON.stringify({ schema: '23', values: { teamim_filter: 'torah' } });
   assert.equal(ctx.getPreferences().teamim_filter, 'tanakh');
   assert.equal(ctx.getPreferences().teamim, 'false', 'migration only affects overridden fields');
 });
 
-test('old renamed or deleted Account slots preserve the named profiles', () => {
+test('old renamed or deleted User Profile slots preserve the named profiles', () => {
   const { ctx } = load({ settings_profiles: JSON.stringify({
     active: 'p2', profiles: [{ id: 'p2', name: 'Handouts' }, { id: 'p3', name: 'Grade 3' }]
   }) });
-  assert.deepEqual(plain(ctx.getSettingsProfiles().profiles.map((profile) => profile.name)), ['Account', 'Handouts', 'Grade 3']);
+  assert.deepEqual(plain(ctx.getSettingsProfiles().profiles.map((profile) => profile.name)), ['User Profile', 'Handouts', 'Grade 3']);
   assert.equal(ctx.switchSettingsProfile('p1').profiles.active, 'p1');
   assert.equal(ctx.readProfileIndex_(JSON.stringify({
     active: 'p1', profiles: [{ id: 'p1', name: 'My settings' }]
-  })).profiles[0].name, 'Account');
+  })).profiles[0].name, 'User Profile');
 });

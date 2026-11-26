@@ -11,11 +11,12 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 ## Unreleased
 
 - **Preferences.** A profile rail in both modes gives each Google Doc its
-  own saved overrides, alongside the built-in Account and reusable named
-  profiles. The blue Save & Close reports what changed; the preview arrow
-  updates an open Texts preview for its current session. Profiles holds
-  Import/Export and reset options, including the red 1.0-style Factory
-  action. Notes appears immediately below Commentary.
+  own saved overrides, alongside the built-in User Profile and reusable named
+  profiles. The footer lets you save without closing, save and close, or
+  update the open Texts preview. The Details tab groups the rename field,
+  profile actions, Import/Export, and reset options. Clone Account Settings
+  copies the saved User Profile and shared settings into This Document.
+  Notes appears immediately below Commentary.
 
 - **Text and notes.** Source and Translation are labeled separately, and ⓘ
   explains when Commentary or Notes cannot affect the displayed passage.
