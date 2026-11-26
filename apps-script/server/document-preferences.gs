@@ -59,31 +59,58 @@ function getDocumentPreferenceProfile() {
   };
 }
 
-// An empty edit is a no-op. Null explicitly discards this Doc's overrides.
-// Only edited fields are passed by the dialog; other account defaults still
-// flow through to this document. Serialize concurrent edits by the same user.
+// Merge only edited fields so unset values still inherit. Null clears
+// overrides for Preferences clients opened before the clone action existed.
 function saveDocumentPreferenceProfile(changes, expectedKey) {
+  return updateDocumentPreferences_(expectedKey, function (props, key) {
+    if (changes === null) return null;
+    const defaults = getDefaultPreferences();
+    const values = readDocumentPreferenceValues_(props.getProperty(key));
+    settingsFileKeys_().forEach(function (field) {
+      if (!changes || !Object.prototype.hasOwnProperty.call(changes, field)) return;
+      if (!settingsFileValueOk_(field, changes[field], defaults)) throw new Error('A preference has an invalid value: ' + field);
+      values[field] = String(changes[field]);
+    });
+    return values;
+  });
+}
+
+// Copy the built-in User Profile even if a different reusable profile is
+// in use. Shared values come from the account and recent-use fields stay out.
+function cloneAccountSettingsForDocument(expectedKey) {
+  return updateDocumentPreferences_(expectedKey, function (props) {
+    const all = props.getProperties() || {};
+    const defaults = getDefaultPreferences();
+    const index = publicProfileIndex_(readProfileIndex_(all[SETTINGS_PROFILES_KEY_]));
+    if (index.active !== SETTINGS_PROFILE_IMPLICIT_ID_) {
+      const userProfile = all[SETTINGS_PROFILE_PREFIX_ + SETTINGS_PROFILE_IMPLICIT_ID_];
+      Object.assign(all, migrateProfileValues_(userProfile, defaults));
+    }
+    const values = {};
+    settingsFileKeys_().forEach(function (key) {
+      const value = all[key] == null ? defaults[key] : all[key];
+      if (settingsFileValueOk_(key, value, defaults)) values[key] = String(value);
+    });
+    return values;
+  });
+}
+
+function updateDocumentPreferences_(expectedKey, nextValues) {
   const key = documentPreferencesKey_();
   if (!key || key !== expectedKey) throw new Error('The document changed. Reopen Preferences before saving.');
   const lock = LockService.getUserLock();
   lock.waitLock(5000);
   try {
     const props = PropertiesService.getUserProperties();
-    if (changes === null) {
+    const values = nextValues(props, key);
+    if (values === null) {
       props.deleteProperty(key);
-    } else {
-      const defaults = getDefaultPreferences();
-      const values = readDocumentPreferenceValues_(props.getProperty(key));
-      settingsFileKeys_().forEach(function (field) {
-        if (!changes || !Object.prototype.hasOwnProperty.call(changes, field)) return;
-        if (!settingsFileValueOk_(field, changes[field], defaults)) throw new Error('A preference has an invalid value: ' + field);
-        values[field] = String(changes[field]);
-      });
+    } else if (Object.keys(values).length) {
       const serialized = JSON.stringify({ schema: PREFS_SCHEMA_CURRENT_, values: values });
       if (Utilities.newBlob(serialized).getBytes().length > PREFERENCE_VALUE_MAX_CHARS_) {
         throw new Error('This document has too many settings to save. Shorten custom overrides and try again.');
       }
-      if (Object.keys(values).length) props.setProperty(key, serialized);
+      props.setProperty(key, serialized);
     }
   } finally {
     lock.releaseLock();

@@ -577,7 +577,7 @@
               <li><strong>Layout and formatting.</strong> Hebrew on the right, on the left or on top, or line by line beside its translation; vowels and cantillation (all, Tanakh only, or none); punctuation; transliteration; fonts that match your document; titles as headings, so they appear in the outline. See <a href="#layout-settings">Insertion Options</a>.</li>
               <li><strong>Commentary and notes.</strong> Keep, combine or leave out inline explanation in supported Talmud and Tanakh editions; choose separately how source footnotes appear. See <a href="#layout-settings">Insertion Options</a>.</li>
               <li><strong>Insert Source from Selection</strong>, the <strong>Voices</strong> (source sheets) and <strong>Lexicon</strong> (dictionary) tabs, the <strong>Session Library</strong> of what you've inserted, and several translations at once.</li>
-              <li><strong>Settings files</strong>, in <span class="ui-label">Preferences → Import/Export (⇅)</span>, so a teacher can hand a class the same settings, and <a href="#profiles">profiles</a>, so you can keep one look for each class and switch in a click.</li>
+              <li><strong>Settings files</strong>, in <span class="ui-label">Preferences → Details → Import/Export (⇅)</span>, so a teacher can hand a class the same settings, and <a href="#profiles">profiles</a>, so you can keep one look for each class and switch in a click.</li>
             </ul>
             <h3>What works differently</h3>
             <ol>
@@ -919,7 +919,7 @@
           <section class="card topic-section" id="preferences" data-search-title="Preferences" data-search-terms="preferences settings defaults save save and close reset refresh fonts insertion linking menu bar sidebar tab voices lexicon profiles advanced settings file export import share class teacher brand kit house style experimental title heading hebrew transliteration translation language source emphasis transliteration mapping insertion defaults current session difference">
             <h2>Preferences</h2>
             <p>Open with <span class="ui-label">⚙︎</span> in the sidebar or <span class="ui-label">Extensions → Sefaria for Google Docs → Preferences</span>. Preferences are your <strong>saved defaults</strong>; they follow your Google account into every document. The sidebar's <span class="ui-label">📰 Insertion Options</span> changes only the current session, and Link Texts' <span class="ui-label">📰 Customize this insertion</span> only one linking pass.</p>
-            <p>At the top, <span class="ui-label">Interface</span> switches between <a href="#interface-mode">Simple and Everything</a> at once, without Save; changes you have not saved yet stay as they are. Simple hides the Search, Linking and Experimental tabs; Everything shows them. The <a href="#profiles">Profiles</a> tab is available in both modes. Explicitly disabled Voices and Lexicon stay off in either interface. The ⇅ Import/Export button is always visible beside Interface.</p>
+            <p>At the top, <span class="ui-label">Interface</span> switches between <a href="#interface-mode">Simple and Everything</a> at once, without Save; changes you have not saved yet stay as they are. Simple hides the Search, Linking and Experimental tabs; Everything shows them. The <a href="#profiles">Details</a> tab is available in both modes. Explicitly disabled Voices and Lexicon stay off in either interface.</p>
             <table class="ref-table">
               <thead><tr><th>Tab</th><th>What's there</th></tr></thead>
               <tbody>
@@ -928,14 +928,14 @@
                 <tr><td><span class="ui-label">Linking</span></td><td>How <a href="#link-texts">Link Texts with Sefaria</a> reviews what it finds, and how much of your document it sends.</td></tr>
                 <tr><td><span class="ui-label">Sidebar</span></td><td>What the sidebar shows: the Voices and Lexicon tabs, the Quick Actions buttons, and (Everything) which controls Insertion Options offers. See <a href="#sidebar-controls">What the sidebar shows</a>.</td></tr>
                 <tr><td><span class="ui-label">Menu Bar</span></td><td>Rearrange the add-on's menu. See <a href="#menu">The menu</a>.</td></tr>
-                <tr><td><span class="ui-label">⇅ Import/Export</span></td><td>Opens a modal from the Profiles tab in both modes. From This Document, it first opens the reusable profile in use. <strong>Simple:</strong> transfer your active preferences. <strong>Everything:</strong> select any named profile, including one not in use. Export includes unsaved form values only for the active profile; inactive profiles use their saved settings. Normally only text, layout and appearance travel with a profile. Opt into shared search, linking, menu and sidebar settings if needed; check the groups to apply before confirming. Import leaves Simple or Everything unchanged. A file holds settings only: never your searches, documents or account.</td></tr>
+                <tr><td><span class="ui-label">⇅ Import/Export</span></td><td>Opens a modal from the Details tab in both modes. From This Document, it first opens the reusable profile in use. <strong>Simple:</strong> transfer your active preferences. <strong>Everything:</strong> select any named profile, including one not in use. Export includes unsaved form values only for the active profile; inactive profiles use their saved settings. Normally only text, layout and appearance travel with a profile. Opt into shared search, linking, menu and sidebar settings if needed; check the groups to apply before confirming. Import leaves Simple or Everything unchanged. A file holds settings only: never your searches, documents or account.</td></tr>
                 <tr><td><span class="ui-label">🧪 Experimental</span></td><td>Optional features still in progress, such as Surprise Me. Off by default.</td></tr>
               </tbody>
             </table>
             <h3>Apply or save changes</h3>
-            <p><strong>Save &amp; Close</strong> saves to the profile selected on the left and lists the settings that changed. <strong>This Document</strong> is selected by default. To change defaults across documents, select <strong>Account</strong> or a named profile first.</p>
+            <p><strong>Save changes to this document</strong> keeps Preferences open. <strong>Save &amp; Close</strong> saves to the profile selected on the left and closes Preferences. Both report which settings changed. To change defaults across documents, select <strong>User Profile</strong> or a named profile first.</p>
             <p>The <strong>🡆 Update Sidebar Preview</strong> button sends the form’s insertion settings to an open Texts preview for the current sidebar session.</p>
-            <p>Under <strong>Reset options</strong>, <strong>Use account defaults in this document</strong> removes the document’s saved overrides. <strong>Restore Factory preset</strong> applies the 1.0-style preset to the reusable profile in use and shared settings, including Simple mode.</p>
+            <p>With This Document selected, the <strong>👤 → ⚙ Clone Account Settings</strong> button under <strong>Details → Reset options</strong> copies the saved User Profile and shared settings to this document. The copy replaces the document’s saved settings and stays independent of later changes to User Profile. <strong>Restore Factory preset</strong> applies the 1.0-style preset to the reusable profile in use and shared settings, including Simple mode.</p>
           </section>
 
           <section class="card topic-section" id="sidebar-controls" data-search-title="What the sidebar shows" data-search-terms="sidebar tab tabs voices lexicon hide show turn off missing quick actions buttons insertion options controls hide toggles fonts class students simpler">
@@ -952,11 +952,11 @@
 
           <section class="card topic-section" id="profiles" data-search-title="Profiles" data-search-terms="profiles profile class classes switch setups presets beginners adults primary school new rename delete my settings everything">
             <h2>Profiles</h2>
-            <p>A profile is a named set of how sources look, so you can keep one for each class: say transliteration for beginners, and no vowels or punctuation with the commentary dropped for adults. Open the Profiles tab in Preferences in either interface mode.</p>
+            <p>A profile is a named set of how sources look, so you can keep one for each class: say transliteration for beginners, and no vowels or punctuation with the commentary dropped for adults. Select a profile on the left. Open <strong>Details</strong> to manage it in either interface mode.</p>
             <ul>
               <li><strong>This Document</strong> keeps the settings you change for this Google Doc, including when you reopen it. Other fields inherit your reusable defaults.</li>
-              <li><strong>Account</strong> is the built-in reusable profile. Named profiles keep their own text, layout and appearance. Search, linking, menus, and sidebar settings saved in a reusable profile are shared across the account.</li>
-              <li><strong>+ New profile</strong> copies the reusable profile in use. The pencil and trash buttons apply to named profiles. Switching asks about unsaved edits.</li>
+              <li><strong>User Profile</strong> is the built-in reusable profile. Named profiles keep their own text, layout and appearance. Search, linking, menus, and sidebar settings saved in a reusable profile are shared across the account.</li>
+              <li><strong>+ New profile</strong> copies the reusable profile in use. The name field, pencil, and trash in Details apply to named profiles. Switching asks about unsaved edits.</li>
               <li><strong>In the sidebar</strong>, <span class="ui-label">Insertion Options → Profile</span> switches reusable defaults. Saved document settings still apply, and switching drops the sidebar’s temporary overrides.</li>
             </ul>
           </section>
@@ -1231,8 +1231,8 @@
                 <li><span class="tag tag-new">New</span><strong>Simple or Everything.</strong> Simple shows search, preview and insert with a shorter menu. Everything shows additional settings and enabled tools. Switching preserves your preferences, including explicitly disabled search tools. <span class="where">Preferences → Interface</span></li>
                 <li><span class="tag tag-new">New</span><strong>Arrange the menu.</strong> Reorder the menu, move items into Quick Actions, and hide what you don't use. <span class="where">Preferences → Menu Bar</span></li>
                 <li><span class="tag tag-new">New</span><strong>Choose what the sidebar shows.</strong> Hide the Voices or Lexicon tab, Quick Actions buttons, or Insertion Options controls you don't use. <span class="where">Preferences → Sidebar</span></li>
-                <li><span class="tag tag-new">New</span><strong>Profiles.</strong> Keep named sets of how sources look and switch between them in a click: transliteration on for a primary class, vowels off for adults. <span class="where">Preferences → Profiles</span></li>
-                <li><span class="tag tag-new">New</span><strong>Settings files in both interfaces.</strong> Open ⇅ to export your settings or import checked groups. In Everything, select the profile to transfer without switching to it. Shared settings are optional. <span class="where">Preferences → Import/Export (⇅)</span></li>
+                <li><span class="tag tag-new">New</span><strong>Profiles.</strong> Keep named sets of how sources look and switch between them in a click: transliteration on for a primary class, vowels off for adults. <span class="where">Preferences → Details</span></li>
+                <li><span class="tag tag-new">New</span><strong>Settings files in both interfaces.</strong> Open ⇅ to export your settings or import checked groups. In Everything, select the profile to transfer without switching to it. Shared settings are optional. <span class="where">Preferences → Details → Import/Export (⇅)</span></li>
               </ul>
             </details>
             <details>

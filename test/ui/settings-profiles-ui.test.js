@@ -45,14 +45,17 @@ test('Profiles is a tab in both modes and owns the persistent actions', needsDom
   const panel = document.getElementById(tab.getAttribute('aria-controls'));
   assert.ok(document.querySelector('.pref-profile-workspace > #pref-profile-rail'));
   assert.equal(document.querySelector('.pref-tab-bar button'), tab);
-  assert.ok(panel.querySelector('.save-preferences-button'));
+  assert.equal(tab.textContent, 'Details');
+  assert.equal(panel.querySelector('[data-preset=document]').title, 'Clone Account Settings');
+  assert.equal(panel.querySelector('[data-preset=document]').textContent, '👤 → ⚙');
   assert.equal(panel.querySelectorAll('.pref-preset-button').length, 3);
   assert.equal(panel.querySelector('[data-preset=factory]').title, 'Factory applies the 1.0-style preset to the active profile and shared settings, including Simple mode.');
   assert.ok(panel.querySelector('[data-preset=factory]').classList.contains('danger'));
   assert.match(fn(PROFILES_JS, 'askProfileQuestion_'), /ok\.classList\.toggle\('danger', !!question\.danger\)/);
   assert.doesNotMatch(PREFS_CSS, /not\(\[data-ui-mode="full"\]\) \.pref-profile-rail/);
   const footer = document.querySelector('.save-bar');
-  assert.equal(footer.querySelectorAll('button').length, 2);
+  assert.equal(footer.querySelectorAll('button').length, 3);
+  assert.equal(footer.querySelector('.save-preferences-button').textContent, 'Save changes to this document');
   assert.equal(footer.querySelector('.apply-sidebar-preferences-button').title, 'Update Sidebar Preview');
   assert.equal(footer.querySelector('.apply-sidebar-preferences-button').textContent, '🡆');
   assert.equal(footer.querySelector('.close-preferences-button.blue').textContent, 'Save & Close');
@@ -66,27 +69,31 @@ test('a profile name is drawn as text', needsDom, () => {
     function $(selector) { return { text: value => { document.querySelector(selector).textContent = value; }, attr() {} }; }
     var editingDocument_ = false;
     var documentProfile_ = { key: 'doc' };
-    var settingsProfiles_ = { active: 'p2', max: 10, profiles: [{ id: 'p1', name: 'Account' }, { id: 'p2', name: '<img src=x onerror=alert(1)>' }] };
+    var settingsProfiles_ = { active: 'p2', max: 10, profiles: [{ id: 'p1', name: 'User Profile' }, { id: 'p2', name: '<img src=x onerror=alert(1)>' }] };
     var profileNameMode_ = null;
     ${fn(PROFILES_JS, 'profileIndex_')}
     ${fn(PROFILES_JS, 'profileById_')}
     ${fn(PROFILES_JS, 'activeProfile_')}
     ${fn(PROFILES_JS, 'quoted_')}
     ${fn(PROFILES_JS, 'renderSettingsProfiles_')}
+    ${fn(PROFILES_JS, 'renderProfileNameField_')}
     renderSettingsProfiles_();`, context);
   const items = [...document.querySelectorAll('.pref-profile-item')];
   assert.equal(items.length, 3);
   assert.equal(items[0].textContent, 'This Document');
-  assert.equal(items[1].textContent, 'Account');
+  assert.equal(items[1].textContent, 'User Profile');
   assert.equal(items[2].textContent, '<img src=x onerror=alert(1)>');
   assert.equal(document.querySelectorAll('img').length, 0);
   assert.deepEqual(items.map((b) => b.getAttribute('aria-current')), ['false', 'false', 'true']);
   assert.equal(document.getElementById('pref-profile-delete').disabled, false);
+  assert.equal(document.getElementById('pref-profile-name-field').hidden, false);
+  assert.equal(document.getElementById('pref-profile-name').value, items[2].textContent);
   vm.runInContext('editingDocument_ = true; renderSettingsProfiles_();', context);
   assert.equal(document.querySelector('.pref-profile-item[aria-current=true]').textContent, 'This Document');
   assert.equal(document.getElementById('pref-profile-delete').disabled, true);
   vm.runInContext('editingDocument_ = false; settingsProfiles_.active = "p1"; renderSettingsProfiles_();', context);
   assert.equal(document.getElementById('pref-profile-rename').disabled, true);
+  assert.equal(document.getElementById('pref-profile-name-field').hidden, true);
   // No HTML sink anywhere in the profile code, here or in the sidebar.
   assert.doesNotMatch(PROFILES_JS, /innerHTML|\.html\(/);
   const picker = STATE_JS.slice(STATE_JS.indexOf('// ── Settings profiles'), STATE_JS.indexOf('function saveSessionAsDefaults'));
@@ -96,7 +103,7 @@ test('a profile name is drawn as text', needsDom, () => {
 
 test('a switch or a new profile asks about unsaved changes first; a rename does not', () => {
   assert.match(fn(PROFILES_JS, 'switchToProfile_'), /withUnsavedChangesHandled_\(/);
-  assert.match(fn(PROFILES_JS, 'submitProfileName_'), /if \(profileNameMode_ === 'rename'\) \{[\s\S]*?renameSettingsProfile\(id, name\);\s*return;\s*\}\s*withUnsavedChangesHandled_\(/);
+  assert.match(fn(PROFILES_JS, 'submitProfileName_'), /if \(profileNameMode_ !== 'create'\) \{[\s\S]*?renameSettingsProfile\(id, name\);\s*return;\s*\}\s*withUnsavedChangesHandled_\(/);
   const ask = fn(PROFILES_JS, 'withUnsavedChangesHandled_');
   assert.match(ask, /if \(!formHasUnsavedChanges_\(\)\) \{ proceed\(\); return; \}/);
   assert.match(ask, /ok: 'Save and continue'/);
@@ -143,11 +150,16 @@ test('a switch, in the sidebar or in Preferences, drops the session\'s Insertion
 });
 
 
-test('profile rename is a labeled pencil action above the profile list', () => {
-  const rail = PREFS.match(/<nav class="pref-profile-rail"[\s\S]*?<\/nav>/)[0];
-  assert.ok(rail.indexOf('id="pref-profile-rename"') < rail.indexOf('id="pref-profile-list"'));
-  assert.match(rail, /id="pref-profile-delete"[^>]*aria-label="Delete active profile"[^>]*>[\s\S]*?&#x1f5d1;/);
-  assert.match(rail, /id="pref-profile-rename"[^>]*aria-label="Rename active profile"[^>]*>[\s\S]*?&#x1f589;/);
+test('Details groups the pencil, trash, and transfer actions above the rename field', needsDom, () => {
+  const { document } = parseHTML(PREFS);
+  const rail = document.querySelector('#pref-profile-rail');
+  const tools = document.querySelector('#pref-tab-profiles .pref-profile-tools');
+  assert.deepEqual([...tools.querySelectorAll('button')].map((button) => button.id),
+    ['pref-profile-rename', 'pref-profile-delete', 'settings-transfer-open']);
+  assert.equal(tools.querySelector('#pref-profile-delete').textContent, '🗑');
+  assert.equal(tools.querySelector('#pref-profile-rename').textContent, '🖉');
+  assert.ok(document.querySelector('#pref-tab-profiles #pref-profile-name'));
+  assert.equal(rail.querySelector('.pref-profile-tools'), null);
 });
 
 test('Import/Export is a modal opened by a labeled icon outside the mode-dependent tabs', () => {

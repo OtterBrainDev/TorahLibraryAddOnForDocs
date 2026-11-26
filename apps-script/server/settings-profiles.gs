@@ -24,9 +24,9 @@ Licensed under the MIT License. See repository LICENSE.md.
 //
 // Storage (UserProperties; not in SETTINGS, so setPreferences and a settings
 // file can never write it):
-//   settings_profiles       {"active": "p2", "profiles": [{"id": "p1", "name": "Account"}, …]}
+//   settings_profiles       {"active": "p2", "profiles": [{"id": "p1", "name": "User Profile"}, …]}
 //                           "" until the first profile is made, when the
-//                           settings in use become "Account".
+//                           settings in use become "User Profile".
 //   settings_profile_<id>   {"schema": "27", "values": {<profile key>: <stored string>}}
 //                           for each profile not in use. A snapshot from an
 //                           older schema is migrated when it comes back
@@ -41,7 +41,7 @@ var SETTINGS_PROFILES_KEY_ = 'settings_profiles';
 var SETTINGS_PROFILE_PREFIX_ = 'settings_profile_';
 var SETTINGS_PROFILES_MAX_ = 10;
 var SETTINGS_PROFILE_NAME_MAX_ = 40;
-var SETTINGS_PROFILE_FIRST_NAME_ = 'Account';
+var SETTINGS_PROFILE_FIRST_NAME_ = 'User Profile';
 // What the settings in use are called before any profile is made.
 var SETTINGS_PROFILE_IMPLICIT_ID_ = 'p1';
 
@@ -71,7 +71,7 @@ function readProfileIndex_(raw) {
   }
   if (!profiles.length) return { active: null, profiles: [] };
   var active = parsed.active && seen[parsed.active] ? parsed.active : profiles[0].id;
-  // Older builds allowed Account to be deleted. Restore the reserved slot
+  // Older builds allowed the built-in profile to be deleted. Restore the reserved slot
   // without replacing any remaining named profiles or their snapshots.
   if (!seen[SETTINGS_PROFILE_IMPLICIT_ID_]) {
     profiles.unshift({ id: SETTINGS_PROFILE_IMPLICIT_ID_, name: SETTINGS_PROFILE_FIRST_NAME_ });
@@ -81,7 +81,7 @@ function readProfileIndex_(raw) {
 
 /**
  * What the client is shown: always at least one profile. With none made, the
- * settings in use are listed as "Account", marked `implicit`.
+ * settings in use are listed as "User Profile", marked `implicit`.
  */
 function publicProfileIndex_(index) {
   if (!index.profiles.length) {
@@ -101,7 +101,7 @@ function cleanProfileName_(name) {
 function checkProfileName_(name, index, exceptId) {
   var clean = cleanProfileName_(name);
   if (!clean) throw new Error('Give the profile a name.');
-  if (/^(account|this document)$/i.test(clean)) throw new Error('That name is reserved for a built-in profile.');
+  if (/^(account|user profile|this document)$/i.test(clean)) throw new Error('That name is reserved for a built-in profile.');
   var taken = index.profiles.some(function (p) {
     return p.id !== exceptId && p.name.toLowerCase() === clean.toLowerCase();
   });
@@ -183,7 +183,7 @@ function planProfileSwitch_(stored, defaults, targetId) {
 /**
  * The writes for a new profile, which starts as a copy of the settings in use
  * and becomes the one in use (so nothing the person sees changes). The first
- * one also turns the settings in use into "Account".
+ * one also turns the settings in use into "User Profile".
  */
 function planProfileCreate_(stored, defaults, name) {
   var index = readProfileIndex_(stored[SETTINGS_PROFILES_KEY_]);
@@ -205,7 +205,7 @@ function planProfileCreate_(stored, defaults, name) {
 
 function planProfileRename_(stored, id, name) {
   var index = readProfileIndex_(stored[SETTINGS_PROFILES_KEY_]);
-  if (id === SETTINGS_PROFILE_IMPLICIT_ID_) throw new Error('Account cannot be renamed.');
+  if (id === SETTINGS_PROFILE_IMPLICIT_ID_) throw new Error('User Profile cannot be renamed.');
   var target = index.profiles.filter(function (p) { return p.id === id; })[0];
   if (!target) throw new Error('That profile no longer exists. Close Preferences and open it again.');
   target.name = checkProfileName_(name, index, id);
@@ -223,7 +223,7 @@ function planProfileDelete_(stored, defaults, id) {
   if (!index.profiles.some(function (p) { return p.id === id; })) {
     throw new Error('That profile no longer exists. Close Preferences and open it again.');
   }
-  if (id === SETTINGS_PROFILE_IMPLICIT_ID_) throw new Error('Account cannot be deleted.');
+  if (id === SETTINGS_PROFILE_IMPLICIT_ID_) throw new Error('User Profile cannot be deleted.');
   var set = {};
   var remove = [SETTINGS_PROFILE_PREFIX_ + id];
   if (index.active === id) {
