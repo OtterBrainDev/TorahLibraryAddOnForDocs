@@ -506,11 +506,12 @@ checklist was run against the code that shipped.
 
 | Case | Action | Expected |
 | --- | --- | --- |
-| S1 | In Preferences, open Insertion → Insertion Defaults → Texts in Simple and Everything | Notes is visible above the Source and Translation sections, with Omit / Inline / Separate and one selected value. It is not buried in Layout. |
+| S1 | In Preferences, open Insertion → Insertion Defaults → Texts in Simple and Everything | Notes sits directly below Commentary, with Separate / Inline / Omit and one selected value. Both rows show ⓘ help on hover and keyboard focus. Repeat in the sidebar at its default narrow width and check the Commentary label and icon have separate space. |
 | S2 | Save Notes: Inline, open sidebar Text and notes; change to Separate for the session, reopen Preferences | Sidebar starts Inline; Separate is temporary until Save as defaults; Preferences still shows Inline. Save as defaults, reopen, verify Separate. |
 | S3 | Compare all shared controls in Preferences and sidebar; change Display to Original, Both, Translation | Notes remains applicable in each; Preferences keeps defaults editable for other display choices; sidebar hides only inapplicable or explicitly disabled controls. |
-| S4 | Switch saved profile and use Import/Export or Reset to Defaults; inspect Notes and other shared options | Notes follows the active saved profile/defaults, not a stale session; Reset returns Omit. |
+| S4 | Switch saved profile and use Import/Export or Reset to Defaults; inspect Notes and other shared options | Notes follows the active saved profile or defaults. In a document inheriting the account menu, Restore Factory preset returns Notes to Separate and the menu starts with Add Sources with Sefaria, Link Texts with Sefaria, and Transform Divine Names in that order, followed by Preferences and Help. |
 | S5 | Run Link Texts → Customize this insertion; choose Notes with either language | Notes is available outside the language sections and applies only to the pass until Save as defaults. |
+| S6 | Reopen the sidebar several times, including after a warm load. Trigger an operation from the Extensions menu and again from the sidebar where available | Controls respond on every open. Record when Google Docs displays its own script-status toast and whether the add-on provides operation-specific feedback. |
 
 ### T — repeated citation detection (pending live verification)
 

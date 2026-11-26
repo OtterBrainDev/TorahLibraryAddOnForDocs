@@ -487,7 +487,6 @@ function updateSidebarTextOptionsAvailability(dataIn, prepared) {
     var group = document.querySelector('#' + control);
     if (!tip || !group) return;
     tip.textContent = message;
-    group.title = disabled ? message : '';
     group.setAttribute('aria-disabled', disabled ? 'true' : 'false');
     Array.prototype.forEach.call(group.querySelectorAll('button'), function (button) {
       button.disabled = disabled;

@@ -636,7 +636,6 @@
     <?!= include('shared/insertion-options/js'); ?>
     <?!= include('sidebar/js/display-controls'); ?>
     <?!= include('sidebar/js/event-bindings'); ?>
-    <?!= include('sidebar/js/bootstrap'); ?>
     <?!= include('sidebar/js/preview-render'); ?>
     <?!= include('shared/fonts/coverage'); ?>
     <?!= include('shared/fonts/js'); ?>
@@ -644,5 +643,7 @@
     <?!= include('sidebar/js/composition-controls'); ?>
     <?!= include('shared/surprise-me/js'); ?>
     <?!= include('sidebar/js/layout-tray'); ?>
+    <!-- Start sidebar requests after every preview and control handler is loaded. -->
+    <?!= include('sidebar/js/bootstrap'); ?>
   </body>
 </html>

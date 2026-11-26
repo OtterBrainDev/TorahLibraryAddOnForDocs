@@ -289,8 +289,7 @@
       var notes = byId('cc-notes-toggle');
       var notesRow = notes && notes.closest('.cc-row');
       if (emphasisRow && notesRow) emphasisRow.after(notesRow);
-      var advancedAnchor = notesRow || emphasisRow;
-      if (mapping && advancedAnchor) advancedAnchor.after(mapping);
+      if (mapping && emphasisRow) emphasisRow.before(mapping);
     }
 
     // Preferences adapter for the shared composition card component.
