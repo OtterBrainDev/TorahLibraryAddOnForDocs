@@ -176,7 +176,7 @@ test('closing Preferences offers save, discard and cancel only with unsaved chan
 test('every profile change reloads what it changed and tells an open sidebar', () => {
   const answer = PROFILES_JS.match(/function profileAnswer_\([\s\S]*?\n    \}/)[0];
   assert.match(answer, /if \(reload && result && result\.preferences\) \{[\s\S]*?applyPreferencesToForm\(result\.preferences\);\s*\}\s*markPreferencesSaved\(\);/);
-  assert.match(fn(PROFILES_JS, 'switchToProfile_'), /profileAnswer_\('Switching profile…', true,/);
+  assert.match(fn(PROFILES_JS, 'switchToProfile_'), /profileAnswer_\(forTransfer \? 'Loading saved settings for Import\/Export…' : 'Switching profile…', true,/);
   assert.match(fn(PROFILES_JS, 'submitProfileName_'), /profileAnswer_\('Renaming…', false,/);
   assert.match(PREFS_JS, /initSidebarControls\(\);\s*initSettingsProfiles\(\);/);
 });

@@ -10,6 +10,12 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Factory and Import/Export.** Factory uses the updated settings export.
+  Import/Export identifies its loading step when opened from This Document.
+- **Search language filter.** Selecting languages shows Texts results with
+  verified translation text in at least one selected language. Any runs the
+  regular search without translation verification.
+
 - **Auto-Scale Hebrew (schema 34).** Optional, font-specific enlargement for matched Hebrew body text; explicit formatting, unsupported fonts and Hebrew insertion context are unchanged. Existing users and factory defaults retain the prior behavior (off). See [the measurement method](hebrew-auto-scale.md).
 
 - **Preferences.** A profile rail in both modes gives each Google Doc its

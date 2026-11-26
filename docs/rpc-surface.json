@@ -73,6 +73,11 @@
       "definedIn": "apps-script/server/menu.gs"
     },
     {
+      "name": "getSearchTranslationMatches",
+      "arity": 2,
+      "definedIn": "apps-script/server/search.gs"
+    },
+    {
       "name": "getTranslationAvailability",
       "arity": 1,
       "definedIn": "apps-script/server/sefaria-fetch.gs"

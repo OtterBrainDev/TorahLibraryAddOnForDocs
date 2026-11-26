@@ -315,7 +315,7 @@ test('metadata batches keep their positions through invalid refs, headings and c
     assert.equal(isMetadata, true, 'metadata traversal never asks for text');
     return response(200, metadata[ref]);
   });
-  const plans = ctx.resolveLinkerRefPlans_(['Genesis 1:1', 'Unknown', 'Mishneh Torah', 'Sefer HaChinukh'], fetchAll);
+  const plans = ctx.resolveSefariaRefPlansBatch_(['Genesis 1:1', 'Unknown', 'Mishneh Torah', 'Sefer HaChinukh'], fetchAll);
 
   assert.equal(plans[0].textRef, 'Genesis 1:1');
   assert.equal(plans[1].error, '');
@@ -333,7 +333,7 @@ test('broken or redirecting metadata stays unavailable with bounded requests', (
     node_type: 'SchemaNode',
     default_child_node: { node_type: 'JaggedArrayNode', depth: 2, address_types: ['Integer', 'Integer'] }
   });
-  const plans = ctx.resolveLinkerRefPlans_(['Too deep', 'Cycle', 'Wrong index', 'Truncated'], (requests) => {
+  const plans = ctx.resolveSefariaRefPlansBatch_(['Too deep', 'Cycle', 'Wrong index', 'Truncated'], (requests) => {
     batches++;
     return requests.filter((r) => refFromUrl(r.url) !== 'Truncated').map((r) => {
       const ref = refFromUrl(r.url);

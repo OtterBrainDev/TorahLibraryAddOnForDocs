@@ -365,6 +365,11 @@ function runUnifiedQuery(options) {
   return run;
 }
 
+function refreshTextSearchForLanguageFilter_() {
+  var query = currentSearchBoxQuery();
+  if (query) startSearchRun('texts', query);
+}
+
 var SEARCH_PREFETCH_MIN_LENGTH = 2;
 
 // The other tabs searched in the background for an explicit search, each
