@@ -1168,12 +1168,42 @@
      set only by a link straight to one of those tabs (preferences/js.html). */
   /* The Interface and Sidebar tabs rows share their columns, so the label
      and the choices line up across the two. */
+  .interface-mode-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .pref-icon-button {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid #d7d3cb;
+    border-radius: 7px;
+    background: #fff;
+    color: #1f3b68;
+    font: inherit;
+    font-size: 19px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .pref-icon-button:hover { background: #f1ece3; }
+  .pref-icon-button:focus-visible { outline: 2px solid #1f3b68; outline-offset: 2px; }
+  .pref-icon-button:disabled { opacity: .5; cursor: default; }
+  .pref-icon-button--small { width: 27px; height: 27px; font-size: 15px; }
+  .pref-profile-rail-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-right: 4px; }
   .interface-mode-row {
     display: grid;
     grid-template-columns: 7.5em 7em max-content;
     align-items: center;
     column-gap: 10px;
-    margin-top: 10px;
+    margin-top: 0;
     font-size: 13px;
   }
   .interface-mode-row + .interface-mode-row { margin-top: 6px; }
@@ -1199,7 +1229,6 @@
 
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-search-btn,
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-linking-btn,
-  .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-advanced-btn,
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #pref-tab-experimental-btn,
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #translation-language-typography,
   .preferences-dialog[data-ui-mode="simple"]:not(.show-advanced) #emphasis-mapping,
@@ -1709,7 +1738,28 @@
     cursor: pointer;
   }
 
-  /* ── Advanced tab: settings file (preferences/settings-file-js) ───────── */
+  /* ── Settings transfer modal (preferences/settings-file-js) ───────── */
+  .settings-transfer-dialog {
+    box-sizing: border-box;
+    width: min(540px, calc(100vw - 28px));
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+    padding: 16px;
+    border: 1px solid #d7d3cb;
+    border-radius: 12px;
+    background: #fff;
+    color: #222;
+    box-shadow: 0 16px 40px rgba(0,0,0,.2);
+  }
+  .settings-transfer-dialog::backdrop { background: rgba(17,24,39,.35); }
+  .settings-transfer-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .settings-transfer-header h2 { font-size: 18px; margin: 0; }
+  .settings-transfer-target { display: grid; gap: 6px; padding: 10px; border: 1px solid #e3dfd8; border-radius: 8px; margin-bottom: 10px; }
+  .settings-transfer-target[hidden] { display: none; }
+  .settings-transfer-target > label { font-size: 13px; font-weight: 600; }
+  .settings-transfer-shared-row { display: flex; align-items: flex-start; gap: 6px; }
+  .settings-transfer-target .subsection-note { margin: 0; }
+
 
   .settings-file-heading {
     margin: 0 0 6px;

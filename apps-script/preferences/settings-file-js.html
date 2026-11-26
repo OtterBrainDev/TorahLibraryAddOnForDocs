@@ -1,5 +1,5 @@
 <script>
-  // Preferences → Advanced → Settings file (server/settings-file.gs).
+  // Preferences → Import/Export (server/settings-file.gs).
   //
   // Export: the dialog's values, saved or not (PreferencesDialog.collect),
   // go to the server, which writes the file; the browser downloads it, and
@@ -11,11 +11,97 @@
   // untrusted (its name included): the preview is built with textContent.
   document.addEventListener('DOMContentLoaded', function () {
     var dialog = window.PreferencesDialog;
-    if (!dialog || !document.getElementById('pref-tab-advanced')) return;
+    if (!dialog || !document.getElementById('settings-transfer-modal')) return;
 
     var pendingImportText = null;
+    var profileIndex = null;
+    var busy = false;
+    var mode = null;
 
     function el(id) { return document.getElementById(id); }
+
+    function target() {
+      return {
+        mode: mode, activeId: profileIndex.active,
+        profileId: mode === 'simple' ? profileIndex.active : el('settings-transfer-target').value,
+        includeShared: mode === 'simple' || el('settings-transfer-shared').checked
+      };
+    }
+
+    function setBusy(on) {
+      busy = on;
+      ['settings-export', 'settings-import-paste', 'settings-import-file',
+       'settings-transfer-target', 'settings-transfer-shared', 'settings-file-name',
+       'settings-import-text', 'settings-import-cancel'].forEach(function (id) {
+        el(id).disabled = on || !profileIndex;
+      });
+      el('settings-transfer-close').disabled = on;
+      updateApplyButton();
+    }
+
+    function updateApplyButton() {
+      var chosen = el('settings-import-groups').querySelector('input[type="checkbox"]:checked');
+      el('settings-import-apply').disabled = busy || !pendingImportText || !chosen;
+    }
+
+    var modal = el('settings-transfer-modal');
+    el('settings-transfer-open').addEventListener('click', function () {
+      if (modal.open) return;
+      mode = dialog.currentUiMode();
+      profileIndex = null;
+      hidePreview();
+      el('settings-export-fallback').hidden = true;
+      el('settings-transfer-profile-row').hidden = mode !== 'full';
+      el('settings-transfer-shared').checked = false;
+      el('settings-transfer-scope').textContent = mode === 'simple'
+        ? 'Import and export your current preferences, including shared settings. Simple stays active.'
+        : 'Choose a profile. An inactive profile can be imported or exported without switching to it.';
+      setStatus('settings-export-status', '');
+      setStatus('settings-import-status', '');
+      setStatus('settings-transfer-status', 'Loading settings targets…');
+      modal.showModal();
+      setBusy(true);
+      google.script.run.withSuccessHandler(function (index) {
+        if (!index || index.active !== dialog.activeProfileId()) {
+          setStatus('settings-transfer-status', 'The active profile changed. Close Preferences and reopen it.', true);
+          setBusy(false);
+          return;
+        }
+        profileIndex = index;
+        var select = el('settings-transfer-target');
+        select.textContent = '';
+        index.profiles.forEach(function (p) {
+          var option = document.createElement('option');
+          option.value = p.id;
+          option.textContent = p.name + (p.id === index.active ? ' (in use)' : '');
+          select.appendChild(option);
+        });
+        select.value = index.active;
+        setStatus('settings-transfer-status', '');
+        setBusy(false);
+      }).withFailureHandler(function (error) {
+        setStatus('settings-transfer-status', errorText(error, 'Could not load settings targets.'), true);
+        setBusy(false);
+      }).getSettingsProfiles();
+    });
+    el('settings-transfer-close').addEventListener('click', function () {
+      if (!busy) modal.close();
+    });
+    modal.addEventListener('cancel', function (event) { if (busy) event.preventDefault(); });
+    modal.addEventListener('close', function () {
+      hidePreview();
+      el('settings-transfer-open').focus();
+    });
+    ['settings-transfer-target', 'settings-transfer-shared'].forEach(function (id) {
+      el(id).addEventListener('change', function () {
+        var previous = pendingImportText;
+        hidePreview();
+        el('settings-export-fallback').hidden = true;
+        setStatus('settings-export-status', '');
+        if (previous !== null) check(previous);
+      });
+    });
+    el('settings-import-groups').addEventListener('change', updateApplyButton);
 
     function setStatus(id, message, isError) {
       var node = el(id);
@@ -51,22 +137,22 @@
 
     // ── Export ────────────────────────────────────────────────────────────
     el('settings-export').addEventListener('click', function () {
-      var button = this;
-      button.disabled = true;
+      if (busy || !profileIndex) return;
+      setBusy(true);
       setStatus('settings-export-status', 'Preparing the file…');
       google.script.run.withSuccessHandler(function (result) {
-        button.disabled = false;
+        setBusy(false);
         var downloaded = download(result.fileName, result.text);
         el('settings-export-text').value = result.text;
         el('settings-export-filename').textContent = result.fileName;
         el('settings-export-fallback').hidden = false;
         setStatus('settings-export-status', downloaded
-          ? 'Exported ' + result.count + ' settings to ' + result.fileName + '. Share the file; anyone can import it in Preferences → Advanced.'
+          ? 'Exported ' + result.count + ' settings to ' + result.fileName + '. Share the file; anyone can import it in Preferences → Import/Export (⇅).'
           : 'Your browser did not download the file. Copy the settings below instead.');
       }).withFailureHandler(function (error) {
-        button.disabled = false;
+        setBusy(false);
         setStatus('settings-export-status', errorText(error, 'Could not export your settings.'), true);
-      }).exportSettingsFile(dialog.collect(), el('settings-file-name').value || '');
+      }).exportSettingsForTarget(dialog.collect(), el('settings-file-name').value || '', target());
     });
 
     el('settings-export-copy').addEventListener('click', function () {
@@ -83,6 +169,7 @@
       pendingImportText = null;
       el('settings-import-preview').hidden = true;
       el('settings-import-groups').textContent = '';
+      updateApplyButton();
     }
 
     function describeFrom(plan) {
@@ -92,7 +179,7 @@
         parts.push('exported ' + new Date(plan.exportedAt).toLocaleDateString());
       }
       var text = parts.join(', ') + '.';
-      if (plan.interfaceMode) text += ' Interface: ' + (plan.interfaceMode === 'simple' ? 'Simple' : 'Everything') + '.';
+      text += ' Target: ' + (mode === 'simple' ? 'current preferences' : '“' + plan.targetName + '”') + '.';
       return text;
     }
 
@@ -102,13 +189,14 @@
       var box = document.createElement('input');
       box.type = 'checkbox';
       box.value = group.id;
-      box.checked = group.changes > 0;
+      var shared = group.id === 'search' || group.id === 'menu';
+      box.checked = group.changes > 0 && !(mode === 'full' && shared);
       box.disabled = group.changes === 0;
       label.appendChild(box);
       var text = document.createElement('span');
       var name = document.createElement('span');
       name.className = 'settings-import-group-label';
-      name.textContent = group.label;
+      name.textContent = group.label + (mode === 'full' && shared ? ' (all profiles)' : '');
       var count = document.createElement('span');
       count.className = 'settings-import-group-count';
       count.textContent = group.changes
@@ -131,26 +219,32 @@
       list.textContent = '';
       plan.groups.forEach(function (group) { list.appendChild(groupRow(group)); });
       var skipped = el('settings-import-skipped');
-      skipped.hidden = !plan.skippedCount;
-      skipped.textContent = plan.skippedCount
-        ? plan.skippedCount + (plan.skippedCount === 1 ? ' entry' : ' entries') + ' in the file ' + (plan.skippedCount === 1 ? 'is' : 'are') + ' not a setting this version has, or not a value it can take, and will be skipped.'
-        : '';
+      skipped.hidden = !plan.skippedCount && !plan.ignoredShared;
+      skipped.textContent = (plan.skippedCount ? plan.skippedCount + ' unsupported or invalid entries will be skipped. ' : '') +
+        (plan.ignoredShared ? plan.ignoredShared + ' shared settings are excluded from this profile import.' : '');
       var anything = plan.groups.some(function (group) { return group.changes > 0; });
-      el('settings-import-apply').disabled = !anything;
       el('settings-import-preview').hidden = false;
+      var warning = plan.targetActive || (plan.includeShared && mode === 'full')
+        ? ' Importing into the active preferences or applying shared changes replaces unsaved form edits.'
+        : ' This inactive profile will be updated without switching or changing the active form.';
       setStatus('settings-import-status', anything
-        ? 'Nothing has changed yet. Apply saves the parts ticked at once; changes in this dialog you have not saved are replaced.'
-        : (plan.groups.length ? 'Your settings already match this file.' : 'This file has no settings this version can use.'));
+        ? 'Nothing has changed yet. Apply saves only the checked groups.' + warning
+        : (plan.groups.length ? 'The target already matches this file.' : 'This file has no settings for the selected target.'));
+      updateApplyButton();
     }
 
     function check(text) {
+      if (busy || !profileIndex) return;
       hidePreview();
+      setBusy(true);
       setStatus('settings-import-status', 'Reading the file…');
       google.script.run.withSuccessHandler(function (plan) {
         showPreview(text, plan);
+        setBusy(false);
       }).withFailureHandler(function (error) {
+        setBusy(false);
         setStatus('settings-import-status', errorText(error, 'Could not read that file.'), true);
-      }).previewSettingsImport(text);
+      }).previewSettingsImportForTarget(text, target());
     }
 
     el('settings-import-file').addEventListener('change', function () {
@@ -184,22 +278,22 @@
         setStatus('settings-import-status', 'Tick at least one part to apply.', true);
         return;
       }
-      var button = this;
-      button.disabled = true;
-      modalBusyShow('Importing settings…');
+      if (busy || !profileIndex) return;
+      setBusy(true);
+      setStatus('settings-import-status', 'Importing settings…');
       google.script.run.withSuccessHandler(function (result) {
-        modalBusyHide();
-        button.disabled = false;
         hidePreview();
-        dialog.markSaved();
-        dialog.reloadFrom(result.preferences);
-        if (result.uiMode && result.uiMode !== dialog.currentUiMode()) dialog.showInterfaceMode(result.uiMode);
-        setStatus('settings-import-status', 'Imported: ' + result.applied + (result.applied === 1 ? ' setting' : ' settings') + ' changed and saved.');
+        if (result.affectsActive) {
+          dialog.reloadFrom(result.preferences);
+          dialog.markSaved();
+        }
+        setBusy(false);
+        setStatus('settings-import-status', 'Imported: ' + result.applied + (result.applied === 1 ? ' setting' : ' settings') + ' changed and saved' +
+          (mode === 'full' ? ' for “' + result.targetName + '” (and any checked shared groups).' : '.'));
       }).withFailureHandler(function (error) {
-        modalBusyHide();
-        button.disabled = false;
+        setBusy(false);
         setStatus('settings-import-status', errorText(error, 'Could not import the settings.'), true);
-      }).applySettingsImport(pendingImportText, groups);
+      }).applySettingsImportForTarget(pendingImportText, groups, target());
     });
   });
 </script>

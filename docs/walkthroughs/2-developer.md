@@ -480,7 +480,7 @@ and the offset mapping) and `linker-classify.test.js`.
   until the server answers, so a slow round trip no longer looks like a hang.
   Opening Preferences from the sidebar shows *Opening Preferences…*
   (`showBusyOverlay('preferences')`) and ignores repeat clicks.
-- **Settings files** (`server/settings-file.gs`, Preferences → Advanced): an
+- **Settings files** (`server/settings-file.gs`, Preferences → Import/Export ⇅): an
   export is the `SETTINGS` values shown in the dialog, grouped into four parts;
   an import writes only `SETTINGS` keys with valid values, only the ticked
   parts and only what differs, and refuses a file from a newer schema
@@ -567,3 +567,5 @@ then set that number in the SDK.
 - *What's stored?* Preferences in `UserProperties`, sidebar state in the user
   cache for 6 hours, and the Session Library in the browser. No credentials,
   no analytics.
+
+**Settings transfer contract:** the new target-aware RPCs validate current mode and active profile identity. They export or update the chosen profile without activating it; inactive profile snapshots are built and size-checked before writes. Shared menu/search/linking settings remain global and are optional for Everything transfers. Import never changes the current interface mode. The older settings-file RPCs retain their compatibility signatures. Run the settings-file, settings-profiles and first-run regression tests, then the live Preferences transfer checklist.

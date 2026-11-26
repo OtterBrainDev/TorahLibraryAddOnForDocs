@@ -35,7 +35,7 @@ function describeEntries(entries) {
   });
 }
 
-const FIXED_TAIL = ['---', 'Preferences', 'Help & Support'];
+const FIXED_TAIL = ['---', 'Preferences', { Help: ['How to...', 'Support', 'About', 'Re-run Setup Wizard'] }];
 
 test('default layout reproduces the menu that shipped before it was customizable', () => {
   const ctx = load();
@@ -71,7 +71,7 @@ test('Preferences and Help are always last, whatever is stored', () => {
     const plan = describe(ctx.planMenuFromLayout_(raw, { surpriseMeEnabled: false }));
     assert.deepEqual(plan.slice(-3), FIXED_TAIL, raw);
     assert.equal(plan.filter((l) => l === 'Preferences').length, 1, raw);
-    assert.equal(plan.filter((l) => l === 'Help & Support').length, 1, raw);
+    assert.equal(plan.filter((l) => l && typeof l === 'object' && l.Help).length, 1, raw);
   }
 });
 
@@ -117,7 +117,8 @@ test('an emptied submenu is left out of the menu', () => {
     quick_actions: ['-'],
   };
   const plan = ctx.planMenuFromLayout_(layout, { surpriseMeEnabled: false });
-  assert.ok(!plan.some((e) => e.type === 'submenu'));
+  assert.ok(!plan.some((e) => e.type === 'submenu' && e.label === 'Quick Actions'));
+  assert.ok(plan.some((e) => e.type === 'submenu' && e.label === 'Help'));
 });
 
 test('no two dividers are ever adjacent, and none leads a list', () => {
@@ -177,7 +178,8 @@ test('hiding the submenu placeholder hides the whole Quick Actions submenu', () 
   const ctx = load();
   const d = ctx.getDefaultMenuLayout_();
   const plan = ctx.planMenuFromLayout_({ top: d.top, quick_actions: d.quick_actions, hidden: ['quick_actions'] }, { surpriseMeEnabled: false });
-  assert.ok(!plan.some((e) => e.type === 'submenu'));
+  assert.ok(!plan.some((e) => e.type === 'submenu' && e.label === 'Quick Actions'));
+  assert.ok(plan.some((e) => e.type === 'submenu' && e.label === 'Help'));
 });
 
 test('a layout without "hidden" hides nothing', () => {
@@ -254,4 +256,12 @@ test('the move buttons say where they go', () => {
   assert.match(PREFS_JS, /menuLayoutButton\('Move to ' \+ menuEditorConfig\.submenuLabel \+ ' ▸'/);
   assert.match(PREFS_JS, /menuLayoutButton\('◂ Move to main menu'/);
   assert.match(PREFS_JS, /focus = menuLayoutMove\(menuLayoutState, listName, index\);/);
+});
+
+test('Texts-only mode uses the legacy menu label and removes disabled tools', () => {
+  const ctx = load();
+  const plan = describe(ctx.planMenuFromLayout_(ctx.getDefaultMenuLayout_(), { voicesEnabled: false, lexiconEnabled: false }));
+  assert.equal(plan[0], 'Add Sources with Sefaria');
+  assert.ok(!plan.includes('Voices') && !plan.includes('Lexicon'));
+  assert.deepEqual(plan.slice(-3), FIXED_TAIL);
 });

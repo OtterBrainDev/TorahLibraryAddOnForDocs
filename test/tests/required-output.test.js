@@ -57,21 +57,19 @@ function loadDocumentActions(env) {
   env.ctx.DocumentApp.ElementType = { TEXT: 'TEXT', PARAGRAPH: 'PARAGRAPH', LIST_ITEM: 'LIST_ITEM' };
 }
 
-test('Insert from Selection reports a missing saved Display language without replacing the selected citation', () => {
-  const env = loadSourceInsertion({ preferences: { output_mode_default: 'en', insert_from_selection_replace: 'true' } });
+test('Insert from Selection opens review without writing the document, even in quiet mode', () => {
+  const env = loadSourceInsertion({ preferences: { linker_review_mode: 'quiet' } });
   loadDocumentActions(env);
-  const touched = watchTarget(env), alerts = [];
-  const doc = env.ctx.DocumentApp.getActiveDocument();
-  env.ctx.DocumentApp.getActiveDocument = () => ({ ...doc, getSelection: () => ({ getRangeElements: () => [{
-    isPartial: () => false, getElement: () => ({ getType: () => 'TEXT', asText: () => ({ getText: () => 'Genesis 1:1' }) }),
-  }] }) });
-  env.ctx.DocumentApp.getUi = () => ({ alert: (message) => alerts.push(message) });
-  env.ctx.findReference = () => payload({ text: [], versionTitle: '' });
+  const touched = watchTarget(env);
+  const scope = { selected: true, insertIntent: true };
+  let opened;
+  env.ctx.captureLinkerScope_ = () => scope;
+  env.ctx.confirmLinkerUploadOnce_ = () => true;
+  env.ctx.openLinkerReview_ = (value) => { opened = value; };
   env.ctx.insertSourceFromSelection();
+  assert.equal(opened, scope);
   assert.equal(touched(), false);
   assert.deepEqual(env.texts(), []);
-  assert.equal(alerts.length, 1);
-  assert.match(alerts[0], /Failed to insert source: No translation text.*Original or Both/);
 });
 
 test('Link Texts retains its citation when the requested Display language has no content', () => {

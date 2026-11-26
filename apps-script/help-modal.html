@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- Same image policy as shared/ui/head.html; this dialog is served as a plain file, so it cannot include() it. test/ui/csp-coverage.test.js keeps the copies identical. -->
+    <!-- Same image policy as shared/ui/head.html. test/ui/csp-coverage.test.js keeps the copies identical. -->
     <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
     <base target="_top">
+    <script type="application/json" id="help-tab-json"><?!= helpTabJson ?></script>
     <style>
       :root {
         --bg: #f5f5f3;
@@ -447,7 +448,12 @@
       document.addEventListener('DOMContentLoaded', function() {
         setupTabs();
         setupHelpSearch();
-        switchTab('help-tab');
+        switchTab(JSON.parse(document.getElementById('help-tab-json').textContent));
+        document.getElementById('rerun-setup-wizard').addEventListener('click', function () {
+          var button = this; button.disabled = true;
+          google.script.run.withSuccessHandler(function () { google.script.host.close(); })
+            .withFailureHandler(function () { button.disabled = false; }).openFirstRunSetup();
+        });
 
         // Prevent sandboxed-iframe navigation errors from hash links
         document.querySelectorAll('a[href^="#"]').forEach(function(link) {
@@ -471,7 +477,7 @@
       <section class="shell">
         <div class="shell-header">
           <div class="eyebrow">Sefaria for Google Docs</div>
-          <h1>Help &amp; Support</h1>
+          <h1>Help</h1>
           <p class="lede"><strong>Help</strong> explains every part of the sidebar, the Quick Actions and Preferences. <strong>Support</strong> is for when something isn't working. <strong>About</strong> has the version, what's new, and privacy.</p>
           <div class="global-links">
             <a class="pill-link" target="_blank" href="https://sefaria.formstack.com/forms/google_docs_extension_feedback" rel="noopener noreferrer">Send feedback</a>
@@ -485,6 +491,7 @@
           <button class="tab-button" role="tab" aria-selected="true" aria-controls="help-tab" data-tab="help-tab">Help</button>
           <button class="tab-button" role="tab" aria-selected="false" aria-controls="support-tab" data-tab="support-tab" tabindex="-1">Support</button>
           <button class="tab-button" role="tab" aria-selected="false" aria-controls="about-tab" data-tab="about-tab" tabindex="-1">About</button>
+          <button type="button" class="tab-button" id="rerun-setup-wizard" title="Change languages, text formatting, divine-name preferences and interface choices by running setup again.">Re-run Setup Wizard</button>
         </div>
 
         <!-- ═══════════════════════════════ HELP ═══════════════════════════════ -->
@@ -535,7 +542,7 @@
               <li>Optional: open <span class="ui-label">📰 Insertion Options</span> to choose Hebrew, translation or both, and how they sit on the page.</li>
               <li>Click <span class="ui-label">Add Source</span> (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).</li>
             </ol>
-            <p>Want to change the basics (Hebrew or translation, vowels, divine names, Simple or Everything)? <button type="button" class="button-link secondary" id="run-setup-again" onclick="google.script.run.openFirstRunSetup()">Run setup again</button></p>
+            <p>To change your initial choices, use Re-run Setup Wizard at the top of this window.</p>
             <div class="action-grid" style="margin-top:12px;">
               <div class="action-card"><a href="#voices"><h3>Quote a source sheet</h3><p class="muted">Use the Voices tab.</p></a></div>
               <div class="action-card"><a href="#lexicon"><h3>Look up a word</h3><p class="muted">Use the Lexicon tab.</p></a></div>
@@ -566,11 +573,11 @@
             </ul>
             <h3>What's new</h3>
             <ul>
-              <li><strong>Saved defaults.</strong> <a href="#preferences">Preferences</a> remembers how you like sources inserted, in every document. A short setup the first time you open the add-on picks the basics — choose <strong>I've used Sefaria for Google Docs</strong> to start from the look you know; <span class="ui-label">Run setup again</span>, under <a href="#quick-start">Quick start</a>, brings it back.</li>
+              <li><strong>Saved defaults.</strong> <a href="#preferences">Preferences</a> remembers how you like sources inserted, in every document. A short setup the first time you open the add-on picks the basics — choose <strong>I've used Sefaria for Google Docs 1.0</strong> to apply familiar active settings immediately, including a Texts-only sidebar; <span class="ui-label">Re-run Setup Wizard</span> at the top brings it back; keep or reset your active preferences first.</li>
               <li><strong>Layout and formatting.</strong> Hebrew on the right, on the left or on top, or line by line beside its translation; vowels and cantillation (all, Tanakh only, or none); punctuation; transliteration; fonts that match your document; titles as headings, so they appear in the outline. See <a href="#layout-settings">Insertion Options</a>.</li>
               <li><strong>Commentary and notes.</strong> Keep, combine or leave out inline explanation in supported Talmud and Tanakh editions; choose separately how source footnotes appear. See <a href="#layout-settings">Insertion Options</a>.</li>
               <li><strong>Insert Source from Selection</strong>, the <strong>Voices</strong> (source sheets) and <strong>Lexicon</strong> (dictionary) tabs, the <strong>Session Library</strong> of what you've inserted, and several translations at once.</li>
-              <li><strong>Settings files</strong>, in <span class="ui-label">Preferences → Advanced</span>, so a teacher can hand a class the same settings, and <a href="#profiles">profiles</a>, so you can keep one look for each class and switch in a click.</li>
+              <li><strong>Settings files</strong>, in <span class="ui-label">Preferences → Import/Export (⇅)</span>, so a teacher can hand a class the same settings, and <a href="#profiles">profiles</a>, so you can keep one look for each class and switch in a click.</li>
             </ul>
             <h3>What works differently</h3>
             <ol>
@@ -629,7 +636,7 @@
               </tbody>
             </table>
             <p style="margin-top:10px;">Whatever the interface, <span class="ui-label">Preferences → Sidebar</span> leaves out the parts of the sidebar you don't use: see <a href="#sidebar-controls">What the sidebar shows</a>. Everything also keeps <a href="#profiles">profiles</a>.</p>
-            <p style="margin-top:10px;">New users choose a mode in the setup shown the first time the add-on opens. To see it again: <button type="button" class="button-link secondary" id="run-setup-again-interface" onclick="google.script.run.openFirstRunSetup()">Run setup again</button> (the same button is under <a href="#quick-start">Quick start</a>).</p>
+            <p style="margin-top:10px;">New users choose a mode in setup. Choose Re-run Setup Wizard at the top or from the Help menu to revisit those choices.</p>
           </section>
 
           <section class="card topic-section" id="texts" data-search-title="Find a text (Texts tab)" data-search-terms="texts search find reference title phrase url link hebrew citation abbreviation hil hilchot rambam results filter language sort category relevance hide corpus restore suggestions no results recent searches history prev next open on sefaria">
@@ -846,7 +853,7 @@
             <p>Click <span class="ui-label">🏃</span> at the bottom of the sidebar, or use <span class="ui-label">Extensions → Sefaria for Google Docs → Quick Actions</span>. <a href="#sidebar-controls">Preferences → Sidebar</a> can leave buttons out of the 🏃 panel.</p>
             <table class="ref-table">
               <tbody>
-                <tr><td><span class="ui-label">Sel → ס</span><br><span class="small">Insert Source from Selection</span></td><td>Select a reference you've typed in the document — say <code>Genesis 1:1</code> — and run this. By default the selected words are replaced by the source (titled with the same reference). To keep your words and insert the source below them, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>. <a href="#link-texts">Link Texts with Sefaria</a>'s Insert follows the same setting.</td></tr>
+                <tr><td><span class="ui-label">Sel → ס</span><br><span class="small">Insert Source from Selection</span></td><td>Select one or more references you've typed in the document — say <code>Genesis 1:1</code> — and run this. Review the matches and choose Insert or Link. This opens review even with quiet linking selected. If none resolves, Search selected text in Texts opens the sidebar with your query. A citation on its own line can be replaced by its source; a citation within a sentence stays in place. To keep your citations, turn off <span class="ui-label">Preferences → Insertion → Insert from Selection</span>. <a href="#link-texts">Link Texts with Sefaria</a>'s Insert follows the same setting.</td></tr>
                 <tr><td><span class="ui-label">ה → ש</span><br><span class="small">Transform Divine Names</span></td><td>Applies your divine-name replacements to text already in the document &mdash; every match in the body of the tab you have open, not only selected text. See <a href="#divine-names">Divine names</a>.</td></tr>
                 <tr><td><span class="ui-label">🔗 → ס</span><br><span class="small">Link Texts with Sefaria</span></td><td>Finds citations in your document and links them to Sefaria. See <a href="#link-texts">Link Texts with Sefaria</a>.</td></tr>
                 <tr><td><span class="ui-label">🎲</span><br><span class="small">Surprise Me</span></td><td>Experimental — inserts a random set of sources on a word or theme (or a Hebrew word from Tanakh picked for you), from the corpora you tick, at the cursor. Each source goes in the way Insert from Selection inserts one: with your saved <span class="ui-label">Preferences → Insertion</span> defaults (Display, Arrangement, Line numbers, Notes, linked titles, Citation, transliteration, Commentary), not the changes made for this session in <span class="ui-label">📰 Insertion Options</span>. The same form as the sidebar's 🧪 Experimental section. Only shown when switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>.</td></tr>
@@ -888,7 +895,7 @@
               <li><strong>Just link and report a count</strong> — never asks; unclear citations are skipped rather than guessed. Turn on <strong>Insert text after linking</strong> to insert each linked source as well.</li>
             </ul>
             <h3>What is sent to Sefaria</h3>
-            <p>Sefaria's linker has to read the text to find citations. With <strong>Candidate passages only</strong> (the default, in <span class="ui-label">Preferences → Linking → Document scanning</span>), your document is checked on your own computer first and only passages that look like they contain a citation are sent. <strong>Whole document</strong> sends everything, which can catch unusual citations the local check misses.</p>
+            <p>Sefaria's linker has to read text to find citations. Highlight text to limit the scope; clear the selection to scan the whole body of the current document tab. With <strong>Candidate passages only</strong> (the default, in <span class="ui-label">Preferences → Linking → Document scanning</span>), the add-on filters that scope before sending candidate passages to Sefaria. <strong>Whole document</strong> sends the full selected scope, or the entire body if nothing is selected. Insert Source from Selection explicitly sends the selected text and always opens review.</p>
             <h3>Citations that couldn't be matched</h3>
             <p>When Sefaria's linker can't match a citation, the add-on looks it up again the way the search box does: with consistent punctuation, Hebrew numerals without their marks, and abbreviations such as <em>Hil.</em> written out. A citation found this way is linked like any other, and its row says <em>Found by searching</em> the spelling that worked. When Sefaria takes a label in front of a colon as part of the citation &mdash; <em>Duplicate A: Genesis 2:1</em> &mdash; the words after the label are searched too, and only they are linked; the label stays as you wrote it.</p>
             <p>The rest are listed under <span class="ui-label">▸ Show … citations that couldn't be matched</span>, below the table. Each row shows the words in your document, every spelling that was searched with what Sefaria answered to it, and why none matched — usually a chapter or page the book doesn't have, a book name Sefaria doesn't know, or <em>ibid.</em> / <em>there</em> / <span class="he" dir="rtl">שם</span>, which points back to an earlier citation. Fix the citation in your document and run Link Texts again.</p>
@@ -910,7 +917,7 @@
           <section class="card topic-section" id="preferences" data-search-title="Preferences" data-search-terms="preferences settings defaults save save and close reset refresh fonts insertion linking menu bar sidebar tab voices lexicon profiles advanced settings file export import share class teacher brand kit house style experimental title heading hebrew transliteration translation language source emphasis transliteration mapping insertion defaults current session difference">
             <h2>Preferences</h2>
             <p>Open with <span class="ui-label">⚙︎</span> in the sidebar or <span class="ui-label">Extensions → Sefaria for Google Docs → Preferences</span>. Preferences are your <strong>saved defaults</strong>; they follow your Google account into every document. The sidebar's <span class="ui-label">📰 Insertion Options</span> changes only the current session, and Link Texts' <span class="ui-label">📰 Customize this insertion</span> only one linking pass.</p>
-            <p>At the top, <span class="ui-label">Interface</span> switches between <a href="#interface-mode">Simple and Everything</a> at once, without Save; changes you have not saved yet stay as they are. Simple hides the Search, Linking, Advanced and Experimental tabs; Everything shows them, and the <a href="#profiles">Profiles</a> column beside the tabs.</p>
+            <p>At the top, <span class="ui-label">Interface</span> switches between <a href="#interface-mode">Simple and Everything</a> at once, without Save; changes you have not saved yet stay as they are. Simple hides the Search, Linking and Experimental tabs; Everything shows them, and the <a href="#profiles">Profiles</a> column beside the tabs. Explicitly disabled Voices and Lexicon stay off in either interface. The ⇅ Import/Export button is always visible beside Interface.</p>
             <table class="ref-table">
               <thead><tr><th>Tab</th><th>What's there</th></tr></thead>
               <tbody>
@@ -919,7 +926,7 @@
                 <tr><td><span class="ui-label">Linking</span></td><td>How <a href="#link-texts">Link Texts with Sefaria</a> reviews what it finds, and how much of your document it sends.</td></tr>
                 <tr><td><span class="ui-label">Sidebar</span></td><td>What the sidebar shows: the Voices and Lexicon tabs, the Quick Actions buttons, and (Everything) which controls Insertion Options offers. See <a href="#sidebar-controls">What the sidebar shows</a>.</td></tr>
                 <tr><td><span class="ui-label">Menu Bar</span></td><td>Rearrange the add-on's menu. See <a href="#menu">The menu</a>.</td></tr>
-                <tr><td><span class="ui-label">Advanced</span></td><td><strong>Settings file.</strong> <span class="ui-label">Export settings file</span> saves the settings shown in Preferences (unsaved changes included) to a <code>.json</code> file you can share; give it a name such as <em>Grade 7 Chumash</em>. <span class="ui-label">Choose a settings file…</span> (or paste its text) shows what each part would change — Text and layout; Fonts, colours and titles; Search and linking; Menu and interface — and applies only the parts you tick, saved at once. Teachers can give a class the same settings; organizations their house style. A file holds settings only: never your searches, documents or account. Everything only.</td></tr>
+                <tr><td><span class="ui-label">⇅ Import/Export</span></td><td>Opens a modal beside Interface in both modes. <strong>Simple:</strong> transfer your active preferences. <strong>Everything:</strong> select any named profile, including one not in use. Export includes unsaved form values only for the active profile; inactive profiles use their saved settings. Normally only text, layout and appearance travel with a profile. Opt into shared search, linking, menu and sidebar settings if needed; check the groups to apply before confirming. Import leaves Simple or Everything unchanged. A file holds settings only: never your searches, documents or account.</td></tr>
                 <tr><td><span class="ui-label">🧪 Experimental</span></td><td>Optional features still in progress, such as Surprise Me. Off by default.</td></tr>
               </tbody>
             </table>
@@ -939,7 +946,7 @@
             <p><span class="ui-label">Preferences → Sidebar</span> leaves out the parts of the sidebar you don't use, in Simple and in Everything. Save applies it, and an open sidebar follows at once. Anything you switch off is hidden, not removed, and your settings still apply.</p>
             <table class="ref-table">
               <tbody>
-                <tr><td><span class="ui-label">Search tabs</span></td><td>The <a href="#voices">Voices</a> and <a href="#lexicon">Lexicon</a> tabs beside Texts. Texts is always there; with both off, the tabs go. A tab you switch off can still be opened from its menu item, and shows while you are in it, so you can get back to Texts; its <em>Insertion Defaults</em> in Preferences come back when you switch it on.</td></tr>
+                <tr><td><span class="ui-label">Search tabs</span></td><td>The <a href="#voices">Voices</a> and <a href="#lexicon">Lexicon</a> tabs beside Texts. Texts is always there; with both off, the tabs go. Switching a tab off also removes its menu item; if both are off, Texts is called Add Sources with Sefaria. its <em>Insertion Defaults</em> in Preferences come back when you switch it on.</td></tr>
                 <tr><td><span class="ui-label">Quick Actions</span></td><td>Which buttons <a href="#quick-actions">🏃</a> offers: Insert from Selection, Transform Divine Names, Link Texts with Sefaria. With all three off, 🏃 goes too. The menu's Quick Actions are arranged separately, in <a href="#menu">Menu Bar</a>.</td></tr>
                 <tr><td><span class="ui-label">Insertion Options</span></td><td>Everything only. Which controls <a href="#layout-settings">📰 Insertion Options</a> offers: Display, Arrangement, Citation, Line by line, Line numbers, Notes; the source's link, vowels, cantillation, punctuation and transliteration; the translation's link, punctuation and commentary; the title and text fonts. Hiding a control prevents further changes through that control, but keeps its current value, including a session override. Use Revert in Insertion Options first if the class should start from saved defaults. <span class="ui-label">Show all</span> brings them all back.</td></tr>
               </tbody>
@@ -952,16 +959,16 @@
             <ul>
               <li><strong>The tabs always edit the profile in use</strong>, marked with a filled dot. Click another profile to switch to it: its settings are loaded and become the ones every insert uses. If you have changes not saved yet, Preferences asks whether to save them to the profile you're leaving first.</li>
               <li><strong>+ New profile</strong> starts as a copy of the profile in use and switches to it; change what you like, then Save. Your first new profile turns your settings into <em>My settings</em>, so nothing you had is lost.</li>
-              <li><strong>Rename</strong> and <strong>Delete</strong> act on the profile in use. Deleting it switches to the first one left. You can keep up to ten.</li>
+              <li>The <strong>🖉 Rename active profile</strong> button above the list and <strong>Delete</strong> act on the profile in use. Deleting it switches to the first one left. You can keep up to ten.</li>
               <li><strong>In the sidebar</strong>, with two or more profiles, <span class="ui-label">📰 Insertion Options</span> names the profile in use and has a <span class="ui-label">Profile</span> list at its top: pick one to switch mid-lesson. A switch, there or in Preferences, drops this session's Insertion Options changes, so what you see is the profile you picked.</li>
             </ul>
-            <p class="small" style="margin-top:10px;">A profile holds the <em>Text and layout</em> and <em>Fonts, colours and titles</em> settings: vowels, cantillation, punctuation, transliteration, commentary, source notes, layout, divine names, translation language, fonts, titles and the citation. The menu, Simple or Everything, what the sidebar shows, search and linking are yours, the same whichever profile is in use. Reset To Defaults, a settings file and the sidebar's <span class="ui-label">Save as defaults</span> change the profile in use.</p>
+            <p class="small" style="margin-top:10px;">A profile holds the <em>Text and layout</em> and <em>Fonts, colours and titles</em> settings: vowels, cantillation, punctuation, transliteration, commentary, source notes, layout, divine names, translation language, fonts, titles and the citation. The menu, Simple or Everything, what the sidebar shows, search and linking are yours, the same whichever profile is in use. Reset To Defaults and the sidebar's <span class="ui-label">Save as defaults</span> change the profile in use. Import/Export can explicitly target another profile without activating it.</p>
           </section>
 
           <section class="card topic-section" id="menu" data-search-title="The add-on menu (Menu Bar)" data-search-terms="menu extensions menu bar customize reorder hide items quick actions submenu divider restore default menu reload">
             <h2>The add-on menu</h2>
-            <p>Everything is under <span class="ui-label">Extensions → Sefaria for Google Docs</span>. Out of the box the menu has: <strong>Texts</strong>, <strong>Voices</strong>, <strong>Lexicon</strong>, <strong>Insert Source from Selection</strong>, and a <strong>Quick Actions</strong> submenu (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count) — then <strong>Surprise Me</strong>, while it is switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>, and <strong>Preferences</strong> and <strong>Help &amp; Support</strong>. In <a href="#interface-mode">Simple</a> mode it is shorter: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria; switching back to Everything restores the menu you had.</p>
-            <p>To change it, open <span class="ui-label">Preferences → Menu Bar</span>. Use &uarr; and &darr; to reorder items, an item's <span class="ui-label">Move to Quick Actions ▸</span> or <span class="ui-label">◂ Move to main menu</span> to move it into the Quick Actions submenu or back out (it lands just below Quick Actions), add dividers, or untick an item to hide it (tick it again to bring it back). <strong>Preferences</strong> and <strong>Help &amp; Support</strong> always stay at the bottom, so you can't lose your way back. <span class="ui-label">Restore default menu</span> undoes everything.</p>
+            <p>Everything is under <span class="ui-label">Extensions → Sefaria for Google Docs</span>. Out of the box the menu has: <strong>Texts</strong>, <strong>Voices</strong>, <strong>Lexicon</strong>, <strong>Insert Source from Selection</strong>, and a <strong>Quick Actions</strong> submenu (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count) — then <strong>Surprise Me</strong>, while it is switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>, and <strong>Preferences</strong> and <strong>Help</strong>. In <a href="#interface-mode">Simple</a> mode it is shorter: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria; switching back to Everything restores the menu you had.</p>
+            <p>To change it, open <span class="ui-label">Preferences → Menu Bar</span>. Use &uarr; and &darr; to reorder items, an item's <span class="ui-label">Move to Quick Actions ▸</span> or <span class="ui-label">◂ Move to main menu</span> to move it into the Quick Actions submenu or back out (it lands just below Quick Actions), add dividers, or untick an item to hide it (tick it again to bring it back). <strong>Preferences</strong> and <strong>Help</strong> always stay at the bottom, so you can't lose your way back. <span class="ui-label">Restore default menu</span> undoes everything.</p>
             <p class="small">After saving, reload the document if the menu hasn't changed — Google Docs builds the menu when the document opens.</p>
           </section>
 
@@ -1015,7 +1022,7 @@
             </details>
             <details>
               <summary>A tab, a button or a Preferences tab is missing</summary>
-              <p>No <span class="ui-label">Voices</span> or <span class="ui-label">Lexicon</span> tab, Quick Actions button or Insertion Options control? It is switched off in <a href="#sidebar-controls">Preferences → Sidebar</a>. Anything else is probably <a href="#interface-mode">Simple</a> mode, which hides the result sort, Restore Corpus, some menu items, and the Search, Linking, Advanced and Experimental tabs of Preferences. Switch to <strong>Everything</strong> at the top of Preferences.</p>
+              <p>No <span class="ui-label">Voices</span> or <span class="ui-label">Lexicon</span> tab, Quick Actions button or Insertion Options control? It is switched off in <a href="#sidebar-controls">Preferences → Sidebar</a>. Anything else is probably <a href="#interface-mode">Simple</a> mode, which hides the result sort, Restore Corpus, some menu items, and the Search, Linking and Experimental tabs of Preferences. Switch to <strong>Everything</strong> at the top of Preferences.</p>
             </details>
             <details>
               <summary>Cantillation marks look different from the rest of the Hebrew</summary>
@@ -1123,6 +1130,7 @@
                 <li><span class="tag tag-new">New</span><strong>Your order of corpora.</strong> Reorder the corpus groups in the results (Tanakh, Mishnah, Talmud and the rest), or hide the ones you don't use. <span class="where">Preferences → Search</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>No dead ends at book headings.</strong> A heading with no text of its own, such as <em>Mishneh Torah</em>, is left out of the matches, and a note says what to add: a chapter, a siman or a verse. <span class="where">The search box</span></li>
                 <li><span class="tag tag-new">New</span><strong>Hebrew keyboard and shortcuts.</strong> An on-screen Hebrew keyboard with a row for vowels. Press <kbd>/</kbd> to jump to the search box, <kbd>↑</kbd> <kbd>↓</kbd> to move through results, and <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> to add the source; see <a href="#shortcuts">Keyboard shortcuts</a>. <span class="where">⌨︎ beside the search box</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Selection-aware actions.</strong> Insert Source from Selection reviews highlighted citations even with quiet linking selected. Link Texts and Gematriya Count act on the selection; clear it to work on the entire document body. <span class="where">Extensions → Sefaria for Google Docs</span></li>
                 <li><span class="tag tag-new">New</span><strong>One search, three tabs.</strong> Typing searches the tab you're in. Enter also searches Voices and the Lexicon in the background, so their results are ready when you switch, and each tab keeps its own results and selection. <span class="where">Texts · Voices · Lexicon, under the search box</span></li>
               </ul>
             </details>
@@ -1136,7 +1144,7 @@
                 <li><span class="tag tag-new">New</span><strong>Several translations at once.</strong> With Translation only or the bilingual Stacked arrangement, click one translation, then Ctrl-click (Cmd-click on Mac) to add or remove individual translations, or Shift-click for a range. They are inserted in selection order; the preview lists their names. The filter box finds a translation by its language's name: <em>French</em>, <em>français</em> or <span class="he" lang="he" dir="rtl">צרפתית</span>. <span class="where">Versions, under the preview</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>Availability for this passage.</strong> Versions hides known empty translations. An edition can have some text without covering the whole range; gaps are not filled from a different edition under the selected edition's credit. If a required edition is unavailable, choose another. If an explicit single-language insertion would be empty, no document text is changed. <span class="where">Versions; Preferences → Search → Translation Languages</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>Your edition stays selected.</strong> Changing Insertion Options preserves the translation, Hebrew edition and order of several translations. The preview waits for matching text before Add Source becomes available. <span class="where">Versions and 📰 Insertion Options</span></li>
-                <li><span class="tag tag-new">New</span><strong>Insert Source from Selection.</strong> Select a reference you typed, such as <em>Psalms 92:1</em>, and run the command. The citation becomes the source, titled with your words. <span class="where">Extensions → Sefaria for Google Docs → Insert Source from Selection</span></li>
+                <li><span class="tag tag-new">New</span><strong>Insert Source from Selection.</strong> Select one or several references you typed, such as <em>Psalms 92:1</em>, and run the command. Review the matches and choose what to insert; unresolved queries can open the Texts sidebar. <span class="where">Extensions → Sefaria for Google Docs → Insert Source from Selection</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>Cleaner inserted text.</strong> No stray HTML tags or entity codes. The source's bold and italics are kept, and verse numbers come from Sefaria. <span class="where">Every insert</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>Ranges across chapters.</strong> <em>Genesis 1:31–2:3</em> gets a heading where each chapter starts (<em>Chapter 2</em>, <span class="he" lang="he" dir="rtl">פרק ב</span>), and the verse numbers restart with it. <span class="where">Inserts with Line numbers on</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>Inserting inside a table.</strong> With the cursor in a table cell, one language or the Stacked layout goes into the cell. Side-by-side layouts go just below the table, and the sidebar says so. Headers, footers and footnotes get a message instead. <span class="where">Cursor in a table cell</span></li>
@@ -1223,12 +1231,12 @@
             <details>
               <summary>Your settings <span class="teaser">first-run setup, Simple or Everything, menu, sidebar, profiles, settings files</span></summary>
               <ul>
-                <li><span class="tag tag-new">New</span><strong>A short setup the first time.</strong> Three questions, with a live preview: what you'll use it for, how sources should look, and how much to show. Choose <em>I've used Sefaria for Google Docs</em> to start from the look you know. <span class="where">Quick start → Run setup again</span></li>
-                <li><span class="tag tag-new">New</span><strong>Simple or Everything.</strong> Simple shows search, preview and insert with a shorter menu. Everything shows every tool. Switching only hides or shows things and never changes a setting. <span class="where">Preferences → Interface</span></li>
+                <li><span class="tag tag-new">New</span><strong>Setup that suits you.</strong> The 1.0 preset applies the familiar settings in one step, with Voices and Lexicon off. Other paths let you customize text, layout and optional search tools. <span class="where">Help → Re-run Setup Wizard</span></li>
+                <li><span class="tag tag-new">New</span><strong>Simple or Everything.</strong> Simple shows search, preview and insert with a shorter menu. Everything shows additional settings and enabled tools. Switching preserves your preferences, including explicitly disabled search tools. <span class="where">Preferences → Interface</span></li>
                 <li><span class="tag tag-new">New</span><strong>Arrange the menu.</strong> Reorder the menu, move items into Quick Actions, and hide what you don't use. <span class="where">Preferences → Menu Bar</span></li>
                 <li><span class="tag tag-new">New</span><strong>Choose what the sidebar shows.</strong> Hide the Voices or Lexicon tab, Quick Actions buttons, or Insertion Options controls you don't use. <span class="where">Preferences → Sidebar</span></li>
                 <li><span class="tag tag-new">New</span><strong>Profiles.</strong> Keep named sets of how sources look and switch between them in a click: transliteration on for a primary class, vowels off for adults. <span class="where">Preferences → Profiles (Everything)</span></li>
-                <li><span class="tag tag-new">New</span><strong>Settings files.</strong> Export your settings to a file to hand to a class, or import an organization's house style and choose which parts to apply. <span class="where">Preferences → Advanced</span></li>
+                <li><span class="tag tag-new">New</span><strong>Settings files in both interfaces.</strong> Open ⇅ to export your settings or import checked groups. In Everything, select the profile to transfer without switching to it. Shared settings are optional. <span class="where">Preferences → Import/Export (⇅)</span></li>
               </ul>
             </details>
             <details>
@@ -1236,7 +1244,7 @@
               <ul>
                 <li><span class="tag tag-improved">Improved</span><strong>Fewer permissions.</strong> It doesn't ask for your email address or profile. It uses only the document it's open in, its own windows, its settings and Sefaria. <span class="where">Google's permission screen, at install</span></li>
                 <li><span class="tag tag-new">New</span><strong>A written privacy policy.</strong> No server, no account and no analytics. The policy says exactly what goes to Sefaria, and when. <span class="where">The Privacy policy link above</span></li>
-                <li><span class="tag tag-improved">Improved</span><strong>Help you can search.</strong> Help, Support and About tabs, with a search box, troubleshooting and the keyboard shortcuts. <span class="where">Extensions → Sefaria for Google Docs → Help &amp; Support</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Help you can search.</strong> How to..., Support and About open the corresponding tabs. Re-run Setup Wizard offers Keep Current Preferences or Reset to Add-on Defaults, without deleting named profiles. <span class="where">Extensions → Sefaria for Google Docs → Help</span></li>
                 <li><span class="tag tag-new">New</span><strong>A Help topic for version 1.0 users.</strong> Where 1.0's commands went, what stays the same and what works differently: <a href="#coming-from-sefaria">Coming from version 1.0</a>. <span class="where">Help → Quick start</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>Clearer messages.</strong> The sidebar says what it's doing (<em>Inserting into your document…</em>, <em>Searching Sefaria…</em>), and says when Sefaria can't be reached instead of reporting no match. <span class="where">The sidebar</span></li>
               </ul>

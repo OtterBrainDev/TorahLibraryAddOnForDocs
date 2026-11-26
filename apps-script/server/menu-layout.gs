@@ -21,7 +21,7 @@ Licensed under the MIT License. See repository LICENSE.md.
 // divider. "hidden" (optional) lists items the user switched off: they keep
 // their place in "top"/"quick_actions" so switching one back on restores it
 // where it was, but they are left out of the built menu. Hiding the
-// "quick_actions" placeholder hides the whole submenu. Preferences and Help & Support are NOT part of the layout: they are
+// "quick_actions" placeholder hides the whole submenu. Preferences and Help are NOT part of the layout: they are
 // always appended after a divider, so the user can never lose the way back to
 // this very screen.
 
@@ -139,7 +139,7 @@ function normalizeMenuLayout_(raw) {
  * Turn a layout into the concrete menu to build. Items that are unavailable
  * right now (Surprise Me while it is switched off) and items the user hid are
  * skipped; dividers are collapsed so no two are adjacent and none leads or
- * trails a list; an empty submenu is left out. Preferences and Help & Support are always appended.
+ * trails a list; an empty submenu is left out. Preferences and Help are always appended.
  *
  * @param {*} layout  anything normalizeMenuLayout_ accepts
  * @param {{surpriseMeEnabled: boolean}} availability
@@ -149,11 +149,14 @@ function normalizeMenuLayout_(raw) {
 function planMenuFromLayout_(layout, availability) {
   var normalized = normalizeMenuLayout_(layout);
   var surpriseOn = !!(availability && availability.surpriseMeEnabled);
+  var voicesOn = !availability || availability.voicesEnabled !== false;
+  var lexiconOn = !availability || availability.lexiconEnabled !== false;
   var hidden = {};
   normalized.hidden.forEach(function(id) { hidden[id] = true; });
 
   function isAvailable(id) {
     if (hidden[id]) return false;
+    if (id === 'voices' && !voicesOn || id === 'lexicon' && !lexiconOn) return false;
     return id !== 'surprise_me' || surpriseOn;
   }
 
@@ -182,7 +185,7 @@ function planMenuFromLayout_(layout, availability) {
         }
       } else if (isAvailable(id)) {
         var item = MENU_LAYOUT_ITEMS_[id];
-        entries.push({ type: 'item', label: item.label, fn: item.fn });
+        entries.push({ type: 'item', label: id === 'texts' && !voicesOn && !lexiconOn ? 'Add Sources with Sefaria' : item.label, fn: item.fn });
       }
     });
     return entries;
@@ -191,7 +194,12 @@ function planMenuFromLayout_(layout, availability) {
   var top = toEntries(normalized.top);
   top.push({ type: 'separator' });
   top.push({ type: 'item', label: 'Preferences', fn: 'preferencesPopup' });
-  top.push({ type: 'item', label: 'Help & Support', fn: 'openHelpModal' });
+  top.push({ type: 'submenu', label: 'Help', entries: [
+    { type: 'item', label: 'How to...', fn: 'openHelpModal' },
+    { type: 'item', label: 'Support', fn: 'openSupportModal' },
+    { type: 'item', label: 'About', fn: 'openAboutModal' },
+    { type: 'item', label: 'Re-run Setup Wizard', fn: 'openFirstRunSetup' }
+  ] });
   return collapse(top);
 }
 

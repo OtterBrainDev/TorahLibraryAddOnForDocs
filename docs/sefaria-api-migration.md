@@ -508,7 +508,12 @@ The release-copy follow-up at `63c08ad` passed GitHub Actions
 ([run 45651545150](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/actions/runs/45651545150)).
 This documentation pass does not change runtime code or release status.
 
-Next action: review the updated PR #60 after #58 and #59, then run the exact
-HEAD in the designated Docs test deployment using the existing checklist.
+PRs #58–60 were merged; master at cc77a87 is the base of the selection/setup follow-up. The new branch changes selection-scoped linking, explicit Insert from Selection review, Gematriya selection extraction, 1.0 setup, optional tools, Help and restart choices. No deployment or release. Run the full suite and live checklist Q1–Q9 against the final PR head; confirm fuzzy fallback and selection placement in Docs before launch.
 No merge, Apps Script push, numbered version, Marketplace publication or
 tutorial recording was performed in this pass.
+
+PR [#62](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/pull/62) is the new draft against master. Initial CI at cdfe562 reported 1,034 passed and four failures in test fixtures/expectations; repaired those to accommodate the new submenu, wizard label and safe template JSON. Full CI and live Docs checks must still be confirmed.
+
+### Preferences transfer follow-up — 2026-11-25
+
+PR #62 remains the review branch. The earlier corrected selection/setup head 8a76961 passed CI (run 45731731253). This follow-up keeps disabled optional tools consistent with menu visibility, preserves unrelated unsaved form edits through mode switches, moves Rename to a labeled pencil above Profiles, and replaces the Advanced settings-file tab with the Import/Export modal in both interfaces. Everything can target a named profile without activating it; shared settings are opt-in. Simple transfers current preferences; imports preserve interface mode. Original RPCs remain for compatibility. Updated release documentation, mirrored agent guides and live cases R1–R9. No new preference key or schema migration, deployment or release. Run CI on final branch head and test modal focus, actual menu rendering, transfer/download and profile isolation in Docs before merge.

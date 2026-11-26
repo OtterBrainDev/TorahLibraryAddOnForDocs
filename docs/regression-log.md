@@ -118,3 +118,19 @@ Columns:
 | Explicit Original-only or Translation-only inserted an empty titled block when that role had no text; numbering could disguise an empty source. | senior walkthrough, 2026-11-24 | — | **any-language resolution confused with required output content**. | `test/tests/required-output.test.js`, `sidebar-edition-selection.test.js` — actual Selection/Link Texts handlers, missing-role Display recovery and no target mutation. | Validate processed output before numbering or resolving a document insertion target; Both alone may fall back to an available language. |
 | The multi-translation selector trimmed exact version titles and accepted whitespace-distinct identities; the inserted result and pinned link drifted. | senior walkthrough, 2026-11-24 | — | **display normalization applied to an identifier**. | `test/tests/multi-version-insert.test.js` — exact whitespace-distinct titles, strict returned identity and pinned URL. | Preserve edition identifiers exactly through selection, fetch, insertion and attribution links. |
 | Multiple-translation insertion could write an empty block after Commentary/Notes removed that edition's only content. | senior walkthrough, 2026-11-24 | — | **raw availability checked without checking processed output**. | `test/tests/required-output.test.js` — separate `filtered`/`skipped` outcomes and the real sidebar insertion handler. | Policy-filtered editions remain selectable; only a genuinely missing edition updates availability. |
+
+### Selection, Help and setup follow-up — 2026-11-25
+
+| Symptom | Root cause | Fix / regression |
+| --- | --- | --- |
+| Selected paragraph reported empty; fuzzy/multiple citations no review | Selection reader handled only TEXT nodes and insertion used a direct-only resolver | Shared selection leaf reader, exact body-range mapping, review override, prefilled Texts fallback; selection-workflows and required-output tests |
+| Selection ignored by Link Texts | Whole body scanned regardless of selection | Scoped payload mapping and placement validation; scanDocumentForReferences RPC now accepts captured scope |
+| Legacy setup continued through customization; Help always opened one tab | Purpose was merely a preset, menu had a single Help entry | One-step legacy preset, optional tools, fixed Help submenu, restartFirstRunSetup RPC; first-run-setup and menu-layout tests |
+
+### Preference mode and profile-transfer follow-up — 2026-11-25
+
+| Symptom | Root cause | Fix / regression |
+| --- | --- | --- |
+| Disabled optional tools appear after mode switch | Menu availability and editor visibility differed; form baseline not reconciled | Respect explicit Sidebar switches in both modes; update only menu baseline; mode round-trip and UI tests |
+| Rename looked like a profile | Text action adjacent to list | Labeled U+1F589 above list |
+| Import/Export hidden in Simple, import only addressed live settings | Mode-dependent Advanced tab and active-only RPCs | U+21C5 modal and target-aware RPCs; inactive snapshot transfer, shared-group opt-in, preserve mode; settings-profile and settings-file tests |

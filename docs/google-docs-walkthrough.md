@@ -51,8 +51,7 @@ Sefaria for Google Docs** starts from the look you know; Help → Quick start �
 transliteration, fonts and heading titles; **Commentary** for supported
 Davidson Talmud and Silverstein Tanakh editions; separate **Notes** choices
 for marked footnotes; Insert Source from Selection; Voices, Lexicon and the
-Session Library; several translations at once; settings files (Preferences →
-Advanced) and profiles, one look per class.
+Session Library; several translations at once; settings files (Preferences → Import/Export ⇅) and profiles, one look per class.
 
 **Different:**
 
@@ -458,7 +457,7 @@ Open with **⚙︎** or **Extensions → Sefaria for Google Docs → Preferences
 are saved defaults and follow your Google account into every document. At the
 top, **Interface** (Simple / Everything) switches at once, without Save, and
 keeps any changes you haven't saved yet. Simple hides the Search, Linking,
-Advanced and Experimental tabs; Everything shows them, and the Profiles column
+Experimental tabs; Everything shows them, and the Profiles column
 beside the tabs.
 
 ### Starting choices
@@ -489,7 +488,7 @@ profile intact, use **Keep my settings** when setup offers it.
 | **Linking** | After linking; Insert text after linking; Document scanning. |
 | **Sidebar** | What the sidebar shows (see below). |
 | **Menu Bar** | Reorder, group, hide and divide menu items; **Move to Quick Actions ▸** / **◂ Move to main menu** move an item into the submenu or out. |
-| **Advanced** | **Settings file**: **Export settings file** saves the settings shown (unsaved changes included) to a `.json` file, optionally named (*Grade 7 Chumash*); **Choose a settings file…** (or paste its text) shows what each part would change — Text and layout; Fonts, colours and titles; Search and linking; Menu and interface — and applies only the parts you tick. A file holds settings only, never searches, documents or account details. |
+| **⇅ Import/Export** (button beside Interface, both modes) | Simple targets current preferences. Everything asks which profile to export or update; inactive profiles stay inactive. Active exports include unsaved form values, inactive exports use saved snapshots. Profile files normally carry text, layout and appearance; shared settings are opt-in. Choose a file or paste its JSON, preview the changes and apply only checked groups. The interface mode stays unchanged. Files contain settings only, not searches, documents or account details. |
 | **🧪 Experimental** | Optional in-progress features such as Surprise Me. |
 
 Buttons: **Reset To Defaults** (every setting back to the original, and the
@@ -569,3 +568,13 @@ shorter menu (see *Simple or Everything*).
   supported, but typo correction is not.
 - Linking is deliberately conservative: an ambiguous citation is asked about
   or skipped, never guessed.
+
+## Selection actions and Help (launch follow-up)
+
+Highlight the references you want to insert and choose Insert Source from Selection. Review the citations, choose among ambiguous sources, and check Insert or Link. This opens review even when the separate Link Texts command is set to Just link and report. If no exact citation is found, Search selected text in Texts opens the normal sidebar with that query. Link Texts and Gematriya Count act on selected text when present; clear the selection for the whole document body. Link Texts still honors its scanning preference inside that scope. If the document changes before review, select again rather than risk linking a different occurrence.
+
+The Help menu has How to..., Support, About and Re-run Setup Wizard. The same rerun button is available in the Help dialog. Keep Current Preferences starts from your choices; Reset to Add-on Defaults resets active preferences but retains named profile snapshots. Choosing the 1.0 preset immediately applies familiar settings and disables Voices and Lexicon; with both disabled, Texts is labelled Add Sources with Sefaria. Other wizard paths let you choose the optional tools.
+
+### Profile transfer and interface controls (launch follow-up)
+
+Use **🖉** above the Profiles list to rename the profile in use. Import/Export is no longer an Advanced tab: **⇅** beside Interface opens it in Simple and Everything. Switching interfaces does not turn explicitly disabled Voices or Lexicon back on. In Everything, select the profile to import or export. An inactive-profile-only import does not replace unsaved edits in the active form. Active imports and shared changes can replace unsaved form edits; review the preview before Apply. Import preserves the current Simple/Everything mode.

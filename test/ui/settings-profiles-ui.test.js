@@ -118,3 +118,32 @@ test('a switch, in the sidebar or in Preferences, drops the session\'s Insertion
   assert.match(fn(MODE_JS, 'reloadAccountPreferences'), /loadSettingsProfiles\(\);/);
   assert.match(readAppScriptFile('sidebar/js/bootstrap.html'), /loadSettingsProfiles\(\);/);
 });
+
+
+test('profile rename is a labeled pencil action above the profile list', () => {
+  const rail = PREFS.match(/<nav class="pref-profile-rail"[\s\S]*?<\/nav>/)[0];
+  assert.ok(rail.indexOf('id="pref-profile-rename"') < rail.indexOf('id="pref-profile-list"'));
+  assert.match(rail, /id="pref-profile-rename"[^>]*aria-label="Rename active profile"[^>]*>[\s\S]*?&#x1f589;/);
+});
+
+test('Import/Export is a modal opened by a labeled icon outside the mode-dependent tabs', () => {
+  const head = PREFS.match(/<section class="preferences-toc[\s\S]*?<\/section>/)[0];
+  assert.match(head, /id="settings-transfer-open"[^>]*title="Import\/Export"[^>]*aria-haspopup="dialog"[^>]*>[\s\S]*?&#x21c5;/);
+  assert.doesNotMatch(PREFS, /id="pref-tab-advanced-btn"/);
+  assert.match(PREFS, /<dialog class="settings-transfer-dialog" id="settings-transfer-modal"/);
+  const js = readAppScriptFile('preferences/settings-file-js.html');
+  assert.match(js, /modal\.showModal\(\)/);
+  assert.match(js, /el\('settings-transfer-profile-row'\)\.hidden = mode !== 'full'/);
+  assert.match(js, /profileId: mode === 'simple' \? profileIndex\.active : el\('settings-transfer-target'\)\.value/);
+  assert.match(js, /if \(result\.affectsActive\) \{\s*dialog\.reloadFrom/);
+  assert.match(js, /el\('settings-transfer-open'\)\.focus\(\)/);
+});
+
+test('menu editor respects disabled tools and does not rewrite other preference baselines on mode switch', () => {
+  assert.match(fn(PREFS_JS, 'menuLayoutIsSuppressed'), /byId\('show_' \+ id \+ '_tab'\)/);
+  assert.match(fn(PREFS_JS, 'menuLayoutLabel'), /Add Sources with Sefaria/);
+  assert.match(fn(PREFS_JS, 'initInterfaceMode'), /syncFormMenuBaseline_\(\)/);
+  const context = vm.createContext({});
+  vm.runInContext("var preferencesBaseline_ = JSON.stringify({nekudot:false,menu_layout:'old',show_voices_tab:false}); var menuLayoutSavedValue='new';" + fn(PREFS_JS, 'syncFormMenuBaseline_') + "syncFormMenuBaseline_();", context);
+  assert.deepEqual(JSON.parse(context.preferencesBaseline_), {nekudot:false,menu_layout:'new',show_voices_tab:false});
+});

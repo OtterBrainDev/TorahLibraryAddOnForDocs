@@ -164,6 +164,8 @@ function setupPreviewText_(answers) {
   var initial = config.answers || {};
   var STEPS = ['purpose', 'look', 'mode', 'done'];
   var step = 0;
+  var restarting = config.rerun === true;
+  var preserveInitial = false;
   var purpose = null;
   var saving = false;
   // Fields the user changed by hand; a later purpose choice never overrides them.
@@ -207,6 +209,8 @@ function setupPreviewText_(answers) {
     });
     selectValue($one('#setup-language'), initial.language || 'en');
     setRadio('uiMode', initial.uiMode || 'full');
+    $one('#setup-voices').checked = initial.voices !== false;
+    $one('#setup-lexicon').checked = initial.lexicon !== false;
   }
 
   function collectAnswers() {
@@ -222,7 +226,9 @@ function setupPreviewText_(answers) {
       teamim: $one('#setup-teamim').checked,
       divine: divine,
       language: $one('#setup-language').value,
-      uiMode: getRadio('uiMode')
+      uiMode: getRadio('uiMode'),
+      voices: $one('#setup-voices').checked,
+      lexicon: $one('#setup-lexicon').checked
     };
   }
 
@@ -231,6 +237,7 @@ function setupPreviewText_(answers) {
   // look: both languages, Hebrew on the right, and a short menu; screen 2
   // explains that God's name is now replaced as sources go in.
   function applyPurpose(value) {
+    if (preserveInitial) return;
     if (value === 'quoting' && !touched.arrangement) setRadio('arrangement', 'he-top');
     if (value === 'sefaria' && !touched.arrangement) setRadio('arrangement', 'he-right');
     if (value !== 'quoting' && value !== 'sefaria' && !touched.arrangement) setRadio('arrangement', initial.arrangement || 'he-right');
@@ -260,16 +267,17 @@ function setupPreviewText_(answers) {
   }
 
   function render(focus) {
-    var name = STEPS[step];
+    var name = restarting ? 'restart' : STEPS[step];
     $all('.setup-step').forEach(function (section) {
       section.hidden = section.getAttribute('data-step') !== name;
     });
-    $one('#setup-progress').textContent = name === 'done' ? '' : 'Step ' + (step + 1) + ' of 3';
+    $one('#setup-progress').textContent = name === 'done' || name === 'restart' ? '' : 'Step ' + (step + 1) + ' of 3';
     $all('#setup-steps li').forEach(function (dot, i) {
       dot.className = name === 'done' ? 'is-current' : (i < step ? 'is-done' : (i === step ? 'is-current' : ''));
     });
     $one('#setup-back').hidden = step === 0 || name === 'done';
     $one('#setup-skip').hidden = name === 'done';
+    $one('#setup-skip').textContent = name === 'restart' ? 'Cancel' : 'Skip for now';
     var next = $one('#setup-next');
     next.textContent = name === 'mode' ? 'Finish' : (name === 'done' ? 'Start' : 'Continue');
     next.disabled = saving || (name === 'purpose' && !purpose);
@@ -286,7 +294,13 @@ function setupPreviewText_(answers) {
     box.hidden = !message;
   }
 
-  function save(answers) {
+  function openSidebarAndClose() {
+    modalBusyShow('Opening Sefaria for Google Docs…');
+    google.script.run.withSuccessHandler(function () { google.script.host.close(); })
+      .withFailureHandler(function () { google.script.host.close(); }).refreshSidebarAfterPreferences();
+  }
+
+  function save(answers, closeImmediately) {
     saving = true;
     showError('');
     render(false);
@@ -295,6 +309,7 @@ function setupPreviewText_(answers) {
       .withSuccessHandler(function () {
         saving = false;
         modalBusyHide();
+        if (closeImmediately) { openSidebarAndClose(); return; }
         step = STEPS.indexOf('done');
         render(true);
       })
@@ -308,7 +323,26 @@ function setupPreviewText_(answers) {
   }
 
   function next() {
+    if (restarting) {
+      var choice = getRadio('restart');
+      saving = true; render(false); showError('');
+      modalBusyShow('Preparing setup…');
+      google.script.run.withSuccessHandler(function (result) {
+        saving = false; modalBusyHide(); restarting = false;
+        preserveInitial = choice === 'keep';
+        initial = result.answers || {};
+        config.hasSavedSettings = result.hasSavedSettings;
+        applyInitialAnswers(); applyKeepOffer(); render(true);
+      }).withFailureHandler(function () {
+        saving = false; modalBusyHide(); showError('Could not prepare setup. Try again.'); render(false);
+      }).restartFirstRunSetup(choice);
+      return;
+    }
     var name = STEPS[step];
+    if (name === 'purpose' && purpose === 'sefaria') {
+      save({ legacyPreset: true }, true);
+      return;
+    }
     if (name === 'purpose' && purpose === 'returning') {
       // Keep everything: nothing is sent but "setup is done".
       save({});
@@ -320,11 +354,7 @@ function setupPreviewText_(answers) {
     }
     if (name === 'done') {
       // Open (or refresh) the sidebar in the mode just chosen, then close.
-      modalBusyShow('Opening Sefaria for Google Docs…');
-      google.script.run
-        .withSuccessHandler(function () { google.script.host.close(); })
-        .withFailureHandler(function () { google.script.host.close(); })
-        .refreshSidebarAfterPreferences();
+      openSidebarAndClose();
       return;
     }
     step += 1;

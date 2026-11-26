@@ -90,7 +90,7 @@ function load({ stored = {}, failReads = null } = {}) {
     },
   };
   vm.createContext(context);
-  ['config.gs', 'attribution.gs', 'gematriya.gs', 'transliteration.gs'].forEach((file) => {
+  ['config.gs', 'attribution.gs', 'gematriya.gs', 'transliteration.gs', 'ui_core.gs'].forEach((file) => {
     vm.runInContext(fs.readFileSync(path.join(APPS_SCRIPT, file), 'utf8'), context, { filename: file });
   });
   fs.readdirSync(path.join(APPS_SCRIPT, 'server')).filter((f) => f.endsWith('.gs')).forEach((file) => {

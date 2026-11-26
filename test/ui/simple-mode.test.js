@@ -65,7 +65,6 @@ test('Preferences hides only advanced tabs and sections, and Everything shows th
   const ids = hiddenIds(PREFS_CSS, /data-ui-mode="simple"\]:not\(\.show-advanced\)/);
   assert.deepEqual(ids.sort(), [
     'emphasis-mapping',
-    'pref-tab-advanced-btn',
     'pref-tab-experimental-btn',
     'pref-tab-linking-btn',
     'pref-tab-search-btn',

@@ -95,8 +95,9 @@ setup again**.
   tabs. Each tab keeps its own results; **Enter** searches all three.
 - **Session Library (📜):** what you've inserted recently, with pins (texts,
   sheets and words) and a **Copy References** list.
-- **Settings files** (**Preferences → Advanced**, in Everything): export your
-  settings and hand them to a class, or import an organization's house style.
+- **Settings files** (**Preferences → ⇅ Import/Export**, in either interface):
+  export your settings and hand them to a class, or import an organization's
+  house style. Everything asks which profile; Simple uses current preferences.
 - **Profiles** (Everything): a look for each class, switched in a click in
   Preferences or the sidebar's Insertion Options.
 - **Unlink Sources** and **Gematriya Count** in the Quick Actions menu.

@@ -257,9 +257,9 @@ test('every setting belongs to exactly one part, and the excluded keys are real 
   assert.equal(ctx.settingsFileGroupOf_('sidebar_options_hidden'), 'menu');
 });
 
-test('the Advanced tab: nothing Save collects, nothing drawn as HTML, a download that stays in the dialog', () => {
+test('Import/Export modal: nothing Save collects, nothing drawn as HTML, a download that stays in the dialog', () => {
   const prefs = fs.readFileSync(path.join(APPS_SCRIPT, 'preferences.html'), 'utf8');
-  const panel = prefs.match(/<div class="pref-tab-panel" id="pref-tab-advanced"[\s\S]*?\n        <\/div>\n/)[0];
+  const panel = prefs.match(/<dialog class="settings-transfer-dialog" id="settings-transfer-modal"[\s\S]*?<\/dialog>/)[0];
   const fields = panel.match(/<(input|textarea|select)\b[^>]*>/g) || [];
   assert.ok(fields.length >= 4);
   fields.forEach((field) => assert.doesNotMatch(field, /\bname=/, `Save would collect ${field}`));
@@ -269,6 +269,6 @@ test('the Advanced tab: nothing Save collects, nothing drawn as HTML, a download
   // The page's <base target="_top"> must not send the download to the document's window.
   assert.match(js, /link\.target = '_self';/);
   // Nothing is written before Apply, and only the parts ticked are sent.
-  assert.match(js, /\.previewSettingsImport\(text\)/);
-  assert.match(js, /input\[type="checkbox"\]:checked[\s\S]*?\.applySettingsImport\(pendingImportText, groups\)/);
+  assert.match(js, /\.previewSettingsImportForTarget\(text, target\(\)\)/);
+  assert.match(js, /input\[type="checkbox"\]:checked[\s\S]*?\.applySettingsImportForTarget\(pendingImportText, groups, target\(\)\)/);
 });

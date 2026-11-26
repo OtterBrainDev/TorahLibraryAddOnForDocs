@@ -464,3 +464,31 @@ checklist was run against the code that shipped.
 | Date | Tester | Account (A/B/C) | Apps Script version / commit | Result | Failures (check ids) |
 | --- | --- | --- | --- | --- | --- |
 | | | | | | |
+
+### Q — selection and onboarding follow-up (pending live verification)
+
+| Case | Action | Expected |
+| --- | --- | --- |
+| Q1 | Highlight an entire paragraph containing Beresheet 1:1-2; choose Insert Source from Selection | Review or prefilled Texts fallback, not empty-selection error; no edit until confirmation |
+| Q2 | Select two references with quiet linking saved | Both reviewed, Insert defaults on for exact matches, ambiguous rows require choice; quiet setting unchanged |
+| Q3 | Select only the second of two identical citations; link; then repeat after an earlier edit or tab switch | Only the intended occurrence linked; stale selection fails safely |
+| Q4 | Select part of a paragraph and multiple paragraphs or table cells; Link Texts in both scan modes | Only selected text uploaded/linked, or clear failure if the body mapping cannot be verified |
+| Q5 | Gematriya Count on a selected full paragraph and without selection | Correct selection and document counts |
+| Q6 | Fresh setup, choose 1.0 and Continue | Immediate completion, Add Sources with Sefaria, no Voices/Lexicon tabs or menu entries; quiet linking, no automatic name transform |
+| Q7 | Other paths with each combination of optional tools | Saved checkboxes and matching menu labels after finish |
+| Q8 | Each Help submenu command and tab-styled rerun button | Correct tab; wizard keep/reset choice, not overlapping dialogs |
+| Q9 | Rerun Keep then Reset on test account with custom preferences and named profiles | Keep retains untouched values; Reset restores active defaults, retains saved profile snapshots and consent |
+
+### R — preference controls and profile transfer (pending live verification)
+
+| Case | Action | Expected |
+| --- | --- | --- |
+| R1 | Disable Voices and Lexicon in Sidebar; Save; switch Simple → Everything → Simple | Both remain absent from sidebar/menu and editor; Add Sources with Sefaria stays the Texts label; unrelated preferences unchanged |
+| R2 | Edit vowels or typography without saving; switch interfaces | Form edits remain unsaved and intact; only the mode-driven menu baseline is updated |
+| R3 | In Everything, click the pencil above Profiles and rename | Renames only the current profile; tooltip and accessible label; no apparent profile row named Rename |
+| R4 | In Simple, open Import/Export; export and import a file | No profile picker; active preferences updated; Simple stays active |
+| R5 | In Everything, choose an inactive profile; export with a different unsaved active font | File uses saved inactive values, not the active form; no profile switch |
+| R6 | Import only Text and layout into inactive profile while active form has edits | Inactive profile updated; active edits and other groups untouched |
+| R7 | Import shared settings with and without opt-in | Shared keys excluded unless enabled and group checked; mode unchanged |
+| R8 | Close with Escape or close button; reopen and change target after file preview | Focus returns to Import/Export; target change refreshes preview |
+| R9 | Open transfer dialog, then change active profile in another document | Stale identity rejected; no preference writes |

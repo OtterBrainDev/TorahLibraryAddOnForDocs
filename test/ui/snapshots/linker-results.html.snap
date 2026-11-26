@@ -4,6 +4,7 @@
     <!-- Served as a template (linkTextsWithSefaria) so it can share the
          insertion options with the sidebar's Layout tray. -->
     <?!= include('shared/ui/head'); ?>
+    <script type="application/json" id="linker-scope-json"><?!= scopeJson ?></script>
     <?!= include('shared/css/native-controls'); ?>
     <?!= include('css/tokens'); ?>
     <?!= include('shared/ui/busy-overlay'); ?>
@@ -510,6 +511,7 @@
       <div id="state-done" class="centered-state" hidden>
         <p class="done-message" id="done-message"></p>
         <div class="actions">
+          <button type="button" class="btn" id="search-selection-btn" hidden>Search selected text in Texts</button>
           <button type="button" class="btn btn-primary" id="done-close-btn">Close</button>
         </div>
       </div>
@@ -750,13 +752,16 @@
               ? error.message
               : 'The scan could not be completed. Please try again.';
           })
-          .scanDocumentForReferences();
+          .scanDocumentForReferences(JSON.parse(document.getElementById('linker-scope-json').textContent));
 
         function onScanned(result) {
           report = result || {};
+          var searchButton = byId('search-selection-btn');
+          searchButton.hidden = !(report.insertIntent && report.query);
+          if (!searchButton.hidden) searchButton.textContent = 'Search selected text in Texts';
 
           if (report.nothingToScan) {
-            finish('No text in this document looks like a Sefaria reference, so nothing was sent to Sefaria.\n\nIf you expected a match, switch "Document scanning" to "Whole document" in Preferences → Linking.');
+            finish('No text in ' + (report.selected ? 'the selection' : 'this document') + ' looks like a Sefaria reference. Clear the selection to scan the whole document. If you expected a match, try the Whole document scanning preference.');
             return;
           }
 
@@ -764,7 +769,7 @@
 
           var matches = report.matches || [];
           if (!matches.length) {
-            var nothing = 'No new references to link.';
+            var nothing = report.insertIntent ? 'No exact reference found. Search the selected text in Texts to review possible matches: ' + report.query : 'No new references to link.';
             if (report.unresolvedCount) {
               nothing += '\n\n' + plural(report.unresolvedCount, 'citation') +
                 ' looked like a reference but could not be matched to a Sefaria source' +
@@ -794,6 +799,7 @@
             : (ambiguous.length ? 'Resolve ' + plural(ambiguous.length, 'ambiguous citation') : 'Ready to link');
 
           byId('review-helper').textContent =
+            (report.selected ? 'Only the original selection is in scope. ' : '') +
             'Tick Link to hyperlink the words in your document, and Insert to add the source’s text after them, using your insertion defaults or the settings under Customize this insertion.';
 
           var summaryParts = [];
@@ -969,8 +975,8 @@
           // pre-checking a guess is the behaviour this dialog exists to replace.
           // Insert always starts unchecked; it adds text to the document, so it
           // is only ever done on request.
-          var linkCb = makeCheckbox('link-cb', !match.ambiguous, 'Link "' + match.documentText + '"');
-          var insertCb = makeCheckbox('insert-cb', false, 'Insert the source for "' + match.documentText + '"');
+          var linkCb = makeCheckbox('link-cb', !report.insertIntent && !match.ambiguous, 'Link "' + match.documentText + '"');
+          var insertCb = makeCheckbox('insert-cb', !!report.insertIntent && !match.ambiguous, 'Insert the source for "' + match.documentText + '"');
           [linkCb, insertCb].forEach(function (cb) {
             var td = document.createElement('td');
             td.className = 'cb-cell';
@@ -1016,7 +1022,9 @@
               renderPreview(preview, match.candidates[parseInt(select.value, 10)]);
               // Choosing a destination is the decision; opt the row in to
               // linking unless the reader has already said what they want.
-              if (!linkCb.checked && !insertCb.checked) linkCb.checked = true;
+              if (!linkCb.checked && !insertCb.checked) {
+                if (report.insertIntent) insertCb.checked = true; else linkCb.checked = true;
+              }
               syncMasterCheckboxes();
               updateSelectionCount();
             });
@@ -1089,6 +1097,13 @@
         byId('master-insert-cb').addEventListener('change', function () { setColumn('insertCb', this.checked); });
         byId('cancel-btn').addEventListener('click', function () { google.script.host.close(); });
         byId('done-close-btn').addEventListener('click', function () { google.script.host.close(); });
+        byId('search-selection-btn').addEventListener('click', function () {
+          if (!report || !report.query) return;
+          var button = this; button.disabled = true;
+          google.script.run.withSuccessHandler(function () { google.script.host.close(); })
+            .withFailureHandler(function () { button.disabled = false; })
+            .searchSelectedSources(report.query);
+        });
 
         // ---- apply ----------------------------------------------------------
 
@@ -1103,6 +1118,9 @@
             endChar: row.match.endChar,
             documentText: row.match.documentText,
             occurrence: row.match.occurrence,
+            selectionPrefixHash: row.match.selectionPrefixHash,
+            selectionDocumentId: row.match.selectionDocumentId,
+            selectionTabId: row.match.selectionTabId,
             ref: candidate.ref
           };
         }

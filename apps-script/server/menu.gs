@@ -15,7 +15,9 @@ Licensed under the MIT License. See repository LICENSE.md.
 function buildAndInstallMenu() {
   const prefs = getPreferences();
   const plan = planMenuFromLayout_(prefs.menu_layout, {
-    surpriseMeEnabled: DEV_FLAGS.SURPRISE_ME && prefs.surprise_me_enabled == "true"
+    surpriseMeEnabled: DEV_FLAGS.SURPRISE_ME && prefs.surprise_me_enabled == "true",
+    voicesEnabled: String(prefs.show_voices_tab) !== "false",
+    lexiconEnabled: String(prefs.show_lexicon_tab) !== "false"
   });
   installMenuPlan_(plan);
 }
@@ -109,26 +111,7 @@ function lexiconHTML() {
 
 function quickActionsHTML() {
   var selectionText = '';
-  try {
-    var doc = DocumentApp.getActiveDocument();
-    var selection = doc.getSelection();
-    if (selection) {
-      var rangeElements = selection.getRangeElements();
-      for (var i = 0; i < rangeElements.length; i++) {
-        var re = rangeElements[i];
-        var el = re.getElement();
-        if (el.getType && el.getType() === DocumentApp.ElementType.TEXT) {
-          var textEl = el.asText();
-          if (re.isPartial()) {
-            selectionText += textEl.getText().substring(re.getStartOffset(), re.getEndOffsetInclusive() + 1);
-          } else {
-            selectionText += textEl.getText();
-          }
-        }
-      }
-    }
-  } catch (e) {}
-  selectionText = String(selectionText || '').trim();
+  try { selectionText = selectedPlainText_(DocumentApp.getActiveDocument().getSelection()).trim(); } catch (e) {}
   openSharedSidebar_('texts', { initialQuery: selectionText || null, openActionsPanel: true });
 }
 
@@ -149,12 +132,16 @@ function getSidebarBootstrapData(mode, sessionId) {
   };
 }
 
-function openHelpModal() {
-  const html = HtmlService.createHtmlOutputFromFile('help-modal')
-      .setWidth(760)
-      .setHeight(860);
-  DocumentApp.getUi().showModalDialog(html, 'Help & Support');
+function openHelpTab_(tab) {
+  const template = HtmlService.createTemplateFromFile('help-modal');
+  template.helpTabJson = toEmbeddedJson_(['help-tab', 'support-tab', 'about-tab'].indexOf(tab) >= 0 ? tab : 'help-tab');
+  const html = template.evaluate().setWidth(760).setHeight(860);
+  DocumentApp.getUi().showModalDialog(html, 'Help');
 }
+
+function openHelpModal() { openHelpTab_('help-tab'); }
+function openSupportModal() { openHelpTab_('support-tab'); }
+function openAboutModal() { openHelpTab_('about-tab'); }
 
 function openFeedbackModal() {
   const html = HtmlService.createHtmlOutputFromFile('feedback-modal')
@@ -205,20 +192,7 @@ function getGematriyaStats_() {
 
   if (selection) {
     hasSelection = true;
-    const elements = selection.getRangeElements();
-    for (const elem of elements) {
-      const el = elem.getElement();
-      if (el.getType() === DocumentApp.ElementType.TEXT) {
-        const textEl = el.asText();
-        if (elem.isPartial()) {
-          rawText += textEl.getText().substring(
-            elem.getStartOffset(), elem.getEndOffsetInclusive() + 1
-          );
-        } else {
-          rawText += textEl.getText();
-        }
-      }
-    }
+    rawText = selectedPlainText_(selection);
   } else {
     rawText = doc.getBody().getText();
   }

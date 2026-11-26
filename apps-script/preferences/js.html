@@ -701,6 +701,7 @@
     function applyPreferencesToForm(preferences) {
       try {
               document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+                if (el.closest && el.closest('#settings-transfer-modal')) return;
                 el.checked = preferences[el.name] == 'true' || preferences[el.name] === true;
               });
 
@@ -1908,6 +1909,12 @@
     // tab) is on, so the editor leaves it out otherwise. It keeps its place in
     // the layout, ready for when the feature is switched back on.
     function menuLayoutIsSuppressed(id) {
+      // Disabled optional tools are unavailable in either interface; retain
+      // their stored order and explicit Menu Bar visibility for re-enabling.
+      if (id === 'voices' || id === 'lexicon') {
+        var tool = byId('show_' + id + '_tab');
+        return !!tool && !tool.checked;
+      }
       if (id !== 'surprise_me') return false;
       var toggle = byId('surprise_me_enabled');
       return !(toggle && toggle.checked && !toggle.disabled);
@@ -1925,6 +1932,7 @@
     function menuLayoutLabel(id) {
       if (id === MENU_DIVIDER) return 'Divider';
       if (id === MENU_SUBMENU_ID) return menuEditorConfig.submenuLabel + ' ▸';
+      if (id === 'texts' && menuLayoutIsSuppressed('voices') && menuLayoutIsSuppressed('lexicon')) return 'Add Sources with Sefaria';
       return menuEditorConfig.items[id].label;
     }
 
@@ -2136,7 +2144,7 @@
     // (UI_MODE_STORAGE_KEY), so it never has to be refreshed, which would
     // clear its session's settings. A link straight to a hidden tab
     // (PREF_NAVIGATE_TAB) shows the hidden tabs for this dialog only.
-    var PREF_ADVANCED_TABS_ = ['search', 'linking', 'advanced', 'experimental'];
+    var PREF_ADVANCED_TABS_ = ['search', 'linking', 'experimental'];
     var UI_MODE_STORAGE_KEY = 'sefariaUiMode';
     var _activatePrefTab = null;
 
@@ -2185,7 +2193,7 @@
     function interfaceModeMessage_(mode, result, keptMenuEdits) {
       var parts = [mode === 'simple'
         ? 'Simple: the sidebar, the menu and Preferences show the essentials.'
-        : 'Everything: every tool and setting is shown.'];
+        : 'Everything: all enabled tools and additional settings are shown.'];
       parts.push('Your settings are unchanged.');
       if (keptMenuEdits) parts.push('Your unsaved Menu Bar changes are kept; Save to apply them.');
       else if (result && result.menuKept) parts.push('Your menu was kept as you arranged it.');
@@ -2199,7 +2207,7 @@
       document.querySelectorAll('input[name="interface_mode_choice"]').forEach(function (input) {
         input.addEventListener('change', function () {
           if (!input.checked) return;
-          var previous = current;
+          var previous = currentUiMode_();
           if (status) status.textContent = '';
           modalBusyShow('Switching the interface…');
           google.script.run.withSuccessHandler(function (result) {
@@ -2216,6 +2224,10 @@
             var keptMenuEdits = menuLayoutHasUnsavedChanges();
             if (keptMenuEdits) markMenuLayoutSaved(storedMenu);
             else loadMenuLayoutEditor(storedMenu);
+            // Update only the stored menu's baseline, not the rest of the
+            // form. A visibility switch must neither lose edits nor mark
+            // previously unsaved edits as saved.
+            syncFormMenuBaseline_();
             if (status) status.textContent = interfaceModeMessage_(current, result, keptMenuEdits);
           }).withFailureHandler(function () {
             modalBusyHide();
@@ -2286,7 +2298,10 @@
 
     function initSidebarControls() {
       document.querySelectorAll('.sidebar-tab-switch').forEach(function (box) {
-        box.addEventListener('change', syncSidebarTabsUi_);
+        box.addEventListener('change', function () {
+          syncSidebarTabsUi_();
+          if (menuLayoutState) renderMenuLayoutEditor();
+        });
       });
       SIDEBAR_HIDDEN_LISTS_.forEach(function (list) {
         document.querySelectorAll(list.selector).forEach(function (box) {
@@ -2317,6 +2332,13 @@
 
     function markFormClean_(saved) {
       preferencesBaseline_ = JSON.stringify(saved || collectPreferenceObject());
+    }
+
+    function syncFormMenuBaseline_() {
+      if (preferencesBaseline_ === null || menuLayoutSavedValue === null) return;
+      var baseline = JSON.parse(preferencesBaseline_);
+      baseline.menu_layout = menuLayoutSavedValue;
+      preferencesBaseline_ = JSON.stringify(baseline);
     }
 
     function formHasUnsavedChanges_() {
@@ -2611,7 +2633,7 @@
       });
     }
 
-    // What the Advanced tab's settings file (preferences/settings-file-js,
+    // What the Import/Export modal (preferences/settings-file-js,
     // loaded after this file) needs from the dialog.
     window.PreferencesDialog = {
       collect: collectPreferenceObject,
@@ -2621,7 +2643,8 @@
         setInterfaceModeUi_(mode);
         announceUiModeToSidebar_(mode);
       },
-      currentUiMode: currentUiMode_
+      currentUiMode: currentUiMode_,
+      activeProfileId: function () { return profileIndex_().active; }
     };
 
     _initPreferencesTabs();

@@ -70,7 +70,7 @@ Document Scanning**:
   abbreviation. Only those passages, plus a small amount of surrounding
   context needed to resolve them, are uploaded. Paragraphs of your own
   writing that contain no citation are never transmitted.
-- **Whole document.** The entire body text of the document is uploaded. This
+- **Whole document.** The entire highlighted selection, or the body text of the current document tab if nothing is highlighted, is uploaded. This
   can catch unusual citation forms the local scan misses. This was the
   add-on's original behavior.
 
@@ -118,13 +118,13 @@ settings, default insertion options — are stored using Google's
 managed by Google. It is not readable by other add-ons, by other users, or by
 the add-on's authors.
 
-**Settings files.** Preferences → Advanced → *Export settings file* saves
+**Settings files.** Preferences → ⇅ Import/Export → *Export settings file* saves
 your preference settings (no searches, document text or account details) to
 a file on your own computer, built from your preferences by Google's Apps
 Script service and downloaded by your browser. Who receives the file is up
 to you. *Import* reads a file you choose in your browser and sends its text
 to Google's Apps Script service, which writes only recognised preference
-settings to your `PropertiesService` storage; the file is not kept.
+settings to your `PropertiesService` storage; the file is not kept. In Everything, the selected profile is the target; shared settings are included only by choice. A transfer never changes the interface mode.
 
 **Sidebar session state** — the temporary choices you make in a single
 sidebar session — is stored in Google's `CacheService` and expires
@@ -229,3 +229,7 @@ Every statement above is checkable against the source, which is public:
 - The absence of user-identity access is checkable:
   `grep -rn "getActiveUser\|getEffectiveUser\|getEmail" apps-script/`
   returns nothing.
+
+### Selection scope
+
+Link Texts limits scanning to a highlighted selection when present, subject to the selected scanning preference. Without a selection it scans the body of the current document tab. Insert Source from Selection sends the selected text to Sefaria for citation resolution, with the same up-front disclosure. Selection placement identifiers are local to the review workflow and are not included in the Sefaria request. Clear the selection before running Link Texts to scan the whole body.

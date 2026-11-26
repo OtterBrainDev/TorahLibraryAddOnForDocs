@@ -189,7 +189,7 @@
     },
     {
       "name": "scanDocumentForReferences",
-      "arity": 0,
+      "arity": 1,
       "definedIn": "apps-script/server/document-actions.gs"
     },
     {
@@ -261,6 +261,31 @@
       "name": "switchSettingsProfile",
       "arity": 1,
       "definedIn": "apps-script/server/settings-profiles.gs"
+    },
+    {
+      "name": "searchSelectedSources",
+      "arity": 1,
+      "definedIn": "apps-script/server/document-actions.gs"
+    },
+    {
+      "name": "restartFirstRunSetup",
+      "arity": 1,
+      "definedIn": "apps-script/server/first-run.gs"
+    },
+    {
+      "name": "exportSettingsForTarget",
+      "arity": 3,
+      "definedIn": "apps-script/server/settings-file.gs"
+    },
+    {
+      "name": "previewSettingsImportForTarget",
+      "arity": 2,
+      "definedIn": "apps-script/server/settings-file.gs"
+    },
+    {
+      "name": "applySettingsImportForTarget",
+      "arity": 3,
+      "definedIn": "apps-script/server/settings-file.gs"
     }
   ]
 }

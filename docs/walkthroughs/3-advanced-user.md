@@ -109,8 +109,11 @@ sidebar's **📰 Insertion Options** has a **Profile** list for switching
 mid-lesson. A profile holds how sources look; the menu, the sidebar, search
 and linking stay the same in each.
 
-**Advanced tab:** **Export settings file** hands your settings to a class or a
-colleague; **Choose a settings file…** applies the parts you tick of theirs.
+**⇅ Import/Export** beside Interface works in both modes. In Everything,
+select the profile to export or update, even if inactive. Export a class
+profile as JSON; choose a file, preview changes and apply the checked groups.
+Shared account-wide settings are optional. The 🖉 action above Profiles
+renames the profile in use.
 
 > Demo tip: set Layout → Title style to Heading 3 now. You'll use it in step 5.
 
