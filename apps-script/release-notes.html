@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <title>Sefaria Release Notes</title>
     <!-- Same image policy as shared/ui/head.html; this dialog is served as a plain file, so it cannot include() it. test/ui/csp-coverage.test.js keeps the copies identical. -->
     <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
     <base target="_top">
@@ -15,7 +17,7 @@
         line-height: 1.5;
         color: #222222;
       }
-      h2, h3 {
+      h1, h2 {
         margin-top: 18px;
         line-height: 1.25;
       }
@@ -34,10 +36,11 @@
     </style>
   </head>
   <body>
-    <h2>Sefaria for Google Docs &mdash; Release Notes</h2>
+    <main>
+    <h1>Sefaria for Google Docs &mdash; Release Notes</h1>
     <p>Sefaria for Google Docs helps you find texts in Sefaria&rsquo;s library and insert them into your document, formatted the way you want.</p>
 
-    <h3>Version 2.0</h3>
+    <h2>Version 2.0</h2>
     <p>Version 2.0 follows Sefaria for Google Docs 1.0. If you used 1.0, the basics will feel familiar: the same library, a search-and-insert sidebar, and commands with the same names. <b>Help &rarr; How to... &rarr; Coming from version 1.0</b> shows where everything went.</p>
     <ul>
       <li><b>Find a text:</b> the Texts, Voices (source sheets) and Lexicon (dictionary) tabs search as you type, from a reference in English or Hebrew, a title, a phrase or a Sefaria link. Traditional citations like &ldquo;Hil. Shabbat 1:1&rdquo; resolve, near-misses are listed under Close matches, and a search that finds nothing suggests titles.</li>
@@ -59,7 +62,7 @@
       <li><b>Familiar setup:</b> the 1.0 choice applies a one-step compatibility preset. Choose Voices and Lexicon in other setup paths; both off means Add Sources with Sefaria. Help opens How to..., Support, About or Re-run Setup Wizard, with a keep/reset choice.</li>
     </ul>
 
-    <h3>What works differently from Sefaria for Google Docs</h3>
+    <h2>What works differently from Sefaria for Google Docs</h2>
     <ul>
       <li><b>Divine-name substitution is configurable.</b> The ordinary defaults replace <span lang="he" dir="rtl">יהוה</span> with <span lang="he" dir="rtl">יי</span>; the 1.0 compatibility preset turns automatic substitution off. Change it in Preferences &rarr; Insertion &rarr; Divine Name Mappings.</li>
       <li><b>Each source gets a credit line.</b> Turn Citation off in 📰 Insertion Options or Preferences if you credit sources another way.</li>
@@ -68,7 +71,7 @@
       <li><b>Notes start on Omit.</b> Marked source footnotes are left out, preserving the previous inserted output. Choose Inline or Separate in Insertion Options → Text and notes (or Layout in Preferences) to include them. Commentary starts on Default and keeps explanation and its markings.</li>
     </ul>
 
-    <h3>Good to know</h3>
+    <h2>Good to know</h2>
     <ul>
       <li><b>Preferences</b> set how the add-on starts for you.</li>
       <li><b>The sidebar</b> shows your choices for this session.</li>
@@ -76,17 +79,18 @@
       <li>If something looks wrong right after an update, reload the document and reopen the add-on before changing settings.</li>
     </ul>
 
-    <h3>Coming later</h3>
+    <h2>Coming later</h2>
     <ul>
       <li>Recognizing Hebrew references even when they&rsquo;re misspelled.</li>
     </ul>
 
-    <h3>Credits and thanks</h3>
+    <h2>Credits and thanks</h2>
     <p>Many thanks to the broader Sefaria ecosystem and community contributors for the APIs, linking ideas, and developer support that make this add-on possible.</p>
 
-    <h3>Questions, bug reports, and suggestions</h3>
+    <h2>Questions, bug reports, and suggestions</h2>
     <p>For support, feature requests, or reproducible bug reports, visit the <a href="https://help.sefaria.org/hc/en-us/sections/20235182393244" target="_blank" rel="noopener noreferrer">Sefaria Help Center</a>. The source code is on <a href="https://github.com/TheMerkazDev/TorahLibraryAddOnForDocs" target="_blank" rel="noopener noreferrer">GitHub</a>.</p>
     <p><a href="https://www.sefaria.org/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy policy</a> &middot; <a href="https://www.sefaria.org/terms" target="_blank" rel="noopener noreferrer">Terms of use</a></p>
     <p class="muted">The most useful reports include the workspace you were using, what you searched for, the settings you had enabled, what you expected, what happened instead, and whether reopening the add-on or refreshing the document changed the outcome.</p>
+    </main>
   </body>
 </html>

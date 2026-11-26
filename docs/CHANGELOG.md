@@ -10,6 +10,8 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Keyboard and screen reader access.** Editor pages have named landmarks, language metadata, and labeled panels. Search results and Session Library entries expose separate actions. Sidebar notices and Preferences confirmations keep focus. Alt + / moves focus to search.
+
 - **Factory and Import/Export.** Factory restores the three 1.0 menu commands in their original order, followed by Preferences and Help.
   Import/Export identifies its loading step when opened from This Document.
 - **Sidebar and Preferences.** Notes follows Commentary, and both use ⓘ help. Sidebar startup waits for its controls to load before requesting settings.

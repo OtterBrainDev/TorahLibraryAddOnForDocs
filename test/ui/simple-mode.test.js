@@ -61,7 +61,7 @@ test('Simple mode keeps the Texts / Voices / Lexicon tabs and hides only the ðŸ§
 });
 
 test('Preferences hides only advanced tabs and sections, and Everything shows them', () => {
-  assert.match(PREFS, /<div class="preferences-dialog" data-ui-mode="<\?= uiMode \?>"[^>]*>/);
+  assert.match(PREFS, /<main class="preferences-dialog" data-ui-mode="<\?= uiMode \?>"[^>]*>/);
   const ids = hiddenIds(PREFS_CSS, /data-ui-mode="simple"\]:not\(\.show-advanced\)/);
   assert.deepEqual(ids.sort(), [
     'emphasis-mapping',
@@ -119,7 +119,7 @@ test('switching the interface changes no setting, keeps unsaved edits and reache
 test('the footer: Add Source, Insertion Options under it, then Session Library, Quick Actions and Preferences, in both modes', () => {
   const primary = SIDEBAR.match(/<section class="primary-actions"[\s\S]*?<\/section>/)[0];
   assert.ok(primary.indexOf('id="insert-source"') < primary.indexOf('id="open-layout-settings"'));
-  assert.match(primary, /id="open-layout-settings"[^>]*>&#x1F4F0; Insertion Options</);
+  assert.match(primary, /id="open-layout-settings"[^>]*>.*<span id="open-layout-label">Insertion Options</);
   const row = SIDEBAR.match(/<section class="sidebar-footer-tools footer-tool-row standard-quick-actions"[\s\S]*?<\/section>/)[0];
   for (const control of ['open-session-library', 'open-actions-panel', 'open-preferences-tool']) assert.ok(row.includes(control), control);
   assert.doesNotMatch(SIMPLE_CSS, /standard-quick-actions|open-preferences-tool|open-layout-settings|open-session-library|open-actions-panel|footer-actions-panel/);

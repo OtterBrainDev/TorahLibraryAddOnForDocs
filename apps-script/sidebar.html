@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <title>Sefaria for Google Docs</title>
     <?!= include('shared/ui/head'); ?>
     <?!= include('shared/css/native-controls'); ?>
     <?!= include('css/tokens'); ?>
@@ -27,7 +29,8 @@
   </head>
   <body>
     <main class="unified-sidebar" data-mode="<?= initialMode ?>" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="<?= sidebarTabs ?>" data-quick-actions-hidden="<?= quickActionsHidden ?>" data-options-hidden="<?= optionsHidden ?>">
-      <aside class="busy-overlay" data-kind="insert" role="status" aria-live="polite">
+      <h1 class="visually-hidden">Sefaria for Google Docs</h1>
+      <div class="busy-overlay" data-kind="insert" role="status" aria-live="polite">
         <div class="busy-card">
           <div class="busy-emblem" aria-hidden="true">
             <span class="busy-ring"></span>
@@ -36,35 +39,33 @@
           <p class="busy-label">Inserting into your document…</p>
           <div class="busy-glyph" aria-hidden="true"><span></span><span></span><span></span></div>
         </div>
-      </aside>
+      </div>
 
       <div class="sidebar-search-region">
         <section class="reference-row unified-search-row">
           <div class="search-field-wrapper">
             <button type="button" class="keyboard-trigger" id="hebrew-keyboard-trigger" aria-label="Open Hebrew keyboard" aria-expanded="false" aria-controls="hebrew-keyboard-tray">⌨︎</button>
-            <input type="text" class="input" placeholder="Search texts…" aria-label="Search Sefaria" title="Press / to search" dir="auto" autocomplete="off" spellcheck="false">
+            <input type="text" class="input" placeholder="Search texts…" aria-label="Search Sefaria" title="Press Alt+/ to reach search" aria-keyshortcuts="Alt+/" dir="auto" autocomplete="off" spellcheck="false">
             <button type="button" class="search-submit search-icon-btn" id="run-sefaria" aria-label="Search Sefaria" title="Search Sefaria">
               <span class="search-submit-icon" aria-hidden="true">🔍</span>
             </button>
           </div>
         </section>
 
-        <!-- Result type: one search, three kinds of results. Switching runs the
-             same query again in the other mode (mode-controller). Under the
-             search box rather than above it, with the results it filters. -->
-        <nav class="mode-switch-section" role="tablist" aria-label="Result type">
-          <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="texts" aria-selected="true">Texts<span class="tab-result-badge" id="texts-tab-badge" hidden aria-hidden="true"></span></button>
-          <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="voices" aria-selected="false">Voices<span class="tab-result-badge" id="voices-tab-badge" hidden aria-hidden="true"></span></button>
-          <button type="button" role="tab" class="mode-switch-button" data-sidebar-mode="lexicon" id="tab-lexicon-btn" aria-selected="false">Lexicon<span class="lexicon-tab-badge" id="lexicon-tab-badge" hidden aria-hidden="true"></span></button>
-          <button type="button" role="tab" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental" style="display:none;" aria-label="Experimental Features" aria-selected="false">🧪</button>
-        </nav>
+        <!-- One search field with a shared result area and three search modes. -->
+        <div class="mode-switch-section" role="radiogroup" aria-label="Result type">
+          <button type="button" role="radio" class="mode-switch-button" data-sidebar-mode="texts" aria-checked="true">Texts<span class="tab-result-badge" id="texts-tab-badge" hidden aria-hidden="true"></span></button>
+          <button type="button" role="radio" class="mode-switch-button" data-sidebar-mode="voices" aria-checked="false" tabindex="-1">Voices<span class="tab-result-badge" id="voices-tab-badge" hidden aria-hidden="true"></span></button>
+          <button type="button" role="radio" class="mode-switch-button" data-sidebar-mode="lexicon" id="tab-lexicon-btn" aria-checked="false" tabindex="-1">Lexicon<span class="lexicon-tab-badge" id="lexicon-tab-badge" hidden aria-hidden="true"></span></button>
+          <button type="button" role="radio" class="mode-switch-button experimental-menu-button" data-sidebar-mode="experimental" style="display:none;" aria-label="Experimental Features" aria-checked="false" tabindex="-1">🧪</button>
+        </div>
 
-        <div id="search-history-dropdown" class="search-history-dropdown" role="listbox" aria-label="Recent searches" hidden></div>
+        <div id="search-history-dropdown" class="search-history-dropdown" role="group" aria-label="Recent searches" hidden></div>
 
         <div class="hebrew-keyboard-tray" id="hebrew-keyboard-tray" role="region" aria-label="Hebrew keyboard">
           <div class="heb-tray-header">
             <span class="heb-tray-label" aria-hidden="true">Hebrew</span>
-            <button type="button" class="heb-nikud-toggle" id="heb-nikud-toggle" aria-pressed="false" aria-label="Toggle vowel marks">Vowels</button>
+            <button type="button" class="heb-nikud-toggle" id="heb-nikud-toggle" aria-pressed="false" aria-label="Vowels">Vowels</button>
           </div>
           <div class="heb-key-row heb-key-row--nikud" id="heb-nikud-row" hidden>
             <button type="button" class="heb-key heb-key--nikud" data-char="ַ" aria-label="Patah">אַ</button>
@@ -151,12 +152,12 @@
   <div class="results-header"></div>
 
   <div class="results-toggle-row">
-    <button type="button" class="results-toggle-button" style="display:none;">Show results</button>    
+    <button type="button" class="results-toggle-button" aria-expanded="true" aria-controls="search-result-lists" style="display:none;">Show results</button>
   </div>
 
   <div class="selected-result-summary" style="display:none;"></div>
 
-  <div class="results-lists">
+  <div class="results-lists" id="search-result-lists">
     <div class="library-results-heading-row text-mode-only" style="display:none;">
       <div class="library-results-toolbar" aria-label="Library result tools">
         <div class="toolbar-control-group">
@@ -243,6 +244,7 @@
     <div class="result-group-label text-mode-only search-results-label" style="display:none;">Search results</div>
     <ul class="result-list search-results"></ul>
     <p class="results-hint" aria-live="polite"></p>
+    <div class="visually-hidden" id="keyboard-result-status" role="status" aria-atomic="true"></div>
   </div>
 </section>
 
@@ -491,8 +493,8 @@
               <button type="button" class="sl-action-btn sl-action-btn--destructive" id="sl-reset-session" title="Clear all items and start fresh" disabled>Reset Session</button>
             </div>
             <div class="sl-toolbar-row sl-toolbar-row--filters">
-              <div class="sl-filter-chips" id="sl-filter-chips" role="radiogroup" aria-label="Filter by type">
-                <button type="button" class="sl-filter-chip sl-filter-chip--active" data-filter="all" role="radio" aria-checked="true">All</button>
+              <div class="sl-filter-chips" id="sl-filter-chips" role="group" aria-label="Filter by type">
+                <button type="button" class="sl-filter-chip sl-filter-chip--active" data-filter="all" aria-pressed="true">All</button>
               </div>
               <div class="sl-toolbar-extras">
                 <select class="sl-sort-select" id="sl-sort-select" aria-label="Sort references">
@@ -536,7 +538,7 @@
       <div id="sidebar-insert-warning" class="insert-warning" role="alert" hidden></div>
       <section class="primary-actions" aria-label="Primary actions">
         <button class="submit primary-action-button" id="insert-source" disabled title="Add Source (Ctrl+Enter)">Add Source</button>
-        <button class="submit secondary-action-button text-mode-only" id="open-layout-settings" title="Insertion Options" aria-label="Insertion Options">&#x1F4F0; Insertion Options<span class="layout-settings-profile" id="layout-settings-profile" hidden></span></button>
+        <button class="submit secondary-action-button text-mode-only" id="open-layout-settings" title="Insertion Options" aria-haspopup="dialog"><span class="layout-settings-icon" aria-hidden="true"></span> <span id="open-layout-label">Insertion Options</span> <span class="layout-settings-profile" id="layout-settings-profile" hidden></span></button>
       </section>
       <section class="sidebar-footer-tools footer-tool-row standard-quick-actions" aria-label="Quick actions">
         <button type="button" class="footer-tool-button sl-footer-btn" id="open-session-library" title="Session Library" aria-label="Session Library"><span class="footer-icon" aria-hidden="true">📜</span><span class="sl-footer-count" id="sl-footer-count" hidden></span></button>
@@ -604,9 +606,10 @@
         </div>
       </div>
     </main>
-    <div class="sidebar-toast" id="sidebar-toast" role="status" aria-live="polite" hidden></div>
+    <div class="sidebar-toast" id="sidebar-toast" aria-hidden="true" hidden></div>
+    <div class="visually-hidden" id="sidebar-toast-status" role="status" aria-atomic="true"></div>
     <div class="sidebar-notice-backdrop" id="sidebar-notice" hidden>
-      <div class="sidebar-notice-card" role="alertdialog" aria-modal="true" aria-labelledby="sidebar-notice-title">
+      <div class="sidebar-notice-card" role="alertdialog" aria-modal="true" aria-labelledby="sidebar-notice-title" aria-describedby="sidebar-notice-message">
         <h2 id="sidebar-notice-title">Notice</h2>
         <p class="sidebar-notice-message" id="sidebar-notice-message"></p>
         <div class="sidebar-notice-actions">

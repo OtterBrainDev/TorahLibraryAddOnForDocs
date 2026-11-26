@@ -254,7 +254,9 @@ function resetSelectedResultView() {
   hasResolvedReference = false;
   setInsertButtonState(false);
   $('#open-on-sefaria').prop('disabled', true);
-  $('.result-item').removeClass('selected').attr('aria-pressed', 'false');
+  $('.result-item').removeClass('selected');
+  $('.result-select').attr('aria-pressed', 'false');
+  $('.result-item[role="option"]').attr('aria-selected', 'false');
   if (appMode === 'voices') selectedVoiceItem = null;
   if (appMode !== 'texts') return;
   data = {};
@@ -382,7 +384,7 @@ function renderResultGroup(selector, items, groupName) {
     var corpusKey = getResultCorpusKey(clusterBuckets[cluster][0], groupName);
     var accentClass = getCorpusAccentClass(corpusKey);
     if (cluster) {
-      $list.append("<li class='result-group-header " + accentClass + "'><button type='button' class='result-group-remove' data-corpus-key='" + escapeHTML(corpusKey) + "' title='Hide corpus'>❌</button><span class='result-cluster-label'>" + escapeHTML(cluster) + "</span></li>");
+      $list.append("<li class='result-group-header " + accentClass + "'><button type='button' class='result-group-remove' data-corpus-key='" + escapeHTML(corpusKey) + "' aria-label='Hide " + escapeHTML(cluster) + " results' title='Hide corpus'><span aria-hidden='true'>❌</span></button><span class='result-cluster-label'>" + escapeHTML(cluster) + "</span></li>");
     }
     clusterBuckets[cluster].forEach(function (item) {
       var selectedClass = item.key === selectedResultKey ? 'selected' : '';
@@ -399,9 +401,9 @@ function renderResultGroup(selector, items, groupName) {
       // so they are rendered rather than escaped — after the same strip the
       // preview uses.
       var snippet = item.snippet ? "<div class='result-snippet'>" + sanitizeSourceHtml(item.snippet) + "</div>" : subtitle;
-      var titleText = (appMode === 'voices') ? (item.label || item.ref) : (groupName === 'Search results' && item.ref ? item.ref : (item.label || item.ref));
-      var sefariaBtn = appMode !== 'voices' ? "<button type='button' class='result-sefaria-btn' data-ref='" + escapeHTML(item.ref) + "' aria-label='Open on Sefaria' title='Open on Sefaria'><span class='open-sefaria-icon' aria-hidden='true'></span></button>" : '';
-      $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "' role='button' tabindex='0' aria-pressed='" + (item.key === selectedResultKey ? 'true' : 'false') + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(item.label || item.ref) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'>📌</button><div class='result-title'>" + escapeHTML(item.label || item.ref) + "</div>" + sefariaBtn + "</div>" + metaLine + snippet + "</li>");
+      var title = escapeHTML(item.label || item.ref);
+      var sefariaBtn = appMode !== 'voices' ? "<button type='button' class='result-sefaria-btn' data-ref='" + escapeHTML(item.ref) + "' aria-label='Open " + title + " on Sefaria' title='Open on Sefaria'><span class='open-sefaria-icon' aria-hidden='true'></span></button>" : '';
+      $list.append("<li class='result-item result-row " + accentClass + " " + selectedClass + "' data-key='" + escapeHTML(item.key) + "' data-ref='" + escapeHTML(item.ref) + "'><div class='result-row-main'><button type='button' class='result-pin-button" + (isPinnedRef(item.ref) ? " is-pinned" : "") + "' data-ref='" + escapeHTML(item.ref) + "' data-label='" + escapeHTML(item.label || item.ref) + "' aria-label='" + (isPinnedRef(item.ref) ? "Unpin " : "Pin ") + title + "' title='" + (isPinnedRef(item.ref) ? "Unpin result" : "Pin result") + "'><span aria-hidden='true'>📌</span></button><button type='button' dir='auto' class='result-title result-select' aria-pressed='" + (selectedClass ? 'true' : 'false') + "'>" + title + "</button>" + sefariaBtn + "</div>" + metaLine + snippet + "</li>");
     });
   });
 }
@@ -512,8 +514,12 @@ function renderResults() {
 
 function updateResultsVisibility() {
   var shouldCollapse = resultsCollapsed && !!selectedResultSummary;
+  var focusInList = shouldCollapse && $(document.activeElement).closest('.results-lists').length;
   $('.results-lists').toggle(!shouldCollapse);
-  $('.results-toggle-button').toggle(!!selectedResultSummary).text(shouldCollapse ? 'Show results' : 'Hide results');
+  var $toggle = $('.results-toggle-button').toggle(!!selectedResultSummary)
+    .attr('aria-expanded', shouldCollapse ? 'false' : 'true')
+    .text(shouldCollapse ? 'Show results' : 'Hide results');
+  if (focusInList) $toggle.focus();
   // selected-result-summary is suppressed via CSS (display:none !important);
   // source card is the canonical display of the selected result.
   $('.selected-result-summary').hide().empty();
@@ -681,7 +687,9 @@ function selectResultItem(item) {
   resultsCollapsed = true;
   $('.result-item').each(function () {
     var on = $(this).attr('data-key') === item.key;
-    $(this).toggleClass('selected', on).attr($(this).attr('role') === 'option' ? 'aria-selected' : 'aria-pressed', on ? 'true' : 'false');
+    $(this).toggleClass('selected', on);
+    if ($(this).attr('role') === 'option') $(this).attr('aria-selected', on ? 'true' : 'false');
+    else $(this).find('.result-select').attr('aria-pressed', on ? 'true' : 'false');
   });
   updateResultsVisibility();
   resolveSelectedResult(item.ref, item.label || item.ref);

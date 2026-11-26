@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <title>Sefaria Help</title>
     <!-- Same image policy as shared/ui/head.html. test/ui/csp-coverage.test.js keeps the copies identical. -->
     <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
     <base target="_top">
@@ -80,13 +82,18 @@
         text-decoration: none;
         color: var(--selected);
       }
-      .tablist {
+      .help-navigation {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
         padding: 12px 18px;
         border-bottom: 1px solid var(--border);
         background: #fcfbf9;
+      }
+      .tablist {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
       }
       .tab-button {
         appearance: none;
@@ -357,10 +364,10 @@
           tab.addEventListener('keydown', function(event) {
             var list = Array.prototype.slice.call(tabs);
             var index = list.indexOf(tab);
-            if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+            if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) {
               event.preventDefault();
               var delta = event.key === 'ArrowRight' ? 1 : -1;
-              var next = (index + delta + list.length) % list.length;
+              var next = event.key === 'Home' ? 0 : event.key === 'End' ? list.length - 1 : (index + delta + list.length) % list.length;
               list[next].focus();
               switchTab(list[next].getAttribute('data-tab'));
             }
@@ -487,15 +494,17 @@
           </div>
         </div>
 
-        <div class="tablist" role="tablist" aria-label="Help Center Tabs">
-          <button class="tab-button" role="tab" aria-selected="true" aria-controls="help-tab" data-tab="help-tab">Help</button>
-          <button class="tab-button" role="tab" aria-selected="false" aria-controls="support-tab" data-tab="support-tab" tabindex="-1">Support</button>
-          <button class="tab-button" role="tab" aria-selected="false" aria-controls="about-tab" data-tab="about-tab" tabindex="-1">About</button>
+        <div class="help-navigation">
+          <div class="tablist" role="tablist" aria-label="Help Center Tabs">
+            <button type="button" class="tab-button" role="tab" aria-selected="true" id="help-tab-button" aria-controls="help-tab" data-tab="help-tab">Help</button>
+            <button type="button" class="tab-button" role="tab" aria-selected="false" id="support-tab-button" aria-controls="support-tab" data-tab="support-tab" tabindex="-1">Support</button>
+            <button type="button" class="tab-button" role="tab" aria-selected="false" id="about-tab-button" aria-controls="about-tab" data-tab="about-tab" tabindex="-1">About</button>
+          </div>
           <button type="button" class="tab-button" id="rerun-setup-wizard" title="Change languages, text formatting, divine-name preferences and interface choices by running setup again.">Re-run Setup Wizard</button>
         </div>
 
         <!-- ═══════════════════════════════ HELP ═══════════════════════════════ -->
-        <section class="tab-panel is-active" id="help-tab" role="tabpanel">
+        <section class="tab-panel is-active" id="help-tab" role="tabpanel" aria-labelledby="help-tab-button">
           <section class="hero">
             <h2>Help</h2>
             <p class="lede">Search for a topic, or jump to a section.</p>
@@ -970,14 +979,16 @@
 
           <section class="card topic-section" id="shortcuts" data-search-title="Keyboard shortcuts" data-search-terms="keyboard shortcuts keys hotkeys slash enter ctrl cmd escape arrow">
             <h2>Keyboard shortcuts</h2>
+            <p>Press <kbd>Tab</kbd> and <kbd>Shift</kbd> + <kbd>Tab</kbd> to move between controls. Use the arrow keys to switch Texts, Voices, and Lexicon once focus is on the sidebar’s result type. In Preferences and Help, use <kbd>←</kbd> and <kbd>→</kbd> to switch tabs, or <kbd>Home</kbd> and <kbd>End</kbd> for the first or last tab.</p>
+            <p>In search results, <kbd>Tab</kbd> reaches the preview, pin, and Sefaria buttons separately. Move focus to a ⓘ button to read its help, and press <kbd>Esc</kbd> to dismiss it.</p>
             <table class="ref-table">
               <tbody>
-                <tr><td><kbd>/</kbd></td><td>Jump to the search box.</td></tr>
+                <tr><td><kbd>Alt</kbd> (Option on Mac) + <kbd>/</kbd></td><td>Jump to the search box.</td></tr>
                 <tr><td><kbd>Enter</kbd></td><td>Search, or pick the highlighted result.</td></tr>
-                <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Move through the results.</td></tr>
+                <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Move through results from the search field. Down moves into recent searches when they’re shown.</td></tr>
                 <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd></td><td>Add Source.</td></tr>
                 <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd></td><td>Open or close the Session Library.</td></tr>
-                <tr><td><kbd>Esc</kbd></td><td>Close Insertion Options, the Session Library, or the Hebrew keyboard.</td></tr>
+                <tr><td><kbd>Esc</kbd></td><td>Dismiss open help or a confirmation, close recent searches, Insertion Options, the Session Library, or the Hebrew keyboard.</td></tr>
               </tbody>
             </table>
           </section>
@@ -1056,7 +1067,7 @@
         </section>
 
         <!-- ══════════════════════════════ SUPPORT ═════════════════════════════ -->
-        <section class="tab-panel" id="support-tab" role="tabpanel" hidden>
+        <section class="tab-panel" id="support-tab" role="tabpanel" aria-labelledby="support-tab-button" hidden>
           <section class="hero">
             <h2>Support</h2>
             <p class="lede">Something not working? Try the quick fixes first — they solve most problems. If they don't, we'd like to hear about it.</p>
@@ -1099,7 +1110,7 @@
         </section>
 
         <!-- ═══════════════════════════════ ABOUT ══════════════════════════════ -->
-        <section class="tab-panel" id="about-tab" role="tabpanel" hidden>
+        <section class="tab-panel" id="about-tab" role="tabpanel" aria-labelledby="about-tab-button" hidden>
           <section class="hero">
             <h2>About</h2>
             <p>Sefaria for Google Docs brings Sefaria's library into Google Docs: find a source, preview it, and insert it formatted the way you want.</p>
@@ -1125,7 +1136,7 @@
                 <li><span class="tag tag-new">New</span><strong>Close matches and suggestions.</strong> Near-misses for what you typed (a typo, a missing word, a different spelling) are listed under <em>Close matches</em>, with your chapter and verse kept. A search that finds nothing suggests titles instead of an empty panel, and titles don't need Sefaria's exact punctuation. <span class="where">The search box</span></li>
                 <li><span class="tag tag-new">New</span><strong>Your order of corpora.</strong> Reorder the corpus groups in the results (Tanakh, Mishnah, Talmud and the rest), or hide the ones you don't use. <span class="where">Preferences → Search</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>No dead ends at book headings.</strong> A heading with no text of its own, such as <em>Mishneh Torah</em>, is left out of the matches, and a note says what to add: a chapter, a siman or a verse. <span class="where">The search box</span></li>
-                <li><span class="tag tag-new">New</span><strong>Hebrew keyboard and shortcuts.</strong> An on-screen Hebrew keyboard with a row for vowels. Press <kbd>/</kbd> to jump to the search box, <kbd>↑</kbd> <kbd>↓</kbd> to move through results, and <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> to add the source; see <a href="#shortcuts">Keyboard shortcuts</a>. <span class="where">⌨︎ beside the search box</span></li>
+                <li><span class="tag tag-new">New</span><strong>Hebrew keyboard and shortcuts.</strong> An on-screen Hebrew keyboard with a row for vowels. Press <kbd>Alt</kbd> (Option on Mac) + <kbd>/</kbd> to jump to the search box, <kbd>↑</kbd> <kbd>↓</kbd> to move through results, and <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> to add the source; see <a href="#shortcuts">Keyboard shortcuts</a>. <span class="where">⌨︎ beside the search box</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>Selection-aware actions.</strong> Insert Source from Selection reviews highlighted citations even with quiet linking selected. Link Texts and Gematriya Count act on the selection; clear it to work on the entire document body. <span class="where">Extensions → Sefaria for Google Docs</span></li>
                 <li><span class="tag tag-new">New</span><strong>One search, three tabs.</strong> Typing searches the tab you're in. Enter also searches Voices and the Lexicon in the background, so their results are ready when you switch, and each tab keeps its own results and selection. <span class="where">Texts · Voices · Lexicon, under the search box</span></li>
               </ul>

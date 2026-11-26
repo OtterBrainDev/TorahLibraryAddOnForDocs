@@ -183,7 +183,7 @@ test('every profile change reloads what it changed and tells an open sidebar', (
 
 test('the sidebar picker shows with two or more profiles and names the one in use', () => {
   assert.match(SIDEBAR, /<div class="tray-profile-bar" id="tray-profile-bar" hidden>\s*<label class="tray-section-label" for="tray-profile-select">Profile<\/label>\s*<select class="tray-profile-select" id="tray-profile-select"><\/select>/);
-  assert.match(SIDEBAR, /id="open-layout-settings"[^>]*>&#x1F4F0; Insertion Options<span class="layout-settings-profile" id="layout-settings-profile" hidden><\/span><\/button>/);
+  assert.match(SIDEBAR, /id="open-layout-settings"[^>]*>.*<span id="open-layout-label">Insertion Options<\/span> <span class="layout-settings-profile" id="layout-settings-profile" hidden><\/span><\/button>/);
   const render = fn(STATE_JS, 'renderProfilePicker');
   assert.match(render, /var several = !!\(index && index\.profiles && index\.profiles\.length > 1\);/);
   assert.match(render, /\$\('#tray-profile-bar'\)\.prop\('hidden', !several\);/);

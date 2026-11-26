@@ -571,12 +571,14 @@ shorter menu (see *Simple or Everything*).
 
 | Keys | Action |
 | --- | --- |
-| <kbd>/</kbd> | Jump to the search box |
+| <kbd>Alt</kbd> (Option on Mac) + <kbd>/</kbd> | Jump to the search box |
 | <kbd>Enter</kbd> | Search, or pick the highlighted result |
-| <kbd>↑</kbd> <kbd>↓</kbd> | Move through results |
+| <kbd>↑</kbd> <kbd>↓</kbd> | Move through results from the search field. Down enters recent searches when they’re shown. |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | Add Source |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> | Open/close the Session Library |
-| <kbd>Esc</kbd> | Close Insertion Options, the Session Library, or the Hebrew keyboard |
+| <kbd>Esc</kbd> | Dismiss help or a confirmation, or close recent searches, Insertion Options, the Session Library, or the Hebrew keyboard |
+
+Use <kbd>Tab</kbd> and <kbd>Shift</kbd> + <kbd>Tab</kbd> between controls. Use the arrow keys on the sidebar’s result type to switch between Texts, Voices, and Lexicon. Use <kbd>←</kbd> and <kbd>→</kbd> to switch tabs in Preferences and Help. <kbd>Home</kbd> and <kbd>End</kbd> go to the first and last tabs. Search result rows expose separate controls to preview, pin, and open on Sefaria. Focus a ⓘ button to read its help.
 
 ## Getting help
 

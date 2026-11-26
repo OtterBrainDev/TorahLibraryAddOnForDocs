@@ -152,7 +152,7 @@ against the screenshot taken before the push.
 | E14 | Preferences → Search: move Talmud above Tanakh, hide Midrash; search `shabbat` | Groups in that order, no Midrash; ⤦ Restore Corpus shows it marked *(Preferences)* |
 | E15 | Texts: type `shalom`, press Enter; switch to Voices, then Lexicon, then back | Each tab's badge counts its results; switching never searches again, the box keeps its text, and Texts comes back with its selection and preview |
 | E16 | Texts: `Genesis 1:1`, Enter; switch to Lexicon | Not looked up in the Lexicon, and no stale *No lexicon entries found for 'Genesis 1:1'* message |
-| E17 | ⌨︎ Hebrew keyboard; then <kbd>/</kbd>, <kbd>↑</kbd> <kbd>↓</kbd>, <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | Types Hebrew, with a vowels row; / jumps to the search box, the arrows move through results, Ctrl/⌘ + Enter adds the source |
+| E17 | ⌨︎ Hebrew keyboard; then <kbd>Alt</kbd> + <kbd>/</kbd>, <kbd>↑</kbd> <kbd>↓</kbd>, <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | Types Hebrew, with a vowels row; Alt + / jumps to the search box, the arrows move through results, Ctrl/⌘ + Enter adds the source |
 
 > E1–E7 are normalization bugs that each failed *silently* before — the query
 > returned nothing and looked like a gap in Sefaria's library. If any returns an
@@ -523,3 +523,16 @@ checklist was run against the code that shipped.
 | T4 | Select only two repeated citations; run Link Texts or Insert from Selection | Only occurrences inside the selection are eligible. |
 | T5 | Run review and quiet linking again after linking all repetitions | Previously linked occurrences remain untouched; no duplicate link rows. |
 | T6 | Use a document with a linked `בראשית א׳:א׳-ב׳` heading, Hebrew body text, and three unlinked `Genesis 1:1-2 (Edition name)` headings. Run Link Texts without a selection, reset, then repeat with the whole block selected and again with only the English text selected. Test both scan modes | All three English citations link at their own positions, the edition names stay plain, and the existing Hebrew link stays intact. Selected scans leave anything outside the selection untouched. |
+
+### U — keyboard and screen reader
+
+Record the deployed Apps Script version, browser, operating system, and screen reader for each run. Run keyboard-only first, then repeat with NVDA and Chrome on Windows and VoiceOver and Safari on macOS where available.
+
+| Case | Action | Expected |
+| --- | --- | --- |
+| U1 | Open the sidebar at its default width. Use Alt + / (Option + / on Mac), submit a search, and move through results from the field. Use Tab to move through a result row. | The shortcut focuses search. The highlighted result is announced with its position. Preview, pin, and open on Sefaria are separately named controls. Selecting a result moves focus to Show results when the list collapses. |
+| U2 | Use arrows on the sidebar’s result type and on Preferences and Help tabs. Include hidden modes in the Preferences fixture. | The selected mode or tab is announced. Hidden choices are skipped. In a tablist, one tab is in the Tab sequence and its panel has the matching name. |
+| U3 | Open Insertion Options, focus the two ⓘ buttons, and press Escape. Open a sidebar notice, a Preferences confirmation, and Import/Export. Check Tab, Shift + Tab, Escape, and cancellation. | Tooltips are described and dismiss before the tray closes. Modal focus remains inside while open and returns to the opener after dismissal. Keyboard shortcuts cannot trigger insertion behind a dialog. |
+| U4 | Preview original and translated text with transliteration. Trigger a recoverable preview error and take Link Texts through review and completion on a disposable document. | Hebrew and Latin transliteration expose language information. Status or error text is announced without reading the whole preview. Link Texts moves focus to the active review, progress, or completion message. |
+| U5 | Open a populated Session Library. Use a filter, select a reference, and exercise the standalone dialog and sidebar fallback. | The selected filter remains focused and announced after it redraws. Open, pin, and remove are distinct controls. Closing the fallback returns focus to the Session Library button. |
+| U6 | Re-run Setup, open Feedback, and enter and leave the add-on from the Docs editor. | Each add-on page has a useful title and heading. Check focus as it crosses the Docs frame boundary and confirm the external feedback link is reachable. |

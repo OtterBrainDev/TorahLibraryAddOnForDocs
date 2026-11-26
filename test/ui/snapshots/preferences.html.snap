@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <title>Sefaria Preferences</title>
     <?!= include('shared/ui/head'); ?>
     <?!= include('shared/css/native-controls'); ?>
     <script type="application/json" id="app-config-json"><?!= appConfigJson ?></script>
@@ -14,9 +16,9 @@
     <?!= include('shared/css/icon-mode-card'); ?>
   </head>
   <body>
-    <aside class="hide" role="status" aria-live="polite"><span class="modal-busy-card"><span class="modal-busy-spinner" aria-hidden="true"></span><span>Loading preferences…</span></span></aside>
+    <div class="hide" role="status" aria-live="polite"><span class="modal-busy-card"><span class="modal-busy-spinner" aria-hidden="true"></span><span>Loading preferences…</span></span></div>
 
-    <div class="preferences-dialog" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="texts voices lexicon">
+    <main class="preferences-dialog" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="texts voices lexicon">
       <div class="preferences-shell">
         <section class="preferences-toc section-card" aria-label="Preferences sections">
           <div class="toc-header-row">
@@ -188,9 +190,9 @@
             <summary class="section-card-summary"><span>Insertion Defaults</span></summary>
             <div class="section-card-body">
               <nav class="pref-workflow-tabs" role="tablist" aria-label="Workflow insertion defaults">
-                <button type="button" class="pref-workflow-tab is-active" data-workflow="texts" role="tab" aria-selected="true" aria-controls="pref-workflow-texts">Texts</button>
-                <button type="button" class="pref-workflow-tab" data-workflow="voices" role="tab" aria-selected="false" aria-controls="pref-workflow-voices">Voices</button>
-                <button type="button" class="pref-workflow-tab" data-workflow="lexicon" role="tab" aria-selected="false" aria-controls="pref-workflow-lexicon">Lexicon</button>
+                <button type="button" class="pref-workflow-tab is-active" id="pref-workflow-tab-texts" data-workflow="texts" role="tab" aria-selected="true" aria-controls="pref-workflow-texts">Texts</button>
+                <button type="button" class="pref-workflow-tab" id="pref-workflow-tab-voices" data-workflow="voices" tabindex="-1" role="tab" aria-selected="false" aria-controls="pref-workflow-voices">Voices</button>
+                <button type="button" class="pref-workflow-tab" id="pref-workflow-tab-lexicon" data-workflow="lexicon" tabindex="-1" role="tab" aria-selected="false" aria-controls="pref-workflow-lexicon">Lexicon</button>
               </nav>
 
               <!-- Texts workflow -->
@@ -1337,7 +1339,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </main>
 
     <?!= include('shared/ui/core-shared'); ?>
     <?!= include('shared/ui/api'); ?>

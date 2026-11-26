@@ -76,7 +76,7 @@ function sidebarDom({ ui = 'simple', tabs = 'texts voices lexicon', mode = 'text
 // The tab bar as shown. `experimental`: the 🧪 tab is enabled
 // (syncExperimentalAvailability shows it and sets .has-experimental-tab).
 function visibleTabs({ ui, tabs, mode, experimental = false }) {
-  const nav = SIDEBAR.match(/<nav class="mode-switch-section"[\s\S]*?<\/nav>/)[0].replace(/ style="display:none;"/, '');
+  const nav = SIDEBAR.match(/<div class="mode-switch-section"[\s\S]*?<\/div>/)[0].replace(/ style="display:none;"/, '');
   const document = sidebarDom({ ui, tabs, mode, classes: experimental ? 'has-experimental-tab' : '' }, nav);
   const selectors = hidingSelectors(SIDEBAR_CSS);
   if (isHidden(document.querySelector('.mode-switch-section'), selectors)) return [];
@@ -235,7 +235,7 @@ test('a switched-off tab takes its Insertion Defaults sub-tab with it', needsDom
   assert.deepEqual(shown('texts voices'), ['texts', 'voices']);
   assert.deepEqual(shown('texts'), []);
   // The page starts with both on (the overlay covers it until the settings load).
-  assert.match(PREFS, /<div class="preferences-dialog" data-ui-mode="<\?= uiMode \?>" data-sidebar-tabs="texts voices lexicon">/);
+  assert.match(PREFS, /<main class="preferences-dialog" data-ui-mode="<\?= uiMode \?>" data-sidebar-tabs="texts voices lexicon">/);
   // A hidden sub-tab that was open gives way to Texts; arrow keys skip hidden ones.
   const sync = PREFS_JS.match(/function syncSidebarTabsUi_\(\) \{[\s\S]*?\n    \}/)[0];
   assert.match(sync, /data-workflow="texts"/);

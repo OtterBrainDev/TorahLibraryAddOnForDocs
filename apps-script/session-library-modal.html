@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <title>Sefaria Session Library</title>
     <?!= include('shared/ui/head'); ?>
     <?!= include('shared/css/native-controls'); ?>
     <?!= include('shared/ui/dom'); ?>
@@ -25,12 +27,12 @@
     </style>
   </head>
   <body>
-    <div class="sl-dialog-root" id="sl-dialog-root">
+    <main class="sl-dialog-root" id="sl-dialog-root">
 
       <!-- Header -->
       <div class="sl-modal-header">
         <div class="sl-modal-header-text">
-          <h2 class="sl-modal-title">Session Library</h2>
+          <h1 class="sl-modal-title">Session Library</h1>
           <p class="sl-modal-subtitle" id="sl-modal-subtitle" aria-live="polite">0 references in this session</p>
         </div>
       </div>
@@ -44,8 +46,8 @@
           <button type="button" class="sl-action-btn sl-action-btn--destructive" id="sl-reset-session" title="Clear all items and start fresh" disabled>Reset Session</button>
         </div>
         <div class="sl-toolbar-row sl-toolbar-row--filters">
-          <div class="sl-filter-chips" id="sl-filter-chips" role="radiogroup" aria-label="Filter by type">
-            <button type="button" class="sl-filter-chip sl-filter-chip--active" data-filter="all" role="radio" aria-checked="true">All</button>
+          <div class="sl-filter-chips" id="sl-filter-chips" role="group" aria-label="Filter by type">
+            <button type="button" class="sl-filter-chip sl-filter-chip--active" data-filter="all" aria-pressed="true">All</button>
           </div>
           <div class="sl-toolbar-extras">
             <select class="sl-sort-select" id="sl-sort-select" aria-label="Sort references">
@@ -83,7 +85,7 @@
         <button type="button" class="sl-btn sl-btn--primary" id="sl-modal-done">Done</button>
       </div>
 
-    </div>
+    </main>
 
     <script>var _slInitData = <?!= sessionDataJson ?>;</script>
     <script>
@@ -245,13 +247,13 @@ function renderSlFilterChips() {
   baseFilters.forEach(function(f) {
     var active = sessionLibraryFilter === f.key;
     html += "<button type='button' class='sl-filter-chip" + (active ? " sl-filter-chip--active" : "") +
-      "' data-filter='" + escapeHTML(f.key) + "' role='radio' aria-checked='" + (active ? 'true' : 'false') + "'>" +
+      "' data-filter='" + escapeHTML(f.key) + "' aria-pressed='" + (active ? 'true' : 'false') + "'>" +
       escapeHTML(f.label) + "</button>";
   });
   cats.forEach(function(cat) {
     var active = sessionLibraryFilter === cat.key;
     html += "<button type='button' class='sl-filter-chip sl-filter-chip--category" + (active ? " sl-filter-chip--active" : "") +
-      "' data-filter='" + escapeHTML(cat.key) + "' role='radio' aria-checked='" + (active ? 'true' : 'false') + "'>" +
+      "' data-filter='" + escapeHTML(cat.key) + "' aria-pressed='" + (active ? 'true' : 'false') + "'>" +
       escapeHTML(cat.label) + "</button>";
   });
   $chips.html(html);
@@ -295,7 +297,7 @@ function renderSlItemRow(item, listName) {
   var isHebrew = isHebrewTitle(label);
   var search = (sessionLibrarySearch || '').trim();
   var displayLabel = search ? slHighlightMatch(label, search) : escapeHTML(label);
-  var pinBtnLabel  = (pinned ? 'Unpin ' : 'Pin ') + escapeHTML(label);
+  var pinBtnLabel  = 'Pin ' + escapeHTML(label);
   var pinBtnClass  = 'sl-item-pin-btn' + (pinned ? ' sl-item-pin-btn--active' : '');
   var rtlClass     = isHebrew ? ' sl-item-title--rtl' : '';
   var rtlAttr      = isHebrew ? " dir='rtl'" : '';
@@ -307,14 +309,14 @@ function renderSlItemRow(item, listName) {
     " data-mode='" + escapeHTML(mode) + "'" +
     " data-query='" + escapeHTML(query) + "'" +
     " data-list='" + escapeHTML(listName) + "'" +
-    " tabindex='0'>" +
+    ">" +
     "<button type='button' class='" + pinBtnClass + "'" +
       " data-ref='" + escapeHTML(ref) + "'" +
       " data-list='" + escapeHTML(listName) + "'" +
       " aria-label='" + pinBtnLabel + "'" +
       " aria-pressed='" + (pinned ? 'true' : 'false') + "'" +
-      " title='" + (pinned ? 'Unpin' : 'Pin to keep at top') + "'>📌</button>" +
-    "<span class='sl-item-title" + rtlClass + "'" + rtlAttr + titleAttr + ">" + displayLabel + "</span>" +
+      " title='" + (pinned ? 'Unpin' : 'Pin to keep at top') + "'><span aria-hidden='true'>📌</span></button>" +
+    "<button type='button' class='sl-item-title sl-item-open" + rtlClass + "'" + rtlAttr + titleAttr + ">" + displayLabel + "</button>" +
     langBadge +
     "<button type='button' class='sl-item-remove-btn'" +
       " data-ref='" + escapeHTML(ref) + "'" +
@@ -638,6 +640,7 @@ window.addEventListener('beforeunload', function() {
 $(document).on('click', '#sl-filter-chips .sl-filter-chip', function() {
   sessionLibraryFilter = $(this).attr('data-filter') || 'all';
   renderSessionLibrary();
+  $('#sl-filter-chips [aria-pressed="true"]').focus();
   $('#sl-content').scrollTop(0);
 });
 
@@ -663,8 +666,7 @@ $(document).on('click', '#sl-confirmation-cancel',  hideSlConfirmation);
 $(document).on('click', '#sl-confirmation-confirm', confirmSlAction);
 
 // Item row click → save selected ref and close dialog
-$(document).on('click keydown', '.sl-item', function(event) {
-  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+$(document).on('click', '.sl-item', function(event) {
   if ($(event.target).closest('.sl-item-pin-btn, .sl-item-remove-btn').length) return;
   event.preventDefault();
   var ref = $(this).attr('data-ref');
@@ -723,7 +725,12 @@ $(document).on('click', function(event) {
   if (!$(event.target).closest('.sl-section-menu-wrap').length) closeSlSectionMenu();
 });
 $(document).on('keydown', '.sl-section-menu-dropdown', function(event) {
-  if (event.key === 'Escape') closeSlSectionMenu();
+  if (event.key !== 'Escape') return;
+  event.preventDefault();
+  event.stopPropagation();
+  var opener = $(this).siblings('.sl-section-menu-btn')[0];
+  closeSlSectionMenu();
+  if (opener) opener.focus();
 });
 
 // Sort + density

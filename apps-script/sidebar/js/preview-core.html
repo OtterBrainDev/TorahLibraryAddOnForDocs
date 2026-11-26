@@ -552,11 +552,11 @@ function renderPreviewHTML(dataIn, inputTitle, transliterationSources) {
   function transliterationSlot(source) {
     if (!transliterationOn) return '';
     transliterationSources.push(source);
-    return "<div class='preview-transliteration' dir='ltr'></div>";
+    return "<div class='preview-transliteration' lang='he-Latn' dir='ltr'></div>";
   }
 
   function tableRow(he, en, transliteration) {
-    var heCell = "<td class='preview-he'>" + he + (position === 'below' ? transliteration : '') + '</td>';
+    var heCell = "<td class='preview-he' lang='he'>" + he + (position === 'below' ? transliteration : '') + '</td>';
     var enCell = '<td>' + en + '</td>';
     if (position !== 'below') {
       var trCell = '<td>' + transliteration + '</td>';
@@ -595,7 +595,7 @@ function renderPreviewHTML(dataIn, inputTitle, transliterationSources) {
     if (layout === 'he-top') {
       return "<div class='preview-stack preview-aligned'>" + heMeta + enMeta + renderedPairs.map(function (pair) {
         return "<div class='preview-line'>" +
-          (pair.he ? "<div class='preview-stack-block preview-he'>" + pair.he + '</div>' : '') +
+          (pair.he ? "<div class='preview-stack-block preview-he' lang='he'>" + pair.he + '</div>' : '') +
           transliterationSlot(pair.heRaw) +
           (pair.en ? "<div class='preview-stack-block'>" + pair.en + '</div>' : '') + '</div>';
       }).join('') + '</div>';
@@ -620,7 +620,7 @@ function renderPreviewHTML(dataIn, inputTitle, transliterationSources) {
 
   if (mode === 'he') {
     return buildPreviewMeta(dataIn.heRef, dataIn) +
-      "<div class='preview-he'>" + heHtml + "</div>" + transliterationSlot(pointedHebrew);
+      "<div class='preview-he' lang='he'>" + heHtml + "</div>" + transliterationSlot(pointedHebrew);
   }
 
   if (mode === 'en') {
@@ -633,7 +633,7 @@ function renderPreviewHTML(dataIn, inputTitle, transliterationSources) {
 
   if (layout === 'he-top') {
     return "<div class='preview-stack'>" +
-      "<div class='preview-stack-block preview-he'>" + heContent + "</div>" +
+      "<div class='preview-stack-block preview-he' lang='he'>" + heContent + "</div>" +
       transliterationSlot(pointedHebrew) +
       "<div class='preview-stack-block'>" + enContent + "</div></div>";
   }

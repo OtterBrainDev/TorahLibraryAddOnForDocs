@@ -1231,8 +1231,8 @@
         actions.className = 'corpus-order-actions';
         actions.appendChild(buildCorpusOrderButton('up', '↑', 'Move ' + label + ' up', index === 0));
         actions.appendChild(buildCorpusOrderButton('down', '↓', 'Move ' + label + ' down', index === corpusOrder.length - 1));
-        const visibility = buildCorpusOrderButton('visibility', isHidden ? 'Hidden' : 'Shown', (isHidden ? 'Show ' : 'Hide ') + label + ' in search results', false);
-        visibility.setAttribute('aria-pressed', isHidden ? 'false' : 'true');
+        const visibility = buildCorpusOrderButton('visibility', isHidden ? 'Hidden' : 'Shown', (isHidden ? 'Hidden: ' : 'Shown: ') + label + ' in search results', false);
+        if (isHidden) visibility.classList.add('is-hidden');
         actions.appendChild(visibility);
 
         row.appendChild(handle);
@@ -1404,8 +1404,8 @@
           actions.appendChild(button('up', '↑', 'Move ' + entry.label + ' up', index === 0));
           actions.appendChild(button('down', '↓', 'Move ' + entry.label + ' down', index === order.length - 1));
           const visibility = button('visibility', isHidden ? 'Hidden' : 'Shown', (isHidden ? 'Show ' : 'Hide ') + entry.label + ' ' + config.where, false);
-          visibility.setAttribute('aria-pressed', isHidden ? 'false' : 'true');
-          actions.appendChild(visibility);
+            if (isHidden) visibility.classList.add('is-hidden');
+        actions.appendChild(visibility);
 
           row.appendChild(handle);
           row.appendChild(position);
@@ -1880,6 +1880,7 @@
           var on = t === activeTab;
           t.classList.toggle('is-active', on);
           t.setAttribute('aria-selected', on ? 'true' : 'false');
+          t.tabIndex = on ? 0 : -1;
         });
         document.querySelectorAll('.pref-workflow-panel').forEach(function(panel) {
           panel.hidden = (panel.id !== 'pref-workflow-' + target);
@@ -2078,8 +2079,8 @@
           // Says where it goes: an arrow alone beside ↑ and ↓ read as one more
           // way to reorder, and the move between the lists went unnoticed.
           actions.appendChild(listName === 'top'
-            ? menuLayoutButton('Move to ' + menuEditorConfig.submenuLabel + ' ▸', 'Move ' + name + ' into the ' + menuEditorConfig.submenuLabel + ' submenu', 'move', false, 'menu-layout-btn--move')
-            : menuLayoutButton('◂ Move to main menu', 'Move ' + name + ' out of ' + menuEditorConfig.submenuLabel + ', to the main menu', 'move', false, 'menu-layout-btn--move'));
+            ? menuLayoutButton('Move to ' + menuEditorConfig.submenuLabel + ' ▸', 'Move to ' + menuEditorConfig.submenuLabel + ': ' + name, 'move', false, 'menu-layout-btn--move')
+            : menuLayoutButton('◂ Move to main menu', 'Move to main menu: ' + name, 'move', false, 'menu-layout-btn--move'));
         }
         li.appendChild(actions);
         listEl.appendChild(li);
@@ -2537,6 +2538,14 @@
       ok.onclick = function () { close(); question.onOk(); };
       alt.onclick = function () { close(); if (question.onAlt) question.onAlt(); };
       byId('profile_modal_cancel').onclick = close;
+      modal.onkeydown = function (event) {
+        if (event.key !== 'Tab') return;
+        var first = byId('profile_modal_cancel');
+        if (event.shiftKey ? document.activeElement === first : document.activeElement === ok) {
+          event.preventDefault();
+          (event.shiftKey ? ok : first).focus();
+        }
+      };
       modal.hidden = false;
       background.forEach(function (region) { region.inert = true; });
       (question.danger ? byId('profile_modal_cancel') : ok).focus();

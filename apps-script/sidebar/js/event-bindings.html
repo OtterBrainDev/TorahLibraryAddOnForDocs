@@ -16,6 +16,14 @@ $('.input').on('input', function () {
 });
 
 $('.input').on('keydown', function (event) {
+  if (event.key === 'ArrowDown') {
+    var firstHistory = document.querySelector('#search-history-dropdown:not([hidden]) .search-history-item');
+    if (firstHistory) {
+      event.preventDefault();
+      firstHistory.focus();
+      return;
+    }
+  }
   if (event.key === 'Enter') {
     event.preventDefault();
     if (keyboardResultIndex >= 0 && $('.result-item').length) {
@@ -35,10 +43,11 @@ $('.input').on('keydown', function (event) {
 });
 
 $(document).on('keydown', function (event) {
-  if (event.key === '/' && !$(event.target).is('input, textarea, select')) {
-    event.preventDefault();
-    $('.input').focus();
-  }
+  var slash = event.key === '/' || (event.originalEvent && event.originalEvent.code === 'Slash');
+  if (!slash || !event.altKey || event.ctrlKey || event.metaKey || event.defaultPrevented) return;
+  if ($('.layout-tray.is-open, #session-library-modal:not([hidden]), #sidebar-notice:not([hidden])').length) return;
+  event.preventDefault();
+  $('.input').focus();
 });
 
 $('.wants-relevance, .search-sort-select, .translation-only-filter').on('change', function () {
@@ -62,7 +71,10 @@ $('.results-panel').on('click', '.result-sefaria-btn', function (event) {
 
 $('.results-panel').on('click keydown', '.result-item', function (event) {
   if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-  if ($(event.target).closest('.result-sefaria-btn').length) return;
+  // Native result controls handle their own keys. Only Lexicon options
+  // need a manual Space/Enter action on the row itself.
+  if (event.type === 'keydown' && event.target !== this) return;
+  if ($(event.target).closest('.result-sefaria-btn, .result-pin-button').length) return;
   event.preventDefault();
 
   var key = $(this).attr('data-key');
@@ -379,14 +391,25 @@ function openSessionLibraryModal() {
       $('#sl-sort-select').val(sessionLibrarySortMode);
       hideSlConfirmation();
       renderSessionLibrary();
-      $('#session-library-modal').removeAttr('hidden');
-      setTimeout(function () { $('#sl-search-input').focus(); }, 40);
+      var modal = document.getElementById('session-library-modal');
+      var tray = document.getElementById('layout-tray');
+      if (tray.classList.contains('is-open')) closeLayoutTray();
+      slModalBackground = Array.from(modal.parentElement.children).filter(function (node) {
+        return node !== modal && !node.inert;
+      });
+      slModalBackground.forEach(function (node) { node.inert = true; });
+      modal.hidden = false;
+      $('#sl-search-input').focus();
     })
     .sessionLibraryPopup(data);
 }
 
+var slModalBackground = [];
+
 function closeSessionLibraryModal() {
   $('#session-library-modal').attr('hidden', true);
+  slModalBackground.forEach(function (node) { node.inert = false; });
+  slModalBackground = [];
   hideSlConfirmation();
   $('#open-session-library').focus();
 }
@@ -396,6 +419,18 @@ $(document).on('click', '#sl-modal-done', closeSessionLibraryModal);
 
 $(document).on('click', '#session-library-modal', function (event) {
   if ($(event.target).is('#session-library-modal')) closeSessionLibraryModal();
+});
+
+$('#session-library-modal').on('keydown', function (event) {
+  if (event.key !== 'Tab') return;
+  var controls = $(this).find('button:enabled:visible, input:enabled:visible, select:enabled:visible').get();
+  if (!controls.length) return;
+  var first = controls[0];
+  var last = controls[controls.length - 1];
+  if (event.shiftKey ? this.ownerDocument.activeElement === first : this.ownerDocument.activeElement === last) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
 });
 
 // Escape key closes modal
@@ -423,6 +458,7 @@ $(document).on('keydown', function (event) {
 $(document).on('click', '#sl-filter-chips .sl-filter-chip', function () {
   sessionLibraryFilter = $(this).attr('data-filter') || 'all';
   renderSessionLibrary();
+  $('#sl-filter-chips [aria-pressed="true"]').focus();
   $('#sl-content').scrollTop(0);
 });
 
@@ -469,8 +505,7 @@ $(document).on('click', '#sl-confirmation-confirm', confirmSlAction);
 // ============================================================
 
 // Click/Enter on item row → search for it
-$(document).on('click keydown', '.sl-item', function (event) {
-  if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
+$(document).on('click', '.sl-item', function (event) {
   if ($(event.target).closest('.sl-item-pin-btn, .sl-item-remove-btn').length) return;
   event.preventDefault();
   var ref = $(this).attr('data-ref');
@@ -548,7 +583,12 @@ $(document).on('click', function (event) {
 });
 
 $(document).on('keydown', '.sl-section-menu-dropdown', function (event) {
-  if (event.key === 'Escape') closeSlSectionMenu();
+  if (event.key !== 'Escape') return;
+  event.preventDefault();
+  event.stopPropagation();
+  var opener = $(this).siblings('.sl-section-menu-btn')[0];
+  closeSlSectionMenu();
+  if (opener) opener.focus();
 });
 
 // ============================================================
@@ -639,8 +679,8 @@ $(document).on('click', '#sl-copy-refs', function () {
     event.stopPropagation();
     var q = $(this).data('query') || '';
     if (!q) return;
+    var $inp = $('.input').val(q).focus();
     hideSearchHistory();
-    var $inp = $('.input').val(q);
     $inp.attr('dir', HEB_RE.test(q) ? 'rtl' : 'ltr');
     if (typeof runUnifiedQuery === 'function') runUnifiedQuery();
   });
@@ -649,6 +689,7 @@ $(document).on('click', '#sl-copy-refs', function () {
   $(document).on('click', '#search-history-clear-btn', function (event) {
     event.stopPropagation();
     try { localStorage.removeItem(SEARCH_HISTORY_KEY); } catch (e) {}
+    $('.input').focus();
     hideSearchHistory();
   });
 
@@ -663,6 +704,14 @@ $(document).on('click', '#sl-copy-refs', function () {
       var q = ($(this).val() || '').trim();
       if (q) saveSearchHistory(q);
     }
+  });
+
+  $(document).on('keydown', '#search-history-dropdown, .input', function (event) {
+    if (event.key !== 'Escape' || $('#search-history-dropdown').is('[hidden]')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    $('.input').focus();
+    hideSearchHistory();
   });
 
   // Click-away dismissal for history dropdown.
