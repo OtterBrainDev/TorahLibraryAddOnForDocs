@@ -18,11 +18,12 @@ those requests carries your data.
 
 Read the full policy: **[`docs/PRIVACY.md`](./docs/PRIVACY.md)**.
 
-The one command that sends text you did not type is **Link Texts with Sefaria**,
-which uploads document text so Sefaria's reference linker can find citations in
-it. By default only the passages that look like they contain a citation are
-uploaded — see *Preferences → Linking → Privacy & Document Scanning*, and §2.1 of the
-policy.
+**Link Texts with Sefaria** sends text to Sefaria to detect citations. By
+default it sends candidate passages. **Insert Source from Selection**
+submits the selected text for reference detection. See *Preferences →
+Linking → Privacy & Document Scanning* and §2.1 of the policy.
+
+To report a security issue, see the [security policy](SECURITY.md).
 
 ## Contributing (human or AI)
 
