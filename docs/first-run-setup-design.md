@@ -98,8 +98,9 @@ existing user had is the regression this project has already paid for.)
   Full mode and changes nothing. It never reappears by itself. Google's dialog
   close button gives the page no callback, so setup is marked done **as soon as
   it is shown** (`maybeShowFirstRunSetup_`) rather than when it is dismissed.
-- **Help → "Run setup again"** reopens it at any time, preselected with the
-  user's current values.
+- **Help → Re-run Setup Wizard** reopens it with Keep Current Preferences or
+  Reset to Add-on Defaults. Reset changes active settings only, retaining named
+  profile snapshots and the upload acknowledgement.
 
 ---
 
@@ -123,7 +124,7 @@ One choice, large cards with an icon and one line each:
 | **Quoting sources in my writing** | Divrei Torah, sermons, newsletters, emails |
 | **Preparing source sheets** | Classes, shiurim, study partners |
 | **Academic writing** | Papers, articles, books with citations |
-| **I've used Sefaria for Google Docs** | Start from what you know: Hebrew on the right, a simple menu |
+| **I've used Sefaria for Google Docs 1.0** | Continue applies the familiar preset immediately; no further customization screens |
 | **Keep my settings** *(only with settings to keep)* | I've set up Torah Library before; change nothing |
 
 **Keep my settings** skips to the done screen with no changes. It is hidden
@@ -176,7 +177,7 @@ Two cards, each with a small screenshot of the sidebar in that mode:
 - **Everything:** "Every tool and setting, including Link Texts, Voices and
   Lexicon."
 
-→ `ui_mode` (`simple` / `full`). Preselected from screen 1 (§5).
+→ `ui_mode` (`simple` / `full`). Preselected from screen 1 (§5). Independent Voices and Lexicon checkboxes are available on ordinary paths; neither is forced on by Everything.
 
 ### Done screen
 
@@ -193,15 +194,16 @@ And one button: **Start** (closes the dialog and focuses the sidebar's search).
 
 ## 5. What each answer preselects
 
-Screen 1 changes only the preselected answers on screens 2 and 3. The user sees
-and can change every one of them before anything is saved.
+For ordinary paths, screen 1 proposes answers on screens 2 and 3. The legacy
+1.0 choice is the exception: Continue applies the preset and closes setup.
+Keep Current Preferences on rerun prevents purpose-based overrides.
 
 | Screen 1 answer | Screen 2 preselection | Screen 3 preselection |
 | --- | --- | --- |
 | Quoting sources in my writing | Current defaults, except **Arrangement: Hebrew above** (`he-top`), which pastes more cleanly into prose and email | Simple |
 | Preparing source sheets | Current defaults (side by side, Hebrew on the right) | Simple |
 | Academic writing | Current defaults | Everything |
-| I've used Sefaria for Google Docs | Current defaults, with **Show: Hebrew and translation** and **Arrangement: Hebrew on the right** (that add-on's look); a note under *God's name* says it is now replaced as sources go in, and how to keep the old behaviour | Simple |
+| I've used Sefaria for Google Docs 1.0 | Skipped: applies familiar active defaults immediately, including bilingual Hebrew-right, automatic divine-name substitution off and quiet linking | Simple; Voices/Lexicon off |
 | Keep my settings (only with settings to keep) | (screens skipped) | No changes |
 
 The "quoting" preset's move to `he-top` is the only place a preset differs

@@ -567,7 +567,7 @@ and in `test/ui/`:
   `<script>` goes through `toEmbeddedJson_`.
 - `csp-coverage.test.js` — every entry page carries the same
   Content-Security-Policy.
-- `help-links.test.js` — every link inside Help & Support lands on a topic
+- `help-links.test.js` — every link inside Help lands on a topic
   that exists (a renamed topic's links did nothing), and About → New in 2.0
   tags each item New or Improved and says where to find it.
 - `line-by-line-layout.test.js` — Line by line shows for every arrangement

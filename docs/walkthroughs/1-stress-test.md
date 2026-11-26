@@ -104,7 +104,7 @@ Keep a pristine copy and make a fresh copy for every run of section 7.
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
 | 1.1 | **B:** install from a Doc; open **Extensions** without reloading. | Menu present; first-run setup opened (*Step 1 of 3*), not the release notes. | No menu until reload (the regression pinned in `triggers.test.js`). |
-| 1.1a | **B:** click **Continue** through setup without changing anything; then **Help → Run setup again** and **Skip for now** | Nothing stored but "setup done"; the sidebar opens in the mode shown. Setup is never shown again on its own. Saving shows a spinner. | Preferences changed by clicking through; setup shown to account **A** (an upgrader never sees it). |
+| 1.1a | **B:** click **Continue** through setup without changing anything; then **Help → Re-run Setup Wizard**, Keep Current Preferences and Skip for now | Nothing stored but "setup done"; the sidebar opens in the mode shown. Setup is never shown again on its own. Saving shows a spinner. | Preferences changed by clicking through; setup shown to account **A** (an upgrader never sees it). |
 | 1.2 | **B:** open a second Doc in a new tab *before* doing anything in the first. | Menu builds in the second Doc too. | Menu missing or partial. In `AuthMode.NONE` the menu is built from the default layout without reading preferences. That is expected; a missing menu is not. |
 | 1.3 | **B:** open Preferences straight away. | Every field shows a value. Colours read **Auto / None**. Divine Name Mappings: יהוה → יי on, others off. | Blank fields, black swatches, or `undefined` anywhere (seeding missed a key). |
 | 1.4 | **A:** open a Doc. Open Preferences. | Everything you set before the upgrade is unchanged. | Anything reset to a default. Compare against a screenshot taken before the upgrade. |
@@ -320,7 +320,7 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 | --- | --- | --- | --- |
 | 10.1 | Leave the sidebar open over 6 hours (the session cache TTL); then change Display or Arrangement and insert | Works, perhaps with defaults restored. | A script error, or a silent insert with the wrong layout. |
 | 10.2 | Incognito window (browser storage blocked or empty) | Sidebar works; Session Library and search history empty but not broken. | Console errors from `localStorage`. |
-| 10.3 | Preferences → Menu Bar: hide every item you're allowed to; reload | Preferences and Help & Support still present, last. | An empty menu with no way back. |
+| 10.3 | Preferences → Menu Bar: hide every item you're allowed to; reload | Preferences and Help still present, last. | An empty menu with no way back. |
 | 10.4 | Menu Bar: nest items three levels; reload | Flattened or rejected clearly (Docs supports one submenu level). | A broken menu. |
 | 10.5 | **Reset To Defaults** | Everything back to defaults, including יהוה → יי on. | Anything left over; `linker_upload_acknowledged` reset (it should **not** be reset). |
 | 10.6 | Preferences → Experimental: enable, turn on Surprise Me, run it with every corpus off | "Choose at least one corpus." | Script error. |

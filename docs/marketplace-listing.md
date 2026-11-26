@@ -78,13 +78,14 @@ that matters is *what leaves the user's document*. The answer, consistent with
 `PRIVACY.md` §2:
 
 > Sefaria for Google Docs sends Sefaria only what the user asks for: search terms, the
-> references they select, and words they look up. The one feature that sends
-> document text is **Link Texts with Sefaria**, which the user runs explicitly.
-> By default the add-on scans the document locally and uploads only passages
-> that look like they contain a citation; the user can switch to whole-document
-> scanning or never run the command. A one-time confirmation explains this
-> before the first upload. Nothing is sent to the add-on's publisher — there is
-> no server, account, or analytics.
+> references they select, and words they look up. **Link Texts with Sefaria**
+> scans highlighted text, or the current document body when nothing is
+> highlighted. By default only candidate passages within that scope are sent;
+> Whole document scanning sends the full scope. **Insert Source from Selection**
+> sends the highlighted text for review, never the unselected document body.
+> A one-time confirmation explains the upload before first use. Nothing is
+> sent to the add-on's publisher — there is no publisher-operated server,
+> account, or analytics.
 
 A short screen recording helps: open the sidebar, search, insert a source, then
 run Link Texts with Sefaria and show the confirmation and review dialog.
