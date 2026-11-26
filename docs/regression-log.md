@@ -160,6 +160,10 @@ The optional session ID on `previewTransliterationWithOverrides` (3) lets the pr
 | --- | --- | --- |
 | An in-dialog dismissal could lose pending Preferences edits | Closing and switching profiles used different paths | The add-on close button and Escape reuse the profile-switch prompt. The UI test covers cancel, discard, clean close, and waiting for the save callback. The live checklist tracks the Google Docs title-bar X separately. |
 
+### Unlink Sources in Simple
+
+Schema 35 restores Unlink Sources in the shipped Simple layout. The migration recognizes that exact legacy layout. The Factory preset retains the 1.0 menu order. The unlink handler prompts before walking all tabs, headers, footers, and footnotes. Menu, migration, and unlink tests cover these cases.
+
 ### Sidebar and Preferences sanity sweep — 2026-11-26
 
 | Symptom | Fix and verification |

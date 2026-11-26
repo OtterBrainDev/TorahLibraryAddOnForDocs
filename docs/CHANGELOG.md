@@ -10,6 +10,8 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Unlink Sources (schema 35).** Quick Actions in Simple mode shows the action again. It asks before removing Sefaria links across tabs, including headers, footers, and footnotes.
+
 - **Divine names.** Confirmation arrows point left for Hebrew rules and
   right for English rules. The transliteration spelling menu shows all
   suggestions and keeps custom input editable.

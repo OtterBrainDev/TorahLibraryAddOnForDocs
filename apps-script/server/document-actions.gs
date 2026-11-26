@@ -1565,42 +1565,59 @@ function buildLinkSourcesInsertOptions_(prefs) {
 }
 
 function unlinkSefariaSources() {
-  const body = DocumentApp.getActiveDocument().getBody();
-  const sefariaHostRe = /^https?:\/\/(?:[^/?#]*\.)?sefaria\.org(?:[/?#]|$)/i;
-  const textElements = [];
-  const collect = (element) => {
+  const ui = DocumentApp.getUi();
+  if (ui.alert('Unlink Sources',
+    'Remove Sefaria hyperlinks throughout this document, including every tab, header, footer, and footnote? Text and other hyperlinks will stay in place.',
+    ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+
+  const doc = DocumentApp.getActiveDocument();
+  const sefariaHostRe = /^https?:\/\/(?:[a-z0-9-]+\.)*sefaria\.org(?::[0-9]+)?(?:[/?#]|$)/i;
+  let unlinkedCount = 0;
+
+  function visitUnlinkElement(element) {
     if (!element) return;
     if (element.getType && element.getType() === DocumentApp.ElementType.TEXT) {
-      textElements.push(element.asText());
+      const text = element.asText();
+      const length = text.getText().length;
+      if (!length) return;
+      const boundaries = text.getTextAttributeIndices();
+      const starts = boundaries[0] === 0 ? boundaries : [0].concat(boundaries);
+      const ranges = [];
+      starts.forEach(function (start, i) {
+        const url = text.getLinkUrl(start);
+        if (!url || !sefariaHostRe.test(url)) return;
+        const end = (i + 1 < starts.length ? starts[i + 1] : length) - 1;
+        const last = ranges[ranges.length - 1];
+        if (last && last.url === url && last.end + 1 === start) last.end = end;
+        else ranges.push({ start: start, end: end, url: url });
+      });
+      ranges.forEach(function (range) {
+        text.setLinkUrl(range.start, range.end, null);
+        unlinkedCount++;
+      });
       return;
     }
     if (!element.getNumChildren) return;
     const count = element.getNumChildren();
-    for (let i = 0; i < count; i++) collect(element.getChild(i));
-  };
-  collect(body);
+    for (let i = 0; i < count; i++) visitUnlinkElement(element.getChild(i));
+  }
 
-  let unlinkedCount = 0;
-  textElements.forEach((textElement) => {
-    const text = textElement.getText();
-    const len = text.length;
-    if (!len) return;
-    let i = 0;
-    while (i < len) {
-      const url = textElement.getLinkUrl(i);
-      if (url && sefariaHostRe.test(url)) {
-        let j = i + 1;
-        while (j < len && textElement.getLinkUrl(j) === url) j++;
-        textElement.setLinkUrl(i, j - 1, null);
-        unlinkedCount++;
-        i = j;
-      } else {
-        i++;
-      }
-    }
-  });
+  function visitUnlinkSections(tab) {
+    visitUnlinkElement(tab.getBody());
+    visitUnlinkElement(tab.getHeader());
+    visitUnlinkElement(tab.getFooter());
+    (tab.getFootnotes() || []).forEach(function (note) { visitUnlinkElement(note.getFootnoteContents()); });
+  }
 
-  DocumentApp.getUi().alert(`Removed ${unlinkedCount} Sefaria hyperlink${unlinkedCount === 1 ? '' : 's'}.`);
+  function visitUnlinkTab(tab) {
+    visitUnlinkSections(tab.asDocumentTab());
+    tab.getChildTabs().forEach(visitUnlinkTab);
+  }
+
+  doc.getTabs().forEach(visitUnlinkTab);
+  ui.alert(unlinkedCount
+    ? `Removed ${unlinkedCount} Sefaria hyperlink${unlinkedCount === 1 ? '' : 's'}.`
+    : 'No Sefaria hyperlinks found in this document.');
 }
 
 function insertSourceFromSelection() {

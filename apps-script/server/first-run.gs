@@ -17,10 +17,10 @@ Licensed under the MIT License. See repository LICENSE.md.
 // PropertiesService, HtmlService or DocumentApp is below them.
 
 // The menu in Simple mode: the default layout with everything but Texts,
-// Insert Source from Selection, Transform Divine Names and Link Texts hidden.
+// Insert Source from Selection, Transform Divine Names, Link Texts and Unlink Sources hidden.
 // Hidden, not removed, so switching an item back on in the Menu Bar tab puts
 // it back where it always was.
-var SIMPLE_MENU_HIDDEN_ = ['voices', 'lexicon', 'quick_actions_sidebar', 'unlink_sources', 'gematriya_count', 'surprise_me'];
+var SIMPLE_MENU_HIDDEN_ = ['voices', 'lexicon', 'quick_actions_sidebar', 'gematriya_count', 'surprise_me'];
 
 // The divine-name rows setup asks about, in the order the dialog shows them.
 var FIRST_RUN_DIVINE_NAMES_ = [

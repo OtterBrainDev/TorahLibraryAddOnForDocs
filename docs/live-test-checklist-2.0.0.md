@@ -320,7 +320,7 @@ Build one test document containing, in this order:
 | # | Check | Expected |
 | --- | --- | --- |
 | L1 | Select `Genesis 1:1` on its own line; **Insert Source from Selection**; confirm Insert in review | The own-line citation is replaced by the source, titled `Genesis 1:1`, if replacement is enabled. With replacement off the citation stays; inside prose it also stays. No write before Apply. |
-| L2 | Quick Actions → **Unlink Sources** | Removes sefaria.org links, leaves other links alone |
+| L2 | In standard Simple and Everything, find **Quick Actions → Unlink Sources**. Test a second tab and a child tab, headers, footers, and footnotes. Decline once, then confirm. | Declining leaves the Doc alone. Confirming removes sefaria.org hyperlinks across the Doc, keeps the linked text and unrelated hyperlinks, and reports the number removed. |
 | L2a | Enable a Hebrew and English rule. Open **Transform Divine Names** and cancel. In **Transliteration Mapping**, open **Spelling suggestions** with HaShem already filled. Pick one, type a custom spelling, save and reopen. Then clear the field, save and reopen. | Hebrew arrows point left toward their replacements and the English arrow points right. All suggestions are available. The custom spelling survives reopening. A cleared field stays blank and transliteration uses HaShem. |
 | L3 | Quick Actions → **Gematriya Count**, with Hebrew selected and with nothing selected | A value for the selection, then for the whole document |
 | L4 | Preferences → 🧪 Experimental: turn on Surprise Me. Compare the sidebar's 🧪 card with *Menu → Surprise Me* | The same form; the status says how many were inserted and for which word |
