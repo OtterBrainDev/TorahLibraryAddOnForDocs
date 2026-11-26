@@ -94,11 +94,12 @@ then choose to keep current preferences or reset active defaults.
   tabs. Each tab keeps its own results; **Enter** searches all three.
 - **Session Library (📜):** what you've inserted recently, with pins (texts,
   sheets and words) and a **Copy References** list.
-- **Settings files** (**Preferences → ⇅ Import/Export**, in either interface):
+- **Settings files** (**Preferences → Details → ⇅ Import/Export**, in either interface):
   export your settings and hand them to a class, or import an organization's
   house style. Everything asks which profile; Simple uses current preferences.
-- **Profiles** (Everything): a look for each class, switched in a click in
-  Preferences or the sidebar's Insertion Options.
+- **Profiles** (both modes): save changes to **This Document** or choose
+  **User Profile** or a named profile for settings you reuse across Docs.
+  Manage profile names and settings files in **Details**.
 - **Unlink Sources** and **Gematriya Count** in the Quick Actions menu.
 
 ---
@@ -173,6 +174,9 @@ and Unlink Sources work on them like any other text.
 
 - **Help → Support** has troubleshooting and a bug-report
   checklist.
-- **Preferences → Reset To Defaults** puts every setting back to the
-  defaults. It doesn't touch your documents.
+- In **Preferences → Details → Reset options**, choose **🏭 Restore Factory
+  preset** for the 1.0-style reusable settings, including Simple mode.
+  Choose **👤 → ⚙ Clone Account Settings** on **This Document** to copy the
+  saved User Profile and shared settings into that Doc. These actions change
+  preferences for future use. Existing text and links stay as they are.
 - [Sefaria's Help Center](https://help.sefaria.org/hc/en-us/sections/20235182393244).

@@ -96,9 +96,10 @@ controls inline.
   - `menu.gs`, `menu-layout.gs` — the add-on menu (customizable from
     Preferences → Menu Bar), sidebar bootstrap, and dialog launchers.
   - `first-run.gs` — first-run setup and the Simple / Full interface mode
-    (`ui_mode`), including the Simple menu and switching between modes, and
-    Reset To Defaults (which resets the menu to the one for the mode).
-  - `settings-file.gs` — Preferences → ⇅ Import/Export: export JSON, preview
+    (`ui_mode`), including the Simple menu and switching between modes.
+  - `factory-preferences.gs` — the 1.0-style Factory preset, reusable profile
+    resets, and account preference saves.
+  - `settings-file.gs` — Preferences → Details → ⇅ Import/Export: export JSON, preview
     and apply checked groups of valid `SETTINGS` keys. Target-aware RPCs
     validate interface and active-profile identity and can update inactive
     snapshots without switching profiles. Simple targets current preferences;
@@ -106,8 +107,8 @@ controls inline.
     modal preserves interface mode; older RPCs retain their compatibility
     behavior and signatures.
   - `settings-profiles.gs` — settings profiles: named sets of the Text and
-    layout / Fonts settings, switched from Everything's Preferences or the
-    sidebar (see Storage layers).
+    layout / Fonts settings, switched from the Preferences rail in either
+    interface or from the sidebar (see Storage layers).
   - `preferences.gs` — the `SETTINGS` list, `getDefaultPreferences()`,
     account preferences (`UserProperties`) and sidebar session state
     (`CacheService`).
@@ -262,8 +263,12 @@ result is found again. The shared part:
    must work on any getProperty / setProperty / deleteProperty store.
    Document overrides (`server/document-preferences.gs`) use a private
    `document_preferences_<hash>` property for each Google Doc, independent of
-   the active Docs tab. They hold only edited keys with a schema stamp and
-   overlay the reusable defaults before sidebar session settings are applied.
+   the active Docs tab. They hold explicitly saved keys with a schema stamp
+   and overlay reusable defaults before sidebar session settings are applied.
+   Clone Account Settings writes a copy of the built-in User Profile and shared
+   account settings. The preview arrow only writes to the open sidebar session.
+   Preferences uses the same unsaved-edit prompt for profile switches and
+   in-dialog dismissal. The host title bar is managed by Google Docs.
 2. **`CacheService.getUserCache()`** (ephemeral, 6h max TTL). Holds
    per-session sidebar state — the in-progress selected result,
    temporary preference overrides, session-library entries. Accessed

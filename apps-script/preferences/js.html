@@ -1022,14 +1022,46 @@
       pendingSidebarPreferences.finish(answer.message);
     });
 
-    $('.close-preferences-button').on('click', function () {
-      if (preferencesBaseline_ === null) return;
-      if (!formHasUnsavedChanges_()) { google.script.host.close(); return; }
-      saveFormThen_(function () {
-        $('.save-actions button').prop('disabled', true);
-        $('.preferences-shell').prop('inert', true);
-        setTimeout(function () { google.script.host.close(); }, 1800);
+    var preferencesClosing_ = false;
+
+    function closePreferences_(afterSave) {
+      preferencesClosing_ = true;
+      if (!afterSave) { google.script.host.close(); return; }
+      $('.save-actions button').prop('disabled', true);
+      $('.preferences-shell').prop('inert', true);
+      setTimeout(function () { google.script.host.close(); }, 1800);
+    }
+
+    function requestPreferencesClose_() {
+      if (preferencesClosing_ || !byId('profile_modal').hidden || document.querySelector('#modal-busy:not([hidden])')) return;
+      withUnsavedChangesHandled_('Close Preferences?', closePreferences_, {
+        label: 'Save & Close',
+        onSave: function () { closePreferences_(true); }
       });
+    }
+
+    byId('preferences-dismiss').addEventListener('click', requestPreferencesClose_);
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing ||
+          document.querySelector('#settings-transfer-modal[open]')) return;
+      event.preventDefault();
+      if (!byId('profile_modal').hidden) byId('profile_modal_cancel').click();
+      else if (document.querySelector('.custom-select.open')) document.body.click();
+      else requestPreferencesClose_();
+    });
+
+    // The parent Docs window owns its title-bar close button. Ask the
+    // browser to warn if it delivers a navigation event to this frame.
+    window.addEventListener('beforeunload', function (event) {
+      if (preferencesClosing_ || !formHasUnsavedChanges_()) return;
+      event.preventDefault();
+      event.returnValue = true;
+    });
+
+    $('.close-preferences-button').on('click', function () {
+      if (preferencesClosing_ || preferencesBaseline_ === null) return;
+      if (!formHasUnsavedChanges_()) { closePreferences_(); return; }
+      saveFormThen_(function () { closePreferences_(true); });
     });
     $('.save-preferences-button').on('click', function () { saveFormThen_(); });
 
@@ -2422,10 +2454,9 @@
       byId('pref-profile-scope').textContent = editingDocument_
         ? 'Changes apply only to this Google Doc. Import/Export and Factory apply to reusable profiles.'
         : 'Reusable profiles store text, layout and appearance. Other settings are shared across the account.';
-      var save = editingDocument_ ? 'Save changes to this document'
-        : profile.id === 'p1' ? 'Save User Profile' : 'Save profile changes';
-      $('.save-preferences-button').text(save);
-      $('.close-preferences-button').attr('title', editingDocument_ ? save : 'Save changes to ' + quoted_(profile.name));
+      var save = editingDocument_ ? 'Save changes to this document' : 'Save changes to ' + quoted_(profile.name);
+      $('.save-preferences-button').attr({ title: save, 'aria-label': save });
+      $('.close-preferences-button').attr('title', save);
       document.querySelectorAll('.pref-preset-button').forEach(function (button) {
         if (button.dataset.preset !== 'factory') button.hidden = (button.dataset.preset === 'document') !== editingDocument_;
         if (button.dataset.preset === 'profile') button.textContent = 'Reset ' + profile.name;
@@ -2479,12 +2510,19 @@
       ok.classList.toggle('blue', !question.danger);
       alt.hidden = !question.alt;
       alt.textContent = question.alt || '';
-      function close() { modal.hidden = true; }
+      var returnFocus = document.activeElement;
+      var background = document.querySelectorAll('.preferences-shell, .save-bar');
+      function close() {
+        modal.hidden = true;
+        background.forEach(function (region) { region.inert = false; });
+        if (returnFocus) returnFocus.focus();
+      }
       ok.onclick = function () { close(); question.onOk(); };
       alt.onclick = function () { close(); if (question.onAlt) question.onAlt(); };
       byId('profile_modal_cancel').onclick = close;
       modal.hidden = false;
-      ok.focus();
+      background.forEach(function (region) { region.inert = true; });
+      (question.danger ? byId('profile_modal_cancel') : ok).focus();
     }
 
     function preferenceChanges_() {
@@ -2542,14 +2580,14 @@
 
     // Unsaved changes belong to the profile in use: save them to it, drop
     // them, or stay.
-    function withUnsavedChangesHandled_(doing, proceed) {
+    function withUnsavedChangesHandled_(doing, proceed, saveAction) {
       if (!formHasUnsavedChanges_()) { proceed(); return; }
       askProfileQuestion_({
         title: 'Save your changes first?',
         message: 'Your changes to ' + quoted_(editingDocument_ ? 'This Document' : activeProfile_().name) + ' aren’t saved. ' + doing,
-        ok: 'Save and continue',
+        ok: saveAction ? saveAction.label : 'Save and continue',
         alt: 'Don’t save',
-        onOk: function () { saveFormThen_(proceed); },
+        onOk: function () { saveFormThen_(saveAction ? saveAction.onSave : proceed); },
         onAlt: proceed
       });
     }

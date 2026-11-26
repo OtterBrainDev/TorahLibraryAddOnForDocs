@@ -473,25 +473,24 @@ and the offset mapping) and `linker-classify.test.js`.
 - `setPreferences(obj)` only stores keys listed in `SETTINGS`, as strings of
   at most 9,000 characters (`test/tests/set-preferences.test.js`). Any iframe
   can call any server function, so the server can't trust the client.
-- `getPreferences()` / `getAccountPreferences()` read the same list back.
-- Menu changes (the Menu Bar tab) take effect on the next `onOpen`, so the
-  user has to reload the Doc.
-- Every save covers the dialog with `modalBusyShow('Saving preferences…')`
-  until the server answers, so a slow round trip no longer looks like a hang.
-  Opening Preferences from the sidebar shows *Opening Preferences…*
-  (`showBusyOverlay('preferences')`) and ignores repeat clicks.
-- **Settings files** (`server/settings-file.gs`, Preferences → Import/Export ⇅): an
-  export is the `SETTINGS` values shown in the dialog, grouped into four parts;
-  an import writes only `SETTINGS` keys with valid values, only the ticked
-  parts and only what differs, and refuses a file from a newer schema
-  (`settings-file.test.js`).
-- **Profiles** (`server/settings-profiles.gs`, Everything): the settings in
-  use are always the ordinary stored preferences, so every reader is
-  unchanged; a profile not in use is a snapshot in `settings_profile_<id>`,
-  with the index in `settings_profiles` (neither in `SETTINGS`, so no client
-  setter can write them). A switch stores the outgoing values and writes the
-  incoming ones in one `setProperties` call, and a snapshot from an older
-  schema is migrated when it comes back (`settings-profiles.test.js`).
+- `getAccountPreferences()` reads reusable defaults. `getPreferences()`
+  adds the current Google Doc’s private overrides. The sidebar adds its own
+  temporary session choices on top.
+- **💾 Save** sends edited fields and writes them to the selected scope.
+  The busy overlay stays up until the server answers. Save & Close waits
+  for success, and the add-on’s ✕ or Escape uses the profile-switch prompt
+  for unsaved edits.
+- **Settings files** (`server/settings-file.gs`, Preferences → Details →
+  Import/Export ⇅) can target a reusable profile. Imports validate settings
+  and write only the changes in checked groups (`settings-file.test.js`).
+- **Profiles** (`server/settings-profiles.gs`, both interfaces) store the
+  reusable profile in use in ordinary user preferences. Inactive snapshots
+  use `settings_profile_<id>` and a separate index, preserving existing
+  profiles and snapshots when the built-in User Profile label changes.
+- **This Document** (`server/document-preferences.gs`) keys overrides to the
+  hashed Doc ID. The writer checks the Doc and locks updates. The Clone
+  action copies the fixed User Profile and shared preferences, even with
+  a different reusable profile in use (`settings-profiles.test.js`).
 
 ---
 
