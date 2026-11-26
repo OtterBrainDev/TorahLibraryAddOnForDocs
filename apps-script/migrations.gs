@@ -26,7 +26,7 @@ only a profile's keys.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '33';
+var PREFS_SCHEMA_CURRENT_ = '34';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -293,6 +293,8 @@ function applyMigrationsFrom_(userProperties, from) {
   if (from < 33) {
     migrateToV33_(userProperties);
   }
+  // v34: new optional optical Hebrew scaling, off to preserve existing formatting.
+  if (from < 34) migrateToV34_(userProperties);
 }
 
 /**
@@ -830,5 +832,12 @@ function migrateToV3_(userProperties) {
   for (var i = 0; i < aiKeys.length; i++) {
     try { userProperties.deleteProperty(aiKeys[i]); } catch (_e) { /* ignore */ }
   }
+  return true;
+}
+
+
+function migrateToV34_(userProperties) {
+  if (userProperties.getProperty('auto_scale_hebrew') != null) return false;
+  userProperties.setProperty('auto_scale_hebrew', 'false');
   return true;
 }

@@ -12,7 +12,7 @@ should happen.
 | 4 | [Coming from version 1.0](4-returning-user.md) | People who use version 1.0 of *Sefaria for Google Docs* | 15 min | Where its three commands went, what's new, and what behaves differently. |
 | 5 | [First five minutes](5-new-user.md) | Someone who has never used it | 5 min | Get one source into a document. |
 
-The version under demo is **2.0.0, preference schema 33** (`docs/VERSION.json`
+The version under demo is **2.0.0, preference schema 34** (`docs/VERSION.json`
 and the v2.0.0 entry in `docs/CHANGELOG.md`).
 *Help → About* should read **Current line: 2.0**.
 

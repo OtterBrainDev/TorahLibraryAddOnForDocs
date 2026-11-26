@@ -58,6 +58,7 @@ var SETTINGS_FILE_GROUPS_ = [
 function settingsFileGroupOf_(key) {
   if (key === 'menu_layout' || key === 'experimental_features_enabled' || key === 'surprise_me_enabled' || /^show_(voices|lexicon)_tab$|^sidebar_/.test(key)) return 'menu';
   if (/^search_corpus_|^lexicon_dictionary_|^voices_topic_|^hidden_translation_languages$|^show_unavailable_translations$|^link_texts_default$|^link_sources_insert_after_linking$|^linker_|^insert_from_selection_replace$/.test(key)) return 'search';
+  if (key === 'auto_scale_hebrew') return 'look';
   if (/_font(_size|_style|_color|_background)?$|^emphasis_(bold|italic)_|_format_override$|_edition_label$|^source_title_heading$|^translation_language_typography$/.test(key)) return 'look';
   return 'text';
 }

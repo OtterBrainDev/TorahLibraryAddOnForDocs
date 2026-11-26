@@ -133,3 +133,28 @@ test('readSurroundingTextStyle_ skips headings and empty paragraphs back to body
   ctx.DocumentApp.getActiveDocument = () => ({ getCursor: () => ({ getElement: () => empty, getOffset: () => 0 }) });
   assert.deepEqual(plain(ctx.readSurroundingTextStyle_()), { font: 'Lora', size: 12 });
 });
+
+
+test('Auto-Scale Hebrew enlarges only the matched Hebrew body, once, for a measured font', () => {
+  const props = { auto_scale_hebrew: 'true', hebrew_font: '', hebrew_font_size: '' };
+  const loadStyle = (overrides, surrounding) => load([PREFS, ...FONTS], Object.assign({}, props, overrides), { readSurroundingTextStyle_: () => surrounding }).getTypographySettings();
+  const t = loadStyle({}, { font: 'Alef', size: 12 });
+  assert.equal(t.roles.hebrew.size, 14);
+  assert.equal(t.hebrewFontSize, 14);
+  assert.equal(t.roles.translation.size, 12);
+  assert.equal(t.roles.hebrewTitle.size, 12);
+  assert.equal(loadStyle({ auto_scale_hebrew: 'false' }, { font: 'Alef', size: 12 }).roles.hebrew.size, 12);
+  assert.equal(loadStyle({ hebrew_font_size: '13' }, { font: 'Alef', size: 12 }).roles.hebrew.size, 13);
+  assert.equal(loadStyle({ hebrew_font: 'Alef' }, { font: 'Alef', size: 12 }).roles.hebrew.size, 12);
+  assert.equal(loadStyle({}, { font: 'Arial', size: 12 }).roles.hebrew.size, 12);
+  assert.equal(loadStyle({}, { font: 'Alef', size: 14, hebrewContext: true }).roles.hebrew.size, 14);
+  assert.equal(loadStyle({}, { font: 'Noto Serif Hebrew', size: 12 }).roles.hebrew.size, 12);
+});
+
+test('Auto-scale server and browser matrices match', () => {
+  const ctx = load(FONTS);
+  const js = fs.readFileSync('apps-script/shared/fonts/js.html', 'utf8').replace(/^<script>\s*/, '').replace(/<\/script>\s*$/, '');
+  const browser = vm.createContext({});
+  vm.runInContext(js, browser);
+  assert.deepEqual(plain(ctx.HEBREW_AUTO_SCALE_), plain(browser.HEBREW_AUTO_SCALE));
+});

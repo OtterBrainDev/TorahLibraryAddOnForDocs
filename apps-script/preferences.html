@@ -120,6 +120,16 @@
                   <button type="button" class="cc-font-chip" id="cc-citation-font-chip" data-font-role="citation" aria-expanded="false" title="The citation’s font, size and style"><span class="cc-font-chip-name">Same as the text above</span><span class="cc-font-chip-caret" aria-hidden="true">▾</span></button>
                 </div>
               </div>
+              <div class="toggle-row" id="auto-scale-hebrew-row" hidden title="Adjust inherited Hebrew text size using measured letter heights for supported fonts. Explicit fonts and sizes are never changed.">
+                <div class="toggle-copy">
+                  <label class="toggle-title" for="auto_scale_hebrew">Auto-Scale Hebrew</label>
+                  <div class="toggle-help" id="auto-scale-hebrew-help">When Hebrew matches the document’s font and size, enlarge its letters if needed to visually balance nearby Latin text. Unsupported fonts and already-Hebrew context keep their original size.</div>
+                </div>
+                <label class="switch" for="auto_scale_hebrew">
+                  <input id="auto_scale_hebrew" type="checkbox" name="auto_scale_hebrew" aria-describedby="auto-scale-hebrew-help">
+                  <span class="slider"></span>
+                </label>
+              </div>
               <div class="pref-card-extras" hidden>
                   <div class="pref-font-editor" data-font-editor="citation" aria-label="Citation style">
                     <div class="subsection-card">

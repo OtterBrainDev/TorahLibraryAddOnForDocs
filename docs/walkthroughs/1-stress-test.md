@@ -389,7 +389,7 @@ For each failure, record:
 2. What happened versus **Expect**
 3. Browser console output and the Executions entry (duration, error)
 4. Scan mode and After-linking mode, for anything in section 7
-5. Version: **2.0.0, schema 33** (the v2.0.0 entry in `docs/CHANGELOG.md`), and the commit you pushed
+5. Version: **2.0.0, schema 34** (the v2.0.0 entry in `docs/CHANGELOG.md`), and the commit you pushed
 
 Anything under **Known suspects** that reproduces should get a row in
 [`docs/regression-log.md`](../regression-log.md) and a pinning test when it's
