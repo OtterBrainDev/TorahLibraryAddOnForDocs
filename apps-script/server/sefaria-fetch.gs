@@ -528,6 +528,48 @@ function resolveSefariaTextRef_(reference, browseBook) {
   throw sefariaUnavailableError_();
 }
 
+/** Resolve a batch's metadata, following complex default nodes at most 4 times. */
+function resolveSefariaRefPlansBatch_(refs, fetchAll) {
+  const outcomes = refs.map(function () { return { unavailable: true }; });
+  let pending = refs.map(function (ref, index) {
+    return { ref: ref, index: index, visited: [ref], indexTitle: '' };
+  });
+  for (let depth = 0; depth < 4 && pending.length; depth++) {
+    let responses;
+    try {
+      responses = fetchAll(pending.map(function (item) {
+        return { url: sefariaRefUrl_(item.ref), muteHttpExceptions: true };
+      }));
+    } catch (error) {
+      responses = null;
+    }
+    if (!Array.isArray(responses)) break;
+    const following = [];
+    pending.forEach(function (item, i) {
+      let plan;
+      try {
+        plan = interpretSefariaRefResponse_(responses[i]);
+      } catch (error) {
+        plan = null;
+      }
+      if (!plan) return;
+      const indexTitle = plan.indexTitle || (plan.resolved && plan.resolved.indexTitle) || '';
+      if (item.indexTitle && indexTitle && item.indexTitle !== indexTitle) return;
+      if (plan.nextRef) {
+        if (item.visited.indexOf(plan.nextRef) >= 0) return;
+        following.push({
+          ref: plan.nextRef, index: item.index,
+          visited: item.visited.concat([plan.nextRef]), indexTitle: item.indexTitle || indexTitle
+        });
+      } else {
+        outcomes[item.index] = plan;
+      }
+    });
+    pending = following;
+  }
+  return outcomes;
+}
+
 /** Cache only the catalog fields needed to select exact editions. */
 function rememberSefariaVersionCatalog_(reference, list) {
   if (!Array.isArray(list)) return;

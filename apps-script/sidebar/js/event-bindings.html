@@ -156,11 +156,7 @@ $(document).on('change', '.translation-language-any', function () {
   }
   updateTranslationLanguageVisibility();
   saveLastUsedSearchSettings();
-  if (getAllRawResults().length) {
-    reprocessAndRenderResults();
-  } else if (($('.input').val() || '').trim()) {
-    runUnifiedQuery();
-  }
+  refreshTextSearchForLanguageFilter_();
 });
 
 $(document).on('change', '.translation-language-option', function () {
@@ -171,11 +167,7 @@ $(document).on('change', '.translation-language-option', function () {
   }
   updateTranslationLanguageVisibility();
   saveLastUsedSearchSettings();
-  if (getAllRawResults().length) {
-    reprocessAndRenderResults();
-  } else if (($('.input').val() || '').trim()) {
-    runUnifiedQuery();
-  }
+  refreshTextSearchForLanguageFilter_();
 });
 
 // Session library item interactions are handled by delegated bindings below.
@@ -231,11 +223,7 @@ $(document).on('click', '.lang-filter-chip', function (event) {
   }
   updateTranslationLanguageVisibility();
   saveLastUsedSearchSettings();
-  if (getAllRawResults().length) {
-    reprocessAndRenderResults();
-  } else if (($('.input').val() || '').trim()) {
-    runUnifiedQuery();
-  }
+  refreshTextSearchForLanguageFilter_();
 });
 
 $(document).on('click', '.lang-filter-clear-chip', function (event) {
@@ -245,11 +233,7 @@ $(document).on('click', '.lang-filter-clear-chip', function (event) {
   syncCompactTranslationLanguageUI();
   updateTranslationLanguageVisibility();
   saveLastUsedSearchSettings();
-  if (getAllRawResults().length) {
-    reprocessAndRenderResults();
-  } else if (($('.input').val() || '').trim()) {
-    runUnifiedQuery();
-  }
+  refreshTextSearchForLanguageFilter_();
 });
 
 // ── Surprise Me ───────────────────────────────────────────────────────────────

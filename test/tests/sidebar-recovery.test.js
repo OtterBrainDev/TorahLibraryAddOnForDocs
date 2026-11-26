@@ -47,7 +47,7 @@ function bootstrapRequestSource() {
   return source.slice(0, source.indexOf('function initializeSidebar'));
 }
 
-function loadBootstrap() {
+function loadBootstrap(initial) {
   const calls = [];
   const timers = [];
   const notices = [];
@@ -55,6 +55,8 @@ function loadBootstrap() {
   const context = {
     console,
     window: { INITIAL_SIDEBAR_MODE: 'texts' },
+    $: (ready) => ready(),
+    getAppConfig: () => ({ sidebarBootstrap: initial }),
     google: { script: { run: scriptRun(calls) } },
     setTimeout: (fn, ms) => timers.push({ fn, ms }),
     showSidebarNotice: (message, onConfirm) => notices.push({ message, onConfirm }),
@@ -74,6 +76,13 @@ function loadBootstrap() {
 const BOOTSTRAP = {
   mode: 'texts', sessionId: 's', accountPreferences: {}, sessionState: {}, effectivePreferences: {}, preferences: {},
 };
+
+test('the opening editor’s embedded settings initialize the sidebar without a settings RPC', () => {
+  const env = loadBootstrap(BOOTSTRAP);
+  assert.equal(env.bound.length, 1);
+  assert.equal(env.bootstraps().length, 0);
+  assert.equal(env.notices.length, 0);
+});
 
 test('a bootstrap that answers wires up the Insertion Options card', () => {
   const env = loadBootstrap();
@@ -171,6 +180,8 @@ test('a layout picked before the bootstrap answers survives it', () => {
     console,
     window: { INITIAL_SIDEBAR_MODE: 'texts' },
     appMode: 'texts',
+    $: (ready) => ready(),
+    getAppConfig: () => ({}),
     google: { script: { run: scriptRun(calls) } },
     setTimeout() {},
     showSidebarNotice() {}, showSidebarToast() {},

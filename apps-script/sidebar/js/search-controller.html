@@ -57,6 +57,7 @@ function setResultsLoading(isLoading) {
 function searchTextsRun(run) {
   var qs = run.queryState;
   var input = run.query;
+  var searchParameters = getSearchParameters();
   var inputExpanded = expandShevaApostrophe(input);
   // Canonicalize traditional abbreviations before the title lookup: Sefaria's
   // autocompleter indexes "Hilchot Shabbat", never "Hil. Shabbat".
@@ -110,7 +111,7 @@ function searchTextsRun(run) {
       resolveSelectedResult(sefariaUrlInput.ref, sefariaUrlInput.ref);
     };
     searchRunChanged(run);
-    finishSearchRun(run);
+    finishTextsSearchWithLanguages_(run, searchParameters);
     return;
   }
 
@@ -156,7 +157,7 @@ function searchTextsRun(run) {
   function finishResultGroup() {
     if (!isCurrentSearchRun(run)) return;
     pendingAsyncResultGroups = Math.max(0, pendingAsyncResultGroups - 1);
-    if (pendingAsyncResultGroups === 0) finishSearchRun(run);
+    if (pendingAsyncResultGroups === 0) finishTextsSearchWithLanguages_(run, searchParameters);
   }
 
   google.script.run.withSuccessHandler(function (response) {
@@ -198,7 +199,6 @@ function searchTextsRun(run) {
     finishResultGroup();
   }).findReferenceForSidebar(directLookupInput, { browseBook: true }, sidebarSessionId);
 
-  var searchParameters = getSearchParameters();
   google.script.run.withSuccessHandler(function (response) {
     if (!isCurrentSearchRun(run)) return;
     var hits = (Array.isArray(response) ? response : (((response || {}).hits || {}).hits || [])).slice(0, 24);
@@ -214,14 +214,9 @@ function searchTextsRun(run) {
       }
       contentHits.push(buildResultFromSource(source, source.ref, 'search', index, snippet, 'Content hit'));
     });
-    var filteredLibraryPathHits = applyClientSideSearchFilters(libraryPathHits, searchParameters, 'texts').slice(0, 10);
-    var filteredContentHits = applyClientSideSearchFilters(contentHits, searchParameters, 'texts').slice(0, 12);
-    setLibraryMatches(qs.rawLibraryMatches.concat(filteredLibraryPathHits));
-    qs.rawSearchResults = filteredContentHits;
+    setLibraryMatches(qs.rawLibraryMatches.concat(libraryPathHits.slice(0, 10)));
+    qs.rawSearchResults = searchParameters.translationOnly ? contentHits : contentHits.slice(0, 12);
     searchRunChanged(run);
-    if (searchParameters.translationOnly && !qs.libraryMatches.length && !qs.searchResults.length) {
-      setSearchRunHint(run, 'No results matched the selected translation language filter.');
-    }
     finishResultGroup();
   }).withFailureHandler(function (error) {
     if (!isCurrentSearchRun(run)) return;
@@ -229,7 +224,7 @@ function searchTextsRun(run) {
     if (error && error.message) setSearchRunHint(run, error.message);
     searchRunChanged(run);
     finishResultGroup();
-  }).findSearchAdvanced(inputExpanded, searchParameters);
+  }).findSearchAdvanced(inputExpanded, Object.assign({}, searchParameters, { translationOnly: false }));
 
   if (useNameApi) {
     requestNameCandidates(inputForNameApi, function (candidates) {
@@ -275,6 +270,34 @@ function searchTextsRun(run) {
     searchRunChanged(run);
     finishResultGroup();
   }
+}
+
+// Search hits and title suggestions do not prove that their passage has
+// translation text. Verify both groups before revealing filtered results.
+function finishTextsSearchWithLanguages_(run, searchParameters) {
+  var qs = run.queryState;
+  var candidates = qs.rawLibraryMatches.concat(qs.rawSearchResults);
+  if (!searchParameters.translationOnly || !candidates.length) {
+    finishSearchRun(run);
+    return;
+  }
+  var refs = Array.from(new Set(candidates.map(function (item) { return item.ref; }).filter(Boolean)));
+  setSearchRunHint(run, 'Checking translation availability…');
+  google.script.run.withSuccessHandler(function (result) {
+    if (!isCurrentSearchRun(run)) return;
+    var verified = Object.create(null);
+    (result.matches || []).forEach(function (match) { verified[match.ref] = match.languages; });
+    candidates.forEach(function (item) { item.verifiedTranslationLanguages = verified[item.ref] || []; });
+    var hasMatch = candidates.some(function (item) { return item.verifiedTranslationLanguages.length; });
+    setSearchRunHint(run, result.incomplete ? 'Some results could not be checked for translations.'
+      : hasMatch ? '' : 'No results have a confirmed translation in the selected languages.');
+    searchRunChanged(run);
+    finishSearchRun(run);
+  }).withFailureHandler(function () {
+    if (!isCurrentSearchRun(run)) return;
+    setSearchRunHint(run, 'Couldn’t verify translation availability. Try again or clear the language filter.');
+    finishSearchRun(run, true);
+  }).getSearchTranslationMatches(refs, searchParameters.translationLanguages);
 }
 
 function showBookContents(response) {

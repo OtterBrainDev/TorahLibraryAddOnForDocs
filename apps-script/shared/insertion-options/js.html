@@ -195,26 +195,6 @@ function initGroupedInsertionOptions(rootSelector) {
     section.appendChild(element('div', 'io-text-role-label', label));
     return section;
   }
-  function addTextHelp(row, key, message) {
-    if (!row) return;
-    row.classList.add('io-text-option');
-    var help = element('span', 'sidebar-option-help');
-    var button = element('button', 'sidebar-option-help-button', 'ⓘ');
-    button.type = 'button';
-    button.setAttribute('aria-label', key + ' help');
-    var tip = element('span', 'sidebar-option-tooltip', message);
-    tip.id = 'io-' + key.toLowerCase() + '-tip';
-    tip.setAttribute('role', 'tooltip');
-    button.setAttribute('aria-describedby', tip.id);
-    help.appendChild(button);
-    help.appendChild(tip);
-    var label = row.querySelector('.cc-row-label');
-    var labelGroup = element('span', 'io-text-option-label');
-    row.insertBefore(labelGroup, label);
-    labelGroup.appendChild(label);
-    labelGroup.appendChild(help);
-  }
-
   var text = createOptionsGroup('text', 'Text and notes');
   var source = textRole('Source', 'he');
   move('.cc-hebrew-stage', source, 'he', null, true);
@@ -226,12 +206,10 @@ function initGroupedInsertionOptions(rootSelector) {
   var translation = textRole('Translation', 'en');
   move('.cc-translation-stage', translation, 'en', null, true);
   move('#cc-translation-punct-toggle', translation, 'en', 'Translation punctuation');
-  addTextHelp(move('#cc-emphasis-toggle', translation, 'en'), 'Commentary',
-    'Commentary controls apply to supported inline-commentary editions.');
+  move('#cc-emphasis-toggle', translation, 'en');
   text.appendChild(translation);
 
-  addTextHelp(move('#cc-notes-toggle', text), 'Notes',
-    'Choose how to include Sefaria’s marked footnotes.');
+  move('#cc-notes-toggle', text);
 
   var references = createOptionsGroup('references', 'References and numbering');
   move('#cc-he-title-toggle', references, 'he', 'Link source title');

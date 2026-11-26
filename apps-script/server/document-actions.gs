@@ -393,9 +393,9 @@ function confirmLinkerUploadOnce_(scanMode, scope) {
   }
 
   const scopeSentence = scope && scope.selected
-    ? 'Only the selected text (or citation-like passages inside it) will be sent. Without a selection, Link Texts can scan the whole document according to your Linking preferences.'
+    ? 'Only the selected text (or citation-like passages inside it) will be sent. Without a selection, Link Texts scans the current tab’s body according to your Linking preferences.'
     : (scanMode === 'full')
-      ? 'Right now it is set to send the ENTIRE text of this document.'
+      ? 'Right now it is set to send all body text in the current tab.'
       : 'Right now it is set to send only the passages that look like they contain a citation — the rest of your writing stays in the document.';
 
   const ui = DocumentApp.getUi();
@@ -596,7 +596,7 @@ function recoverUnmatchedCitations_(unmatched, fetchAll, docText) {
     // section before v3 fetches text. Structural headings need no text call.
     // Keep the original indices: some citations fail metadata or are headings
     // while their peers in the same round need a second, content-only batch.
-    const outcomes = resolveLinkerRefPlans_(batch.map(function (item) {
+    const outcomes = resolveSefariaRefPlansBatch_(batch.map(function (item) {
       return item.variants[round].spelling;
     }), fetchAll);
     const textPlans = [];
@@ -669,48 +669,6 @@ function recoverUnmatchedCitations_(unmatched, fetchAll, docText) {
   });
 
   return { recovered: recovered, unmatched: stillUnmatched };
-}
-
-/** Resolve a batch's metadata, following complex default nodes at most 4 times. */
-function resolveLinkerRefPlans_(refs, fetchAll) {
-  const outcomes = refs.map(function () { return { unavailable: true }; });
-  let pending = refs.map(function (ref, index) {
-    return { ref: ref, index: index, visited: [ref], indexTitle: '' };
-  });
-  for (let depth = 0; depth < 4 && pending.length; depth++) {
-    let responses;
-    try {
-      responses = fetchAll(pending.map(function (item) {
-        return { url: sefariaRefUrl_(item.ref), muteHttpExceptions: true };
-      }));
-    } catch (error) {
-      responses = null;
-    }
-    if (!Array.isArray(responses)) break;
-    const following = [];
-    pending.forEach(function (item, i) {
-      let plan;
-      try {
-        plan = interpretSefariaRefResponse_(responses[i]);
-      } catch (error) {
-        plan = null;
-      }
-      if (!plan) return;
-      const indexTitle = plan.indexTitle || (plan.resolved && plan.resolved.indexTitle) || '';
-      if (item.indexTitle && indexTitle && item.indexTitle !== indexTitle) return;
-      if (plan.nextRef) {
-        if (item.visited.indexOf(plan.nextRef) >= 0) return;
-        following.push({
-          ref: plan.nextRef, index: item.index,
-          visited: item.visited.concat([plan.nextRef]), indexTitle: item.indexTitle || indexTitle
-        });
-      } else {
-        outcomes[item.index] = plan;
-      }
-    });
-    pending = following;
-  }
-  return outcomes;
 }
 
 // "Duplicate A: Genesis 2:1", "Source 1: בראשית ב:א": up to 40 characters of

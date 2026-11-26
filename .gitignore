@@ -1,2 +1,5 @@
 .reorg-backupsd
 node_modules/
+
+# Local Google OAuth credentials. The separate .clasp.json is project config.
+.clasprc.json

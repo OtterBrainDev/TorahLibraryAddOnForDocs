@@ -14,9 +14,18 @@
     <?!= include('shared/css/icon-mode-card'); ?>
   </head>
   <body>
-    <aside class="hide" role="status" aria-live="polite"><span class="modal-busy-card"><span class="modal-busy-spinner" aria-hidden="true"></span><span>Loading preferences…</span></span></aside>
+    <aside class="hide">
+      <div class="modal-busy-card preferences-load-card">
+        <span class="modal-busy-spinner" id="preferences-load-spinner" aria-hidden="true"></span>
+        <span id="preferences-load-status" role="status" aria-live="polite">Loading preferences…</span>
+        <div id="preferences-load-actions" hidden>
+          <button type="button" class="blue submit" id="preferences-load-retry">Retry</button>
+          <button type="button" class="submit" id="preferences-load-close">Close</button>
+        </div>
+      </div>
+    </aside>
 
-    <div class="preferences-dialog" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="texts voices lexicon">
+    <div class="preferences-dialog" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="texts voices lexicon" inert>
       <div class="preferences-shell">
         <section class="preferences-toc section-card" aria-label="Preferences sections">
           <div class="toc-header-row">

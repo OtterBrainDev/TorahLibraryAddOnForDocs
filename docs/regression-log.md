@@ -159,3 +159,26 @@ The optional session ID on `previewTransliterationWithOverrides` (3) lets the pr
 | Symptom | Root cause | Fix / regression |
 | --- | --- | --- |
 | An in-dialog dismissal could lose pending Preferences edits | Closing and switching profiles used different paths | The add-on close button and Escape reuse the profile-switch prompt. The UI test covers cancel, discard, clean close, and waiting for the save callback. The live checklist tracks the Google Docs title-bar X separately. |
+
+### Sidebar and Preferences sanity sweep — 2026-11-26
+
+| Symptom | Fix and verification |
+| --- | --- |
+| Fast sidebar startup could leave Insertion Options uninitialized | Reproduced in Chromium with an immediate asynchronous settings reply. The sidebar now starts its requests after all control and preview scripts load. The include-wiring test pins that order. |
+| Factory menu order and shared Commentary and Notes help drifted | The Factory test asserts the complete menu. Shared DOM tests pin single controls, tooltip associations, and Notes at the bottom. Chromium with stubbed Apps Script verified the order, label spacing, focus, and Escape at 300 px sidebar width and 600/860 px Preferences widths. |
+| Live host and collaborator behavior | Google Docs host chrome, deployed Apps Script access, and writes under a second editor account still require verification on a designated test deployment. |
+
+### Texts search translation filter
+
+Title candidates and content hits may omit language metadata or list an edition with no text at the hit. The sidebar uses `getSearchTranslationMatches(refs, selectedLanguages)` to check Texts v3 for non-empty translations. Unknown or unavailable refs do not pass the filter, and a new search supersedes a pending result.
+
+### Preferences bootstrap in shared Docs
+
+A collaborator reported the dialog opening with “Could not load preferences.” The opening action now embeds the caller’s single private settings snapshot. A failed read is recoverable from the dialog, and working reusable settings can load when Google does not provide the document identity. The tests simulate two users of the same Doc. Live verification is tracked in checklist D16.
+
+A follow-up console log showed both account slot 0 and account slot 1 requests
+alongside a generic HTML Service error. Google documents multi-login as
+unsupported for Apps Script. The sidebar now also initializes from the opening
+editor’s payload and keeps the existing RPC retry for a failed initial read.
+The single-account editor fixture must still exercise a search and a save,
+which use the HTML Service bridge. [Google troubleshooting](https://developers.google.com/apps-script/guides/support/troubleshooting#issues_with_multiple_google_accounts)

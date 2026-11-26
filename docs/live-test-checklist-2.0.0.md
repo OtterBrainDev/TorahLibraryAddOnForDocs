@@ -8,7 +8,7 @@ snapshots; opt-in live API checks separately cover Sefaria responses. Neither
 kind of automated check holds a `DocumentApp` handle or proves that this HEAD
 works in the Apps Script sidebar and a real document.
 
-**Version under test:** 2.0.0 · **preference schema:** 33 (both from
+**Version under test:** 2.0.0 · **preference schema:** 34 (both from
 `docs/VERSION.json`)
 Confirm both before starting — *Help → About* should read
 **Current line: 2.0**. This confirms the release line only: record the exact
@@ -27,7 +27,7 @@ a user has before they open 2.0.0:
 - **Account A — upgrading tester.** Had a development build of this add-on
   with preferences they changed: a font, a divine-name rule, a layout. Do **not** reset
   preferences. This is the account that proves the migrations (schemas up to
-  33) keep what users chose. Take a screenshot of Preferences before the push.
+  34) keep what users chose. Take a screenshot of Preferences before the push.
 - **Account B — fresh install.** A Google account that has never had the
   add-on. Proves `onInstall` seeds correctly, builds the menu and shows the
   first-run setup. Resetting preferences on Account A is *not* a substitute:
@@ -128,6 +128,8 @@ against the screenshot taken before the push.
 | D12 | Change Notes in This Document and click **🡆 Update Sidebar Preview** with a source previewed. Reopen the sidebar before saving. Use **💾 Save** without closing. Then edit again, use **Save & Close**, reopen the Doc and compare with a second Doc. Click **🏭 Restore Factory preset** and open its confirmation. | Preview updates only the open session. Save & Close identifies the destination and changed setting. The first Doc keeps its saved Notes; a second Doc inherits reusable defaults. Both Factory buttons are dark red, and restoring Factory preserves the first Doc’s explicit overrides. |
 | D13 | Set Notes differently in User Profile, a named profile, and This Document. With the named profile in use, choose This Document → Details → Reset options → **Clone Account Settings**. | Confirmation describes replacement. The Doc receives the saved User Profile setting. The named profile stays active for another Doc, and later User Profile edits do not change the cloned value. |
 | D14 | With an unsaved edit, try the add-on’s **✕ Close Preferences** and Escape from the form. Test all three choices and a failed save. Repeat using the Google Docs title-bar X and record whether the browser shows its native warning. | Cancel keeps edits, Don’t save drops them, and Save & Close waits for success. A failed save keeps the form open. Clean forms close without prompting. Google Docs controls the outer dialog close. |
+| D15 | Use Import/Export from This Document, and restore the updated Factory preset. | The transfer says it is loading saved settings. Factory selects Simple, uses right-side Hebrew, separates Notes, and uses Quiet Link Texts review. |
+| D16 | Share a test Doc with a second account as an editor. Use a separate browser profile with only each test account signed in. After authorizing the add-on, open both the sidebar and **Preferences**, run a Texts search, then save different **This Document** settings and reopen. | Both accounts can load the sidebar and Preferences and complete a search after authorization. Each sees its own settings in the shared Doc. If personal storage is unavailable but the Apps Script opening action still runs, the read-only preset preview appears. Test an explicitly shared preset and an unset preset. In a multi-account session or while signed out, record any host error or unavailable menu and repeat in the single-account fixture. |
 
 ---
 
@@ -169,6 +171,7 @@ against the screenshot taken before the push.
 | F3a | Open a passage with many translations. Scroll down, click a visible edition, wait for the preview, then Ctrl/Cmd-click another and Shift-click a range. Apply a filter and change a preview layout option | The list keeps its scroll position, focus, filter and selected editions for the passage. The chosen rows stay in view after the preview reloads. Test both single- and multi-select layouts |
 | F3b | Open Versions at normal sidebar width in Stacked and side by side. Hover, focus, and activate each available ⓘ. Press Escape | Each picker has one labeled heading and its count. Help is visible on hover or focus, fits the sidebar, adds no row, and can be dismissed without toggling the accordion. Multi-selection help appears only when the layout supports it |
 | F4 | Type `français`, then `French`, `צרפתית` and `fr` in the filter box above the list; with a hidden pick, Ctrl/Cmd-click a visible version, then plain-click one | Each lists the French translations; filtering alone preserves all picks; Ctrl/Cmd adds/removes one and retains hidden picks; plain click replaces the entire selection |
+| F4a | Select French in the Texts search language menu and search a title and a verse. Add English, then choose Any. | A result must contain text in at least one selected translation language. Title and fuzzy candidates are checked too. Any restores unfiltered results. |
 | F4a | Preview Genesis 1:1. Under **Source editions**, choose **Tanach.us (full edition)** and toggle Vowels and Cantillation. Compare Miqra according to the Masorah. Repeat with an already selected pre-stripped Tanach.us edition | The full Tanach.us edition is one choice, its two pre-stripped forms are normally hidden, and an active pre-stripped choice remains selectable. The marks follow the controls on the full edition. Insertion and citation retain the actual Sefaria edition title |
 | F5 | Insert the multi-selection with **Link title to Sefaria** and **Citation** on | One block per translation, in pick order, each titled once with its version; each link opens that translation; a blank line after every citation, including the last; every block formatted like the first |
 | F6 | Deuteronomy 6:4's translation list; then Preferences → Search → Advanced → **Show unavailable translations** | A translation with no text for the verse (the Yiddish) is not listed; with the setting on, it is listed greyed out, *unavailable for this ref* |
@@ -459,7 +462,7 @@ For anything that fails, the useful report is:
 4. Which account (A upgrading / B fresh / C from version 1.0), the
    interface (Simple / Everything) and the scan mode in effect
 
-State the version too: **2.0.0, schema 33**, and the exact tested commit. "It broke" is not checkable
+State the version too: **2.0.0, schema 34**, and the exact tested commit. "It broke" is not checkable
 later; the version and the check id are.
 
 ---
@@ -505,11 +508,12 @@ checklist was run against the code that shipped.
 
 | Case | Action | Expected |
 | --- | --- | --- |
-| S1 | In Preferences, open Insertion → Insertion Defaults → Texts in Simple and Everything | Notes is visible above the Source and Translation sections, with Omit / Inline / Separate and one selected value. It is not buried in Layout. |
+| S1 | In Preferences, open Insertion → Insertion Defaults → Texts in Simple and Everything | Notes sits directly below Commentary, with Separate / Inline / Omit and one selected value. Both rows show ⓘ help on hover and keyboard focus. Repeat in the sidebar at its default narrow width and check the Commentary label and icon have separate space. |
 | S2 | Save Notes: Inline, open sidebar Text and notes; change to Separate for the session, reopen Preferences | Sidebar starts Inline; Separate is temporary until Save as defaults; Preferences still shows Inline. Save as defaults, reopen, verify Separate. |
 | S3 | Compare all shared controls in Preferences and sidebar; change Display to Original, Both, Translation | Notes remains applicable in each; Preferences keeps defaults editable for other display choices; sidebar hides only inapplicable or explicitly disabled controls. |
-| S4 | Switch saved profile and use Import/Export or Reset to Defaults; inspect Notes and other shared options | Notes follows the active saved profile/defaults, not a stale session; Reset returns Omit. |
+| S4 | Switch saved profile and use Import/Export or Reset to Defaults; inspect Notes and other shared options | Notes follows the active saved profile or defaults. In a document inheriting the account menu, Restore Factory preset returns Notes to Separate and the menu starts with Add Sources with Sefaria, Link Texts with Sefaria, and Transform Divine Names in that order, followed by Preferences and Help. |
 | S5 | Run Link Texts → Customize this insertion; choose Notes with either language | Notes is available outside the language sections and applies only to the pass until Save as defaults. |
+| S6 | Reopen the sidebar several times, including after a warm load. Trigger an operation from the Extensions menu and again from the sidebar where available | Controls respond on every open. Record when Google Docs displays its own script-status toast and whether the add-on provides operation-specific feedback. |
 
 ### T — repeated citation detection (pending live verification)
 
