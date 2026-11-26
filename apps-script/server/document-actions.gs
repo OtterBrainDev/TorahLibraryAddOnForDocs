@@ -854,6 +854,129 @@ function classifyUnmatchedCitation_(documentText, item) {
  *
  * @returns {Object} scan report; see linker-results.html for the consumer.
  */
+
+// Sefaria normally returns one row per occurrence, but a model can omit a
+// repeated citation. Recover only literal repetitions of a fully specified,
+// unambiguous citation independently verified by the context-free Ref API.
+// Never copy a resolution of "ibid.", a bare section number, or a spelling
+// which the model resolved differently elsewhere. Scan only the uploaded
+// segments (including selection scopes), never their omitted surroundings.
+var LINKER_REPEAT_MAX_SPELLINGS_ = 50;
+
+function linkerRepeatBoundary_(text, start, end) {
+  var before = text.slice(0, start);
+  var after = text.slice(end);
+  // Avoid substrings in larger words, numbers, ranges and commentary refs.
+  if (/[\p{L}\p{N}\p{M}_]$/u.test(before) || /^[\p{L}\p{N}\p{M}_]/u.test(after)) return false;
+  if (/[\p{L}\p{N}\p{M}][:.\/\-\u05BE\u2013\u2014]\s*$/u.test(before) ||
+      /^\s*[:.\/\-\u05BE\u2013\u2014]\s*[\p{N}\u05D0-\u05EA]/u.test(after)) return false;
+  // A bare base citation inside an otherwise unrecognized commentary title
+  // is not necessarily the same reference as the standalone spelling.
+  if (/(?:\bon|על|ל)\s+$/iu.test(before)) return false;
+  return true;
+}
+
+function recoverRepeatedLinkerMatches_(input, fetchAll) {
+  var docText = String(input.docText || '');
+  var scan = input.scan;
+  var raw = input.rawMatches || [];
+  var refData = input.refData || {};
+  var existing = input.existingMatches || [];
+  var occupied = [];
+  var seeds = new Map();
+
+  function remember(start, end, refs) {
+    if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 ||
+        end <= start || end > docText.length) return;
+    occupied.push({ start: start, end: end });
+    var spelling = docText.slice(start, end).trim();
+    if (!spelling || spelling.length > 300 || /[\r\n]/.test(spelling)) return;
+    // Require a title and address, not only a number or context marker.
+    // The metadata check below also requires an actual nonempty address.
+    if (!/[\p{L}]/u.test(spelling) || !/\s/u.test(spelling)) return;
+    var unique = Array.from(new Set((refs || []).filter(Boolean)));
+    var seed = seeds.get(spelling);
+    if (!seed) {
+      seed = { spelling: spelling, ref: unique.length === 1 ? unique[0] : '', blocked: unique.length !== 1 };
+      seeds.set(spelling, seed);
+    } else if (unique.length !== 1 || unique[0] !== seed.ref) seed.blocked = true;
+  }
+  raw.forEach(function (item) {
+    if (!item) return;
+    var range = scan.segments ? mapPayloadRangeToDocRange_(scan.segments, Number(item.startChar), Number(item.endChar)) :
+      { startChar: Number(item.startChar), endChar: Number(item.endChar) };
+    if (range) remember(range.startChar, range.endChar,
+      !item.linkFailed && Array.isArray(item.refs) ? item.refs : []);
+  });
+  existing.forEach(function (item) {
+    // Existing recovered results also protect their actual span; the raw
+    // unresolved spelling above is deliberately not used as a repeat seed.
+    remember(item.startChar, item.endChar, (item.candidates || []).map(function (c) { return c.ref; }));
+  });
+
+  var segments = scan.segments || [{ docStart: 0, length: scan.payload.length }];
+  var pending = [];
+  seeds.forEach(function (seed) {
+    if (seed.blocked || pending.length >= LINKER_REPEAT_MAX_SPELLINGS_) return;
+    var spans = [];
+    segments.forEach(function (segment) {
+      var endOfSegment = segment.docStart + segment.length;
+      var at = segment.docStart;
+      while (at < endOfSegment) {
+        var start = docText.indexOf(seed.spelling, at);
+        if (start < 0 || start + seed.spelling.length > endOfSegment) break;
+        var end = start + seed.spelling.length;
+        at = end;
+        if (!linkerRepeatBoundary_(docText, start, end) ||
+            occupied.some(function (r) { return start < r.end && end > r.start; }) ||
+            (input.isAlreadyLinked && input.isAlreadyLinked(start, end - 1))) continue;
+        spans.push({ start: start, end: end });
+      }
+    });
+    if (spans.length) pending.push({ seed: seed, spans: spans });
+  });
+  if (!pending.length) return [];
+
+  // One metadata lookup per distinct spelling, not per occurrence. No
+  // fuzzy matching, variant expansion, context borrowing or whole-book
+  // padding. The verified canonical ref must agree with the original model.
+  var responses;
+  try {
+    responses = fetchAll(pending.map(function (item) {
+      return { url: sefariaRefUrl_(item.seed.spelling), muteHttpExceptions: true };
+    }));
+  } catch (error) { return []; }
+  if (!Array.isArray(responses)) return [];
+
+  var recovered = [];
+  pending.forEach(function (item, i) {
+    var response = responses[i], meta;
+    try {
+      if (!response || (response.getResponseCode && response.getResponseCode() >= 400)) return;
+      meta = parseJsonOrNull_(response.getContentText());
+    } catch (error) { return; }
+    if (!meta || meta.is_ref !== true || meta.normalized !== item.seed.ref ||
+        !Array.isArray(meta.start_labels) || !meta.start_labels.length) return;
+    var candidate = buildLinkerCandidate_(item.seed.ref, refData);
+    if (!candidate) return;
+    item.spans.forEach(function (span) {
+      if (occupied.some(function (r) { return span.start < r.end && span.end > r.start; })) return;
+      occupied.push(span);
+      recovered.push({
+        key: 'repeat-' + span.start + '-' + span.end,
+        documentText: item.seed.spelling,
+        startChar: span.start,
+        endChar: span.end,
+        occurrence: countOccurrencesBefore_(docText, item.seed.spelling, span.start),
+        snippet: buildLinkerSnippet_(docText, span.start, span.end),
+        ambiguous: false,
+        candidates: [candidate]
+      });
+    });
+  });
+  return recovered;
+}
+
 function scanDocumentForReferences(requestedScope) {
   const doc = DocumentApp.getActiveDocument();
   const bodyText = doc.getBody().editAsText();
@@ -885,20 +1008,39 @@ function scanDocumentForReferences(requestedScope) {
 
   const response = findRefsInDocumentText(scan.payload);
 
+  const rawMatches = Array.isArray(response.results) ? response.results : [];
+  const isAlreadyLinked = function (start, endInclusive) {
+    return !scope.insertIntent && !!(bodyText.getLinkUrl(start) || bodyText.getLinkUrl(endInclusive));
+  };
   const classified = classifyLinkerMatches_({
-    rawMatches: Array.isArray(response.results) ? response.results : [],
+    rawMatches: rawMatches,
     refData: response.refData || {},
     segments: scan.segments,
     docText: docText,
-    isAlreadyLinked: function (start, endInclusive) {
-      return !scope.insertIntent && !!(bodyText.getLinkUrl(start) || bodyText.getLinkUrl(endInclusive));
-    }
+    isAlreadyLinked: isAlreadyLinked
   });
   // Look the unmatched ones up the way the sidebar search would.
   const recovery = recoverUnmatchedCitations_(classified.unmatched, function (requests) {
     return UrlFetchApp.fetchAll(requests);
   }, docText);
-  const matches = classified.matches.concat(recovery.recovered)
+  const existingMatches = classified.matches.concat(recovery.recovered);
+  const repeated = recoverRepeatedLinkerMatches_({
+    docText: docText, scan: scan, rawMatches: rawMatches, refData: response.refData || {},
+    existingMatches: existingMatches, isAlreadyLinked: isAlreadyLinked
+  }, function (requests) { return UrlFetchApp.fetchAll(requests); });
+  // Keep each physical occurrence. A duplicate API row for the identical
+  // span is not another citation; preserve distinct offsets regardless of ref.
+  const bySpan = new Map();
+  existingMatches.concat(repeated).forEach(function (match) {
+    const key = match.startChar + ':' + match.endChar;
+    const prior = bySpan.get(key);
+    if (!prior) { bySpan.set(key, match); return; }
+    match.candidates.forEach(function (candidate) {
+      if (!prior.candidates.some(function (c) { return c.ref === candidate.ref; })) prior.candidates.push(candidate);
+    });
+    prior.ambiguous = prior.candidates.length > 1;
+  });
+  const matches = Array.from(bySpan.values())
     .filter(function (match) { return !scope.selected || scope.ranges.some(function (range) { return match.startChar >= range.start && match.endChar <= range.end; }); })
     .sort(function (a, b) { return a.startChar - b.startChar; });
   // If the linker missed one whole selected reference, try the ordinary

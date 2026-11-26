@@ -10,6 +10,8 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Link repeated citations:** retain each distinct document position even when references resolve to the same source. If Sefaria omits a literal repeat, recover it only when a context-free Ref API lookup confirms the same fully addressed, unambiguous source. Already-linked text, overlapping matches and text outside the scan scope are not added.
+
 - **Insertion control parity:** Notes now appears at the top of Preferences →
   Insertion → Insertion Defaults → Texts, rather than in the separate Layout
   accordion. The same shared control is used by the sidebar and Link Texts;

@@ -134,3 +134,7 @@ Columns:
 | Disabled optional tools appear after mode switch | Menu availability and editor visibility differed; form baseline not reconciled | Respect explicit Sidebar switches in both modes; update only menu baseline; mode round-trip and UI tests |
 | Rename looked like a profile | Text action adjacent to list | Labeled U+1F589 above list |
 | Import/Export hidden in Simple, import only addressed live settings | Mode-dependent Advanced tab and active-only RPCs | U+21C5 modal and target-aware RPCs; inactive snapshot transfer, shared-group opt-in, preserve mode; settings-profile and settings-file tests |
+
+### Repeated citations — 2026-11-25
+
+Link Texts could miss later literal occurrences when the resolver omitted them. Preserve distinct positions and recover explicit repeated citations only after a context-free Ref lookup verifies the same fully addressed source. Keep already linked occurrences and unscanned text untouched. See linker-classify tests and live checklist T.
