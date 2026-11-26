@@ -59,8 +59,8 @@ Session Library; several translations at once; settings files (Preferences → I
 
 1. **Divine names are replaced as you insert:** out of the box יהוה becomes
    **יי**. Choose the spelling, or turn it off, in the setup or in Preferences →
-   Insertion → Divine Name Mappings. Transform Divine Names asks first and
-   works on the tab you have open.
+   Insertion → Divine Name Mappings. Transform Divine Names asks before
+   changing the selected text or the current tab’s body.
 2. **Link Texts tells you what it did:** it links what it is sure of, asks
    about citations that could mean more than one text, and lists what it
    couldn't link. It sends Sefaria only the passages that look like citations.
@@ -403,7 +403,7 @@ the current Doc. Sidebar overrides are temporary for the open sidebar.
 | Action | What it does |
 | --- | --- |
 | **Sel → ס** Insert Source from Selection | Highlight one or more references and run it. Review matches even if quiet linking is enabled; choose Insert or Link. Unresolved text can open prefilled Texts search. A citation on its own line can be replaced; a citation inside prose stays. Turn off **Preferences → Insertion → Insert from Selection** to keep own-line citations too. |
-| **ה → ש** Transform Divine Names | Apply your divine-name replacements to text already in the document: every match in the body of the open tab, not only a selection (headers, footers, footnotes and other tabs are left alone). It asks first. |
+| **ה → ש** Transform Divine Names | Apply your divine-name replacements to the selected text or, with no selection, the current tab’s body. It asks first. |
 | **🔗 → ס** Link Texts with Sefaria | Find citations in highlighted text, or in the document body if no text is selected, and link them to Sefaria. |
 | **🎲** Surprise Me | Experimental; shown only when enabled in **Preferences → 🧪 Experimental**. Inserts a random set of sources on a word or theme, each with your saved **Preferences → Insertion** defaults (not this session's Insertion Options). |
 
@@ -468,8 +468,10 @@ By default, inserted יהוה becomes יי. The rules are in **Preferences →
 Insertion → Divine Name Mappings**: a master switch for replacement on
 insertion, and a rule each for יהוה, יה, אלוהים and English *God*, each with a
 choice of replacement or **Other**. **Transform Divine Names** applies the same
-rules to text already in the document — the whole body of the open tab, not
-only a selection — after asking.
+rules to text already in the document. Highlight a passage to replace only
+complete matches within it. Clear the selection to use the current tab’s
+body. The confirmation and replacement count both name the scope. Headers,
+footers, footnotes, and other tabs stay unchanged.
 
 ## Preferences
 

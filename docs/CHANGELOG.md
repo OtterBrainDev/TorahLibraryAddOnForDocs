@@ -10,6 +10,8 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Transform Divine Names** uses selected text when highlighted and the current tab’s body otherwise. The confirmation and replacement count name the scope.
+
 - **Unlink Sources (schema 35).** Quick Actions in Simple mode shows the action again. It asks before removing Sefaria links across tabs, including headers, footers, and footnotes.
 
 - **Divine names.** Confirmation arrows point left for Hebrew rules and
