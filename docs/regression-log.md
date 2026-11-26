@@ -160,10 +160,6 @@ The optional session ID on `previewTransliterationWithOverrides` (3) lets the pr
 | --- | --- | --- |
 | An in-dialog dismissal could lose pending Preferences edits | Closing and switching profiles used different paths | The add-on close button and Escape reuse the profile-switch prompt. The UI test covers cancel, discard, clean close, and waiting for the save callback. The live checklist tracks the Google Docs title-bar X separately. |
 
-### Texts search translation filter
-
-Title candidates and content hits may omit language metadata or list an edition with no text at the hit. The sidebar uses `getSearchTranslationMatches(refs, selectedLanguages)` to check Texts v3 for non-empty translations. Unknown or unavailable refs do not pass the filter, and a new search supersedes a pending result.
-
 ### Sidebar and Preferences sanity sweep — 2026-11-26
 
 | Symptom | Fix and verification |
@@ -171,3 +167,7 @@ Title candidates and content hits may omit language metadata or list an edition 
 | Fast sidebar startup could leave Insertion Options uninitialized | Reproduced in Chromium with an immediate asynchronous settings reply. The sidebar now starts its requests after all control and preview scripts load. The include-wiring test pins that order. |
 | Factory menu order and shared Commentary and Notes help drifted | The Factory test asserts the complete menu. Shared DOM tests pin single controls, tooltip associations, and Notes at the bottom. Chromium with stubbed Apps Script verified the order, label spacing, focus, and Escape at 300 px sidebar width and 600/860 px Preferences widths. |
 | Live host and collaborator behavior | Google Docs host chrome, deployed Apps Script access, and writes under a second editor account still require verification on a designated test deployment. |
+
+### Texts search translation filter
+
+Title candidates and content hits may omit language metadata or list an edition with no text at the hit. The sidebar uses `getSearchTranslationMatches(refs, selectedLanguages)` to check Texts v3 for non-empty translations. Unknown or unavailable refs do not pass the filter, and a new search supersedes a pending result.
