@@ -6,8 +6,9 @@ project behind its existing listing (path A in
 [`for-sefaria-review.md`](for-sefaria-review.md) §1). Sefaria's approval and
 the release date are not established.
 
-Source copy reconciled on 2026-11-25 for the final candidate's insertion
-options, edition selection, Commentary and Notes. In-place upgrade behavior
+Source copy reconciled on 2026-11-25 for the candidate's insertion options,
+edition selection, Commentary and Notes, selection actions, legacy setup,
+Help and profile-aware Import/Export. In-place upgrade behavior
 and the new Google Docs checks still need live verification before this
 notice is sent.
 
@@ -44,10 +45,12 @@ and marked footnotes appear.
 
 **When you first open the sidebar**
 
-- A short setup appears. Choose **I've used Sefaria for Google Docs** to start
-  with the familiar layout: Hebrew and translation, Hebrew on the right.
-- Check the divine-name setting. By default, newly inserted sources replace
-  יהוה with יי. Turn this off to keep Sefaria's spelling.
+- A short setup appears. Choose **I've used Sefaria for Google Docs 1.0** and
+  Continue for familiar bilingual Hebrew-right layout, Simple, and the
+  **Add Sources with Sefaria** menu. Voices and Lexicon are initially off in
+  this preset; enable them later in Preferences → Sidebar.
+- The 1.0 preset keeps Sefaria's divine-name spelling. Other setup paths start
+  with the add-on's defaults, including automatic יהוה → יי unless changed.
 - Check the citation setting. By default, new sources carry a credit line
   naming the edition and its license.
 - Selecting a search result now shows a preview. Click **Add Source** to
@@ -67,9 +70,14 @@ and marked footnotes appear.
   In Translation only or the bilingual Stacked arrangement, Ctrl-click
   (Cmd-click on Mac) adds or removes individual translations and Shift-click
   selects a range.
-- **Insert Source from Selection** replaces the highlighted citation by
-  default. To keep the citation and insert below it, change this in
-  Preferences → Insertion.
+- **Insert Source from Selection** opens review for one or several selected
+  citations, even if Link Texts normally runs quietly. Choose Insert or Link;
+  own-line citations may be replaced according to Preferences → Insertion.
+  Highlight text to limit Link Texts and Gematriya Count, or clear the
+  selection for the document body.
+- **⇅ Import/Export** beside Interface in Preferences shares or restores
+  settings in either mode. Everything lets you select a named profile.
+  **Help → Re-run Setup Wizard** offers keeping or resetting active preferences.
 
 All of these can be changed later in **Preferences**.
 
@@ -84,9 +92,10 @@ Release date: [to be confirmed].
 ## Confirm before sending
 
 - **Setup and defaults are Sefaria's decisions** (`for-sefaria-review.md` §2,
-  decisions 2–4). The candidate shows setup to an upgraded 1.0 user, replaces
-  divine names on insert and adds the credit line. If Sefaria changes any of
-  these, change or drop the matching bullet.
+  decisions 2–4). The candidate offers upgraded users setup, with a one-step
+  1.0 preset that disables automatic divine-name substitution and retains
+  attribution. Other paths start from the ordinary defaults. If Sefaria
+  changes these decisions, revise the matching bullet.
 - **The 1.0 permission baseline comes from the public listing**, not from
   1.0's manifest. The listing shows 1.0 requesting email and profile, which
   2.0 does not. Once the published 1.0 manifest confirms that, this sentence

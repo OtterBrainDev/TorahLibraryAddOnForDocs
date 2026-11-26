@@ -53,7 +53,7 @@ test('every Preferences save tells an open sidebar, which re-reads them and refr
   }
   // A settings-file import writes too (preferences/settings-file-js).
   const importJs = readAppScriptFile('preferences/settings-file-js.html');
-  assert.match(importJs, /withSuccessHandler\(function \(result\) \{[\s\S]*?dialog\.markSaved\(\);[\s\S]*?\.applySettingsImport\(/);
+  assert.match(importJs, /withSuccessHandler\(function \(result\) \{[\s\S]*?if \(result\.affectsActive\) \{\s*dialog\.reloadFrom\(result\.preferences\);\s*dialog\.markSaved\(\);\s*\}[\s\S]*?\.applySettingsImportForTarget\(/);
   assert.match(prefs, /markSaved: markPreferencesSaved/);
   const key = prefs.match(/localStorage\.setItem\('([^']+)'/)[1];
 

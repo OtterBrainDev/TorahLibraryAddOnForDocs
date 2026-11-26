@@ -80,10 +80,12 @@
     "window.PreferencesDialog = {"
   ],
   "apps-script/preferences/settings-file-js.html": [
-    ".exportSettingsFile(",
-    ".previewSettingsImport(",
-    ".applySettingsImport(",
-    "window.PreferencesDialog"
+    ".exportSettingsForTarget(",
+    ".previewSettingsImportForTarget(",
+    ".applySettingsImportForTarget(",
+    "window.PreferencesDialog",
+    "modal.showModal()",
+    "result.affectsActive"
   ],
   "apps-script/sidebar/js/bootstrap.html": [
     "function initializeSidebar",
