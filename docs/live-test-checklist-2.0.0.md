@@ -318,6 +318,7 @@ Build one test document containing, in this order:
 | --- | --- | --- |
 | L1 | Select `Genesis 1:1` on its own line; **Insert Source from Selection**; confirm Insert in review | The own-line citation is replaced by the source, titled `Genesis 1:1`, if replacement is enabled. With replacement off the citation stays; inside prose it also stays. No write before Apply. |
 | L2 | Quick Actions → **Unlink Sources** | Removes sefaria.org links, leaves other links alone |
+| L2a | Enable a Hebrew and English rule. Open **Transform Divine Names** and cancel. In **Transliteration Mapping**, open **Spelling suggestions** with HaShem already filled. Pick one, type a custom spelling, save and reopen. Then clear the field, save and reopen. | Hebrew arrows point left toward their replacements and the English arrow points right. All suggestions are available. The custom spelling survives reopening. A cleared field stays blank and transliteration uses HaShem. |
 | L3 | Quick Actions → **Gematriya Count**, with Hebrew selected and with nothing selected | A value for the selection, then for the whole document |
 | L4 | Preferences → 🧪 Experimental: turn on Surprise Me. Compare the sidebar's 🧪 card with *Menu → Surprise Me* | The same form; the status says how many were inserted and for which word |
 | L5 | Set Stacked, Line numbers off and Citation on in Preferences; in the sidebar's Insertion Options switch to Right–Left; run Surprise Me | Inserted Stacked, unnumbered, with titles linked and the credit line: the saved defaults, not the sidebar's session change |

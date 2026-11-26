@@ -412,6 +412,11 @@ Menu-only: **Unlink Sources** removes every sefaria.org link from the
 document; **Gematriya Count** totals the gematria of the selection (or the
 whole document).
 
+**The Name in transliteration** under **Preferences → Insertion →
+Transliteration Mapping** saves a single spelling for the selected document
+or profile. Pick from **Spelling suggestions** or type your own, then save.
+A blank field uses *HaShem*.
+
 ## Link Texts with Sefaria
 
 1. Highlight text to limit the scan, or clear the selection to scan the body
