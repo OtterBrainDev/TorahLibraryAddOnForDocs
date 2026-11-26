@@ -82,7 +82,9 @@
     background: var(--busy-scrim);
   }
 
-  /* The loading card is the busy overlay's (shared/ui/busy-overlay). */
+  .preferences-load-card { flex-wrap: wrap; }
+  #preferences-load-actions { flex-basis: 100%; }
+  #preferences-load-spinner[hidden] { display: none; }
 
   /* The intro scrolls away; only the tab bar stays pinned. (Both used to be
      sticky at top: 0, so the intro showed through below the tabs.)        */
@@ -206,6 +208,10 @@
     width: 100%;
     max-width: 100%;
   }
+
+  .divine-name-spelling { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .divine-name-spelling input { flex: 1 1 12em; width: auto; }
+  .divine-name-spelling select { flex: 1 1 11em; width: auto; }
 
   .compact-row {
     display: grid;

@@ -10,7 +10,17 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
-- **Unlink Sources (schema 35).** The shipped Simple and Factory menus show the action again. It asks before removing Sefaria links from all tabs, including headers, footers, and footnotes. Custom menus keep their choices.
+- **Unlink Sources (schema 35).** Quick Actions in Simple mode shows the action again. It asks before removing Sefaria links across tabs, including headers, footers, and footnotes.
+
+- **Divine names.** Confirmation arrows point left for Hebrew rules and
+  right for English rules. The transliteration spelling menu shows all
+  suggestions and keeps custom input editable.
+- **Factory and Import/Export.** Factory restores the three 1.0 menu commands in their original order, followed by Preferences and Help.
+  Import/Export identifies its loading step when opened from This Document.
+- **Sidebar and Preferences.** Notes follows Commentary, and both use ⓘ help. Sidebar startup waits for its controls to load before requesting settings.
+- **Search language filter.** Selecting languages shows Texts results with
+  verified translation text in at least one selected language. Any runs the
+  regular search without translation verification.
 
 - **Auto-Scale Hebrew (schema 34).** Optional, font-specific enlargement for matched Hebrew body text; explicit formatting, unsupported fonts and Hebrew insertion context are unchanged. Existing users and factory defaults retain the prior behavior (off). See [the measurement method](hebrew-auto-scale.md).
 

@@ -7,8 +7,8 @@ only), and nothing here reaches the add-on's users.
 
 It lives in its own folder, with its own lockfile, so that the deploy
 workflow installs exactly the versions in `package-lock.json`, each checked
-against its integrity hash, with install scripts disabled — that job holds a
-Google credential — and so that `npm ci` at the repo root never downloads it.
+against its integrity hash, with install scripts disabled. The final push step
+holds a Google credential. A root-level `npm ci` does not install clasp.
 
 ## Deploying by hand (what you need day to day)
 
@@ -19,21 +19,21 @@ bash pre_clasp_qc.sh apps-script
 npx --prefix tools/clasp clasp push            # from the repo root; uses .clasp.json
 ```
 
-A globally installed `clasp` (2.x or 3.x) works the same way if you already
-have one. `clasp push` replaces the script project's HEAD — what you see
+Use the pinned `clasp` 3.4.1 for deployment checks. `clasp push` replaces the
+script project's HEAD, which is what you see
 through **Deploy → Test deployments** in your development document. It never
 reaches Marketplace users; see `docs/marketplace-listing.md` §6.
 
 ## Automatic deploys from GitHub (optional)
 
 `.github/workflows/deploy.yml` can do the `clasp push` for you on every push to
-`master`, after the tests and QC pass. It is **off** in any repository that has
-not set it up (the workflow is skipped), so nothing breaks if you never do
+`master`, after the tests and QC pass. Manual runs also target `master`. The workflow
+is **off** in any repository that has not set it up (the workflow is skipped), so nothing breaks if you never do
 this. To turn it on in a repository:
 
 1. **Log in once with clasp** on your computer (see above), as a Google
    account that can edit the Apps Script project. This writes
-   `~/.clasprc.json`. Either clasp 2 or clasp 3 is fine.
+   `~/.clasprc.json`. The pinned CLI also reads the old clasp 2 credential shape.
 
    That file is a long-lived credential for the account: treat it like a
    password. Ideally use a Google account that has access to this Apps
@@ -75,5 +75,9 @@ cd tools/clasp
 npm install --package-lock-only --ignore-scripts @google/clasp@<version>
 ```
 
-Commit `package.json` and `package-lock.json` together. The workflow runs
-clasp 2 commands (`clasp push -f`); check them before moving to clasp 3.
+Commit `package.json` and `package-lock.json` together. The deploy workflow
+runs `clasp --auth <file> push -f` using a temporary file with restricted
+permissions. Smoke-test the exact command and file list and run
+`npm audit --prefix tools/clasp` before changing the pin. Review the
+`gaxios` override at upgrades. It selects the patched 7.x release already
+used by the authentication library.

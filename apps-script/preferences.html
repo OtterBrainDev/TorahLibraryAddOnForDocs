@@ -14,9 +14,18 @@
     <?!= include('shared/css/icon-mode-card'); ?>
   </head>
   <body>
-    <aside class="hide" role="status" aria-live="polite"><span class="modal-busy-card"><span class="modal-busy-spinner" aria-hidden="true"></span><span>Loading preferences…</span></span></aside>
+    <aside class="hide">
+      <div class="modal-busy-card preferences-load-card">
+        <span class="modal-busy-spinner" id="preferences-load-spinner" aria-hidden="true"></span>
+        <span id="preferences-load-status" role="status" aria-live="polite">Loading preferences…</span>
+        <div id="preferences-load-actions" hidden>
+          <button type="button" class="blue submit" id="preferences-load-retry">Retry</button>
+          <button type="button" class="submit" id="preferences-load-close">Close</button>
+        </div>
+      </div>
+    </aside>
 
-    <div class="preferences-dialog" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="texts voices lexicon">
+    <div class="preferences-dialog" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="texts voices lexicon" inert>
       <div class="preferences-shell">
         <section class="preferences-toc section-card" aria-label="Preferences sections">
           <div class="toc-header-row">
@@ -784,13 +793,21 @@
               </div>
               <div class="subsection-card">
                 <div class="subsection-title">The Name in transliteration</div>
-                <div class="mini-help">How the transliteration writes <span class="he" dir="rtl" lang="he">יהוה</span> and every substitute for it (<span class="he" dir="rtl" lang="he">יי</span>, <span class="he" dir="rtl" lang="he">יקוק</span>, <span class="he" dir="rtl" lang="he">ה׳</span>, <span class="he" dir="rtl" lang="he">השם</span>), in every style. Pick a suggestion or type your own; a prefix stays in front of it (<em>laHaShem</em>, <em>laAdonai</em>). Empty is <em>HaShem</em>.</div>
+                <div class="mini-help">How the transliteration writes <span class="he" dir="rtl" lang="he">יהוה</span> and every substitute for it (<span class="he" dir="rtl" lang="he">יי</span>, <span class="he" dir="rtl" lang="he">יקוק</span>, <span class="he" dir="rtl" lang="he">ה׳</span>, <span class="he" dir="rtl" lang="he">השם</span>), in every style. Choose a suggestion or type your own spelling, then save Preferences. A prefix stays in front of it (<em>laHaShem</em>, <em>laAdonai</em>). A blank field uses <em>HaShem</em>.</div>
                 <div class="compact-field">
                   <label for="transliteration_divine_name">Write the Name as</label>
-                  <input id="transliteration_divine_name" name="transliteration_divine_name" type="text" maxlength="40" list="transliteration-divine-name-options" placeholder="HaShem" autocomplete="off">
-                  <datalist id="transliteration-divine-name-options">
-                    <option value="HaShem"><option value="Hashem"><option value="Adonai"><option value="Adonoy"><option value="Ado-nai"><option value="G-d">
-                  </datalist>
+                  <div class="divine-name-spelling">
+                    <input id="transliteration_divine_name" name="transliteration_divine_name" type="text" maxlength="40" placeholder="HaShem" autocomplete="off">
+                    <select id="transliteration-divine-name-options" aria-label="Spelling suggestions">
+                      <option value="">Spelling suggestions</option>
+                      <option value="HaShem">HaShem</option>
+                      <option value="Hashem">Hashem</option>
+                      <option value="Adonai">Adonai</option>
+                      <option value="Adonoy">Adonoy</option>
+                      <option value="Ado-nai">Ado-nai</option>
+                      <option value="G-d">G-d</option>
+                    </select>
+                  </div>
                 </div>
               </div>
               <div class="subsection-card">

@@ -91,7 +91,9 @@
       "#cc-translation-preview",
       ".cc-pill-row",
       ".cc-translation",
-      "#cc-notes-toggle"
+      "#cc-notes-toggle",
+      "#io-commentary-tip",
+      "#io-notes-tip"
     ]
   },
   "first-run-setup": {

@@ -289,8 +289,7 @@
       var notes = byId('cc-notes-toggle');
       var notesRow = notes && notes.closest('.cc-row');
       if (emphasisRow && notesRow) emphasisRow.after(notesRow);
-      var advancedAnchor = notesRow || emphasisRow;
-      if (mapping && advancedAnchor) advancedAnchor.after(mapping);
+      if (mapping && emphasisRow) emphasisRow.before(mapping);
     }
 
     // Preferences adapter for the shared composition card component.
@@ -743,8 +742,8 @@
                 if (el.dataset.customFor) return;
                 if (preferences[el.name] !== undefined && preferences[el.name] !== null && preferences[el.name] !== '') {
                   el.value = preferences[el.name];
-                } else if (FONT_SIZE_FIELDS.indexOf(el.name) >= 0 && preferences[el.name] === '') {
-                  el.value = ''; // blank size = match the document
+                } else if (preferences[el.name] === '' && (FONT_SIZE_FIELDS.indexOf(el.name) >= 0 || el.name === 'transliteration_divine_name')) {
+                  el.value = ''; // blank means use the document size or the default spelling
                 }
               });
 
@@ -823,8 +822,6 @@
       } catch (error) {
         console.error('Preferences modal apply failed:', error);
         setResultsMessage('Preferences loaded with an error: ' + (error && error.message ? error.message : error));
-      } finally {
-        $(".hide").fadeOut(300);
       }
     }
 
@@ -856,18 +853,42 @@
       $("#results").text(message);
     }
 
-    function loadPreferencesIntoForm() {
-      google.script.run.withSuccessHandler(function(result) {
+    function loadPreferencesIntoForm(initial) {
+      var status = byId('preferences-load-status');
+      var spinner = byId('preferences-load-spinner');
+      var actions = byId('preferences-load-actions');
+      status.textContent = 'Loading preferences…';
+      spinner.hidden = false;
+      actions.hidden = true;
+      function failed() {
+        status.textContent = 'Could not load your preferences. Check that this account can use the add-on. If several Google accounts are signed in, use a browser profile signed into only the account that should run the add-on.';
+        spinner.hidden = true;
+        actions.hidden = false;
+        byId('preferences-load-retry').focus();
+      }
+      function loaded(result) {
+        if (!result || !result.preferences) { failed(); return; }
         adoptDocumentProfile_(result);
         editingDocument_ = !!documentProfile_.key;
-        applyPreferencesToForm(result.preferences || {});
+        applyPreferencesToForm(result.preferences);
+        if (preferencesBaseline_ === null) { failed(); return; }
         renderSettingsProfiles_();
-      }).withFailureHandler(function(error) {
-        console.error('Preferences modal failed to load:', error);
-        setResultsMessage('Could not load preferences.');
+        document.querySelector('.preferences-dialog').inert = false;
         $(".hide").fadeOut(300);
-      }).getDocumentPreferenceProfile();
+        if (!editingDocument_) {
+          setResultsMessage('This Document settings are unavailable here. You’re editing ' +
+            quoted_(activeProfile_().name) + '.');
+        }
+      }
+      if (initial) {
+        loaded(initial);
+        return;
+      }
+      google.script.run.withSuccessHandler(loaded).withFailureHandler(failed).getDocumentPreferenceProfile();
     }
+
+    byId('preferences-load-retry').addEventListener('click', function () { loadPreferencesIntoForm(); });
+    byId('preferences-load-close').addEventListener('click', function () { closePreferences_(); });
 
     document.addEventListener('click', function() {
       document.querySelectorAll('.custom-select.open').forEach(function(wrapper) {
@@ -964,6 +985,15 @@
     bindReplacementField('yaw_replacement', 'yaw_replace');
     bindReplacementField('elodim_replacement', 'elodim_replace');
     bindReplacementField('god_replacement', 'god_replace');
+
+    function applyTransliterationNameSuggestion_(event) {
+      var suggestions = event.currentTarget;
+      if (!suggestions.value) return;
+      byId('transliteration_divine_name').value = suggestions.value;
+      suggestions.selectedIndex = 0;
+    }
+
+    byId('transliteration-divine-name-options').addEventListener('change', applyTransliterationNameSuggestion_);
 
     ['meforash_replace','yaw_replace','elodim_replace','god_replace'].forEach(function(id) {
       const el = byId(id);
@@ -2634,11 +2664,13 @@
       };
     }
 
-    function switchToProfile_(id, next) {
+    function switchToProfile_(id, next, forTransfer) {
       if (preferencesBaseline_ === null) return;
       var target = id === 'document' ? { name: 'This Document' } : profileById_(id);
       if (!target || id === (editingDocument_ ? 'document' : profileIndex_().active)) return;
-      withUnsavedChangesHandled_('Switching to ' + quoted_(target.name) + ' loads its settings here.', function () {
+      var question = forTransfer ? 'Import/Export uses the saved settings for ' + quoted_(target.name) + '.'
+        : 'Switching to ' + quoted_(target.name) + ' loads its settings here.';
+      withUnsavedChangesHandled_(question, function () {
         if (id === 'document') {
           modalBusyShow('Loading this document…');
           google.script.run.withSuccessHandler(function (result) {
@@ -2654,7 +2686,7 @@
           }).getDocumentPreferenceProfile();
           return;
         }
-        var answer = profileAnswer_('Switching profile…', true, function (before, now) {
+        var answer = profileAnswer_(forTransfer ? 'Loading saved settings for Import/Export…' : 'Switching profile…', true, function (before, now) {
           return 'Now using ' + quoted_(now.name) + '.';
         });
         if (id === profileIndex_().active) {
@@ -2818,7 +2850,7 @@
       currentUiMode: currentUiMode_,
       activeProfileId: function () { return profileIndex_().active; },
       withTransferProfile: function (open) {
-        if (editingDocument_) switchToProfile_(activeProfile_().id, open);
+        if (editingDocument_) switchToProfile_(activeProfile_().id, open, true);
         else if (preferencesBaseline_ !== null) open();
       }
     };
@@ -2839,6 +2871,6 @@
     initTranslationLanguageGrid();
     _initPreferencesCompositionCard();
     _initPreferencesInsertionOptions();
-    loadPreferencesIntoForm();
+    loadPreferencesIntoForm(getAppConfig().preferencesBootstrap);
   });
 </script>

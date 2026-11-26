@@ -65,8 +65,20 @@ function sidebarPreferencesConfig_() {
 }
 
 function openSharedSidebar_(mode, options) {
-  var controls = getSidebarControls_();
-  var resolvedMode = setSearchMode_(resolveSidebarOpenMode_(mode || null, getSearchMode_(), controls.tabs));
+  var resolvedMode, controls, bootstrap;
+  try {
+    controls = getSidebarControls_();
+    resolvedMode = resolveSidebarOpenMode_(mode || null, getSearchMode_(), controls.tabs);
+    // Read the opening editor's settings before crossing the HTML RPC bridge.
+    bootstrap = getSidebarBootstrapData(resolvedMode);
+  } catch (error) {
+    Logger.log('Sidebar bootstrap could not read user settings.');
+    showStartupFallback_(true);
+    return;
+  }
+  try { setSearchMode_(resolvedMode); } catch (error) {
+    Logger.log('Sidebar could not remember its mode.');
+  }
   var template = HtmlService.createTemplateFromFile('sidebar');
   template.initialMode = resolvedMode;
   template.uiMode = getUiMode_();
@@ -75,7 +87,7 @@ function openSharedSidebar_(mode, options) {
   template.sidebarTabs = controls.tabs.join(' ');
   template.quickActionsHidden = controls.quickActionsHidden.join(' ');
   template.optionsHidden = controls.optionsHidden.join(' ');
-  var extra = Object.assign(sidebarPreferencesConfig_(), options || {});
+  var extra = Object.assign(sidebarPreferencesConfig_(), options || {}, { sidebarBootstrap: bootstrap });
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode, extra));
   var output = template.evaluate()
     .setTitle('Sefaria')
@@ -248,10 +260,21 @@ function sefariaSearch() {
 }
 
 function preferencesPopup() {
+  let preferencesBootstrap;
+  try {
+    // Read while opening the dialog in the caller's add-on invocation. An
+    // iframe RPC is only needed if the initial read is unavailable.
+    preferencesBootstrap = getDocumentPreferenceProfile();
+  } catch (error) {
+    Logger.log('Preferences bootstrap could not read user settings.');
+    showStartupFallback_(false);
+    return;
+  }
   const template = HtmlService.createTemplateFromFile('preferences');
   template.uiMode = getUiMode_();
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences', Object.assign(sidebarPreferencesConfig_(), {
-    menuLayoutEditor: getMenuLayoutEditorConfig_(DEV_FLAGS)
+    menuLayoutEditor: getMenuLayoutEditorConfig_(DEV_FLAGS),
+    preferencesBootstrap: preferencesBootstrap
   })));
   template.devFlagsJson = JSON.stringify(DEV_FLAGS);
   const output = template.evaluate()

@@ -93,8 +93,8 @@ test('it asks first, naming the scope and the rules, and declining changes nothi
   assert.match(message, /not only selected text/);
   assert.match(message, /Headers, footers, footnotes and other tabs are not changed/);
   assert.match(message, /the selection does not limit what is replaced/);
-  assert.match(message, /יהוה {2}→ {2}יי/);
-  assert.match(message, /God {2}→ {2}TEST\$&/, 'a custom replacement is shown as entered');
+  assert.match(message, /\u2066\u2068יי\u2069 {2}← {2}\u2067יהוה\u2069\u2069/);
+  assert.match(message, /\u2066God {2}→ {2}\u2068TEST\$&\u2069\u2069/, 'a custom replacement is shown as entered');
   assert.match(message, /Undo/);
 });
 
@@ -121,7 +121,7 @@ test('accepted: selected and unselected text in the open tab change alike; other
 test('nothing to replace says so', () => {
   const env = load({ prefs: { elodim_replace: 'true' } });
   env.context.transformDivineNames();
-  assert.match(env.alerts[0][1], /אלהים \/ אלוהים {2}→ {2}אלוקים/);
+  assert.match(env.alerts[0][1], /\u2066\u2068אלוקים\u2069 {2}← {2}\u2067אלהים \/ אלוהים\u2069\u2069/);
   assert.match(env.alerts[1][0], /No divine names matching your rules were found/);
 });
 

@@ -154,13 +154,16 @@ test('Notes has one real labelled radio control whose values match server and cl
 
 test('Preferences places the one shared Notes row directly below Commentary', () => {
   const card = read('shared/composition-card/markup.html');
-  const { document } = parseHTML('<html><body><div id="composition-card-container">' + card + '</div></body></html>');
+  const { document } = parseHTML('<html><body><div id="composition-card-container">' + card +
+    '<details data-cc-attach="emphasisMapping"></details></div></body></html>');
   const ctx = vm.createContext({ document, byId: (id) => document.getElementById(id) });
   vm.runInContext(namedFunction(script('preferences/js.html'), '_attachCardExtras', 4), ctx);
   ctx._attachCardExtras();
   const notes = document.querySelector('#cc-notes-toggle').closest('.cc-row');
   const commentary = document.querySelector('#cc-emphasis-toggle').closest('.cc-row');
+  assert.equal(commentary.previousElementSibling.getAttribute('data-cc-attach'), 'emphasisMapping');
   assert.equal(commentary.nextElementSibling, notes);
+  assert.equal(notes.nextElementSibling, null);
   assert.equal(document.querySelectorAll('#cc-notes-toggle').length, 1);
 });
 test('Preferences composition Notes choice writes the named form field and reads it back', () => {
@@ -235,6 +238,18 @@ function expandedHost(name) {
 test('all three hosts expose exactly one shared Notes choice alongside composition controls', () => {
   for (const host of ['preferences.html', 'sidebar.html', 'linker-results.html']) {
     const doc = expandedHost(host);
+    for (const id of ['cc-emphasis-toggle', 'cc-notes-toggle']) {
+      const group = doc.getElementById(id);
+      const row = group.closest('.cc-row');
+      const label = doc.getElementById(group.getAttribute('aria-labelledby'));
+      const help = row.querySelector('.cc-choice-info');
+      const tooltip = doc.getElementById(help.getAttribute('aria-describedby'));
+      assert.equal(help.textContent, 'ⓘ', host);
+      assert.equal(label.parentElement, help.parentElement.parentElement, host);
+      assert.equal(tooltip.getAttribute('role'), 'tooltip', host);
+      assert.equal(tooltip.parentElement, help.parentElement, host);
+    }
+    assert.equal(doc.querySelector('.cc-commentary-help'), null, host);
     const notes = doc.querySelectorAll('#cc-notes-toggle');
     assert.equal(notes.length, 1, host);
     assert.ok(notes[0].closest('#composition-card-container'), host + ': Notes belongs to the composition card');

@@ -103,6 +103,70 @@ function searchHitHasTranslation_(hit, desiredLanguages) {
   });
 }
 
+// Sefaria's language selectors use family names. Dialects can share a
+// family, so check the returned edition's actual language independently.
+const SEARCH_TRANSLATION_FAMILIES_ = {
+  en: ['english'], he: ['hebrew'], fr: ['french'], de: ['german'], pt: ['portuguese'], es: ['spanish'],
+  ar: ['arabic'], cs: ['czech'], eo: ['esperanto'], fa: ['persian'], fi: ['finnish'], hu: ['hungarian'],
+  it: ['italian'], ko: ['korean'], ru: ['russian'], pl: ['polish'], yi: ['yiddish'],
+  itk: ['italian', 'judeo-italian'], jrb: ['arabic', 'judeo-arabic'], lad: ['spanish', 'ladino']
+};
+
+function getSearchTranslationMatches(references, selectedLanguages) {
+  const languages = normalizeSearchTranslationLanguages_(selectedLanguages).filter(function (code) {
+    return Object.prototype.hasOwnProperty.call(SEARCH_TRANSLATION_FAMILIES_, code);
+  });
+  const selectors = Array.from(new Set(languages.flatMap(function (code) {
+    return SEARCH_TRANSLATION_FAMILIES_[code];
+  }))).map(function (family) { return family + '|all'; });
+  const refs = Array.from(new Set((Array.isArray(references) ? references : []).slice(0, 36).map(function (ref) {
+    return typeof ref === 'string' && ref.length <= 240 ? ref.trim() : '';
+  }).filter(Boolean)));
+  const result = { matches: [], incomplete: false };
+  if (!refs.length || !selectors.length) return result;
+  const plans = resolveSefariaRefPlansBatch_(refs, function (requests) { return UrlFetchApp.fetchAll(requests); });
+  const targets = [];
+  plans.forEach(function (plan, i) {
+    if (plan.unavailable) result.incomplete = true;
+    if (plan.textRef) targets.push({ ref: refs[i], plan: plan });
+  });
+  if (!targets.length) return result;
+
+  let responses;
+  try {
+    responses = UrlFetchApp.fetchAll(targets.map(function (target) {
+      return { url: sefariaV3TextsUrl_(target.plan.textRef, selectors, 'text_only'), muteHttpExceptions: true };
+    }));
+  } catch (error) {
+    result.incomplete = true;
+    return result;
+  }
+
+  targets.forEach(function (target, i) {
+    const response = responses[i];
+    const status = response ? response.getResponseCode() : 0;
+    if (status < 200 || status >= 300) {
+      if (status !== 404) result.incomplete = true;
+      return;
+    }
+    const payload = parseJsonOrNull_(response.getContentText());
+    if (payload && payload.error) return;
+    if (!payload || payload.ref !== target.plan.textRef || payload.indexTitle !== target.plan.indexTitle ||
+        !Array.isArray(payload.versions)) {
+      result.incomplete = true;
+      return;
+    }
+    const present = languages.filter(function (code) {
+      return payload.versions.some(function (version) {
+        if (!version || version.isSource !== false || !versionHasText_(version.text)) return false;
+        return normalizeSearchTranslationLanguages_([version.actualLanguage || version.language])[0] === code;
+      });
+    });
+    if (present.length) result.matches.push({ ref: target.ref, languages: present });
+  });
+  return result;
+}
+
 function findSearchAdvanced(input, filters, relevanceSort, translationOnly) {
   let searchConfig = (filters && typeof filters === 'object' && !Array.isArray(filters))
     ? filters

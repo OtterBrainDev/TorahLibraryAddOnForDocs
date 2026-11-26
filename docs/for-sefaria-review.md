@@ -3,11 +3,11 @@
 Written 2026-11-17 against the 2.0.0 release candidate (816 tests passing,
 `pre_clasp_qc.sh` clean, preference schema 31).
 
-Current source update, 2026-11-24: the v3, Commentary/Notes and launch-defaults
-changes, followed by the sidebar grouping and senior engineering review,
-are recorded in [the project handoff](sefaria-api-migration.md).
-The current schema is 33; the date and test count above describe the original
-review. Deployment and release approval remain separate.
+The dated counts describe the original review. The current source targets
+2.0.0, preference schema 34. The [API handoff](sefaria-api-migration.md)
+records the Texts v3 migration and related behavior. The engineering review
+below identifies what can be verified in source and which checks require
+the release candidate running in Google Docs.
 
 This add-on grew out of *Sefaria for Google Docs* 1.0 (Shlomi Helfgot's code,
 MIT). It was first set up to be published by The Merkaz as a separate add-on
@@ -226,14 +226,14 @@ procedure in full.
 profile (`grep -rn "getActiveUser\|getEffectiveUser\|getEmail" apps-script/`
 is empty).
 
-**Where data goes.** Server requests go to `www.sefaria.org`; user input is
+**Where data goes.** Add-on API requests go to `www.sefaria.org`. User input is
 URL-encoded. Passage retrieval uses Texts v3, while Ref, Versions, search,
 sheets, dictionaries and citation detection retain their own supported
 endpoints. The [migration handoff](sefaria-api-migration.md) records exact
 routes, edition-gap policy and pending live validation. There is no
-server of the publisher's, no account and no analytics. *Link Texts with
-Sefaria* is the one feature that sends document text: by default only passages
-that look like they hold a citation, after a one-time confirmation. Details:
+server of the publisher's, no account and no analytics. *Link Texts with Sefaria* sends candidate passages by default, and
+*Insert Source from Selection* submits the selection for reference detection.
+The first such upload requires confirmation. Details:
 `docs/PRIVACY.md` §2.
 
 **What the pages load.** jQuery 3.7.1 from Google's CDN with a Subresource
@@ -271,21 +271,32 @@ appears without a reload (`apps-script/triggers.gs`,
 
 **The Sefaria API surface in use**: `/api/v3/texts/`, `/api/name/`,
 `/api/index/titles/`, `/api/search-wrapper/es8`, `/api/search/sheet/_search`,
-`/api/sheets/`, `/api/words/`, `/api/find-refs` with `/api/async/`. Sefaria is
+`/api/sheets/`, `/api/words/`, `/api/ref/`, `/api/shape/`,
+`/api/texts/versions/`, and `/api/find-refs` with `/api/async/`. Sefaria is
 best placed to say whether any of these should be called differently;
 `docs/pre-upstream-review.md` §1 has the earlier notes.
 
-**Known and accepted.** The pinned deploy tool, clasp 2.4.2, has 10 open npm
-advisories in its dependency tree (6 high, 4 moderate). It runs only in the
-deploy job and never reaches users, but that job holds a Google credential.
-It is installed from a lockfile with integrity hashes and install scripts
-disabled. Moving to clasp 3 is the fix; `tools/clasp/README.md` explains what
-changes with it.
+### Engineering review, 2026-11-26
 
-**Not verified here.** No live call to Sefaria's API or to `the-merkaz.org`
-was possible from the review environment. What is said about 1.0 comes from
-its public Marketplace listing, not from its code, and nothing in this file
-has been tested against the real 1.0 script project.
+The sweep started from commit `b5d6634` (PR #78). The follow-up pins clasp
+3.4.1 and its patched 7.x gaxios dependency, limits the workflow token to
+read access, disables checkout credential persistence, and restricts
+deployment to `master`. The deploy credential is available only in the push
+step and its temporary file is removed on exit. See [Security](../SECURITY.md)
+for private reporting.
+
+| Area | Evidence reviewed | Remaining check |
+| --- | --- | --- |
+| Regression testing | Node tests, pre-clasp QC, and the clasp file list. Cases cover original and translated text, exact editions, settings migrations, and sidebar behavior. | Record results on the exact Apps Script test deployment. Exercise fresh install, upgrade from 1.0 and current user preferences, insertion, linking, and real keyboard and screen-reader behavior. |
+| Dependencies | npm reported zero advisories for the test lockfile and a separate lookup of the pinned jQuery version. After the upgrade, the deployment tree still reports Zod and its parent clasp for one advisory, [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5). Clasp imports Zod in its optional MCP server. The deployment runs only push. | Recheck before release and track a compatible upstream Zod update. Verify GitHub branch rules, deployment-environment approvals, and vulnerability reporting in the publishing repository. |
+| Attribution and rights | [MIT notice](../LICENSE.md), [STEPBible credit and CC BY 4.0](../tools/proper-names/README.md), and [edition-level text and license handling](sefaria-api-migration.md). The release manifest still uses a Merkaz-hosted logo. | Confirm Sefaria’s name, logo, hosted assets, linked privacy policy and terms, and edition reuse policy before publication. |
+| Release traceability | Code, version manifest, live checklist and separate numbered Marketplace version. | Record the commit, CI run, Apps Script project and test deployment, tested cohorts, release version, reviewer, and previous version for rollback. |
+
+Locally, all 1,092 tests and pre-clasp QC passed. The pinned CLI listed all
+100 tracked add-on files. Synthetic tests checked both credential-file
+formats and removal of the temporary file on successful and failed pushes
+using a command stub. An authenticated push, Google Docs deployment identity,
+in-place Marketplace upgrade, and independent security review remain unverified.
 
 **Where to read more**: `docs/architecture.md` (server/client boundary,
 storage, the RPC surface), `docs/rpc-surface.json` (every function the pages

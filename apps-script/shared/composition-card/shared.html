@@ -675,6 +675,19 @@ function _bindCompositionCardEvents() {
     updateCompositionCard();
   }
 
+  $('.cc-choice-info').off('click.cc keydown.cc').on('click.cc', function () {
+    $(this).closest('.cc-choice-help').removeAttr('data-dismissed');
+    this.focus({ preventScroll: true });
+  }).on('keydown.cc', function (event) {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    event.stopPropagation();
+    $(this).closest('.cc-choice-help').attr('data-dismissed', '');
+  });
+  $('.cc-choice-help').off('mouseenter.cc focusin.cc').on('mouseenter.cc focusin.cc', function () {
+    $(this).removeAttr('data-dismissed');
+  });
+
   $('#cc-title-toggle').off('click.cc').on('click.cc', function () { doToggle('link'); });
   $('#cc-he-title-toggle').off('click.cc').on('click.cc', function () { doToggle('hebrewLink'); });
   $('#cc-edition-toggle').off('click.cc').on('click.cc', function () { doToggle('edition'); });
