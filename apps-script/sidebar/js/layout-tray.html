@@ -186,7 +186,8 @@ $(document).on('click keydown', '.recent-source-item', function (event) {
 
 $(document).on('keydown.insertShortcut', function (event) {
   if (!(event.ctrlKey || event.metaKey) || event.key !== 'Enter') return;
-  if ($('#layout-tray').hasClass('is-open')) return;
+  if ($('#layout-tray').hasClass('is-open') ||
+      $('#session-library-modal:not([hidden]), #sidebar-notice:not([hidden])').length) return;
   if ($(event.target).is('input, textarea, select, [contenteditable]')) return;
   var $btn = $('#insert-source');
   if (!$btn.prop('disabled')) {

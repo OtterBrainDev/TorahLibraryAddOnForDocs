@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <title>Link Texts with Sefaria</title>
     <!-- Served as a template (linkTextsWithSefaria) so it can share the
          insertion options with the sidebar's Layout tray. -->
     <?!= include('shared/ui/head'); ?>
+    <?!= include('css/utilities'); ?>
     <script type="application/json" id="linker-scope-json"><?!= scopeJson ?></script>
     <?!= include('shared/css/native-controls'); ?>
     <?!= include('css/tokens'); ?>
@@ -417,20 +420,21 @@
   </head>
   <body>
     <main>
+      <h1 class="visually-hidden">Link Texts with Sefaria</h1>
 
       <div id="state-scanning" class="centered-state">
-        <p class="progress-label" id="scan-label">Scanning the document for Sefaria references…</p>
+        <p class="progress-label" id="scan-label" role="status">Scanning the document for Sefaria references…</p>
         <div class="progress-track is-indeterminate"><div class="progress-fill"></div></div>
         <p class="progress-detail">This can take up to 30 seconds. Please keep this dialog open.</p>
       </div>
 
       <div id="state-review" hidden>
-        <h2 id="review-title">Review references</h2>
+        <h2 id="review-title" tabindex="-1">Review references</h2>
         <p class="helper" id="review-helper"></p>
         <p class="summary-line" id="summary-line" hidden></p>
 
         <div class="controls-row" id="review-controls">
-          <span class="selection-count" id="selection-count"></span>
+          <span class="selection-count" id="selection-count" role="status" aria-atomic="true"></span>
         </div>
 
         <div class="table-scroll">
@@ -503,13 +507,13 @@
       </div>
 
       <div id="state-applying" class="centered-state" hidden>
-        <p class="progress-label" id="apply-label">Applying links…</p>
+        <p class="progress-label" id="apply-label" tabindex="-1">Applying links…</p>
         <div class="progress-track"><div class="progress-fill" id="apply-fill"></div></div>
         <p class="progress-detail" id="apply-detail"></p>
       </div>
 
       <div id="state-done" class="centered-state" hidden>
-        <p class="done-message" id="done-message"></p>
+        <p class="done-message" id="done-message" tabindex="-1"></p>
         <div class="actions">
           <button type="button" class="btn" id="search-selection-btn" hidden>Search selected text in Texts</button>
           <button type="button" class="btn btn-primary" id="done-close-btn">Close</button>
@@ -546,6 +550,8 @@
             byId('state-' + state).hidden = (state !== name);
           });
           placeUnmatched(name);
+          var focusId = { review: 'review-title', applying: 'apply-label', done: 'done-message' }[name];
+          if (focusId) byId(focusId).focus();
         }
 
         function plural(n, singular, pluralForm) {

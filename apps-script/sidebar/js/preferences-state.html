@@ -307,7 +307,6 @@ function renderProfilePicker() {
   var active = several ? activeSettingsProfile() : null;
   $('#tray-profile-bar').prop('hidden', !several);
   $('#layout-settings-profile').text(active ? active.name : '').prop('hidden', !active);
-  $('#open-layout-settings').attr('aria-label', active ? 'Insertion Options, profile ' + active.name : 'Insertion Options');
   var $select = $('#tray-profile-select').empty();
   if (!several) return;
   index.profiles.forEach(function (profile) {

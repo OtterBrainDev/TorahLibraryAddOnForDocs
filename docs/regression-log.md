@@ -168,6 +168,21 @@ The optional session ID on `previewTransliterationWithOverrides` (3) lets the pr
 | Factory menu order and shared Commentary and Notes help drifted | The Factory test asserts the complete menu. Shared DOM tests pin single controls, tooltip associations, and Notes at the bottom. Chromium with stubbed Apps Script verified the order, label spacing, focus, and Escape at 300 px sidebar width and 600/860 px Preferences widths. |
 | Live host and collaborator behavior | Google Docs host chrome, deployed Apps Script access, and writes under a second editor account still require verification on a designated test deployment. |
 
+### ARIA and keyboard review — 2026-11-26
+
+Chromium with stubbed Apps Script calls and axe-core 4.14.1 reported no
+violations in 33 exercised states across all ten entry pages. The scan used
+WCAG 2.0 and 2.1 A/AA and axe best-practice rules. It covered populated Texts
+results and preview, the sidebar notice and options, Voices and Lexicon,
+both Preferences modes and Import/Export, Help tabs, setup steps, Link Texts
+review, and the standalone dialogs. Keyboard checks exercised mode switching,
+the search shortcut, and modal focus and dismissal.
+
+The automated template test checks page titles, language, landmarks, ID
+references, and tab-to-panel associations. Live screen reader output and
+focus across the Google Docs frame remain unverified. Section U of the live
+test checklist records those cases.
+
 ### Texts search translation filter
 
 Title candidates and content hits may omit language metadata or list an edition with no text at the hit. The sidebar uses `getSearchTranslationMatches(refs, selectedLanguages)` to check Texts v3 for non-empty translations. Unknown or unavailable refs do not pass the filter, and a new search supersedes a pending result.

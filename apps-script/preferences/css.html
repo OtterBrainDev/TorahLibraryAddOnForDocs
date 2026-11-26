@@ -1662,7 +1662,7 @@
 
   .menu-layout-row--hidden {
     background: #f3f1ed;
-    color: #888;
+    color: var(--muted);
   }
 
   .menu-layout-row--hidden .menu-layout-toggle > span:first-of-type {
@@ -1864,7 +1864,7 @@
   .settings-import-group-label { font-weight: 600; }
   .settings-import-group-count { color: #5b6472; }
   .settings-import-group-help { display: block; color: #5b6472; font-size: 12px; }
-  .settings-import-group.is-unchanged { color: #888; }
+  .settings-import-group.is-unchanged { color: var(--muted); }
 
   /* ── Search tab: translation languages ────────────────────────────────── */
 
@@ -2000,7 +2000,7 @@
     min-width: 58px;
   }
 
-  .corpus-order-button--visibility[aria-pressed="false"] {
+  .corpus-order-button--visibility.is-hidden {
     background: #f1ece3;
     color: #802f3e;
   }

@@ -357,7 +357,7 @@ Insertion settings and the sidebar's 📰 Insertion Options panel.
 
 | # | Do | Expect | Watch for |
 | --- | --- | --- | --- |
-| 12.1 | Use only the keyboard: <kbd>/</kbd>, type, <kbd>↓</kbd>, <kbd>Enter</kbd>, <kbd>Ctrl</kbd>+<kbd>Enter</kbd>, <kbd>Esc</kbd> | A full search-and-insert without the mouse. | A focus trap in 📰 Insertion Options, a font panel or the Hebrew keyboard. |
+| 12.1 | Use only the keyboard: <kbd>Alt</kbd> + <kbd>/</kbd>, type, <kbd>↓</kbd>, <kbd>Enter</kbd>, <kbd>Ctrl</kbd>+<kbd>Enter</kbd>, <kbd>Esc</kbd> | A full search-and-insert without the mouse. | A focus trap in 📰 Insertion Options, a font panel or the Hebrew keyboard. |
 | 12.2 | Browser zoom 200 % | Sidebar usable; nothing cut off horizontally. | Buttons off-screen. |
 | 12.3 | OS dark mode | Sidebar and dialogs readable. | Dark text on a dark background. |
 | 12.4 | Screen reader on the result list and the linker table | Rows and controls announced meaningfully. | "Button" with no label on icon buttons (🔍, 📜, 🏃, ⚙︎). |

@@ -384,6 +384,14 @@
   overflow-wrap: anywhere;
 }
 
+.result-select {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+}
+
 .result-snippet,
 .result-subtitle {
   color: #566273;
@@ -1012,7 +1020,7 @@
 }
 
 .sl-section-count {
-  color: #9ca3af;
+  color: var(--row-sublabel);
   font-size: 10px;
   user-select: none;
 }
@@ -1026,7 +1034,7 @@
   width: 22px;
   height: 22px;
   padding: 0;
-  color: #9ca3af;
+  color: var(--row-sublabel);
   cursor: pointer;
   background: transparent;
   border: 0;
@@ -1137,6 +1145,14 @@
   background: #fef3c7;
 }
 
+.sl-item-open {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+}
+
 .sl-item-title {
   flex: 1;
   min-width: 0;
@@ -1172,7 +1188,7 @@
   width: 26px;
   height: 26px;
   padding: 0;
-  color: #9ca3af;
+  color: var(--row-sublabel);
   cursor: pointer;
   background: transparent;
   border: 0;

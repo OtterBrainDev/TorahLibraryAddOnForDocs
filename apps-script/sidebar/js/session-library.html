@@ -236,13 +236,13 @@ function renderSlFilterChips() {
   baseFilters.forEach(function(f) {
     var active = sessionLibraryFilter === f.key;
     html += "<button type='button' class='sl-filter-chip" + (active ? " sl-filter-chip--active" : "") +
-      "' data-filter='" + escapeHTML(f.key) + "' role='radio' aria-checked='" + (active ? 'true' : 'false') + "'>" +
+      "' data-filter='" + escapeHTML(f.key) + "' aria-pressed='" + (active ? 'true' : 'false') + "'>" +
       escapeHTML(f.label) + "</button>";
   });
   cats.forEach(function(cat) {
     var active = sessionLibraryFilter === cat.key;
     html += "<button type='button' class='sl-filter-chip sl-filter-chip--category" + (active ? " sl-filter-chip--active" : "") +
-      "' data-filter='" + escapeHTML(cat.key) + "' role='radio' aria-checked='" + (active ? 'true' : 'false') + "'>" +
+      "' data-filter='" + escapeHTML(cat.key) + "' aria-pressed='" + (active ? 'true' : 'false') + "'>" +
       escapeHTML(cat.label) + "</button>";
   });
   $chips.html(html);
@@ -297,7 +297,7 @@ function renderSlItemRow(item, listName) {
   var search = (sessionLibrarySearch || '').trim();
 
   var displayLabel = search ? slHighlightMatch(label, search) : escapeHTML(label);
-  var pinBtnLabel  = (pinned ? 'Unpin ' : 'Pin ') + escapeHTML(label);
+  var pinBtnLabel  = 'Pin ' + escapeHTML(label);
   var pinBtnClass  = 'sl-item-pin-btn' + (pinned ? ' sl-item-pin-btn--active' : '');
   var rtlClass     = isHebrew ? ' sl-item-title--rtl' : '';
   var rtlAttr      = isHebrew ? " dir='rtl'" : '';
@@ -310,14 +310,14 @@ function renderSlItemRow(item, listName) {
     " data-mode='" + escapeHTML(mode) + "'" +
     " data-query='" + escapeHTML(query) + "'" +
     " data-list='" + escapeHTML(listName) + "'" +
-    " tabindex='0'>" +
+    ">" +
     "<button type='button' class='" + pinBtnClass + "'" +
       " data-ref='" + escapeHTML(ref) + "'" +
       " data-list='" + escapeHTML(listName) + "'" +
       " aria-label='" + pinBtnLabel + "'" +
       " aria-pressed='" + (pinned ? 'true' : 'false') + "'" +
-      " title='" + (pinned ? 'Unpin' : 'Pin to keep at top') + "'>📌</button>" +
-    "<span class='sl-item-title" + rtlClass + "'" + rtlAttr + titleAttr + ">" + displayLabel + "</span>" +
+      " title='" + (pinned ? 'Unpin' : 'Pin to keep at top') + "'><span aria-hidden='true'>📌</span></button>" +
+    "<button type='button' class='sl-item-title sl-item-open" + rtlClass + "'" + rtlAttr + titleAttr + ">" + displayLabel + "</button>" +
     langBadge +
     "<button type='button' class='sl-item-remove-btn'" +
       " data-ref='" + escapeHTML(ref) + "'" +

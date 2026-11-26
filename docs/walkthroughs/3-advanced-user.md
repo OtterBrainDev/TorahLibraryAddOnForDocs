@@ -120,7 +120,7 @@ groups. Shared account-wide settings are optional.
 
 ## 2. Find fast (5 min)
 
-Open **Texts** and press <kbd>/</kbd> to jump to the search box. Try:
+Open **Texts** and press <kbd>Alt</kbd> + <kbd>/</kbd> to jump to the search box. Try:
 
 | Type | Shows |
 | --- | --- |
@@ -310,7 +310,7 @@ alone.
 
 | Keys | Action |
 | --- | --- |
-| <kbd>/</kbd> | Search box |
+| <kbd>Alt</kbd> + <kbd>/</kbd> | Search box |
 | <kbd>↑</kbd> <kbd>↓</kbd> <kbd>Enter</kbd> | Move through and pick results |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> | Add Source |
 | <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Shift</kbd> + <kbd>L</kbd> | Session Library |

@@ -8,6 +8,8 @@ function focusResultByIndex(index) {
   $items.removeClass('is-nav-target');
   var $target = $items.eq(clamped);
   $target.addClass('is-nav-target');
+  var title = $target.find('.result-title').text() || $target.text().trim();
+  $('#keyboard-result-status').text(title + ', result ' + (clamped + 1) + ' of ' + count);
   if ($target[0] && $target[0].scrollIntoView) {
     $target[0].scrollIntoView({ block: 'nearest' });
   }
@@ -16,23 +18,45 @@ function focusResultByIndex(index) {
 function showSidebarNotice(message, onConfirm) {
   var $notice = $('#sidebar-notice');
   if (!$notice.length) return;
+  var background = document.querySelector('.unified-sidebar');
+  var returnFocus = document.activeElement;
+  var previouslyInert = background.inert;
+  function dismiss() {
+    $notice.attr('hidden', true);
+    background.inert = previouslyInert;
+    if (returnFocus && returnFocus.isConnected) returnFocus.focus();
+  }
   $('#sidebar-notice-message').text(String(message || ''));
   $notice.removeAttr('hidden');
-  $('#sidebar-notice-ok').off('click.sidebarNotice').on('click.sidebarNotice', function () {
-    $notice.attr('hidden', true);
+  background.inert = true;
+  var $ok = $('#sidebar-notice-ok');
+  var $cancel = $('#sidebar-notice-cancel');
+  $ok.off('click.sidebarNotice').on('click.sidebarNotice', function () {
+    dismiss();
     if (typeof onConfirm === 'function') onConfirm();
   });
-  $('#sidebar-notice-cancel').off('click.sidebarNotice').on('click.sidebarNotice', function () {
-    $notice.attr('hidden', true);
+  $cancel.off('click.sidebarNotice').on('click.sidebarNotice', dismiss);
+  $notice.off('keydown.sidebarNotice').on('keydown.sidebarNotice', function (event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      dismiss();
+    } else if (event.key === 'Tab') {
+      event.preventDefault();
+      var first = event.shiftKey ? $cancel[0] : $ok[0];
+      var next = event.shiftKey ? $ok[0] : $cancel[0];
+      (document.activeElement === first ? next : first).focus();
+    }
   });
+  $ok[0].focus();
 }
 
 var sidebarToastTimer = null;
 function showSidebarToast(message, durationMs) {
   var $toast = $('#sidebar-toast');
   if (!$toast.length) return;
-  // Escaped: messages can carry server error text.
-  $toast.html(escapeHTML(message || ''));
+  $toast.text(message || '');
+  $('#sidebar-toast-status').text(message || '');
   // `.is-visible` carries the opacity; without it the toast was shown fully
   // transparent, so every toast message went unseen.
   $toast.removeAttr('hidden');
@@ -310,9 +334,9 @@ function setSidebarMode(mode, skipPreferenceSave) {
   $('body').removeClass('mode-texts mode-voices mode-experimental mode-lexicon')
     .addClass('mode-' + appMode);
   $('.unified-sidebar').attr('data-mode', appMode);
-  $('.mode-switch-button, .experimental-menu-button').removeClass('is-active').attr('aria-selected', 'false');
-  $('.mode-switch-button[data-sidebar-mode="' + appMode + '"], .experimental-menu-button[data-sidebar-mode="' + appMode + '"]')
-    .addClass('is-active').attr('aria-selected', 'true');
+  $('.mode-switch-button').removeClass('is-active').attr('aria-checked', 'false').attr('tabindex', '-1');
+  $('.mode-switch-button[data-sidebar-mode="' + appMode + '"]')
+    .addClass('is-active').attr('aria-checked', 'true').attr('tabindex', '0');
 
   $('.voices-only').toggle(appMode === 'voices');
   $('.lexicon-only').toggle(appMode === 'lexicon');
@@ -383,6 +407,19 @@ function updateModeDependentSections() {
 // fills that tab only, and its hint or count stays there (BUG-005).
 $('.mode-switch-button, .experimental-menu-button').off('click').on('click', function () {
   setSidebarMode($(this).attr('data-sidebar-mode'));
+});
+
+$('.mode-switch-button').on('keydown', function (event) {
+  var keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+  if (!Object.prototype.hasOwnProperty.call(keys, event.key)) return;
+  var buttons = $('.mode-switch-button:visible').get();
+  var index = buttons.indexOf(this);
+  if (index < 0) return;
+  event.preventDefault();
+  event.stopPropagation();
+  var next = buttons[(index + keys[event.key] + buttons.length) % buttons.length];
+  next.click();
+  next.focus();
 });
 
 $('#open-session-library').off('click').on('click', function (event) {

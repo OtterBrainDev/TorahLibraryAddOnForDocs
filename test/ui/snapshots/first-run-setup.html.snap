@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
+    <title>Set up Sefaria for Google Docs</title>
     <!-- First-run setup (server/first-run.gs, docs/first-run-setup-design.md).
          Every answer starts at the user's current value, so Continue through
          every screen without touching anything changes nothing. -->
