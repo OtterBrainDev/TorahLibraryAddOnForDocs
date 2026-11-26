@@ -492,3 +492,13 @@ checklist was run against the code that shipped.
 | R7 | Import shared settings with and without opt-in | Shared keys excluded unless enabled and group checked; mode unchanged |
 | R8 | Close with Escape or close button; reopen and change target after file preview | Focus returns to Import/Export; target change refreshes preview |
 | R9 | Open transfer dialog, then change active profile in another document | Stale identity rejected; no preference writes |
+
+### S — shared insertion control parity (pending Docs verification)
+
+| Case | Action | Expected |
+| --- | --- | --- |
+| S1 | In Preferences, open Insertion → Insertion Defaults → Texts in Simple and Everything | Notes is visible above the Source and Translation sections, with Omit / Inline / Separate and one selected value. It is not buried in Layout. |
+| S2 | Save Notes: Inline, open sidebar Text and notes; change to Separate for the session, reopen Preferences | Sidebar starts Inline; Separate is temporary until Save as defaults; Preferences still shows Inline. Save as defaults, reopen, verify Separate. |
+| S3 | Compare all shared controls in Preferences and sidebar; change Display to Original, Both, Translation | Notes remains applicable in each; Preferences keeps defaults editable for other display choices; sidebar hides only inapplicable or explicitly disabled controls. |
+| S4 | Switch saved profile and use Import/Export or Reset to Defaults; inspect Notes and other shared options | Notes follows the active saved profile/defaults, not a stale session; Reset returns Omit. |
+| S5 | Run Link Texts → Customize this insertion; choose Notes with either language | Notes is available outside the language sections and applies only to the pass until Save as defaults. |

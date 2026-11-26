@@ -10,6 +10,13 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Insertion control parity:** Notes now appears at the top of Preferences →
+  Insertion → Insertion Defaults → Texts, rather than in the separate Layout
+  accordion. The same shared control is used by the sidebar and Link Texts;
+  it applies to either language and keeps the existing saved setting. Tests
+  check the actual expanded host templates, central defaults, unique form
+  fields and keyboard interaction.
+
 - **Preferences without a reset.** Explicitly disabled Voices and Lexicon
   stay out of the menu in both interfaces; the Menu Bar editor follows the
   same switches. A mode switch updates only the saved menu baseline, retaining
@@ -106,7 +113,7 @@ below include fixes found during development of the candidate.
   supplied translation such as JPS's `[I give]`. A verse with malformed
   brackets stays whole.
 - **Source Notes: Omit / Inline / Separate.** Notes in Insertion Options →
-  Text and notes (or Preferences → Insertion → Layout) applies to marked
+  Text and notes (or Preferences → Insertion → Insertion Defaults → Texts) applies to marked
   footnotes in Hebrew and translation, independently of Commentary.
   Separate collects labelled notes below the passage, or below its line in
   Line by line; it creates text sections, not native Google Docs footnotes.

@@ -230,7 +230,11 @@ test('all three hosts expose exactly one shared Notes choice alongside compositi
     assert.equal(notes[0].closest('.cc-section--source, .cc-section--translation'), null,
       host + ': Notes is not language-specific');
     assert.equal(notes[0].closest('[data-cc-feature]'), null, host + ': no optional feature gate');
-    assert.equal(notes[0].closest('[hidden]'), null, host + ': not explicitly hidden');
+    // Link Texts hides its entire Customize panel until review is ready.
+    // The Notes row itself and its composition ancestors must not be hidden.
+    assert.ok(!notes[0].closest('#composition-card-container').hasAttribute('hidden'), host);
+    assert.equal(notes[0].closest('.cc-row').hasAttribute('hidden'), false, host);
+    assert.equal(notes[0].hasAttribute('hidden'), false, host);
     if (host === 'preferences.html') {
       assert.ok(notes[0].closest('#pref-workflow-texts'), 'Notes is in the Texts insertion defaults');
       assert.equal(notes[0].closest('#display-defaults'), null, 'not in the separate Layout accordion');
