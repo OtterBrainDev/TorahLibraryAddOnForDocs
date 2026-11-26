@@ -152,7 +152,7 @@ ENTRY_TEMPLATES = [
     "sidebar.html", "preferences.html", "ai_lesson.html", "surprise-me.html",
     "help-modal.html", "feedback-modal.html", "release-notes.html",
     "gematriya-count.html", "session-library-modal.html", "linker-results.html",
-    "first-run-setup.html",
+    "first-run-setup.html", "startup-fallback.html",
 ]
 
 def walk(exts):
@@ -268,7 +268,7 @@ ENTRY_TEMPLATES = {
     "surprise-me.html", "help-modal.html", "feedback-modal.html",
     "release-notes.html", "gematriya-count.html",
     "session-library-modal.html", "linker-results.html",
-    "first-run-setup.html",
+    "first-run-setup.html", "startup-fallback.html",
 }
 
 INCLUDE_RE = re.compile(r"""include\s*\(\s*['\"]([^'\"]+)['\"]\s*\)""")

@@ -171,3 +171,14 @@ The optional session ID on `previewTransliterationWithOverrides` (3) lets the pr
 ### Texts search translation filter
 
 Title candidates and content hits may omit language metadata or list an edition with no text at the hit. The sidebar uses `getSearchTranslationMatches(refs, selectedLanguages)` to check Texts v3 for non-empty translations. Unknown or unavailable refs do not pass the filter, and a new search supersedes a pending result.
+
+### Preferences bootstrap in shared Docs
+
+A collaborator reported the dialog opening with “Could not load preferences.” The opening action now embeds the caller’s single private settings snapshot. A failed read is recoverable from the dialog, and working reusable settings can load when Google does not provide the document identity. The tests simulate two users of the same Doc. Live verification is tracked in checklist D16.
+
+A follow-up console log showed both account slot 0 and account slot 1 requests
+alongside a generic HTML Service error. Google documents multi-login as
+unsupported for Apps Script. The sidebar now also initializes from the opening
+editor’s payload and keeps the existing RPC retry for a failed initial read.
+The single-account editor fixture must still exercise a search and a save,
+which use the HTML Service bridge. [Google troubleshooting](https://developers.google.com/apps-script/guides/support/troubleshooting#issues_with_multiple_google_accounts)

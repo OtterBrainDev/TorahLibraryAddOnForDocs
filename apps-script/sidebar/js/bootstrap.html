@@ -62,13 +62,18 @@ function requestSidebarBootstrap(retried) {
       showSidebarNotice(
         'The sidebar couldn\u2019t load your settings, so Insertion Options won\u2019t respond and an insert ' +
         'may not use your settings. Click OK to try again, or close the sidebar and open it again from the Extensions menu.' +
+        ' If several Google accounts are signed in, open the document in a browser profile signed into only the account that should run the add-on.' +
         ((error && error.message) ? '\n\n' + error.message : ''),
         function () { requestSidebarBootstrap(true); }
       );
     })
     .getSidebarBootstrapData(window.INITIAL_SIDEBAR_MODE || 'texts');
 }
-requestSidebarBootstrap(false);
+$(function () {
+  var initial = getAppConfig().sidebarBootstrap;
+  if (initial) applySidebarBootstrap(initial);
+  else requestSidebarBootstrap(false);
+});
 
 function initializeSidebar(receivedTitles) {
   titles = Array.isArray(receivedTitles) ? receivedTitles : [];

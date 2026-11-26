@@ -238,3 +238,45 @@ test('menu editor respects disabled tools and does not rewrite other preference 
   vm.runInContext("var preferencesBaseline_ = JSON.stringify({nekudot:false,menu_layout:'old',show_voices_tab:false}); var menuLayoutSavedValue='new';" + fn(PREFS_JS, 'syncFormMenuBaseline_') + "syncFormMenuBaseline_();", context);
   assert.deepEqual(JSON.parse(context.preferencesBaseline_), {nekudot:false,menu_layout:'new',show_voices_tab:false});
 });
+
+test('Preferences bootstraps without an iframe read and offers recovery when one is needed', needsDom, () => {
+  const { document } = parseHTML(PREFS);
+  const shell = document.querySelector('.preferences-dialog');
+  shell.inert = true;
+  let attempts = 0;
+  let success;
+  let failure;
+  const script = {
+    withSuccessHandler(fn) { success = fn; return this; },
+    withFailureHandler(fn) { failure = fn; return this; },
+    getDocumentPreferenceProfile() { attempts++; }
+  };
+  const context = vm.createContext({ document, google: { script: { run: script } }, $: () => ({ fadeOut() {} }) });
+  vm.runInContext(`
+    var documentProfile_, preferencesBaseline_ = null, decoded, resultMessage;
+    function byId(id) { return document.getElementById(id); }
+    function renderSettingsProfiles_() {}
+    function applyPreferencesToForm(value) { decoded = value; preferencesBaseline_ = '{}'; }
+    function adoptDocumentProfile_(result) { documentProfile_ = result; }
+    function activeProfile_() { return {name:'User Profile'}; }
+    function quoted_(value) { return '“' + value + '”'; }
+    function setResultsMessage(value) { resultMessage = value; }
+    ${fn(PREFS_JS, 'loadPreferencesIntoForm')}
+  `, context);
+
+  context.loadPreferencesIntoForm({ key: 'collaborative-doc', preferences: { source_notes_mode: 'inline' } });
+  assert.equal(attempts, 0);
+  assert.equal(context.decoded.source_notes_mode, 'inline');
+  assert.equal(shell.inert, false);
+
+  shell.inert = true;
+  context.loadPreferencesIntoForm();
+  failure(new Error('permissions'));
+  assert.equal(shell.inert, true);
+  assert.equal(document.getElementById('preferences-load-actions').hidden, false);
+  context.loadPreferencesIntoForm();
+  success({ key: '', preferences: { source_notes_mode: 'separate' } });
+  assert.equal(attempts, 2);
+  assert.equal(shell.inert, false);
+  assert.match(context.resultMessage, /This Document settings are unavailable.*User Profile/);
+});
