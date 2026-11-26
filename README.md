@@ -249,7 +249,7 @@ The add-on menu (**Extensions → Sefaria for Google Docs**) includes, by defaul
 - **Insert Source from Selection** — look up the selected reference and insert it.
 - **Quick Actions** submenu — Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count.
 - **Surprise Me** — preference-gated experimental feature (random-reference discovery).
-- **Preferences** and **Help & Support** — always last.
+- **Preferences** and **Help** — always last.
 
 Users can reorder, group and hide items in **Preferences → Menu Bar**.
 

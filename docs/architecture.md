@@ -57,8 +57,9 @@ QC check (see `pre_clasp_qc.sh` step 6).
   workflow, `sidebar/js/search-tabs` (see *The search tabs* below); each tab's
   own code is in `search-controller` (Texts), `voices` and `lexicon`.
 - **`preferences.html`** — preferences dialog. Composes `preferences/css`,
-  `preferences/js` and `preferences/settings-file-js` (the Advanced tab's
-  settings file, which reaches the dialog through `window.PreferencesDialog`).
+  `preferences/js` and `preferences/settings-file-js` (the ⇅ Import/Export
+  modal in either interface, which reaches the dialog through
+  `window.PreferencesDialog`).
 - **`surprise-me.html`** — "surprise me" random-text dialog: the shared
   `shared/surprise-me` form, the same as the sidebar's Experimental card.
 - **`linker-results.html`** — the Link Texts review dialog. A template
@@ -97,9 +98,13 @@ controls inline.
   - `first-run.gs` — first-run setup and the Simple / Full interface mode
     (`ui_mode`), including the Simple menu and switching between modes, and
     Reset To Defaults (which resets the menu to the one for the mode).
-  - `settings-file.gs` — Preferences → Advanced's settings file: export the
-    settings as JSON, preview and apply an import (only `SETTINGS` keys with
-    valid values; a file's interface mode goes through `applyUiModeSwitch_`).
+  - `settings-file.gs` — Preferences → ⇅ Import/Export: export JSON, preview
+    and apply checked groups of valid `SETTINGS` keys. Target-aware RPCs
+    validate interface and active-profile identity and can update inactive
+    snapshots without switching profiles. Simple targets current preferences;
+    Everything defaults to profile keys, with shared settings opt-in. The new
+    modal preserves interface mode; older RPCs retain their compatibility
+    behavior and signatures.
   - `settings-profiles.gs` — settings profiles: named sets of the Text and
     layout / Fonts settings, switched from Everything's Preferences or the
     sidebar (see Storage layers).

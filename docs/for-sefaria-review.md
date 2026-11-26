@@ -100,12 +100,13 @@ document text that *Link Texts with Sefaria* sends.
 - Because that user has no settings, they are treated as new: **the first-run
   setup dialog opens the first time they open the sidebar**
   (`apps-script/server/first-run.gs`, called from `server/menu.gs`). Its first
-  screen offers *"I've used Sefaria for Google Docs"*, which starts them on
-  1.0's look: both languages, Hebrew on the right, the Simple interface.
-- Two defaults differ from 1.0 and would reach every upgraded user unless
-  changed first: **divine names are replaced as a source is inserted**
-  (יהוה → יי), and **each source gets a credit line** naming the edition and
-  its license.
+  screen offers *"I've used Sefaria for Google Docs 1.0"*, a one-step preset
+  with both languages, Hebrew on the right, Simple, Voices/Lexicon disabled,
+  quiet linking and no automatic divine-name substitution. The menu reads
+  Add Sources with Sefaria. Other paths customize the optional tools.
+- The ordinary defaults include automatic divine-name substitution on insert
+  (יהוה → יי); the 1.0 preset turns it off. **Each source gets a credit line**
+  naming the edition and license unless the user disables attribution.
 - Documents written with 1.0 are untouched. Transform Divine Names, Link Texts
   and Unlink Sources work on text 1.0 inserted.
 

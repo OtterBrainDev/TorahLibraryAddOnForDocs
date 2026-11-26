@@ -14,7 +14,7 @@ should happen.
 
 The version under demo is **2.0.0, preference schema 33** (`docs/VERSION.json`
 and the v2.0.0 entry in `docs/CHANGELOG.md`).
-*Help & Support → About* should read **Current line: 2.0**.
+*Help → About* should read **Current line: 2.0**.
 
 **Status:** these scripts have been reconciled with the current source,
 including Texts v3, edition persistence, Commentary and Notes, the grouped

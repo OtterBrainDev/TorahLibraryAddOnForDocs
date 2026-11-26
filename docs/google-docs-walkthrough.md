@@ -2,7 +2,7 @@
 
 A walkthrough of the add-on as it is today (v2.0; see the
 [changelog](./CHANGELOG.md)). The same material is inside
-the add-on under **Extensions → Sefaria for Google Docs → Help & Support**, or the
+the add-on under **Extensions → Sefaria for Google Docs → Help**, or the
 **Help** button at the bottom of the sidebar.
 
 This copy describes the current source. Release and live-test status are
@@ -12,7 +12,7 @@ do not establish that a Marketplace release or a recorded tutorial exists.
 ## Quick start
 
 1. Put your cursor where the source should go.
-2. Open **Extensions → Sefaria for Google Docs → Texts**. The sidebar opens on the right.
+2. Open **Extensions → Sefaria for Google Docs → Texts** (or **Add Sources with Sefaria** when Voices and Lexicon are both disabled). The sidebar opens on the right.
 3. Type a reference — `Genesis 1:1`, `Berakhot 2a`, `בראשית א:א`. Results
    appear as you type.
 4. Click a result. The **Preview** shows the passage with your text choices.
@@ -20,10 +20,12 @@ do not establish that a Marketplace release or a recorded tutorial exists.
    they are arranged.
 6. Click **Add Source** (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).
 
-The first time a new user opens the add-on, a three-step setup asks what it is
-for, how sources should look (with a preview) and how much of the add-on to
-show. Every answer starts at the current setting, so clicking through changes
-nothing. **Help & Support → Quick start → Run setup again** reopens it.
+The first time a new user opens the add-on, setup asks what it is for, how
+sources should look and which interface and optional tools to use. Choosing
+**I've used Sefaria for Google Docs 1.0** applies the familiar preset in one
+step. Other paths continue through customization. **Help → Re-run Setup
+Wizard** offers keeping current preferences or resetting active defaults
+before continuing. Named profile snapshots are retained.
 
 ## Coming from version 1.0
 
@@ -35,7 +37,7 @@ changes nothing in your documents. Version 1.0 kept no settings, so version
 | Version 1.0 | Version 2.0 |
 | --- | --- |
 | **Extensions → Sefaria for Google Docs** | The same menu, with more in it (rearrange it in Preferences → Menu Bar) |
-| **Add Sources with Sefaria** | **Texts**: type a citation (ranges such as `Genesis 1:1-9` work) or a title, click a result, check the **Preview**, **Add Source** |
+| **Add Sources with Sefaria** | **Add Sources with Sefaria** in the 1.0 preset (or **Texts** when another search tool is enabled): type a citation (ranges such as `Genesis 1:1-9` work) or a title, click a result, check the **Preview**, **Add Source** |
 | Format, edition and translation, picked for each source | **📰 Insertion Options** and **Versions** for this source; saved defaults in **Preferences** |
 | **Transform Divine Names** | **Quick Actions → Transform Divine Names**, with the spellings set in Preferences → Insertion → Divine Name Mappings |
 | **Link Texts with Sefaria** | **Quick Actions → Link Texts with Sefaria** |
@@ -45,9 +47,9 @@ the right. Text and links version 1.0 inserted stay as they are, and
 Transform Divine Names, Link Texts and Unlink Sources work on
 them like any other text.
 
-**New:** saved defaults (a short setup the first time, where **I've used
-Sefaria for Google Docs** starts from the look you know; Help → Quick start →
-**Run setup again**); arrangement, vowels, cantillation, punctuation,
+**New:** saved defaults (choose **I've used Sefaria for Google Docs 1.0**
+for the one-step familiar preset; **Help → Re-run Setup Wizard** to revisit
+setup); arrangement, vowels, cantillation, punctuation,
 transliteration, fonts and heading titles; **Commentary** for supported
 Davidson Talmud and Silverstein Tanakh editions; separate **Notes** choices
 for marked footnotes; Insert Source from Selection; Voices, Lexicon and the
@@ -99,7 +101,7 @@ below).
 | **📜** | The Session Library — sources you've inserted or pinned. |
 | **🏃** | Quick Actions: Insert from Selection, Transform Divine Names, Link Texts with Sefaria. |
 | **⚙︎** | Preferences — your saved defaults. Shows *Opening Preferences…* until the dialog appears; repeat clicks do nothing meanwhile. |
-| **Help** · **Feedback** | Help & Support, and the feedback form. |
+| **Help** · **Feedback** | Help, and the feedback form. |
 
 ## Simple or Everything
 
@@ -110,9 +112,9 @@ takes effect at once, without Save). Simple hides, and never removes:
   Texts / Voices / Lexicon tabs, Add Source, Insertion Options and the footer
   buttons stay in both modes.
 - **Menu:** a shorter menu — Texts, Insert Source from Selection, Transform
-  Divine Names, Link Texts with Sefaria, then Preferences and Help & Support.
+  Divine Names, Link Texts with Sefaria, then Preferences and Help.
   Switching back to Everything restores the menu you had.
-- **Preferences:** the Search, Linking, Advanced and 🧪 Experimental tabs and
+- **Preferences:** the Search, Linking and 🧪 Experimental tabs and
   the advanced formatting sections (formatting for specific languages, how
   kept bold and italics look). Switch to **Everything** to see them; the switch
   never changes a setting.
@@ -120,8 +122,8 @@ takes effect at once, without Save). Simple hides, and never removes:
 In either interface, **Preferences → Sidebar** leaves out what you don't use:
 the Voices and Lexicon tabs, Quick Actions buttons, and (in Everything)
 Insertion Options controls; hiding one keeps its current value, including a
-session override. Anything
-switched off is hidden, not removed: a tab's menu item still opens it.
+session override. Disabling Voices or Lexicon also hides its menu item and
+its row in the Menu Bar editor. Switching interfaces does not re-enable it.
 
 Everything also has **profiles** (see *Profiles* below).
 
@@ -392,9 +394,9 @@ everything). The Session Library is kept in your browser only.
 
 | Action | What it does |
 | --- | --- |
-| **Sel → ס** Insert Source from Selection | Select a reference typed in the document and run it. By default the selection is replaced by the source; turn off **Preferences → Insertion → Insert from Selection** to keep it and insert below. Link Texts' Insert follows the same setting. |
+| **Sel → ס** Insert Source from Selection | Highlight one or more references and run it. Review matches even if quiet linking is enabled; choose Insert or Link. Unresolved text can open prefilled Texts search. A citation on its own line can be replaced; a citation inside prose stays. Turn off **Preferences → Insertion → Insert from Selection** to keep own-line citations too. |
 | **ה → ש** Transform Divine Names | Apply your divine-name replacements to text already in the document: every match in the body of the open tab, not only a selection (headers, footers, footnotes and other tabs are left alone). It asks first. |
-| **🔗 → ס** Link Texts with Sefaria | Find citations in the document and link them to Sefaria. |
+| **🔗 → ס** Link Texts with Sefaria | Find citations in highlighted text, or in the document body if no text is selected, and link them to Sefaria. |
 | **🎲** Surprise Me | Experimental; shown only when enabled in **Preferences → 🧪 Experimental**. Inserts a random set of sources on a word or theme, each with your saved **Preferences → Insertion** defaults (not this session's Insertion Options). |
 
 **Preferences → Sidebar** can leave buttons out of the 🏃 panel; with all three
@@ -406,8 +408,8 @@ whole document).
 
 ## Link Texts with Sefaria
 
-1. Run it from Quick Actions or the menu. A dialog shows progress while the
-   document is scanned.
+1. Highlight text to limit the scan, or clear the selection to scan the body
+   of the current document tab. Run Link Texts from Quick Actions or the menu.
 2. Review the table: the words in your document and the Sefaria source each
    will point to. Where a citation could mean more than one source, choose
    from the dropdown (each option shows an excerpt).
@@ -429,10 +431,10 @@ summary, and ask about ambiguous citations** (recommended), **Show every match
 for review**, or **Just link and report a count** (never asks, skips ambiguous
 citations; **Insert text after linking** inserts each linked source too).
 
-**Document scanning** controls what is sent to Sefaria: **Candidate passages
-only** (default — only passages that look like citations) or **Whole
-document**. If the report says citations *could not be placed*, switch to
-**Whole document** and run it again.
+**Document scanning** controls what is sent within that scope: **Candidate
+passages only** (default — passages that look like citations) or **Whole
+document** (the entire selection, or the document body without a selection).
+If a selected placement cannot be verified, select the passage again.
 
 A citation Sefaria's linker can't match is looked up again the way the search
 box does (consistent punctuation, Hebrew numerals without their marks,
@@ -477,9 +479,12 @@ choices are retained when the add-on updates.
 | Voices | Citation; transliteration None |
 | Lexicon | Full entry |
 
-The returning-user setup choice starts with the familiar bilingual layout
-and Simple interface. It does not reset every setting. To keep an existing
-profile intact, use **Keep my settings** when setup offers it.
+The returning-user 1.0 preset applies familiar active defaults immediately:
+bilingual Hebrew-right layout, Simple, quiet linking, Voices and Lexicon off,
+and no automatic divine-name substitution. It retains modern attribution
+and privacy safeguards. On rerun, **Keep Current Preferences** starts from
+existing settings; **Reset to Add-on Defaults** restores active defaults,
+not saved named profile snapshots.
 
 | Tab | Contents |
 | --- | --- |
@@ -524,7 +529,8 @@ the Preferences tabs.
 - The tabs always edit the profile in use (the filled dot). Click another to
   switch; if you have unsaved changes, Preferences asks first.
 - **+ New profile** copies the one in use and switches to it; the first turns
-  your settings into *My settings*. **Rename** and **Delete** act on the one
+  your settings into *My settings*. **🖉 Rename active profile** above the list
+  and **Delete** act on the one
   in use. Up to ten.
 - With two or more, the sidebar's **📰 Insertion Options** names the profile
   in use and has a **Profile** list. A switch, there or in Preferences, drops
@@ -540,8 +546,8 @@ linking stay the same in every profile.
 Insert Source from Selection, and a Quick Actions submenu (Quick Actions
 Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources,
 Gematriya Count), then Surprise Me (while it is switched on), Preferences and
-Help & Support. Customize it in
-**Preferences → Menu Bar**; Preferences and Help & Support always stay at the
+Help. Customize it in
+**Preferences → Menu Bar**; Preferences and Help always stay at the
 bottom. Reload the document if a change doesn't appear. Simple mode uses a
 shorter menu (see *Simple or Everything*).
 
@@ -558,7 +564,7 @@ shorter menu (see *Simple or Everything*).
 
 ## Getting help
 
-- Troubleshooting and a bug-report checklist: **Help & Support → Support**.
+- Troubleshooting and a bug-report checklist: **Help → Support**.
 - [Sefaria's Help Center](https://help.sefaria.org/hc/en-us/sections/20235182393244)
 - [Privacy policy](https://www.sefaria.org/privacy-policy) · [Terms](https://www.sefaria.org/terms) · [Changelog](./CHANGELOG.md)
 

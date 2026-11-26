@@ -10,7 +10,7 @@ works in the Apps Script sidebar and a real document.
 
 **Version under test:** 2.0.0 · **preference schema:** 33 (both from
 `docs/VERSION.json`)
-Confirm both before starting — *Help & Support → About* should read
+Confirm both before starting — *Help → About* should read
 **Current line: 2.0**. This confirms the release line only: record the exact
 commit pushed to the Apps Script project and the test deployment used. The
 About label alone cannot distinguish two builds on the same release line.
@@ -48,11 +48,11 @@ a footnote serves every section below.
 | --- | --- | --- |
 | A1 | **B:** install the test deployment from a Doc, then open **Extensions** *without reloading* | The add-on's menu is already there, and the first-run setup opened (*Step 1 of 3*), not the release notes. (Marketplace reviewers check this first.) |
 | A2 | **B:** click **Continue** through all three screens without changing anything | Setup closes behind a *Saving…* spinner. Preferences shows the defaults: colours **Auto / None**, Divine Name Mappings יהוה → יי on, Linking **Candidate passages only**, Interface **Everything** |
-| A3 | **B:** *Help & Support → Quick start → Run setup again*, then **Skip for now**; reload the document | Setup reopens, then closes with nothing changed. After the reload it is not shown again on its own |
+| A3 | **B:** *Help → Re-run Setup Wizard*, choose Keep Current Preferences, then Skip for now; reload | Setup reopens with current choices and closes without preference changes; it is not shown again on its own |
 | A4 | **C:** install; open the document version 1.0 inserted into; open **Extensions** | Two *Sefaria for Google Docs* submenus (the published 1.0 and this build), each with its own items; the first-run setup opens once |
-| A5 | **C:** on screen 1 choose **I've used Sefaria for Google Docs**; continue | Screens 2 and 3 start on both languages, Hebrew on the right, and Simple; a note under *God's name* says the name is now replaced as sources go in |
-| A6 | **C:** insert `Genesis 1:1` with the defaults | A two-column table, Hebrew on the right; יהוה replaced with יי; a small credit line under it |
-| A7 | **C:** *Help & Support →* **Coming from version 1.0** | In the Help navigation and on Quick start; every link in it lands |
+| A5 | **C:** on screen 1 choose **I've used Sefaria for Google Docs 1.0**; Continue | Setup completes immediately: bilingual Hebrew-right, Simple, quiet linking, Voices/Lexicon off, Add Sources with Sefaria, no automatic divine-name substitution |
+| A6 | **C:** insert `Genesis 1:1` and then a passage with יהוה using the 1.0 preset | A two-column table, Hebrew on the right; source divine-name spelling preserved; a small edition/license credit line |
+| A7 | **C:** *Help →* **Coming from version 1.0** | In the Help navigation and on Quick start; every link in it lands |
 | A8 | **C:** run **Transform Divine Names**, **Link Texts with Sefaria** and **Unlink Sources** on the text version 1.0 inserted | Each works on it like any other text; Unlink removes its sefaria.org links too |
 
 ---
@@ -61,7 +61,7 @@ a footnote serves every section below.
 
 | # | Check | Expected |
 | --- | --- | --- |
-| B1 | Open the add-on menu (Everything) | **Texts / Voices / Lexicon / Insert Source from Selection / Quick Actions** (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count), then **Preferences** and **Help & Support**, last |
+| B1 | Open the add-on menu (Everything) | **Texts / Voices / Lexicon / Insert Source from Selection / Quick Actions** (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count), then **Preferences** and **Help**, last |
 | B2 | Open the sidebar | Renders fully — not a blank or half-styled panel. Texts / Voices / Lexicon under the search box; **Add Source**, **📰 Insertion Options** and the 📜 🏃 ⚙︎ footer buttons |
 | B3 | Type a query and press Enter | *Searching Sefaria…* with the magnifier while it runs, then results |
 | B4 | Sidebar footer | The Sefaria logo renders |
@@ -89,7 +89,7 @@ against the screenshot taken before the push.
 
 | # | Check | Expected |
 | --- | --- | --- |
-| C1 | *Help & Support → About* | **Current line: 2.0**; *New in 2.0* |
+| C1 | *Help → About* | **Current line: 2.0**; *New in 2.0* |
 | C2 | Open a document | No first-run setup. Interface **Everything**; the menu is the one you had |
 | C3 | Preferences → Insertion: each **Title font** / **Text font** button, and the transliteration's **Font** | Your previous fonts, sizes and styles; colours and highlights **Auto / None** unless you set one — *not* black |
 | C4 | Translation → **Commentary** | Your old choice under its new name: Keep → **Default**, Drop → **Combine**, Bold only → **Drop** |
@@ -114,11 +114,11 @@ against the screenshot taken before the push.
 
 | # | Check | Expected |
 | --- | --- | --- |
-| D1 | Preferences → **Interface: Simple**, with the sidebar open | At once, without Save or a refresh: the menu is Texts, Insert Source from Selection, Transform Divine Names, Link Texts with Sefaria, then Preferences and Help & Support; the sidebar loses the result sort, ⤦ Restore Corpus and 🧪 (tabs, Add Source, Insertion Options and the footer stay); Preferences hides Search, Linking, Advanced and 🧪 Experimental |
+| D1 | Preferences → **Interface: Simple**, with the sidebar open | At once, without Save or a refresh: the menu is Texts, Insert Source from Selection, Transform Divine Names, Link Texts with Sefaria, then Preferences and Help; the sidebar loses the result sort, ⤦ Restore Corpus and 🧪 (tabs, Add Source, Insertion Options and the footer stay); Preferences hides Search, Linking and 🧪 Experimental |
 | D2 | Back to **Everything** | Your own menu returns; no setting changed; values not yet saved (and Menu Bar edits) are still there |
-| D3 | Preferences → **Sidebar**: switch off **Lexicon** and one Quick Actions button; Save | The sidebar loses the Lexicon tab and that button. *Menu → Lexicon* still opens it, and the tab shows while it is open |
+| D3 | Preferences → **Sidebar**: switch off **Lexicon** and one Quick Actions button; Save | The Lexicon tab and menu item disappear, as does that sidebar action; switching mode does not re-enable them |
 | D4 | Sidebar tab (Everything): switch off Insertion Options' **Punctuation**; Save | Gone from the sidebar's Insertion Options; still in Preferences and Link Texts; inserts use the saved value |
-| D5 | **Menu Bar**: **Move to Quick Actions ▸** on Lexicon, then **◂ Move to main menu**; untick an item; Save; reload | Lexicon goes to the end of Quick Actions, then back just below it; the unticked item is gone; Preferences and Help & Support last |
+| D5 | Re-enable Lexicon and Save first; in **Menu Bar** move it to Quick Actions, then back to main menu; untick an item; Save; reload | Lexicon goes to the end of Quick Actions, then back just below it; the unticked item is gone; Preferences and Help last |
 | D6 | **Profiles** (Everything): **+ New profile**; change Vowels in it; Save; click the first profile | The first new one turns your settings into *My settings*; switching asks about unsaved changes first; each profile keeps its own Vowels. With two, the sidebar's Insertion Options names the profile in use and has a *Profile* list; switching there drops the session's Insertion Options changes |
 | D7 | **Advanced**: name it *Test*, **Export settings file**; change Vowels and the Hebrew font, Save; import the file, ticking only *Text and layout* | A `.json` download (if blocked, the text to copy). The import preview lists what each part would change; only Vowels comes back, the font stays |
 | D8 | Import `{"format":"torah-library-settings","formatVersion":1,"prefsSchemaVersion":"99","settings":{}}` | "made by a newer version"; nothing changes |
@@ -310,7 +310,7 @@ Build one test document containing, in this order:
 
 | # | Check | Expected |
 | --- | --- | --- |
-| L1 | Select `Genesis 1:1`; **Insert Source from Selection** | The selection is **replaced** by the source, titled `Genesis 1:1`. With Preferences → Insertion → Insert from Selection → *replaces the selection* off, the selection stays and the source goes below it |
+| L1 | Select `Genesis 1:1` on its own line; **Insert Source from Selection**; confirm Insert in review | The own-line citation is replaced by the source, titled `Genesis 1:1`, if replacement is enabled. With replacement off the citation stays; inside prose it also stays. No write before Apply. |
 | L2 | Quick Actions → **Unlink Sources** | Removes sefaria.org links, leaves other links alone |
 | L3 | Quick Actions → **Gematriya Count**, with Hebrew selected and with nothing selected | A value for the selection, then for the whole document |
 | L4 | Preferences → 🧪 Experimental: turn on Surprise Me. Compare the sidebar's 🧪 card with *Menu → Surprise Me* | The same form; the status says how many were inserted and for which word |
@@ -325,7 +325,7 @@ Build one test document containing, in this order:
 | --- | --- | --- |
 | M1 | **B:** Google's permission screen at install | Four permissions: this document, the add-on's windows, connecting to an external service, storing its settings. Nothing about your email address, profile or Drive |
 | M2 | Preferences → Linking → **🔒 Privacy & Document Scanning** → policy link | Opens Sefaria's privacy policy, `https://www.sefaria.org/privacy-policy` |
-| M3 | *Help & Support → About* → **Privacy policy** and **GitHub** pills | The same policy, and `TheMerkazDev/TorahLibraryAddOnForDocs`; **Terms** opens `https://www.sefaria.org/terms` and **Help Center** Sefaria's Help Center; About reads as user-facing text, with no "fork" wording |
+| M3 | *Help → About* → **Privacy policy** and **GitHub** pills | The same policy, and `TheMerkazDev/TorahLibraryAddOnForDocs`; **Terms** opens `https://www.sefaria.org/terms` and **Help Center** Sefaria's Help Center; About reads as user-facing text, with no "fork" wording |
 | M4 | *About* → **What's new** | Release Notes, *Version 2.0*: what's new since version 1.0, and what works differently |
 
 ---

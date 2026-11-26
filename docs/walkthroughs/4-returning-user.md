@@ -27,14 +27,14 @@ Open **Extensions → Sefaria for Google Docs**. In a test deployment, open the
 
 | Version 1.0 | Version 2.0 |
 | --- | --- |
-| **Add Sources with Sefaria** sidebar | **Texts** tab of the sidebar (**Extensions → Sefaria for Google Docs → Texts**) |
+| **Add Sources with Sefaria** sidebar | The same menu label in the 1.0 preset; **Texts** if Voices or Lexicon is enabled. |
 | Search bar, with a dropdown of sections when you type a book name | The same box. Results appear as you type, from an English or Hebrew reference (`בראשית א:א`), a title, a traditional citation (`Hil. Shabbat 1:1`), a sefaria.org link or a phrase; near-misses come under *Close matches*. |
 | A range such as `Genesis 1:1-9` | The same. |
 | Format, edition and translation, chosen for each source | **📰 Insertion Options** (Display, Arrangement, Line by line and Transliteration at the top, with three folding groups for other choices) and **Versions** under the preview, for this source; your usual choice saved in **⚙︎ Preferences → Insertion**. |
 | **Add Source** | **Add Source** (or <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Enter</kbd>), after the **Preview** shows what will go in. |
 | **Transform Divine Names**, choosing one of its Hebrew spellings | **🏃 Quick Actions → Transform Divine Names**, with the spellings set in **Preferences → Insertion → Divine Name Mappings** (and English *God*). |
 | **Link Texts with Sefaria** sidebar, **Link Texts** button | **🏃 Quick Actions → Link Texts with Sefaria**: a review dialog. |
-| Sefaria's Help Center | **Help & Support** (always last in the menu) and **Feedback**. |
+| Sefaria's Help Center | **Help** (always last in the menu) and **Feedback**. |
 
 ---
 
@@ -43,7 +43,7 @@ Open **Extensions → Sefaria for Google Docs**. In a test deployment, open the
 Do the thing everyone uses the add-on for: insert a pasuk in Hebrew and
 English.
 
-1. Cursor in the document. **Extensions → Sefaria for Google Docs → Texts**.
+1. Cursor in the document. **Extensions → Sefaria for Google Docs → Add Sources with Sefaria** (or **Texts**).
 2. Type `Genesis 1:1`. Results appear as you type.
 3. Click the result. **New:** the **Preview** shows the selected passage,
    with your vowel and divine-name settings already applied.
@@ -56,13 +56,12 @@ also offers **Hebrew left** and **Stacked** (Hebrew above English), and **Line b
 line** pairs each verse with its translation: side by side, in its own row;
 Stacked, the verse and then its translation, down the page.
 
-The first time the add-on opens, a short setup asks three things (what you'll
-use it for, how sources should look, Simple or Everything). Choose **I've used
-Sefaria for Google Docs**: it starts the next screens on version 1.0's look
-(both languages, Hebrew on the right, a simple menu), and a note under *God's
-name* explains that the name is now replaced as sources go in. Every answer
-can be changed there, later in Preferences, or by **Help → Quick start → Run
-setup again**.
+The first time the add-on opens, choose **I've used Sefaria for Google Docs
+1.0** and Continue. The wizard closes after applying the compatibility preset:
+both languages, Hebrew on the right, Simple, Voices and Lexicon off, quiet
+linking and automatic divine-name substitution off. Attribution remains on.
+For a different setup, use the other paths or **Help → Re-run Setup Wizard**,
+then choose to keep current preferences or reset active defaults.
 
 ---
 
@@ -173,7 +172,7 @@ and Unlink Sources work on them like any other text.
 
 ## If something looks wrong
 
-- **Help & Support → Support** has troubleshooting and a bug-report
+- **Help → Support** has troubleshooting and a bug-report
   checklist.
 - **Preferences → Reset To Defaults** puts every setting back to the
   defaults. It doesn't touch your documents.

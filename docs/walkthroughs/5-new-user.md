@@ -12,11 +12,12 @@ in translation or both, straight into your Google Doc.
 
 The first time you open the add-on, a short **setup** asks three questions:
 what you'll use it for, how sources should look (with a preview of
-Deuteronomy 6:4), and whether you want **Simple** or **Everything**. Every
-answer is already filled in, so you can just click **Continue** through it, or
-**Skip for now**. You can change all of it later.
+Deuteronomy 6:4), and whether you want **Simple** or **Everything**, with
+optional Voices and Lexicon switches. Accept the proposed choices with
+**Continue**, or choose **Skip for now**. You can change all of it later.
 
-In your document, click **Extensions → Sefaria for Google Docs → Texts**.
+In your document, click **Extensions → Sefaria for Google Docs → Texts** (or
+**Add Sources with Sefaria** if both optional tools are off).
 
 A panel opens on the right. That's the sidebar.
 
@@ -70,9 +71,10 @@ top and a short credit line underneath naming the translation.
 
 - **Change the default look:** click **⚙︎** at the bottom of the sidebar
   (Preferences).
-- **Link the references you've typed** to Sefaria: **🏃 → Link Texts with
-  Sefaria**.
-- **Run the setup again:** **Help** → **Run setup again**.
+- **Link references** to Sefaria: **🏃 → Link Texts with Sefaria**. Highlight
+  text to limit the scan; clear the selection for the document body.
+- **Re-run setup:** **Help → Re-run Setup Wizard**, then keep or reset active preferences.
+- **Share or restore settings:** click **⇅ Import/Export** beside Interface in Preferences. Simple uses current preferences; Everything lets you choose a profile.
 - **Get help:** click **Help** at the bottom of the sidebar, or visit
   [Sefaria's Help Center](https://help.sefaria.org/hc/en-us/sections/20235182393244).
 

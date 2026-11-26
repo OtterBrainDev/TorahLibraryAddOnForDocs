@@ -103,7 +103,7 @@ document, your searches, or your settings.**
 | `www.sefaria.org` | The Sefaria logo in the sidebar footer | Sidebar |
 | `sefaria.formstack.com` | Sefaria's feedback form, embedded in the dialog | Only when you open **Send Feedback**; anything you type into that form goes to Sefaria under their policy |
 
-Links in Help & Support and Release Notes (GitHub, Wikipedia, Sefaria's Help
+Links in Help and Release Notes (GitHub, Wikipedia, Sefaria's Help
 Center) open only if you click them.
 
 The add-on's own icons are bundled into the add-on and load from nowhere.
