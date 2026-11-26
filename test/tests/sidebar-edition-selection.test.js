@@ -180,6 +180,30 @@ test('Insertion Options wait for saves and refetch the exact chosen translation 
   assert.equal(env.insertStates.at(-1), true);
 });
 
+test('a version change and same-passage rebuild keep the translation list viewport', () => {
+  const env = load();
+  env.start();
+  const list = () => env.document.querySelector('#translation-version-selection');
+  const filter = () => env.document.querySelector('#translation-version-filter');
+  list().scrollTop = 120;
+  env.change('#translation-version-selection', ['Third']);
+  env.answer(payload('Third'));
+  assert.equal(list().scrollTop, 120);
+
+  env.change('#translation-version-selection', ['Third', 'Default'], ['Third', 'Default']);
+  filter().value = 'Third';
+  list().scrollTop = 65;
+  env.ctx.refreshSidebarLivePreview();
+  assert.equal(list().scrollTop, 65);
+  assert.equal(filter().value, 'Third');
+  assert.deepEqual(env.picks(), ['Third', 'Default']);
+  assert.deepEqual([...list().querySelectorAll('option')].map((option) => option.value), ['Third']);
+
+  env.start(payload('Default', 'Source default', 'Exodus 1:1'));
+  assert.equal(filter().value, '');
+  assert.notEqual(list().scrollTop, 65);
+});
+
 test('local rebuilds and fetch refreshes keep ordered multiple choices and the range anchor', () => {
   const env = load(); env.start(); choose(env);
   env.change('#translation-version-selection', ['Chosen ', 'Default', 'Third'], ['Chosen ', 'Third', 'Default']);

@@ -88,12 +88,43 @@ function findRefsInDocumentText(documentText) {
     );
   }
 
-  const payload = {
-    text: {
-      title: '',
-      body: body
-    }
-  };
+  // Sefaria otherwise chooses one model for the whole body. Both models
+  // need the same scoped text so each can still resolve contextual citations.
+  const mixed = /[א-ת]/.test(body) && /\p{Script=Latin}/u.test(body);
+  const languages = mixed ? ['he', 'en'] : [''];
+  const tasks = languages.map(function (language) { return enqueueFindRefs_(body, language); });
+  const reports = pollFindRefs_(tasks);
+  if (!mixed) return reports[0];
+
+  const bySpan = new Map();
+  const refData = Object.assign({}, reports[0].refData, reports[1].refData);
+  reports.forEach(function (report, i) {
+    const ownScript = languages[i] === 'he' ? /[א-ת]/ : /\p{Script=Latin}/u;
+    const otherScript = languages[i] === 'he' ? /\p{Script=Latin}/u : /[א-ת]/;
+    report.results.forEach(function (row) {
+      if (!row) return;
+      const citation = body.slice(row.startChar, row.endChar);
+      // Keep references containing the model's script and scriptless
+      // citations (such as numeric continuations). The other model owns
+      // its own single-script citations.
+      if (!ownScript.test(citation) && otherScript.test(citation)) return;
+      const refs = !row.linkFailed && Array.isArray(row.refs) ? row.refs : [];
+      const key = row.startChar + ':' + row.endChar;
+      const prior = bySpan.get(key);
+      if (!prior) {
+        bySpan.set(key, Object.assign({}, row, { refs: refs.slice(), linkFailed: !refs.length }));
+      } else if (refs.length) {
+        prior.refs = Array.from(new Set(prior.refs.concat(refs)));
+        prior.linkFailed = false;
+      }
+    });
+  });
+  return { results: Array.from(bySpan.values()), refData: refData };
+}
+
+function enqueueFindRefs_(body, language) {
+  const payload = { text: { title: '', body: body } };
+  if (language) payload.lang = language;
 
   // with_text gives us `refData`: heRef, url and a short excerpt for every
   // candidate ref, in the SAME request. That is what makes it possible to show
@@ -126,24 +157,31 @@ function findRefsInDocumentText(documentText) {
     throw new Error('Sefaria did not accept the document for scanning. Please try again in a moment.');
   }
 
+  return taskId;
+}
+
+function pollFindRefs_(taskIds) {
   const delays = FIND_REFS_POLL_DELAYS_MS_;
+  const reports = taskIds.map(function () { return null; });
   for (let attempt = 0; attempt < delays.length; attempt++) {
     Utilities.sleep(delays[attempt]);
-    let statusResponse;
-    try {
-      statusResponse = UrlFetchApp.fetch(`https://www.sefaria.org/api/async/${encodeURIComponent(taskId)}`, { muteHttpExceptions: true });
-    } catch (error) {
-      continue; // one dropped poll is not a failure; the deadline below is
-    }
-    const statusData = parseJsonOrNull_(statusResponse.getContentText());
-    if (!statusData || !statusData.ready) {
-      continue;
-    }
-    const body = (((statusData || {}).result || {}).body || {});
-    return {
-      results: Array.isArray(body.results) ? body.results : [],
-      refData: (body.refData && typeof body.refData === 'object') ? body.refData : {}
-    };
+    taskIds.forEach(function (taskId, index) {
+      if (reports[index]) return;
+      let statusResponse;
+      try {
+        statusResponse = UrlFetchApp.fetch(`https://www.sefaria.org/api/async/${encodeURIComponent(taskId)}`, { muteHttpExceptions: true });
+      } catch (error) {
+        return; // one dropped poll is not a failure; the deadline below is
+      }
+      const statusData = parseJsonOrNull_(statusResponse.getContentText());
+      if (!statusData || !statusData.ready) return;
+      const body = (((statusData || {}).result || {}).body || {});
+      reports[index] = {
+        results: Array.isArray(body.results) ? body.results : [],
+        refData: (body.refData && typeof body.refData === 'object') ? body.refData : {}
+      };
+    });
+    if (reports.every(Boolean)) return reports;
   }
 
   const waitedSeconds = Math.round(delays.reduce(function (sum, d) { return sum + d; }, 0) / 1000);

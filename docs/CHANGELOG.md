@@ -10,6 +10,12 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Bilingual Link Texts:** scan mixed Hebrew and English text with both
+  Sefaria Linker models, so a Hebrew citation does not hide English
+  headings in the same document or selection.
+- **Translation list:** retain the scroll position, filter and focus when
+  the same passage's version list is rebuilt.
+
 - **Texts preview:** Line by line redraws the selected passage as soon as
   the switch changes. Transliteration appears in the preview beside or
   below the Hebrew according to Position, including one reading per line
