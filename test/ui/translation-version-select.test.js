@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
+const { parseHTML } = require('linkedom');
 const { ROOT, readAppScriptFile } = require('./test-utils');
 
 // The sidebar's version lists (sidebar/js/preview-core.html). Reported:
@@ -107,4 +108,21 @@ test('a list box shows its chosen option when it is not focused', () => {
   assert.ok(rule, 'native-controls styles a list box\'s checked option');
   assert.match(rule[1], /background-color:\s*var\(--option-selected-bg\)/);
   assert.match(css, /--option-selected-bg:\s*#[0-9a-f]{3,6};/i);
+});
+
+test('version headings carry the counts and accessible information icons', () => {
+  const { document } = parseHTML(readAppScriptFile('sidebar.html'));
+  for (const [selector, heading] of [
+    ['.translation-version-details', 'Translation versions'],
+    ['.advanced-version-details', 'Source editions']
+  ]) {
+    const detail = document.querySelector(selector);
+    assert.equal(detail.querySelector('summary > span').textContent, heading);
+    assert.ok(detail.querySelector('summary > .version-summary-count'));
+    const button = detail.querySelector('summary button');
+    assert.equal(button.textContent, 'ⓘ');
+    assert.ok(button.getAttribute('aria-label'));
+    assert.equal(document.getElementById(button.getAttribute('aria-describedby')).getAttribute('role'), 'tooltip');
+  }
+  assert.doesNotMatch(core, /translation-multi-hint|version-control-header/);
 });

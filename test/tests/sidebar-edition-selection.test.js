@@ -159,6 +159,37 @@ function choose(env, en = 'Chosen ', he = 'Source chosen') {
   env.change('#he-version-selection', he); env.answer(payload(en, he));
 }
 
+test('Source editions keeps the full Tanach.us edition and preserves an already selected variant', () => {
+  const full = "Tanach with Ta'amei Hamikra";
+  const nikkud = 'Tanach with Nikkud';
+  const plain = 'Tanach with Text Only';
+  const editions = [full, nikkud, plain].map((versionTitle) => ({ versionTitle, language: 'he' }));
+  const values = (env) => [...env.document.querySelectorAll('.he-version-selection option')].map((option) => option.value);
+
+  const normal = load();
+  const starting = payload();
+  starting.versions.push(...editions);
+  normal.start(starting);
+  assert.ok(values(normal).includes('Source chosen'));
+  assert.ok(values(normal).includes(full));
+  assert.ok(!values(normal).includes(nikkud) && !values(normal).includes(plain));
+  assert.equal(normal.document.querySelector('.he-version-selection option[value="' + full + '"]').textContent, 'Tanach.us (full edition)');
+  normal.change('#he-version-selection', full);
+  assert.equal(normal.fetches().at(-1).versions.he, full, 'fetch uses the exact Sefaria title');
+
+  const selected = load();
+  selected.start({ ...starting, heVersionTitle: nikkud });
+  assert.ok(values(selected).includes(nikkud));
+  assert.ok(!values(selected).includes(plain));
+  assert.equal(selected.$('#he-version-selection').val(), nikkud);
+  selected.ctx.refreshSidebarLivePreview();
+  assert.equal(selected.$('#he-version-selection').val(), nikkud);
+
+  const noFull = load();
+  noFull.start({ ...starting, versions: starting.versions.filter((entry) => entry.versionTitle !== full) });
+  assert.ok(values(noFull).includes(nikkud) && values(noFull).includes(plain));
+});
+
 test('Insertion Options wait for saves and refetch the exact chosen translation and source', () => {
   const env = load(); env.start(); choose(env);
   env.ctx.saveSessionPreference({ nekudot: 'false' }); env.ctx.scheduleSelectedResultRefresh();

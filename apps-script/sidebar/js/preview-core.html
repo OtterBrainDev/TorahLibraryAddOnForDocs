@@ -86,17 +86,7 @@ function applyMultiSelectMode() {
     $select.prop('multiple', allowMulti);
   }
 
-  // Update the hint text below the select.
-  var $hint = $('.translation-multi-hint');
-  if (!$hint.length) {
-    $hint = $('<p class="translation-multi-hint version-multi-hint"></p>');
-    $select.after($hint);
-  }
-  if (allowMulti) {
-    $hint.text('Click for one; Ctrl/Cmd-click to add or remove; Shift-click for a range. Inserted in selection order.').show();
-  } else {
-    $hint.hide();
-  }
+  $('.translation-selection-help').prop('hidden', !allowMulti);
 }
 
 // What a multi-version insert will put in the document, in order, in place of
@@ -363,6 +353,21 @@ function buildVersionModel(dataIn) {
     });
   });
   return normalized;
+}
+
+// Sefaria catalogs three display forms from Tanach.us. Keep the fully
+// marked edition so Vowels, Cantillation and Punctuation can do the work.
+var TANACH_US_FULL_EDITION = "Tanach with Ta'amei Hamikra";
+var TANACH_US_STRIPPED_EDITIONS = ['Tanach with Nikkud', 'Tanach with Text Only'];
+
+function listedSourceEditions(entries, activeTitles) {
+  var sourceEditions = entries.filter(function (entry) { return entry.languageKey === 'he'; });
+  if (!sourceEditions.some(function (entry) { return entry.versionTitle === TANACH_US_FULL_EDITION; })) {
+    return sourceEditions;
+  }
+  return sourceEditions.filter(function (entry) {
+    return TANACH_US_STRIPPED_EDITIONS.indexOf(entry.versionTitle) < 0 || activeTitles.indexOf(entry.versionTitle) >= 0;
+  });
 }
 
 function sortVersionEntries(entries) {
@@ -641,12 +646,17 @@ function updateSuggestion(dataIn, inputTitle) {
   var versionEntries = buildVersionModel(dataIn);
   var enSelectedVersionTitle = dataIn.versionTitle || "";
   var heSelectedVersionTitle = dataIn.heVersionTitle || "";
-  var hebrewEntries = sortVersionEntries(versionEntries.filter(function (entry) { return entry.languageKey === 'he'; }));
+  var hebrewEntries = sortVersionEntries(listedSourceEditions(versionEntries, [
+    heSelectedVersionTitle, keptVersions && keptVersions.he, pendingPreferredVersions && pendingPreferredVersions.he
+  ]));
   var translationEntries = sortVersionEntries(versionEntries.filter(function (entry) { return entry.languageKey !== 'he'; }));
 
-  var selectVersionHebrew = "<div class=\"version-control-header\"><label class=\"version-label\" for=\"he-version-filter\">Source editions</label><span class=\"version-count\">" + hebrewEntries.length + " available</span></div><input type=\"text\" id=\"he-version-filter\" class=\"translation-filter-input he-version-filter\" placeholder=\"Filter source editions\" aria-label=\"Filter source editions\"><select id=\"he-version-selection\" class=\"translation-version-select he-version-selection\" size=\"6\" aria-label=\"Source editions\"></select><div class=\"translation-selected-display he-selected-display\" aria-live=\"polite\"></div>";
-
-  var translationInput = "<div class=\"version-control-header\"><label class=\"version-label\" for=\"translation-version-filter\">Translation versions</label><span class=\"version-count\">" + translationEntries.length + " available</span></div><input type=\"text\" id=\"translation-version-filter\" class=\"translation-filter-input\" placeholder=\"Filter by language or version name\" aria-label=\"Filter translation versions\"><select id=\"translation-version-selection\" class=\"translation-version-select\" size=\"6\"" + (allowMulti ? " multiple" : "") + " aria-label=\"Translation versions\"></select><div class=\"translation-selected-display\" aria-live=\"polite\"></div>";
+  var selectVersionHebrew = '<input type="text" id="he-version-filter" class="translation-filter-input he-version-filter" placeholder="Filter source editions" aria-label="Filter source editions">' +
+    '<select id="he-version-selection" class="translation-version-select he-version-selection" size="6" aria-label="Source editions"></select>' +
+    '<div class="translation-selected-display he-selected-display" aria-live="polite"></div>';
+  var translationInput = '<input type="text" id="translation-version-filter" class="translation-filter-input" placeholder="Filter by language or version name" aria-label="Filter by language or version name">' +
+    '<select id="translation-version-selection" class="translation-version-select" size="6"' + (allowMulti ? ' multiple' : '') + ' aria-label="Translation versions"></select>' +
+    '<div class="translation-selected-display" aria-live="polite"></div>';
 
   var languageGroups = {};
   translationEntries.forEach(function (entry) {
@@ -686,20 +696,20 @@ function updateSuggestion(dataIn, inputTitle) {
 
   var hebrewItems = hebrewEntries.map(function (entry) {
     var normalizedLabel = normalizeOptionText(entry.fullTitle || entry.label || entry.versionTitle) || normalizeOptionText(entry.versionTitle) || ("Source " + (entry.index + 1));
+    var pickerLabel = entry.versionTitle === TANACH_US_FULL_EDITION ? 'Tanach.us (full edition)' : normalizedLabel;
     return {
-      label: normalizedLabel,
-      optionLabel: normalizedLabel,
+      label: pickerLabel,
+      optionLabel: pickerLabel,
       value: entry.versionTitle,
-      searchable: (normalizedLabel + " " + entry.versionTitle).toLowerCase()
+      searchable: (pickerLabel + " " + normalizedLabel + " " + entry.versionTitle).toLowerCase()
     };
   });
 
-  // Version-control shells interpolate only entry counts. The preview is
-  // escaped source text and fixed formatting tags from processSourceText_,
-  // with refs and titles escaped by buildPreviewMeta.
+  // Static picker shell with a fixed multiple attribute when supported.
   $('.translation-version-control').html(translationInput);
   // Fixed control markup only; edition labels are added with text nodes below.
   $('.hebrew-version-control').html(selectVersionHebrew);
+  $('.hebrew-summary-count').text(hebrewItems.length + ' available').attr('data-option-count', hebrewItems.length);
   var transliterationSources = [];
   // Shared source processor emits escaped text and fixed tags; meta fields are escaped.
   $('.suggestions').not('.voices-suggestions').html(renderPreviewHTML(dataIn, inputTitle, transliterationSources));
@@ -766,7 +776,7 @@ function updateSuggestion(dataIn, inputTitle) {
     var $select = translationVersionSelect();
     var select = $select[0];
     var scrollTop = select.options.length ? select.scrollTop : null;
-    $('.translation-version-control .version-count').text(listed.length + ' available');
+    $('.translation-summary-count').text(listed.length + ' available').attr('data-option-count', listed.length);
 
     if (!filtered.length) {
       optionsHTML = listed.length
@@ -944,6 +954,7 @@ function updateSuggestion(dataIn, inputTitle) {
       if (latestResolveRequestId !== optionsBuiltForRequestId) return;
       var wasMulti = orderedTranslationVersions.length > 1;
       renderTranslationOptions($('#translation-version-filter').val());
+      updateVersionControlsVisibility();
       if (orderedTranslationVersions.length > 1 || $('.output-mode-selection').val() === 'he') return;
       // The version in the preview is no longer listed: load the one the list
       // moved to, so a plain Insert doesn't carry text the list doesn't show.

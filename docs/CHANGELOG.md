@@ -16,6 +16,11 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 - **Translation list:** retain the scroll position, filter and focus when
   the same passage's version list is rebuilt.
 
+- **Sidebar Versions.** Each picker has one heading and an edition count.
+  The ⓘ icons explain selection without taking up a row. The full Tanach.us
+  edition remains available, while its pre-stripped variants are hidden when
+  the full edition is listed unless a variant is already selected.
+
 - **Texts preview:** Line by line redraws the selected passage as soon as
   the switch changes. Transliteration appears in the preview beside or
   below the Hebrew according to Position, including one reading per line

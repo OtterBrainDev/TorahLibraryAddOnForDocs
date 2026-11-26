@@ -283,7 +283,6 @@ function setSidebarMode(mode, skipPreferenceSave) {
   if (appMode !== 'texts' && typeof closeLayoutTray === 'function') closeLayoutTray();
 
   $('.reference-row .search-submit, .reference-row .history-submit').show();
-  $('.advanced-version-details').toggle(appMode === 'texts' && $('.output-mode-selection').val() !== 'en');
   var placeholders = { texts: 'Search texts…', voices: 'Search voices…', lexicon: 'Search dictionary…' };
   $('.input').attr('placeholder', placeholders[appMode] || 'Search texts…');
   var searchLabels = { voices: 'Source Sheets' };
@@ -310,7 +309,6 @@ function updateModeDependentSections() {
   var hasSelectedTextResult = appMode === 'texts' && !!selectedResultKey;
   var hasSelectedVoiceResult = appMode === 'voices' && !!selectedVoiceItem;
   var hasSelectedLexiconResult = appMode === 'lexicon' && !!selectedLexiconItem;
-  var hideTranslations = $('.translation-version-select option:not(:disabled)').length <= 1;
 
   if (appMode === 'experimental') {
     $('.results-panel, .versions-section, .preview-section, .inline-session-settings').hide();
@@ -321,7 +319,7 @@ function updateModeDependentSections() {
 
   $('.experimental-section').hide();
   $('.results-panel').toggle(hasSearch);
-  $('.versions-section').toggle(hasSelectedTextResult && !hideTranslations);
+  updateVersionControlsVisibility();
   // Show source card when a text result is selected
   $('.preview-section').toggle(hasSelectedTextResult);
   $('.voices-preview-section').toggle(hasSelectedVoiceResult);

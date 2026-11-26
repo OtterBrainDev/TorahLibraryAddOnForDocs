@@ -416,6 +416,7 @@ function clearVersionSelectors() {
   activeTranslationOptions = null;
   $('.translation-version-control').empty();
   $('.hebrew-version-control').empty();
+  $('.version-summary-count').removeAttr('data-option-count').empty();
 }
 
 function setResultsHint(message, allowHtml) {

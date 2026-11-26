@@ -195,3 +195,22 @@ test('a layout picked before the bootstrap answers survives it', () => {
   assert.ok(save, 'the early choice is sent once there is a session');
   assert.deepEqual(JSON.parse(JSON.stringify(save.args)), ['s1', { bilingual_layout_default: 'he-top' }]);
 });
+
+
+test('version sections show independently according to the output and edition counts', () => {
+  const visibility = read('apps-script/sidebar/js/display-controls.html').match(/function updateVersionControlsVisibility\(\) \{[\s\S]*?\n\}/)[0];
+  const shown = {};
+  const run = (mode, translations, sources) => {
+    const counts = { '.translation-summary-count': translations, '.hebrew-summary-count': sources };
+    const ctx = vm.createContext({
+      appMode: 'texts', selectedResultKey: 'Genesis 1:1',
+      $: (selector) => ({ val: () => mode, attr: () => counts[selector], toggle: (value) => { shown[selector] = value; } }),
+    });
+    vm.runInContext(visibility + '\nupdateVersionControlsVisibility();', ctx);
+    return [shown['.translation-version-details'], shown['.advanced-version-details'], shown['.versions-section']];
+  };
+  assert.deepEqual(run('he', 2, 4), [false, true, true]);
+  assert.deepEqual(run('both', 1, 4), [false, true, true]);
+  assert.deepEqual(run('en', 2, 4), [true, false, true]);
+  assert.deepEqual(run('en', 1, 4), [false, false, false]);
+});

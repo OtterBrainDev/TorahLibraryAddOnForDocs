@@ -27,13 +27,12 @@
 
 /* .versions-section panel chrome is shared with layout.css panel shells. */
 /* The details inside gets a slight shadow lift from the shared panel rule. */
-/* CRITICAL: .versions-section must have flex: 0 0 auto, min-height: 0 and overflow: hidden */
-/* to prevent escape from .sidebar-scroll container. */
+/* Let the help tooltips overlap adjacent sections inside the sidebar scroll area. */
 
 .versions-section {
   flex: 0 0 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .versions-panel,
@@ -46,11 +45,6 @@
 .versions-panel.more-options-card {
   background: #fcfcfb;
   border-color: #ece9e3;
-}
-
-.versions-section.single-translation .translation-version-control,
-.versions-section.single-translation .advanced-version-details {
-  display: none;
 }
 
 /* =============================================================

@@ -34,6 +34,7 @@ const FILES = [
   'apps-script/sidebar/js/voices.html',
   'apps-script/sidebar/js/lexicon.html',
   'apps-script/sidebar/js/search-tabs.html',
+  'apps-script/sidebar/js/display-controls.html',
   'apps-script/sidebar/js/mode-controller.html',
   'apps-script/sidebar/js/event-bindings.html',
   'apps-script/sidebar/js/layout-tray.html',
@@ -127,6 +128,7 @@ function loadSidebarSearch(options) {
   const localStorage = fakeStorage(options.storage);
   const context = {
     console, $, localStorage,
+    initInsertionOptions() {},
     google: { script: { run: fakeScriptRun(calls), host: { close() {}, editor: { focus() {} } } } },
     document: { documentElement: { addEventListener() {} }, querySelector: () => null },
     navigator: {},

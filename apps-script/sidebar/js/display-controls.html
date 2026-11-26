@@ -51,13 +51,11 @@ function updateHebrewOptionsVisibility() {
 
 function updateVersionControlsVisibility() {
   var outputMode = $('.output-mode-selection').val();
-  var hideTranslations = $('.translation-version-select option:not(:disabled)').length <= 1;
-  $('.translation-version-control').toggle(outputMode !== 'he' && appMode !== 'voices' && !hideTranslations);
-  $('.advanced-version-details').toggle(outputMode !== 'en' && appMode === 'texts');
-  $('.versions-section').toggleClass('single-translation', hideTranslations);
-  if (appMode !== 'voices' && !!selectedResultKey) {
-    $('.versions-section').toggle(!hideTranslations);
-  }
+  var showTranslations = outputMode !== 'he' && Number($('.translation-summary-count').attr('data-option-count')) > 1;
+  var showSources = outputMode !== 'en' && Number($('.hebrew-summary-count').attr('data-option-count')) > 1;
+  $('.translation-version-details').toggle(showTranslations);
+  $('.advanced-version-details').toggle(showSources);
+  $('.versions-section').toggle(appMode === 'texts' && !!selectedResultKey && (showTranslations || showSources));
 }
 
 function updateTransliterationVisibility() {

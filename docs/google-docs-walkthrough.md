@@ -159,10 +159,16 @@ chapter, titled *Genesis 1*.
 
 ## Versions & Preview
 
-**Versions** chooses the translation (**Translation Versions**) and, when
-needed, a specific Hebrew edition (**Original Versions**). Your preferred
+**Versions** chooses the translation (**Translation versions**) and, when
+needed, a specific Hebrew edition (**Source editions**). Your preferred
 translation language is set in **Preferences → Insertion → Insertion
 Defaults → Translation → Language**.
+
+The ⓘ icons explain how to select translations and when to choose a source
+edition. **Tanach.us (full edition)** includes vowels and cantillation. Use
+the **Vowels** and **Cantillation** controls to change which marks appear.
+The pre-stripped versions are omitted when the full edition is listed,
+unless one is already selected. Miqra according to the Masorah stays separate.
 
 Changing Insertion Options keeps the chosen translation, Hebrew edition and
 order of multiple translations. Add Source waits while a refresh is loading.

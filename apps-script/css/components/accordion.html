@@ -47,47 +47,6 @@
    shared/insertion-options/css.html with the rest of the Layout pickers. */
 
 /* =============================================================
-   ADVANCED VERSION DETAILS
-   ============================================================= */
-
-.advanced-version-details summary::-webkit-details-marker {
-  display: none;
-}
-
-.advanced-version-details {
-  margin-top: 8px;
-  padding-top: 8px;
-  opacity: 0.9;
-  border-top: 1px solid var(--border);
-}
-
-.advanced-version-details summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--sefaria-blue);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  list-style: none;
-}
-
-.advanced-version-details summary::before {
-  margin-right: 6px;
-  color: #666;
-  content: "▸";
-}
-
-.advanced-version-details[open] summary::before {
-  content: "▾";
-}
-
-.versions-section.single-translation .translation-version-control,
-.versions-section.single-translation .advanced-version-details {
-  display: none;
-}
-
-/* =============================================================
    VERSION CHOICE DETAILS
    ============================================================= */
 
@@ -106,8 +65,8 @@
 .version-choice-details > summary {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
+  position: relative;
   color: var(--sefaria-blue);
   cursor: pointer;
   font-size: 12px;
@@ -121,7 +80,6 @@
 
 .version-choice-details > summary::before {
   content: "▸";
-  margin-right: 6px;
   color: #666;
 }
 
@@ -137,5 +95,51 @@
   color: var(--muted);
   font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.version-help[hidden] {
+  display: none;
+}
+
+.version-help-button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  color: var(--sefaria-blue);
+  background: transparent;
+  border: 0;
+  cursor: help;
+  font-size: 16px;
+}
+
+.version-tooltip {
+  position: absolute;
+  z-index: 2;
+  top: 100%;
+  right: 0;
+  max-width: min(220px, 100%);
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 15%);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  visibility: hidden;
+}
+
+.version-choice-details:not([open]) .version-tooltip {
+  top: auto;
+  bottom: 100%;
+}
+
+.version-help:not([data-dismissed]):is(:hover, :focus-within) .version-tooltip {
+  visibility: visible;
 }
 </style>
