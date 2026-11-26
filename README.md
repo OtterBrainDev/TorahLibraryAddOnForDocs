@@ -159,9 +159,12 @@ insert, with fewer tools in view and a shorter menu) or **Everything**.
 Existing users keep Everything. Switch at the top of Preferences; Simple hides
 with CSS only, so nothing is lost. In either one, **Preferences → Sidebar**
 leaves out the Voices or Lexicon tab, Quick Actions buttons and (Everything)
-Insertion Options controls. Everything also keeps **profiles**, named sets of
-how sources look (one per class), and **settings files** (Preferences →
-Advanced) to hand a class or an organization the same settings.
+Insertion Options controls. Explicitly disabled Voices and Lexicon stay off
+when switching interfaces. Everything also keeps **profiles**, named sets of
+how sources look (one per class). **Import/Export (⇅)** beside Interface is
+available in both modes: Simple uses the active preferences; Everything lets
+you choose a profile without switching to it. Shared account-wide settings
+are an explicit opt-in for named-profile transfers.
 
 ### Preferences
 

@@ -10,6 +10,19 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Preferences without a reset.** Explicitly disabled Voices and Lexicon
+  stay out of the menu in both interfaces; the Menu Bar editor follows the
+  same switches. A mode switch updates only the saved menu baseline, retaining
+  other unsaved form edits.
+- **Import/Export in both interfaces.** The ⇅ button beside Interface opens a
+  modal with the former Advanced tab's settings-file tools. Simple targets the
+  current preferences; Everything lets the reader select a named profile,
+  including an inactive one, without switching to it. Profile transfers
+  default to text/layout/appearance; shared settings are explicitly optional
+  and imported only in checked groups. Import keeps the interface mode.
+  A stale mode or active-profile identity is rejected before writes. The 🖉
+  rename action is above the profile list, with a tooltip and accessible label.
+
 - **Selection-aware actions.** Insert Source from Selection opens citation review even when Link Texts is set to quiet, including multiple selected citations. Unresolved selections can be searched in the Texts sidebar. Link Texts and Gematriya Count use highlighted text when present; clear it for the whole document body. Selected link placements are checked against the original document and text rather than guessed after edits.
 - **Familiar setup and Help.** The 1.0 compatibility preset applies familiar active preferences in one step, turns Voices and Lexicon off and uses Add Sources with Sefaria. Other setup paths offer both optional tools. Help is a submenu with How to..., Support, About and Re-run Setup Wizard. Re-run can keep or reset active settings without deleting named profile snapshots.
 

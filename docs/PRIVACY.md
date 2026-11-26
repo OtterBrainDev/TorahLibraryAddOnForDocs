@@ -118,13 +118,13 @@ settings, default insertion options — are stored using Google's
 managed by Google. It is not readable by other add-ons, by other users, or by
 the add-on's authors.
 
-**Settings files.** Preferences → Advanced → *Export settings file* saves
+**Settings files.** Preferences → ⇅ Import/Export → *Export settings file* saves
 your preference settings (no searches, document text or account details) to
 a file on your own computer, built from your preferences by Google's Apps
 Script service and downloaded by your browser. Who receives the file is up
 to you. *Import* reads a file you choose in your browser and sends its text
 to Google's Apps Script service, which writes only recognised preference
-settings to your `PropertiesService` storage; the file is not kept.
+settings to your `PropertiesService` storage; the file is not kept. In Everything, the selected profile is the target; shared settings are included only by choice. A transfer never changes the interface mode.
 
 **Sidebar session state** — the temporary choices you make in a single
 sidebar session — is stored in Google's `CacheService` and expires
