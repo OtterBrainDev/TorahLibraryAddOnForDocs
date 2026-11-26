@@ -544,3 +544,33 @@ test('rate limits and server failures never fall back to the deprecated text end
     assert.match(calls[1].url, /\/api\/v3\/texts\//);
   }
 });
+
+
+test('the sidebar browses a root book without fetching text and regular insertion still resolves its first chapter', () => {
+  const raw = { ...fixture('book-section'), ref: 'Genesis 1', indexTitle: 'Genesis' };
+  const root = { is_ref: true, normalized: 'Genesis', index_title: 'Genesis', node_type: 'JaggedArrayNode',
+    depth: 2, start_labels: [], end_labels: [], section_names: ['Chapter', 'Verse'], address_types: ['Perek', 'Pasuk'],
+    navigation_refs: { first_available_section_ref: 'Genesis 1', first_subref: 'Genesis 1', last_subref: 'Genesis 50' } };
+  const shape = { title: 'Genesis', book: 'Genesis', chapters: Array(50).fill(1) };
+  const { ctx, calls } = load((url) => url.includes('/api/shape/') ? response(200, [shape]) : apiResponse(raw, root)(url));
+  const toc = ctx.findReferenceForSidebar('Genesis', { browseBook: true }, null);
+  assert.equal(toc.bookContents.length, 50);
+  assert.deepEqual(plain(toc.bookContents[49]), { ref: 'Genesis 50', label: 'Chapter 50' });
+  assert.ok(!calls.some(({ url }) => url.includes('/api/v3/texts/')));
+  assert.equal(ctx.findReference('Genesis').ref, 'Genesis 1');
+
+  const fallback = load((url) => url.includes('/api/shape/') ? response(200, [{ ...shape, chapters: [1] }]) : apiResponse(raw, root)(url));
+  assert.equal(fallback.ctx.findReferenceForSidebar('Genesis', { browseBook: true }, null).ref, 'Genesis 1');
+});
+
+test('book contents use real Daf numbering and named complex-book sections', () => {
+  const { ctx } = load();
+  const daf = ctx.buildBookContents_({ ref: 'Berakhot', first: 'Berakhot 1a', last: 'Berakhot 3a',
+    addressType: 'Talmud', sectionName: 'Daf' }, [{ book: 'Berakhot', title: 'Berakhot', chapters: [0, 0, 14, 19, 15] }]);
+  assert.deepEqual(Array.from(daf.bookContents, (row) => row.ref), ['Berakhot 2a', 'Berakhot 2b', 'Berakhot 3a']);
+  const named = ctx.buildBookContents_({ ref: 'Pesach Haggadah', complex: true }, [{ book: 'Pesach Haggadah', isComplex: true, chapters: [
+    { book: 'Pesach Haggadah', title: 'Pesach Haggadah, Kadesh', chapters: 13 },
+    { book: 'Other', title: 'Other, Kadesh', chapters: 13 },
+  ] }]);
+  assert.deepEqual(plain(named.bookContents), [{ ref: 'Pesach Haggadah, Kadesh', label: 'Kadesh' }]);
+});

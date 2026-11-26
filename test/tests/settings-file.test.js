@@ -208,12 +208,12 @@ test('Reset To Defaults also resets all workflow modes, Commentary and Notes', (
   const { ctx, props } = load({
     voices_insert_mode_default: 'both', voices_translit_default: 'ashkenazi',
     lexicon_insert_mode_default: 'definition', source_emphasis_mode: 'only',
-    source_notes_mode: 'separate', ui_mode: 'simple'
+    source_notes_mode: 'omit', ui_mode: 'simple'
   });
   const result = ctx.resetPreferencesToDefaults();
   const expected = {
     voices_insert_mode_default: 'reference', voices_translit_default: 'none',
-    lexicon_insert_mode_default: 'entry', source_emphasis_mode: 'keep', source_notes_mode: 'omit'
+    lexicon_insert_mode_default: 'entry', source_emphasis_mode: 'keep', source_notes_mode: 'separate'
   };
   Object.entries(expected).forEach(([key, value]) => {
     assert.equal(props.store[key], value, `stored ${key}`);

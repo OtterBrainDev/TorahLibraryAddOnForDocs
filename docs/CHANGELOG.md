@@ -10,6 +10,14 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Text and notes.** Source and Translation are labeled separately, and ⓘ
+  explains when Commentary or Notes cannot affect the displayed passage.
+  Separate appears first and is the default for unset Notes. Stored choices
+  are preserved.
+- **Book contents in search.** Root titles with supported Sefaria shape
+  data open a picker for chapters, dapim, or named sections. Opening a
+  section loads its normal preview before insertion.
+
 - **Bilingual Link Texts:** scan mixed Hebrew and English text with both
   Sefaria Linker models, so a Hebrew citation does not hide English
   headings in the same document or selection.

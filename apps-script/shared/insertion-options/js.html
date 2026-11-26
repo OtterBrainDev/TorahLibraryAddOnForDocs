@@ -187,16 +187,51 @@ function initGroupedInsertionOptions(rootSelector) {
   move('#layout-rows-toggle', primary);
   move('.cc-translit-wrap', primary, 'he');
 
+  function textRole(label, role) {
+    var section = element('div', 'io-text-role');
+    section.setAttribute('data-io-role', role);
+    section.setAttribute('role', 'group');
+    section.setAttribute('aria-label', label);
+    section.appendChild(element('div', 'io-text-role-label', label));
+    return section;
+  }
+  function addTextHelp(row, key, message) {
+    if (!row) return;
+    row.classList.add('io-text-option');
+    var help = element('span', 'sidebar-option-help');
+    var button = element('button', 'sidebar-option-help-button', 'ⓘ');
+    button.type = 'button';
+    button.setAttribute('aria-label', key + ' help');
+    var tip = element('span', 'sidebar-option-tooltip', message);
+    tip.id = 'io-' + key.toLowerCase() + '-tip';
+    tip.setAttribute('role', 'tooltip');
+    button.setAttribute('aria-describedby', tip.id);
+    help.appendChild(button);
+    help.appendChild(tip);
+    var label = row.querySelector('.cc-row-label');
+    var labelGroup = element('span', 'io-text-option-label');
+    row.insertBefore(labelGroup, label);
+    labelGroup.appendChild(label);
+    labelGroup.appendChild(help);
+  }
+
   var text = createOptionsGroup('text', 'Text and notes');
-  move('.cc-hebrew-stage', text, 'he', null, true);
-  move('#cc-vowels-toggle', text, 'he');
-  move('#cc-cantillation-toggle', text, 'he');
-  move('#cc-hebrew-punct-toggle', text, 'he', 'Hebrew punctuation');
-  move('.cc-translation-stage', text, 'en', null, true);
-  move('#cc-translation-punct-toggle', text, 'en', 'Translation punctuation');
-  move('#cc-emphasis-toggle', text, 'en');
-  move('#cc-commentary-help', text, 'en', null, true);
-  move('#cc-notes-toggle', text);
+  var source = textRole('Source', 'he');
+  move('.cc-hebrew-stage', source, 'he', null, true);
+  move('#cc-vowels-toggle', source, 'he');
+  move('#cc-cantillation-toggle', source, 'he');
+  move('#cc-hebrew-punct-toggle', source, 'he', 'Hebrew punctuation');
+  text.appendChild(source);
+
+  var translation = textRole('Translation', 'en');
+  move('.cc-translation-stage', translation, 'en', null, true);
+  move('#cc-translation-punct-toggle', translation, 'en', 'Translation punctuation');
+  addTextHelp(move('#cc-emphasis-toggle', translation, 'en'), 'Commentary',
+    'Commentary controls apply to supported inline-commentary editions.');
+  text.appendChild(translation);
+
+  addTextHelp(move('#cc-notes-toggle', text), 'Notes',
+    'Choose how to include Sefaria’s marked footnotes.');
 
   var references = createOptionsGroup('references', 'References and numbering');
   move('#cc-he-title-toggle', references, 'he', 'Link source title');
@@ -247,7 +282,7 @@ function updateGroupedInsertionOptions() {
     var controls = (row.getAttribute('data-sidebar-control') || '').split(/\s+/);
     return !controls.some(function (id) { return id && hidden.indexOf(id) >= 0; });
   }
-  Array.prototype.forEach.call(root.querySelectorAll('.io-options-group, .io-primary-options'), function (section) {
+  Array.prototype.forEach.call(root.querySelectorAll('.io-options-group, .io-primary-options, .io-text-role'), function (section) {
     section.hidden = !Array.prototype.some.call(section.querySelectorAll('[data-io-item]'), available);
   });
   // Samples accompany the controls they demonstrate, not a hidden control.
@@ -259,7 +294,7 @@ function updateGroupedInsertionOptions() {
   var notes = { omit: 'Notes omitted', inline: 'Notes inline', separate: 'Notes below text' };
   var commentary = { keep: 'Default commentary', discard: 'Commentary combined', only: 'Commentary dropped' };
   var marks = { never: 'off', always: 'on', tanakh: 'Tanakh', torah: 'Torah' };
-  var textParts = [notes[state.notesMode] || notes.omit];
+  var textParts = [notes[state.notesMode] || notes.separate];
   if (hasTranslation) textParts.push(commentary[state.emphasisMode] || commentary.keep);
   if (hasSource) {
     textParts.push('Vowels ' + (marks[state.vowelsMode] || 'on'));

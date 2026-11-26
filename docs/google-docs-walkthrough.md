@@ -153,9 +153,9 @@ Result tools:
 The selected-source card has **‹ Prev** / **Next ›** to step to the
 neighbouring passage and **Open on Sefaria**. Book and section headings with no
 text of their own (*Mishneh Torah*) can't be inserted — the sidebar says so and
-keeps **Add Source** disabled until you pick a specific passage. A book Sefaria
-opens at its first chapter (*Genesis* on its own) previews and inserts that one
-chapter, titled *Genesis 1*.
+keeps **Add Source** disabled until you pick a specific passage. Searching for
+*Genesis* on its own shows its table of contents when Sefaria provides section
+data. Pick a chapter and select **Open section** to preview and insert it.
 
 ## Versions & Preview
 

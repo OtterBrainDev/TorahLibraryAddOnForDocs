@@ -246,6 +246,7 @@ function renderCorpusChipStrip($strip, options) {
 }
 
 function resetSelectedResultView() {
+  updateSidebarTextOptionsAvailability(null);
   selectedResultKey = null;
   selectedResultSummary = null;
   selectedRefValue = null;
