@@ -139,9 +139,9 @@ function hostContext() {
 }
 
 test('Notes has one real labelled radio control whose values match server and client normalization', () => {
-  const { document } = parseHTML(read('shared/insertion-options/markup.html'));
+  const { document } = parseHTML(read('shared/composition-card/markup.html'));
   const group = document.querySelector('#cc-notes-toggle');
-  assert.ok(group, 'the shared Layout controls expose Notes, rather than only hidden state');
+  assert.ok(group, 'the shared Texts composition controls expose Notes, rather than only hidden state');
   assert.equal(group.getAttribute('role'), 'radiogroup');
   const labels = Array.from(group.querySelectorAll('[role="radio"]'), (button) => [button.getAttribute('data-value'), button.textContent.trim()]);
   assert.deepEqual(labels, [['omit', 'Omit'], ['inline', 'Inline'], ['separate', 'Separate']]);
@@ -210,4 +210,68 @@ test('the sidebar sends the current Notes choice to single and multiple inserts 
   assert.equal(env.last('insertReferenceVersions').args[1].sourceNotesMode, 'separate');
   assert.equal(env.last('insertReferenceVersions').args[1].sessionId, 'notes-session');
   assert.equal(env.ctx.accountPreferences.source_notes_mode, undefined, 'the choice is a session setting');
+});
+
+
+// Check the actual host templates with their shared includes expanded. A
+// standalone hidden-state or adapter test cannot catch a misplaced control.
+function expandedHost(name) {
+  return parseHTML(read(name).replace(/<\?!=\s*include\('([^']+)'\)\s*;?\s*\?>/g,
+    (match, partial) => partial === 'shared/insertion-options/markup' || partial === 'shared/composition-card/markup'
+      ? read(partial + '.html') : '')).document;
+}
+
+test('all three hosts expose exactly one shared Notes choice alongside composition controls', () => {
+  for (const host of ['preferences.html', 'sidebar.html', 'linker-results.html']) {
+    const doc = expandedHost(host);
+    const notes = doc.querySelectorAll('#cc-notes-toggle');
+    assert.equal(notes.length, 1, host);
+    assert.ok(notes[0].closest('#composition-card-container'), host + ': Notes belongs to the composition card');
+    assert.equal(notes[0].closest('.cc-section--source, .cc-section--translation'), null,
+      host + ': Notes is not language-specific');
+    assert.equal(notes[0].closest('[data-cc-feature]'), null, host + ': no optional feature gate');
+    assert.equal(notes[0].closest('[hidden]'), null, host + ': not explicitly hidden');
+    if (host === 'preferences.html') {
+      assert.ok(notes[0].closest('#pref-workflow-texts'), 'Notes is in the Texts insertion defaults');
+      assert.equal(notes[0].closest('#display-defaults'), null, 'not in the separate Layout accordion');
+      assert.ok(notes[0].closest('#insertion-preview').hasAttribute('open'));
+      assert.equal(doc.querySelectorAll('[name="source_notes_mode"]').length, 1);
+    }
+  }
+});
+
+test('shared insertion controls and their Preferences fields stay in sync', () => {
+  const doc = expandedHost('preferences.html');
+  const hosts = ['sidebar.html', 'linker-results.html'].map(expandedHost);
+  const contract = {
+    'cc-vowels-toggle': ['nekudot', 'nekudot_filter'],
+    'cc-cantillation-toggle': ['teamim', 'teamim_filter'],
+    'cc-hebrew-punct-toggle': ['hebrew_punctuation'],
+    'cc-translation-punct-toggle': ['translation_punctuation'],
+    'cc-translit-pill': ['include_transliteration_default'],
+    'cc-translit-toggle': ['transliteration_scheme'],
+    'cc-translit-position-toggle': ['transliteration_position'],
+    'cc-emphasis-toggle': ['source_emphasis_mode'],
+    'cc-notes-toggle': ['source_notes_mode'],
+    'cc-title-toggle': ['insert_sefaria_link_default'],
+    'cc-he-title-toggle': ['insert_hebrew_sefaria_link_default'],
+    'cc-details-toggle': ['include_translation_source_info'],
+    'cc-lines-toggle': ['show_line_markers_default'],
+    'layout-rows-toggle': ['bilingual_aligned_rows'],
+    'display-choice-label': ['output_mode_default'],
+    'layout-choice-label': ['bilingual_layout_default']
+  };
+  const defaults = server().ctx.getDefaultPreferences();
+  for (const [id, keys] of Object.entries(contract)) {
+    for (const page of [doc, ...hosts]) assert.equal(page.querySelectorAll('#' + id).length, 1, id);
+    for (const key of keys) {
+      assert.equal(doc.querySelectorAll('[name="' + key + '"]').length, 1, key);
+      assert.ok(Object.hasOwn(defaults, key), key + ' has a central default');
+    }
+  }
+  // The composition radios must all have a mapped setting; future controls
+  // cannot silently bypass this audit.
+  for (const group of doc.querySelectorAll('#composition-card-container [data-cc-choice]')) {
+    assert.ok(Object.hasOwn(contract, group.id), group.id);
+  }
 });

@@ -4,6 +4,18 @@
 </div>
 
 <div class="cc-surface">
+  <!-- Notes applies to either language, independently of Commentary. Keep
+       it outside the language-specific sections in every host. The sidebar
+       moves this same node into Text and notes. -->
+  <div class="cc-row" data-sidebar-control="commentary">
+    <span class="cc-row-label" id="cc-notes-label">Notes</span>
+    <div class="cc-seg" id="cc-notes-toggle" role="radiogroup" aria-labelledby="cc-notes-label" data-cc-choice="notes">
+      <button type="button" class="cc-seg-option" role="radio" data-value="omit" aria-checked="true" title="Leave out Sefaria’s marked footnotes in both the source and translation">Omit</button>
+      <button type="button" class="cc-seg-option" role="radio" data-value="inline" aria-checked="false" title="Put marked footnotes in parentheses where they occur">Inline</button>
+      <button type="button" class="cc-seg-option" role="radio" data-value="separate" aria-checked="false" title="Keep note references in the text and put the notes below each passage or aligned line">Separate</button>
+    </div>
+  </div>
+
   <!-- The source (Hebrew) and translation settings, each collapsible. The
        summary line says what is set; initCompositionCard opens both when the
        host's data-cc-features has "openSections" (Preferences). Each setting

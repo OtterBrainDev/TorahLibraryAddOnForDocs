@@ -6,7 +6,7 @@
 // Usage:
 //   initCompositionCard({
 //     containerId: 'composition-card-container',
-//     getState:       function() { return { vowelsMode, cantillationMode, hebrewPunctuationOn, transliterationOn, scheme, translitPosition, translationPunctuationOn, linkOn, hebrewLinkOn, linesOn, detailsOn, emphasisMode }; },
+//     getState:       function() { return { vowelsMode, cantillationMode, hebrewPunctuationOn, transliterationOn, scheme, translitPosition, translationPunctuationOn, linkOn, hebrewLinkOn, linesOn, detailsOn, emphasisMode, notesMode }; },
 //                     (vowelsMode: ccVowelsMode(); cantillationMode: ccCantillationMode();
 //                      hebrewPunctuationOn / translationPunctuationOn: undefined reads as on;
 //                      linkOn is the translation title's link, hebrewLinkOn the source title's;
@@ -18,7 +18,8 @@
 //                     hebrewEdition, lines, details */ },
 //     onChoice:       function(key, value) { /* a three-way choice: 'vowels' (never / tanakh /
 //                     always), 'cantillation' (never / tanakh / torah), 'emphasis' (keep /
-//                     discard / only), 'translitPosition' (below / left / right) */ },
+//                     discard / only), 'notes' (omit / inline / separate),
+//                     'translitPosition' (below / left / right) */ },
 //     onSchemeSelect: function(value) { /* set transliteration scheme */ },
 //     afterUpdate:    function(state) { /* optional host-specific post-update hook */ },
 //     getTranslitLabel: function(on, scheme) { /* optional custom label for translit button */ },
