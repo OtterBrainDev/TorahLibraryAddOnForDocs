@@ -15,17 +15,25 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const TRIGGERS = fs.readFileSync(path.resolve(__dirname, '../../apps-script/triggers.gs'), 'utf8');
+const read = (file) => fs.readFileSync(path.resolve(__dirname, '../../apps-script', file), 'utf8');
 
 const AuthMode = { NONE: 'NONE', LIMITED: 'LIMITED', FULL: 'FULL' };
 
 function load(overrides = {}) {
   const calls = [];
   const store = {};
+  const menus = [];
   const context = {
     console,
     Logger: { log() {} },
-    ScriptApp: { AuthMode },
+    ScriptApp: {
+      AuthMode,
+      AuthorizationStatus: { NOT_REQUIRED: 'NOT_REQUIRED', REQUIRED: 'REQUIRED' },
+      getAuthorizationInfo(mode) {
+        assert.equal(mode, AuthMode.FULL);
+        return { getAuthorizationStatus: () => 'NOT_REQUIRED' };
+      },
+    },
     PropertiesService: { getUserProperties: () => ({ store }) },
     HtmlService: {
       createHtmlOutputFromFile: () => ({ setWidth() { return this; }, setHeight() { return this; } }),
@@ -34,16 +42,16 @@ function load(overrides = {}) {
     seedDefaultPreferences_: (props) => { calls.push('seed'); props.store.nekudot = 'true'; },
     runUserPreferenceMigrationsIfNeeded_: () => calls.push('migrate'),
     buildAndInstallMenu: () => calls.push('buildMenu'),
-    getDefaultMenuLayout_: () => ['default'],
-    planMenuFromLayout_: (layout, availability) => ({ layout, availability }),
-    installMenuPlan_: (plan) => calls.push(`defaultMenu:${plan.availability.surpriseMeEnabled}`),
+    installMenuPlan_: (plan) => { menus.push(Array.from(plan, (entry) => entry.label || entry.type)); calls.push('starterMenu'); },
     // Setup already done: the reinstall case, which keeps the release notes.
     maybeShowFirstRunSetup_: () => false,
   };
   Object.assign(context, overrides(calls));
   vm.createContext(context);
-  vm.runInContext(TRIGGERS, context, { filename: 'triggers.gs' });
-  return { context, calls, store };
+  for (const file of ['server/menu-layout.gs', 'server/factory-preferences.gs', 'triggers.gs']) {
+    vm.runInContext(read(file), context, { filename: file });
+  }
+  return { context, calls, store, menus };
 }
 
 const noOverrides = () => ({});
@@ -73,21 +81,51 @@ test('onInstall still builds the menu if seeding preferences fails', () => {
   assert.ok(calls.includes('buildMenu'), `no menu after a seeding failure: ${calls}`);
 });
 
-test('onOpen in AuthMode.NONE builds the default menu without touching preferences', () => {
-  const { context, calls } = load(noOverrides);
+const STARTER_MENU = [
+  'Add Sources with Sefaria', 'Link Texts with Sefaria', 'Transform Divine Names',
+  'separator', 'Preferences', 'Help',
+];
 
+test('onOpen in AuthMode.NONE builds the starter menu without checking authorization or preferences', () => {
+  const { context, calls, menus } = load(() => ({
+    PropertiesService: { getUserProperties() { assert.fail('preference access before authorization'); } },
+  }));
+  context.ScriptApp.getAuthorizationInfo = () => assert.fail('authorization check in NONE');
   context.onOpen({ authMode: AuthMode.NONE });
-
-  assert.deepEqual(calls, ['defaultMenu:false']);
+  assert.deepEqual(calls, ['starterMenu']);
+  assert.deepEqual(menus, [STARTER_MENU]);
 });
 
-test('onOpen falls back to the default menu when building the menu throws', () => {
-  const { context, calls } = load((log) => ({
+test('an editor in LIMITED who still needs to authorize sees the starter menu', () => {
+  const { context, calls, menus } = load(noOverrides);
+  context.ScriptApp.getAuthorizationInfo = () => ({ getAuthorizationStatus: () => 'REQUIRED' });
+  context.onOpen({ authMode: AuthMode.LIMITED });
+  assert.deepEqual(calls, ['starterMenu']);
+  assert.deepEqual(menus, [STARTER_MENU]);
+});
+
+test('the starter menu still appears when Google cannot report consent', () => {
+  const { context, calls, menus } = load(noOverrides);
+  context.ScriptApp.getAuthorizationInfo = () => { throw new Error('Unavailable'); };
+  context.onOpen({ authMode: AuthMode.LIMITED });
+  assert.deepEqual(calls, ['starterMenu']);
+  assert.deepEqual(menus, [STARTER_MENU]);
+});
+
+test('an authorized editor in LIMITED gets their saved menu', () => {
+  const { context, calls } = load(noOverrides);
+  context.onOpen({ authMode: AuthMode.LIMITED });
+  assert.deepEqual(calls, ['migrate', 'buildMenu']);
+});
+
+test('onOpen falls back to the starter menu when building the saved menu throws', () => {
+  const { context, calls, menus } = load((log) => ({
     buildAndInstallMenu: () => { log.push('buildMenu'); throw new Error('PropertiesService unavailable'); },
   }));
 
   assert.doesNotThrow(() => context.onOpen({ authMode: AuthMode.LIMITED }));
-  assert.deepEqual(calls, ['migrate', 'buildMenu', 'defaultMenu:false']);
+  assert.deepEqual(calls, ['migrate', 'buildMenu', 'starterMenu']);
+  assert.deepEqual(menus, [STARTER_MENU]);
 });
 
 test('onOpen still builds the menu when a migration throws', () => {

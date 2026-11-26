@@ -51,18 +51,37 @@ function onInstall(e) {
   }
 }
 
-function installDefaultMenu_() {
-  // The default layout, built without reading preferences. Surprise Me is
-  // omitted because whether it is enabled is itself a preference.
-  installMenuPlan_(planMenuFromLayout_(getDefaultMenuLayout_(), { surpriseMeEnabled: false }));
+function installStarterMenu_() {
+  const preset = FACTORY_PREFERENCE_VALUES_;
+  installMenuPlan_(planMenuFromLayout_(preset.menu_layout, {
+    voicesEnabled: preset.show_voices_tab !== 'false',
+    lexiconEnabled: preset.show_lexicon_tab !== 'false',
+    surpriseMeEnabled: false
+  }));
 }
 
 function onOpen(e) {
   // Per Google Workspace add-on guidance, avoid reading PropertiesService while
   // the add-on is still in AuthMode.NONE so the menu always renders.
   if (e && e.authMode === ScriptApp.AuthMode.NONE) {
-    installDefaultMenu_();
+    installStarterMenu_();
     return;
+  }
+
+  // A shared document can run onOpen in LIMITED before this editor has
+  // granted the scopes needed by its actions. Check consent separately.
+  if (e && e.authMode === ScriptApp.AuthMode.LIMITED) {
+    let authorized = false;
+    try {
+      const authorization = ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL);
+      authorized = authorization.getAuthorizationStatus() === ScriptApp.AuthorizationStatus.NOT_REQUIRED;
+    } catch (error) {
+      Logger.log('Could not check add-on authorization during onOpen.');
+    }
+    if (!authorized) {
+      installStarterMenu_();
+      return;
+    }
   }
 
   // A migration failure must not cost the user their menu: log it and build
@@ -74,11 +93,11 @@ function onOpen(e) {
   }
 
   // And a failure reading preferences must not leave the document with no
-  // add-on menu at all: fall back to the default one.
+  // add-on menu at all: fall back to the starter menu.
   try {
     buildAndInstallMenu();
   } catch (error) {
-    Logger.log(`Menu build failed in onOpen; installing the default menu: ${error.message}`);
-    installDefaultMenu_();
+    Logger.log(`Menu build failed in onOpen; installing the starter menu: ${error.message}`);
+    installStarterMenu_();
   }
 }
