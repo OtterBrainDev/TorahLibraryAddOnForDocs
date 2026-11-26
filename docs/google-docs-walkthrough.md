@@ -500,16 +500,13 @@ not saved named profile snapshots.
 | **Linking** | After linking; Insert text after linking; Document scanning. |
 | **Sidebar** | What the sidebar shows (see below). |
 | **Menu Bar** | Reorder, group, hide and divide menu items; **Move to Quick Actions ▸** / **◂ Move to main menu** move an item into the submenu or out. |
-| **⇅ Import/Export** (button beside Interface, both modes) | Simple targets current preferences. Everything asks which profile to export or update; inactive profiles stay inactive. Active exports include unsaved form values, inactive exports use saved snapshots. Profile files normally carry text, layout and appearance; shared settings are opt-in. Choose a file or paste its JSON, preview the changes and apply only checked groups. The interface mode stays unchanged. Files contain settings only, not searches, documents or account details. |
+| **⇅ Import/Export** (Profiles tab, both modes) | Simple targets current preferences. Everything asks which profile to export or update; inactive profiles stay inactive. Active exports include unsaved form values, inactive exports use saved snapshots. Profile files normally carry text, layout and appearance; shared settings are opt-in. Choose a file or paste its JSON, preview the changes and apply only checked groups. The interface mode stays unchanged. Files contain settings only, not searches, documents or account details. |
 | **🧪 Experimental** | Optional in-progress features such as Surprise Me. |
 
-**Profiles** appears in either interface. **Save defaults to account** keeps
-changes across documents. **Reset active profile** restores its insertion
-defaults. **Restore Factory preset** applies the 1.0-style configuration,
-including shared settings and the Simple interface.
-
-At the bottom, **Apply to sidebar** sends insertion settings to the open
-Texts preview for this session. **Close** closes Preferences.
+**Save & Close** saves your changes to the profile selected on the left and
+shows what changed. **This Document** is selected by default. The **🡆 Update
+Sidebar Preview** button sends your insertion settings to an open Texts
+preview for the current sidebar session.
 
 ## What the sidebar shows
 
@@ -530,24 +527,22 @@ Anything switched off is hidden, not removed, and your settings still apply.
 
 ## Profiles
 
-A profile is a named set of how sources look, so you can keep one per class:
-transliteration for beginners, say, and no vowels or punctuation with the
-commentary dropped for adults. Profiles are in Everything, in a column beside
-the Preferences tabs.
+Use the profile list on the left in either interface mode.
 
-- The tabs always edit the profile in use (the filled dot). Click another to
-  switch; if you have unsaved changes, Preferences asks first.
-- **+ New profile** copies the one in use and switches to it; the first turns
-  your settings into *My settings*. **🖉 Rename active profile** above the list
-  and **Delete** act on the one
-  in use. Up to ten.
-- With two or more, the sidebar's **📰 Insertion Options** names the profile
-  in use and has a **Profile** list. A switch, there or in Preferences, drops
-  the session's Insertion Options changes.
-
-A profile holds the *Text and layout* and *Fonts, colours and titles*
-settings. The menu, Simple or Everything, what the sidebar shows, search and
-linking stay the same in every profile.
+- **This Document** remembers the settings you change for this Google Doc
+  when you reopen it. Other settings inherit the reusable profile in use.
+  Under **Profiles → Reset options**, use **Use account defaults in this
+  document** to clear the document’s saved overrides.
+- **Account** is the built-in profile. Select it to save defaults across
+  documents. Add named profiles for different text, layout and appearance
+  settings. **+ New profile** copies the reusable profile in use. Use the
+  pencil and trash buttons to rename or delete a named profile.
+- Use **⇅ Import/Export** in the Profiles tab to transfer reusable settings.
+  **Restore Factory preset** applies the 1.0-style settings to the reusable
+  profile in use and shared account settings, including Simple mode.
+- The sidebar’s **Insertion Options → Profile** switches reusable profiles.
+  Saved document overrides continue to apply. Temporary sidebar overrides
+  are cleared on a profile switch.
 
 ## The menu
 

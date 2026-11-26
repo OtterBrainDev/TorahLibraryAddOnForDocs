@@ -27,7 +27,7 @@ const needsDom = { skip: !parseHTML && 'linkedom not installed' };
 const PREFS = readAppScriptFile('preferences.html');
 const PREFS_CSS = readAppScriptFile('preferences/css.html');
 const PREFS_JS = readAppScriptFile('preferences/js.html');
-const PROFILES_JS = PREFS_JS.slice(PREFS_JS.indexOf('// ── Settings profiles (Everything)'), PREFS_JS.indexOf('    function _initPreferencesTabs() {'));
+const PROFILES_JS = PREFS_JS.slice(PREFS_JS.indexOf('// ── Settings profiles'), PREFS_JS.indexOf('    function _initPreferencesTabs() {'));
 const SIDEBAR = readAppScriptFile('sidebar.html');
 const STATE_JS = readAppScriptFile('sidebar/js/preferences-state.html');
 const MODE_JS = readAppScriptFile('sidebar/js/mode-controller.html');
@@ -43,33 +43,50 @@ test('Profiles is a tab in both modes and owns the persistent actions', needsDom
   const { document } = parseHTML(PREFS);
   const tab = document.querySelector('#pref-tab-profiles-btn');
   const panel = document.getElementById(tab.getAttribute('aria-controls'));
-  assert.ok(panel.querySelector('#pref-profile-rail'));
+  assert.ok(document.querySelector('.pref-profile-workspace > #pref-profile-rail'));
+  assert.equal(document.querySelector('.pref-tab-bar button'), tab);
   assert.ok(panel.querySelector('.save-preferences-button'));
-  assert.equal(panel.querySelectorAll('.pref-preset-button').length, 2);
+  assert.equal(panel.querySelectorAll('.pref-preset-button').length, 3);
+  assert.equal(panel.querySelector('[data-preset=factory]').title, 'Factory applies the 1.0-style preset to the active profile and shared settings, including Simple mode.');
+  assert.ok(panel.querySelector('[data-preset=factory]').classList.contains('danger'));
+  assert.match(fn(PROFILES_JS, 'askProfileQuestion_'), /ok\.classList\.toggle\('danger', !!question\.danger\)/);
   assert.doesNotMatch(PREFS_CSS, /not\(\[data-ui-mode="full"\]\) \.pref-profile-rail/);
   const footer = document.querySelector('.save-bar');
   assert.equal(footer.querySelectorAll('button').length, 2);
-  assert.match(footer.querySelector('.apply-sidebar-preferences-button').title, /session/);
-  assert.ok(footer.querySelector('.close-preferences-button'));
+  assert.equal(footer.querySelector('.apply-sidebar-preferences-button').title, 'Update Sidebar Preview');
+  assert.equal(footer.querySelector('.apply-sidebar-preferences-button').textContent, '🡆');
+  assert.equal(footer.querySelector('.close-preferences-button.blue').textContent, 'Save & Close');
 });
 
 test('a profile name is drawn as text', needsDom, () => {
-  const rail = PREFS.match(/<nav class="pref-profile-rail"[\s\S]*?<\/nav>/)[0];
-  const { document, window } = parseHTML(`<html><body>${rail}</body></html>`);
+  const { document, window } = parseHTML(PREFS);
   const context = vm.createContext({ document, window });
   vm.runInContext(`
     function byId(id) { return document.getElementById(id); }
-    var settingsProfiles_ = { active: 'p2', max: 10, profiles: [{ id: 'p1', name: 'My settings' }, { id: 'p2', name: '<img src=x onerror=alert(1)>' }] };
+    function $(selector) { return { text: value => { document.querySelector(selector).textContent = value; }, attr() {} }; }
+    var editingDocument_ = false;
+    var documentProfile_ = { key: 'doc' };
+    var settingsProfiles_ = { active: 'p2', max: 10, profiles: [{ id: 'p1', name: 'Account' }, { id: 'p2', name: '<img src=x onerror=alert(1)>' }] };
     var profileNameMode_ = null;
     ${fn(PROFILES_JS, 'profileIndex_')}
+    ${fn(PROFILES_JS, 'profileById_')}
+    ${fn(PROFILES_JS, 'activeProfile_')}
+    ${fn(PROFILES_JS, 'quoted_')}
     ${fn(PROFILES_JS, 'renderSettingsProfiles_')}
     renderSettingsProfiles_();`, context);
   const items = [...document.querySelectorAll('.pref-profile-item')];
-  assert.equal(items.length, 2);
-  assert.equal(items[1].textContent, '<img src=x onerror=alert(1)>');
+  assert.equal(items.length, 3);
+  assert.equal(items[0].textContent, 'This Document');
+  assert.equal(items[1].textContent, 'Account');
+  assert.equal(items[2].textContent, '<img src=x onerror=alert(1)>');
   assert.equal(document.querySelectorAll('img').length, 0);
-  assert.deepEqual(items.map((b) => b.getAttribute('aria-current')), ['false', 'true']);
+  assert.deepEqual(items.map((b) => b.getAttribute('aria-current')), ['false', 'false', 'true']);
   assert.equal(document.getElementById('pref-profile-delete').disabled, false);
+  vm.runInContext('editingDocument_ = true; renderSettingsProfiles_();', context);
+  assert.equal(document.querySelector('.pref-profile-item[aria-current=true]').textContent, 'This Document');
+  assert.equal(document.getElementById('pref-profile-delete').disabled, true);
+  vm.runInContext('editingDocument_ = false; settingsProfiles_.active = "p1"; renderSettingsProfiles_();', context);
+  assert.equal(document.getElementById('pref-profile-rename').disabled, true);
   // No HTML sink anywhere in the profile code, here or in the sidebar.
   assert.doesNotMatch(PROFILES_JS, /innerHTML|\.html\(/);
   const picker = STATE_JS.slice(STATE_JS.indexOf('// ── Settings profiles'), STATE_JS.indexOf('function saveSessionAsDefaults'));
@@ -90,12 +107,13 @@ test('a switch or a new profile asks about unsaved changes first; a rename does 
   // "Unsaved" is measured against what was last loaded or saved.
   assert.match(fn(PREFS_JS, 'applyPreferencesToForm'), /markFormClean_\(\);/);
   assert.match(fn(PROFILES_JS, 'saveFormThen_'), /applyPreferencesToForm\(result.preferences\)/);
+  assert.match(fn(PROFILES_JS, 'saveFormThen_'), /saveDocumentPreferenceProfile\(preferenceObject, documentProfile_\.key\)/);
   assert.match(fn(PROFILES_JS, 'saveFormThen_'), /savePreferenceDefaults\(preferenceObject, activeProfile_\(\).id\)/);
 });
 
 test('every profile change reloads what it changed and tells an open sidebar', () => {
   const answer = PROFILES_JS.match(/function profileAnswer_\([\s\S]*?\n    \}/)[0];
-  assert.match(answer, /if \(reload && result && result\.preferences\) applyPreferencesToForm\(result\.preferences\);\s*markPreferencesSaved\(\);/);
+  assert.match(answer, /if \(reload && result && result\.preferences\) \{[\s\S]*?applyPreferencesToForm\(result\.preferences\);\s*\}\s*markPreferencesSaved\(\);/);
   assert.match(fn(PROFILES_JS, 'switchToProfile_'), /profileAnswer_\('Switching profile…', true,/);
   assert.match(fn(PROFILES_JS, 'submitProfileName_'), /profileAnswer_\('Renaming…', false,/);
   assert.match(PREFS_JS, /initSidebarControls\(\);\s*initSettingsProfiles\(\);/);
@@ -128,12 +146,13 @@ test('a switch, in the sidebar or in Preferences, drops the session\'s Insertion
 test('profile rename is a labeled pencil action above the profile list', () => {
   const rail = PREFS.match(/<nav class="pref-profile-rail"[\s\S]*?<\/nav>/)[0];
   assert.ok(rail.indexOf('id="pref-profile-rename"') < rail.indexOf('id="pref-profile-list"'));
+  assert.match(rail, /id="pref-profile-delete"[^>]*aria-label="Delete active profile"[^>]*>[\s\S]*?&#x1f5d1;/);
   assert.match(rail, /id="pref-profile-rename"[^>]*aria-label="Rename active profile"[^>]*>[\s\S]*?&#x1f589;/);
 });
 
 test('Import/Export is a modal opened by a labeled icon outside the mode-dependent tabs', () => {
-  const head = PREFS.match(/<section class="preferences-toc[\s\S]*?<\/section>/)[0];
-  assert.match(head, /id="settings-transfer-open"[^>]*title="Import\/Export"[^>]*aria-haspopup="dialog"[^>]*>[\s\S]*?&#x21c5;/);
+  const panel = PREFS.match(/<section class="pref-profile-defaults[\s\S]*?<\/section>/)[0];
+  assert.match(panel, /id="settings-transfer-open"[^>]*title="Import\/Export"[^>]*aria-haspopup="dialog"[^>]*>[\s\S]*?&#x21c5;/);
   assert.doesNotMatch(PREFS, /id="pref-tab-advanced-btn"/);
   assert.match(PREFS, /<dialog class="settings-transfer-dialog" id="settings-transfer-modal"/);
   const js = readAppScriptFile('preferences/settings-file-js.html');

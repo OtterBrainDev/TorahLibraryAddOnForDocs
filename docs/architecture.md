@@ -260,6 +260,10 @@ result is found again. The shared part:
    ones in one `setProperties`. A snapshot records its schema and is brought
    forward through `applyMigrationsFrom_` when it comes back, so a migration
    must work on any getProperty / setProperty / deleteProperty store.
+   Document overrides (`server/document-preferences.gs`) use a private
+   `document_preferences_<hash>` property for each Google Doc, independent of
+   the active Docs tab. They hold only edited keys with a schema stamp and
+   overlay the reusable defaults before sidebar session settings are applied.
 2. **`CacheService.getUserCache()`** (ephemeral, 6h max TTL). Holds
    per-session sidebar state — the in-progress selected result,
    temporary preference overrides, session-library entries. Accessed

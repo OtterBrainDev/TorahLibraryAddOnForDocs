@@ -419,6 +419,7 @@ function setUiMode(mode) {
   return {
     uiMode: getUiMode_(),
     menuLayout: PropertiesService.getUserProperties().getProperty('menu_layout') || '',
+    documentMenuLayout: typeof documentPreferencesKey_ === 'function' ? snapshotProperties_().getProperty('menu_layout') || '' : undefined,
     menuKept: plan.menuKept
   };
 }

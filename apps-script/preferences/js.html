@@ -844,13 +844,16 @@
     }
 
     function loadPreferencesIntoForm() {
-      google.script.run.withSuccessHandler(function(preferences) {
-        applyPreferencesToForm(preferences || {});
+      google.script.run.withSuccessHandler(function(result) {
+        adoptDocumentProfile_(result);
+        editingDocument_ = !!documentProfile_.key;
+        applyPreferencesToForm(result.preferences || {});
+        renderSettingsProfiles_();
       }).withFailureHandler(function(error) {
         console.error('Preferences modal failed to load:', error);
         setResultsMessage('Could not load preferences.');
         $(".hide").fadeOut(300);
-      }).getPreferences();
+      }).getDocumentPreferenceProfile();
     }
 
     document.addEventListener('click', function() {
@@ -981,7 +984,7 @@
     // apply an old form or inherit another document's settings.
     var pendingSidebarPreferences = null;
     $('.apply-sidebar-preferences-button').on('click', function () {
-      if (pendingSidebarPreferences) return;
+      if (pendingSidebarPreferences || preferencesBaseline_ === null) return;
       var channel = sidebarPreferenceChannel();
       var $button = $(this);
       if (!channel) { setResultsMessage('Open the sidebar and preview a source to apply settings here.'); return; }
@@ -1019,21 +1022,51 @@
       pendingSidebarPreferences.finish(answer.message);
     });
 
-    $('.close-preferences-button').on('click', function () { google.script.host.close(); });
-    $('.save-preferences-button').on('click', function () {
-      saveFormThen_(function () { setResultsMessage('Saved to your account defaults.'); });
+    $('.close-preferences-button').on('click', function () {
+      if (preferencesBaseline_ === null) return;
+      if (!formHasUnsavedChanges_()) { google.script.host.close(); return; }
+      saveFormThen_(function () {
+        $('.save-actions button').prop('disabled', true);
+        $('.preferences-shell').prop('inert', true);
+        setTimeout(function () { google.script.host.close(); }, 1800);
+      });
     });
+    $('.save-preferences-button').on('click', function () { saveFormThen_(); });
+
+    function resetDocumentProfile_() {
+      askProfileQuestion_({
+        title: 'Use account defaults in this document?',
+        message: 'This removes the preferences you saved for this document and discards unsaved edits in this window.',
+        ok: 'Use account defaults',
+        onOk: function () {
+          modalBusyShow('Resetting this document…');
+          google.script.run.withSuccessHandler(function (result) {
+            modalBusyHide();
+            adoptDocumentProfile_(result);
+            applyPreferencesToForm(result.preferences);
+            renderSettingsProfiles_();
+            markPreferencesSaved();
+            setResultsMessage('This Document now uses your account defaults.');
+          }).withFailureHandler(function (error) {
+            modalBusyHide();
+            setResultsMessage((error && error.message) || 'Could not reset this document.');
+          }).saveDocumentPreferenceProfile(null, documentProfile_.key);
+        }
+      });
+    }
 
     $('.pref-preset-button').on('click', function () {
       var preset = $(this).attr('data-preset');
+      if (preset === 'document') { resetDocumentProfile_(); return; }
       var factory = preset === 'factory';
       var name = activeProfile_().name;
       askProfileQuestion_({
         title: factory ? 'Restore Factory preset?' : 'Reset ' + quoted_(name) + '?',
         message: factory
-          ? 'This replaces the active profile’s settings, resets shared settings, and switches to Simple. Other named profiles are kept. Unsaved edits in this window will be discarded.'
+          ? 'This resets ' + quoted_(name) + ' and the shared account settings, and switches to Simple. Saved document overrides and other named profiles are kept. Unsaved edits in this window will be discarded.'
           : 'This restores the add-on defaults for text, layout and appearance in this profile. Unsaved edits in this window will be discarded.',
         ok: factory ? 'Restore Factory preset' : 'Reset profile',
+        danger: factory,
         onOk: function () {
           var profile = activeProfile_().id;
           modalBusyShow('Restoring defaults…');
@@ -1042,9 +1075,9 @@
             setInterfaceModeUi_(result.uiMode);
             announceUiModeToSidebar_(result.uiMode);
             try { google.script.host.setWidth(result.uiMode === 'full' ? 860 : 600); } catch (e) {}
-            applyPreferencesToForm(result.preferences);
+            applyPreferencesToForm(editingDocument_ ? result.documentPreferences : result.preferences);
             markPreferencesSaved();
-            setResultsMessage(factory ? 'Factory preset saved to your account.' : 'Active profile reset to add-on defaults.');
+            setResultsMessage(factory ? 'Factory preset applied to ' + quoted_(name) + ' and shared account settings.' : 'Active profile reset to add-on defaults.');
           }).withFailureHandler(function (error) {
             modalBusyHide();
             setResultsMessage((error && error.message) || 'Could not restore defaults.');
@@ -2212,7 +2245,7 @@
             // setUiMode may have moved the stored menu. Show it in the Menu
             // Bar editor, unless the editor holds changes not saved yet:
             // those stay, and Save stores them.
-            var storedMenu = (result && result.menuLayout) || '';
+            var storedMenu = (result && (editingDocument_ ? result.documentMenuLayout : result.menuLayout)) || '';
             var keptMenuEdits = menuLayoutHasUnsavedChanges();
             if (keptMenuEdits) markMenuLayoutSaved(storedMenu);
             else loadMenuLayoutEditor(storedMenu);
@@ -2309,18 +2342,19 @@
       }
     }
 
-    // ── Settings profiles (Everything) ───────────────────────────────────
-    // The column beside the tabs (server/settings-profiles.gs). The tabs always
-    // edit the profile in use; clicking another switches to it: its settings
-    // become the saved ones and are loaded here. A switch, a new profile and
-    // deleting the one in use reload the form, so unsaved changes are asked
-    // about first (Save and continue / Don't save / Cancel). Renaming changes
-    // no setting. Each change tells an open sidebar (markPreferencesSaved),
-    // whose Insertion Options names the profile in use and can switch too.
-    // Everything here is drawn with textContent: a name is the person's text.
+    // ── Settings profiles ────────────────────────────────────────────
+    // The rail selects the destination for the form. Document edits use a
+    // separate saved layer; reusable profiles use the existing account store.
     var settingsProfiles_ = null;
     var preferencesBaseline_ = null;
     var profileNameMode_ = null;
+    var documentProfile_ = { key: '', hasOverrides: false };
+    var editingDocument_ = false;
+
+    function adoptDocumentProfile_(result) {
+      documentProfile_ = result;
+      settingsProfiles_ = result.profiles || settingsProfiles_;
+    }
 
     function markFormClean_(saved) {
       preferencesBaseline_ = JSON.stringify(saved || collectPreferenceObject());
@@ -2338,7 +2372,7 @@
     }
 
     function profileIndex_() {
-      return settingsProfiles_ || { active: 'p1', implicit: true, max: 10, profiles: [{ id: 'p1', name: 'My settings' }] };
+      return settingsProfiles_ || { active: 'p1', implicit: true, max: 10, profiles: [{ id: 'p1', name: 'Account' }] };
     }
 
     function profileById_(id) {
@@ -2358,8 +2392,10 @@
       if (!list) return;
       var index = profileIndex_();
       list.textContent = '';
-      index.profiles.forEach(function (profile) {
-        var current = profile.id === index.active;
+      var profiles = index.profiles;
+      if (documentProfile_.key) profiles = [{ id: 'document', name: 'This Document' }].concat(profiles);
+      profiles.forEach(function (profile) {
+        var current = profile.id === (editingDocument_ ? 'document' : index.active);
         var item = document.createElement('li');
         var button = document.createElement('button');
         button.type = 'button';
@@ -2378,7 +2414,23 @@
         item.appendChild(button);
         list.appendChild(item);
       });
-      byId('pref-profile-delete').disabled = index.profiles.length < 2;
+      var profile = activeProfile_();
+      var protectedProfile = editingDocument_ || profile.id === 'p1';
+      byId('pref-profile-delete').disabled = protectedProfile;
+      byId('pref-profile-rename').disabled = protectedProfile;
+      byId('pref-editing-profile').textContent = editingDocument_ ? 'This Document' : profile.name;
+      byId('pref-profile-scope').textContent = editingDocument_
+        ? 'Changes apply only to this Google Doc. Import/Export and Factory apply to reusable profiles.'
+        : 'Reusable profiles store text, layout and appearance. Other settings are shared across the account.';
+      var save = editingDocument_ ? 'Save changes to this document'
+        : profile.id === 'p1' ? 'Save Account defaults' : 'Save ' + quoted_(profile.name) + ' defaults';
+      $('.save-preferences-button').text(save);
+      $('.close-preferences-button').attr('title', save);
+      document.querySelectorAll('.pref-preset-button').forEach(function (button) {
+        if (button.dataset.preset !== 'factory') button.hidden = (button.dataset.preset === 'document') !== editingDocument_;
+        if (button.dataset.preset === 'document') button.disabled = !documentProfile_.hasOverrides;
+        if (button.dataset.preset === 'profile') button.textContent = 'Reset ' + profile.name;
+      });
       byId('pref-profile-new').hidden = !!profileNameMode_ || index.profiles.length >= (index.max || 10);
     }
 
@@ -2409,6 +2461,8 @@
       var ok = byId('profile_modal_ok');
       var alt = byId('profile_modal_alt');
       ok.textContent = question.ok;
+      ok.classList.toggle('danger', !!question.danger);
+      ok.classList.toggle('blue', !question.danger);
       alt.hidden = !question.alt;
       alt.textContent = question.alt || '';
       function close() { modal.hidden = true; }
@@ -2419,19 +2473,57 @@
       ok.focus();
     }
 
+    function preferenceChanges_() {
+      var before = JSON.parse(preferencesBaseline_ || '{}');
+      var current = collectPreferenceObject();
+      var changes = {};
+      Object.keys(current).forEach(function (key) {
+        if (current[key] !== before[key]) changes[key] = current[key];
+      });
+      return changes;
+    }
+
+    function describePreferenceChanges_(changes) {
+      return Object.keys(changes).map(function (key) {
+        var commonLabels = {
+          source_emphasis_mode: 'Commentary', source_notes_mode: 'Notes',
+          nekudot: 'Vowels', teamim: 'Cantillation', output_mode_default: 'Display',
+          bilingual_layout_default: 'Layout', bilingual_aligned_rows: 'Line by line',
+          include_transliteration_default: 'Transliteration', menu_layout: 'Menu Bar'
+        };
+        return commonLabels[key] || key.replace(/_default$/, '').replace(/_/g, ' ').replace(/^./, function (c) {
+          return c.toUpperCase();
+        });
+      });
+    }
+
     function saveFormThen_(next) {
-      setResultsMessage('');
-      modalBusyShow('Saving account defaults…');
-      var preferenceObject = collectPreferenceObject();
-      google.script.run.withSuccessHandler(function (result) {
-        markPreferencesSaved();
+      if (preferencesBaseline_ === null) return;
+      var preferenceObject = preferenceChanges_();
+      var names = describePreferenceChanges_(preferenceObject);
+      var scope = editingDocument_ ? 'This Document' : activeProfile_().name;
+      if (!names.length) {
+        setResultsMessage('No changes to save for ' + quoted_(scope) + '.');
+        if (next) next();
+        return;
+      }
+      modalBusyShow('Saving ' + scope + '…');
+      var run = google.script.run.withSuccessHandler(function (result) {
+        if (editingDocument_) adoptDocumentProfile_(result);
         applyPreferencesToForm(result.preferences);
+        renderSettingsProfiles_();
+        markPreferencesSaved();
         modalBusyHide();
-        next();
+        if (pendingSidebarPreferences) pendingSidebarPreferences.finish('');
+        var rest = names.length > 3 ? ' and ' + (names.length - 3) + ' more' : '';
+        setResultsMessage('Saved to ' + quoted_(scope) + '. Updated ' + names.slice(0, 3).join(', ') + rest + '.');
+        if (next) next();
       }).withFailureHandler(function (error) {
         modalBusyHide();
-        setResultsMessage((error && error.message) || 'Could not save account defaults.');
-      }).savePreferenceDefaults(preferenceObject, activeProfile_().id);
+        setResultsMessage((error && error.message) || 'Could not save ' + scope + '.');
+      });
+      if (editingDocument_) run.saveDocumentPreferenceProfile(preferenceObject, documentProfile_.key);
+      else run.savePreferenceDefaults(preferenceObject, activeProfile_().id);
     }
 
     // Unsaved changes belong to the profile in use: save them to it, drop
@@ -2440,7 +2532,7 @@
       if (!formHasUnsavedChanges_()) { proceed(); return; }
       askProfileQuestion_({
         title: 'Save your changes first?',
-        message: 'Your changes to ' + quoted_(activeProfile_().name) + ' aren’t saved. ' + doing,
+        message: 'Your changes to ' + quoted_(editingDocument_ ? 'This Document' : activeProfile_().name) + ' aren’t saved. ' + doing,
         ok: 'Save and continue',
         alt: 'Don’t save',
         onOk: function () { saveFormThen_(proceed); },
@@ -2457,7 +2549,10 @@
           modalBusyHide();
           var before = activeProfile_();
           settingsProfiles_ = (result && result.profiles) || settingsProfiles_;
-          if (reload && result && result.preferences) applyPreferencesToForm(result.preferences);
+          if (reload && result && result.preferences) {
+            editingDocument_ = false;
+            applyPreferencesToForm(result.preferences);
+          }
           markPreferencesSaved();
           closeProfileNameField_();
           setResultsMessage(describe(before, activeProfile_()));
@@ -2469,13 +2564,36 @@
       };
     }
 
-    function switchToProfile_(id) {
-      var target = profileById_(id);
-      if (!target || id === profileIndex_().active) return;
+    function switchToProfile_(id, next) {
+      if (preferencesBaseline_ === null) return;
+      var target = id === 'document' ? { name: 'This Document' } : profileById_(id);
+      if (!target || id === (editingDocument_ ? 'document' : profileIndex_().active)) return;
       withUnsavedChangesHandled_('Switching to ' + quoted_(target.name) + ' loads its settings here.', function () {
+        if (id === 'document') {
+          modalBusyShow('Loading this document…');
+          google.script.run.withSuccessHandler(function (result) {
+            modalBusyHide();
+            adoptDocumentProfile_(result);
+            editingDocument_ = true;
+            applyPreferencesToForm(result.preferences);
+            closeProfileNameField_();
+            setResultsMessage('Editing This Document.');
+          }).withFailureHandler(function (error) {
+            modalBusyHide();
+            setResultsMessage((error && error.message) || 'Could not load this document.');
+          }).getDocumentPreferenceProfile();
+          return;
+        }
         var answer = profileAnswer_('Switching profile…', true, function (before, now) {
-          return 'Now using ' + quoted_(now.name) + '. Inserts use its settings, and the sidebar follows.';
+          return 'Now using ' + quoted_(now.name) + '.';
         });
+        if (id === profileIndex_().active) {
+          google.script.run.withSuccessHandler(function (preferences) {
+            answer.ok({ preferences: preferences });
+            if (next) next();
+          }).withFailureHandler(answer.fail).getAccountPreferences();
+          return;
+        }
         google.script.run.withSuccessHandler(answer.ok).withFailureHandler(answer.fail).switchSettingsProfile(id);
       });
     }
@@ -2490,9 +2608,9 @@
         google.script.run.withSuccessHandler(renamed.ok).withFailureHandler(renamed.fail).renameSettingsProfile(id, name);
         return;
       }
-      withUnsavedChangesHandled_('A new profile starts as a copy of the saved settings.', function () {
+      withUnsavedChangesHandled_('A new profile starts as a copy of ' + quoted_(activeProfile_().name) + '.', function () {
         var created = profileAnswer_('Making the profile…', true, function (before, now) {
-          return quoted_(now.name) + ' is ready and in use, a copy of ' + quoted_(before.name) + '. Change what you like, then use Save defaults to account.';
+          return quoted_(now.name) + ' is ready and in use, a copy of ' + quoted_(before.name) + '. Change what you like, then use Save & Close.';
         });
         google.script.run.withSuccessHandler(created.ok).withFailureHandler(created.fail).createSettingsProfile(name);
       });
@@ -2502,7 +2620,7 @@
       var index = profileIndex_();
       var doomed = activeProfile_();
       var next = index.profiles.filter(function (p) { return p.id !== doomed.id; })[0];
-      if (!next) return;
+      if (editingDocument_ || doomed.id === 'p1' || !next) return;
       askProfileQuestion_({
         title: 'Delete ' + quoted_(doomed.name) + '?',
         message: 'Its settings are deleted, and Preferences switches to ' + quoted_(next.name) + '. Changes not saved here are dropped.',
@@ -2533,10 +2651,6 @@
         if (event.key === 'Escape') { event.preventDefault(); closeProfileNameField_(); }
       });
       renderSettingsProfiles_();
-      google.script.run.withSuccessHandler(function (index) {
-        settingsProfiles_ = index || null;
-        renderSettingsProfiles_();
-      }).withFailureHandler(function () { /* the column shows the settings in use */ }).getSettingsProfiles();
     }
 
     function _initPreferencesTabs() {
@@ -2630,7 +2744,11 @@
         announceUiModeToSidebar_(mode);
       },
       currentUiMode: currentUiMode_,
-      activeProfileId: function () { return profileIndex_().active; }
+      activeProfileId: function () { return profileIndex_().active; },
+      withTransferProfile: function (open) {
+        if (editingDocument_) switchToProfile_(activeProfile_().id, open);
+        else if (preferencesBaseline_ !== null) open();
+      }
     };
 
     _initPreferencesTabs();

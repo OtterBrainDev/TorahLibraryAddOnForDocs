@@ -1173,7 +1173,7 @@
   .pref-icon-button:focus-visible { outline: 2px solid #1f3b68; outline-offset: 2px; }
   .pref-icon-button:disabled { opacity: .5; cursor: default; }
   .pref-icon-button--small { width: 27px; height: 27px; font-size: 15px; }
-  .pref-profile-rail-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-right: 4px; }
+  .pref-profile-rail-header { display: flex; align-items: center; gap: 4px; padding-right: 4px; }
   .interface-mode-row {
     display: grid;
     grid-template-columns: 7.5em 7em max-content;
@@ -1215,9 +1215,9 @@
   .preferences-dialog[data-ui-mode="full"] { max-width: 860px; }
   .pref-main { min-width: 0; }
 
-  .pref-profile-panel {
+  .pref-profile-workspace {
     display: grid;
-    grid-template-columns: minmax(140px, 1fr) minmax(0, 2fr);
+    grid-template-columns: clamp(120px, 22%, 170px) minmax(0, 1fr);
     gap: 16px;
   }
 
@@ -1230,24 +1230,41 @@
     background: #fff;
   }
 
+  .pref-profile-defaults-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .preferences-dialog .submit.danger {
+    background: #7f1d1d;
+    border-color: #7f1d1d;
+    color: #fff;
+  }
+  .preferences-dialog .submit.danger:hover { background: #641616; }
+  .save-actions > .apply-sidebar-preferences-button { font-size: 18px; line-height: 1; }
+  .pref-profile-defaults [hidden] { display: none; }
   .pref-profile-defaults h2 { margin: 0; font-size: 14px; }
   .pref-profile-defaults p { margin: 6px 0 10px; font-size: 12px; }
   .pref-reset-options { margin-top: 12px; font-size: 12px; }
   .pref-reset-options summary { margin-bottom: 6px; cursor: pointer; }
 
-  @media (max-width: 460px) {
-    .pref-profile-panel { grid-template-columns: 1fr; }
-  }
-
   .pref-profile-rail {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 6px;
     padding: 10px 0 0;
     font-size: 13px;
   }
+  @media (max-width: 420px) {
+    .pref-profile-workspace { grid-template-columns: 1fr; }
+    .pref-profile-rail { position: static; max-height: none; }
+  }
+
   .pref-profile-rail-title {
-    padding: 0 8px 2px;
+    flex: 1;
+    padding: 0 0 2px 4px;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.04em;
@@ -1287,9 +1304,6 @@
     border: 1.5px solid #b9b2a6;
   }
   .pref-profile-item[aria-current="true"] .pref-profile-item-dot { background: #1f3b68; border-color: #1f3b68; }
-  .pref-profile-actions { display: flex; gap: 10px; padding: 0 10px; }
-  .pref-profile-actions[hidden] { display: none; }
-  .pref-profile-action,
   .pref-profile-new {
     padding: 0;
     font: inherit;
@@ -1300,9 +1314,7 @@
     border: 0;
     cursor: pointer;
   }
-  .pref-profile-action:hover,
   .pref-profile-new:hover { text-decoration: underline; }
-  .pref-profile-action:disabled { color: #aaa; cursor: default; text-decoration: none; }
   .pref-profile-new { align-self: flex-start; margin: 4px 10px 0; }
   .pref-profile-new[hidden] { display: none; }
   .pref-profile-name-field { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; background: #fff; border: 1px solid #e3dfd8; border-radius: 8px; }

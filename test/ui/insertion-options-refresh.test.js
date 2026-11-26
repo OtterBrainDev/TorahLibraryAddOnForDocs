@@ -39,13 +39,13 @@ test('a change the fetch applies shows the preview as updating at once', () => {
 test('every Preferences save tells an open sidebar, which re-reads them and refreshes the preview', () => {
   const prefs = readAppScriptFile('preferences/js.html');
   // Explicit persistent writes from the Profiles tab.
-  const saves = prefs.match(/\.(savePreferenceDefaults|restorePreferencePreset)\(/g) || [];
-  assert.equal(saves.length, 2);
+  const saves = prefs.match(/\.(savePreferenceDefaults|restorePreferencePreset|saveDocumentPreferenceProfile)\(/g) || [];
+  assert.equal(saves.length, 4);
   // The helper's definition, plus one call per save, plus one in
   // profileAnswer_, the success handler every settings-profile change uses
   // (a switch, a new profile or a delete rewrites the saved settings).
   const marks = prefs.match(/markPreferencesSaved\(\)/g) || [];
-  assert.equal(marks.length, saves.length + 2, 'each save\'s success marks the save');
+  assert.equal(marks.length, saves.length + 1, 'each save\'s success marks the save');
   const answer = prefs.match(/function profileAnswer_\([\s\S]*?\n    \}/)[0];
   assert.match(answer, /ok: function \(result\) \{[\s\S]*?markPreferencesSaved\(\);/);
   for (const rpc of ['switchSettingsProfile', 'createSettingsProfile', 'renameSettingsProfile', 'deleteSettingsProfile']) {

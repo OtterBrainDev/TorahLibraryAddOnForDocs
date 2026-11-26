@@ -211,7 +211,7 @@ test('Preferences has a Sidebar tab in both interfaces; its Insertion Options pa
 });
 
 test('the Sidebar tab is saved with Save, like every other tab', () => {
-  const block = PREFS_JS.slice(PREFS_JS.indexOf('// ── Sidebar tab (Preferences → Sidebar)'), PREFS_JS.indexOf('// ── Settings profiles (Everything)'));
+  const block = PREFS_JS.slice(PREFS_JS.indexOf('// ── Sidebar tab (Preferences → Sidebar)'), PREFS_JS.indexOf('// ── Settings profiles'));
   assert.doesNotMatch(block, /google\.script\.run|setPreferences/, 'no save of its own');
   assert.match(block, /field\.value = JSON\.stringify\(hidden\);/);
   assert.match(PREFS_JS, /initInterfaceMode\(\);\s*initSidebarControls\(\);/);

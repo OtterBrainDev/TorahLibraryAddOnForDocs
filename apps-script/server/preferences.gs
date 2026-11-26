@@ -127,8 +127,7 @@ const SETTINGS = [
 //returns the user preference w.r.t. displaying the versioning dropdowns in the insertion module
 function getVersioningPreference() {
   try {
-    const userProperties = PropertiesService.getUserProperties();
-    return userProperties.getProperty("versioning");
+    return snapshotProperties_().getProperty("versioning");
   } catch (error) {
     Logger.log(`The system has made a mach'ah: ${error.message}`);
     return true;
@@ -470,6 +469,10 @@ function snapshotProperties_(source) {
   const properties = source || PropertiesService.getUserProperties();
   if (typeof properties.getProperties !== 'function') return properties;
   const all = properties.getProperties() || {};
+  if (!source && typeof documentPreferencesKey_ === 'function') {
+    const key = documentPreferencesKey_();
+    if (key && all[key]) Object.assign(all, readDocumentPreferenceValues_(all[key]));
+  }
   return {
     getProperty: function (key) {
       return Object.prototype.hasOwnProperty.call(all, key) ? all[key] : null;
@@ -477,9 +480,9 @@ function snapshotProperties_(source) {
   };
 }
 
-function readUserPreferenceObject_() {
+function readUserPreferenceObject_(source) {
   const defaults = getDefaultPreferences();
-  const preferences = snapshotProperties_();
+  const preferences = snapshotProperties_(source);
   const out = {};
   for (let i = 0; i < SETTINGS.length; i++) {
     const key = SETTINGS[i];
@@ -525,23 +528,23 @@ function clearSidebarSessionState(sessionId) {
 }
 
 function getAccountPreferences() {
-  return readUserPreferenceObject_();
+  return readUserPreferenceObject_(PropertiesService.getUserProperties());
 }
 
 function setAccountPreferences(preferenceObject) {
   setPreferences(preferenceObject || {});
-  return getAccountPreferences();
+  return getPreferences();
 }
 
 function saveSidebarSessionAsAccountDefaults(sessionId) {
   const sessionState = getSidebarSessionState(sessionId);
   setPreferences(sessionState || {});
   clearSidebarSessionState(sessionId);
-  return getAccountPreferences();
+  return getPreferences();
 }
 
 function getPreferences() {
-  return getAccountPreferences();
+  return readUserPreferenceObject_();
 }
 
 /**

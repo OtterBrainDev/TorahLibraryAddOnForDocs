@@ -45,7 +45,7 @@
     }
 
     var modal = el('settings-transfer-modal');
-    el('settings-transfer-open').addEventListener('click', function () {
+    function openTransfer() {
       if (modal.open) return;
       mode = dialog.currentUiMode();
       profileIndex = null;
@@ -83,7 +83,8 @@
         setStatus('settings-transfer-status', errorText(error, 'Could not load settings targets.'), true);
         setBusy(false);
       }).getSettingsProfiles();
-    });
+    }
+    el('settings-transfer-open').addEventListener('click', function () { dialog.withTransferProfile(openTransfer); });
     el('settings-transfer-close').addEventListener('click', function () {
       if (!busy) modal.close();
     });

@@ -126,7 +126,7 @@ function quickActionsHTML() {
 
 function getSidebarBootstrapData(mode, sessionId) {
   runUserPreferenceMigrationsIfNeeded_();
-  const accountPreferences = getAccountPreferences();
+  const accountPreferences = getPreferences();
   const resolvedMode = (mode === 'voices' || mode === 'experimental' || mode === 'texts' || mode === 'lexicon') ? mode : getSearchMode_();
   const resolvedSessionId = sessionId || generateSidebarSessionId_();
   const sessionState = resolvedMode === 'texts' ? getSidebarSessionState(resolvedSessionId) : {};

@@ -339,7 +339,7 @@ function switchProfileFromSidebar(id) {
   beginSidebarSessionAction_('profile', function () {
     google.script.run.withSuccessHandler(function (result) {
       settingsProfiles = (result && result.profiles) || settingsProfiles;
-      accountPreferences = clonePlainObject((result && result.preferences) || accountPreferences);
+      accountPreferences = clonePlainObject((result && (result.documentPreferences || result.preferences)) || accountPreferences);
       renderProfilePicker();
       var name = (activeSettingsProfile() || {}).name || '';
       var announce = function () { showSidebarToast('Using \u201c' + name + '\u201d.'); };

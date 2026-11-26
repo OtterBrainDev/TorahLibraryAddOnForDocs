@@ -10,10 +10,12 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
-- **Preferences.** The Profiles tab appears in both interfaces and provides
-  account saves, active-profile reset and the attached 1.0-style Factory
-  preset. The footer applies insertion settings to an open sidebar preview
-  for the current session. Notes appears immediately below Commentary.
+- **Preferences.** A profile rail in both modes gives each Google Doc its
+  own saved overrides, alongside the built-in Account and reusable named
+  profiles. The blue Save & Close reports what changed; the preview arrow
+  updates an open Texts preview for its current session. Profiles holds
+  Import/Export and reset options, including the red 1.0-style Factory
+  action. Notes appears immediately below Commentary.
 
 - **Text and notes.** Source and Translation are labeled separately, and ⓘ
   explains when Commentary or Notes cannot affect the displayed passage.

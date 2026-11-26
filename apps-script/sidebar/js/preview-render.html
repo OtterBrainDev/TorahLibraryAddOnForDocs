@@ -36,7 +36,7 @@ function renderPreviewTransliteration(sources) {
     $targets.each(function (index) {
       $(this).text(text[index] || '');
     });
-  }).previewTransliterationWithOverrides(plain, getSidebarTransliterationScheme());
+  }).previewTransliterationWithOverrides(plain, getSidebarTransliterationScheme(), typeof sidebarSessionId === 'undefined' ? null : sidebarSessionId);
 }
 
 function refreshSidebarLivePreview() {
