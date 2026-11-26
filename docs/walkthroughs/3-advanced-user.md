@@ -296,9 +296,9 @@ alone.
 - **Insert Source from Selection** (**Sel → ס**): type `Psalms 92:1` in your
   notes, select it, run it, and the citation becomes the source.
 - **Transform Divine Names** (**ה → ש**): apply your divine-name rules to text
-  already in the document, including text you pasted from elsewhere. It changes
-  every match in the body of the tab you have open — a selection does not limit
-  it; headers, footers, footnotes and other tabs are left alone — and asks first.
+  already in the document, including text you pasted from elsewhere. Highlight
+  a passage to limit the replacements to it. Clear the selection to use the
+  current tab’s body. It names the scope and asks first.
 - **Unlink Sources** (menu): removes every sefaria.org link and leaves other
   links alone. Useful before printing.
 - **Gematriya Count** (menu): the gematria total of the selection or the whole

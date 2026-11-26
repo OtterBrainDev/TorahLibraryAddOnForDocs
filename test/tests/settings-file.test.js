@@ -293,6 +293,10 @@ test('Factory applies the complete preset while preserving inactive profiles, hi
   assert.equal(result.preferences.god_replacement, 'G-d');
   assert.deepEqual(JSON.parse(result.preferences.hidden_translation_languages), []);
   const menuPrefs = result.documentPreferences;
+  const hidden = JSON.parse(menuPrefs.menu_layout).hidden;
+  for (const item of ['quick_actions', 'gematriya_count', 'unlink_sources']) {
+    assert.ok(hidden.includes(item), item + ' stays hidden in Factory');
+  }
   const menu = ctx.planMenuFromLayout_(menuPrefs.menu_layout, {
     voicesEnabled: menuPrefs.show_voices_tab !== 'false',
     lexiconEnabled: menuPrefs.show_lexicon_tab !== 'false',

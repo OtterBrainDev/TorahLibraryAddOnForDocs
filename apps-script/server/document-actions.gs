@@ -16,17 +16,10 @@ function enabledDivineNameRules_(prefs) {
     .map(function (rule) { return { name: rule.name, replacement: String(rule.replacement), ltr: !!rule.ltr }; });
 }
 
-/**
- * What Transform Divine Names is about to change, asked before it changes it.
- * It edits every match in the body of the open tab: a selection does not limit
- * it, and headers, footers, footnotes and other tabs are left alone. Nothing
- * said so; Preferences called it "document-wide", and a tutorial promised that
- * unselected text would be kept (BUG-006). The scope is unchanged; it is stated.
- */
-function divineNameTransformPrompt_(rules, hasSelection) {
-  return 'This replaces every match in the body of the tab you have open \u2014 the whole tab, not only selected text. ' +
-    'Headers, footers, footnotes and other tabs are not changed.' +
-    (hasSelection ? '\n\nYou have text selected: the selection does not limit what is replaced.' : '') +
+/** Name the same scope in confirmation and in the result. */
+function divineNameTransformPrompt_(rules, scope) {
+  return 'This replaces matching divine names in ' + scope + '. ' +
+    'Headers, footers, footnotes and other tabs stay unchanged.' +
     '\n\nRules turned on (Preferences \u2192 Divine Name Mappings):\n' +
     rules.map(function (rule) {
       // Docs alerts are plain text. Pin the visual order with a left-to-right
@@ -40,14 +33,12 @@ function divineNameTransformPrompt_(rules, hasSelection) {
     '\n\nEdit \u2192 Undo reverses it. Continue?';
 }
 
-function divineNameTransformSummary_(count) {
-  if (!count) return 'No divine names matching your rules were found in this tab\u2019s body. Nothing was changed.';
-  return 'Replaced ' + count + ' divine name' + (count === 1 ? '' : 's') + ' in this tab\u2019s body.';
+function divineNameTransformSummary_(count, scope) {
+  if (!count) return 'No divine names matching your rules were found in ' + scope + '. Nothing was changed.';
+  return 'Replaced ' + count + ' divine name' + (count === 1 ? '' : 's') + ' in ' + scope + '.';
 }
 
 function transformDivineNames() {
-  const doc = DocumentApp.getActiveDocument();
-  const body = doc.getBody();
   const prefs = getPreferences();
   const ui = DocumentApp.getUi();
   const rules = enabledDivineNameRules_(prefs);
@@ -55,32 +46,99 @@ function transformDivineNames() {
     ui.alert('No divine-name transforms are enabled. Open Preferences and enable at least one transform before running this action.');
     return;
   }
-  let hasSelection = false;
-  try { hasSelection = !!(doc.getSelection && doc.getSelection()); } catch (e) { hasSelection = false; }
-  if (ui.alert('Transform Divine Names', divineNameTransformPrompt_(rules, hasSelection), ui.ButtonSet.YES_NO) !== ui.Button.YES) {
+
+  const doc = DocumentApp.getActiveDocument();
+  const identity = selectionDocumentIdentity_(doc);
+  let selection;
+  let selectedBodyText;
+  const selectedTargets = new Map();
+  try {
+    selection = doc.getSelection ? doc.getSelection() : null;
+    if (selection) {
+      const pieces = selectedTextPieces_(selection);
+      if (!pieces.length) throw new Error('Select text in the body of this tab, or clear the selection to transform the whole body.');
+      pieces.forEach(function (piece) {
+        const path = selectionBodyPath_(piece.element);
+        if (path === null) throw new Error('Select text in the body of this tab. Headers, footers and footnotes are outside this command’s scope.');
+        if (!selectedTargets.has(path)) selectedTargets.set(path, { source: piece.text, spans: [] });
+        selectedTargets.get(path).spans.push({ start: piece.start, end: piece.end });
+      });
+      selectedBodyText = doc.getBody().getText();
+    }
+  } catch (error) {
+    ui.alert('Could not use the selection. ' + error.message + ' Nothing was changed.');
     return;
   }
+
+  const scope = selection ? 'the selected text in this tab' : 'the whole body of this tab';
+  if (ui.alert('Transform Divine Names', divineNameTransformPrompt_(rules, scope), ui.ButtonSet.YES_NO) !== ui.Button.YES) {
+    return;
+  }
+
+  // An Apps Script alert suspends execution. Reopen the active body and
+  // resolve captured paths before editing so a changed selection cannot widen
+  // the scope or send an offset into a different paragraph.
+  const targets = [];
+  try {
+    const active = DocumentApp.getActiveDocument();
+    const current = selectionDocumentIdentity_(active);
+    const body = active.getBody();
+    if (identity.documentId !== current.documentId || identity.tabId !== current.tabId ||
+        (selection && selectedBodyText !== body.getText())) {
+      throw new Error('The document, tab or text changed.');
+    }
+    if (selection) {
+      selectedTargets.forEach(function (target, path) {
+        const leaf = path.split('/').reduce(function (node, index) { return node.getChild(Number(index)); }, body);
+        if (leaf.getType() !== DocumentApp.ElementType.TEXT || leaf.asText().getText() !== target.source) {
+          throw new Error('The selected text changed.');
+        }
+        const spans = [];
+        target.spans.sort(function (a, b) { return a.start - b.start; }).forEach(function (span) {
+          const last = spans[spans.length - 1];
+          if (last && span.start <= last.end) last.end = Math.max(last.end, span.end);
+          else spans.push(span);
+        });
+        targets.push({ textElement: leaf.asText(), spans });
+      });
+    } else {
+      walkSelectionTextLeaves_(body, function (leaf) { targets.push({ textElement: leaf.asText() }); });
+    }
+  } catch (error) {
+    ui.alert('Could not verify the confirmed scope. Run the command again. Nothing was changed.');
+    return;
+  }
+
   let replacedCount = 0;
   // A name's letters and their marks (HEBREW_LETTER_MARKS_). Maqaf, paseq and
   // sof pasuq end a word: a name before one is matched and the mark kept.
   const hebrewMarks = HEBREW_LETTER_MARKS_;
   const hebrewChars = hebrewMarks + "\\u05D0-\\u05EA";
-  const replaceRangesInTextElement = (textElement, ranges) => {
-    if (!ranges || !ranges.length) {
-      return;
-    }
-    replacedCount += ranges.length;
+  const replaceRangesInTextElement = (target, ranges) => {
+    const { textElement, spans } = target;
 
     for (let i = ranges.length - 1; i >= 0; i--) {
       const range = ranges[i];
       const start = range.start;
       const end = range.end;
       const replacement = range.replacement;
+      if (spans && !spans.some(span => start >= span.start && end < span.end)) continue;
       const originalAttributes = textElement.getAttributes(start);
       const originalLink = textElement.getLinkUrl(start);
 
       textElement.deleteText(start, end);
       textElement.insertText(start, replacement);
+
+      replacedCount++;
+      // Later rules read the edited text. Keep all selection offsets aligned
+      // when a replacement changes the length of this text element.
+      if (spans) {
+        const delta = replacement.length - (end - start + 1);
+        spans.forEach(function (span) {
+          if (span.start > end) span.start += delta;
+          if (span.end > end) span.end += delta;
+        });
+      }
 
       if (replacement.length > 0) {
         const replacementEnd = start + replacement.length - 1;
@@ -90,8 +148,8 @@ function transformDivineNames() {
     }
   };
 
-  const replaceHebrewWordInTextElement = (textElement, tokenPattern, replacement) => {
-    const source = textElement.getText();
+  const replaceHebrewWordInTextElement = (target, tokenPattern, replacement) => {
+    const source = target.textElement.getText();
     if (!source) {
       return;
     }
@@ -110,11 +168,11 @@ function transformDivineNames() {
       }
     }
 
-    replaceRangesInTextElement(textElement, ranges);
+    replaceRangesInTextElement(target, ranges);
   };
 
-  const replaceRegexInTextElement = (textElement, regex, replacement) => {
-    const source = textElement.getText();
+  const replaceRegexInTextElement = (target, regex, replacement) => {
+    const source = target.textElement.getText();
     if (!source) {
       return;
     }
@@ -129,51 +187,28 @@ function transformDivineNames() {
       });
     }
 
-    replaceRangesInTextElement(textElement, ranges);
+    replaceRangesInTextElement(target, ranges);
   };
 
-  const collectTextElements = (element, textElements) => {
-    if (!element) {
-      return;
-    }
-
-    if (element.getType && element.getType() === DocumentApp.ElementType.TEXT) {
-      textElements.push(element.asText());
-      return;
-    }
-
-    if (!element.getNumChildren) {
-      return;
-    }
-
-    const count = element.getNumChildren();
-    for (let i = 0; i < count; i++) {
-      collectTextElements(element.getChild(i), textElements);
-    }
-  };
-
-  const textElements = [];
-  collectTextElements(body, textElements);
-
-  textElements.forEach((textElement) => {
+  targets.forEach((target) => {
     if (prefs.meforash_replace == "true") {
-      replaceHebrewWordInTextElement(textElement, `י[${hebrewMarks}]*ה[${hebrewMarks}]*ו[${hebrewMarks}]*ה[${hebrewMarks}]*`, prefs.meforash_replacement || "יי");
+      replaceHebrewWordInTextElement(target, `י[${hebrewMarks}]*ה[${hebrewMarks}]*ו[${hebrewMarks}]*ה[${hebrewMarks}]*`, prefs.meforash_replacement || "יי");
     }
     if (prefs.yaw_replace == "true") {
-      replaceHebrewWordInTextElement(textElement, `י[${hebrewMarks}]*ה[${hebrewMarks}]*`, prefs.yaw_replacement || "קה");
+      replaceHebrewWordInTextElement(target, `י[${hebrewMarks}]*ה[${hebrewMarks}]*`, prefs.yaw_replacement || "קה");
     }
     if (prefs.elodim_replace == "true") {
-      replaceHebrewWordInTextElement(textElement, `א[${hebrewMarks}]*ל[${hebrewMarks}]*(?:ו[${hebrewMarks}]*)?ה[${hebrewMarks}]*י[${hebrewMarks}]*ם[${hebrewMarks}]*`, prefs.elodim_replacement || "אלוקים");
+      replaceHebrewWordInTextElement(target, `א[${hebrewMarks}]*ל[${hebrewMarks}]*(?:ו[${hebrewMarks}]*)?ה[${hebrewMarks}]*י[${hebrewMarks}]*ם[${hebrewMarks}]*`, prefs.elodim_replacement || "אלוקים");
     }
     if (prefs.god_replace == "true") {
       // "God" and "GOD" only; lowercase "god"/"gods" are untouched.
       const godReplacement = prefs.god_replacement || "G-d";
-      replaceRegexInTextElement(textElement, /\bGod\b/g, godReplacement);
-      replaceRegexInTextElement(textElement, /\bGOD\b/g, godReplacement.toUpperCase());
+      replaceRegexInTextElement(target, /\bGod\b/g, godReplacement);
+      replaceRegexInTextElement(target, /\bGOD\b/g, godReplacement.toUpperCase());
     }
   });
 
-  ui.alert(divineNameTransformSummary_(replacedCount));
+  ui.alert(divineNameTransformSummary_(replacedCount, scope));
 }
 
 // Selection ranges can name a paragraph, table cell or other container, not
