@@ -10,8 +10,9 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
-- **Factory and Import/Export.** Factory uses the updated settings export.
+- **Factory and Import/Export.** Factory restores the three 1.0 menu commands in their original order, followed by Preferences and Help.
   Import/Export identifies its loading step when opened from This Document.
+- **Sidebar and Preferences.** Notes follows Commentary, and both use ⓘ help. Sidebar startup waits for its controls to load before requesting settings.
 - **Search language filter.** Selecting languages shows Texts results with
   verified translation text in at least one selected language. Any runs the
   regular search without translation verification.

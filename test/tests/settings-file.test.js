@@ -292,6 +292,15 @@ test('Factory applies the complete preset while preserving inactive profiles, hi
   assert.equal(result.preferences.linker_review_mode, 'quiet');
   assert.equal(result.preferences.god_replacement, 'G-d');
   assert.deepEqual(JSON.parse(result.preferences.hidden_translation_languages), []);
+  const menuPrefs = result.documentPreferences;
+  const menu = ctx.planMenuFromLayout_(menuPrefs.menu_layout, {
+    voicesEnabled: menuPrefs.show_voices_tab !== 'false',
+    lexiconEnabled: menuPrefs.show_lexicon_tab !== 'false',
+  });
+  assert.deepEqual(Array.from(menu, (entry) => entry.label || entry.type), [
+    'Add Sources with Sefaria', 'Link Texts with Sefaria', 'Transform Divine Names',
+    'separator', 'Preferences', 'Help',
+  ]);
   for (const [key, value] of Object.entries(preset)) assert.equal(props.store[key], value, key);
   for (const key of ['settings_profiles', 'settings_profile_p2', 'prefs_schema_version', 'last_search_sort_mode', 'linker_upload_acknowledged']) {
     assert.equal(props.store[key], initial[key], key);

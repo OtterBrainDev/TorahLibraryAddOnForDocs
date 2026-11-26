@@ -17,3 +17,10 @@ Object.entries(contract).forEach(([templateFile, requiredSnippets]) => {
     });
   });
 });
+
+
+test('sidebar startup follows every JavaScript partial so early server replies can initialize the controls', () => {
+  const html = readAppScriptFile('sidebar.html');
+  const includes = Array.from(html.matchAll(/include\('([^']+)'\)/g), (match) => match[1]);
+  assert.equal(includes.at(-1), 'sidebar/js/bootstrap');
+});

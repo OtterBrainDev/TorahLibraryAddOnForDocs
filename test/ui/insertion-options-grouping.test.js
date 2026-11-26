@@ -75,7 +75,7 @@ function harness(grouped = true) {
 
 test('grouping preserves every shared interactive node and keeps Line by line and Transliteration outside details', needsDom, () => {
   const h = harness();
-  assert.equal(h.get('#layout-tray').querySelectorAll('button:not(.sidebar-option-help-button), input, select').length, h.controls.length);
+  assert.equal(h.get('#layout-tray').querySelectorAll('button, input, select').length, h.controls.length);
   h.controls.forEach((node) => assert.ok(h.get('#layout-tray').contains(node), node.id || node.textContent));
   const ids = [...h.document.querySelectorAll('[id]')].map((node) => node.id);
   assert.equal(new Set(ids).size, ids.length);
@@ -86,6 +86,9 @@ test('grouping preserves every shared interactive node and keeps Line by line an
   assert.equal(h.get('#cc-vowels-toggle').closest('.io-text-role').getAttribute('aria-label'), 'Source');
   assert.equal(h.get('#cc-emphasis-toggle').closest('.io-text-role').getAttribute('aria-label'), 'Translation');
   assert.equal(h.get('#cc-notes-toggle').closest('.io-text-role'), null);
+  const commentarySection = h.get('#cc-emphasis-toggle').closest('.io-text-role');
+  assert.equal(commentarySection.nextElementSibling, h.get('#cc-notes-toggle').closest('.cc-row'));
+  assert.equal(commentarySection.nextElementSibling.nextElementSibling, null);
   assert.equal(h.get('#cc-lines-toggle').closest('details').id, 'io-references-group');
   assert.equal(h.get('#cc-hebrew-font-chip').closest('details').id, 'io-fonts-group');
   assert.ok(h.get('#cc-font-panel').closest('.cc-surface'));
