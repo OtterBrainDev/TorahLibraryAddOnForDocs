@@ -138,3 +138,10 @@ Columns:
 ### Repeated citations — 2026-11-25
 
 Link Texts could miss later literal occurrences when the resolver omitted them. Preserve distinct positions and recover explicit repeated citations only after a context-free Ref lookup verifies the same fully addressed source. Keep already linked occurrences and unscanned text untouched. See linker-classify tests and live checklist T.
+
+
+Preferences now uses `savePreferenceDefaults(preferences, expectedProfile)`
+and `restorePreferencePreset(preset, expectedProfile)` for account writes.
+The preview action sends a document- and tab-scoped session request and
+acknowledges it after the queued sidebar write. The old refresh and reset
+RPCs remain for open clients from earlier builds.

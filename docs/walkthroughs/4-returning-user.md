@@ -148,9 +148,8 @@ likely to report as bugs if nobody warns them.
    passage. An unavailable edition needed for your Display shows a notice
    and keeps Add Source disabled until you choose an available edition.
 9. **Commentary and Notes are separate.** Start with **Commentary: Default**
-   and **Notes: Omit**, the defaults. Default keeps explanation and its
-   markings; Omit leaves out marked footnotes, as the previous insertion
-   path did. A bold quotation in a JPS footnote is controlled by Notes, not
+   and **Notes: Separate** when no choice was saved. Default keeps explanation
+   and its markings. Separate keeps marked footnotes below the passage. A bold quotation in a JPS footnote is controlled by Notes, not
    Commentary. **Separate** creates a labelled text section, not a native
    Google Docs footnote.
 

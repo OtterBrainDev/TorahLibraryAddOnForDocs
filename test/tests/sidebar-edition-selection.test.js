@@ -69,7 +69,7 @@ function page() {
       },
       attr(key, value) { if (value === undefined) return list[0] && list[0].getAttribute(key); list.forEach((node) => node.setAttribute(key, value)); return api; },
       empty() { return api.html(''); },
-      append(other) { list.forEach((node) => other.get().forEach((child) => node.appendChild(child))); return api; },
+      append(...others) { list.forEach((node) => others.forEach((other) => other.get().forEach((child) => node.appendChild(child)))); return api; },
       after(other) { if (list[0]) other.get().forEach((node) => list[0].after(node)); return api; },
       off(events) { list.forEach((node) => { const h = handlers.get(node) || {}; delete h[events]; handlers.set(node, h); }); return api; },
       on(events, selector, fn) { const handler = typeof selector === 'function' ? selector : fn; list.forEach((node) => { const h = handlers.get(node) || {}; h[events] = handler; handlers.set(node, h); }); return api; },
@@ -82,7 +82,10 @@ function page() {
     if (selector.startsWith('<')) { const el = document.createElement('div'); el.innerHTML = selector; return wrap(el.children); }
     return wrap(document.querySelectorAll(selector));
   };
-  return { document, $, change(selector, value, pointerSelection) {
+  return { document, $, click(selector) {
+    const node = document.querySelector(selector);
+    handlers.get(node).click.call(node);
+  }, change(selector, value, pointerSelection) {
     const node = document.querySelector(selector);
     $(node).val(value);
     const h = handlers.get(node) || {};
@@ -123,6 +126,7 @@ function load() {
   Object.assign(ctx, {
     renderPreviewHTML: (data) => data.versionTitle + ' / ' + data.heVersionTitle,
     requestTranslationAvailability() {}, updateActionabilityUI() {},
+    clearVersionSelectors() { ctx.activeTranslationOptions = null; },
     applyEffectivePreferencesToUI() { if (ctx.activeTranslationOptions) ctx.activeTranslationOptions.refresh(); },
     refreshSidebarLivePreview() { if (ctx.hasResolvedReference) ctx.updateSuggestion(ctx.data, ctx.data.ref); },
     sidebarSessionId: 'session-one', selectedRefValue: 'Genesis 1:1',
@@ -259,7 +263,7 @@ test('an options refresh of a newly selected reference cannot revive the previou
   const older = env.fetches().at(-1);
   env.ctx.refreshSelectedResult();
   const latest = env.fetches().at(-1);
-  assert.equal(latest.ref, 'Exodus 1:1'); assert.equal(latest.versions, null);
+  assert.equal(latest.ref, 'Exodus 1:1'); assert.deepEqual({ ...latest.versions }, { browseBook: true });
   latest.ok(payload('Default', 'Source default', 'Exodus 1:1'));
   older.ok(payload('Chosen ', 'Source chosen', 'Exodus 1:1'));
   assert.equal(env.ctx.data.ref, 'Exodus 1:1');
@@ -400,7 +404,7 @@ test('a new reference picked while options are saving cannot bypass the pending 
   env.calls.find((c) => c.name === 'save').ok({ teamim: 'false' }); env.tick();
   const request = env.fetches().at(-1);
   assert.equal(request.ref, 'Exodus 1:2');
-  assert.equal(request.versions, null, 'a new reference does not inherit the previous editions');
+  assert.deepEqual({ ...request.versions }, { browseBook: true }, 'a new reference does not inherit the previous editions');
   request.ok(payload('Default', 'Source default', 'Exodus 1:2'));
   assert.equal(env.ctx.data.ref, 'Exodus 1:2');
   assert.equal(env.ctx.hasResolvedReference, true);
@@ -520,3 +524,23 @@ for (const missingMode of ['en', 'he']) {
     assert.match(env.$('.suggestions').text(), /or Both in Display/);
   });
 }
+
+
+test('a root book opens its table of contents and clicking a chapter then enables insertion', () => {
+  const env = load();
+  env.ctx.resolveSelectedResult('Genesis', 'Genesis');
+  assert.equal(env.fetches().at(-1).versions.browseBook, true);
+  env.answer({
+    ref: 'Genesis', indexTitle: 'Genesis',
+    bookContents: [{ ref: 'Genesis 1', label: 'Chapter 1' }, { ref: 'Genesis 2', label: 'Chapter 2' }],
+  });
+  assert.equal(env.ctx.hasResolvedReference, false);
+  assert.equal(env.insertStates.at(-1), false);
+  assert.match(env.$('.suggestions').text(), /Genesis · Table of contents/);
+  env.$('#book-contents-section').val('Genesis 2');
+  env.click('.book-contents button');
+  assert.equal(env.fetches().at(-1).ref, 'Genesis 2');
+  env.answer(payload('Default', 'Source default', 'Genesis 2'));
+  assert.equal(env.insertStates.at(-1), true);
+  assert.equal(env.ctx.data.ref, 'Genesis 2');
+});

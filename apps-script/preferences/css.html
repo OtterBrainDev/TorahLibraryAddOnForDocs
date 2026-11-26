@@ -32,7 +32,7 @@
     min-height: 0;
     overflow-x: visible;
     overflow-y: auto;
-    padding: 16px 18px 118px;
+    padding: 16px 18px 20px;
     scroll-padding-top: 64px;
     padding-left: 14px;
     padding-right: 14px;
@@ -40,53 +40,33 @@
   }
 
   .save-bar {
-    position: sticky;
-    bottom: 0;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 14px 18px;
+    justify-content: space-between;
+    gap: 6px 12px;
+    padding: 8px 14px;
     background: #fff;
-    border-top: 1px solid #e3dfd8;
-    box-shadow: 0 -2px 8px rgba(31, 59, 104, 0.04);
-	grid-template-columns: 1fr;
-    align-items: start;
+    border-top: 1px solid var(--border);
+  }
+
+  #results {
+    flex: 1 1 180px;
+    font-size: 12px;
   }
 
   .save-actions {
-      width: 100%;
-      order: 1;
-	  display: grid;
-	  grid-template-columns: repeat(2, minmax(0, 1fr));
-	  align-items: stretch;
-	  gap: 10px;
-	  order: 2;
-	}
-
-.save-actions > button {
-  box-sizing: border-box;
-  width: 100%;
-  min-height: 36px;
-  margin: 0;
-  padding: 0 12px;
-  line-height: 1.2;
-  font: inherit;
-  appearance: none;
-}
-
-  .save-feedback {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-    order: 2;  
+    gap: 6px;
+    margin-left: auto;
   }
 
-  .save-note {
-    color: #666;
-    font-size: 13px;
-    line-height: 1.35;
+  .save-actions > button,
+  .pref-profile-defaults button {
+    min-height: 30px;
+    padding: 4px 10px;
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .hide {
@@ -1143,10 +1123,6 @@
     word-break: normal;
   }
 
-  .save-actions .submit {
-    min-height: 36px;
-  }
-
   @media (max-width: 440px) {
     .compact-row,
     .compact-inline-pair,
@@ -1236,26 +1212,32 @@
     display: none !important;
   }
 
-  /* ── Settings profiles (Everything): a column of profiles beside the tabs
-     that edit the one in use. The header spans both columns; the rail sticks
-     while the panel scrolls. The dialog is wider in Everything
-     (preferencesPopup, and setWidth when the Interface switch changes). ── */
   .preferences-dialog[data-ui-mode="full"] { max-width: 860px; }
-  .preferences-dialog[data-ui-mode="full"] .pref-tab { padding-left: 11px; padding-right: 11px; }
-  .preferences-dialog:not([data-ui-mode="full"]) .pref-profile-rail { display: none; }
-  .preferences-dialog[data-ui-mode="full"] .preferences-shell {
-    display: grid;
-    grid-template-columns: 164px minmax(0, 1fr);
-    column-gap: 16px;
-    align-content: start;
-  }
-  .preferences-dialog[data-ui-mode="full"] .preferences-toc { grid-column: 1 / -1; }
-  .preferences-dialog[data-ui-mode="full"] .pref-profile-rail {
-    align-self: start;
-    position: sticky;
-    top: 0;
-  }
   .pref-main { min-width: 0; }
+
+  .pref-profile-panel {
+    display: grid;
+    grid-template-columns: minmax(140px, 1fr) minmax(0, 2fr);
+    gap: 16px;
+  }
+
+  .pref-profile-defaults {
+    min-width: 0;
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .pref-profile-defaults h2 { margin: 0; font-size: 14px; }
+  .pref-profile-defaults p { margin: 6px 0 10px; font-size: 12px; }
+  .pref-reset-options { margin-top: 12px; font-size: 12px; }
+  .pref-reset-options summary { margin-bottom: 6px; cursor: pointer; }
+
+  @media (max-width: 460px) {
+    .pref-profile-panel { grid-template-columns: 1fr; }
+  }
 
   .pref-profile-rail {
     display: flex;

@@ -55,6 +55,15 @@ function getSearchMode_() {
   return (stored === 'voices' || stored === 'experimental' || stored === 'lexicon') ? stored : 'texts';
 }
 
+function sidebarPreferencesConfig_() {
+  let scope = '';
+  try {
+    const identity = selectionDocumentIdentity_(DocumentApp.getActiveDocument());
+    if (identity.documentId) scope = selectionTextHash_(identity.documentId + ':' + identity.tabId);
+  } catch (error) { /* No sidebar hand-off outside a document. */ }
+  return { sidebarPreferenceScope: scope, sidebarPreferenceKeys: settingsProfileKeys_() };
+}
+
 function openSharedSidebar_(mode, options) {
   var controls = getSidebarControls_();
   var resolvedMode = setSearchMode_(resolveSidebarOpenMode_(mode || null, getSearchMode_(), controls.tabs));
@@ -66,7 +75,7 @@ function openSharedSidebar_(mode, options) {
   template.sidebarTabs = controls.tabs.join(' ');
   template.quickActionsHidden = controls.quickActionsHidden.join(' ');
   template.optionsHidden = controls.optionsHidden.join(' ');
-  var extra = (options && typeof options === 'object') ? options : {};
+  var extra = Object.assign(sidebarPreferencesConfig_(), options || {});
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode, extra));
   var output = template.evaluate()
     .setTitle('Sefaria')
@@ -241,9 +250,9 @@ function sefariaSearch() {
 function preferencesPopup() {
   const template = HtmlService.createTemplateFromFile('preferences');
   template.uiMode = getUiMode_();
-  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences', {
+  template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences', Object.assign(sidebarPreferencesConfig_(), {
     menuLayoutEditor: getMenuLayoutEditorConfig_(DEV_FLAGS)
-  }));
+  })));
   template.devFlagsJson = JSON.stringify(DEV_FLAGS);
   const output = template.evaluate()
     .setTitle('Preferences')

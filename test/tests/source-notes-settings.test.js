@@ -41,15 +41,15 @@ function settingsFile(value) {
     settings: { source_notes_mode: value } });
 }
 
-test('schema 32 keeps existing insertion behavior, preserves a chosen Notes mode, and is idempotent', () => {
-  for (const chosen of [undefined, 'inline', 'separate']) {
+test('a missing Notes mode defaults to Separate and existing choices survive migration', () => {
+  for (const chosen of [undefined, 'omit', 'inline', 'separate']) {
     const initial = { prefs_schema_version: '31', source_emphasis_mode: 'only' };
     if (chosen !== undefined) initial.source_notes_mode = chosen;
     const env = server(initial);
-    assert.equal(env.ctx.getDefaultPreferences().source_notes_mode, 'omit');
+    assert.equal(env.ctx.getDefaultPreferences().source_notes_mode, 'separate');
     assert.equal(env.ctx.runUserPreferenceMigrationsIfNeeded_(), true);
     assert.equal(env.store.prefs_schema_version, env.ctx.PREFS_SCHEMA_CURRENT_);
-    assert.equal(env.store.source_notes_mode, chosen || 'omit');
+    assert.equal(env.store.source_notes_mode, chosen || 'separate');
     assert.equal(env.store.source_emphasis_mode, 'only', 'Commentary is independent');
     const before = env.writes.length;
     assert.equal(env.ctx.runUserPreferenceMigrationsIfNeeded_(), false);
@@ -77,7 +77,7 @@ test('settings files round-trip valid Notes choices in Text and layout, rejectin
   }
 });
 
-test('profiles retain Notes choices and older schema-31 profiles restore Omit', () => {
+test('profiles retain Notes choices and older schema-31 profiles use Separate when unset', () => {
   const env = server({ prefs_schema_version: '32', source_notes_mode: 'inline' });
   assert.ok(Array.from(env.ctx.settingsProfileKeys_()).includes('source_notes_mode'));
   env.ctx.createSettingsProfile('With notes');
@@ -91,7 +91,7 @@ test('profiles retain Notes choices and older schema-31 profiles restore Omit', 
     settings_profile_p2: JSON.stringify({ schema: '31', values: { source_emphasis_mode: 'discard' } }),
   });
   old.ctx.switchSettingsProfile('p2');
-  assert.equal(old.store.source_notes_mode, 'omit');
+  assert.equal(old.store.source_notes_mode, 'separate');
   assert.equal(old.store.source_emphasis_mode, 'discard');
 });
 
@@ -144,7 +144,7 @@ test('Notes has one real labelled radio control whose values match server and cl
   assert.ok(group, 'the shared Texts composition controls expose Notes, rather than only hidden state');
   assert.equal(group.getAttribute('role'), 'radiogroup');
   const labels = Array.from(group.querySelectorAll('[role="radio"]'), (button) => [button.getAttribute('data-value'), button.textContent.trim()]);
-  assert.deepEqual(labels, [['omit', 'Omit'], ['inline', 'Inline'], ['separate', 'Separate']]);
+  assert.deepEqual(labels, [['separate', 'Separate'], ['inline', 'Inline'], ['omit', 'Omit']]);
   const { ctx: host } = hostContext(), { ctx: api } = server();
   for (const [mode] of labels) {
     assert.equal(host.ccNormalizeNotesMode(mode), mode);
@@ -152,6 +152,17 @@ test('Notes has one real labelled radio control whose values match server and cl
   }
 });
 
+test('Preferences places the one shared Notes row directly below Commentary', () => {
+  const card = read('shared/composition-card/markup.html');
+  const { document } = parseHTML('<html><body><div id="composition-card-container">' + card + '</div></body></html>');
+  const ctx = vm.createContext({ document, byId: (id) => document.getElementById(id) });
+  vm.runInContext(namedFunction(script('preferences/js.html'), '_attachCardExtras', 4), ctx);
+  ctx._attachCardExtras();
+  const notes = document.querySelector('#cc-notes-toggle').closest('.cc-row');
+  const commentary = document.querySelector('#cc-emphasis-toggle').closest('.cc-row');
+  assert.equal(commentary.nextElementSibling, notes);
+  assert.equal(document.querySelectorAll('#cc-notes-toggle').length, 1);
+});
 test('Preferences composition Notes choice writes the named form field and reads it back', () => {
   const env = hostContext();
   const source = script('preferences/js.html');

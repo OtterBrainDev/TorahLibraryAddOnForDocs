@@ -33,16 +33,25 @@
             </div>
             <button type="button" class="pref-icon-button" id="settings-transfer-open" title="Import/Export" aria-label="Import/Export" aria-haspopup="dialog"><span aria-hidden="true">&#x21c5;</span></button>
           </div>
-          <p class="interface-mode-note" id="interface-mode-note">Simple shows the essentials; Everything adds profiles, Search, Linking and Experimental. Explicitly disabled tools stay disabled in both modes. Import/Export is always available.</p>
+          <p class="interface-mode-note" id="interface-mode-note">Simple shows the essentials; Everything adds Search, Linking and Experimental. Explicitly disabled tools stay disabled in both modes. Import/Export is always available.</p>
           <p class="interface-mode-status" id="interface-mode-status" role="status" aria-live="polite"></p>
         </section>
 
-        <!-- Settings profiles (server/settings-profiles.gs), Everything only:
-             named sets of how sources look, beside the tabs that edit the one
-             in use. Clicking a profile switches to it (asking first about
-             unsaved changes); the sidebar's Insertion Options switches too.
-             Filled by initSettingsProfiles in preferences/js.html, with
-             textContent only. -->
+        <div class="pref-main">
+        <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
+          <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="true">Insertion</button>
+          <button type="button" id="pref-tab-profiles-btn" class="pref-tab" role="tab" data-pref-tab="profiles" aria-controls="pref-tab-profiles" aria-selected="false">Profiles</button>
+          <button type="button" id="pref-tab-search-btn" class="pref-tab" role="tab" data-pref-tab="search" aria-controls="pref-tab-search" aria-selected="false">Search</button>
+          <button type="button" id="pref-tab-linking-btn" class="pref-tab" role="tab" data-pref-tab="linking" aria-controls="pref-tab-linking" aria-selected="false">Linking</button>
+          <button type="button" id="pref-tab-sidebar-btn" class="pref-tab" role="tab" data-pref-tab="sidebar" aria-controls="pref-tab-sidebar" aria-selected="false">Sidebar</button>
+          <button type="button" id="pref-tab-menu-btn" class="pref-tab" role="tab" data-pref-tab="menu" aria-controls="pref-tab-menu" aria-selected="false">Menu Bar</button>
+<? if (devFlags.SURPRISE_ME) { ?>
+          <button type="button" id="pref-tab-experimental-btn" class="pref-tab" role="tab" data-pref-tab="experimental" aria-controls="pref-tab-experimental" aria-selected="false">🧪 Experimental</button>
+<? } ?>
+        </nav>
+
+        <div class="pref-tab-panel" id="pref-tab-profiles" role="tabpanel" aria-labelledby="pref-tab-profiles-btn" hidden>
+          <div class="pref-profile-panel">
         <nav class="pref-profile-rail" id="pref-profile-rail" aria-labelledby="pref-profile-rail-title">
           <div class="pref-profile-rail-header">
             <div class="pref-profile-rail-title" id="pref-profile-rail-title">Profiles</div>
@@ -61,23 +70,21 @@
             </div>
           </div>
           <button type="button" class="pref-profile-new" id="pref-profile-new">+ New profile</button>
-          <p class="pref-profile-hint">Keep a setup for each class, say transliteration for beginners and no vowels for adults, and switch here or in the sidebar&rsquo;s Insertion Options. A profile holds how sources look; the menu, the sidebar&rsquo;s controls, search and linking are shared.</p>
-        </nav>
 
-        <!-- The tabs and their panels: one column beside the profiles in
-             Everything (preferences/css). Not indented, to keep the panels'
-             markup as it was. -->
-        <div class="pref-main">
-        <nav class="pref-tab-bar" role="tablist" aria-label="Preferences tabs">
-          <button type="button" id="pref-tab-insertion-btn" class="pref-tab" role="tab" data-pref-tab="insertion" aria-controls="pref-tab-insertion" aria-selected="true">Insertion</button>
-          <button type="button" id="pref-tab-search-btn" class="pref-tab" role="tab" data-pref-tab="search" aria-controls="pref-tab-search" aria-selected="false">Search</button>
-          <button type="button" id="pref-tab-linking-btn" class="pref-tab" role="tab" data-pref-tab="linking" aria-controls="pref-tab-linking" aria-selected="false">Linking</button>
-          <button type="button" id="pref-tab-sidebar-btn" class="pref-tab" role="tab" data-pref-tab="sidebar" aria-controls="pref-tab-sidebar" aria-selected="false">Sidebar</button>
-          <button type="button" id="pref-tab-menu-btn" class="pref-tab" role="tab" data-pref-tab="menu" aria-controls="pref-tab-menu" aria-selected="false">Menu Bar</button>
-<? if (devFlags.SURPRISE_ME) { ?>
-          <button type="button" id="pref-tab-experimental-btn" class="pref-tab" role="tab" data-pref-tab="experimental" aria-controls="pref-tab-experimental" aria-selected="false">🧪 Experimental</button>
-<? } ?>
         </nav>
+            <section class="pref-profile-defaults">
+              <h2>Saved defaults</h2>
+              <p>Profiles store text, layout and appearance. Search, linking, menu and sidebar settings are shared across profiles.</p>
+              <button type="button" class="blue submit save-preferences-button">Save defaults to account</button>
+              <details class="pref-reset-options">
+                <summary>Reset options</summary>
+                <button type="button" class="submit pref-preset-button" data-preset="profile">Reset active profile</button>
+                <button type="button" class="submit pref-preset-button" data-preset="factory">Restore Factory preset</button>
+                <p>Factory applies the 1.0-style preset to the active profile and shared settings, including Simple mode.</p>
+              </details>
+            </section>
+          </div>
+        </div>
 
         <div class="pref-tab-panel" id="pref-tab-insertion" role="tabpanel" aria-labelledby="pref-tab-insertion-btn">
 
@@ -174,7 +181,7 @@
 
               <!-- Texts workflow -->
               <div class="pref-workflow-panel" id="pref-workflow-texts" role="tabpanel" aria-labelledby="pref-workflow-tab-texts">
-                <p class="section-note">Set the defaults applied to new text insertions: the linked title and title font (source and translation, separately), cantillation, vowels, punctuation (Hebrew and translation, separately), transliteration, and what to do with the translation’s commentary. Notes applies to both languages and appears at the top of Texts defaults. Line numbers and citation are under Layout. The sidebar can override these for that sidebar session.</p>
+                <p class="section-note">Set the defaults applied to new text insertions: the linked title and title font (source and translation, separately), cantillation, vowels, punctuation (Hebrew and translation, separately), transliteration, and what to do with the translation’s commentary. Notes applies to both languages and appears below Commentary. Line numbers and citation are under Layout. The sidebar can override these for that sidebar session.</p>
                 <div class="cc-card" id="composition-card-container" data-cc-features="linkedTitle,editionLabel,openSections,fonts,titleFonts,translitFont" aria-label="Default insertion preview">
                   <?!= include('shared/composition-card/markup') ?>
                 </div>
@@ -207,7 +214,7 @@
                     <option value="ipa_tiberian">IPA (Tiberian-ish)</option>
                   </select>
                   <input type="hidden" id="source_emphasis_mode" name="source_emphasis_mode" value="keep">
-                  <input type="hidden" id="source_notes_mode" name="source_notes_mode" value="omit">
+                  <input type="hidden" id="source_notes_mode" name="source_notes_mode" value="separate">
                 </div>
                 <!-- Moved into the card above by preferences/js.html (_initPreferencesCompositionCard):
                      each data-font-editor opens in place under its font button (fontEditor),
@@ -1224,18 +1231,10 @@
       </div>
 
       <section class="save-bar" name="actions">
+        <span id="results" role="status" aria-live="polite"></span>
         <div class="save-actions">
-          <button type="button" class="submit reset-preferences-button">Reset To Defaults</button>
-          <button type="button" class="submit refresh-sidebar-button" aria-label="Refresh Sidebar">
-            <span class="icon" aria-hidden="true">🔁</span>
-            <span>Refresh</span>
-          </button>
-          <button type="button" class="blue submit save-preferences-button">Save Defaults</button>
-		  <button type="button" class="blue submit save-close-preferences-button">Save &amp; Close</button>
-        </div>
-        <div class="save-feedback">
-          <span id="results"></span>
-          <span id="sidebar_refresh_note" class="save-note">Reloads the sidebar from your saved defaults and clears its session overrides.</span>
+          <button type="button" class="blue submit apply-sidebar-preferences-button" title="Send the form’s insertion settings to the open sidebar and refresh its current preview for this session.">Apply to sidebar</button>
+          <button type="button" class="submit close-preferences-button">Close</button>
         </div>
       </section>
 
@@ -1307,17 +1306,6 @@
             </div>
           </div>
       </dialog>
-
-      <div class="modal-backdrop" id="reset_modal" hidden>
-        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="reset_modal_title">
-          <h2 id="reset_modal_title">Reset Preferences?</h2>
-          <p>This will restore all preferences to their default values for your account, and the menu to the default for your interface. The interface itself (Simple or Everything) stays as it is.</p>
-          <div class="modal-actions">
-            <button type="button" class="submit reset-cancel-button">Cancel</button>
-            <button type="button" class="blue submit reset-confirm-button">Reset</button>
-          </div>
-        </div>
-      </div>
 
       <!-- Settings profiles: the one question before a switch, a new profile or
            a delete (askProfileQuestion_ in preferences/js.html; textContent only). -->

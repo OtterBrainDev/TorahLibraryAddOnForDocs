@@ -21,7 +21,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const APPS_SCRIPT = path.resolve(__dirname, '../../apps-script');
-const FILES = ['server/menu-layout.gs', 'server/preferences.gs', 'migrations.gs', 'server/first-run.gs', 'server/settings-file.gs'];
+const FILES = ['server/menu-layout.gs', 'server/preferences.gs', 'migrations.gs', 'server/first-run.gs', 'server/settings-file.gs', 'server/settings-profiles.gs', 'server/factory-preferences.gs'];
 
 function makeProps(initial = {}) {
   const store = Object.assign({}, initial);
@@ -30,6 +30,7 @@ function makeProps(initial = {}) {
     getProperty: (k) => (Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null),
     getProperties: () => Object.assign({}, store),
     setProperty(k, v) { store[k] = String(v); return this; },
+    setProperties(values) { Object.entries(values).forEach(([k, v]) => this.setProperty(k, v)); return this; },
     deleteProperty(k) { delete store[k]; return this; },
   };
 }
@@ -208,12 +209,12 @@ test('Reset To Defaults also resets all workflow modes, Commentary and Notes', (
   const { ctx, props } = load({
     voices_insert_mode_default: 'both', voices_translit_default: 'ashkenazi',
     lexicon_insert_mode_default: 'definition', source_emphasis_mode: 'only',
-    source_notes_mode: 'separate', ui_mode: 'simple'
+    source_notes_mode: 'omit', ui_mode: 'simple'
   });
   const result = ctx.resetPreferencesToDefaults();
   const expected = {
     voices_insert_mode_default: 'reference', voices_translit_default: 'none',
-    lexicon_insert_mode_default: 'entry', source_emphasis_mode: 'keep', source_notes_mode: 'omit'
+    lexicon_insert_mode_default: 'entry', source_emphasis_mode: 'keep', source_notes_mode: 'separate'
   };
   Object.entries(expected).forEach(([key, value]) => {
     assert.equal(props.store[key], value, `stored ${key}`);
@@ -271,4 +272,39 @@ test('Import/Export modal: nothing Save collects, nothing drawn as HTML, a downl
   // Nothing is written before Apply, and only the parts ticked are sent.
   assert.match(js, /\.previewSettingsImportForTarget\(text, target\(\)\)/);
   assert.match(js, /input\[type="checkbox"\]:checked[\s\S]*?\.applySettingsImportForTarget\(pendingImportText, groups, target\(\)\)/);
+});
+
+test('Factory applies the complete preset while preserving inactive profiles, history and consent', () => {
+  const initial = {
+    prefs_schema_version: '33', ui_mode: 'full', source_notes_mode: 'inline',
+    settings_profiles: JSON.stringify({ active: 'p1', profiles: [{ id: 'p1', name: 'Main' }, { id: 'p2', name: 'Class' }] }),
+    settings_profile_p2: JSON.stringify({ values: { source_notes_mode: 'inline' } }),
+    linker_upload_acknowledged: 'true', last_search_sort_mode: 'chronological',
+  };
+  const { ctx, props, calls } = load(initial);
+  const preset = vm.runInContext('FACTORY_PREFERENCE_VALUES_', ctx);
+  assert.equal(Object.keys(preset).length, 112);
+  const result = ctx.restorePreferencePreset('factory', 'p1');
+  assert.equal(result.uiMode, 'simple');
+  assert.equal(result.preferences.source_notes_mode, 'omit');
+  assert.equal(result.preferences.bilingual_layout_default, 'he-top');
+  for (const [key, value] of Object.entries(preset)) assert.equal(props.store[key], value, key);
+  for (const key of ['settings_profiles', 'settings_profile_p2', 'prefs_schema_version', 'last_search_sort_mode', 'linker_upload_acknowledged']) {
+    assert.equal(props.store[key], initial[key], key);
+  }
+  assert.deepEqual(calls, ['buildMenu']);
+});
+
+test('profile reset affects only profile fields and saves refuse a stale profile', () => {
+  const { ctx, props } = load({ prefs_schema_version: '33', ui_mode: 'full', source_notes_mode: 'omit', show_voices_tab: 'false' });
+  const result = ctx.restorePreferencePreset('profile', 'p1');
+  assert.equal(result.uiMode, 'full');
+  assert.equal(result.preferences.source_notes_mode, 'separate');
+  assert.equal(result.preferences.show_voices_tab, 'false');
+  assert.throws(() => ctx.savePreferenceDefaults({ source_notes_mode: 'inline' }, 'p2'), /active profile changed/);
+  assert.equal(props.store.source_notes_mode, 'separate');
+  ctx.savePreferenceDefaults({ source_notes_mode: 'inline', show_voices_tab: true, linker_upload_acknowledged: 'false' }, 'p1');
+  assert.equal(props.store.source_notes_mode, 'inline');
+  assert.equal(props.store.show_voices_tab, 'true');
+  assert.equal(props.store.linker_upload_acknowledged, undefined);
 });

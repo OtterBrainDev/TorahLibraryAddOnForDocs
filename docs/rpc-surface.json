@@ -213,6 +213,16 @@
       "definedIn": "apps-script/server/first-run.gs"
     },
     {
+      "name": "restorePreferencePreset",
+      "arity": 2,
+      "definedIn": "apps-script/server/factory-preferences.gs"
+    },
+    {
+      "name": "savePreferenceDefaults",
+      "arity": 2,
+      "definedIn": "apps-script/server/factory-preferences.gs"
+    },
+    {
       "name": "resetPreferencesToDefaults",
       "arity": 0,
       "definedIn": "apps-script/server/first-run.gs"
