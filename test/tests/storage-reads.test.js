@@ -194,3 +194,23 @@ test('document identity can be unavailable while the current user settings still
   assert.equal(result.hasOverrides, false);
   assert.equal(reads.getProperties, 1);
 });
+
+test('the sidebar opens with each editor’s own effective settings in the shared Doc', () => {
+  function open(stored) {
+    const { context } = load({ stored });
+    const template = { evaluate: () => ({ setTitle() { return this; }, setWidth() { return this; } }) };
+    context.DocumentApp.getUi = () => ({ showSidebar() {} });
+    context.DocumentApp.getActiveDocument = () => ({ getId: () => 'shared', getActiveTab: () => ({ getId: () => 'tab' }) });
+    context.selectionTextHash_ = (value) => value;
+    context.HtmlService.createTemplateFromFile = () => template;
+    context.runUserPreferenceMigrationsIfNeeded_ = () => {};
+    context.maybeShowFirstRunSetup_ = () => {};
+    context.openSharedSidebar_('texts');
+    return JSON.parse(template.appConfigJson).sidebarBootstrap;
+  }
+  const owner = open({ document_preferences_shared: '{"values":{"source_notes_mode":"inline"}}' });
+  const editor = open({ nekudot: 'false' });
+  assert.equal(owner.effectivePreferences.source_notes_mode, 'inline');
+  assert.equal(editor.effectivePreferences.source_notes_mode, 'separate');
+  assert.equal(editor.effectivePreferences.nekudot, 'false');
+});

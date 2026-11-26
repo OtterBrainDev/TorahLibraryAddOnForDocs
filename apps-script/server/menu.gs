@@ -76,6 +76,12 @@ function openSharedSidebar_(mode, options) {
   template.quickActionsHidden = controls.quickActionsHidden.join(' ');
   template.optionsHidden = controls.optionsHidden.join(' ');
   var extra = Object.assign(sidebarPreferencesConfig_(), options || {});
+  try {
+    // Read the opening editor's settings before crossing the HTML RPC bridge.
+    extra.sidebarBootstrap = getSidebarBootstrapData(resolvedMode);
+  } catch (error) {
+    Logger.log('Sidebar bootstrap could not read user settings.');
+  }
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('sidebar', resolvedMode, extra));
   var output = template.evaluate()
     .setTitle('Sefaria')

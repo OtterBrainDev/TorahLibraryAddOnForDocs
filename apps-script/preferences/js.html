@@ -862,7 +862,7 @@
       spinner.hidden = false;
       actions.hidden = true;
       function failed() {
-        status.textContent = 'Could not load your preferences. Check that this Google account can use the add-on, then retry.';
+        status.textContent = 'Could not load your preferences. Check that this account can use the add-on. If several Google accounts are signed in, use a browser profile signed into only the account that should run the add-on.';
         spinner.hidden = true;
         actions.hidden = false;
         byId('preferences-load-retry').focus();
