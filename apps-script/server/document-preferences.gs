@@ -4,7 +4,8 @@
 function documentPreferencesKey_() {
   try {
     const doc = DocumentApp.getActiveDocument();
-    return doc ? 'document_preferences_' + selectionTextHash_(doc.getId()) : '';
+    const id = doc && doc.getId();
+    return id ? 'document_preferences_' + selectionTextHash_(id) : '';
   } catch (error) {
     return '';
   }
@@ -49,12 +50,12 @@ function migrateDocumentPreferenceValues_(values, from) {
 
 function getDocumentPreferenceProfile() {
   const key = documentPreferencesKey_();
-  const props = PropertiesService.getUserProperties();
-  const values = key ? readDocumentPreferenceValues_(props.getProperty(key)) : {};
+  const properties = snapshotProperties_(PropertiesService.getUserProperties());
+  const values = key ? readDocumentPreferenceValues_(properties.getProperty(key)) : {};
   return {
     key: key,
-    profiles: getSettingsProfiles(),
-    preferences: Object.assign(getAccountPreferences(), values),
+    profiles: publicProfileIndex_(readProfileIndex_(properties.getProperty(SETTINGS_PROFILES_KEY_))),
+    preferences: Object.assign(readUserPreferenceObject_(properties), values),
     hasOverrides: Object.keys(values).length > 0
   };
 }

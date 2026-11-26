@@ -129,6 +129,7 @@ against the screenshot taken before the push.
 | D13 | Set Notes differently in User Profile, a named profile, and This Document. With the named profile in use, choose This Document → Details → Reset options → **Clone Account Settings**. | Confirmation describes replacement. The Doc receives the saved User Profile setting. The named profile stays active for another Doc, and later User Profile edits do not change the cloned value. |
 | D14 | With an unsaved edit, try the add-on’s **✕ Close Preferences** and Escape from the form. Test all three choices and a failed save. Repeat using the Google Docs title-bar X and record whether the browser shows its native warning. | Cancel keeps edits, Don’t save drops them, and Save & Close waits for success. A failed save keeps the form open. Clean forms close without prompting. Google Docs controls the outer dialog close. |
 | D15 | Use Import/Export from This Document, and restore the updated Factory preset. | The transfer says it is loading saved settings. Factory selects Simple, uses right-side Hebrew, separates Notes, and uses Quiet Link Texts review. |
+| D16 | Share a test Doc with a second account as an editor. Have each account open **Preferences** from the menu and sidebar. Save different **This Document** settings, then reopen each dialog. | Both accounts can open Preferences after authorization. Each sees its own settings in the shared Doc. If settings cannot be read, **Retry** and **Close** remain available. |
 
 ---
 

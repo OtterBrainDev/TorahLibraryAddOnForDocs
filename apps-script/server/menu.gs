@@ -250,8 +250,17 @@ function sefariaSearch() {
 function preferencesPopup() {
   const template = HtmlService.createTemplateFromFile('preferences');
   template.uiMode = getUiMode_();
+  let preferencesBootstrap = null;
+  try {
+    // Read while opening the dialog in the caller's add-on invocation. An
+    // iframe RPC is only needed if the initial read is unavailable.
+    preferencesBootstrap = getDocumentPreferenceProfile();
+  } catch (error) {
+    Logger.log('Preferences bootstrap could not read user settings.');
+  }
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('preferences', 'preferences', Object.assign(sidebarPreferencesConfig_(), {
-    menuLayoutEditor: getMenuLayoutEditorConfig_(DEV_FLAGS)
+    menuLayoutEditor: getMenuLayoutEditorConfig_(DEV_FLAGS),
+    preferencesBootstrap: preferencesBootstrap
   })));
   template.devFlagsJson = JSON.stringify(DEV_FLAGS);
   const output = template.evaluate()

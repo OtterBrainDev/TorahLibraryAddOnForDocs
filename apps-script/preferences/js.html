@@ -823,8 +823,6 @@
       } catch (error) {
         console.error('Preferences modal apply failed:', error);
         setResultsMessage('Preferences loaded with an error: ' + (error && error.message ? error.message : error));
-      } finally {
-        $(".hide").fadeOut(300);
       }
     }
 
@@ -856,18 +854,42 @@
       $("#results").text(message);
     }
 
-    function loadPreferencesIntoForm() {
-      google.script.run.withSuccessHandler(function(result) {
+    function loadPreferencesIntoForm(initial) {
+      var status = byId('preferences-load-status');
+      var spinner = byId('preferences-load-spinner');
+      var actions = byId('preferences-load-actions');
+      status.textContent = 'Loading preferences…';
+      spinner.hidden = false;
+      actions.hidden = true;
+      function failed() {
+        status.textContent = 'Could not load your preferences. Check that this Google account can use the add-on, then retry.';
+        spinner.hidden = true;
+        actions.hidden = false;
+        byId('preferences-load-retry').focus();
+      }
+      function loaded(result) {
+        if (!result || !result.preferences) { failed(); return; }
         adoptDocumentProfile_(result);
         editingDocument_ = !!documentProfile_.key;
-        applyPreferencesToForm(result.preferences || {});
+        applyPreferencesToForm(result.preferences);
+        if (preferencesBaseline_ === null) { failed(); return; }
         renderSettingsProfiles_();
-      }).withFailureHandler(function(error) {
-        console.error('Preferences modal failed to load:', error);
-        setResultsMessage('Could not load preferences.');
+        document.querySelector('.preferences-dialog').inert = false;
         $(".hide").fadeOut(300);
-      }).getDocumentPreferenceProfile();
+        if (!editingDocument_) {
+          setResultsMessage('This Document settings are unavailable here. You’re editing ' +
+            quoted_(activeProfile_().name) + '.');
+        }
+      }
+      if (initial) {
+        loaded(initial);
+        return;
+      }
+      google.script.run.withSuccessHandler(loaded).withFailureHandler(failed).getDocumentPreferenceProfile();
     }
+
+    byId('preferences-load-retry').addEventListener('click', function () { loadPreferencesIntoForm(); });
+    byId('preferences-load-close').addEventListener('click', function () { closePreferences_(); });
 
     document.addEventListener('click', function() {
       document.querySelectorAll('.custom-select.open').forEach(function(wrapper) {
@@ -2841,6 +2863,6 @@
     initTranslationLanguageGrid();
     _initPreferencesCompositionCard();
     _initPreferencesInsertionOptions();
-    loadPreferencesIntoForm();
+    loadPreferencesIntoForm(getAppConfig().preferencesBootstrap);
   });
 </script>

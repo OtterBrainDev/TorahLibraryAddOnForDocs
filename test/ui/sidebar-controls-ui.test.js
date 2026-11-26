@@ -235,7 +235,7 @@ test('a switched-off tab takes its Insertion Defaults sub-tab with it', needsDom
   assert.deepEqual(shown('texts voices'), ['texts', 'voices']);
   assert.deepEqual(shown('texts'), []);
   // The page starts with both on (the overlay covers it until the settings load).
-  assert.match(PREFS, /<div class="preferences-dialog" data-ui-mode="<\?= uiMode \?>" data-sidebar-tabs="texts voices lexicon">/);
+  assert.match(PREFS, /<div class="preferences-dialog" data-ui-mode="<\?= uiMode \?>" data-sidebar-tabs="texts voices lexicon" inert>/);
   // A hidden sub-tab that was open gives way to Texts; arrow keys skip hidden ones.
   const sync = PREFS_JS.match(/function syncSidebarTabsUi_\(\) \{[\s\S]*?\n    \}/)[0];
   assert.match(sync, /data-workflow="texts"/);

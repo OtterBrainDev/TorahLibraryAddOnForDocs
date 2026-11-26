@@ -162,3 +162,35 @@ test('a scan whose settings cannot be read says nothing changed, and sends nothi
   assert.deepEqual(env.links, [], 'no link is written');
   assert.equal(env.total(), 1, 'one refused read, not retried');
 });
+
+test('Preferences opens with one private snapshot for each account on a shared Doc', () => {
+  const owner = load({ stored: { nekudot: 'true', 'document_preferences_shared': '{"values":{"source_notes_mode":"inline"}}' } });
+  const collaborator = load({ stored: { nekudot: 'false' } });
+  for (const env of [owner, collaborator]) {
+    const context = env.context;
+    context.DocumentApp.getActiveDocument = () => ({ getId: () => 'shared', getActiveTab: () => ({ getId: () => 'tab' }) });
+    context.selectionTextHash_ = (value) => value;
+    const template = { evaluate: () => ({ setTitle() { return this; }, setWidth() { return this; }, setHeight() { return this; } }) };
+    context.HtmlService.createTemplateFromFile = () => template;
+
+    context.preferencesPopup();
+    env.popup = JSON.parse(template.appConfigJson).preferencesBootstrap;
+    assert.equal(env.popup.key, 'document_preferences_shared');
+    assert.equal(env.reads.getProperties, 1, 'only one private settings snapshot');
+    assert.equal(env.reads.getProperty, 1, 'mode is the only other per-key lookup');
+  }
+  assert.equal(owner.popup.preferences.source_notes_mode, 'inline');
+  assert.equal(collaborator.popup.preferences.source_notes_mode, 'separate');
+  assert.equal(collaborator.popup.preferences.nekudot, 'false');
+  assert.equal(collaborator.popup.profiles.active, 'p1');
+});
+
+test('document identity can be unavailable while the current user settings still load', () => {
+  const { context, reads } = load({ stored: { nekudot: 'false' } });
+  context.DocumentApp.getActiveDocument = () => { throw new Error('Docs context unavailable'); };
+  const result = context.getDocumentPreferenceProfile();
+  assert.equal(result.key, '');
+  assert.equal(result.preferences.nekudot, 'false');
+  assert.equal(result.hasOverrides, false);
+  assert.equal(reads.getProperties, 1);
+});
