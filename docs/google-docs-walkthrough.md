@@ -504,8 +504,11 @@ not saved named profile snapshots.
 | **🧪 Experimental** | Optional in-progress features such as Surprise Me. |
 
 **Save & Close** saves your changes to the profile selected on the left and
-shows what changed. **This Document** is selected by default. Use **Save changes to this document**
-to save and keep editing. The **🡆 Update
+shows what changed. **This Document** is selected by default. Use **💾 Save**
+to save and keep editing. Its tooltip shows where the changes will be saved.
+The **✕ Close Preferences** button beside the Preferences heading and Escape
+from within the form offer Save & Close, Don’t save, and Cancel when there
+are unsaved edits. The **🡆 Update
 Sidebar Preview** button sends your insertion settings to an open Texts
 preview for the current sidebar session.
 
@@ -540,7 +543,7 @@ Use the profile list on the left in either interface mode.
   settings. **+ New profile** copies the reusable profile in use. Use the
   name field, pencil and trash in **Details** to rename or delete a named profile.
 - Use **⇅ Import/Export** in the Details tab to transfer reusable settings.
-  **Restore Factory preset** applies the 1.0-style settings to the reusable
+  **🏭 Restore Factory preset** applies the 1.0-style settings to the reusable
   profile in use and shared account settings, including Simple mode.
 - The sidebar’s **Insertion Options → Profile** switches reusable profiles.
   Saved document overrides continue to apply. Temporary sidebar overrides

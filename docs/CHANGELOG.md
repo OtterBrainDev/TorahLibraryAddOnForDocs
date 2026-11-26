@@ -12,9 +12,10 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 - **Preferences.** A profile rail in both modes gives each Google Doc its
   own saved overrides, alongside the built-in User Profile and reusable named
-  profiles. The footer lets you save without closing, save and close, or
-  update the open Texts preview. The Details tab groups the rename field,
-  profile actions, Import/Export, and reset options. Clone Account Settings
+  profiles. The footer has a 💾 Save icon with a destination tooltip,
+  Save & Close, and a temporary sidebar preview update. The add-on’s close
+  button and Escape ask about unsaved edits. Details groups the rename
+  field, profile actions, Import/Export, and the 🏭 Factory action. Clone Account Settings
   copies the saved User Profile and shared settings into This Document.
   Notes appears immediately below Commentary.
 

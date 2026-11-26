@@ -155,3 +155,7 @@ RPCs remain for open clients from earlier builds.
 The optional session ID on `previewTransliterationWithOverrides` (3) lets the preview read transliteration overrides, dagesh, and the divine name from the same preference layers as insertion. Older clients can still pass two arguments.
 
 **Clone Account Settings** adds `cloneAccountSettingsForDocument(expectedKey)` (1). It copies the fixed User Profile and shared values into the current document, including when a named profile is active, while leaving the active profile and other documents alone. The document preference test covers replacement, stale targets, and independence from later shared edits.
+
+| Symptom | Root cause | Fix / regression |
+| --- | --- | --- |
+| An in-dialog dismissal could lose pending Preferences edits | Closing and switching profiles used different paths | The add-on close button and Escape reuse the profile-switch prompt. The UI test covers cancel, discard, clean close, and waiting for the save callback. The live checklist tracks the Google Docs title-bar X separately. |

@@ -116,9 +116,10 @@ by your browser from us.
 settings, default insertion options — are stored using Google's
 `PropertiesService` user storage. This is per-user, per-add-on storage
 managed by Google. It is not readable by other add-ons, by other users, or by
-the add-on's authors.
+the add-on's authors. Settings saved for This Document use a hashed
+document identifier in the same private storage.
 
-**Settings files.** Preferences → ⇅ Import/Export → *Export settings file* saves
+**Settings files.** Preferences → Details → ⇅ Import/Export → *Export settings file* saves
 your preference settings (no searches, document text or account details) to
 a file on your own computer, built from your preferences by Google's Apps
 Script service and downloaded by your browser. Who receives the file is up
@@ -185,11 +186,9 @@ without any of that data.
 ## 6. Data retention and deletion
 
 Apart from the browser-side sidebar history described in §3, the add-on
-retains only your preference settings. To delete them:
-
-- Use **Preferences → Reset To Defaults** to restore defaults, or
-- Uninstall the add-on. Google removes the add-on's `PropertiesService`
-  storage when you uninstall it.
+retains only your preference settings. **Preferences → Details → Reset
+options** replaces saved settings in the selected scope. Uninstalling the
+add-on removes its `PropertiesService` storage.
 
 Cached sidebar session state expires on its own within 6 hours, and the
 Session Library window's hand-off (§3) is deleted when the sidebar collects it

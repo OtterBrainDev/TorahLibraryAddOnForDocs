@@ -102,18 +102,17 @@ which keeps its current value, including any existing session override.
 Use **Revert** before hiding controls if the class should start from saved
 defaults.
 
-**Profiles** (the column beside the tabs): **+ New profile** copies your
-settings into a second profile, say *Beginners* with transliteration on, and
-your first becomes *My settings*. Click one to switch; with two or more, the
-sidebar's **📰 Insertion Options** has a **Profile** list for switching
-mid-lesson. A profile holds how sources look; the menu, the sidebar, search
-and linking stay the same in each.
+**Profiles** (left of the settings tabs) starts on **This Document**. The
+**💾 Save** tooltip shows where the changes go. Select **User Profile** for
+account defaults, or use **+ New profile** to copy the reusable profile in
+use and create a named set, such as *Beginners* with transliteration on.
+With two or more reusable profiles, **📰 Insertion Options → Profile**
+switches between them in the sidebar. The document’s saved overrides still apply.
 
-**⇅ Import/Export** beside Interface works in both modes. In Everything,
-select the profile to export or update, even if inactive. Export a class
-profile as JSON; choose a file, preview changes and apply the checked groups.
-Shared account-wide settings are optional. The 🖉 action above Profiles
-renames the profile in use.
+Open **Details** to rename or delete a named profile, clone the User Profile
+into This Document, or open **⇅ Import/Export**. In Everything, select any
+reusable profile to export or update. Preview imports before applying checked
+groups. Shared account-wide settings are optional.
 
 > Demo tip: set Layout → Title style to Heading 3 now. You'll use it in step 5.
 

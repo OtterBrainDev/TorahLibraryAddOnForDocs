@@ -39,7 +39,7 @@ const fn = (source, name) => {
   return source.match(new RegExp(`function ${name}\\([^)]*\\) \\{[\\s\\S]*?\\n${indent}\\}`))[0];
 };
 
-test('Profiles is a tab in both modes and owns the persistent actions', needsDom, () => {
+test('Details is available in both modes and the footer holds the save actions', needsDom, () => {
   const { document } = parseHTML(PREFS);
   const tab = document.querySelector('#pref-tab-profiles-btn');
   const panel = document.getElementById(tab.getAttribute('aria-controls'));
@@ -51,11 +51,14 @@ test('Profiles is a tab in both modes and owns the persistent actions', needsDom
   assert.equal(panel.querySelectorAll('.pref-preset-button').length, 3);
   assert.equal(panel.querySelector('[data-preset=factory]').title, 'Factory applies the 1.0-style preset to the active profile and shared settings, including Simple mode.');
   assert.ok(panel.querySelector('[data-preset=factory]').classList.contains('danger'));
+  assert.equal(panel.querySelector('[data-preset=factory]').textContent, '🏭');
+  assert.equal(panel.querySelector('[data-preset=factory]').getAttribute('aria-label'), 'Restore Factory preset');
   assert.match(fn(PROFILES_JS, 'askProfileQuestion_'), /ok\.classList\.toggle\('danger', !!question\.danger\)/);
   assert.doesNotMatch(PREFS_CSS, /not\(\[data-ui-mode="full"\]\) \.pref-profile-rail/);
   const footer = document.querySelector('.save-bar');
   assert.equal(footer.querySelectorAll('button').length, 3);
-  assert.equal(footer.querySelector('.save-preferences-button').textContent, 'Save changes to this document');
+  assert.equal(footer.querySelector('.save-preferences-button').textContent, '💾');
+  assert.equal(document.querySelector('#preferences-dismiss').getAttribute('aria-label'), 'Close Preferences');
   assert.equal(footer.querySelector('.apply-sidebar-preferences-button').title, 'Update Sidebar Preview');
   assert.equal(footer.querySelector('.apply-sidebar-preferences-button').textContent, '🡆');
   assert.equal(footer.querySelector('.close-preferences-button.blue').textContent, 'Save & Close');
@@ -66,7 +69,12 @@ test('a profile name is drawn as text', needsDom, () => {
   const context = vm.createContext({ document, window });
   vm.runInContext(`
     function byId(id) { return document.getElementById(id); }
-    function $(selector) { return { text: value => { document.querySelector(selector).textContent = value; }, attr() {} }; }
+    function $(selector) {
+      return { attr: (name, value) => {
+        const attributes = typeof name === 'string' ? { [name]: value } : name;
+        Object.entries(attributes).forEach(([key, val]) => document.querySelector(selector).setAttribute(key, val));
+      } };
+    }
     var editingDocument_ = false;
     var documentProfile_ = { key: 'doc' };
     var settingsProfiles_ = { active: 'p2', max: 10, profiles: [{ id: 'p1', name: 'User Profile' }, { id: 'p2', name: '<img src=x onerror=alert(1)>' }] };
@@ -91,9 +99,14 @@ test('a profile name is drawn as text', needsDom, () => {
   vm.runInContext('editingDocument_ = true; renderSettingsProfiles_();', context);
   assert.equal(document.querySelector('.pref-profile-item[aria-current=true]').textContent, 'This Document');
   assert.equal(document.getElementById('pref-profile-delete').disabled, true);
+  const save = document.querySelector('.save-preferences-button');
+  assert.equal(save.title, 'Save changes to this document');
   vm.runInContext('editingDocument_ = false; settingsProfiles_.active = "p1"; renderSettingsProfiles_();', context);
   assert.equal(document.getElementById('pref-profile-rename').disabled, true);
   assert.equal(document.getElementById('pref-profile-name-field').hidden, true);
+  assert.equal(save.title, 'Save changes to “User Profile”');
+  assert.equal(save.getAttribute('aria-label'), save.title);
+  assert.equal(save.textContent, '💾');
   // No HTML sink anywhere in the profile code, here or in the sidebar.
   assert.doesNotMatch(PROFILES_JS, /innerHTML|\.html\(/);
   const picker = STATE_JS.slice(STATE_JS.indexOf('// ── Settings profiles'), STATE_JS.indexOf('function saveSessionAsDefaults'));
@@ -106,8 +119,8 @@ test('a switch or a new profile asks about unsaved changes first; a rename does 
   assert.match(fn(PROFILES_JS, 'submitProfileName_'), /if \(profileNameMode_ !== 'create'\) \{[\s\S]*?renameSettingsProfile\(id, name\);\s*return;\s*\}\s*withUnsavedChangesHandled_\(/);
   const ask = fn(PROFILES_JS, 'withUnsavedChangesHandled_');
   assert.match(ask, /if \(!formHasUnsavedChanges_\(\)\) \{ proceed\(\); return; \}/);
-  assert.match(ask, /ok: 'Save and continue'/);
-  assert.match(ask, /onOk: function \(\) \{ saveFormThen_\(proceed\); \}/);
+  assert.match(ask, /ok: saveAction \? saveAction\.label : 'Save and continue'/);
+  assert.match(ask, /onOk: function \(\) \{ saveFormThen_\(saveAction \? saveAction\.onSave : proceed\); \}/);
   assert.match(ask, /onAlt: proceed/);
   // Deleting asks its own question, which says unsaved changes are dropped.
   assert.match(fn(PROFILES_JS, 'deleteActiveProfile_'), /Changes not saved here are dropped\./);
@@ -116,6 +129,48 @@ test('a switch or a new profile asks about unsaved changes first; a rename does 
   assert.match(fn(PROFILES_JS, 'saveFormThen_'), /applyPreferencesToForm\(result.preferences\)/);
   assert.match(fn(PROFILES_JS, 'saveFormThen_'), /saveDocumentPreferenceProfile\(preferenceObject, documentProfile_\.key\)/);
   assert.match(fn(PROFILES_JS, 'saveFormThen_'), /savePreferenceDefaults\(preferenceObject, activeProfile_\(\).id\)/);
+});
+
+test('closing Preferences offers save, discard and cancel only with unsaved changes', needsDom, () => {
+  const { document } = parseHTML(PREFS);
+  const calls = [];
+  const context = vm.createContext({ document, calls, google: { script: { host: { close: () => calls.push('close') } } } });
+  vm.runInContext(`
+    function byId(id) { return document.getElementById(id); }
+    function $(selector) { return { prop() {} }; }
+    function setTimeout(callback) { callback(); }
+    function quoted_(name) { return '“' + name + '”'; }
+    function formHasUnsavedChanges_() { return dirty; }
+    function saveFormThen_(next) { calls.push('save'); completeSave = next; }
+    var dirty = true, editingDocument_ = true, preferencesClosing_ = false, completeSave;
+    ${fn(PREFS_JS, 'closePreferences_')}
+    ${fn(PREFS_JS, 'requestPreferencesClose_')}
+    ${fn(PROFILES_JS, 'withUnsavedChangesHandled_')}
+    ${fn(PROFILES_JS, 'askProfileQuestion_')}
+  `, context);
+  const requestClose = () => vm.runInContext('preferencesClosing_ = false; requestPreferencesClose_();', context);
+  const modal = document.querySelector('#profile_modal');
+  requestClose();
+  assert.equal(modal.hidden, false);
+  assert.match(document.querySelector('#profile_modal_message').textContent, /This Document/);
+  assert.equal(document.querySelector('#profile_modal_ok').textContent, 'Save & Close');
+  document.querySelector('#profile_modal_cancel').click();
+  assert.equal(modal.hidden, true);
+  assert.deepEqual(calls, []);
+  requestClose();
+  document.querySelector('#profile_modal_ok').click();
+  assert.deepEqual(calls, ['save'], 'wait for a successful save before closing');
+  vm.runInContext('completeSave();', context);
+  assert.deepEqual(calls, ['save', 'close']);
+  calls.length = 0;
+  requestClose();
+  document.querySelector('#profile_modal_alt').click();
+  assert.deepEqual(calls, ['close'], 'discard closes without a save');
+  calls.length = 0;
+  vm.runInContext('dirty = false;', context);
+  requestClose();
+  assert.equal(modal.hidden, true);
+  assert.deepEqual(calls, ['close'], 'a clean form closes without a prompt');
 });
 
 test('every profile change reloads what it changed and tells an open sidebar', () => {

@@ -19,7 +19,10 @@
     <div class="preferences-dialog" data-ui-mode="<?= uiMode ?>" data-sidebar-tabs="texts voices lexicon">
       <div class="preferences-shell">
         <section class="preferences-toc section-card" aria-label="Preferences sections">
-          <h1>Preferences</h1>
+          <div class="toc-header-row">
+            <h1>Preferences</h1>
+            <button type="button" class="pref-icon-button pref-icon-button--small" id="preferences-dismiss" title="Close Preferences" aria-label="Close Preferences"><span aria-hidden="true">&#x2715;</span></button>
+          </div>
           <p class="section-note">Choose where to save changes. This Document inherits settings from the reusable profile in use until you change them here.</p>
           <!-- Interface mode (server/first-run.gs setUiMode): the one switch for
                what is shown, here, in the sidebar and in the menu. Takes effect
@@ -82,7 +85,7 @@
               <summary>Reset options</summary>
               <button type="button" class="pref-icon-button pref-preset-button" data-preset="document" title="Clone Account Settings" aria-label="Clone Account Settings"><span aria-hidden="true">&#x1f464; → &#x2699;</span></button>
               <button type="button" class="submit pref-preset-button" data-preset="profile">Reset active profile</button>
-              <button type="button" class="submit danger pref-preset-button" data-preset="factory" title="Factory applies the 1.0-style preset to the active profile and shared settings, including Simple mode.">Restore Factory preset</button>
+              <button type="button" class="submit danger pref-preset-button" data-preset="factory" aria-label="Restore Factory preset" title="Factory applies the 1.0-style preset to the active profile and shared settings, including Simple mode."><span aria-hidden="true">&#x1f3ed;</span></button>
             </details>
           </section>
         </div>
@@ -1237,7 +1240,7 @@
         <span id="results" role="status" aria-live="polite"></span>
         <div class="save-actions">
           <button type="button" class="submit apply-sidebar-preferences-button" title="Update Sidebar Preview" aria-label="Update Sidebar Preview"><span aria-hidden="true">&#x1f846;</span></button>
-          <button type="button" class="submit save-preferences-button">Save changes to this document</button>
+          <button type="button" class="submit save-preferences-button" title="Save changes to this document" aria-label="Save changes to this document"><span aria-hidden="true">&#x1f4be;</span></button>
           <button type="button" class="blue submit close-preferences-button">Save &amp; Close</button>
         </div>
       </section>
@@ -1311,10 +1314,10 @@
           </div>
       </dialog>
 
-      <!-- Settings profiles: the one question before a switch, a new profile or
-           a delete (askProfileQuestion_ in preferences/js.html; textContent only). -->
+      <!-- Settings profiles: the one question before a close, profile switch, or
+           destructive action (askProfileQuestion_ in preferences/js.html; textContent only). -->
       <div class="modal-backdrop" id="profile_modal" hidden>
-        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="profile_modal_title">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="profile_modal_title" aria-describedby="profile_modal_message">
           <h2 id="profile_modal_title"></h2>
           <p id="profile_modal_message"></p>
           <div class="modal-actions">
