@@ -33,11 +33,12 @@ function editorBlock(role) {
   return PREFS.slice(start, next > 0 ? Math.min(next, end > 0 ? end : next) : end);
 }
 
-test('Preferences has no Fonts tab; Insertion is the first tab and open', () => {
+test('Preferences has no Fonts tab; Profiles is first and Insertion starts open', () => {
   assert.doesNotMatch(PREFS, /pref-tab-fonts|data-pref-tab="fonts"/);
   assert.doesNotMatch(PREFS_JS, /pref-tab-fonts|showTitleLanguage|onMoreFontSettings/);
   const first = PREFS.match(/<button type="button" id="(pref-tab-[a-z]+-btn)"[^>]*aria-selected="(true|false)"/);
-  assert.deepEqual([first[1], first[2]], ['pref-tab-insertion-btn', 'true']);
+  assert.deepEqual([first[1], first[2]], ['pref-tab-profiles-btn', 'false']);
+  assert.match(PREFS, /id="pref-tab-insertion-btn"[^>]*aria-selected="true"/);
   assert.match(PREFS, /<div class="pref-tab-panel" id="pref-tab-insertion" role="tabpanel" aria-labelledby="pref-tab-insertion-btn">/);
 });
 

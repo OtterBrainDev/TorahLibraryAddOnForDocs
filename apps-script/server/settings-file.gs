@@ -223,7 +223,7 @@ function planSettingsImport_(file, stored, defaults, currentUiMode, groupIds) {
 
 function settingsImportContext_() {
   return {
-    stored: readUserPreferenceObject_(),
+    stored: getAccountPreferences(),
     defaults: getDefaultPreferences(),
     uiMode: getUiMode_()
   };

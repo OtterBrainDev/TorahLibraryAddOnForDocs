@@ -33,9 +33,19 @@
       "definedIn": "apps-script/server/search.gs"
     },
     {
+      "name": "getAccountPreferences",
+      "arity": 0,
+      "definedIn": "apps-script/server/preferences.gs"
+    },
+    {
       "name": "getDefaultPreferences",
       "arity": 0,
       "definedIn": "apps-script/server/preferences.gs"
+    },
+    {
+      "name": "getDocumentPreferenceProfile",
+      "arity": 0,
+      "definedIn": "apps-script/server/document-preferences.gs"
     },
     {
       "name": "getInsertionPointFont",
@@ -216,6 +226,11 @@
       "name": "restorePreferencePreset",
       "arity": 2,
       "definedIn": "apps-script/server/factory-preferences.gs"
+    },
+    {
+      "name": "saveDocumentPreferenceProfile",
+      "arity": 2,
+      "definedIn": "apps-script/server/document-preferences.gs"
     },
     {
       "name": "savePreferenceDefaults",

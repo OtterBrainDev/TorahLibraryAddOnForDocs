@@ -24,9 +24,9 @@ Licensed under the MIT License. See repository LICENSE.md.
 //
 // Storage (UserProperties; not in SETTINGS, so setPreferences and a settings
 // file can never write it):
-//   settings_profiles       {"active": "p2", "profiles": [{"id": "p1", "name": "My settings"}, …]}
+//   settings_profiles       {"active": "p2", "profiles": [{"id": "p1", "name": "Account"}, …]}
 //                           "" until the first profile is made, when the
-//                           settings in use become "My settings".
+//                           settings in use become "Account".
 //   settings_profile_<id>   {"schema": "27", "values": {<profile key>: <stored string>}}
 //                           for each profile not in use. A snapshot from an
 //                           older schema is migrated when it comes back
@@ -41,7 +41,7 @@ var SETTINGS_PROFILES_KEY_ = 'settings_profiles';
 var SETTINGS_PROFILE_PREFIX_ = 'settings_profile_';
 var SETTINGS_PROFILES_MAX_ = 10;
 var SETTINGS_PROFILE_NAME_MAX_ = 40;
-var SETTINGS_PROFILE_FIRST_NAME_ = 'My settings';
+var SETTINGS_PROFILE_FIRST_NAME_ = 'Account';
 // What the settings in use are called before any profile is made.
 var SETTINGS_PROFILE_IMPLICIT_ID_ = 'p1';
 
@@ -64,18 +64,24 @@ function readProfileIndex_(raw) {
       if (!entry || typeof entry.id !== 'string' || !/^p\d{1,6}$/.test(entry.id) || seen[entry.id]) return;
       var name = cleanProfileName_(entry.name);
       if (!name) return;
+      if (entry.id === SETTINGS_PROFILE_IMPLICIT_ID_) name = SETTINGS_PROFILE_FIRST_NAME_;
       seen[entry.id] = true;
       profiles.push({ id: entry.id, name: name });
     });
   }
   if (!profiles.length) return { active: null, profiles: [] };
   var active = parsed.active && seen[parsed.active] ? parsed.active : profiles[0].id;
-  return { active: active, profiles: profiles.slice(0, SETTINGS_PROFILES_MAX_) };
+  // Older builds allowed Account to be deleted. Restore the reserved slot
+  // without replacing any remaining named profiles or their snapshots.
+  if (!seen[SETTINGS_PROFILE_IMPLICIT_ID_]) {
+    profiles.unshift({ id: SETTINGS_PROFILE_IMPLICIT_ID_, name: SETTINGS_PROFILE_FIRST_NAME_ });
+  }
+  return { active: active, profiles: profiles };
 }
 
 /**
  * What the client is shown: always at least one profile. With none made, the
- * settings in use are listed as "My settings", marked `implicit`.
+ * settings in use are listed as "Account", marked `implicit`.
  */
 function publicProfileIndex_(index) {
   if (!index.profiles.length) {
@@ -95,6 +101,7 @@ function cleanProfileName_(name) {
 function checkProfileName_(name, index, exceptId) {
   var clean = cleanProfileName_(name);
   if (!clean) throw new Error('Give the profile a name.');
+  if (/^(account|this document)$/i.test(clean)) throw new Error('That name is reserved for a built-in profile.');
   var taken = index.profiles.some(function (p) {
     return p.id !== exceptId && p.name.toLowerCase() === clean.toLowerCase();
   });
@@ -176,7 +183,7 @@ function planProfileSwitch_(stored, defaults, targetId) {
 /**
  * The writes for a new profile, which starts as a copy of the settings in use
  * and becomes the one in use (so nothing the person sees changes). The first
- * one also turns the settings in use into "My settings".
+ * one also turns the settings in use into "Account".
  */
 function planProfileCreate_(stored, defaults, name) {
   var index = readProfileIndex_(stored[SETTINGS_PROFILES_KEY_]);
@@ -198,9 +205,7 @@ function planProfileCreate_(stored, defaults, name) {
 
 function planProfileRename_(stored, id, name) {
   var index = readProfileIndex_(stored[SETTINGS_PROFILES_KEY_]);
-  if (!index.profiles.length && id === SETTINGS_PROFILE_IMPLICIT_ID_) {
-    index = { active: id, profiles: [{ id: id, name: SETTINGS_PROFILE_FIRST_NAME_ }] };
-  }
+  if (id === SETTINGS_PROFILE_IMPLICIT_ID_) throw new Error('Account cannot be renamed.');
   var target = index.profiles.filter(function (p) { return p.id === id; })[0];
   if (!target) throw new Error('That profile no longer exists. Close Preferences and open it again.');
   target.name = checkProfileName_(name, index, id);
@@ -218,7 +223,7 @@ function planProfileDelete_(stored, defaults, id) {
   if (!index.profiles.some(function (p) { return p.id === id; })) {
     throw new Error('That profile no longer exists. Close Preferences and open it again.');
   }
-  if (index.profiles.length < 2) throw new Error('You need at least one profile.');
+  if (id === SETTINGS_PROFILE_IMPLICIT_ID_) throw new Error('Account cannot be deleted.');
   var set = {};
   var remove = [SETTINGS_PROFILE_PREFIX_ + id];
   if (index.active === id) {
@@ -242,7 +247,8 @@ function applyProfilePlan_(plan) {
   }
   return {
     profiles: publicProfileIndex_(readProfileIndex_(props.getProperty(SETTINGS_PROFILES_KEY_))),
-    preferences: getAccountPreferences()
+    preferences: getAccountPreferences(),
+    documentPreferences: getPreferences()
   };
 }
 

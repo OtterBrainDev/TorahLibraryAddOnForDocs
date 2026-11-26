@@ -135,7 +135,7 @@ function writeActiveProfileDefaults_(expectedProfile, values, preset) {
   }
   props.setProperties(changes);
   rebuildMenuQuietly_();
-  return { preferences: getAccountPreferences(), uiMode: getUiMode_() };
+  return { preferences: getAccountPreferences(), documentPreferences: getPreferences(), uiMode: getUiMode_() };
 }
 
 function savePreferenceDefaults(preferences, expectedProfile) {
