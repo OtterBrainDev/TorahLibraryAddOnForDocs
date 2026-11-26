@@ -101,7 +101,7 @@ function updateMultiSelectPreviewNotice() {
   });
   $notice.append($list);
   $notice.append($('<span></span>').text('The preview shows one translation at a time: remove the others to preview it.'));
-  $('.suggestions').empty().append($notice);
+  $('.suggestions').not('.voices-suggestions').empty().append($notice);
 }
 
 // Called after a multi-version insert reports translations the server skipped
@@ -452,10 +452,17 @@ function updatePreviewCommentaryHelp(dataIn, prepared) {
 // verse numbers/chapter headings that the preview has never displayed.
 // Empty segments occupy their original positions; unsupported shapes use
 // the whole-passage preview, just as buildAlignedLinePairs_ falls back.
-function previewAlignedSourcePairs_(dataIn) {
+function previewAlignedSourcePairs_(dataIn, pointedHebrew) {
   if (!dataIn || !Array.isArray(dataIn.he) || !Array.isArray(dataIn.text) ||
       !hasRenderableText(dataIn.he) || !hasRenderableText(dataIn.text)) return null;
   var pairs = [];
+  var sourceAligned = Array.isArray(pointedHebrew) && pointedHebrew.length === dataIn.he.length &&
+    dataIn.he.every(function (chapter, c) {
+      var raw = pointedHebrew[c];
+      return Array.isArray(chapter)
+        ? Array.isArray(raw) && raw.length === chapter.length && raw.every(function (verse) { return typeof verse === 'string'; })
+        : typeof raw === 'string';
+    });
   var count = Math.max(dataIn.he.length, dataIn.text.length);
   for (var c = 0; c < count; c++) {
     var he = dataIn.he[c], en = dataIn.text[c];
@@ -467,25 +474,49 @@ function previewAlignedSourcePairs_(dataIn) {
           (!Array.isArray(en) && en !== undefined && en !== '')) return null;
       var heChapter = Array.isArray(he) ? he : [];
       var enChapter = Array.isArray(en) ? en : [];
+      var rawChapter = sourceAligned && Array.isArray(he) ? pointedHebrew[c] : heChapter;
       var verses = Math.max(heChapter.length, enChapter.length);
       for (var i = 0; i < verses; i++) {
         if ((heChapter[i] !== undefined && typeof heChapter[i] !== 'string') ||
             (enChapter[i] !== undefined && typeof enChapter[i] !== 'string')) return null;
-        pairs.push({ he: heChapter[i] || '', en: enChapter[i] || '' });
+        pairs.push({ he: heChapter[i] || '', en: enChapter[i] || '', heRaw: rawChapter[i] || '' });
       }
     } else {
       if ((he !== undefined && typeof he !== 'string') ||
           (en !== undefined && typeof en !== 'string')) return null;
-      pairs.push({ he: he || '', en: en || '' });
+      pairs.push({ he: he || '', en: en || '', heRaw: (sourceAligned ? pointedHebrew[c] : he) || '' });
     }
   }
   return pairs.length ? pairs : null;
 }
 
-function renderPreviewHTML(dataIn, inputTitle) {
+function renderPreviewHTML(dataIn, inputTitle, transliterationSources) {
   var mode = $('.output-mode-selection').val();
   var layout = $('.bilingual-layout-selection').val() || 'he-right';
+  var pointedHebrew = dataIn.heTransliterationSource === undefined ? dataIn.he : dataIn.heTransliterationSource;
+  var transliterationOn = transliterationSources && mode !== 'en' &&
+    $('.include-transliteration').is(':checked') && hasRenderableText(pointedHebrew);
+  var position = transliterationOn && mode === 'both' && layout !== 'he-top'
+    ? ccNormalizeTranslitPosition(effectivePreferences.transliteration_position) : 'below';
 
+  function transliterationSlot(source) {
+    if (!transliterationOn) return '';
+    transliterationSources.push(source);
+    return "<div class='preview-transliteration' dir='ltr'></div>";
+  }
+
+  function tableRow(he, en, transliteration) {
+    var heCell = "<td class='preview-he'>" + he + (position === 'below' ? transliteration : '') + '</td>';
+    var enCell = '<td>' + en + '</td>';
+    if (position !== 'below') {
+      var trCell = '<td>' + transliteration + '</td>';
+      heCell = position === 'left' ? trCell + heCell : heCell + trCell;
+    }
+    return '<tr>' + (layout === 'he-left' ? heCell + enCell : enCell + heCell) + '</tr>';
+  }
+
+  var columnLabel = position === 'below' ? '' : '<span class="preview-meta">Transliteration</span>';
+  var tableClass = position === 'below' ? '' : ' preview-three-columns';
   var emphasisMode = ccNormalizeEmphasisMode($('.source-emphasis-mode').val());
   var notesMode = ccNormalizeNotesMode($('.source-notes-mode').val());
   var lineMarkers = Boolean($('.wants-pesukim').prop('checked'));
@@ -497,12 +528,13 @@ function renderPreviewHTML(dataIn, inputTitle) {
   updatePreviewCommentaryHelp(dataIn, prepared);
   var translationProfile = prepared.commentaryPrepared ? 'none' : sourceCommentaryProfile_(prepared);
   var alignedPairs = mode === 'both' && $('.wants-aligned-rows').prop('checked')
-    ? previewAlignedSourcePairs_(prepared) : null;
+    ? previewAlignedSourcePairs_(prepared, pointedHebrew) : null;
   if (alignedPairs) {
     // Each insertion row has its own Notes block and marker labels. Reading
     // the whole passage here would give repeated labels different numbers.
     var renderedPairs = alignedPairs.map(function (pair) {
       return {
+        heRaw: pair.heRaw,
         he: processSourceText_(pair.he, { commentaryProfile: 'none', notesMode: notesMode, extendedGemara: !!extendedGemara }).html,
         en: previewTranslationEmphasisHtml(pair.en, emphasisMode, false, extendedGemara,
           translationProfile, notesMode, prepared.commentaryPunctuationStripped)
@@ -514,17 +546,14 @@ function renderPreviewHTML(dataIn, inputTitle) {
       return "<div class='preview-stack preview-aligned'>" + heMeta + enMeta + renderedPairs.map(function (pair) {
         return "<div class='preview-line'>" +
           (pair.he ? "<div class='preview-stack-block preview-he'>" + pair.he + '</div>' : '') +
+          transliterationSlot(pair.heRaw) +
           (pair.en ? "<div class='preview-stack-block'>" + pair.en + '</div>' : '') + '</div>';
       }).join('') + '</div>';
     }
-    var header = layout === 'he-left'
-      ? "<td class='preview-he'>" + heMeta + '</td><td>' + enMeta + '</td>'
-      : '<td>' + enMeta + "</td><td class='preview-he'>" + heMeta + '</td>';
-    return "<table class='preview-table preview-aligned'><tr>" + header + '</tr>' + renderedPairs.map(function (pair) {
-      var heCell = "<td class='preview-he'>" + pair.he + '</td>';
-      var enCell = '<td>' + pair.en + '</td>';
-      return '<tr>' + (layout === 'he-left' ? heCell + enCell : enCell + heCell) + '</tr>';
-    }).join('') + '</table>';
+    return "<table class='preview-table preview-aligned" + tableClass + "'>" +
+      tableRow(heMeta, enMeta, columnLabel) + renderedPairs.map(function (pair) {
+        return tableRow(pair.he, pair.en, transliterationSlot(pair.heRaw));
+      }).join('') + '</table>';
   }
   // Both strings contain only the shared processor's escaped text and its
   // own b/i/sup/sub/br tags. Notes are independent of Commentary in both roles.
@@ -541,7 +570,7 @@ function renderPreviewHTML(dataIn, inputTitle) {
 
   if (mode === 'he') {
     return buildPreviewMeta(dataIn.heRef, dataIn) +
-      "<div class='preview-he'>" + heHtml + "</div>";
+      "<div class='preview-he'>" + heHtml + "</div>" + transliterationSlot(pointedHebrew);
   }
 
   if (mode === 'en') {
@@ -549,21 +578,18 @@ function renderPreviewHTML(dataIn, inputTitle) {
       "<div>" + enHtml + "</div>";
   }
 
-  var englishCell = "<td>" + buildPreviewMeta(dataIn.ref, inputTitle) + enHtml + "</td>";
-  var hebrewCell = "<td class='preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + heHtml + "</td>";
+  var heContent = buildPreviewMeta(dataIn.heRef, dataIn) + heHtml;
+  var enContent = buildPreviewMeta(dataIn.ref, inputTitle) + enHtml;
 
   if (layout === 'he-top') {
     return "<div class='preview-stack'>" +
-      "<div class='preview-stack-block preview-he'>" + buildPreviewMeta(dataIn.heRef, dataIn) + heHtml + "</div>" +
-      "<div class='preview-stack-block'>" + buildPreviewMeta(dataIn.ref, inputTitle) + enHtml + "</div>" +
-      "</div>";
+      "<div class='preview-stack-block preview-he'>" + heContent + "</div>" +
+      transliterationSlot(pointedHebrew) +
+      "<div class='preview-stack-block'>" + enContent + "</div></div>";
   }
 
-  if (layout === 'he-left') {
-    return "<table class='preview-table'><tr>" + hebrewCell + englishCell + "</tr></table>";
-  }
-
-  return "<table class='preview-table'><tr>" + englishCell + hebrewCell + "</tr></table>";
+  return "<table class='preview-table" + tableClass + "'>" +
+    tableRow(heContent, enContent, transliterationSlot(pointedHebrew)) + '</table>';
 }
 
 
@@ -654,8 +680,9 @@ function updateSuggestion(dataIn, inputTitle) {
   $('.translation-version-control').html(translationInput);
   // Fixed control markup only; edition labels are added with text nodes below.
   $('.hebrew-version-control').html(selectVersionHebrew);
+  var transliterationSources = [];
   // Shared source processor emits escaped text and fixed tags; meta fields are escaped.
-  $('.suggestions').html(renderPreviewHTML(dataIn, inputTitle));
+  $('.suggestions').not('.voices-suggestions').html(renderPreviewHTML(dataIn, inputTitle, transliterationSources));
 
   if (pendingPreferredVersions) {
     var preferredEn = pendingPreferredVersions.en || '';
@@ -1040,7 +1067,7 @@ function updateSuggestion(dataIn, inputTitle) {
   if (orderedTranslationVersions.length > 1) {
     updateMultiSelectPreviewNotice();
   } else if (typeof renderPreviewTransliteration === 'function') {
-    renderPreviewTransliteration(dataIn);
+    renderPreviewTransliteration(transliterationSources);
   }
 }
 

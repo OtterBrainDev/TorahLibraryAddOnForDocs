@@ -918,8 +918,16 @@ function transliterateHebrewHtmlPreservingBasicBreaks(html, schemeKey, options) 
 
 /** The sidebar preview: the stored overrides and "Double dagesh chazak" setting, as an insert reads them. */
 function previewTransliterationWithOverrides(text, schemeKey) {
-  return transliterateHebrewText(text, schemeKey, {
-    keepNiqqud: true,
-    isBiblicalHebrew: false
-  });
+  var options = { keepNiqqud: true, isBiblicalHebrew: false };
+  // Aligned previews send one batch. Preserve empty rows and read the
+  // stored settings once, while older callers can still send one string.
+  if (Array.isArray(text)) {
+    options.overrideMap = getTransliterationOverrides_();
+    options.dageshMode = getStoredDageshMode_();
+    options.divineName = getStoredDivineName_();
+    return text.map(function (segment) {
+      return segment ? transliterateHebrewText(segment, schemeKey, options) : '';
+    });
+  }
+  return transliterateHebrewText(text, schemeKey, options);
 }

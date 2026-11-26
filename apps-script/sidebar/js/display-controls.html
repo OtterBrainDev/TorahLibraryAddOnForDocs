@@ -21,15 +21,14 @@ initInsertionOptions({
   onSelectLayout: function (layout) {
     $('.bilingual-layout-selection').val(layout);
     saveSidebarPreference({ bilingual_layout_default: layout });
-    if (hasResolvedReference && data && data.ref) {
-      updateSuggestion(data, selectedResultSummary ? selectedResultSummary.label : data.ref);
-    }
+    refreshSidebarLivePreview();
     if (typeof applyMultiSelectMode === 'function') applyMultiSelectMode();
   },
   onToggleAlignedRows: function () {
     var $el = $('.wants-aligned-rows');
     $el.prop('checked', !$el.is(':checked'));
     saveSidebarPreference({ bilingual_aligned_rows: $el.is(':checked') });
+    refreshSidebarLivePreview();
   }
 });
 

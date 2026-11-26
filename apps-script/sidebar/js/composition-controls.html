@@ -63,7 +63,6 @@ function _sidebarCompositionOnToggle(key) {
     }, function () {
       updateCompositionCard();
     });
-    scheduleSelectedResultRefresh();
   } else if (key === 'link') {
     var $el = $('.insert-sefaria-link');
     $el.prop('checked', !$el.is(':checked'));
@@ -97,8 +96,8 @@ function _sidebarCompositionOnToggle(key) {
 }
 
 // The three-way choices. Vowels and Cantillation are fetch-time filters, so
-// the selected text is fetched again; Commentary and the transliteration's
-// Position are applied at insert.
+// the selected text is fetched again. Commentary, Notes and transliteration
+// Position can redraw the current text.
 function _sidebarCompositionOnChoice(key, value) {
   var payload;
   if (key === 'vowels') {
@@ -123,6 +122,7 @@ function _sidebarCompositionOnChoice(key, value) {
     saveSidebarPreference({ transliteration_position: effectivePreferences.transliteration_position }, function () {
       updateCompositionCard();
     });
+    if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
     return;
   } else {
     return;
@@ -139,26 +139,20 @@ function _sidebarCompositionOnChoice(key, value) {
 function _sidebarCompositionOnSchemeSelect(value) {
   if (value === 'none') {
     $('.include-transliteration').prop('checked', false);
-    effectivePreferences.transliteration_scheme = getSidebarTransliterationScheme();
     saveSidebarPreference({ include_transliteration_default: false }, function () {
-      effectivePreferences.transliteration_scheme = getSidebarTransliterationScheme();
       updateCompositionCard();
     });
-    scheduleSelectedResultRefresh();
   } else {
     $('.include-transliteration').prop('checked', true);
-    effectivePreferences.transliteration_scheme = value;
     saveSidebarPreference({ include_transliteration_default: true, transliteration_scheme: value }, function () {
-      effectivePreferences.transliteration_scheme = value;
       updateCompositionCard();
     });
-    scheduleSelectedResultRefresh();
   }
   if (typeof refreshSidebarLivePreview === 'function') refreshSidebarLivePreview();
 }
 
-// A change the fetch applies (vowels, cantillation, punctuation,
-// transliteration) needs the selected text fetched again. Add Source waits
+// A change the fetch applies (vowels, cantillation, punctuation) needs
+// the selected text fetched again. Add Source waits
 // for that at once, so the text inserted is never the one fetched before the
 // change; the fetch itself waits until the clicks stop and every session save
 // has landed, so a run of quick changes is one fetch that has them all. (Each
