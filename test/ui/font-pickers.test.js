@@ -7,6 +7,7 @@
 // design decision explained in Help, not a switch or a note in any font UI.
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const vm = require('node:vm');
 
 const { readAppScriptFile } = require('./test-utils');
 
@@ -76,4 +77,17 @@ test('no font UI talks about borrowed marks; Help does', () => {
     .replace(/<!--[\s\S]*?-->/g, '').replace(/^\s*(\/\/|\*).*$/gm, '');
   assert.doesNotMatch(sources, /['"][^'"\n]*\b(borrow|missing marks|cantillation marks)\b[^'"\n]*['"]/i);
   assert.match(readAppScriptFile('help-modal.html'), /Noto Serif Hebrew/);
+});
+
+test('sidebar inheritance says Match formatting even after the document font is known', () => {
+  const adapter = readAppScriptFile('sidebar/js/composition-controls.html');
+  const shared = readAppScriptFile('shared/composition-card/shared.html').replace(/^\s*<script>/, '').replace(/<\/script>\s*$/, '');
+  const context = vm.createContext({});
+  vm.runInContext(shared, context);
+  context._ccConfig = { matchFontLabel: adapter.match(/matchFontLabel: '([^']+)'/)[1] };
+  context._ccDocumentFont = 'Georgia';
+  assert.equal(context._ccFontChipLabel({ font: '', size: '' }, 'translation'), 'Match formatting');
+  assert.equal(context._ccFontChipLabel({ font: '', size: '14' }, 'translation'), 'Match formatting · 14 pt');
+  assert.equal(context._ccFontChipLabel({ font: 'Georgia', size: '' }, 'translation'), 'Georgia');
+  assert.equal(context._ccEffectiveFont({ font: '' }), 'Georgia', 'the sample still previews the inherited font');
 });

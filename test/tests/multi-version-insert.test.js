@@ -309,7 +309,7 @@ test('Hebrew on top with two translations credits the Hebrew edition once, and e
     versionTitles: ['Koren', 'JPS'], bilingualLayout: 'he-top', includeTranslationSourceInfo: true,
   });
   assert.deepEqual(texts(), [
-    'בראשית א:א', 'בְּרֵאשִׁית', 'Hebrew: Miqra according to the Masorah\nLicense: CC-BY-SA',
+    'בראשית א:א', 'בְּרֵאשִׁית', 'Hebrew: Miqra according to the Masorah · License: CC-BY-SA',
     'Genesis 1:1 (Koren)', 'In the beginning', 'Translation: Koren',
     '',
     'Genesis 1:1 (JPS)', 'When God began', 'Translation: JPS',

@@ -68,9 +68,18 @@ function hideBusyOverlay() {
 }
 
 function showInsertWarning(message) {
-  var warningText = String(message || 'Could not insert at the current selection. Place the cursor where you want the source inserted, then try again.').trim();
-  $('.insert-warning').remove();
-  $('.suggestions').prepend("<div class='insert-warning' role='alert' aria-live='assertive'>" + escapeHTML(warningText) + "</div>");
+  $('#sidebar-insert-warning').prop('hidden', false).text(message);
+}
+
+function clearInsertWarning() {
+  $('#sidebar-insert-warning').prop('hidden', true).text('');
+}
+
+function showInsertFailure(error) {
+  hideBusyOverlay();
+  var message = String((error && error.message) || '').trim();
+  showInsertWarning(message ? 'Could not insert the source. ' + message :
+    'Could not confirm the insertion. Check the document and your connection before trying again.');
 }
 
 function buildSefariaOpenUrl() {

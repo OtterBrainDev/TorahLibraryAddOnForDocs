@@ -339,7 +339,7 @@ function writeSefariaMetadataCache_(kind, reference, value) {
 function interpretSefariaRefResponse_(response) {
   if (!response) return { unavailable: true };
   const status = response.getResponseCode ? response.getResponseCode() : 200;
-  if (status === 429 || status >= 500) return { unavailable: true, status: status };
+  if (status >= 400 && status !== 400 && status !== 404) return { unavailable: true, status: status };
   const meta = parseJsonOrNull_(response.getContentText());
   if (status >= 400 || (meta && (meta.is_ref === false || typeof meta.error === 'string'))) {
     return { error: meta && typeof meta.error === 'string' ? meta.error : '' };
@@ -573,12 +573,8 @@ function fetchReference_(safeReference, versions, properties) {
     throw sefariaUnavailableError_();
   }
   const status = response.getResponseCode ? response.getResponseCode() : 200;
-  if (status === 429 || status >= 500) {
-    throw sefariaUnavailableError_(status);
-  }
-  if (status >= 400) {
-    return;
-  }
+  if (status === 400 || status === 404) return;
+  if (status >= 400) throw sefariaUnavailableError_(status);
 
   try {
     const payload = parseJsonOrNull_(response.getContentText());
@@ -612,8 +608,8 @@ function fetchReference_(safeReference, versions, properties) {
     if (error && error.sefariaUnavailable) throw error;
     // Not the URL: the reference can be raw selected document text (Insert
     // Source from Selection), and hard rule 7 keeps that out of the logs.
-    Logger.log(`The system has made a macha'ah in findReference: ${error.message}`)
-    return;
+    Logger.log(`Could not prepare the Sefaria response: ${error.message}`);
+    throw new Error('Could not prepare the source text. Try again or choose a different edition.');
   }
 
 }

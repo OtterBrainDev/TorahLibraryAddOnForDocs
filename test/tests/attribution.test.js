@@ -88,5 +88,6 @@ test('returns structured attribution details', () => {
     sourceDisplay: 'example.com',
     digitization: '',
     license: '',
+    licenseUrl: '',
   });
 });

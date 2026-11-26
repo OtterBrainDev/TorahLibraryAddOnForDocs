@@ -144,3 +144,33 @@ test('sidebar reports policy omissions without marking those editions unavailabl
   assert.equal(env.ctx.translationAvailabilityByRef['Genesis 1:1::Notes'], false, 'actually unavailable editions still update availability');
   assert.deepEqual(Array.from(env.ctx.orderedTranslationVersions), ['Main']);
 });
+
+
+test('insertion failures appear by Add Source, clear the busy state and leave retry available', () => {
+  let busy = false;
+  const env = loadSidebarSearch({ stubs: {
+    showBusyOverlay() { busy = true; }, hideBusyOverlay() { busy = false; },
+    ccNormalizeEmphasisMode: () => 'keep', ccNormalizeNotesMode: () => 'omit',
+    ccNormalizeTranslitPosition: () => 'below', getSidebarTransliterationScheme: () => 'traditional',
+  } });
+  const warning = '#sidebar-insert-warning';
+  env.ctx.hasResolvedReference = true;
+  env.ctx.data = payload();
+  env.dom.val['.output-mode-selection'] = 'en';
+  env.click('#insert-source');
+  assert.equal(busy, true);
+  env.last('insertReference').fail({ message: 'Couldn’t reach Sefaria. Try again in a moment.' });
+  assert.equal(busy, false);
+  assert.equal(env.dom.prop[warning].hidden, false);
+  assert.match(env.dom.text[warning], /Could not insert.*reach Sefaria.*Try again/);
+  assert.equal(env.ctx.hasResolvedReference, true);
+
+  env.ctx.orderedTranslationVersions = ['Notes', 'Main'];
+  env.dom.prop['.translation-version-select'] = { multiple: true };
+  env.click('#insert-source');
+  assert.equal(env.dom.prop[warning].hidden, true);
+  env.last('insertReferenceVersions').fail({});
+  assert.equal(busy, false);
+  assert.equal(env.dom.prop[warning].hidden, false);
+  assert.match(env.dom.text[warning], /Check the document and your connection before trying again/);
+});

@@ -24,7 +24,7 @@ function load() {
     PropertiesService: { getUserProperties: () => ({ getProperty: () => null }) },
   };
   vm.createContext(context);
-  ['apps-script/server/source-text.gs', 'apps-script/server/utils.gs', 'apps-script/server/insertion.gs',
+  ['apps-script/attribution.gs', 'apps-script/server/source-text.gs', 'apps-script/server/utils.gs', 'apps-script/server/insertion.gs',
     'apps-script/server/menu-layout.gs', 'apps-script/server/preferences.gs'].forEach((file) => {
     vm.runInContext(fs.readFileSync(path.join(ROOT, file), 'utf8'), context, { filename: file });
   });
@@ -37,33 +37,62 @@ test('source credit is on by default', () => {
   assert.equal(getDefaultPreferences().include_translation_source_info, true);
 });
 
-test('the Hebrew edition is credited with its own license', () => {
-  const { getHebrewAttributionLines_ } = load();
+function writeCredits(ctx, lines) {
+  const links = [];
+  const paragraph = {
+    text: '',
+    setText(text) { this.text = text; },
+    setAttributes() {},
+    setLeftToRight() {},
+    editAsText() { return { setLinkUrl: (start, end, url) => links.push([this.text.slice(start, end + 1), url]) }; }
+  };
+  ctx.insertAttributionParagraph(paragraph, lines);
+  return { text: paragraph.text, links };
+}
 
-  assert.deepEqual(
-    Array.from(getHebrewAttributionLines_({
-      heVersionTitle: 'Miqra according to the Masorah',
-      heLicense: 'CC-BY-SA',
-    })),
-    ['Hebrew: Miqra according to the Masorah', 'License: CC-BY-SA']
-  );
-  assert.deepEqual(Array.from(getHebrewAttributionLines_({ heVersionTitle: 'Vilna' })), ['Hebrew: Vilna']);
-  assert.deepEqual(Array.from(getHebrewAttributionLines_({ heLicense: 'CC0' })), []);
-  assert.deepEqual(Array.from(getHebrewAttributionLines_(null)), []);
+test('bilingual credit uses two lines and attaches each license to its edition', () => {
+  const ctx = load();
+  const data = {
+    versionTitle: 'JPS', versionSource: 'https://www.jps.org/edition', versionDigitizedBy: 'Sefaria',
+    license: 'CC-BY-NC', heVersionTitle: 'Miqra according to the Masorah', heLicense: 'CC-BY-SA'
+  };
+  const credits = writeCredits(ctx, [
+    ...ctx.getEnglishAttributionLines(data, ctx.translationAttributionLine_),
+    ...ctx.getHebrewAttributionLines_(data),
+  ]);
+  assert.equal(credits.text, 'JPS · Source: jps.org · Digitization: Sefaria · License: CC-BY-NC' +
+    '\nHebrew: Miqra according to the Masorah · License: CC-BY-SA');
+  assert.deepEqual(credits.links, [
+    ['Source: jps.org', 'https://www.jps.org/edition'],
+    ['License: CC-BY-NC', 'https://creativecommons.org/licenses/by-nc/4.0/'],
+    ['License: CC-BY-SA', 'https://creativecommons.org/licenses/by-sa/3.0/']
+  ]);
 });
 
-test('citation lines name both licenses when they differ, one when they agree', () => {
-  const { buildCitationLines } = load();
+test('edition metadata overrides the license destination and unknown licenses stay plain', () => {
+  const ctx = load();
+  const data = {
+    versionTitle: 'An edition', translationVersion: { license: 'Publisher terms', licenseUrl: 'https://example.com/terms' },
+    heVersionTitle: 'Vilna', heLicense: 'Copyright', heLicenseUrl: 'javascript:bad'
+  };
+  const credits = writeCredits(ctx, [
+    ...ctx.getEnglishAttributionLines(data, ctx.translationAttributionLine_),
+    ...ctx.getHebrewAttributionLines_(data),
+  ]);
+  assert.equal(credits.text, 'An edition · License: Publisher terms\nHebrew: Vilna · License: Copyright');
+  assert.deepEqual(credits.links, [['License: Publisher terms', 'https://example.com/terms']]);
+  assert.equal(writeCredits(ctx, ctx.getHebrewAttributionLines_({ heVersionTitle: 'Vilna' })).text, 'Hebrew: Vilna');
+  assert.equal(writeCredits(ctx, ctx.getHebrewAttributionLines_({ heLicense: 'CC0' })).text, '');
+});
+
+test('the optional citation block retains distinct license labels on one metadata line', () => {
+  const ctx = load();
   const base = { ref: 'Genesis 1:1', versionTitle: 'JPS', heVersionTitle: 'Masorah' };
-
-  const differ = Array.from(buildCitationLines(Object.assign({ license: 'CC-BY-NC', heLicense: 'CC-BY-SA' }, base), '', true));
-  assert.ok(differ.includes('Translation license: CC-BY-NC'), differ.join(' | '));
-  assert.ok(differ.includes('Source edition license: CC-BY-SA'), differ.join(' | '));
-
-  const same = Array.from(buildCitationLines(Object.assign({ license: 'CC0', heLicense: 'CC0' }, base), '', true));
-  assert.equal(same.filter((l) => /license/i.test(l)).length, 1, same.join(' | '));
-  assert.ok(same.includes('License: CC0'));
-
-  const heOnly = Array.from(buildCitationLines(Object.assign({ heLicense: 'CC-BY' }, base), '', true));
-  assert.ok(heOnly.includes('License: CC-BY'), heOnly.join(' | '));
+  const credit = (licenses) => writeCredits(ctx, ctx.buildCitationLines({ ...base, ...licenses }, '', true));
+  const differ = credit({ license: 'CC-BY-NC', heLicense: 'CC-BY-SA' });
+  assert.equal(differ.text.split('\n').length, 2);
+  assert.deepEqual(differ.links.map(([label]) => label), ['Translation license: CC-BY-NC', 'Source edition license: CC-BY-SA']);
+  const same = credit({ license: 'CC0', heLicense: 'CC0' });
+  assert.deepEqual(same.links, [['License: CC0', 'https://creativecommons.org/publicdomain/zero/1.0/']]);
+  assert.match(credit({ heLicense: 'CC-BY' }).text, /License: CC-BY$/);
 });
