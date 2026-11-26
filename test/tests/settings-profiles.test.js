@@ -252,3 +252,104 @@ test('a failure is logged by message only, never with a value', () => {
   assert.match(logged[0], /^switchSettingsProfile: /);
   assert.doesNotMatch(logged[0], /nekudot|false/);
 });
+
+
+// The Import/Export modal can address an inactive profile without switching.
+function transferTarget_(ctx, id, includeShared) {
+  const index = ctx.getSettingsProfiles();
+  return { mode: ctx.getUiMode_(), activeId: index.active, profileId: id || index.active, includeShared: !!includeShared };
+}
+function transferFile_(settings, mode) {
+  return JSON.stringify({ format: 'torah-library-settings', formatVersion: 1, prefsSchemaVersion: '33', interfaceMode: mode || 'full', settings });
+}
+
+test('profile export uses the named saved snapshot, not the active form or shared settings', () => {
+  const { ctx, store } = load({ ui_mode: 'full', nekudot: 'false', show_voices_tab: 'false' });
+  ctx.createSettingsProfile('Grade 3');
+  ctx.setPreferences({ nekudot: 'true' });
+  const file = JSON.parse(ctx.exportSettingsForTarget({ nekudot: 'true', hebrew_font: 'not the inactive profile' }, '', transferTarget_(ctx, 'p1')).text);
+  assert.equal(file.name, 'My settings');
+  assert.equal(file.settings.nekudot, 'false');
+  assert.notEqual(file.settings.hebrew_font, 'not the inactive profile');
+  assert.ok(!('show_voices_tab' in file.settings));
+  assert.ok(!('interfaceMode' in file));
+  assert.equal(ctx.getSettingsProfiles().active, 'p2');
+  assert.equal(store.nekudot, 'true');
+  const all = JSON.parse(ctx.exportSettingsForTarget({}, '', transferTarget_(ctx, 'p1', true)).text);
+  assert.equal(all.settings.show_voices_tab, 'false');
+  assert.equal(all.settings.nekudot, 'false');
+});
+
+test('import into an inactive profile changes only its selected settings; active values and interface remain intact', () => {
+  const { ctx, store } = load({ ui_mode: 'full', nekudot: 'true', hebrew_font: 'Arial', show_voices_tab: 'false', show_lexicon_tab: 'false' });
+  ctx.createSettingsProfile('Adult study');
+  ctx.setPreferences({ hebrew_font: 'David Libre' });
+  const target = transferTarget_(ctx, 'p1');
+  const text = transferFile_({ nekudot: 'false', hebrew_font: 'Times New Roman', show_voices_tab: 'true' }, 'simple');
+  const preview = ctx.previewSettingsImportForTarget(text, target);
+  assert.equal(preview.targetName, 'My settings');
+  assert.equal(preview.targetActive, false);
+  assert.equal(preview.ignoredShared, 1);
+  assert.ok(!preview.groups.some(g => g.id === 'menu'));
+  const result = ctx.applySettingsImportForTarget(text, ['text', 'menu'], target);
+  assert.equal(result.affectsActive, false);
+  assert.equal(result.preferences, null);
+  assert.equal(ctx.getSettingsProfiles().active, 'p2');
+  assert.equal(store.nekudot, 'true');
+  assert.equal(store.hebrew_font, 'David Libre');
+  assert.equal(store.show_voices_tab, 'false');
+  assert.equal(store.ui_mode, 'full');
+  const saved = JSON.parse(store.settings_profile_p1).values;
+  assert.equal(saved.nekudot, 'false');
+  assert.equal(saved.hebrew_font, 'Arial');
+  ctx.switchSettingsProfile('p1');
+  assert.equal(store.nekudot, 'false');
+  assert.equal(store.hebrew_font, 'Arial');
+  assert.equal(store.show_voices_tab, 'false');
+});
+
+test('active profile import changes its values without switching profile, while Simple import can include shared settings', () => {
+  const { ctx, store } = load({ ui_mode: 'full', nekudot: 'true', show_voices_tab: 'true' });
+  const text = transferFile_({ nekudot: 'false', show_voices_tab: 'false' }, 'simple');
+  const active = transferTarget_(ctx);
+  const result = ctx.applySettingsImportForTarget(text, ['text', 'menu'], active);
+  assert.equal(result.affectsActive, true);
+  assert.equal(store.nekudot, 'false');
+  assert.equal(store.show_voices_tab, 'true');
+  assert.equal(store.ui_mode, 'full');
+  ctx.setUiMode('simple');
+  const simple = transferTarget_(ctx);
+  const imported = ctx.applySettingsImportForTarget(text, ['menu'], simple);
+  assert.equal(imported.affectsActive, true);
+  assert.equal(store.show_voices_tab, 'false');
+  assert.equal(store.ui_mode, 'simple');
+});
+
+test('shared import is explicit and never changes mode, even if the file specifies one', () => {
+  const { ctx, store } = load({ ui_mode: 'full', show_lexicon_tab: 'true' });
+  ctx.createSettingsProfile('Class');
+  const t = transferTarget_(ctx, 'p1', true);
+  const text = transferFile_({ nekudot: 'false', show_lexicon_tab: 'false' }, 'simple');
+  ctx.applySettingsImportForTarget(text, ['text'], t);
+  assert.equal(store.show_lexicon_tab, 'true');
+  const result = ctx.applySettingsImportForTarget(text, ['menu'], t);
+  assert.equal(result.affectsActive, true);
+  assert.equal(store.show_lexicon_tab, 'false');
+  assert.equal(store.ui_mode, 'full');
+  assert.equal(ctx.getSettingsProfiles().active, 'p2');
+});
+
+test('a stale mode, active profile or deleted target is rejected before any import writes', () => {
+  const { ctx, store, writes } = load({ ui_mode: 'full' });
+  ctx.createSettingsProfile('Class');
+  const t = transferTarget_(ctx, 'p1');
+  ctx.switchSettingsProfile('p1');
+  const before = plain(store);
+  const count = writes.length;
+  assert.throws(() => ctx.applySettingsImportForTarget(transferFile_({ nekudot: 'false' }), ['text'], t), /active profile changed/);
+  assert.deepEqual(plain(store), before);
+  assert.equal(writes.length, count);
+  const missing = transferTarget_(ctx, 'p2');
+  ctx.deleteSettingsProfile('p2');
+  assert.throws(() => ctx.previewSettingsImportForTarget(transferFile_({ nekudot: 'false' }), missing), /no longer available/);
+});

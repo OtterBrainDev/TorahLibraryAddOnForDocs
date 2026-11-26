@@ -466,3 +466,24 @@ test('legacy preset resets active choices, keeps profiles and consent, and skips
   assert.equal(props.store.show_voices_tab, 'true');
   assert.equal(props.store.settings_profiles, 'saved index');
 });
+
+
+test('a Simple/Everything round trip preserves explicit search-tool switches and the actual Texts-only menu', () => {
+  const initial = Object.assign(seededDefaults(), { ui_mode: 'full', show_voices_tab: 'false',
+    show_lexicon_tab: 'false', nekudot: 'false', source_notes_mode: 'separate' });
+  const { context, store } = load(initial);
+  const check = () => {
+    const plan = plain(context.planMenuFromLayout_(store.menu_layout, {
+      voicesEnabled: store.show_voices_tab !== 'false', lexiconEnabled: store.show_lexicon_tab !== 'false'
+    }));
+    const labels = JSON.stringify(plan);
+    assert.ok(labels.includes('Add Sources with Sefaria'));
+    assert.ok(!labels.includes('"Voices"') && !labels.includes('"Lexicon"'));
+    for (const key of ['show_voices_tab', 'show_lexicon_tab', 'nekudot', 'source_notes_mode']) {
+      assert.equal(store[key], initial[key], key + ' was not reset');
+    }
+  };
+  check();
+  context.setUiMode('simple'); check();
+  context.setUiMode('full'); check();
+});

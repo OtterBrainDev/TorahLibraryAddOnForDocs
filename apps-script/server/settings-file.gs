@@ -288,3 +288,121 @@ function applySettingsImport(text, groupIds) {
     menuLayout: PropertiesService.getUserProperties().getProperty('menu_layout') || ''
   };
 }
+
+
+// ── Import/Export modal: explicit target, never a profile switch ────────────
+// Keep the original RPCs above for already-open older dialogs. New callers
+// name the mode and active profile they opened with, plus the selected target.
+// Shared settings remain account-wide; named profiles contain text/look only.
+function settingsTransferContext_(target) {
+  var props = PropertiesService.getUserProperties();
+  var all = props.getProperties() || {};
+  var mode = normalizeUiMode_(all.ui_mode);
+  var index = publicProfileIndex_(readProfileIndex_(all[SETTINGS_PROFILES_KEY_]));
+  var t = target && typeof target === 'object' ? target : {};
+  if (t.mode !== mode || t.activeId !== index.active) {
+    throw new Error('The interface or active profile changed. Close Import/Export and reopen Preferences.');
+  }
+  var id = String(t.profileId || '');
+  var profile = index.profiles.filter(function (p) { return p.id === id; })[0];
+  if (!profile || (mode === 'simple' && id !== index.active)) {
+    throw new Error('That settings target is no longer available. Reopen Import/Export.');
+  }
+  var defaults = getDefaultPreferences();
+  var values = {};
+  settingsFileKeys_().forEach(function (key) {
+    values[key] = all[key] == null ? defaults[key] : all[key];
+  });
+  var active = id === index.active;
+  if (!active) {
+    var raw = all[SETTINGS_PROFILE_PREFIX_ + id];
+    if (!raw) throw new Error('The saved profile could not be read. Nothing was changed.');
+    Object.assign(values, migrateProfileValues_(raw, defaults));
+  }
+  return {
+    props: props, defaults: defaults, stored: values, uiMode: mode,
+    profile: profile, active: active, includeShared: mode === 'simple' || t.includeShared === true
+  };
+}
+
+function exportSettingsForTarget(formValues, name, target) {
+  var c = settingsTransferContext_(target);
+  // Unsaved form values belong only to the active profile. An inactive
+  // profile is exported from its saved snapshot, without activating it.
+  var file = buildSettingsFile_(c.stored, c.active ? formValues : {}, c.defaults, {
+    name: String(name || '').trim() || (c.uiMode === 'full' ? c.profile.name : ''),
+    uiMode: c.uiMode, exportedAt: new Date().toISOString(), schemaVersion: PREFS_SCHEMA_CURRENT_
+  });
+  if (!c.includeShared) {
+    var keys = settingsProfileKeys_();
+    Object.keys(file.settings).forEach(function (key) {
+      if (keys.indexOf(key) < 0) delete file.settings[key];
+    });
+    delete file.interfaceMode;
+  }
+  return { fileName: settingsFileName_(file.name), text: JSON.stringify(file, null, 2),
+    count: Object.keys(file.settings).length };
+}
+
+function planSettingsTransferImport_(text, c, groupIds) {
+  var file = parseSettingsFile_(text, PREFS_SCHEMA_CURRENT_);
+  var profileKeys = settingsProfileKeys_();
+  var known = settingsFileKeys_();
+  var ignoredShared = 0;
+  if (!c.includeShared) {
+    Object.keys(file.settings).forEach(function (key) {
+      if (known.indexOf(key) >= 0 && profileKeys.indexOf(key) < 0) {
+        ignoredShared++;
+        delete file.settings[key];
+      }
+    });
+  }
+  // Import never changes the interface mode. This is a separate UI choice.
+  delete file.interfaceMode;
+  var plan = planSettingsImport_(file, c.stored, c.defaults, c.uiMode, groupIds);
+  plan.ignoredShared = ignoredShared;
+  plan.targetName = c.profile.name;
+  plan.targetActive = c.active;
+  plan.includeShared = c.includeShared;
+  return plan;
+}
+
+function previewSettingsImportForTarget(text, target) {
+  var c = settingsTransferContext_(target);
+  var plan = planSettingsTransferImport_(text, c, null);
+  delete plan.changes;
+  plan.skippedCount = plan.skipped.length;
+  delete plan.skipped;
+  return plan;
+}
+
+function applySettingsImportForTarget(text, groupIds, target) {
+  var c = settingsTransferContext_(target);
+  var groups = (Array.isArray(groupIds) ? groupIds : []).map(String);
+  var plan = planSettingsTransferImport_(text, c, groups);
+  var profileKeys = settingsProfileKeys_();
+  var set = {}, inactiveChanges = {}, sharedChanged = false;
+  Object.keys(plan.changes).forEach(function (key) {
+    if (profileKeys.indexOf(key) >= 0) {
+      if (c.active) set[key] = plan.changes[key];
+      else inactiveChanges[key] = plan.changes[key];
+    } else if (c.includeShared) {
+      set[key] = plan.changes[key];
+      sharedChanged = true;
+    }
+  });
+  // Build and size-check the inactive snapshot before making any writes.
+  // Import only the checked file groups, retaining other profile values.
+  var affectsActive = Object.keys(set).length > 0;
+  if (Object.keys(inactiveChanges).length) {
+    set[SETTINGS_PROFILE_PREFIX_ + c.profile.id] =
+      snapshotProfileValues_(Object.assign({}, c.stored, inactiveChanges), c.defaults);
+  }
+  if (Object.keys(set).length) c.props.setProperties(set);
+  if (sharedChanged) rebuildMenuQuietly_();
+  return {
+    preferences: affectsActive ? getAccountPreferences() : null,
+    applied: Object.keys(plan.changes).length,
+    uiMode: c.uiMode, affectsActive: affectsActive, targetName: c.profile.name
+  };
+}
