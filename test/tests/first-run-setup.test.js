@@ -184,14 +184,14 @@ test('turning a divine name on when substitution is off turns the master switch 
 
 // ── Interface mode and the menu ───────────────────────────────────────────
 
-test('the Simple menu is Texts, Insert from Selection and two quick actions, then Preferences and Help', () => {
+test('the Simple menu is Texts, Insert from Selection and three quick actions, then Preferences and Help', () => {
   const { context } = load();
   const plan = plain(context.planMenuFromLayout_(context.getSimpleMenuLayout_(), { surpriseMeEnabled: true }));
   const labels = plan.map((e) => (e.type === 'submenu' ? `${e.label}: ${e.entries.map((c) => c.label).join(', ')}` : e.label || '---'));
   assert.deepEqual(labels, [
     'Texts',
     'Insert Source from Selection',
-    'Quick Actions: Transform Divine Names, Link Texts with Sefaria',
+    'Quick Actions: Transform Divine Names, Link Texts with Sefaria, Unlink Sources',
     '---',
     'Preferences',
     'Help: How to..., Support, About, Re-run Setup Wizard',

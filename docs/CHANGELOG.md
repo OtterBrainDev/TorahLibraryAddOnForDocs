@@ -10,6 +10,8 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Unlink Sources (schema 35).** The shipped Simple and Factory menus show the action again. It asks before removing Sefaria links from all tabs, including headers, footers, and footnotes. Custom menus keep their choices.
+
 - **Auto-Scale Hebrew (schema 34).** Optional, font-specific enlargement for matched Hebrew body text; explicit formatting, unsupported fonts and Hebrew insertion context are unchanged. Existing users and factory defaults retain the prior behavior (off). See [the measurement method](hebrew-auto-scale.md).
 
 - **Preferences.** A profile rail in both modes gives each Google Doc its

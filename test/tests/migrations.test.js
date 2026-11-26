@@ -684,3 +684,30 @@ test('schema 34 preserves existing sizing and explicit Auto-Scale Hebrew choice'
   enabled.context.migrateToV34_(enabled.userProperties);
   assert.equal(enabled.userProperties.getProperty('auto_scale_hebrew'), 'true');
 });
+
+test('schema 35 exposes Unlink Sources in the old Simple and Factory layouts without rewriting custom menus', () => {
+  const { context, userProperties } = loadMigrations({ prefs_schema_version: '34' });
+  const oldSimple = context.getDefaultMenuLayout_();
+  oldSimple.hidden = ['voices', 'lexicon', 'quick_actions_sidebar', 'unlink_sources', 'gematriya_count', 'surprise_me'];
+  const factory = {
+    top: ['texts', 'voices', 'lexicon', 'insert_from_selection', 'quick_actions', 'link_texts', 'transform_divine_names', '-', 'surprise_me'],
+    quick_actions: ['quick_actions_sidebar', '-', 'unlink_sources', '-', 'gematriya_count'],
+    hidden: ['voices', 'lexicon', 'quick_actions_sidebar', 'unlink_sources', 'gematriya_count', 'surprise_me', 'quick_actions', 'insert_from_selection']
+  };
+  userProperties.setProperty('menu_layout', JSON.stringify(oldSimple));
+  userProperties.setProperty('menu_layout_before_simple', JSON.stringify(factory));
+  context.runUserPreferenceMigrationsIfNeeded_();
+  const simple = JSON.parse(userProperties.getProperty('menu_layout'));
+  assert.ok(!simple.hidden.includes('unlink_sources'));
+  assert.ok(simple.quick_actions.includes('unlink_sources'));
+  const upgradedFactory = JSON.parse(userProperties.getProperty('menu_layout_before_simple'));
+  assert.ok(upgradedFactory.top.includes('unlink_sources'));
+  assert.ok(!upgradedFactory.hidden.includes('unlink_sources'));
+  assert.ok(upgradedFactory.hidden.includes('quick_actions'));
+  assert.equal(context.migrateToV35_(userProperties), false);
+  oldSimple.top.reverse();
+  const custom = JSON.stringify(oldSimple);
+  userProperties.setProperty('menu_layout', custom);
+  assert.equal(context.migrateToV35_(userProperties), false);
+  assert.equal(userProperties.getProperty('menu_layout'), custom);
+});

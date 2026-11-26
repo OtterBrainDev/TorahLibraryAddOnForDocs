@@ -26,7 +26,7 @@ only a profile's keys.
 */
 
 var PREFS_SCHEMA_KEY_ = 'prefs_schema_version';
-var PREFS_SCHEMA_CURRENT_ = '34';
+var PREFS_SCHEMA_CURRENT_ = '35';
 
 function runUserPreferenceMigrationsIfNeeded_() {
   var userProperties = PropertiesService.getUserProperties();
@@ -295,6 +295,7 @@ function applyMigrationsFrom_(userProperties, from) {
   }
   // v34: new optional optical Hebrew scaling, off to preserve existing formatting.
   if (from < 34) migrateToV34_(userProperties);
+  if (from < 35) migrateToV35_(userProperties);
 }
 
 /**
@@ -840,4 +841,31 @@ function migrateToV34_(userProperties) {
   if (userProperties.getProperty('auto_scale_hebrew') != null) return false;
   userProperties.setProperty('auto_scale_hebrew', 'false');
   return true;
+}
+
+/** Restore Unlink Sources in shipped presets without rewriting custom menus. */
+function migrateToV35_(userProperties) {
+  var oldSimple = getDefaultMenuLayout_();
+  oldSimple.hidden = ['voices', 'lexicon', 'quick_actions_sidebar', 'unlink_sources', 'gematriya_count', 'surprise_me'];
+  var oldFactory = {"top":["texts","voices","lexicon","insert_from_selection","quick_actions","link_texts","transform_divine_names","-","surprise_me"],"quick_actions":["quick_actions_sidebar","-","unlink_sources","-","gematriya_count"],"hidden":["voices","lexicon","quick_actions_sidebar","unlink_sources","gematriya_count","surprise_me","quick_actions","insert_from_selection"]};
+  var presets = [oldSimple, oldFactory].map(function (layout) {
+    return JSON.stringify(normalizeMenuLayout_(layout));
+  });
+  var wrote = false;
+  ['menu_layout', 'menu_layout_before_simple'].forEach(function (key) {
+    var stored = userProperties.getProperty(key);
+    if (!stored) return;
+    var layout = normalizeMenuLayout_(stored);
+    var preset = presets.indexOf(JSON.stringify(layout));
+    if (preset < 0) return;
+    layout.hidden = layout.hidden.filter(function (id) { return id !== 'unlink_sources'; });
+    if (preset === 1) {
+      var unlinkIndex = layout.quick_actions.indexOf('unlink_sources');
+      layout.quick_actions.splice(unlinkIndex, 2); // Unlink Sources and the adjacent divider.
+      layout.top.splice(layout.top.indexOf('transform_divine_names') + 1, 0, 'unlink_sources');
+    }
+    userProperties.setProperty(key, JSON.stringify(layout));
+    wrote = true;
+  });
+  return wrote;
 }

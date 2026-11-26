@@ -112,7 +112,7 @@ takes effect at once, without Save). Simple hides, and never removes:
   Texts / Voices / Lexicon tabs, Add Source, Insertion Options and the footer
   buttons stay in both modes.
 - **Menu:** a shorter menu — Texts, Insert Source from Selection, Transform
-  Divine Names, Link Texts with Sefaria, then Preferences and Help.
+  Divine Names, Link Texts with Sefaria, Unlink Sources, then Preferences and Help.
   Switching back to Everything restores the menu you had.
 - **Preferences:** the Search, Linking and 🧪 Experimental tabs and
   the advanced formatting sections (formatting for specific languages, how
@@ -408,9 +408,11 @@ everything). The Session Library is kept in your browser only.
 **Preferences → Sidebar** can leave buttons out of the 🏃 panel; with all three
 off, 🏃 goes too.
 
-Menu-only: **Unlink Sources** removes every sefaria.org link from the
-document; **Gematriya Count** totals the gematria of the selection (or the
-whole document).
+In the add-on menu, **Quick Actions → Unlink Sources** asks before removing
+sefaria.org hyperlinks from all tabs, including headers, footers, and
+footnotes. The Factory preset places **Unlink Sources** directly in the add-on
+menu. Linked words and other hyperlinks stay in place. **Gematriya Count**
+totals the gematria of the selection or whole document.
 
 ## Link Texts with Sefaria
 

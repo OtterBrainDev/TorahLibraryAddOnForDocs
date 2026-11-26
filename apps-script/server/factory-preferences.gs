@@ -113,7 +113,7 @@ const FACTORY_PREFERENCE_VALUES_ = Object.freeze({
   "show_lexicon_tab": "false",
   "sidebar_quick_actions_hidden": "[\"insert_from_selection\",\"transform_divine_names\",\"link_texts\"]",
   "sidebar_options_hidden": "[]",
-  "menu_layout": "{\"top\":[\"texts\",\"voices\",\"lexicon\",\"insert_from_selection\",\"quick_actions\",\"link_texts\",\"transform_divine_names\",\"-\",\"surprise_me\"],\"quick_actions\":[\"quick_actions_sidebar\",\"-\",\"unlink_sources\",\"-\",\"gematriya_count\"],\"hidden\":[\"voices\",\"lexicon\",\"quick_actions_sidebar\",\"unlink_sources\",\"gematriya_count\",\"surprise_me\",\"quick_actions\",\"insert_from_selection\"]}",
+  "menu_layout": "{\"top\":[\"texts\",\"voices\",\"lexicon\",\"insert_from_selection\",\"quick_actions\",\"link_texts\",\"transform_divine_names\",\"unlink_sources\",\"-\",\"surprise_me\"],\"quick_actions\":[\"quick_actions_sidebar\",\"-\",\"gematriya_count\"],\"hidden\":[\"voices\",\"lexicon\",\"quick_actions_sidebar\",\"gematriya_count\",\"surprise_me\",\"quick_actions\",\"insert_from_selection\"]}",
   "insert_from_selection_replace": "true"
 });
 

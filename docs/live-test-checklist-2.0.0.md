@@ -114,7 +114,7 @@ against the screenshot taken before the push.
 
 | # | Check | Expected |
 | --- | --- | --- |
-| D1 | Preferences → **Interface: Simple**, with the sidebar open | At once, without Save or a refresh: the menu is Texts, Insert Source from Selection, Transform Divine Names, Link Texts with Sefaria, then Preferences and Help; the sidebar loses the result sort, ⤦ Restore Corpus and 🧪 (tabs, Add Source, Insertion Options and the footer stay); Preferences hides Search, Linking and 🧪 Experimental |
+| D1 | Preferences → **Interface: Simple**, with the sidebar open | At once, without Save or a refresh: the menu is Texts, Insert Source from Selection, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, then Preferences and Help; the sidebar loses the result sort, ⤦ Restore Corpus and 🧪 (tabs, Add Source, Insertion Options and the footer stay); Preferences hides Search, Linking and 🧪 Experimental |
 | D2 | Back to **Everything** | Your own menu returns; no setting changed; values not yet saved (and Menu Bar edits) are still there |
 | D3 | Preferences → **Sidebar**: switch off **Lexicon** and one Quick Actions button; Save | The Lexicon tab and menu item disappear, as does that sidebar action; switching mode does not re-enable them |
 | D4 | Sidebar tab (Everything): switch off Insertion Options' **Punctuation**; Save | Gone from the sidebar's Insertion Options; still in Preferences and Link Texts; inserts use the saved value |
@@ -122,7 +122,7 @@ against the screenshot taken before the push.
 | D6 | In both modes, confirm Details is first and the Profiles rail stays visible. Switch from This Document to User Profile, create a named profile, change Vowels and save. | User Profile cannot be renamed or deleted. The name field, pencil, and trash operate on named profiles. Import/Export opens from Details beside those icons. Switching with edits asks whether to save them. |
 | D7 | **Advanced**: name it *Test*, **Export settings file**; change Vowels and the Hebrew font, Save; import the file, ticking only *Text and layout* | A `.json` download (if blocked, the text to copy). The import preview lists what each part would change; only Vowels comes back, the font stays |
 | D8 | Import `{"format":"torah-library-settings","formatVersion":1,"prefsSchemaVersion":"99","settings":{}}` | "made by a newer version"; nothing changes |
-| D9 | In both interfaces, open **Profiles → Reset options**. Test **Reset active profile** and **Restore Factory preset** on a test account | Profile reset restores text, layout and appearance. Factory matches the supplied preset, sets Simple and preserves inactive profiles and upload consent |
+| D9 | In both interfaces, open **Details → Reset options**. Test **Reset active profile** and **Restore Factory preset** on a test account | Profile reset restores text, layout and appearance. Factory applies the supplied settings with Unlink Sources visible in the add-on menu. It sets Simple and preserves inactive profiles and upload consent |
 | D10 | **🔁 Refresh** | *Refreshing the sidebar…*; the sidebar reopens from saved defaults |
 | D11 | ⚙︎ in the sidebar footer, three times quickly | *Opening Preferences…* over the sidebar; one Preferences dialog |
 | D12 | Change Notes in This Document and click **🡆 Update Sidebar Preview** with a source previewed. Reopen the sidebar before saving. Use **💾 Save** without closing. Then edit again, use **Save & Close**, reopen the Doc and compare with a second Doc. Click **🏭 Restore Factory preset** and open its confirmation. | Preview updates only the open session. Save & Close identifies the destination and changed setting. The first Doc keeps its saved Notes; a second Doc inherits reusable defaults. Both Factory buttons are dark red, and restoring Factory preserves the first Doc’s explicit overrides. |
@@ -317,7 +317,7 @@ Build one test document containing, in this order:
 | # | Check | Expected |
 | --- | --- | --- |
 | L1 | Select `Genesis 1:1` on its own line; **Insert Source from Selection**; confirm Insert in review | The own-line citation is replaced by the source, titled `Genesis 1:1`, if replacement is enabled. With replacement off the citation stays; inside prose it also stays. No write before Apply. |
-| L2 | Quick Actions → **Unlink Sources** | Removes sefaria.org links, leaves other links alone |
+| L2 | Find **Unlink Sources** under Quick Actions in both modes and directly in the Factory menu. Test a second tab and a child tab, headers, footers and footnotes. Decline once, then confirm. | Declining leaves the Doc unchanged. Confirming removes sefaria.org links across the Doc, keeps text and unrelated links, and reports the number removed. |
 | L3 | Quick Actions → **Gematriya Count**, with Hebrew selected and with nothing selected | A value for the selection, then for the whole document |
 | L4 | Preferences → 🧪 Experimental: turn on Surprise Me. Compare the sidebar's 🧪 card with *Menu → Surprise Me* | The same form; the status says how many were inserted and for which word |
 | L5 | Set Stacked, Line numbers off and Citation on in Preferences; in the sidebar's Insertion Options switch to Right–Left; run Surprise Me | Inserted Stacked, unnumbered, with titles linked and the credit line: the saved defaults, not the sidebar's session change |

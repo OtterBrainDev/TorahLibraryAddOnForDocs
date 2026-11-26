@@ -226,10 +226,10 @@ Preferences (§7) does, and turns Simple mode off at any time.
 ### Menu
 
 Simple mode writes a `menu_layout`: the default layout with
-`"hidden": ["voices", "lexicon", "quick_actions_sidebar", "unlink_sources",
-"gematriya_count", "surprise_me"]` (`getSimpleMenuLayout_`). What remains is
-Texts, Insert Source from Selection, and Quick Actions ▸ Transform Divine Names
-and Link Texts with Sefaria. Preferences and Help are appended by the menu
+`"hidden": ["voices", "lexicon", "quick_actions_sidebar", "gematriya_count",
+"surprise_me"]` (`getSimpleMenuLayout_`). What remains is
+Texts, Insert Source from Selection, and Quick Actions ▸ Transform Divine Names,
+Link Texts with Sefaria, and Unlink Sources. Preferences and Help are appended by the menu
 builder as always. Because the items are `hidden`, not removed, turning them
 back on in the Menu Bar tab puts each one back in its usual place.
 

@@ -289,6 +289,8 @@ test('Factory applies the complete preset while preserving inactive profiles, hi
   assert.equal(result.preferences.source_notes_mode, 'omit');
   assert.equal(result.preferences.bilingual_layout_default, 'he-top');
   assert.equal(result.preferences.auto_scale_hebrew, 'false');
+  const menu = ctx.planMenuFromLayout_(result.preferences.menu_layout);
+  assert.ok(menu.some((entry) => entry.fn === 'unlinkSefariaSources'));
   for (const [key, value] of Object.entries(preset)) assert.equal(props.store[key], value, key);
   for (const key of ['settings_profiles', 'settings_profile_p2', 'prefs_schema_version', 'last_search_sort_mode', 'linker_upload_acknowledged']) {
     assert.equal(props.store[key], initial[key], key);
