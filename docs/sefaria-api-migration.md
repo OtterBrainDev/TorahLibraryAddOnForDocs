@@ -508,7 +508,6 @@ The release-copy follow-up at `63c08ad` passed GitHub Actions
 ([run 45651545150](https://github.com/OtterBrainDev/TorahLibraryAddOnForDocs/actions/runs/45651545150)).
 This documentation pass does not change runtime code or release status.
 
-Next action: review the updated PR #60 after #58 and #59, then run the exact
-HEAD in the designated Docs test deployment using the existing checklist.
+PRs #58–60 were merged; master at cc77a87 is the base of the selection/setup follow-up. The new branch changes selection-scoped linking, explicit Insert from Selection review, Gematriya selection extraction, 1.0 setup, optional tools, Help and restart choices. No deployment or release. Run the full suite and live checklist Q1–Q9 against the final PR head; confirm fuzzy fallback and selection placement in Docs before launch.
 No merge, Apps Script push, numbered version, Marketplace publication or
 tutorial recording was performed in this pass.

@@ -10,6 +10,9 @@ heading until the next build consolidates it under its own `## v2.0.X` heading.
 
 ## Unreleased
 
+- **Selection-aware actions.** Insert Source from Selection opens citation review even when Link Texts is set to quiet, including multiple selected citations. Unresolved selections can be searched in the Texts sidebar. Link Texts and Gematriya Count use highlighted text when present; clear it for the whole document body. Selected link placements are checked against the original document and text rather than guessed after edits.
+- **Familiar setup and Help.** The 1.0 compatibility preset applies familiar active preferences in one step, turns Voices and Lexicon off and uses Add Sources with Sefaria. Other setup paths offer both optional tools. Help is a submenu with How to..., Support, About and Re-run Setup Wizard. Re-run can keep or reset active settings without deleting named profile snapshots.
+
 These changes are part of the pending 2.0.0 candidate, not a published
 update. For a reader-oriented overview, see [New in 2.0 in the README](../README.md#whats-new-compared-with-the-original-add-on),
 Help → About → New in 2.0, and the in-app Release Notes. The detailed changes

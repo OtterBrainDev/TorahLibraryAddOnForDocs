@@ -770,3 +770,8 @@ different repo.
 - `test/tests/` — Node unit tests.
 - `test/ui/` — contract / snapshot / wiring tests.
 - `pre_clasp_qc.sh` — the last line of defense before `clasp push`.
+
+### Selection and setup contracts
+
+- Selection-scoped linking captures body offsets and document/tab identity before opening review. Never upload outside the selected slices, substitute a same-text occurrence elsewhere, or fall back to whole-document scanning on selection failure. Insert Source from Selection always opens review (including quiet saved mode); unresolved/fuzzy queries can move to the prefilled Texts sidebar.
+- The legacy setup preset resets active preferences to the documented compatible look/workflow with Voices/Lexicon off; do not downgrade v3, attribution, privacy or edition handling. Reset in rerun preserves named profile snapshots and upload consent. Keep starts from current preferences without purpose presets overwriting them. The Help submenu remains fixed at the bottom.

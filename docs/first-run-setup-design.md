@@ -558,3 +558,7 @@ green.
 - A menu rearranged in Simple mode is kept on switching back, with a note,
   instead of a question (§6).
 - The version number (2.0.0) is set at the release (§7).
+
+## Launch follow-up: legacy preset and explicit rerun
+
+The version 1.0 choice now applies the documented familiar layout/menu and quiet linking in one step. Automatic divine-name substitution is off; current attribution and privacy safeguards are retained. Both optional tools are disabled and the Texts menu is Add Sources with Sefaria. Other paths expose Voices and Lexicon checkboxes independently. The rerun entry opens a keep/reset choice first. Keep preselects the current values without purpose-based overrides; Reset writes canonical active defaults, preserving named profile snapshots and the upload acknowledgement. No preference changes occur until the restart choice is confirmed. The former three-screen legacy description above is historical.

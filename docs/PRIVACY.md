@@ -229,3 +229,7 @@ Every statement above is checkable against the source, which is public:
 - The absence of user-identity access is checkable:
   `grep -rn "getActiveUser\|getEffectiveUser\|getEmail" apps-script/`
   returns nothing.
+
+### Selection scope
+
+Link Texts limits scanning to a highlighted selection when present, subject to the selected scanning preference. Without a selection it scans the body of the current document tab. Insert Source from Selection sends the selected text to Sefaria for citation resolution, with the same up-front disclosure. Selection placement identifiers are local to the review workflow and are not included in the Sefaria request. Clear the selection before running Link Texts to scan the whole body.

@@ -363,3 +363,7 @@ This repository is a release candidate offered to Sefaria; it is an official
 Sefaria release only once Sefaria publishes it.
 Texts and metadata retrieved from Sefaria may carry separate attribution,
 copyright, or reuse terms depending on the source text.
+
+### Selection actions and setup
+
+Insert Source from Selection reviews the highlighted citations independently of quiet linking preferences. Link Texts and Gematriya Count limit their work to highlighted text; clear the selection for document-body scope. The one-step 1.0 preset uses the familiar bilingual layout, quiet linking and Add Sources with Sefaria (Voices and Lexicon off). Other setup paths expose both optional search tools. Help → Re-run Setup Wizard offers keeping or resetting active preferences; named profile snapshots remain.

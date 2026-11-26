@@ -569,3 +569,9 @@ shorter menu (see *Simple or Everything*).
   supported, but typo correction is not.
 - Linking is deliberately conservative: an ambiguous citation is asked about
   or skipped, never guessed.
+
+## Selection actions and Help (launch follow-up)
+
+Highlight the references you want to insert and choose Insert Source from Selection. Review the citations, choose among ambiguous sources, and check Insert or Link. This opens review even when the separate Link Texts command is set to Just link and report. If no exact citation is found, Search selected text in Texts opens the normal sidebar with that query. Link Texts and Gematriya Count act on selected text when present; clear the selection for the whole document body. Link Texts still honors its scanning preference inside that scope. If the document changes before review, select again rather than risk linking a different occurrence.
+
+The Help menu has How to..., Support, About and Re-run Setup Wizard. The same rerun button is available in the Help dialog. Keep Current Preferences starts from your choices; Reset to Add-on Defaults resets active preferences but retains named profile snapshots. Choosing the 1.0 preset immediately applies familiar settings and disables Voices and Lexicon; with both disabled, Texts is labelled Add Sources with Sefaria. Other wizard paths let you choose the optional tools.

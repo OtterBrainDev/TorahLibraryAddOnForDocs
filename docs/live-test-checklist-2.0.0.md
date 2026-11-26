@@ -464,3 +464,17 @@ checklist was run against the code that shipped.
 | Date | Tester | Account (A/B/C) | Apps Script version / commit | Result | Failures (check ids) |
 | --- | --- | --- | --- | --- | --- |
 | | | | | | |
+
+### Q — selection and onboarding follow-up (pending live verification)
+
+| Case | Action | Expected |
+| --- | --- | --- |
+| Q1 | Highlight an entire paragraph containing Beresheet 1:1-2; choose Insert Source from Selection | Review or prefilled Texts fallback, not empty-selection error; no edit until confirmation |
+| Q2 | Select two references with quiet linking saved | Both reviewed, Insert defaults on for exact matches, ambiguous rows require choice; quiet setting unchanged |
+| Q3 | Select only the second of two identical citations; link; then repeat after an earlier edit or tab switch | Only the intended occurrence linked; stale selection fails safely |
+| Q4 | Select part of a paragraph and multiple paragraphs or table cells; Link Texts in both scan modes | Only selected text uploaded/linked, or clear failure if the body mapping cannot be verified |
+| Q5 | Gematriya Count on a selected full paragraph and without selection | Correct selection and document counts |
+| Q6 | Fresh setup, choose 1.0 and Continue | Immediate completion, Add Sources with Sefaria, no Voices/Lexicon tabs or menu entries; quiet linking, no automatic name transform |
+| Q7 | Other paths with each combination of optional tools | Saved checkboxes and matching menu labels after finish |
+| Q8 | Each Help submenu command and tab-styled rerun button | Correct tab; wizard keep/reset choice, not overlapping dialogs |
+| Q9 | Rerun Keep then Reset on test account with custom preferences and named profiles | Keep retains untouched values; Reset restores active defaults, retains saved profile snapshots and consent |
