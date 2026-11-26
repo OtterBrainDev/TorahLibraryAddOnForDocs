@@ -34,6 +34,13 @@ function harness() {
       },
       prop(key, value) { if (value === undefined) return nodes[0] && nodes[0][key]; nodes.forEach((node) => { node[key] = value; }); return api; },
       text(value) { if (value === undefined) return nodes[0] ? nodes[0].textContent : ''; nodes.forEach((node) => { node.textContent = value; }); return api; },
+      css(key, value) {
+        nodes.forEach((node) => {
+          if (value === '') node.style.removeProperty(key);
+          else node.style.setProperty(key, value);
+        });
+        return api;
+      },
       toggleClass(name, on) { nodes.forEach((node) => node.classList.toggle(name, on)); return api; },
       addClass(name) { nodes.forEach((node) => node.classList.add(name)); return api; },
       removeClass(name) { nodes.forEach((node) => node.classList.remove(name)); return api; },
