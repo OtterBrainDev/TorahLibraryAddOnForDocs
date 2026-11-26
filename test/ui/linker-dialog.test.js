@@ -54,7 +54,9 @@ test('linker dialog: "Customize this insertion" uses the shared insertion option
   // and composition card as the sidebar's Layout tray. A plain file would
   // print the include tags as text.
   const server = readAppScriptFile('server/document-actions.gs');
-  assert.match(server, /createTemplateFromFile\('linker-results'\)\s*\.evaluate\(\)/);
+  assert.match(server, /createTemplateFromFile\('linker-results'\)/);
+  assert.match(server, /template\.scopeJson = toEmbeddedJson_\(scope\)/);
+  assert.match(server, /template\.evaluate\(\)/);
   assert.doesNotMatch(server, /createHtmlOutputFromFile\('linker-results'\)/);
 
   assert.match(html, /<details class="customize-insertion"/);

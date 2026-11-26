@@ -109,26 +109,7 @@ function lexiconHTML() {
 
 function quickActionsHTML() {
   var selectionText = '';
-  try {
-    var doc = DocumentApp.getActiveDocument();
-    var selection = doc.getSelection();
-    if (selection) {
-      var rangeElements = selection.getRangeElements();
-      for (var i = 0; i < rangeElements.length; i++) {
-        var re = rangeElements[i];
-        var el = re.getElement();
-        if (el.getType && el.getType() === DocumentApp.ElementType.TEXT) {
-          var textEl = el.asText();
-          if (re.isPartial()) {
-            selectionText += textEl.getText().substring(re.getStartOffset(), re.getEndOffsetInclusive() + 1);
-          } else {
-            selectionText += textEl.getText();
-          }
-        }
-      }
-    }
-  } catch (e) {}
-  selectionText = String(selectionText || '').trim();
+  try { selectionText = selectedPlainText_(DocumentApp.getActiveDocument().getSelection()).trim(); } catch (e) {}
   openSharedSidebar_('texts', { initialQuery: selectionText || null, openActionsPanel: true });
 }
 
@@ -205,20 +186,7 @@ function getGematriyaStats_() {
 
   if (selection) {
     hasSelection = true;
-    const elements = selection.getRangeElements();
-    for (const elem of elements) {
-      const el = elem.getElement();
-      if (el.getType() === DocumentApp.ElementType.TEXT) {
-        const textEl = el.asText();
-        if (elem.isPartial()) {
-          rawText += textEl.getText().substring(
-            elem.getStartOffset(), elem.getEndOffsetInclusive() + 1
-          );
-        } else {
-          rawText += textEl.getText();
-        }
-      }
-    }
+    rawText = selectedPlainText_(selection);
   } else {
     rawText = doc.getBody().getText();
   }

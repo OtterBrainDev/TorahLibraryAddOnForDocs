@@ -189,7 +189,7 @@
     },
     {
       "name": "scanDocumentForReferences",
-      "arity": 0,
+      "arity": 1,
       "definedIn": "apps-script/server/document-actions.gs"
     },
     {
@@ -261,6 +261,11 @@
       "name": "switchSettingsProfile",
       "arity": 1,
       "definedIn": "apps-script/server/settings-profiles.gs"
+    },
+    {
+      "name": "searchSelectedSources",
+      "arity": 1,
+      "definedIn": "apps-script/server/document-actions.gs"
     }
   ]
 }
