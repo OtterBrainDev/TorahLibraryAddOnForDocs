@@ -22,7 +22,23 @@
         <p class="setup-progress" id="setup-progress" aria-live="polite">Step 1 of 3</p>
       </header>
 
-      <!-- Screen 1: what the add-on is for. Only preselects screens 2 and 3. -->
+      <section class="setup-step" data-step="restart" hidden>
+        <fieldset class="setup-fieldset">
+          <legend><h1 class="setup-heading" tabindex="-1">Re-run Setup Wizard</h1></legend>
+          <p class="setup-lede">Choose how to start. Saved named profiles are not deleted.</p>
+          <div class="setup-cards">
+            <label class="setup-card"><input type="radio" name="restart" value="keep" checked>
+              <span class="setup-card-title">Keep Current Preferences</span>
+              <span class="setup-card-note">Start from the current settings and change only what you choose.</span>
+            </label>
+            <label class="setup-card"><input type="radio" name="restart" value="reset">
+              <span class="setup-card-title">Reset to Add-on Defaults</span>
+              <span class="setup-card-note">Restore the active preferences to fresh-install defaults before continuing.</span>
+            </label>
+          </div>
+        </fieldset>
+      </section>
+      <!-- Screen 1: what the add-on is for. The legacy preset completes setup immediately. -->
       <section class="setup-step" data-step="purpose">
         <fieldset class="setup-fieldset">
           <legend><h1 class="setup-heading" tabindex="-1">What will you mostly use Sefaria for Google Docs for?</h1></legend>
@@ -45,8 +61,8 @@
             </label>
             <label class="setup-card">
               <input type="radio" name="purpose" value="sefaria">
-              <span class="setup-card-title">I've used Sefaria for Google Docs</span>
-              <span class="setup-card-note">Start from what version 1.0 did: Hebrew on the right, a simple menu</span>
+              <span class="setup-card-title">I've used Sefaria for Google Docs 1.0</span>
+              <span class="setup-card-note">Continue to apply familiar active settings immediately: Hebrew on the right, Add Sources with Sefaria, and the simple menu. Voices and Lexicon are off; change them later in Preferences.</span>
             </label>
             <!-- Only for someone with settings of their own (config.hasSavedSettings,
                  server/first-run.gs firstRunHasSavedSettings_): never at install. -->
@@ -179,6 +195,12 @@
             </label>
           </div>
         </fieldset>
+        <fieldset class="setup-fieldset">
+          <legend>Optional search tools</legend>
+          <label><input type="checkbox" id="setup-voices"> Voices — search source sheets</label>
+          <label><input type="checkbox" id="setup-lexicon"> Lexicon — search dictionaries</label>
+          <p class="setup-help">Texts is always enabled. If both are off, its menu item is Add Sources with Sefaria.</p>
+        </fieldset>
       </section>
 
       <!-- Done. -->
@@ -186,9 +208,9 @@
         <span class="setup-done-mark" aria-hidden="true">✓</span>
         <h1 class="setup-heading" tabindex="-1">You're set.</h1>
         <ul class="setup-done-list">
-          <li>Open the sidebar from <strong>Extensions → Sefaria for Google Docs → Texts</strong>.</li>
+          <li>Open the sidebar from <strong>Extensions → Sefaria for Google Docs → Texts (or Add Sources with Sefaria)</strong>.</li>
           <li>Highlight a reference like <em>Genesis 1:1</em> and choose <strong>Insert Source from Selection</strong>.</li>
-          <li>Change any of this in <strong>Preferences</strong>. Run setup again from <strong>Help</strong>.</li>
+          <li>Change any of this in <strong>Preferences</strong>. Choose <strong>Help → Re-run Setup Wizard</strong> to start again.</li>
         </ul>
       </section>
 

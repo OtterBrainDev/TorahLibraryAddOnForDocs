@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- Same image policy as shared/ui/head.html; this dialog is served as a plain file, so it cannot include() it. test/ui/csp-coverage.test.js keeps the copies identical. -->
+    <!-- Same image policy as shared/ui/head.html. test/ui/csp-coverage.test.js keeps the copies identical. -->
     <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: https://www.sefaria.org https://ssl.gstatic.com https://*.googleusercontent.com https://*.gstatic.com; object-src 'none'; base-uri 'self'">
     <base target="_top">
+    <script type="application/json" id="help-tab-json"><?!= helpTabJson ?></script>
     <style>
       :root {
         --bg: #f5f5f3;
@@ -447,7 +448,12 @@
       document.addEventListener('DOMContentLoaded', function() {
         setupTabs();
         setupHelpSearch();
-        switchTab('help-tab');
+        switchTab(JSON.parse(document.getElementById('help-tab-json').textContent));
+        document.getElementById('rerun-setup-wizard').addEventListener('click', function () {
+          var button = this; button.disabled = true;
+          google.script.run.withSuccessHandler(function () { google.script.host.close(); })
+            .withFailureHandler(function () { button.disabled = false; }).openFirstRunSetup();
+        });
 
         // Prevent sandboxed-iframe navigation errors from hash links
         document.querySelectorAll('a[href^="#"]').forEach(function(link) {
@@ -471,7 +477,7 @@
       <section class="shell">
         <div class="shell-header">
           <div class="eyebrow">Sefaria for Google Docs</div>
-          <h1>Help &amp; Support</h1>
+          <h1>Help</h1>
           <p class="lede"><strong>Help</strong> explains every part of the sidebar, the Quick Actions and Preferences. <strong>Support</strong> is for when something isn't working. <strong>About</strong> has the version, what's new, and privacy.</p>
           <div class="global-links">
             <a class="pill-link" target="_blank" href="https://sefaria.formstack.com/forms/google_docs_extension_feedback" rel="noopener noreferrer">Send feedback</a>
@@ -485,6 +491,7 @@
           <button class="tab-button" role="tab" aria-selected="true" aria-controls="help-tab" data-tab="help-tab">Help</button>
           <button class="tab-button" role="tab" aria-selected="false" aria-controls="support-tab" data-tab="support-tab" tabindex="-1">Support</button>
           <button class="tab-button" role="tab" aria-selected="false" aria-controls="about-tab" data-tab="about-tab" tabindex="-1">About</button>
+          <button type="button" class="tab-button" id="rerun-setup-wizard" title="Change languages, text formatting, divine-name preferences and interface choices by running setup again.">Re-run Setup Wizard</button>
         </div>
 
         <!-- ═══════════════════════════════ HELP ═══════════════════════════════ -->
@@ -535,7 +542,7 @@
               <li>Optional: open <span class="ui-label">📰 Insertion Options</span> to choose Hebrew, translation or both, and how they sit on the page.</li>
               <li>Click <span class="ui-label">Add Source</span> (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).</li>
             </ol>
-            <p>Want to change the basics (Hebrew or translation, vowels, divine names, Simple or Everything)? <button type="button" class="button-link secondary" id="run-setup-again" onclick="google.script.run.openFirstRunSetup()">Run setup again</button></p>
+            <p>To change your initial choices, use Re-run Setup Wizard at the top of this window.</p>
             <div class="action-grid" style="margin-top:12px;">
               <div class="action-card"><a href="#voices"><h3>Quote a source sheet</h3><p class="muted">Use the Voices tab.</p></a></div>
               <div class="action-card"><a href="#lexicon"><h3>Look up a word</h3><p class="muted">Use the Lexicon tab.</p></a></div>
@@ -566,7 +573,7 @@
             </ul>
             <h3>What's new</h3>
             <ul>
-              <li><strong>Saved defaults.</strong> <a href="#preferences">Preferences</a> remembers how you like sources inserted, in every document. A short setup the first time you open the add-on picks the basics — choose <strong>I've used Sefaria for Google Docs</strong> to start from the look you know; <span class="ui-label">Run setup again</span>, under <a href="#quick-start">Quick start</a>, brings it back.</li>
+              <li><strong>Saved defaults.</strong> <a href="#preferences">Preferences</a> remembers how you like sources inserted, in every document. A short setup the first time you open the add-on picks the basics — choose <strong>I've used Sefaria for Google Docs</strong> to start from the look you know; <span class="ui-label">Re-run Setup Wizard</span> at the top brings it back; keep or reset your active preferences first.</li>
               <li><strong>Layout and formatting.</strong> Hebrew on the right, on the left or on top, or line by line beside its translation; vowels and cantillation (all, Tanakh only, or none); punctuation; transliteration; fonts that match your document; titles as headings, so they appear in the outline. See <a href="#layout-settings">Insertion Options</a>.</li>
               <li><strong>Commentary and notes.</strong> Keep, combine or leave out inline explanation in supported Talmud and Tanakh editions; choose separately how source footnotes appear. See <a href="#layout-settings">Insertion Options</a>.</li>
               <li><strong>Insert Source from Selection</strong>, the <strong>Voices</strong> (source sheets) and <strong>Lexicon</strong> (dictionary) tabs, the <strong>Session Library</strong> of what you've inserted, and several translations at once.</li>
@@ -629,7 +636,7 @@
               </tbody>
             </table>
             <p style="margin-top:10px;">Whatever the interface, <span class="ui-label">Preferences → Sidebar</span> leaves out the parts of the sidebar you don't use: see <a href="#sidebar-controls">What the sidebar shows</a>. Everything also keeps <a href="#profiles">profiles</a>.</p>
-            <p style="margin-top:10px;">New users choose a mode in the setup shown the first time the add-on opens. To see it again: <button type="button" class="button-link secondary" id="run-setup-again-interface" onclick="google.script.run.openFirstRunSetup()">Run setup again</button> (the same button is under <a href="#quick-start">Quick start</a>).</p>
+            <p style="margin-top:10px;">New users choose a mode in setup. Choose Re-run Setup Wizard at the top or from the Help menu to revisit those choices.</p>
           </section>
 
           <section class="card topic-section" id="texts" data-search-title="Find a text (Texts tab)" data-search-terms="texts search find reference title phrase url link hebrew citation abbreviation hil hilchot rambam results filter language sort category relevance hide corpus restore suggestions no results recent searches history prev next open on sefaria">
@@ -939,7 +946,7 @@
             <p><span class="ui-label">Preferences → Sidebar</span> leaves out the parts of the sidebar you don't use, in Simple and in Everything. Save applies it, and an open sidebar follows at once. Anything you switch off is hidden, not removed, and your settings still apply.</p>
             <table class="ref-table">
               <tbody>
-                <tr><td><span class="ui-label">Search tabs</span></td><td>The <a href="#voices">Voices</a> and <a href="#lexicon">Lexicon</a> tabs beside Texts. Texts is always there; with both off, the tabs go. A tab you switch off can still be opened from its menu item, and shows while you are in it, so you can get back to Texts; its <em>Insertion Defaults</em> in Preferences come back when you switch it on.</td></tr>
+                <tr><td><span class="ui-label">Search tabs</span></td><td>The <a href="#voices">Voices</a> and <a href="#lexicon">Lexicon</a> tabs beside Texts. Texts is always there; with both off, the tabs go. Switching a tab off also removes its menu item; if both are off, Texts is called Add Sources with Sefaria. its <em>Insertion Defaults</em> in Preferences come back when you switch it on.</td></tr>
                 <tr><td><span class="ui-label">Quick Actions</span></td><td>Which buttons <a href="#quick-actions">🏃</a> offers: Insert from Selection, Transform Divine Names, Link Texts with Sefaria. With all three off, 🏃 goes too. The menu's Quick Actions are arranged separately, in <a href="#menu">Menu Bar</a>.</td></tr>
                 <tr><td><span class="ui-label">Insertion Options</span></td><td>Everything only. Which controls <a href="#layout-settings">📰 Insertion Options</a> offers: Display, Arrangement, Citation, Line by line, Line numbers, Notes; the source's link, vowels, cantillation, punctuation and transliteration; the translation's link, punctuation and commentary; the title and text fonts. Hiding a control prevents further changes through that control, but keeps its current value, including a session override. Use Revert in Insertion Options first if the class should start from saved defaults. <span class="ui-label">Show all</span> brings them all back.</td></tr>
               </tbody>
@@ -960,8 +967,8 @@
 
           <section class="card topic-section" id="menu" data-search-title="The add-on menu (Menu Bar)" data-search-terms="menu extensions menu bar customize reorder hide items quick actions submenu divider restore default menu reload">
             <h2>The add-on menu</h2>
-            <p>Everything is under <span class="ui-label">Extensions → Sefaria for Google Docs</span>. Out of the box the menu has: <strong>Texts</strong>, <strong>Voices</strong>, <strong>Lexicon</strong>, <strong>Insert Source from Selection</strong>, and a <strong>Quick Actions</strong> submenu (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count) — then <strong>Surprise Me</strong>, while it is switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>, and <strong>Preferences</strong> and <strong>Help &amp; Support</strong>. In <a href="#interface-mode">Simple</a> mode it is shorter: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria; switching back to Everything restores the menu you had.</p>
-            <p>To change it, open <span class="ui-label">Preferences → Menu Bar</span>. Use &uarr; and &darr; to reorder items, an item's <span class="ui-label">Move to Quick Actions ▸</span> or <span class="ui-label">◂ Move to main menu</span> to move it into the Quick Actions submenu or back out (it lands just below Quick Actions), add dividers, or untick an item to hide it (tick it again to bring it back). <strong>Preferences</strong> and <strong>Help &amp; Support</strong> always stay at the bottom, so you can't lose your way back. <span class="ui-label">Restore default menu</span> undoes everything.</p>
+            <p>Everything is under <span class="ui-label">Extensions → Sefaria for Google Docs</span>. Out of the box the menu has: <strong>Texts</strong>, <strong>Voices</strong>, <strong>Lexicon</strong>, <strong>Insert Source from Selection</strong>, and a <strong>Quick Actions</strong> submenu (Quick Actions Sidebar, Transform Divine Names, Link Texts with Sefaria, Unlink Sources, Gematriya Count) — then <strong>Surprise Me</strong>, while it is switched on in <span class="ui-label">Preferences → 🧪 Experimental</span>, and <strong>Preferences</strong> and <strong>Help</strong>. In <a href="#interface-mode">Simple</a> mode it is shorter: Texts, Insert Source from Selection, Transform Divine Names and Link Texts with Sefaria; switching back to Everything restores the menu you had.</p>
+            <p>To change it, open <span class="ui-label">Preferences → Menu Bar</span>. Use &uarr; and &darr; to reorder items, an item's <span class="ui-label">Move to Quick Actions ▸</span> or <span class="ui-label">◂ Move to main menu</span> to move it into the Quick Actions submenu or back out (it lands just below Quick Actions), add dividers, or untick an item to hide it (tick it again to bring it back). <strong>Preferences</strong> and <strong>Help</strong> always stay at the bottom, so you can't lose your way back. <span class="ui-label">Restore default menu</span> undoes everything.</p>
             <p class="small">After saving, reload the document if the menu hasn't changed — Google Docs builds the menu when the document opens.</p>
           </section>
 
@@ -1223,7 +1230,7 @@
             <details>
               <summary>Your settings <span class="teaser">first-run setup, Simple or Everything, menu, sidebar, profiles, settings files</span></summary>
               <ul>
-                <li><span class="tag tag-new">New</span><strong>A short setup the first time.</strong> Three questions, with a live preview: what you'll use it for, how sources should look, and how much to show. Choose <em>I've used Sefaria for Google Docs</em> to start from the look you know. <span class="where">Quick start → Run setup again</span></li>
+                <li><span class="tag tag-new">New</span><strong>A short setup the first time.</strong> Three questions, with a live preview: what you'll use it for, how sources should look, and how much to show. Choose <em>I've used Sefaria for Google Docs</em> to start from the look you know. <span class="where">Help → Re-run Setup Wizard</span></li>
                 <li><span class="tag tag-new">New</span><strong>Simple or Everything.</strong> Simple shows search, preview and insert with a shorter menu. Everything shows every tool. Switching only hides or shows things and never changes a setting. <span class="where">Preferences → Interface</span></li>
                 <li><span class="tag tag-new">New</span><strong>Arrange the menu.</strong> Reorder the menu, move items into Quick Actions, and hide what you don't use. <span class="where">Preferences → Menu Bar</span></li>
                 <li><span class="tag tag-new">New</span><strong>Choose what the sidebar shows.</strong> Hide the Voices or Lexicon tab, Quick Actions buttons, or Insertion Options controls you don't use. <span class="where">Preferences → Sidebar</span></li>
@@ -1236,7 +1243,7 @@
               <ul>
                 <li><span class="tag tag-improved">Improved</span><strong>Fewer permissions.</strong> It doesn't ask for your email address or profile. It uses only the document it's open in, its own windows, its settings and Sefaria. <span class="where">Google's permission screen, at install</span></li>
                 <li><span class="tag tag-new">New</span><strong>A written privacy policy.</strong> No server, no account and no analytics. The policy says exactly what goes to Sefaria, and when. <span class="where">The Privacy policy link above</span></li>
-                <li><span class="tag tag-improved">Improved</span><strong>Help you can search.</strong> Help, Support and About tabs, with a search box, troubleshooting and the keyboard shortcuts. <span class="where">Extensions → Sefaria for Google Docs → Help &amp; Support</span></li>
+                <li><span class="tag tag-improved">Improved</span><strong>Help you can search.</strong> Help, Support and About tabs, with a search box, troubleshooting and the keyboard shortcuts. <span class="where">Extensions → Sefaria for Google Docs → Help</span></li>
                 <li><span class="tag tag-new">New</span><strong>A Help topic for version 1.0 users.</strong> Where 1.0's commands went, what stays the same and what works differently: <a href="#coming-from-sefaria">Coming from version 1.0</a>. <span class="where">Help → Quick start</span></li>
                 <li><span class="tag tag-improved">Improved</span><strong>Clearer messages.</strong> The sidebar says what it's doing (<em>Inserting into your document…</em>, <em>Searching Sefaria…</em>), and says when Sefaria can't be reached instead of reporting no match. <span class="where">The sidebar</span></li>
               </ul>

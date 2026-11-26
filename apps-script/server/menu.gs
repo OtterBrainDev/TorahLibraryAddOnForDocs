@@ -15,7 +15,9 @@ Licensed under the MIT License. See repository LICENSE.md.
 function buildAndInstallMenu() {
   const prefs = getPreferences();
   const plan = planMenuFromLayout_(prefs.menu_layout, {
-    surpriseMeEnabled: DEV_FLAGS.SURPRISE_ME && prefs.surprise_me_enabled == "true"
+    surpriseMeEnabled: DEV_FLAGS.SURPRISE_ME && prefs.surprise_me_enabled == "true",
+    voicesEnabled: String(prefs.show_voices_tab) !== "false",
+    lexiconEnabled: String(prefs.show_lexicon_tab) !== "false"
   });
   installMenuPlan_(plan);
 }
@@ -130,12 +132,16 @@ function getSidebarBootstrapData(mode, sessionId) {
   };
 }
 
-function openHelpModal() {
-  const html = HtmlService.createHtmlOutputFromFile('help-modal')
-      .setWidth(760)
-      .setHeight(860);
-  DocumentApp.getUi().showModalDialog(html, 'Help & Support');
+function openHelpTab_(tab) {
+  const template = HtmlService.createTemplateFromFile('help-modal');
+  template.helpTabJson = toEmbeddedJson_(['help-tab', 'support-tab', 'about-tab'].indexOf(tab) >= 0 ? tab : 'help-tab');
+  const html = template.evaluate().setWidth(760).setHeight(860);
+  DocumentApp.getUi().showModalDialog(html, 'Help');
 }
+
+function openHelpModal() { openHelpTab_('help-tab'); }
+function openSupportModal() { openHelpTab_('support-tab'); }
+function openAboutModal() { openHelpTab_('about-tab'); }
 
 function openFeedbackModal() {
   const html = HtmlService.createHtmlOutputFromFile('feedback-modal')

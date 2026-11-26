@@ -266,6 +266,11 @@
       "name": "searchSelectedSources",
       "arity": 1,
       "definedIn": "apps-script/server/document-actions.gs"
+    },
+    {
+      "name": "restartFirstRunSetup",
+      "arity": 1,
+      "definedIn": "apps-script/server/first-run.gs"
     }
   ]
 }

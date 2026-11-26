@@ -31,6 +31,7 @@ function makeUserProperties(initial = {}) {
     getProperty: (k) => (Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null),
     setProperty(k, v) { store[k] = String(v); return this; },
     deleteProperty(k) { delete store[k]; return this; },
+    setProperties(values) { Object.keys(values).forEach(k => { store[k] = String(values[k]); }); return this; },
   };
 }
 
@@ -193,7 +194,7 @@ test('the Simple menu is Texts, Insert from Selection and two quick actions, the
     'Quick Actions: Transform Divine Names, Link Texts with Sefaria',
     '---',
     'Preferences',
-    'Help & Support',
+    'Help: How to..., Support, About, Re-run Setup Wizard',
   ]);
 });
 
@@ -410,6 +411,7 @@ test('the setup page is told whether to offer it, and setup still opens if that 
   assert.equal(extra.fields.hasSavedSettings, false);
   context.openFirstRunSetup();
   assert.equal(extra.fields.hasSavedSettings, true, 'marked done once shown');
+  assert.equal(extra.fields.rerun, true);
 });
 
 test('screen 1: "I\'ve used Sefaria for Google Docs" for everyone, "Keep my settings" hidden unless offered', () => {
@@ -430,4 +432,37 @@ test('"I\'ve used Sefaria for Google Docs" presets version 1.0\'s look and expla
   assert.match(SETUP_HTML, /id="setup-divine-sefaria-note" hidden>/);
   // Only the answers reach the server: the purpose is never stored.
   assert.doesNotMatch(SETUP_JS.match(/function collectAnswers\(\) \{[\s\S]*?\n  \}/)[0], /purpose/);
+});
+
+
+test('wizard exposes and stores optional search tools', () => {
+  const { context } = load();
+  const plan = plain(context.planFirstRunPreferences_({ voices: false, lexicon: false }, seededDefaults()));
+  assert.deepEqual(plan.changes, { show_voices_tab: 'false', show_lexicon_tab: 'false' });
+  assert.match(SETUP_HTML, /id="setup-voices"/);
+  assert.match(SETUP_HTML, /id="setup-lexicon"/);
+  assert.match(SETUP_JS, /save\(\{ legacyPreset: true \}, true\)/);
+});
+test('legacy preset resets active choices, keeps profiles and consent, and skips custom screens', () => {
+  const context = { console, Logger: { log() {} } };
+  const props = makeUserProperties({ settings_profiles: 'saved index', settings_profile_p2: 'saved snapshot', linker_upload_acknowledged: 'true', ui_mode: 'full' });
+  context.PropertiesService = { getUserProperties: () => props };
+  context.buildAndInstallMenu = () => {};
+  vm.createContext(context);
+  [MENU_LAYOUT, PREFERENCES, FIRST_RUN].forEach(src => vm.runInContext(src, context));
+  context.completeFirstRunSetup(JSON.stringify({ legacyPreset: true }));
+  assert.equal(props.store.ui_mode, 'simple');
+  assert.equal(props.store.show_voices_tab, 'false');
+  assert.equal(props.store.show_lexicon_tab, 'false');
+  assert.equal(props.store.apply_sheimot_on_insertion, 'false');
+  assert.equal(props.store.linker_review_mode, 'quiet');
+  assert.equal(props.store.settings_profiles, 'saved index');
+  assert.equal(props.store.settings_profile_p2, 'saved snapshot');
+  assert.equal(props.store.linker_upload_acknowledged, 'true');
+  const result = plain(context.restartFirstRunSetup('keep'));
+  assert.equal(result.answers.voices, false);
+  context.restartFirstRunSetup('reset');
+  assert.equal(props.store.ui_mode, 'full');
+  assert.equal(props.store.show_voices_tab, 'true');
+  assert.equal(props.store.settings_profiles, 'saved index');
 });

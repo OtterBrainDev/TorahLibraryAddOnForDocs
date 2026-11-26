@@ -80,7 +80,9 @@ function firstRunAnswersFromPreferences_(prefs) {
     teamim: p.teamim !== 'false',
     divine: divine,
     language: String(p.preferred_translation_language || 'en'),
-    uiMode: normalizeUiMode_(p.ui_mode)
+    uiMode: normalizeUiMode_(p.ui_mode),
+    voices: String(p.show_voices_tab) !== 'false',
+    lexicon: String(p.show_lexicon_tab) !== 'false'
   };
 }
 
@@ -142,6 +144,8 @@ function planFirstRunPreferences_(answers, prefs) {
 
   if (typeof a.language === 'string' && /^[a-z]{2,3}$/.test(a.language)) set('preferred_translation_language', a.language);
 
+  if (typeof a.voices === 'boolean') set('show_voices_tab', String(a.voices));
+  if (typeof a.lexicon === 'boolean') set('show_lexicon_tab', String(a.lexicon));
   var uiMode = FIRST_RUN_UI_MODES_.indexOf(a.uiMode) >= 0 ? a.uiMode : null;
   return { changes: changes, uiMode: uiMode };
 }
@@ -271,7 +275,7 @@ function readStoredPreferences_(keys) {
 
 function firstRunPreferenceKeys_() {
   var keys = ['output_mode_default', 'bilingual_layout_default', 'nekudot', 'nekudot_filter', 'teamim',
-    'apply_sheimot_on_insertion', 'preferred_translation_language', 'ui_mode'];
+    'apply_sheimot_on_insertion', 'preferred_translation_language', 'ui_mode', 'show_voices_tab', 'show_lexicon_tab'];
   FIRST_RUN_DIVINE_NAMES_.forEach(function (name) { keys.push(name.on, name.text); });
   return keys;
 }
@@ -307,11 +311,12 @@ function readHasSavedSettings_() {
   }
 }
 
-function showFirstRunSetup_() {
+function showFirstRunSetup_(rerun) {
   var template = HtmlService.createTemplateFromFile('first-run-setup');
   template.appConfigJson = toEmbeddedJson_(getUiAppConfig_('first-run-setup', 'setup', {
     answers: firstRunAnswersFromPreferences_(readStoredPreferences_(firstRunPreferenceKeys_())),
-    hasSavedSettings: readHasSavedSettings_()
+    hasSavedSettings: readHasSavedSettings_(),
+    rerun: rerun === true
   }));
   var output = template.evaluate()
     .setWidth(640)
@@ -333,9 +338,49 @@ function maybeShowFirstRunSetup_() {
   return true;
 }
 
-/** Help → "Run setup again". */
+/** Help → Re-run Setup Wizard. No preferences change until an explicit choice. */
 function openFirstRunSetup() {
-  showFirstRunSetup_();
+  showFirstRunSetup_(true);
+}
+
+// Reset active settings, not named profile snapshots, schema or upload consent.
+// On a fresh install these values are seeded from the same canonical defaults.
+function resetActiveSetupPreferences_(legacy) {
+  var defaults = getDefaultPreferences();
+  var values = planPreferenceReset_(defaults, 'full');
+  values.ui_mode = 'full';
+  values.menu_layout_before_simple = '';
+  values.search_mode = 'texts';
+  values.first_run_setup = 'done';
+  if (legacy) {
+    // The documented v1 look and workflows, with current attribution and
+    // privacy safeguards retained. No automatic divine-name substitution.
+    values.output_mode_default = 'both';
+    values.bilingual_layout_default = 'he-right';
+    values.bilingual_aligned_rows = false;
+    values.apply_sheimot_on_insertion = false;
+    values.show_voices_tab = false;
+    values.show_lexicon_tab = false;
+    values.linker_review_mode = 'quiet';
+    values.include_transliteration_default = false;
+    values.ui_mode = 'simple';
+    values.menu_layout = getSimpleMenuLayoutJson_();
+  }
+  var props = PropertiesService.getUserProperties();
+  var strings = {};
+  Object.keys(values).forEach(function (key) { strings[key] = String(values[key]); });
+  props.setProperties(strings);
+  rebuildMenuQuietly_();
+}
+
+// Called only after an explicit reset/keep choice in the restart screen.
+function restartFirstRunSetup(choice) {
+  if (choice !== 'keep' && choice !== 'reset') throw new Error('Choose whether to keep or reset preferences.');
+  if (choice === 'reset') resetActiveSetupPreferences_(false);
+  return {
+    answers: firstRunAnswersFromPreferences_(readStoredPreferences_(firstRunPreferenceKeys_())),
+    hasSavedSettings: choice === 'keep'
+  };
 }
 
 /**
@@ -349,6 +394,10 @@ function completeFirstRunSetup(answersJson) {
     answers = typeof answersJson === 'string' ? JSON.parse(answersJson) : (answersJson || {});
   } catch (error) {
     answers = {};
+  }
+  if (answers && answers.legacyPreset === true) {
+    resetActiveSetupPreferences_(true);
+    return { uiMode: getUiMode_() };
   }
   var userProperties = PropertiesService.getUserProperties();
   var plan = planFirstRunPreferences_(answers, readStoredPreferences_(firstRunPreferenceKeys_()));
