@@ -20,12 +20,42 @@ do not establish that a Marketplace release or a recorded tutorial exists.
    they are arranged.
 6. Click **Add Source** (or press <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd>).
 
-The first time a new user opens the add-on, setup asks what it is for, how
-sources should look and which interface and optional tools to use. Choosing
-**I've used Sefaria for Google Docs 1.0** applies the familiar preset in one
-step. Other paths continue through customization. **Help → Re-run Setup
-Wizard** offers keeping current preferences or resetting active defaults
-before continuing. Named profile snapshots are retained.
+## Setup Wizard: choose your starting settings
+
+On a new installation, the wizard sets preferences for future insertions,
+not text already in a document. The first screen asks **What will you
+mostly use Sefaria for Google Docs for?** The first three paths preselect
+answers on later screens; they are not locked modes.
+
+| First-screen choice | What happens |
+| --- | --- |
+| **Quoting sources in my writing** | For divrei Torah, sermons, newsletters and emails. Starts with Hebrew above the translation (Stacked) and Simple. |
+| **Preparing source sheets** | For classes, shiurim and study partners. Starts with the initial arrangement (Hebrew on the right, translation on the left on a fresh install) and Simple. |
+| **Academic writing** | For papers, articles and books. Starts with the initial arrangement (Hebrew on the right on a fresh install) and Everything, exposing advanced controls and profiles. It does not choose a citation style or change citation settings automatically. |
+| **I've used Sefaria for Google Docs 1.0** | Continue immediately applies familiar active settings and opens the sidebar, skipping the other questions: both languages, Hebrew on the right, one block per language, Simple, quiet linking, no transliteration or automatic divine-name replacement on insertion, Voices and Lexicon off. Texts is called Add Sources with Sefaria. Current attribution and privacy safeguards remain; saved named profiles are retained. |
+| **Keep my settings** | Only offered when there are saved settings to keep, not on a fresh install. Continue leaves preferences unchanged; then choose Start. |
+
+For the first three paths, other answers retain their starting values:
+on a fresh installation, Hebrew and translation, English translation,
+vowels and cantillation on, יהוה → יי on insertion, and Voices and Lexicon
+enabled.
+
+1. On **How should sources look?**, review the live sample, choose the
+   display language(s), arrangement, vowels, cantillation, divine-name
+   replacements and translation language. Continue.
+2. On **How much do you want to see?**, choose Simple or Everything and
+   independently enable Voices and Lexicon. Texts is always enabled.
+3. Click **Finish**, then **Start** to open the sidebar. Change choices
+   later in Preferences.
+
+**Help → Re-run Setup Wizard** (or the button at the top of Help) opens
+the restart screen. **Keep Current Preferences** starts from your existing
+settings and does not let the purpose choice overwrite the preselected
+answers; **Reset to Add-on Defaults** resets active fresh-install defaults
+as soon as you continue, before the remaining questions. Named profile
+snapshots are retained. Cancel on the restart screen to avoid that reset.
+Closing or choosing **Skip for now** does not save unfinished answers; a
+previously confirmed reset has already taken effect.
 
 ## Coming from version 1.0
 
